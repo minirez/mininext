@@ -34,19 +34,21 @@
         <div class="flex bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
           <button
             @click="viewMode = 'calendar'"
-            class="p-2 rounded-md transition-colors"
+            class="px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
             :class="viewMode === 'calendar' ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm' : 'text-gray-500'"
             :title="$t('planning.pricing.calendarView')"
           >
             <span class="material-icons text-lg">calendar_view_month</span>
+            <span class="text-xs font-medium hidden sm:inline">{{ $t('planning.pricing.calendarView') }}</span>
           </button>
           <button
-            @click="viewMode = 'list'"
-            class="p-2 rounded-md transition-colors"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm' : 'text-gray-500'"
-            :title="$t('planning.pricing.listView')"
+            @click="viewMode = 'period'"
+            class="px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
+            :class="viewMode === 'period' ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm' : 'text-gray-500'"
+            :title="$t('planning.pricing.periodView')"
           >
-            <span class="material-icons text-lg">view_list</span>
+            <span class="material-icons text-lg">date_range</span>
+            <span class="text-xs font-medium hidden sm:inline">{{ $t('planning.pricing.periodView') }}</span>
           </button>
         </div>
 
@@ -134,8 +136,8 @@
       </div>
     </Transition>
 
-    <!-- Beautiful Filters (for list view) -->
-    <div v-if="viewMode === 'list'" class="mb-6">
+    <!-- Beautiful Filters (for period view) -->
+    <div v-if="viewMode === 'period'" class="mb-6">
       <div class="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl p-5 border border-gray-200/50 dark:border-slate-600/50">
         <!-- Room Type Filter (Required) -->
         <div class="flex items-center gap-2 mb-3">
@@ -179,8 +181,8 @@
         />
       </template>
 
-      <!-- List View - Period Based Price List -->
-      <template v-else>
+      <!-- Period View - Period Based Price List -->
+      <template v-else-if="viewMode === 'period'">
         <!-- No Room Type Selected -->
         <div v-if="!filters.roomType" class="text-center py-16 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
           <div class="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4">
@@ -196,50 +198,124 @@
         </div>
 
         <!-- Price List Table -->
-        <div v-else-if="priceListData.length > 0" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div v-else-if="priceListData.length > 0" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="bg-gray-100 dark:bg-slate-700">
+              <thead class="bg-gray-50 dark:bg-slate-700">
                 <tr>
-                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase border-r border-gray-200 dark:border-slate-600 w-[160px]">
+                  <!-- Period Header -->
+                  <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase border-r border-gray-200 dark:border-slate-600 w-[140px] sticky left-0 bg-gray-50 dark:bg-slate-700 z-10">
                     {{ $t('planning.pricing.period') }}
                   </th>
+                  <!-- Meal Plan Price Headers -->
                   <th
-                    v-for="mp in priceListMealPlans"
+                    v-for="mp in activeMealPlans"
                     :key="mp._id"
-                    class="px-3 py-2 text-center text-xs font-bold border-r last:border-r-0 border-gray-200 dark:border-slate-600"
+                    class="px-3 py-3 text-center text-xs font-bold border-r border-gray-200 dark:border-slate-600 min-w-[80px]"
                     :class="getMealPlanHeaderClass(mp.code)"
                   >
-                    {{ mp.code }}
+                    <div>{{ mp.code }}</div>
+                    <div class="text-[10px] font-normal opacity-75">{{ selectedMarket?.currency }}</div>
+                  </th>
+                  <!-- Min Stay Header -->
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase border-r border-gray-200 dark:border-slate-600 min-w-[60px]">
+                    <div class="flex flex-col items-center">
+                      <span class="material-icons text-sm text-blue-500">hotel</span>
+                      <span class="text-[10px]">Min</span>
+                    </div>
+                  </th>
+                  <!-- Release Header -->
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase min-w-[60px]">
+                    <div class="flex flex-col items-center">
+                      <span class="material-icons text-sm text-amber-500">schedule</span>
+                      <span class="text-[10px]">Release</span>
+                    </div>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                 <tr
                   v-for="(period, periodIndex) in unifiedPeriods"
                   :key="periodIndex"
-                  class="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/30"
+                  class="hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors"
                 >
                   <!-- Period Column -->
-                  <td class="px-3 py-2 border-r border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
-                    <div class="text-xs font-medium text-gray-800 dark:text-white">
+                  <td class="px-3 py-2.5 border-r border-gray-200 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-800/50 sticky left-0 z-10">
+                    <div class="text-xs font-semibold text-gray-800 dark:text-white">
                       {{ formatShortDate(period.startDate) }} - {{ formatShortDate(period.endDate) }}
+                    </div>
+                    <div class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                      {{ getPeriodDays(period.startDate, period.endDate) }} {{ $t('planning.pricing.days') }}
                     </div>
                   </td>
 
-                  <!-- Price Cells -->
+                  <!-- Meal Plan Price Cells with Tooltip -->
                   <td
-                    v-for="mp in priceListMealPlans"
+                    v-for="mp in activeMealPlans"
                     :key="mp._id"
-                    class="px-2 py-1.5 text-center border-r last:border-r-0 border-gray-100 dark:border-slate-700"
+                    class="px-2 py-2 text-center border-r border-gray-100 dark:border-slate-700 relative group"
                   >
+                    <template v-if="getPeriodPrice(period, mp._id)">
+                      <div class="cursor-pointer">
+                        <span class="font-bold text-green-600 dark:text-green-400 text-sm">
+                          {{ getPeriodPrice(period, mp._id).pricePerNight.toLocaleString() }}
+                        </span>
+                        <!-- Tooltip -->
+                        <div
+                          v-if="hasExtraPricing(getPeriodPrice(period, mp._id))"
+                          class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 dark:bg-slate-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
+                        >
+                          <div class="space-y-1">
+                            <div v-if="getPeriodPrice(period, mp._id).extraAdult" class="flex items-center gap-2">
+                              <span class="material-icons text-amber-400 text-xs">person_add</span>
+                              <span>+{{ $t('planning.pricing.adult') }}: {{ getPeriodPrice(period, mp._id).extraAdult.toLocaleString() }}</span>
+                            </div>
+                            <div v-if="getPeriodPrice(period, mp._id).extraChild" class="flex items-center gap-2">
+                              <span class="material-icons text-pink-400 text-xs">child_care</span>
+                              <span>+{{ $t('planning.pricing.child') }}: {{ getPeriodPrice(period, mp._id).extraChild.toLocaleString() }}</span>
+                            </div>
+                            <div v-if="getPeriodPrice(period, mp._id).extraInfant" class="flex items-center gap-2">
+                              <span class="material-icons text-purple-400 text-xs">baby_changing_station</span>
+                              <span>+{{ $t('planning.pricing.infant') }}: {{ getPeriodPrice(period, mp._id).extraInfant.toLocaleString() }}</span>
+                            </div>
+                            <div v-if="getPeriodPrice(period, mp._id).singleSupplement" class="flex items-center gap-2 pt-1 border-t border-slate-600">
+                              <span class="material-icons text-blue-400 text-xs">person</span>
+                              <span>{{ $t('planning.pricing.singleOccupancy') }}: -{{ getPeriodPrice(period, mp._id).singleSupplement.toLocaleString() }}</span>
+                            </div>
+                          </div>
+                          <!-- Tooltip Arrow -->
+                          <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-900"></div>
+                        </div>
+                      </div>
+                      <!-- Extra pricing indicator -->
+                      <div v-if="hasExtraPricing(getPeriodPrice(period, mp._id))" class="text-[9px] text-purple-500 dark:text-purple-400 mt-0.5">
+                        +{{ $t('planning.pricing.extras') }}
+                      </div>
+                    </template>
+                    <span v-else class="text-gray-300 dark:text-slate-600">-</span>
+                  </td>
+
+                  <!-- Min Stay Column -->
+                  <td class="px-2 py-2 text-center border-r border-gray-100 dark:border-slate-700">
                     <span
-                      v-if="getPeriodPrice(period, mp._id)"
-                      class="font-bold text-green-600 dark:text-green-400"
+                      v-if="getFirstPeriodRate(period)?.minStay"
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium"
+                      :class="getFirstPeriodRate(period).minStay > 1 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-slate-600 text-gray-500 dark:text-slate-400'"
                     >
-                      {{ getPeriodPrice(period, mp._id).pricePerNight.toLocaleString() }}
+                      {{ getFirstPeriodRate(period).minStay }}
                     </span>
-                    <span v-else class="text-gray-300">-</span>
+                    <span v-else class="text-gray-300 dark:text-slate-600">-</span>
+                  </td>
+
+                  <!-- Release Days Column -->
+                  <td class="px-2 py-2 text-center">
+                    <span
+                      v-if="getFirstPeriodRate(period)?.releaseDays"
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                    >
+                      {{ getFirstPeriodRate(period).releaseDays }}
+                    </span>
+                    <span v-else class="text-gray-300 dark:text-slate-600">0</span>
                   </td>
                 </tr>
               </tbody>
@@ -247,8 +323,18 @@
           </div>
 
           <!-- Footer -->
-          <div class="px-3 py-1.5 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-600 text-xs text-gray-500 dark:text-slate-400">
-            {{ selectedMarket?.currency }} • {{ unifiedPeriods.length }} {{ $t('planning.pricing.periods') }}
+          <div class="px-4 py-2 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-600 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
+            <div class="flex items-center gap-4">
+              <span>{{ selectedMarket?.currency }}</span>
+              <span>•</span>
+              <span>{{ unifiedPeriods.length }} {{ $t('planning.pricing.periods') }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-[10px]">
+              <span class="flex items-center gap-1">
+                <span class="material-icons text-xs text-purple-500">info</span>
+                {{ $t('planning.pricing.hoverForExtras') }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -443,6 +529,11 @@ const priceListMealPlans = computed(() => {
   return Object.values(mpMap)
 })
 
+// Active meal plans only (filter out inactive ones)
+const activeMealPlans = computed(() => {
+  return priceListMealPlans.value.filter(mp => mp.status === 'active')
+})
+
 // Unified periods across all meal plans
 const unifiedPeriods = computed(() => {
   const allPeriods = []
@@ -471,6 +562,13 @@ const unifiedPeriods = computed(() => {
 // Get price for a specific period and meal plan
 const getPeriodPrice = (period, mealPlanId) => {
   return period.prices[mealPlanId] || null
+}
+
+// Get first available rate for a period (for min stay, release days)
+const getFirstPeriodRate = (period) => {
+  const mealPlanIds = Object.keys(period.prices)
+  if (mealPlanIds.length === 0) return null
+  return period.prices[mealPlanIds[0]]
 }
 
 // Helpers
@@ -721,7 +819,7 @@ const handleBulkEditSaved = () => {
 
 const handleAIExecuted = () => {
   fetchRates()
-  if (viewMode.value === 'list') {
+  if (viewMode.value === 'period') {
     fetchPriceList()
   }
 }
@@ -785,13 +883,13 @@ const executeDelete = async () => {
 // Watchers
 watch(selectedMarket, () => {
   fetchRates()
-  if (viewMode.value === 'list') {
+  if (viewMode.value === 'period') {
     fetchPriceList()
   }
 })
 
 watch(viewMode, (newMode) => {
-  if (newMode === 'list') {
+  if (newMode === 'period') {
     // Auto-select first room type if none selected
     if (!filters.roomType && roomTypes.value.length > 0) {
       filters.roomType = roomTypes.value[0]._id
@@ -801,7 +899,7 @@ watch(viewMode, (newMode) => {
 })
 
 watch(() => filters.roomType, () => {
-  if (viewMode.value === 'list') {
+  if (viewMode.value === 'period') {
     fetchPriceList()
   }
 })
