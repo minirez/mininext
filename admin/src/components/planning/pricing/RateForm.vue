@@ -875,8 +875,69 @@ const handleSave = async () => {
   }
 }
 
+// Fetch last rate for this market and set suggested next period
+const fetchLastRateAndSetDates = async () => {
+  if (!props.market?._id || !props.hotel?._id) return
+
+  try {
+    const response = await planningService.getRates(props.hotel._id, {
+      market: props.market._id
+    })
+
+    // Handle both old format (array) and new format ({ rates, overrides })
+    let rates = []
+    if (response.success) {
+      if (Array.isArray(response.data)) {
+        rates = response.data
+      } else if (response.data?.rates) {
+        rates = response.data.rates
+      }
+    }
+
+    if (rates.length > 0) {
+      // Find the rate with the latest end date
+      const sortedRates = [...rates].sort((a, b) => {
+        const endA = new Date(a.endDate)
+        const endB = new Date(b.endDate)
+        return endB - endA // Sort descending
+      })
+
+      const lastRate = sortedRates[0]
+      const lastEndDate = new Date(lastRate.endDate)
+      const lastStartDate = new Date(lastRate.startDate)
+
+      // Calculate duration of last rate
+      const lastDuration = Math.ceil((lastEndDate - lastStartDate) / (1000 * 60 * 60 * 24)) + 1
+
+      // Set start date to day after last rate ends
+      const nextStartDate = new Date(lastEndDate)
+      nextStartDate.setDate(nextStartDate.getDate() + 1)
+
+      // Set end date with same duration
+      const nextEndDate = new Date(nextStartDate)
+      nextEndDate.setDate(nextEndDate.getDate() + lastDuration - 1)
+
+      // Format dates as YYYY-MM-DD
+      const formatDate = (date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+
+      dateRange.value.start = formatDate(nextStartDate)
+      dateRange.value.end = formatDate(nextEndDate)
+
+      console.log('Last rate period:', formatDate(lastStartDate), '-', formatDate(lastEndDate), `(${lastDuration} days)`)
+      console.log('Suggested next period:', dateRange.value.start, '-', dateRange.value.end)
+    }
+  } catch (error) {
+    console.error('Error fetching last rate:', error)
+  }
+}
+
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   initializeRoomData()
 
   // If bulk creating from selected cells
@@ -890,6 +951,9 @@ onMounted(() => {
     if (firstCell.roomTypeId) {
       selectedRoomTab.value = firstCell.roomTypeId
     }
+  } else {
+    // Fetch last rate and set suggested dates
+    await fetchLastRateAndSetDates()
   }
 })
 </script>
