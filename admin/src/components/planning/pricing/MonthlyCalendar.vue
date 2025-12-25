@@ -456,6 +456,7 @@ const props = defineProps({
   mealPlans: { type: Array, default: () => [] },
   market: { type: Object, default: null },
   rates: { type: Array, default: () => [] },
+  overrides: { type: Array, default: () => [] }, // RateOverride records (daily exceptions)
   loading: { type: Boolean, default: false },
   initialMonth: { type: Object, default: null } // { year, month }
 })
@@ -632,7 +633,18 @@ const getMealPlanColor = (code) => {
 }
 
 const getRateForCell = (roomTypeId, mealPlanId, dateStr) => {
-  // Find all matching rates for this cell
+  // First check if there's an override for this specific date
+  const override = props.overrides.find(o => {
+    const rtId = o.roomType?._id || o.roomType
+    const mpId = o.mealPlan?._id || o.mealPlan
+    if (rtId !== roomTypeId || mpId !== mealPlanId) return false
+
+    // Override date is a single date (ISO string)
+    const overrideDateStr = o.date?.substring?.(0, 10) || ''
+    return overrideDateStr === dateStr
+  })
+
+  // Find the base rate (period-based) for this cell
   const matchingRates = props.rates.filter(rate => {
     const rtId = rate.roomType?._id || rate.roomType
     const mpId = rate.mealPlan?._id || rate.mealPlan
@@ -640,31 +652,83 @@ const getRateForCell = (roomTypeId, mealPlanId, dateStr) => {
     if (rtId !== roomTypeId || mpId !== mealPlanId) return false
 
     // Compare date strings directly (YYYY-MM-DD format)
-    // rate.startDate and rate.endDate come as ISO strings like "2026-01-15T00:00:00.000Z"
     const rateStartStr = rate.startDate.substring(0, 10)
     const rateEndStr = rate.endDate.substring(0, 10)
 
     return dateStr >= rateStartStr && dateStr <= rateEndStr
   })
 
-  if (matchingRates.length === 0) return null
-  if (matchingRates.length === 1) return matchingRates[0]
+  // Get base rate (prefer shorter range if multiple match)
+  let baseRate = null
+  if (matchingRates.length === 1) {
+    baseRate = matchingRates[0]
+  } else if (matchingRates.length > 1) {
+    baseRate = matchingRates.reduce((best, current) => {
+      const bestRange = new Date(best.endDate.substring(0, 10)) - new Date(best.startDate.substring(0, 10))
+      const currRange = new Date(current.endDate.substring(0, 10)) - new Date(current.startDate.substring(0, 10))
+      return currRange < bestRange ? current : best
+    })
+  }
 
-  // If multiple rates match, prefer the most specific one (shortest date range)
-  // Single-day rates (startDate === endDate) take priority over range rates
-  return matchingRates.reduce((best, current) => {
-    const bestStart = best.startDate.substring(0, 10)
-    const bestEnd = best.endDate.substring(0, 10)
-    const currStart = current.startDate.substring(0, 10)
-    const currEnd = current.endDate.substring(0, 10)
+  // If there's an override, merge it with base rate
+  if (override) {
+    const mergedRate = baseRate ? { ...baseRate } : {
+      _id: null,
+      roomType: roomTypeId,
+      mealPlan: mealPlanId,
+      pricePerNight: 0,
+      allotment: 0,
+      stopSale: false,
+      closedToArrival: false,
+      closedToDeparture: false
+    }
 
-    // Calculate range lengths (0 for single day)
-    const bestRange = new Date(bestEnd) - new Date(bestStart)
-    const currRange = new Date(currEnd) - new Date(currStart)
+    // Apply override values (only non-null values)
+    if (override.pricePerNight !== null && override.pricePerNight !== undefined) {
+      mergedRate.pricePerNight = override.pricePerNight
+    }
+    if (override.allotment !== null && override.allotment !== undefined) {
+      mergedRate.allotment = override.allotment
+    }
+    if (override.stopSale !== null && override.stopSale !== undefined) {
+      mergedRate.stopSale = override.stopSale
+    }
+    if (override.stopSaleReason !== null && override.stopSaleReason !== undefined) {
+      mergedRate.stopSaleReason = override.stopSaleReason
+    }
+    if (override.closedToArrival !== null && override.closedToArrival !== undefined) {
+      mergedRate.closedToArrival = override.closedToArrival
+    }
+    if (override.closedToDeparture !== null && override.closedToDeparture !== undefined) {
+      mergedRate.closedToDeparture = override.closedToDeparture
+    }
+    if (override.minStay !== null && override.minStay !== undefined) {
+      mergedRate.minStay = override.minStay
+    }
+    if (override.maxStay !== null && override.maxStay !== undefined) {
+      mergedRate.maxStay = override.maxStay
+    }
+    if (override.singleSupplement !== null && override.singleSupplement !== undefined) {
+      mergedRate.singleSupplement = override.singleSupplement
+    }
+    if (override.extraAdult !== null && override.extraAdult !== undefined) {
+      mergedRate.extraAdult = override.extraAdult
+    }
+    if (override.extraChild !== null && override.extraChild !== undefined) {
+      mergedRate.extraChild = override.extraChild
+    }
+    if (override.extraInfant !== null && override.extraInfant !== undefined) {
+      mergedRate.extraInfant = override.extraInfant
+    }
 
-    // Prefer shorter range (more specific)
-    return currRange < bestRange ? current : best
-  })
+    // Mark that this is an override for UI indication
+    mergedRate.isOverride = true
+    mergedRate.overrideId = override._id
+
+    return mergedRate
+  }
+
+  return baseRate
 }
 
 const isCellSelected = (roomTypeId, mealPlanId, date) => {

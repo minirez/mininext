@@ -171,6 +171,7 @@
           :meal-plans="mealPlans"
           :market="selectedMarket"
           :rates="rates"
+          :overrides="overrides"
           :loading="loadingRates"
           :initial-month="currentMonth"
           @refresh="handleCalendarRefresh"
@@ -338,6 +339,7 @@ const toast = useToast()
 
 // Data
 const rates = ref([])
+const overrides = ref([]) // RateOverride records (daily exceptions)
 const seasons = ref([])
 const roomTypes = ref([])
 const mealPlans = ref([])
@@ -620,8 +622,20 @@ const fetchRates = async (params = {}) => {
 
     console.log('fetchRates queryParams:', queryParams)
     const response = await planningService.getRates(props.hotel._id, queryParams)
-    console.log('fetchRates response:', response.data?.length, 'rates')
-    if (response.success) rates.value = response.data
+
+    // Handle both old format (array) and new format ({ rates, overrides })
+    if (response.success) {
+      if (Array.isArray(response.data)) {
+        // Old format - data is an array of rates
+        rates.value = response.data
+        overrides.value = []
+      } else if (response.data && typeof response.data === 'object') {
+        // New format - data has rates and overrides
+        rates.value = response.data.rates || []
+        overrides.value = response.data.overrides || []
+      }
+      console.log('fetchRates response:', rates.value.length, 'rates,', overrides.value.length, 'overrides')
+    }
   } catch (error) {
     toast.error(t('common.fetchError'))
   } finally {

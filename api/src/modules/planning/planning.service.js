@@ -3,6 +3,7 @@ import MealPlan from './mealPlan.model.js'
 import Market from './market.model.js'
 import Season from './season.model.js'
 import Rate from './rate.model.js'
+import RateOverride from './rateOverride.model.js'
 import Campaign from './campaign.model.js'
 import Hotel from '../hotel/hotel.model.js'
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../core/errors.js'
@@ -799,11 +800,23 @@ export const getRatesCalendar = asyncHandler(async (req, res) => {
 		throw new BadRequestError('DATE_RANGE_REQUIRED')
 	}
 
-	const rates = await Rate.getCalendarView(hotelId, startDate, endDate, {
-		roomType, mealPlan, market
-	})
+	// Fetch both rates (period-based) and overrides (daily exceptions)
+	const [rates, overrides] = await Promise.all([
+		Rate.getCalendarView(hotelId, startDate, endDate, {
+			roomType, mealPlan, market
+		}),
+		RateOverride.findInRange(hotelId, startDate, endDate, {
+			roomType, mealPlan, market
+		})
+	])
 
-	res.json({ success: true, data: rates })
+	res.json({
+		success: true,
+		data: {
+			rates,
+			overrides
+		}
+	})
 })
 
 /**
@@ -1653,7 +1666,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 				const isStopSale = action === 'stop_sale'
 
 				if (hasDayFilter(filters?.daysOfWeek)) {
-					// Work with individual dates when daysOfWeek filter is active
+					// Work with individual dates when daysOfWeek filter is active - use RateOverride
 					const matchingDates = getMatchingDates(dateRange.startDate, dateRange.endDate, filters.daysOfWeek)
 					logger.info(`${action} with daysOfWeek: ${matchingDates.length} matching dates`)
 
@@ -1673,63 +1686,36 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 						: { hotel: hotelId, status: 'active' }
 					const marketsForAction = await Market.find(mktFilter).select('_id code currency').lean()
 
-					let updated = 0
-					let created = 0
-
+					// Build RateOverride records for bulk upsert
+					const overridesToUpsert = []
 					for (const date of matchingDates) {
 						for (const rt of roomTypesForAction) {
 							for (const mp of mealPlansForAction) {
 								for (const market of marketsForAction) {
-									// Find existing rate for this specific date
-									const existingRate = await Rate.findOne({
-										hotel: hotelId,
+									overridesToUpsert.push({
 										partner: partnerId,
+										hotel: hotelId,
 										roomType: rt._id,
 										mealPlan: mp._id,
 										market: market._id,
-										startDate: { $lte: date },
-										endDate: { $gte: date }
+										date: date,
+										stopSale: isStopSale,
+										stopSaleReason: isStopSale ? (reason || '') : null,
+										source: 'ai',
+										aiCommand: action
 									})
-
-									if (existingRate) {
-										const isSingleDayRate = existingRate.startDate.getTime() === existingRate.endDate.getTime()
-
-										if (isSingleDayRate) {
-											await Rate.findByIdAndUpdate(existingRate._id, {
-												stopSale: isStopSale,
-												stopSaleReason: isStopSale ? (reason || '') : ''
-											})
-											updated++
-										} else {
-											// Create a new single-day rate with stop sale
-											await Rate.create({
-												partner: partnerId,
-												hotel: hotelId,
-												roomType: rt._id,
-												mealPlan: mp._id,
-												market: market._id,
-												startDate: date,
-												endDate: date,
-												season: existingRate.season,
-												pricePerNight: existingRate.pricePerNight,
-												currency: existingRate.currency,
-												allotment: existingRate.allotment,
-												minStay: existingRate.minStay,
-												maxStay: existingRate.maxStay,
-												stopSale: isStopSale,
-												stopSaleReason: isStopSale ? (reason || '') : '',
-												status: 'active'
-											})
-											created++
-										}
-									}
 								}
 							}
 						}
 					}
 
-					updateResult = { modifiedCount: updated + created }
-					logger.info(`${action} with daysOfWeek: updated ${updated}, created ${created}`)
+					if (overridesToUpsert.length > 0) {
+						const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
+						updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
+						logger.info(`${action} with daysOfWeek: upserted ${overridesToUpsert.length} overrides`)
+					} else {
+						updateResult = { modifiedCount: 0 }
+					}
 				} else {
 					updateData = {
 						stopSale: isStopSale,
@@ -1777,71 +1763,35 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 				const matchingDatesCTA = getMatchingDates(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
 				logger.info(`${action}: ${matchingDatesCTA.length} dates to process`)
 
-				let updatedCTA = 0
-				let createdCTA = 0
-
+				// Build RateOverride records for bulk upsert
+				const overridesToUpsert = []
 				for (const date of matchingDatesCTA) {
 					for (const rt of roomTypesForCTA) {
 						for (const mp of mealPlansForCTA) {
 							for (const market of marketsForCTA) {
-								// First check if there's already a single-day rate for this exact date
-								const singleDayRate = await Rate.findOne({
-									hotel: hotelId,
+								overridesToUpsert.push({
 									partner: partnerId,
+									hotel: hotelId,
 									roomType: rt._id,
 									mealPlan: mp._id,
 									market: market._id,
-									startDate: date,
-									endDate: date
+									date: date,
+									[fieldName]: fieldValue,
+									source: 'ai',
+									aiCommand: action
 								})
-
-								if (singleDayRate) {
-									// Update existing single-day rate
-									await Rate.findByIdAndUpdate(singleDayRate._id, { [fieldName]: fieldValue })
-									updatedCTA++
-								} else {
-									// Find a range rate that covers this date
-									const rangeRate = await Rate.findOne({
-										hotel: hotelId,
-										partner: partnerId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										startDate: { $lte: date },
-										endDate: { $gte: date }
-									})
-
-									if (rangeRate) {
-										// Create a new single-day rate with the CTA/CTD value
-										await Rate.create({
-											partner: partnerId,
-											hotel: hotelId,
-											roomType: rt._id,
-											mealPlan: mp._id,
-											market: market._id,
-											startDate: date,
-											endDate: date,
-											season: rangeRate.season,
-											pricePerNight: rangeRate.pricePerNight,
-											currency: rangeRate.currency,
-											allotment: rangeRate.allotment,
-											minStay: rangeRate.minStay,
-											maxStay: rangeRate.maxStay,
-											closedToArrival: action === 'close_to_arrival' ? fieldValue : rangeRate.closedToArrival,
-											closedToDeparture: action === 'close_to_departure' ? fieldValue : rangeRate.closedToDeparture,
-											stopSale: rangeRate.stopSale,
-											status: 'active'
-										})
-										createdCTA++
-									}
-								}
 							}
 						}
 					}
 				}
 
-				updateResult = { modifiedCount: updatedCTA + createdCTA }
-				logger.info(`${action}: updated ${updatedCTA}, created ${createdCTA}`)
+				if (overridesToUpsert.length > 0) {
+					const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
+					updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
+					logger.info(`${action}: upserted ${overridesToUpsert.length} overrides`)
+				} else {
+					updateResult = { modifiedCount: 0 }
+				}
 				break
 			}
 
@@ -1970,7 +1920,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 			}
 
 			case 'update_price': {
-				// When daysOfWeek filter is active, work with individual dates
+				// When daysOfWeek filter is active, create RateOverrides
 				if (hasDayFilter(filters?.daysOfWeek)) {
 					const matchingDates = getMatchingDates(dateRange.startDate, dateRange.endDate, filters.daysOfWeek)
 					logger.info(`update_price with daysOfWeek: ${matchingDates.length} matching dates`)
@@ -1991,80 +1941,67 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 						: { hotel: hotelId, status: 'active' }
 					const marketsForUpdate = await Market.find(mktFilter).select('_id code currency').lean()
 
-					let updated = 0
-					let created = 0
+					// Build RateOverride records
+					const overridesToUpsert = []
 
 					for (const date of matchingDates) {
 						for (const rt of roomTypesForUpdate) {
 							for (const mp of mealPlansForUpdate) {
 								for (const market of marketsForUpdate) {
-									// First check if there's already a single-day rate for this exact date
-									const singleDayRate = await Rate.findOne({
-										hotel: hotelId,
-										partner: partnerId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										startDate: date,
-										endDate: date
-									})
-
-									if (singleDayRate) {
-										// Update existing single-day rate
-										let newPrice
-										if (valueType === 'percentage') {
-											newPrice = Math.round(singleDayRate.pricePerNight * (1 + value / 100))
-										} else {
-											newPrice = value
-										}
-										await Rate.findByIdAndUpdate(singleDayRate._id, { pricePerNight: newPrice })
-										updated++
-									} else {
-										// Find a range rate that covers this date
-										const rangeRate = await Rate.findOne({
+									// For percentage updates, we need to find the base rate price first
+									let newPrice = value
+									if (valueType === 'percentage') {
+										// Check if there's already an override for this date
+										const existingOverride = await RateOverride.findOne({
 											hotel: hotelId,
-											partner: partnerId,
 											roomType: rt._id,
 											mealPlan: mp._id,
 											market: market._id,
-											startDate: { $lte: date },
-											endDate: { $gte: date }
+											date: date
 										})
 
-										if (rangeRate) {
-											let newPrice
-											if (valueType === 'percentage') {
-												newPrice = Math.round(rangeRate.pricePerNight * (1 + value / 100))
-											} else {
-												newPrice = value
-											}
-											// Create a new single-day rate with updated price
-											await Rate.create({
-												partner: partnerId,
+										if (existingOverride && existingOverride.pricePerNight !== null) {
+											newPrice = Math.round(existingOverride.pricePerNight * (1 + value / 100))
+										} else {
+											// Find the base rate
+											const baseRate = await Rate.findOne({
 												hotel: hotelId,
+												partner: partnerId,
 												roomType: rt._id,
 												mealPlan: mp._id,
 												market: market._id,
-												startDate: date,
-												endDate: date,
-												season: rangeRate.season,
-												pricePerNight: newPrice,
-												currency: rangeRate.currency,
-												allotment: rangeRate.allotment,
-												minStay: rangeRate.minStay,
-												maxStay: rangeRate.maxStay,
-												status: 'active'
+												startDate: { $lte: date },
+												endDate: { $gte: date }
 											})
-											created++
+											if (baseRate) {
+												newPrice = Math.round(baseRate.pricePerNight * (1 + value / 100))
+											}
 										}
 									}
+
+									overridesToUpsert.push({
+										partner: partnerId,
+										hotel: hotelId,
+										roomType: rt._id,
+										mealPlan: mp._id,
+										market: market._id,
+										date: date,
+										pricePerNight: newPrice,
+										source: 'ai',
+										aiCommand: 'update_price'
+									})
 								}
 							}
 						}
 					}
 
-					updateResult = { modifiedCount: updated + created }
-					logger.info(`update_price with daysOfWeek: updated ${updated}, created ${created}`)
+					if (overridesToUpsert.length > 0) {
+						const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
+						updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
+						logger.info(`update_price with daysOfWeek: upserted ${overridesToUpsert.length} overrides`)
+					} else {
+						updateResult = { modifiedCount: 0 }
+					}
 				} else if (valueType === 'percentage') {
 					// Percentage update without day filter
 					const rates = await Rate.find(rateFilter)
