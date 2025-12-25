@@ -123,15 +123,31 @@
             type="button"
             @click="selectedRoomTab = rt._id"
             class="px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px"
-            :class="selectedRoomTab === rt._id
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 hover:border-gray-300'"
+            :class="[
+              selectedRoomTab === rt._id
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 hover:border-gray-300',
+              !hasRoomPrices(rt._id) ? 'ring-2 ring-red-300 dark:ring-red-700 ring-offset-1' : ''
+            ]"
           >
             <div class="flex items-center gap-2">
               <span class="font-bold">{{ rt.code }}</span>
               <span v-if="hasRoomPrices(rt._id)" class="w-2 h-2 rounded-full bg-green-500"></span>
+              <span v-else class="material-icons text-red-500 text-sm">error</span>
             </div>
           </button>
+        </div>
+      </div>
+
+      <!-- Missing Prices Warning -->
+      <div v-if="roomsMissingPrices.length > 0" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start gap-3">
+        <span class="material-icons text-red-500">warning</span>
+        <div>
+          <div class="font-medium text-red-700 dark:text-red-400">{{ $t('planning.pricing.allRoomsPriceRequired') }}</div>
+          <div class="text-sm text-red-600 dark:text-red-300 mt-1">
+            {{ $t('planning.pricing.missingPricesFor') }}:
+            <span class="font-bold">{{ roomsMissingPrices.map(r => r.code).join(', ') }}</span>
+          </div>
         </div>
       </div>
 
@@ -620,9 +636,14 @@ const hasRoomPrices = (roomTypeId) => {
   return Object.values(prices).some(mp => mp.pricePerNight > 0)
 }
 
-// Check if at least one room has at least one meal plan price
-const hasAtLeastOnePrice = computed(() => {
-  return Object.keys(roomPrices).some(roomId => hasRoomPrices(roomId))
+// Check if ALL rooms have at least one meal plan price (required)
+const allRoomsHavePrices = computed(() => {
+  return props.roomTypes.every(rt => hasRoomPrices(rt._id))
+})
+
+// Get rooms that are missing prices
+const roomsMissingPrices = computed(() => {
+  return props.roomTypes.filter(rt => !hasRoomPrices(rt._id))
 })
 
 const canProceed = computed(() => {
@@ -630,7 +651,7 @@ const canProceed = computed(() => {
     return dateRange.value.start && dateRange.value.end
   }
   if (currentStep.value === 1) {
-    return hasAtLeastOnePrice.value
+    return allRoomsHavePrices.value
   }
   return true
 })

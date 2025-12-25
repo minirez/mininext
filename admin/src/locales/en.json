@@ -1181,6 +1181,8 @@
       "copyRestrictionsToAll": "Copy restrictions to all rooms",
       "copiedRestrictionsToRooms": "Restrictions copied to all rooms",
       "atLeastOnePrice": "Please enter price for at least one meal plan",
+      "allRoomsPriceRequired": "Prices are required for all room types",
+      "missingPricesFor": "Missing prices for",
       "ratesCreated": "{count} rates created",
       "selectMarket": "Please select a market first",
       "inlineEditMode": "Quick Price Edit",

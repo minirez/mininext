@@ -1181,6 +1181,8 @@
       "copyRestrictionsToAll": "Kısıtlamaları tüm odalara kopyala",
       "copiedRestrictionsToRooms": "Kısıtlamalar tüm odalara kopyalandı",
       "atLeastOnePrice": "En az bir oda için fiyat girmelisiniz",
+      "allRoomsPriceRequired": "Tüm oda tipleri için fiyat girmelisiniz",
+      "missingPricesFor": "Fiyat girilmemiş odalar",
       "ratesCreated": "{count} adet fiyat oluşturuldu",
       "selectMarket": "Lütfen önce bir pazar seçin",
       "inlineEditMode": "Fiyat Düzenleme",

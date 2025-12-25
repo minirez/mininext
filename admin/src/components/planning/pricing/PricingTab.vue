@@ -529,9 +529,9 @@ const priceListMealPlans = computed(() => {
   return Object.values(mpMap)
 })
 
-// Active meal plans only (filter out inactive ones)
+// Active meal plans only (filter out inactive ones, default to active if status not set)
 const activeMealPlans = computed(() => {
-  return priceListMealPlans.value.filter(mp => mp.status === 'active')
+  return priceListMealPlans.value.filter(mp => mp.status !== 'inactive')
 })
 
 // Unified periods across all meal plans

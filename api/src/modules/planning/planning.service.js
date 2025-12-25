@@ -820,8 +820,8 @@ export const getRatesCalendar = asyncHandler(async (req, res) => {
 })
 
 /**
- * Get price list with computed periods
- * Groups consecutive days with same price into periods
+ * Get price list with periods
+ * Returns range-based rates as periods for period view
  */
 export const getRatesPriceList = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
@@ -847,13 +847,14 @@ export const getRatesPriceList = asyncHandler(async (req, res) => {
 
 	// Get all rates sorted by mealPlan and date
 	const rates = await Rate.find(filter)
-		.populate('mealPlan', 'name code')
+		.populate('mealPlan', 'name code status')
 		.sort({ mealPlan: 1, startDate: 1 })
 		.lean()
 
 	// Group by meal plan
 	const mealPlanGroups = {}
 	rates.forEach(rate => {
+		if (!rate.mealPlan) return
 		const mpId = rate.mealPlan._id.toString()
 		if (!mealPlanGroups[mpId]) {
 			mealPlanGroups[mpId] = {
@@ -864,70 +865,28 @@ export const getRatesPriceList = asyncHandler(async (req, res) => {
 		mealPlanGroups[mpId].rates.push(rate)
 	})
 
-	// Helper to format date as YYYY-MM-DD (UTC)
-	const toDateStr = (d) => {
-		const date = new Date(d)
-		return date.toISOString().split('T')[0]
-	}
-
-	// Helper to add days to a date string
-	const addDays = (dateStr, days) => {
-		const date = new Date(dateStr + 'T00:00:00Z')
-		date.setUTCDate(date.getUTCDate() + days)
-		return date.toISOString().split('T')[0]
-	}
-
-	// For each meal plan, compute periods from consecutive same-priced days
+	// For each meal plan, return rates as periods (range rates are already periods)
 	const result = []
 
 	Object.values(mealPlanGroups).forEach(group => {
-		const periods = []
-		let currentPeriod = null
-
-		group.rates.forEach(rate => {
-			const dateStr = toDateStr(rate.startDate)
-
-			// Check if this rate can extend current period
-			if (currentPeriod) {
-				const expectedNextDay = addDays(currentPeriod.endDateStr, 1)
-
-				// Only check price for grouping (simpler logic)
-				const isSamePrice = currentPeriod.pricePerNight === rate.pricePerNight
-				const isConsecutive = dateStr === expectedNextDay
-
-				if (isConsecutive && isSamePrice) {
-					// Extend current period
-					currentPeriod.endDate = rate.startDate
-					currentPeriod.endDateStr = dateStr
-				} else {
-					// Save current period and start new one
-					delete currentPeriod.endDateStr
-					periods.push(currentPeriod)
-					currentPeriod = {
-						startDate: rate.startDate,
-						endDate: rate.startDate,
-						endDateStr: dateStr,
-						pricePerNight: rate.pricePerNight,
-						currency: rate.currency
-					}
-				}
-			} else {
-				// Start new period
-				currentPeriod = {
-					startDate: rate.startDate,
-					endDate: rate.startDate,
-					endDateStr: dateStr,
-					pricePerNight: rate.pricePerNight,
-					currency: rate.currency
-				}
-			}
-		})
-
-		// Don't forget the last period
-		if (currentPeriod) {
-			delete currentPeriod.endDateStr
-			periods.push(currentPeriod)
-		}
+		const periods = group.rates.map(rate => ({
+			startDate: rate.startDate,
+			endDate: rate.endDate,
+			pricePerNight: rate.pricePerNight,
+			currency: rate.currency,
+			minStay: rate.minStay,
+			maxStay: rate.maxStay,
+			releaseDays: rate.releaseDays,
+			allotment: rate.allotment,
+			stopSale: rate.stopSale,
+			closedToArrival: rate.closedToArrival,
+			closedToDeparture: rate.closedToDeparture,
+			extraAdult: rate.extraAdult,
+			extraChild: rate.extraChild,
+			extraInfant: rate.extraInfant,
+			singleSupplement: rate.singleSupplement,
+			childOrderPricing: rate.childOrderPricing
+		}))
 
 		result.push({
 			mealPlan: group.mealPlan,
