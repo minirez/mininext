@@ -44,10 +44,11 @@ export const createAgency = asyncHandler(async (req, res) => {
 
   // Create admin user for agency
   const tempPassword = generatePassword()
+  const agencyName = agency.companyName || agency.name
   const adminUser = await User.create({
     accountType: 'agency',
     accountId: agency._id,
-    name: req.body.name + ' Admin',
+    name: (req.body.contactPerson?.name || agencyName) + ' Admin',
     email: req.body.email,
     password: tempPassword,
     role: 'admin',
@@ -110,8 +111,10 @@ export const getAgencies = asyncHandler(async (req, res) => {
   if (status) filter.status = status
   if (search) {
     filter.$or = [
+      { companyName: { $regex: search, $options: 'i' } },
       { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { email: { $regex: search, $options: 'i' } },
+      { taxNumber: { $regex: search, $options: 'i' } }
     ]
   }
 
@@ -433,6 +436,123 @@ export const approveAgency = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: req.t('AGENCY_APPROVED'),
+    data: agency
+  })
+})
+
+// Upload agency document
+export const uploadDocument = asyncHandler(async (req, res) => {
+  const agency = await Agency.findById(req.params.id)
+
+  if (!agency) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Check ownership for partner users
+  if (req.user.accountType === 'partner' && agency.partner.toString() !== req.user.accountId.toString()) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  if (!req.file) {
+    throw new BadRequestError('NO_FILE_UPLOADED')
+  }
+
+  const { documentType } = req.body
+
+  if (!documentType || !['license', 'tax_certificate', 'contract', 'other'].includes(documentType)) {
+    throw new BadRequestError('INVALID_DOCUMENT_TYPE')
+  }
+
+  // Add document
+  agency.documents.push({
+    type: documentType,
+    name: req.file.originalname,
+    url: req.file.path,
+    uploadedAt: new Date()
+  })
+
+  await agency.save()
+
+  res.json({
+    success: true,
+    message: req.t('DOCUMENT_UPLOADED'),
+    data: { agency }
+  })
+})
+
+// Delete agency document
+export const deleteDocument = asyncHandler(async (req, res) => {
+  const agency = await Agency.findById(req.params.id)
+
+  if (!agency) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Check ownership for partner users
+  if (req.user.accountType === 'partner' && agency.partner.toString() !== req.user.accountId.toString()) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  const documentId = req.params.documentId
+  const documentIndex = agency.documents.findIndex(doc => doc._id.toString() === documentId)
+
+  if (documentIndex === -1) {
+    throw new NotFoundError('DOCUMENT_NOT_FOUND')
+  }
+
+  // Remove document
+  agency.documents.splice(documentIndex, 1)
+  await agency.save()
+
+  res.json({
+    success: true,
+    message: req.t('DOCUMENT_DELETED'),
+    data: agency
+  })
+})
+
+// Serve agency document (authenticated)
+export const serveDocument = asyncHandler(async (req, res) => {
+  const agency = await Agency.findById(req.params.id)
+
+  if (!agency) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Check ownership for partner users
+  if (req.user.accountType === 'partner' && agency.partner.toString() !== req.user.accountId.toString()) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  const documentId = req.params.documentId
+  const document = agency.documents.find(doc => doc._id.toString() === documentId)
+
+  if (!document) {
+    throw new NotFoundError('DOCUMENT_NOT_FOUND')
+  }
+
+  // Send file
+  res.sendFile(document.url, { root: '.' })
+})
+
+// Suspend agency
+export const suspendAgency = asyncHandler(async (req, res) => {
+  const agency = await Agency.findById(req.params.id)
+
+  if (!agency) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Check ownership for partner users
+  if (req.user.accountType === 'partner' && agency.partner.toString() !== req.user.accountId.toString()) {
+    throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  await agency.suspend()
+
+  res.json({
+    success: true,
+    message: req.t('AGENCY_SUSPENDED'),
     data: agency
   })
 })

@@ -112,6 +112,24 @@ const hotelSchema = new mongoose.Schema({
 		placeId: { type: String, trim: true } // Google Place ID
 	},
 
+	// Tags - Hotel labels/badges
+	tags: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Tag'
+	}],
+
+	// Hierarchical Location (Country > City > District > TourismRegions)
+	location: {
+		countryCode: { type: String, uppercase: true, trim: true }, // ISO 3166-1 alpha-2
+		city: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+		district: { type: mongoose.Schema.Types.ObjectId, ref: 'District' }, // İlçe - will be added later
+		// Multiple tourism regions (like tags)
+		tourismRegions: [{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'TourismRegion'
+		}]
+	},
+
 	// Contact Information (Enhanced)
 	contact: {
 		// Primary contacts
@@ -214,11 +232,206 @@ const hotelSchema = new mongoose.Schema({
 		hasElevator: { type: Boolean, default: false }
 	},
 
+	// Pricing Settings (B2B Pricing Model)
+	pricingSettings: {
+		// Fiyatlandırma modeli: net (otel net fiyat verir) veya rack (afişe fiyat verir)
+		model: {
+			type: String,
+			enum: ['net', 'rack'],
+			default: 'net'
+		},
+		// Net model için default markup %
+		defaultMarkup: {
+			type: Number,
+			min: 0,
+			max: 100,
+			default: 20
+		},
+		// Rack model için partner komisyon %
+		defaultCommission: {
+			type: Number,
+			min: 0,
+			max: 100,
+			default: 15
+		},
+		// Para birimi
+		currency: {
+			type: String,
+			enum: ['TRY', 'USD', 'EUR', 'GBP'],
+			default: 'EUR'
+		},
+		// KDV dahil mi?
+		taxIncluded: {
+			type: Boolean,
+			default: true
+		},
+		// KDV oranı
+		taxRate: {
+			type: Number,
+			min: 0,
+			max: 100,
+			default: 10
+		}
+	},
+
 	// SEO (all multilingual)
 	seo: {
 		title: multiLangString(),
 		description: multiLangString(),
 		keywords: multiLangString()
+	},
+
+	// Profile - Rich content sections with WYSIWYG support
+	profile: {
+		// Genel Bilgiler / Overview
+		overview: {
+			content: multiLangString(), // WYSIWYG HTML content
+			establishedYear: { type: Number, min: 1800, max: 2100 },
+			renovationYear: { type: Number, min: 1900, max: 2100 },
+			chainBrand: { type: String, trim: true },
+			officialRating: { type: String, trim: true }
+		},
+
+		// Otel Olanakları / Facilities
+		facilities: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'wifi', 'freeWifi', 'parking', 'freeParking', 'valetParking',
+					'reception24h', 'concierge', 'luggageStorage', 'elevator',
+					'airConditioning', 'heating', 'laundry', 'dryCleaning',
+					'currencyExchange', 'atm', 'safe', 'giftShop', 'hairdresser',
+					'carRental', 'airportShuttle', 'disabledAccess', 'wheelchairAccessible',
+					'smokingArea', 'nonSmoking', 'garden', 'terrace'
+				]
+			}]
+		},
+
+		// Yeme İçme / Dining
+		dining: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'mainRestaurant', 'alacarteRestaurant', 'buffetRestaurant',
+					'snackBar', 'poolBar', 'beachBar', 'lobbyBar', 'nightclub',
+					'patisserie', 'iceCream', 'roomService', 'roomService24h',
+					'minibar', 'dietMenu', 'veganOptions', 'halalFood', 'kosherFood'
+				]
+			}],
+			restaurants: [{
+				name: { type: String, trim: true },
+				cuisine: { type: String, trim: true },
+				dressCode: { type: String, trim: true },
+				reservationRequired: { type: Boolean, default: false }
+			}]
+		},
+
+		// Spor & Eğlence / Sports & Entertainment
+		sportsEntertainment: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'fitness', 'aerobics', 'yoga', 'tennis', 'tableTennis',
+					'basketball', 'volleyball', 'beachVolleyball', 'football',
+					'golf', 'miniGolf', 'bowling', 'billiards', 'darts',
+					'waterSports', 'diving', 'snorkeling', 'jetski', 'parasailing',
+					'canoeing', 'surfing', 'sailing', 'fishing',
+					'animation', 'liveMusic', 'disco', 'cinema', 'gameRoom', 'casino'
+				]
+			}]
+		},
+
+		// Spa & Wellness
+		spaWellness: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'spa', 'hammam', 'sauna', 'steamRoom', 'jacuzzi',
+					'massage', 'thaiMassage', 'aromatherapy', 'beautyCenter',
+					'hairdresser', 'manicure', 'pedicure', 'skinCare',
+					'relaxationRoom', 'heatedPool', 'vitality'
+				]
+			}],
+			spaDetails: {
+				area: { type: Number, min: 0 }, // m²
+				treatments: [{ type: String, trim: true }]
+			}
+		},
+
+		// Çocuk & Bebek / Family & Kids
+		familyKids: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'kidsClub', 'miniClub', 'teenClub', 'playground',
+					'babyPool', 'kidsPool', 'waterSlides', 'aquapark',
+					'babysitting', 'babyEquipment', 'highChair', 'babyCot',
+					'kidsMenu', 'kidsAnimation', 'miniDisco'
+				]
+			}],
+			kidsClubAges: {
+				min: { type: Number, min: 0, max: 18, default: 4 },
+				max: { type: Number, min: 0, max: 18, default: 12 }
+			}
+		},
+
+		// Plaj & Havuz / Beach & Pool
+		beachPool: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'privateBeach', 'publicBeach', 'sandyBeach', 'pebbleBeach',
+					'beachPlatform', 'pier', 'sunbeds', 'beachTowels',
+					'outdoorPool', 'indoorPool', 'heatedPool', 'infinityPool',
+					'kidsPool', 'wavePool', 'waterSlides', 'aquapark', 'lazyRiver'
+				]
+			}],
+			beachDetails: {
+				distance: { type: Number, min: 0 }, // meters
+				type: { type: String, enum: ['', 'sand', 'pebble', 'platform', 'mixed'] },
+				length: { type: Number, min: 0 } // meters
+			},
+			pools: [{
+				type: { type: String, enum: ['indoor', 'outdoor', 'kids', 'wave', 'infinity'] },
+				heated: { type: Boolean, default: false },
+				dimensions: { type: String, trim: true }
+			}]
+		},
+
+		// Balayı / Honeymoon
+		honeymoon: {
+			content: multiLangString(),
+			features: [{
+				type: String,
+				enum: [
+					'romanticRoomDecoration', 'honeymoonSuite', 'champagne',
+					'fruitBasket', 'romanticDinner', 'privateDining',
+					'couplesSpa', 'sunsetCruise', 'specialTurndown'
+				]
+			}],
+			available: { type: Boolean, default: false }
+		},
+
+		// Önemli Bilgiler / Important Info
+		importantInfo: {
+			content: multiLangString()
+		},
+
+		// Konum & Çevre / Location & Surroundings
+		location: {
+			content: multiLangString(),
+			distances: [{
+				place: { type: String, trim: true },
+				distance: { type: Number, min: 0 },
+				unit: { type: String, enum: ['m', 'km', 'min'], default: 'km' }
+			}]
+		}
 	},
 
 	// Display settings
@@ -242,6 +455,11 @@ const hotelSchema = new mongoose.Schema({
 hotelSchema.index({ partner: 1, status: 1 })
 hotelSchema.index({ partner: 1, 'address.city': 1 })
 hotelSchema.index({ partner: 1, slug: 1 }, { unique: true, sparse: true })
+hotelSchema.index({ tags: 1 })
+hotelSchema.index({ 'location.countryCode': 1 })
+hotelSchema.index({ 'location.city': 1 })
+hotelSchema.index({ 'location.district': 1 })
+hotelSchema.index({ 'location.tourismRegions': 1 })
 // Not using 2dsphere index - current lat/lng format is not GeoJSON
 // hotelSchema.index({ 'address.coordinates': '2dsphere' })
 hotelSchema.index({ stars: 1 })

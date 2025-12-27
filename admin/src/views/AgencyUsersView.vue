@@ -137,7 +137,7 @@
           </div>
 
           <div>
-            <label class="form-label">{{ $t('common.status') }}</label>
+            <label class="form-label">{{ $t('common.status.label') }}</label>
             <select v-model="form.status" class="form-input">
               <option value="active">{{ $t('common.active') }}</option>
               <option value="inactive">{{ $t('common.inactive') }}</option>

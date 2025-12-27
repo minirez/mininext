@@ -96,8 +96,8 @@ const marketSchema = new mongoose.Schema({
 		max: { type: Number, min: 1, max: 17, default: null }
 	},
 	infantAgeRange: {
-		min: { type: Number, min: 0, max: 5, default: null },
-		max: { type: Number, min: 0, max: 5, default: null }
+		min: { type: Number, min: 0, max: 6, default: null },
+		max: { type: Number, min: 0, max: 6, default: null }
 	},
 
 	// Rate type - refundable or non-refundable
@@ -164,7 +164,36 @@ const marketSchema = new mongoose.Schema({
 	},
 
 	// Display order
-	displayOrder: { type: Number, default: 0 }
+	displayOrder: { type: Number, default: 0 },
+
+	// Active room types for this market (empty = all room types available)
+	activeRoomTypes: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'RoomType'
+	}],
+
+	// Active meal plans for this market (empty = all meal plans available)
+	activeMealPlans: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'MealPlan'
+	}],
+
+	// Payment methods settings
+	paymentMethods: {
+		// Credit card payment
+		creditCard: {
+			enabled: { type: Boolean, default: true }
+		},
+		// Bank transfer payment
+		bankTransfer: {
+			enabled: { type: Boolean, default: true },
+			releaseDays: { type: Number, min: 0, max: 60, default: 3 }, // Days before check-in to disable
+			discountRate: { type: Number, min: 0, max: 50, default: 0 } // Discount percentage for bank transfer
+		}
+	},
+
+	// Children allowed in this market
+	childrenAllowed: { type: Boolean, default: true }
 
 }, {
 	timestamps: true,

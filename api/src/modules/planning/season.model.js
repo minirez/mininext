@@ -38,6 +38,14 @@ const seasonSchema = new mongoose.Schema({
 		index: true
 	},
 
+	// Market reference (seasons are now market-specific)
+	market: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Market',
+		required: [true, 'REQUIRED_MARKET'],
+		index: true
+	},
+
 	// Season identification
 	name: multiLangString(true),
 
@@ -69,7 +77,65 @@ const seasonSchema = new mongoose.Schema({
 	},
 
 	// Display order
-	displayOrder: { type: Number, default: 0 }
+	displayOrder: { type: Number, default: 0 },
+
+	// Active room types override (empty = inherit from market)
+	activeRoomTypes: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'RoomType'
+	}],
+
+	// Active meal plans override (empty = inherit from market)
+	activeMealPlans: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'MealPlan'
+	}],
+
+	// Child age settings override
+	childAgeSettings: {
+		inheritFromMarket: { type: Boolean, default: true },
+		childAgeRange: {
+			min: { type: Number, min: 0, max: 17, default: null },
+			max: { type: Number, min: 1, max: 17, default: null }
+		},
+		infantAgeRange: {
+			min: { type: Number, min: 0, max: 6, default: null },
+			max: { type: Number, min: 0, max: 6, default: null }
+		}
+	},
+
+	// Payment methods settings override
+	paymentSettings: {
+		inheritFromMarket: { type: Boolean, default: true },
+		creditCard: {
+			enabled: { type: Boolean, default: true }
+		},
+		bankTransfer: {
+			enabled: { type: Boolean, default: true },
+			releaseDays: { type: Number, min: 0, max: 60, default: 3 },
+			discountRate: { type: Number, min: 0, max: 50, default: 0 }
+		}
+	},
+
+	// Children allowed override
+	childrenSettings: {
+		inheritFromMarket: { type: Boolean, default: true },
+		allowed: { type: Boolean, default: true }
+	},
+
+	// Pricing override (inherit from hotel or override)
+	pricingOverride: {
+		// true = use hotel's pricingSettings, false = use values below
+		inheritFromHotel: { type: Boolean, default: true },
+		// Override values (only used if inheritFromHotel = false)
+		model: {
+			type: String,
+			enum: ['net', 'rack'],
+			default: 'net'
+		},
+		markup: { type: Number, min: 0, max: 100, default: null },
+		commission: { type: Number, min: 0, max: 100, default: null }
+	}
 
 }, {
 	timestamps: true,
@@ -79,8 +145,9 @@ const seasonSchema = new mongoose.Schema({
 
 // Indexes
 seasonSchema.index({ partner: 1, hotel: 1 })
-seasonSchema.index({ partner: 1, hotel: 1, code: 1 }, { unique: true })
-seasonSchema.index({ partner: 1, hotel: 1, 'dateRanges.startDate': 1, 'dateRanges.endDate': 1 })
+seasonSchema.index({ partner: 1, hotel: 1, market: 1 })
+seasonSchema.index({ partner: 1, hotel: 1, market: 1, code: 1 }, { unique: true })
+seasonSchema.index({ partner: 1, hotel: 1, market: 1, 'dateRanges.startDate': 1, 'dateRanges.endDate': 1 })
 seasonSchema.index({ priority: -1 })
 seasonSchema.index({ displayOrder: 1 })
 
@@ -110,11 +177,21 @@ seasonSchema.statics.findActiveByHotel = function(hotelId) {
 	return this.find({ hotel: hotelId, status: 'active' }).sort('displayOrder')
 }
 
-// Find season for a specific date
-seasonSchema.statics.findByDate = function(hotelId, date) {
+// Find seasons by market (seasons are now market-specific)
+seasonSchema.statics.findByMarket = function(hotelId, marketId) {
+	return this.find({ hotel: hotelId, market: marketId }).sort('displayOrder')
+}
+
+seasonSchema.statics.findActiveByMarket = function(hotelId, marketId) {
+	return this.find({ hotel: hotelId, market: marketId, status: 'active' }).sort('displayOrder')
+}
+
+// Find season for a specific date (now requires marketId)
+seasonSchema.statics.findByDate = function(hotelId, marketId, date) {
 	const queryDate = new Date(date)
 	return this.findOne({
 		hotel: hotelId,
+		market: marketId,
 		status: 'active',
 		dateRanges: {
 			$elemMatch: {
@@ -125,10 +202,11 @@ seasonSchema.statics.findByDate = function(hotelId, date) {
 	}).sort({ priority: -1 }) // Higher priority wins
 }
 
-// Find all seasons that overlap with a date range
-seasonSchema.statics.findByDateRange = function(hotelId, startDate, endDate) {
+// Find all seasons that overlap with a date range (now requires marketId)
+seasonSchema.statics.findByDateRange = function(hotelId, marketId, startDate, endDate) {
 	return this.find({
 		hotel: hotelId,
+		market: marketId,
 		status: 'active',
 		dateRanges: {
 			$elemMatch: {

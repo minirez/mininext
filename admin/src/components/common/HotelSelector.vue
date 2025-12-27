@@ -130,6 +130,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import hotelService from '@/services/hotelService'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useHotelStore } from '@/stores/hotel'
 
 const props = defineProps({
   modelValue: {
@@ -141,6 +142,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 const { t } = useI18n()
+const hotelStore = useHotelStore()
 
 const isOpen = ref(false)
 const dropdownRef = ref(null)
@@ -157,15 +159,19 @@ const hasSelectedHotel = computed(() => !!selectedHotel.value)
 
 // Partner context for reactivity
 const { currentPartnerId } = usePartnerContext({
-  onPartnerChange: () => {
-    // Clear selection and reload when partner changes
-    emit('update:modelValue', null)
-    emit('change', null)
+  onPartnerChange: (partner) => {
+    // Load saved hotel for this partner (or clear if no partner)
+    hotelStore.setPartner(partner?._id || null)
+    // Emit the loaded hotel (could be null or saved hotel)
+    emit('update:modelValue', hotelStore.selectedHotel)
+    emit('change', hotelStore.selectedHotel)
     if (isOpen.value) {
       fetchHotels()
     }
-  }
+  },
+  immediate: false // Don't trigger on mount, only on actual partner change
 })
+
 
 const getImageUrl = (url) => {
   if (!url) return ''
@@ -242,6 +248,15 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+
+  // Initialize partner and load saved hotel on mount
+  if (currentPartnerId.value && !hotelStore.currentPartnerId) {
+    hotelStore.setPartner(currentPartnerId.value)
+    // Sync store to parent if there's a saved hotel
+    if (hotelStore.selectedHotel) {
+      emit('update:modelValue', hotelStore.selectedHotel)
+    }
+  }
 })
 
 onUnmounted(() => {

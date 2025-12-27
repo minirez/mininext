@@ -58,8 +58,9 @@
           {{ rate.allotment ?? 0 }}
         </div>
 
-        <!-- Restrictions Icons (NO STOP text, just CTA/CTD/MinStay) -->
+        <!-- Restrictions Icons (NO STOP text, just CTA/CTD/MinStay/SingleStop) -->
         <div v-if="hasVisibleRestrictions" class="flex gap-0.5 mt-0.5">
+          <span v-if="rate.singleStop" class="text-[6px] sm:text-[8px] text-pink-500 font-bold" title="Single Stop">1P</span>
           <span v-if="rate.closedToArrival" class="text-[6px] sm:text-[8px] text-orange-500 font-bold" title="Closed to Arrival">CTA</span>
           <span v-if="rate.closedToDeparture" class="text-[6px] sm:text-[8px] text-orange-500 font-bold" title="Closed to Departure">CTD</span>
           <span v-if="rate.minStay > 1" class="text-[6px] sm:text-[8px] text-blue-500 font-medium" :title="`Min Stay: ${rate.minStay}`">{{ rate.minStay }}+</span>
@@ -275,7 +276,7 @@ const allotmentTextColor = computed(() => {
 // Visible restrictions (excluding stopSale which is shown via red color)
 const hasVisibleRestrictions = computed(() => {
   if (!props.rate) return false
-  return props.rate.closedToArrival || props.rate.closedToDeparture || (props.rate.minStay && props.rate.minStay > 1)
+  return props.rate.singleStop || props.rate.closedToArrival || props.rate.closedToDeparture || (props.rate.minStay && props.rate.minStay > 1)
 })
 
 // Check if rate has any extra person pricing (with valid values)

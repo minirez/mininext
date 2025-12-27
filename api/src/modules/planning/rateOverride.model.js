@@ -86,6 +86,9 @@ const rateOverrideSchema = new mongoose.Schema({
 	stopSale: { type: Boolean, default: null },
 	stopSaleReason: { type: String, default: null, trim: true },
 
+	// Single stop override - if true, single occupancy (1 adult) bookings are not allowed
+	singleStop: { type: Boolean, default: null },
+
 	// Release days override
 	releaseDays: { type: Number, default: null, min: 0 },
 

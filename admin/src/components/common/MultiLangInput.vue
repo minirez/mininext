@@ -1,53 +1,61 @@
 <template>
-  <div class="space-y-3">
+  <div>
     <!-- Header with label and translate button -->
-    <div class="flex items-center justify-between">
-      <label v-if="label" class="form-label mb-0">{{ label }}</label>
+    <div class="flex items-center justify-between mb-2">
+      <label v-if="label" class="block text-sm font-medium text-gray-700 dark:text-slate-300">{{ label }}</label>
       <button
         v-if="showTranslate && languages.length > 1"
         type="button"
         @click="handleTranslate"
-        :disabled="translating"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium shadow-sm"
-        :title="$t('siteSettings.general.translateTooltip')"
+        :disabled="translating || !modelValue[selectedLang]"
+        class="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 flex items-center gap-1 disabled:opacity-50"
       >
-        <span v-if="translating" class="material-icons text-xs animate-spin">sync</span>
-        <span v-else class="material-icons text-xs">translate</span>
-        <span>{{ translating ? $t('siteSettings.general.translating') : $t('siteSettings.general.translateAll') }}</span>
-        <span class="material-icons text-[10px]">auto_awesome</span>
+        <span v-if="translating" class="material-icons text-sm animate-spin">sync</span>
+        <span v-else class="material-icons text-sm">translate</span>
+        {{ translating ? $t('common.translating') : $t('common.translateAll') }}
       </button>
     </div>
 
     <!-- Language tabs -->
-    <div class="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <div class="flex bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700 overflow-x-auto">
+    <div class="border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden">
+      <div class="flex border-b border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 overflow-x-auto">
         <button
-          v-for="lang in languages"
+          v-for="lang in visibleLanguages"
           :key="lang"
           type="button"
           @click="selectedLang = lang"
-          class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 -mb-px"
-          :class="selectedLang === lang
-            ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-white dark:bg-slate-800'
-            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300'"
-          :title="`${getLanguageFlag(lang)} ${getLanguageName(lang)}`"
+          :title="getLanguageName(lang)"
+          class="relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors"
+          :class="[
+            selectedLang === lang
+              ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-b-2 border-purple-600'
+              : modelValue[lang] && modelValue[lang].trim()
+                ? 'text-green-600 dark:text-green-400 font-semibold'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200'
+          ]"
         >
-          <span class="uppercase">{{ lang }}</span>
-          <span
-            v-if="modelValue[lang] && modelValue[lang].trim()"
-            class="w-2 h-2 bg-green-500 rounded-full"
-          ></span>
+          <span v-if="modelValue[lang] && modelValue[lang].trim() && selectedLang !== lang"
+                class="absolute top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full"></span>
+          {{ lang.toUpperCase() }}
+        </button>
+        <button
+          v-if="!showAllLanguages && languages.length > 5"
+          type="button"
+          @click="showAllLanguages = true"
+          class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 dark:text-slate-500"
+        >
+          +{{ languages.length - 5 }}
         </button>
       </div>
 
       <!-- Input area -->
-      <div class="p-3 bg-white dark:bg-slate-800">
+      <div class="p-3">
         <template v-if="type === 'textarea'">
           <textarea
             :value="modelValue[selectedLang] || ''"
             @input="updateValue($event.target.value)"
             :rows="rows"
-            :placeholder="placeholder"
+            :placeholder="placeholder || `${label} (${selectedLang.toUpperCase()})`"
             :maxlength="maxlength"
             class="form-input w-full"
           ></textarea>
@@ -57,7 +65,7 @@
             :type="type"
             :value="modelValue[selectedLang] || ''"
             @input="updateValue($event.target.value)"
-            :placeholder="placeholder"
+            :placeholder="placeholder || `${label} (${selectedLang.toUpperCase()})`"
             :maxlength="maxlength"
             class="form-input w-full"
           />
@@ -69,7 +77,7 @@
     </div>
 
     <!-- Helper text -->
-    <p v-if="help" class="text-xs text-gray-500 dark:text-slate-400">{{ help }}</p>
+    <p v-if="help" class="mt-1 text-xs text-gray-500 dark:text-slate-400">{{ help }}</p>
   </div>
 </template>
 
@@ -125,14 +133,39 @@ const { t } = useI18n()
 
 const selectedLang = ref(props.languages[0] || 'tr')
 const translating = ref(false)
+const showAllLanguages = ref(false)
+
+// Preferred language order (TR, EN, DE, RU, ES first)
+const preferredOrder = ['tr', 'en', 'de', 'ru', 'es']
+
+// Sort languages: preferred ones first, then rest alphabetically
+const sortedLanguages = computed(() => {
+  const sorted = [...props.languages].sort((a, b) => {
+    const aIndex = preferredOrder.indexOf(a)
+    const bIndex = preferredOrder.indexOf(b)
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+    if (aIndex !== -1) return -1
+    if (bIndex !== -1) return 1
+    return a.localeCompare(b)
+  })
+  return sorted
+})
+
+// Show first 5 languages or all if expanded
+const visibleLanguages = computed(() => {
+  if (showAllLanguages.value || sortedLanguages.value.length <= 5) {
+    return sortedLanguages.value
+  }
+  return sortedLanguages.value.slice(0, 5)
+})
 
 const availableLanguages = [
   { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'ro', name: 'Română', flag: '🇷🇴' },
@@ -150,6 +183,13 @@ const availableLanguages = [
 ]
 
 const getLanguageName = (code) => {
+  // Use translated language name from locale
+  const translatedName = t(`common.languages.${code}`)
+  // If translation exists and is different from the key, use it
+  if (translatedName && !translatedName.includes('common.languages.')) {
+    return translatedName
+  }
+  // Fallback to native name
   return availableLanguages.find(l => l.code === code)?.name || code.toUpperCase()
 }
 

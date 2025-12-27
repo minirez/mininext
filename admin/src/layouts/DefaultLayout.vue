@@ -71,12 +71,14 @@
 <script setup>
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import { useUIStore } from '@/stores/ui'
 
 const route = useRoute()
 const uiStore = useUIStore()
+const { t } = useI18n()
 
 // Initialize UI store on mount
 onMounted(() => {
@@ -101,24 +103,82 @@ const handleNavigate = () => {
   }
 }
 
-// Route metadata for page titles and descriptions
-const routeMeta = {
-  dashboard: {
-    title: 'Dashboard',
-    description: 'Overview and statistics'
-  },
-  partners: {
-    title: 'Partners',
-    description: 'Manage partner accounts'
-  },
-  profile: {
-    title: 'Profile',
-    description: 'Your account settings'
+// Base titles by route name
+const getBaseTitle = (routeName) => {
+  if (route.meta?.titleKey) {
+    return t(route.meta.titleKey)
   }
+  const titles = {
+    dashboard: t('dashboard.title'),
+    partners: t('partners.title'),
+    profile: t('user.profile'),
+    planning: t('planning.title'),
+    agencies: t('agencies.title'),
+    settings: t('settings.title'),
+    hotels: t('hotels.title'),
+    'hotel-detail': t('hotels.title'),
+    'hotel-new': t('hotels.title'),
+    'room-type-detail': t('planning.title'),
+    'room-type-new': t('planning.title'),
+    'market-detail': t('planning.title'),
+    'market-new': t('planning.title'),
+    'region-management': t('locations.title'),
+    'site-settings': t('siteSettings.title')
+  }
+  return titles[routeName] || 'Booking Engine'
 }
 
-const pageTitle = computed(() => routeMeta[route.name]?.title || 'Booking Engine')
-const pageDescription = computed(() => routeMeta[route.name]?.description || '')
+const getBaseDescription = (routeName) => {
+  if (route.meta?.descriptionKey) {
+    return t(route.meta.descriptionKey)
+  }
+  const descriptions = {
+    dashboard: t('dashboard.description'),
+    partners: t('partners.description'),
+    planning: t('planning.description'),
+    agencies: t('agencies.description'),
+    settings: t('settings.description'),
+    hotels: t('hotels.description'),
+    'region-management': t('locations.description'),
+    'site-settings': t('siteSettings.description')
+  }
+  return descriptions[routeName] || ''
+}
+
+// Page title - uses custom title from store if set, otherwise base title
+const pageTitle = computed(() => {
+  // If view set a custom title, use it
+  if (uiStore.customPageTitle) {
+    return uiStore.customPageTitle
+  }
+
+  const baseTitle = getBaseTitle(route.name)
+
+  // If there's a suffix (e.g., hotel name), append it
+  if (uiStore.pageTitleSuffix) {
+    return `${baseTitle} - ${uiStore.pageTitleSuffix}`
+  }
+
+  return baseTitle
+})
+
+const pageDescription = computed(() => {
+  // If view set a custom description, use it
+  if (uiStore.customPageDescription) {
+    return uiStore.customPageDescription
+  }
+  return getBaseDescription(route.name)
+})
+
+// Update browser title
+watch(pageTitle, (newTitle) => {
+  document.title = newTitle ? `${newTitle} | Booking Engine` : 'Booking Engine'
+}, { immediate: true })
+
+// Clear custom title on route change
+watch(() => route.name, () => {
+  uiStore.clearPageTitle()
+})
 </script>
 
 <style>

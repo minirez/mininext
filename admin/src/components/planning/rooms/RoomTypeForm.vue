@@ -94,16 +94,14 @@
         </div>
       </div>
 
-      <div>
-        <label class="form-label">{{ $t('planning.roomTypes.name') }} ({{ currentLang.toUpperCase() }}) <span class="text-red-500">*</span></label>
-        <input
-          v-model="form.name[currentLang]"
-          type="text"
-          class="form-input"
-          :placeholder="$t('planning.roomTypes.namePlaceholder')"
-        />
-      </div>
     </div>
+
+    <!-- Name (Multilingual) -->
+    <MultiLangInput
+      v-model="form.name"
+      :languages="SUPPORTED_LANGUAGES"
+      :label="$t('planning.roomTypes.name') + ' *'"
+    />
 
     <!-- Occupancy -->
     <div>
@@ -183,6 +181,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import planningService from '@/services/planningService'
 import { ROOM_CODE_DEFINITIONS, searchRoomCodes, getRoomCodeDefinition } from '@/data/roomCodeDefinitions'
+import MultiLangInput from '@/components/common/MultiLangInput.vue'
 
 const props = defineProps({
   hotel: { type: Object, required: true },
@@ -351,7 +350,8 @@ const availableAmenities = [
 ]
 
 const handleSave = async () => {
-  if (!form.code || !form.name[currentLang.value]) {
+  const hasName = SUPPORTED_LANGUAGES.some(l => form.name[l]?.trim())
+  if (!form.code || !hasName) {
     toast.error(t('validation.required'))
     return
   }

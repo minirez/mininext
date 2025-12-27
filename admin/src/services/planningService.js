@@ -177,9 +177,10 @@ const updateMealPlan = async (hotelId, id, data) => {
 	}
 }
 
-const deleteMealPlan = async (hotelId, id) => {
+const deleteMealPlan = async (hotelId, id, deleteRates = true) => {
 	try {
-		const response = await apiClient.delete(`${BASE_URL}/hotels/${hotelId}/meal-plans/${id}`)
+		const params = deleteRates ? { deleteRates: 'true' } : {}
+		const response = await apiClient.delete(`${BASE_URL}/hotels/${hotelId}/meal-plans/${id}`, { params })
 		return response.data
 	} catch (error) {
 		console.error('Planning Service: Delete meal plan failed', error.response?.data || error.message)
@@ -320,9 +321,11 @@ const getAssignedCountries = async (hotelId, excludeMarketId = null) => {
 
 // ==================== SEASONS ====================
 
-const getSeasons = async (hotelId) => {
+const getSeasons = async (hotelId, marketId) => {
 	try {
-		const response = await apiClient.get(`${BASE_URL}/hotels/${hotelId}/seasons`)
+		const response = await apiClient.get(`${BASE_URL}/hotels/${hotelId}/seasons`, {
+			params: { market: marketId }
+		})
 		return response.data
 	} catch (error) {
 		console.error('Planning Service: Get seasons failed', error.response?.data || error.message)
@@ -576,9 +579,13 @@ const updateCampaignStatus = async (hotelId, id, status) => {
 
 // ==================== AI PRICING ASSISTANT ====================
 
-const parseAIPricingCommand = async (hotelId, command, currentMonth = null) => {
+const parseAIPricingCommand = async (hotelId, command, currentMonth = null, selectionContext = null) => {
 	try {
-		const response = await apiClient.post(`${BASE_URL}/hotels/${hotelId}/ai/parse-command`, { command, currentMonth })
+		const response = await apiClient.post(`${BASE_URL}/hotels/${hotelId}/ai/parse-command`, {
+			command,
+			currentMonth,
+			selectionContext
+		})
 		return response.data
 	} catch (error) {
 		console.error('Planning Service: Parse AI command failed', error.response?.data || error.message)
@@ -596,7 +603,22 @@ const executeAIPricingCommand = async (hotelId, parsedCommand) => {
 	}
 }
 
+// ==================== HOTEL ====================
+
+const getHotel = async (hotelId) => {
+	try {
+		const response = await apiClient.get(`/hotels/${hotelId}`)
+		return response.data
+	} catch (error) {
+		console.error('Planning Service: Get hotel failed', error.response?.data || error.message)
+		throw error
+	}
+}
+
 export default {
+	// Hotel
+	getHotel,
+
 	// Room Types
 	getRoomTypes,
 	getRoomType,

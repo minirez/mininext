@@ -37,3 +37,22 @@ app.use(Toast, {
 })
 
 app.mount('#app')
+
+// Twemoji parsing for Windows flag emoji support
+const parseEmojis = () => {
+  if (window.twemoji) {
+    window.twemoji.parse(document.body, {
+      folder: 'svg',
+      ext: '.svg',
+      className: 'twemoji'
+    })
+  }
+}
+
+// Parse emojis after initial render and on route changes
+router.afterEach(() => {
+  setTimeout(parseEmojis, 100)
+})
+
+// Initial parse
+setTimeout(parseEmojis, 500)

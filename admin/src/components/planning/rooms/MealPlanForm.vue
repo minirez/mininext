@@ -1,27 +1,23 @@
 <template>
   <div class="space-y-6">
-    <!-- Code & Name -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="form-label">{{ $t('planning.mealPlans.code') }} <span class="text-red-500">*</span></label>
-        <input
-          v-model="form.code"
-          type="text"
-          class="form-input uppercase"
-          :placeholder="$t('planning.mealPlans.codePlaceholder')"
-          maxlength="10"
-        />
-      </div>
-      <div>
-        <label class="form-label">{{ $t('planning.mealPlans.name') }} ({{ currentLang.toUpperCase() }}) <span class="text-red-500">*</span></label>
-        <input
-          v-model="form.name[currentLang]"
-          type="text"
-          class="form-input"
-          :placeholder="$t('planning.mealPlans.namePlaceholder')"
-        />
-      </div>
+    <!-- Code -->
+    <div>
+      <label class="form-label">{{ $t('planning.mealPlans.code') }} <span class="text-red-500">*</span></label>
+      <input
+        v-model="form.code"
+        type="text"
+        class="form-input uppercase"
+        :placeholder="$t('planning.mealPlans.codePlaceholder')"
+        maxlength="10"
+      />
     </div>
+
+    <!-- Name (Multilingual) -->
+    <MultiLangInput
+      v-model="form.name"
+      :languages="SUPPORTED_LANGUAGES"
+      :label="$t('planning.mealPlans.name') + ' *'"
+    />
 
     <!-- Included Meals -->
     <div>
@@ -76,10 +72,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import planningService from '@/services/planningService'
+import MultiLangInput from '@/components/common/MultiLangInput.vue'
 
 const props = defineProps({
   hotel: { type: Object, required: true }
@@ -87,10 +84,8 @@ const props = defineProps({
 
 const emit = defineEmits(['saved', 'cancel'])
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const toast = useToast()
-
-const currentLang = computed(() => locale.value)
 const saving = ref(false)
 
 const SUPPORTED_LANGUAGES = ['tr', 'en', 'ru', 'el', 'de', 'es', 'it', 'fr', 'ro', 'bg', 'pt', 'da', 'zh', 'ar', 'fa', 'he', 'sq', 'uk', 'pl', 'az']
@@ -118,7 +113,8 @@ const form = reactive({
 })
 
 const handleSave = async () => {
-  if (!form.code || !form.name[currentLang.value]) {
+  const hasName = SUPPORTED_LANGUAGES.some(l => form.name[l]?.trim())
+  if (!form.code || !hasName) {
     toast.error(t('validation.required'))
     return
   }

@@ -3,7 +3,7 @@ import MealPlan from './mealPlan.model.js'
 import Market from './market.model.js'
 import Season from './season.model.js'
 import Rate from './rate.model.js'
-import RateOverride from './rateOverride.model.js'
+// RateOverride removed - now using daily Rate model directly
 import Campaign from './campaign.model.js'
 import Hotel from '../hotel/hotel.model.js'
 import { NotFoundError, BadRequestError, ForbiddenError } from '../../core/errors.js'
@@ -421,13 +421,23 @@ export const updateMealPlan = asyncHandler(async (req, res) => {
 export const deleteMealPlan = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 	const { hotelId, id } = req.params
+	const { deleteRates } = req.query // ?deleteRates=true to also delete rates
 
 	if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
 	await verifyHotelOwnership(hotelId, partnerId)
 
 	// Check if meal plan has rates
 	const rateCount = await Rate.countDocuments({ mealPlan: id })
-	if (rateCount > 0) throw new BadRequestError('MEAL_PLAN_HAS_RATES')
+
+	if (rateCount > 0) {
+		if (deleteRates === 'true') {
+			// Delete all rates for this meal plan
+			const deleteResult = await Rate.deleteMany({ mealPlan: id, hotel: hotelId, partner: partnerId })
+			logger.info(`Deleted ${deleteResult.deletedCount} rates for meal plan ${id}`)
+		} else {
+			throw new BadRequestError('MEAL_PLAN_HAS_RATES')
+		}
+	}
 
 	// Only delete hotel-specific plans (hotel must match)
 	const mealPlan = await MealPlan.findOneAndDelete({ _id: id, hotel: hotelId, partner: partnerId })
@@ -435,7 +445,8 @@ export const deleteMealPlan = asyncHandler(async (req, res) => {
 
 	res.json({
 		success: true,
-		message: req.t('MEAL_PLAN_DELETED')
+		message: req.t('MEAL_PLAN_DELETED'),
+		data: { deletedRates: rateCount }
 	})
 })
 
@@ -680,11 +691,23 @@ export const getAssignedCountries = asyncHandler(async (req, res) => {
 export const getSeasons = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 	const { hotelId } = req.params
+	const { market: marketId } = req.query
 
 	if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
 	await verifyHotelOwnership(hotelId, partnerId)
 
-	const seasons = await Season.findByHotel(hotelId)
+	// Market is now required for seasons
+	if (!marketId) {
+		throw new BadRequestError('MARKET_REQUIRED')
+	}
+
+	// Verify market belongs to this hotel
+	const market = await Market.findOne({ _id: marketId, hotel: hotelId, partner: partnerId })
+	if (!market) {
+		throw new NotFoundError('MARKET_NOT_FOUND')
+	}
+
+	const seasons = await Season.findByMarket(hotelId, marketId)
 
 	res.json({ success: true, data: seasons })
 })
@@ -705,17 +728,30 @@ export const getSeason = asyncHandler(async (req, res) => {
 export const createSeason = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 	const { hotelId } = req.params
+	const { market: marketId } = req.body
 
 	if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
 	await verifyHotelOwnership(hotelId, partnerId)
 
+	// Market is required for seasons
+	if (!marketId) {
+		throw new BadRequestError('MARKET_REQUIRED')
+	}
+
+	// Verify market belongs to this hotel
+	const market = await Market.findOne({ _id: marketId, hotel: hotelId, partner: partnerId })
+	if (!market) {
+		throw new NotFoundError('MARKET_NOT_FOUND')
+	}
+
 	const season = await Season.create({
 		...req.body,
 		partner: partnerId,
-		hotel: hotelId
+		hotel: hotelId,
+		market: marketId
 	})
 
-	logger.info(`Season created: ${season.code} for hotel ${hotelId}`)
+	logger.info(`Season created: ${season.code} for hotel ${hotelId}, market ${market.code}`)
 
 	res.status(201).json({
 		success: true,
@@ -800,28 +836,23 @@ export const getRatesCalendar = asyncHandler(async (req, res) => {
 		throw new BadRequestError('DATE_RANGE_REQUIRED')
 	}
 
-	// Fetch both rates (period-based) and overrides (daily exceptions)
-	const [rates, overrides] = await Promise.all([
-		Rate.getCalendarView(hotelId, startDate, endDate, {
-			roomType, mealPlan, market
-		}),
-		RateOverride.findInRange(hotelId, startDate, endDate, {
-			roomType, mealPlan, market
-		})
-	])
+	// Fetch daily rates directly (no more separate overrides table)
+	const rates = await Rate.findInRange(hotelId, startDate, endDate, {
+		roomType, mealPlan, market
+	})
 
 	res.json({
 		success: true,
 		data: {
 			rates,
-			overrides
+			overrides: [] // Empty for backward compatibility - no longer used
 		}
 	})
 })
 
 /**
  * Get price list with periods
- * Returns range-based rates as periods for period view
+ * Groups consecutive days with same values into periods for display
  */
 export const getRatesPriceList = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
@@ -836,65 +867,47 @@ export const getRatesPriceList = asyncHandler(async (req, res) => {
 	if (!roomType) throw new BadRequestError('ROOM_TYPE_REQUIRED')
 	if (!market) throw new BadRequestError('MARKET_REQUIRED')
 
-	// Build filter
-	const filter = {
-		hotel: hotelId,
-		partner: partnerId,
+	// Use getPeriodsView to get dynamically grouped periods
+	const periods = await Rate.getPeriodsView(hotelId, {
 		roomType,
-		market
-	}
-	if (mealPlan) filter.mealPlan = mealPlan
-
-	// Get all rates sorted by mealPlan and date
-	const rates = await Rate.find(filter)
-		.populate('mealPlan', 'name code status')
-		.sort({ mealPlan: 1, startDate: 1 })
-		.lean()
-
-	// Group by meal plan
-	const mealPlanGroups = {}
-	rates.forEach(rate => {
-		if (!rate.mealPlan) return
-		const mpId = rate.mealPlan._id.toString()
-		if (!mealPlanGroups[mpId]) {
-			mealPlanGroups[mpId] = {
-				mealPlan: rate.mealPlan,
-				rates: []
-			}
-		}
-		mealPlanGroups[mpId].rates.push(rate)
+		market,
+		mealPlan
 	})
 
-	// For each meal plan, return rates as periods (range rates are already periods)
-	const result = []
-
-	Object.values(mealPlanGroups).forEach(group => {
-		const periods = group.rates.map(rate => ({
-			startDate: rate.startDate,
-			endDate: rate.endDate,
-			pricePerNight: rate.pricePerNight,
-			currency: rate.currency,
-			minStay: rate.minStay,
-			maxStay: rate.maxStay,
-			releaseDays: rate.releaseDays,
-			allotment: rate.allotment,
-			stopSale: rate.stopSale,
-			closedToArrival: rate.closedToArrival,
-			closedToDeparture: rate.closedToDeparture,
-			extraAdult: rate.extraAdult,
-			extraChild: rate.extraChild,
-			extraInfant: rate.extraInfant,
-			singleSupplement: rate.singleSupplement,
-			childOrderPricing: rate.childOrderPricing
-		}))
-
-		result.push({
-			mealPlan: group.mealPlan,
-			periods
+	// Group by meal plan for the response format
+	const mealPlanGroups = {}
+	periods.forEach(period => {
+		if (!period.mealPlan) return
+		const mpId = period.mealPlan._id.toString()
+		if (!mealPlanGroups[mpId]) {
+			mealPlanGroups[mpId] = {
+				mealPlan: period.mealPlan,
+				periods: []
+			}
+		}
+		mealPlanGroups[mpId].periods.push({
+			_id: period._id,
+			startDate: period.startDate,
+			endDate: period.endDate,
+			pricePerNight: period.pricePerNight,
+			currency: period.currency,
+			minStay: period.minStay,
+			maxStay: period.maxStay,
+			releaseDays: period.releaseDays,
+			allotment: period.allotment,
+			stopSale: period.stopSale,
+			singleStop: period.singleStop,
+			closedToArrival: period.closedToArrival,
+			closedToDeparture: period.closedToDeparture,
+			extraAdult: period.extraAdult,
+			extraChild: period.extraChild,
+			extraInfant: period.extraInfant,
+			singleSupplement: period.singleSupplement,
+			childOrderPricing: period.childOrderPricing
 		})
 	})
 
-	res.json({ success: true, data: result })
+	res.json({ success: true, data: Object.values(mealPlanGroups) })
 })
 
 export const getRate = asyncHandler(async (req, res) => {
@@ -922,19 +935,43 @@ export const createRate = asyncHandler(async (req, res) => {
 	if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
 	await verifyHotelOwnership(hotelId, partnerId)
 
-	const rate = await Rate.create({
-		...req.body,
-		partner: partnerId,
-		hotel: hotelId
-	})
+	const { startDate, endDate, ...rateData } = req.body
 
-	logger.info(`Rate created for hotel ${hotelId}`)
+	// Daily rate model: if startDate/endDate provided, create rate for each day
+	if (startDate && endDate) {
+		const baseData = {
+			...rateData,
+			partner: partnerId,
+			hotel: hotelId
+		}
 
-	res.status(201).json({
-		success: true,
-		message: req.t('RATE_CREATED'),
-		data: rate
-	})
+		const result = await Rate.createForDateRange(baseData, startDate, endDate)
+
+		logger.info(`${result.upsertedCount || 0} daily rates created for hotel ${hotelId}`)
+
+		res.status(201).json({
+			success: true,
+			message: req.t('RATE_CREATED'),
+			data: { created: result.upsertedCount || 0, modified: result.modifiedCount || 0 }
+		})
+	} else if (req.body.date) {
+		// Single date rate
+		const rate = await Rate.create({
+			...req.body,
+			partner: partnerId,
+			hotel: hotelId
+		})
+
+		logger.info(`Rate created for hotel ${hotelId}`)
+
+		res.status(201).json({
+			success: true,
+			message: req.t('RATE_CREATED'),
+			data: rate
+		})
+	} else {
+		throw new BadRequestError('REQUIRED_DATE_OR_RANGE')
+	}
 })
 
 export const updateRate = asyncHandler(async (req, res) => {
@@ -1129,7 +1166,7 @@ export const updateAllotment = asyncHandler(async (req, res) => {
 	})
 })
 
-// Bulk update by specific dates (handles rate splitting)
+// Bulk update by specific dates (daily rate model - simple upsert)
 export const bulkUpdateByDates = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 	const { hotelId } = req.params
@@ -1151,7 +1188,7 @@ export const bulkUpdateByDates = asyncHandler(async (req, res) => {
 	}
 
 	// Allowed fields for update
-	const allowedFields = ['pricePerNight', 'allotment', 'minStay', 'maxStay', 'stopSale', 'closedToArrival', 'closedToDeparture', 'extraAdult', 'extraChild', 'extraInfant', 'childOrderPricing', 'releaseDays', 'singleSupplement']
+	const allowedFields = ['pricePerNight', 'allotment', 'minStay', 'maxStay', 'stopSale', 'singleStop', 'closedToArrival', 'closedToDeparture', 'extraAdult', 'extraChild', 'extraInfant', 'childOrderPricing', 'releaseDays', 'singleSupplement']
 	const sanitizedUpdate = {}
 	for (const field of allowedFields) {
 		if (updateFields[field] !== undefined) {
@@ -1159,140 +1196,44 @@ export const bulkUpdateByDates = asyncHandler(async (req, res) => {
 		}
 	}
 
-	let created = 0
-	let updated = 0
-	let split = 0
-
-	// Group cells by roomType + mealPlan for efficiency
-	const cellsByKey = {}
+	// Build bulk upsert operations for daily rates
+	const ratesToUpsert = []
 	for (const cell of cells) {
-		const key = `${cell.roomTypeId}_${cell.mealPlanId}`
-		if (!cellsByKey[key]) {
-			cellsByKey[key] = {
-				roomTypeId: cell.roomTypeId,
-				mealPlanId: cell.mealPlanId,
-				dates: []
-			}
-		}
-		cellsByKey[key].dates.push(cell.date)
+		// Parse date string and create UTC date at midnight
+		const [year, month, day] = cell.date.split('-').map(Number)
+		const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
+
+		ratesToUpsert.push({
+			partner: partnerId,
+			hotel: hotelId,
+			roomType: cell.roomTypeId,
+			mealPlan: cell.mealPlanId,
+			market: marketId,
+			date: targetDate,
+			currency: currency,
+			pricePerNight: sanitizedUpdate.pricePerNight ?? 0,
+			allotment: sanitizedUpdate.allotment ?? 10,
+			minStay: sanitizedUpdate.minStay ?? 1,
+			maxStay: sanitizedUpdate.maxStay ?? 30,
+			status: 'active',
+			source: 'bulk',
+			...sanitizedUpdate
+		})
 	}
 
-	// Process each roomType + mealPlan group
-	for (const key of Object.keys(cellsByKey)) {
-		const { roomTypeId, mealPlanId, dates } = cellsByKey[key]
-		const sortedDates = [...new Set(dates)].sort()
-		console.log(`\n=== Processing ${sortedDates.length} dates for RT:${roomTypeId.slice(-6)} MP:${mealPlanId.slice(-6)} ===`)
-		console.log(`First 3 dates: ${sortedDates.slice(0, 3).join(', ')}, Last 3: ${sortedDates.slice(-3).join(', ')}`)
+	// Execute bulk upsert
+	const bulkResult = await Rate.bulkUpsert(ratesToUpsert)
 
-		for (const dateStr of sortedDates) {
-			// Parse date string and create UTC date at midnight
-			const [year, month, day] = dateStr.split('-').map(Number)
-			const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
-
-			// Find rate that covers this specific date
-			const existingRate = await Rate.findOne({
-				hotel: hotelId,
-				partner: partnerId,
-				roomType: roomTypeId,
-				mealPlan: mealPlanId,
-				market: marketId,
-				startDate: { $lte: targetDate },
-				endDate: { $gte: targetDate }
-			})
-
-			if (!existingRate) {
-				console.log(`    [${dateStr}] No existing rate found`)
-				// No rate exists - create new single-day rate if we have price
-				if (sanitizedUpdate.pricePerNight !== undefined || sanitizedUpdate.stopSale !== undefined) {
-					console.log(`    [${dateStr}] CREATING new rate with price: ${sanitizedUpdate.pricePerNight}`)
-					await Rate.create({
-						partner: partnerId,
-						hotel: hotelId,
-						roomType: roomTypeId,
-						mealPlan: mealPlanId,
-						market: marketId,
-						currency: currency,
-						startDate: targetDate,
-						endDate: targetDate,
-						pricePerNight: sanitizedUpdate.pricePerNight || 0,
-						allotment: sanitizedUpdate.allotment ?? 10,
-						minStay: sanitizedUpdate.minStay ?? 1,
-						...sanitizedUpdate
-					})
-					created++
-				}
-				continue
-			}
-
-			// Get UTC midnight for rate dates
-			const rateStart = new Date(existingRate.startDate)
-			const rateEnd = new Date(existingRate.endDate)
-			// Normalize to UTC midnight
-			rateStart.setUTCHours(0, 0, 0, 0)
-			rateEnd.setUTCHours(0, 0, 0, 0)
-			console.log(`    [${dateStr}] Found existing rate: ${rateStart.toISOString().slice(0, 10)} to ${rateEnd.toISOString().slice(0, 10)}`)
-
-			// Check if rate is exactly this date
-			const isExactDate = rateStart.getTime() === targetDate.getTime() && rateEnd.getTime() === targetDate.getTime()
-
-			if (isExactDate) {
-				// Rate is exactly this date - just update it
-				console.log(`    [${dateStr}] UPDATING exact date rate`)
-				await Rate.findByIdAndUpdate(existingRate._id, { $set: sanitizedUpdate })
-				updated++
-			} else {
-				// Rate covers multiple days - need to split
-				console.log(`    [${dateStr}] SPLITTING multi-day rate`)
-				const originalData = existingRate.toObject()
-				delete originalData._id
-				delete originalData.__v
-				delete originalData.createdAt
-				delete originalData.updatedAt
-
-				// Calculate day before and day after (UTC)
-				const dayBefore = new Date(targetDate.getTime() - 24 * 60 * 60 * 1000)
-				const dayAfter = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000)
-
-				// Delete original rate
-				await Rate.findByIdAndDelete(existingRate._id)
-
-				// Create rate for days before (if any)
-				if (rateStart.getTime() < targetDate.getTime()) {
-					await Rate.create({
-						...originalData,
-						startDate: rateStart,
-						endDate: dayBefore
-					})
-				}
-
-				// Create rate for the target date with updates
-				await Rate.create({
-					...originalData,
-					startDate: targetDate,
-					endDate: targetDate,
-					...sanitizedUpdate
-				})
-
-				// Create rate for days after (if any)
-				if (rateEnd.getTime() > targetDate.getTime()) {
-					await Rate.create({
-						...originalData,
-						startDate: dayAfter,
-						endDate: rateEnd
-					})
-				}
-
-				split++
-			}
-		}
-	}
-
-	console.log(`=== Bulk update summary: created=${created}, updated=${updated}, split=${split} ===`)
+	logger.info(`Bulk update: ${bulkResult.upsertedCount} created, ${bulkResult.modifiedCount} updated`)
 
 	res.json({
 		success: true,
 		message: req.t('RATES_UPDATED'),
-		data: { created, updated, split }
+		data: {
+			created: bulkResult.upsertedCount || 0,
+			updated: bulkResult.modifiedCount || 0,
+			total: ratesToUpsert.length
+		}
 	})
 })
 
@@ -1429,7 +1370,7 @@ export const updateCampaignStatus = asyncHandler(async (req, res) => {
 export const parseAIPricingCommand = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 	const { hotelId } = req.params
-	const { command, currentMonth } = req.body
+	const { command, currentMonth, selectionContext } = req.body
 
 	if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
 	if (!command) throw new BadRequestError('COMMAND_REQUIRED')
@@ -1439,6 +1380,9 @@ export const parseAIPricingCommand = asyncHandler(async (req, res) => {
 	// Get context data for AI
 	logger.info(`AI Query params - hotelId: ${hotelId}, partnerId: ${partnerId}`)
 	logger.info(`AI currentMonth received: ${JSON.stringify(currentMonth)}`)
+	if (selectionContext) {
+		logger.info(`AI selectionContext received: ${JSON.stringify(selectionContext)}`)
+	}
 
 	const [roomTypes, mealPlans, markets, seasons] = await Promise.all([
 		RoomType.find({ hotel: hotelId, partner: partnerId }).select('code name status').lean(),
@@ -1465,7 +1409,8 @@ export const parseAIPricingCommand = asyncHandler(async (req, res) => {
 			name: s.name?.tr || s.name?.en || s.code,
 			dateRanges: s.dateRanges
 		})),
-		currentMonth: currentMonth || null
+		currentMonth: currentMonth || null,
+		selectionContext: selectionContext || null
 	}
 
 	const result = await parsePricingCommand(command, context)
@@ -1475,8 +1420,10 @@ export const parseAIPricingCommand = asyncHandler(async (req, res) => {
 		const filter = {
 			hotel: hotelId,
 			partner: partnerId,
-			startDate: { $lte: new Date(result.dateRange.endDate) },
-			endDate: { $gte: new Date(result.dateRange.startDate) }
+			date: {
+				$gte: new Date(result.dateRange.startDate),
+				$lte: new Date(result.dateRange.endDate)
+			}
 		}
 
 		// Apply room type filter
@@ -1491,7 +1438,7 @@ export const parseAIPricingCommand = asyncHandler(async (req, res) => {
 		// Apply meal plan filter
 		if (result.filters?.mealPlans !== 'all' && Array.isArray(result.filters?.mealPlans)) {
 			const mpIds = await MealPlan.find({
-				hotel: hotelId,
+				$or: [{ hotel: hotelId }, { hotel: null, isStandard: true }],
 				code: { $in: result.filters.mealPlans }
 			}).select('_id')
 			filter.mealPlan = { $in: mpIds.map(m => m._id) }
@@ -1525,7 +1472,13 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
 	await verifyHotelOwnership(hotelId, partnerId)
 
-	const { dateRange } = parsedCommand
+	const { dateRange, rateIds, selectedCells } = parsedCommand
+
+	// If rateIds are provided (from selected cells), use direct ID-based update
+	const useDirectIds = Array.isArray(rateIds) && rateIds.length > 0
+
+	logger.info(`AI Execute: useDirectIds=${useDirectIds}, rateIds=${rateIds?.length || 0}, selectedCells=${selectedCells?.length || 0}`)
+
 	// Support both old format (single action) and new format (actions array)
 	const actions = parsedCommand.actions || [{
 		action: parsedCommand.action,
@@ -1581,12 +1534,10 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 	for (const act of actions) {
 		const { action, filters, value, valueType, reason, childIndex } = act
 
-		// Build filter for rates
+		// Build filter for rates (using single 'date' field, not startDate/endDate!)
 		const rateFilter = {
 			hotel: hotelId,
-			partner: partnerId,
-			startDate: { $lte: new Date(dateRange.endDate) },
-			endDate: { $gte: new Date(dateRange.startDate) }
+			partner: partnerId
 		}
 
 		// Apply room type filter
@@ -1619,68 +1570,77 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 		let updateResult
 		let updateData = {}
 
+		// Helper function to build date filter for Rate queries
+		const buildDateFilter = (startDate, endDate, daysOfWeek) => {
+			if (hasDayFilter(daysOfWeek)) {
+				const matchingDates = getMatchingDates(startDate, endDate, daysOfWeek)
+				return { $in: matchingDates }
+			}
+			return {
+				$gte: new Date(startDate),
+				$lte: new Date(endDate)
+			}
+		}
+
 		switch (action) {
 			case 'stop_sale':
 			case 'open_sale': {
 				const isStopSale = action === 'stop_sale'
 
-				if (hasDayFilter(filters?.daysOfWeek)) {
-					// Work with individual dates when daysOfWeek filter is active - use RateOverride
-					const matchingDates = getMatchingDates(dateRange.startDate, dateRange.endDate, filters.daysOfWeek)
-					logger.info(`${action} with daysOfWeek: ${matchingDates.length} matching dates`)
-
-					// Get filter entities
-					const rtFilter = filters?.roomTypes !== 'all' && Array.isArray(filters?.roomTypes)
-						? { hotel: hotelId, code: { $in: filters.roomTypes } }
-						: { hotel: hotelId }
-					const roomTypesForAction = await RoomType.find(rtFilter).select('_id code').lean()
-
-					const mpFilter = filters?.mealPlans !== 'all' && Array.isArray(filters?.mealPlans)
-						? { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], code: { $in: filters.mealPlans } }
-						: { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], status: 'active' }
-					const mealPlansForAction = await MealPlan.find(mpFilter).select('_id code').lean()
-
-					const mktFilter = filters?.markets !== 'all' && Array.isArray(filters?.markets)
-						? { hotel: hotelId, code: { $in: filters.markets } }
-						: { hotel: hotelId, status: 'active' }
-					const marketsForAction = await Market.find(mktFilter).select('_id code currency').lean()
-
-					// Build RateOverride records for bulk upsert
-					const overridesToUpsert = []
-					for (const date of matchingDates) {
-						for (const rt of roomTypesForAction) {
-							for (const mp of mealPlansForAction) {
-								for (const market of marketsForAction) {
-									overridesToUpsert.push({
-										partner: partnerId,
-										hotel: hotelId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										date: date,
-										stopSale: isStopSale,
-										stopSaleReason: isStopSale ? (reason || '') : null,
-										source: 'ai',
-										aiCommand: action
-									})
-								}
+				// Use direct IDs if available
+				if (useDirectIds) {
+					updateResult = await Rate.updateMany(
+						{ _id: { $in: rateIds }, hotel: hotelId, partner: partnerId },
+						{
+							$set: {
+								stopSale: isStopSale,
+								stopSaleReason: isStopSale ? (reason || '') : '',
+								source: 'ai',
+								aiCommand: action
 							}
 						}
-					}
-
-					if (overridesToUpsert.length > 0) {
-						const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
-						updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
-						logger.info(`${action} with daysOfWeek: upserted ${overridesToUpsert.length} overrides`)
-					} else {
-						updateResult = { modifiedCount: 0 }
-					}
+					)
 				} else {
-					updateData = {
-						stopSale: isStopSale,
-						stopSaleReason: isStopSale ? (reason || '') : ''
-					}
+					rateFilter.date = buildDateFilter(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
+					updateResult = await Rate.updateMany(rateFilter, {
+						$set: {
+							stopSale: isStopSale,
+							stopSaleReason: isStopSale ? (reason || '') : '',
+							source: 'ai',
+							aiCommand: action
+						}
+					})
 				}
+				logger.info(`${action}: updated ${updateResult.modifiedCount} rates (directIds=${useDirectIds})`)
+				break
+			}
+
+			case 'single_stop':
+			case 'open_single': {
+				const isSingleStop = action === 'single_stop'
+
+				if (useDirectIds) {
+					updateResult = await Rate.updateMany(
+						{ _id: { $in: rateIds }, hotel: hotelId, partner: partnerId },
+						{
+							$set: {
+								singleStop: isSingleStop,
+								source: 'ai',
+								aiCommand: action
+							}
+						}
+					)
+				} else {
+					rateFilter.date = buildDateFilter(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
+					updateResult = await Rate.updateMany(rateFilter, {
+						$set: {
+							singleStop: isSingleStop,
+							source: 'ai',
+							aiCommand: action
+						}
+					})
+				}
+				logger.info(`${action}: updated ${updateResult.modifiedCount} rates (directIds=${useDirectIds})`)
 				break
 			}
 
@@ -1698,64 +1658,36 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
 			case 'close_to_arrival':
 			case 'close_to_departure': {
-				// Determine which field to update
 				const fieldName = action === 'close_to_arrival' ? 'closedToArrival' : 'closedToDeparture'
 				const fieldValue = value === true || value === 'true'
 
-				// Get filter entities
-				const rtFilterCTA = filters?.roomTypes !== 'all' && Array.isArray(filters?.roomTypes)
-					? { hotel: hotelId, code: { $in: filters.roomTypes } }
-					: { hotel: hotelId }
-				const roomTypesForCTA = await RoomType.find(rtFilterCTA).select('_id code').lean()
-
-				const mpFilterCTA = filters?.mealPlans !== 'all' && Array.isArray(filters?.mealPlans)
-					? { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], code: { $in: filters.mealPlans } }
-					: { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], status: 'active' }
-				const mealPlansForCTA = await MealPlan.find(mpFilterCTA).select('_id code').lean()
-
-				const mktFilterCTA = filters?.markets !== 'all' && Array.isArray(filters?.markets)
-					? { hotel: hotelId, code: { $in: filters.markets } }
-					: { hotel: hotelId, status: 'active' }
-				const marketsForCTA = await Market.find(mktFilterCTA).select('_id code currency').lean()
-
-				// Get all dates in the range (or matching daysOfWeek if specified)
-				const matchingDatesCTA = getMatchingDates(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
-				logger.info(`${action}: ${matchingDatesCTA.length} dates to process`)
-
-				// Build RateOverride records for bulk upsert
-				const overridesToUpsert = []
-				for (const date of matchingDatesCTA) {
-					for (const rt of roomTypesForCTA) {
-						for (const mp of mealPlansForCTA) {
-							for (const market of marketsForCTA) {
-								overridesToUpsert.push({
-									partner: partnerId,
-									hotel: hotelId,
-									roomType: rt._id,
-									mealPlan: mp._id,
-									market: market._id,
-									date: date,
-									[fieldName]: fieldValue,
-									source: 'ai',
-									aiCommand: action
-								})
+				if (useDirectIds) {
+					updateResult = await Rate.updateMany(
+						{ _id: { $in: rateIds }, hotel: hotelId, partner: partnerId },
+						{
+							$set: {
+								[fieldName]: fieldValue,
+								source: 'ai',
+								aiCommand: action
 							}
 						}
-					}
-				}
-
-				if (overridesToUpsert.length > 0) {
-					const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
-					updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
-					logger.info(`${action}: upserted ${overridesToUpsert.length} overrides`)
+					)
 				} else {
-					updateResult = { modifiedCount: 0 }
+					rateFilter.date = buildDateFilter(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
+					updateResult = await Rate.updateMany(rateFilter, {
+						$set: {
+							[fieldName]: fieldValue,
+							source: 'ai',
+							aiCommand: action
+						}
+					})
 				}
+				logger.info(`${action}: updated ${updateResult.modifiedCount} rates (directIds=${useDirectIds})`)
 				break
 			}
 
 			case 'set_price': {
-				// Create or update rates
+				// Create or update daily rates
 				// Get all combinations of roomType × mealPlan × market
 				const roomTypeFilter = filters?.roomTypes !== 'all' && Array.isArray(filters?.roomTypes)
 					? { hotel: hotelId, code: { $in: filters.roomTypes } }
@@ -1772,208 +1704,76 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 					: { hotel: hotelId, status: 'active' }
 				const marketsForPrice = await Market.find(marketFilter).select('_id code currency').lean()
 
-				// Get season for the date range
-				const season = await Season.findOne({
-					hotel: hotelId,
-					partner: partnerId,
-					'dateRanges.startDate': { $lte: new Date(dateRange.endDate) },
-					'dateRanges.endDate': { $gte: new Date(dateRange.startDate) }
-				}).select('_id').lean()
+				// Get all dates to process
+				const datesToProcess = getMatchingDates(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
+				logger.info(`set_price: ${datesToProcess.length} dates to process`)
 
-				let created = 0
-				let updated = 0
-
-				// Check if daysOfWeek filter is active
-				if (hasDayFilter(filters?.daysOfWeek)) {
-					// Create individual day rates for matching days
-					const matchingDates = getMatchingDates(dateRange.startDate, dateRange.endDate, filters.daysOfWeek)
-					logger.info(`set_price with daysOfWeek: ${matchingDates.length} matching dates`)
-
-					for (const date of matchingDates) {
-						for (const rt of roomTypesForPrice) {
-							for (const mp of mealPlansForPrice) {
-								for (const market of marketsForPrice) {
-									// Check if rate exists for this specific date
-									const existingRate = await Rate.findOne({
-										hotel: hotelId,
-										partner: partnerId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										startDate: date,
-										endDate: date
-									})
-
-									if (existingRate) {
-										await Rate.findByIdAndUpdate(existingRate._id, { pricePerNight: value })
-										updated++
-									} else {
-										await Rate.create({
-											partner: partnerId,
-											hotel: hotelId,
-											roomType: rt._id,
-											mealPlan: mp._id,
-											market: market._id,
-											startDate: date,
-											endDate: date,
-											season: season?._id,
-											pricePerNight: value,
-											currency: market.currency || 'EUR',
-											allotment: 10,
-											minStay: 1,
-											maxStay: 30,
-											status: 'active'
-										})
-										created++
-									}
-								}
-							}
-						}
-					}
-				} else {
-					// Create/update rate for entire date range
+				// Build bulk upsert records
+				const ratesToUpsert = []
+				for (const date of datesToProcess) {
 					for (const rt of roomTypesForPrice) {
 						for (const mp of mealPlansForPrice) {
 							for (const market of marketsForPrice) {
-								// Check if rate exists
-								const existingRate = await Rate.findOne({
-									hotel: hotelId,
+								ratesToUpsert.push({
 									partner: partnerId,
+									hotel: hotelId,
 									roomType: rt._id,
 									mealPlan: mp._id,
 									market: market._id,
-									startDate: new Date(dateRange.startDate),
-									endDate: new Date(dateRange.endDate)
+									date: date,
+									pricePerNight: value,
+									currency: market.currency || 'EUR',
+									allotment: 10,
+									minStay: 1,
+									maxStay: 30,
+									status: 'active',
+									source: 'ai',
+									aiCommand: action
 								})
-
-								if (existingRate) {
-									await Rate.findByIdAndUpdate(existingRate._id, { pricePerNight: value })
-									updated++
-								} else {
-									await Rate.create({
-										partner: partnerId,
-										hotel: hotelId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										startDate: new Date(dateRange.startDate),
-										endDate: new Date(dateRange.endDate),
-										season: season?._id,
-										pricePerNight: value,
-										currency: market.currency || 'EUR',
-										allotment: 10,
-										minStay: 1,
-										maxStay: 30,
-										status: 'active'
-									})
-									created++
-								}
 							}
 						}
 					}
 				}
 
-				updateResult = { modifiedCount: created + updated }
-				logger.info(`set_price: created ${created}, updated ${updated} rates`)
+				if (ratesToUpsert.length > 0) {
+					const bulkResult = await Rate.bulkUpsert(ratesToUpsert)
+					updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
+					logger.info(`set_price: upserted ${ratesToUpsert.length} rates`)
+				} else {
+					updateResult = { modifiedCount: 0 }
+				}
 				break
 			}
 
 			case 'update_price': {
-				// When daysOfWeek filter is active, create RateOverrides
-				if (hasDayFilter(filters?.daysOfWeek)) {
-					const matchingDates = getMatchingDates(dateRange.startDate, dateRange.endDate, filters.daysOfWeek)
-					logger.info(`update_price with daysOfWeek: ${matchingDates.length} matching dates`)
+				// Update existing rates with new price (absolute or percentage)
+				rateFilter.date = buildDateFilter(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
 
-					// Get filter entities
-					const rtFilter = filters?.roomTypes !== 'all' && Array.isArray(filters?.roomTypes)
-						? { hotel: hotelId, code: { $in: filters.roomTypes } }
-						: { hotel: hotelId }
-					const roomTypesForUpdate = await RoomType.find(rtFilter).select('_id code').lean()
-
-					const mpFilter = filters?.mealPlans !== 'all' && Array.isArray(filters?.mealPlans)
-						? { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], code: { $in: filters.mealPlans } }
-						: { $or: [{ hotel: hotelId }, { hotel: null, isStandard: true }], status: 'active' }
-					const mealPlansForUpdate = await MealPlan.find(mpFilter).select('_id code').lean()
-
-					const mktFilter = filters?.markets !== 'all' && Array.isArray(filters?.markets)
-						? { hotel: hotelId, code: { $in: filters.markets } }
-						: { hotel: hotelId, status: 'active' }
-					const marketsForUpdate = await Market.find(mktFilter).select('_id code currency').lean()
-
-					// Build RateOverride records
-					const overridesToUpsert = []
-
-					for (const date of matchingDates) {
-						for (const rt of roomTypesForUpdate) {
-							for (const mp of mealPlansForUpdate) {
-								for (const market of marketsForUpdate) {
-									// For percentage updates, we need to find the base rate price first
-									let newPrice = value
-									if (valueType === 'percentage') {
-										// Check if there's already an override for this date
-										const existingOverride = await RateOverride.findOne({
-											hotel: hotelId,
-											roomType: rt._id,
-											mealPlan: mp._id,
-											market: market._id,
-											date: date
-										})
-
-										if (existingOverride && existingOverride.pricePerNight !== null) {
-											newPrice = Math.round(existingOverride.pricePerNight * (1 + value / 100))
-										} else {
-											// Find the base rate
-											const baseRate = await Rate.findOne({
-												hotel: hotelId,
-												partner: partnerId,
-												roomType: rt._id,
-												mealPlan: mp._id,
-												market: market._id,
-												startDate: { $lte: date },
-												endDate: { $gte: date }
-											})
-											if (baseRate) {
-												newPrice = Math.round(baseRate.pricePerNight * (1 + value / 100))
-											}
-										}
-									}
-
-									overridesToUpsert.push({
-										partner: partnerId,
-										hotel: hotelId,
-										roomType: rt._id,
-										mealPlan: mp._id,
-										market: market._id,
-										date: date,
-										pricePerNight: newPrice,
-										source: 'ai',
-										aiCommand: 'update_price'
-									})
-								}
-							}
-						}
-					}
-
-					if (overridesToUpsert.length > 0) {
-						const bulkResult = await RateOverride.bulkUpsert(overridesToUpsert)
-						updateResult = { modifiedCount: bulkResult.modifiedCount + bulkResult.upsertedCount }
-						logger.info(`update_price with daysOfWeek: upserted ${overridesToUpsert.length} overrides`)
-					} else {
-						updateResult = { modifiedCount: 0 }
-					}
-				} else if (valueType === 'percentage') {
-					// Percentage update without day filter
+				if (valueType === 'percentage') {
+					// Percentage update - need to calculate new price for each rate
 					const rates = await Rate.find(rateFilter)
 					let updated = 0
 					for (const rate of rates) {
 						const newPrice = Math.round(rate.pricePerNight * (1 + value / 100))
-						await Rate.findByIdAndUpdate(rate._id, { pricePerNight: newPrice })
+						await Rate.findByIdAndUpdate(rate._id, {
+							pricePerNight: newPrice,
+							source: 'ai',
+							aiCommand: 'update_price'
+						})
 						updated++
 					}
 					updateResult = { modifiedCount: updated }
+					logger.info(`update_price (percentage): updated ${updated} rates`)
 				} else {
-					// Set absolute value - bulk update
-					updateData = { pricePerNight: value }
+					// Absolute value - bulk update
+					updateResult = await Rate.updateMany(rateFilter, {
+						$set: {
+							pricePerNight: value,
+							source: 'ai',
+							aiCommand: 'update_price'
+						}
+					})
+					logger.info(`update_price (absolute): updated ${updateResult.modifiedCount} rates`)
 				}
 				break
 			}
@@ -2095,7 +1895,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 					const rates = await Rate.find(rateFilter)
 					let updated = 0
 					for (const rate of rates) {
-						if (!matchesDayOfWeek(rate.startDate, filters?.daysOfWeek)) continue
+						if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
 						const current = rate.extraAdult || 0
 						const newValue = Math.round(current * (1 + value / 100))
 						await Rate.findByIdAndUpdate(rate._id, { extraAdult: newValue })
@@ -2112,7 +1912,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 					const rates = await Rate.find(rateFilter)
 					let updated = 0
 					for (const rate of rates) {
-						if (!matchesDayOfWeek(rate.startDate, filters?.daysOfWeek)) continue
+						if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
 						const current = rate.extraChild || 0
 						const newValue = Math.round(current * (1 + value / 100))
 						await Rate.findByIdAndUpdate(rate._id, { extraChild: newValue })
@@ -2129,7 +1929,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 					const rates = await Rate.find(rateFilter)
 					let updated = 0
 					for (const rate of rates) {
-						if (!matchesDayOfWeek(rate.startDate, filters?.daysOfWeek)) continue
+						if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
 						const current = rate.extraInfant || 0
 						const newValue = Math.round(current * (1 + value / 100))
 						await Rate.findByIdAndUpdate(rate._id, { extraInfant: newValue })
@@ -2146,7 +1946,7 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 				const rates = await Rate.find(rateFilter)
 				let updated = 0
 				for (const rate of rates) {
-					if (!matchesDayOfWeek(rate.startDate, filters?.daysOfWeek)) continue
+					if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
 					const childPricing = rate.childPricing || []
 					const idx = (childIndex || 1) - 1
 					if (childPricing[idx]) {
@@ -2164,21 +1964,35 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 				continue // Skip unknown actions instead of throwing
 		}
 
-		// If we have updateData, do bulk update (only for non-daysOfWeek filtered actions)
+		// If we have updateData, do bulk update
 		if (Object.keys(updateData).length > 0) {
-			if (filters?.daysOfWeek && filters.daysOfWeek !== 'all' && Array.isArray(filters.daysOfWeek)) {
-				// Need to filter by day of week - iterate through rates
-				const rates = await Rate.find(rateFilter)
-				let updated = 0
-				for (const rate of rates) {
-					if (matchesDayOfWeek(rate.startDate, filters.daysOfWeek)) {
-						await Rate.findByIdAndUpdate(rate._id, { $set: updateData })
-						updated++
-					}
-				}
-				updateResult = { modifiedCount: updated }
+			// Use direct IDs if available
+			if (useDirectIds) {
+				updateResult = await Rate.updateMany(
+					{ _id: { $in: rateIds }, hotel: hotelId, partner: partnerId },
+					{ $set: { ...updateData, source: 'ai', aiCommand: action } }
+				)
+				logger.info(`updateData with directIds: updated ${updateResult.modifiedCount} rates`)
 			} else {
-				updateResult = await Rate.updateMany(rateFilter, { $set: updateData })
+				// Always add date filter if not already set
+				if (!rateFilter.date) {
+					rateFilter.date = buildDateFilter(dateRange.startDate, dateRange.endDate, filters?.daysOfWeek)
+				}
+
+				if (filters?.daysOfWeek && filters.daysOfWeek !== 'all' && Array.isArray(filters.daysOfWeek)) {
+					// Need to filter by day of week - iterate through rates
+					const rates = await Rate.find(rateFilter)
+					let updated = 0
+					for (const rate of rates) {
+						if (matchesDayOfWeek(rate.date, filters.daysOfWeek)) {
+							await Rate.findByIdAndUpdate(rate._id, { $set: updateData })
+							updated++
+						}
+					}
+					updateResult = { modifiedCount: updated }
+				} else {
+					updateResult = await Rate.updateMany(rateFilter, { $set: updateData })
+				}
 			}
 		}
 

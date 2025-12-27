@@ -42,7 +42,7 @@
             </div>
 
             <!-- Body -->
-            <div class="p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div class="p-4 max-h-[calc(100vh-200px)] overflow-y-auto" :class="contentClass">
               <slot />
             </div>
 
@@ -81,6 +81,10 @@ const props = defineProps({
   closeOnEsc: {
     type: Boolean,
     default: true
+  },
+  contentClass: {
+    type: String,
+    default: ''
   }
 })
 

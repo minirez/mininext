@@ -61,28 +61,22 @@
 
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
       <!-- Header -->
-      <div class="p-6 border-b border-gray-200 dark:border-slate-700">
-        <div class="flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ $t('hotels.title') }}</h2>
-            <p class="text-gray-600 dark:text-slate-400 mt-1">{{ $t('hotels.description') }}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <!-- Export Button -->
-            <button
-              @click="exportToCSV"
-              class="btn-secondary flex items-center"
-              :title="$t('hotels.exportCSV')"
-            >
-              <span class="material-icons text-lg mr-1">download</span>
-              <span class="hidden sm:inline">{{ $t('hotels.export') }}</span>
-            </button>
-            <!-- Add Hotel -->
-            <router-link to="/hotels/new" class="btn-primary flex items-center">
-              <span class="material-icons text-lg mr-2">add</span>
-              {{ $t('hotels.addHotel') }}
-            </router-link>
-          </div>
+      <div class="p-4 border-b border-gray-200 dark:border-slate-700">
+        <div class="flex flex-wrap justify-end items-center gap-2">
+          <!-- Export Button -->
+          <button
+            @click="exportToCSV"
+            class="btn-secondary flex items-center"
+            :title="$t('hotels.exportCSV')"
+          >
+            <span class="material-icons text-lg mr-1">download</span>
+            <span class="hidden sm:inline">{{ $t('hotels.export') }}</span>
+          </button>
+          <!-- Add Hotel -->
+          <router-link to="/hotels/new" class="btn-primary flex items-center">
+            <span class="material-icons text-lg mr-2">add</span>
+            {{ $t('hotels.addHotel') }}
+          </router-link>
         </div>
 
         <!-- Toolbar -->
@@ -335,7 +329,7 @@
                   {{ $t('hotels.type') }}
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                  {{ $t('common.status') }}
+                  {{ $t('common.status.label') }}
                 </th>
                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                   {{ $t('common.actions') }}

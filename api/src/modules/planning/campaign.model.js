@@ -125,14 +125,35 @@ const campaignSchema = new mongoose.Schema({
 	// Can this campaign be combined with others?
 	combinable: { type: Boolean, default: false },
 
-	// Priority (higher = applied first when multiple campaigns match)
-	priority: { type: Number, default: 0 },
-
-	// Visibility
+	// Visibility - B2C and B2B
 	visibility: {
 		b2c: { type: Boolean, default: true },
 		b2b: { type: Boolean, default: true }
 	},
+
+	// Application type: how the campaign is applied to stay dates
+	// 'stay' = Applied only to nights that fall within stayWindow (day by day)
+	// 'checkin' = If check-in date is within stayWindow, applied to ALL nights
+	applicationType: {
+		type: String,
+		enum: ['stay', 'checkin'],
+		default: 'stay'
+	},
+
+	// Calculation type: how discount is calculated when combined with other campaigns
+	// 'cumulative' = All discounts calculated on original price and summed
+	// 'sequential' = Each discount calculated on the result of previous discount
+	calculationType: {
+		type: String,
+		enum: ['cumulative', 'sequential'],
+		default: 'cumulative'
+	},
+
+	// Calculation order: when multiple campaigns are combined, lower number = calculated first
+	calculationOrder: { type: Number, default: 0 },
+
+	// Priority (higher = applied first when multiple campaigns match)
+	priority: { type: Number, default: 0 },
 
 	// Status
 	status: {
@@ -158,6 +179,7 @@ campaignSchema.index({ hotel: 1, 'bookingWindow.startDate': 1, 'bookingWindow.en
 campaignSchema.index({ hotel: 1, 'stayWindow.startDate': 1, 'stayWindow.endDate': 1 })
 campaignSchema.index({ hotel: 1, type: 1 })
 campaignSchema.index({ priority: -1 })
+campaignSchema.index({ calculationOrder: 1 })
 campaignSchema.index({ displayOrder: 1 })
 
 // Validate dates and discount

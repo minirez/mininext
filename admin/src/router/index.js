@@ -20,6 +20,7 @@ const HotelDetailView = () => import('../views/HotelDetailView.vue')
 const PlanningView = () => import('../views/PlanningView.vue')
 const RoomTypeDetailView = () => import('../views/RoomTypeDetailView.vue')
 const MarketDetailView = () => import('../views/MarketDetailView.vue')
+const RegionManagementView = () => import('../views/admin/RegionManagementView.vue')
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +44,12 @@ const router = createRouter({
 					path: 'partners',
 					name: 'partners',
 					component: PartnersView,
+					meta: {requiresPlatformAdmin: true}
+				},
+				{
+					path: 'admin/regions',
+					name: 'region-management',
+					component: RegionManagementView,
 					meta: {requiresPlatformAdmin: true}
 				},
 				{

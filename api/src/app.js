@@ -66,6 +66,8 @@ import siteSettingsRoutes from './modules/siteSettings/siteSettings.routes.js'
 import translationRoutes from './modules/translation/translation.routes.js'
 import hotelRoutes from './modules/hotel/hotel.routes.js'
 import planningRoutes from './modules/planning/planning.routes.js'
+import tagRoutes from './modules/tag/tag.routes.js'
+import locationRoutes from './modules/location/location.routes.js'
 
 app.use('/api/auth', authRoutes)
 app.use('/api/partners', partnerRoutes)
@@ -75,6 +77,8 @@ app.use('/api/site-settings', siteSettingsRoutes)
 app.use('/api/translation', translationRoutes)
 app.use('/api/hotels', hotelRoutes)
 app.use('/api/planning', planningRoutes)
+app.use('/api/tags', tagRoutes)
+app.use('/api/locations', locationRoutes)
 
 // 404 handler
 app.use(notFoundHandler)

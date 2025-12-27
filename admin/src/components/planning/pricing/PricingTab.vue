@@ -64,6 +64,16 @@
           <span class="hidden sm:inline">{{ $t('planning.pricing.seasons') }}</span>
         </button>
 
+        <!-- Price Query Button -->
+        <button
+          @click="showPriceQueryModal = true"
+          class="flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+          :title="$t('planning.pricing.priceQuery') || 'Fiyat Sorgula'"
+        >
+          <span class="material-icons text-lg">calculate</span>
+          <span class="hidden sm:inline">{{ $t('planning.pricing.priceQuery') || 'Sorgula' }}</span>
+        </button>
+
         <!-- Add Rate Button -->
         <button @click="openBulkModal" class="btn-primary flex items-center gap-2">
           <span class="material-icons text-lg">add</span>
@@ -77,7 +87,11 @@
       <AIPricingAssistant
         :hotel-id="hotel._id"
         :current-month="currentMonth"
+        :selected-cells="bulkEditCells"
+        :room-types="filteredRoomTypes"
+        :meal-plans="filteredMealPlans"
         @executed="handleAIExecuted"
+        @clear-selection="clearCalendarSelection"
       />
     </div>
 
@@ -88,8 +102,12 @@
           <h4 class="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
             <span class="material-icons text-amber-600">date_range</span>
             {{ $t('planning.pricing.seasonManager') }}
+            <span v-if="selectedMarket" class="text-sm font-normal text-gray-500 dark:text-slate-400">
+              ({{ selectedMarket.code }})
+            </span>
           </h4>
           <button
+            v-if="selectedMarket"
             @click="showSeasonForm = true; editingSeason = null"
             class="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1 font-medium"
           >
@@ -129,6 +147,11 @@
           </div>
         </div>
 
+        <div v-else-if="!selectedMarket" class="text-center py-6 text-gray-500 dark:text-slate-400">
+          <span class="material-icons text-4xl opacity-30">public</span>
+          <p class="mt-2 text-sm">{{ $t('planning.pricing.selectMarketFirst') }}</p>
+        </div>
+
         <div v-else class="text-center py-6 text-gray-500 dark:text-slate-400">
           <span class="material-icons text-4xl opacity-30">event_busy</span>
           <p class="mt-2 text-sm">{{ $t('planning.pricing.noSeasons') }}</p>
@@ -139,26 +162,53 @@
     <!-- Beautiful Filters (for period view) -->
     <div v-if="viewMode === 'period'" class="mb-6">
       <div class="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-slate-700/50 rounded-2xl p-5 border border-gray-200/50 dark:border-slate-600/50">
-        <!-- Room Type Filter (Required) -->
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <span class="material-icons text-purple-600 dark:text-purple-400 text-lg">hotel</span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Room Type Filter (Required) -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <span class="material-icons text-purple-600 dark:text-purple-400 text-lg">hotel</span>
+              </div>
+              <span class="font-semibold text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.selectRoomType') }}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="rt in filteredRoomTypes"
+                :key="rt._id"
+                @click="filters.roomType = rt._id"
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                :class="filters.roomType === rt._id
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-105'
+                  : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-slate-600'"
+              >
+                <span class="font-bold">{{ rt.code }}</span>
+                <span class="text-xs opacity-75">{{ getRoomTypeName(rt) }}</span>
+              </button>
+            </div>
           </div>
-          <span class="font-semibold text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.selectRoomType') }}</span>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="rt in roomTypes"
-            :key="rt._id"
-            @click="filters.roomType = rt._id"
-            class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2"
-            :class="filters.roomType === rt._id
-              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 scale-105'
-              : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-slate-600'"
-          >
-            <span class="font-bold">{{ rt.code }}</span>
-            <span class="text-xs opacity-75">{{ getRoomTypeName(rt) }}</span>
-          </button>
+
+          <!-- Meal Plan Filter (Required) -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <span class="material-icons text-amber-600 dark:text-amber-400 text-lg">restaurant</span>
+              </div>
+              <span class="font-semibold text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.selectMealPlan') }}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="mp in filteredMealPlans"
+                :key="mp._id"
+                @click="filters.mealPlan = mp._id"
+                class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                :class="filters.mealPlan === mp._id
+                  ? getMealPlanActiveColor(mp.code) + ' text-white shadow-lg scale-105'
+                  : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-gray-200 dark:border-slate-600'"
+              >
+                {{ mp.code }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -168,28 +218,41 @@
       <!-- Calendar View -->
       <template v-if="viewMode === 'calendar'">
         <MonthlyCalendar
+          ref="calendarRef"
           :hotel-id="hotel._id"
-          :room-types="roomTypes"
-          :meal-plans="mealPlans"
+          :room-types="filteredRoomTypes"
+          :meal-plans="filteredMealPlans"
           :market="selectedMarket"
           :rates="rates"
           :overrides="overrides"
           :loading="loadingRates"
           :initial-month="currentMonth"
+          :current-seasons="currentMonthSeasons"
           @refresh="handleCalendarRefresh"
           @bulk-edit="openBulkEditModal"
+          @selection-change="handleSelectionChange"
         />
       </template>
 
       <!-- Period View - Period Based Price List -->
       <template v-else-if="viewMode === 'period'">
-        <!-- No Room Type Selected -->
-        <div v-if="!filters.roomType" class="text-center py-16 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-          <div class="w-16 h-16 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4">
-            <span class="material-icons text-3xl text-purple-600 dark:text-purple-400">hotel</span>
+        <!-- No Room Type or Meal Plan Selected -->
+        <div v-if="!filters.roomType || !filters.mealPlan" class="text-center py-16 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
+          <div class="flex items-center justify-center gap-4 mb-4">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center" :class="filters.roomType ? 'bg-green-100 dark:bg-green-900/30' : 'bg-purple-100 dark:bg-purple-900/30'">
+              <span class="material-icons text-3xl" :class="filters.roomType ? 'text-green-600 dark:text-green-400' : 'text-purple-600 dark:text-purple-400'">
+                {{ filters.roomType ? 'check' : 'hotel' }}
+              </span>
+            </div>
+            <span class="material-icons text-2xl text-gray-300 dark:text-slate-600">add</span>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center" :class="filters.mealPlan ? 'bg-green-100 dark:bg-green-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
+              <span class="material-icons text-3xl" :class="filters.mealPlan ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'">
+                {{ filters.mealPlan ? 'check' : 'restaurant' }}
+              </span>
+            </div>
           </div>
-          <p class="text-gray-600 dark:text-slate-400 text-lg font-medium">{{ $t('planning.pricing.selectRoomTypeFirst') }}</p>
-          <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">{{ $t('planning.pricing.selectRoomTypeHint') }}</p>
+          <p class="text-gray-600 dark:text-slate-400 text-lg font-medium">{{ $t('planning.pricing.selectFiltersFirst') }}</p>
+          <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">{{ $t('planning.pricing.selectFiltersHint') }}</p>
         </div>
 
         <!-- Loading -->
@@ -198,122 +261,135 @@
         </div>
 
         <!-- Price List Table -->
-        <div v-else-if="priceListData.length > 0" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm">
+        <div v-else-if="periodListData.length > 0" class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm">
+          <!-- Selected Filters Info -->
+          <div class="px-4 py-3 bg-gradient-to-r from-purple-50 to-amber-50 dark:from-purple-900/20 dark:to-amber-900/20 border-b border-gray-200 dark:border-slate-600 flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-purple-600 dark:text-purple-400">hotel</span>
+              <span class="font-bold text-gray-800 dark:text-white">{{ getSelectedRoomTypeName() }}</span>
+            </div>
+            <span class="text-gray-300 dark:text-slate-600">+</span>
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-amber-600 dark:text-amber-400">restaurant</span>
+              <span class="font-bold text-gray-800 dark:text-white">{{ getSelectedMealPlanCode() }}</span>
+            </div>
+            <span class="text-gray-300 dark:text-slate-600">•</span>
+            <span class="text-sm text-gray-500 dark:text-slate-400">{{ selectedMarket?.currency }}</span>
+          </div>
+
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-gray-50 dark:bg-slate-700">
                 <tr>
-                  <!-- Period Header -->
-                  <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase border-r border-gray-200 dark:border-slate-600 w-[140px] sticky left-0 bg-gray-50 dark:bg-slate-700 z-10">
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[180px]">
                     {{ $t('planning.pricing.period') }}
                   </th>
-                  <!-- Meal Plan Price Headers -->
-                  <th
-                    v-for="mp in activeMealPlans"
-                    :key="mp._id"
-                    class="px-3 py-3 text-center text-xs font-bold border-r border-gray-200 dark:border-slate-600 min-w-[80px]"
-                    :class="getMealPlanHeaderClass(mp.code)"
-                  >
-                    <div>{{ mp.code }}</div>
-                    <div class="text-[10px] font-normal opacity-75">{{ selectedMarket?.currency }}</div>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[100px]">
+                    {{ $t('planning.pricing.pricePerNight') }}
                   </th>
-                  <!-- Min Stay Header -->
-                  <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase border-r border-gray-200 dark:border-slate-600 min-w-[60px]">
-                    <div class="flex flex-col items-center">
-                      <span class="material-icons text-sm text-blue-500">hotel</span>
-                      <span class="text-[10px]">Min</span>
-                    </div>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[80px]">
+                    {{ $t('planning.pricing.singleSupplementShort') }}
                   </th>
-                  <!-- Release Header -->
-                  <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase min-w-[60px]">
-                    <div class="flex flex-col items-center">
-                      <span class="material-icons text-sm text-amber-500">schedule</span>
-                      <span class="text-[10px]">Release</span>
-                    </div>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[80px]">
+                    {{ $t('planning.pricing.extraAdultShort') }}
+                  </th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[140px]">
+                    {{ $t('planning.pricing.childPricesShort') }}
+                  </th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[80px]">
+                    {{ $t('planning.pricing.extraInfantShort') }}
+                  </th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[60px]">
+                    Min
+                  </th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase w-[60px]">
+                    Rel
                   </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                 <tr
-                  v-for="(period, periodIndex) in unifiedPeriods"
-                  :key="periodIndex"
+                  v-for="(period, idx) in periodListData"
+                  :key="idx"
                   class="hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-colors"
                 >
-                  <!-- Period Column -->
-                  <td class="px-3 py-2.5 border-r border-gray-200 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-800/50 sticky left-0 z-10">
-                    <div class="text-xs font-semibold text-gray-800 dark:text-white">
-                      {{ formatShortDate(period.startDate) }} - {{ formatShortDate(period.endDate) }}
+                  <!-- Period -->
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-semibold text-gray-800 dark:text-white">
+                      {{ formatPeriodDate(period.startDate) }} - {{ formatPeriodDate(period.endDate) }}
                     </div>
-                    <div class="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">
+                    <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                       {{ getPeriodDays(period.startDate, period.endDate) }} {{ $t('planning.pricing.days') }}
                     </div>
                   </td>
 
-                  <!-- Meal Plan Price Cells with Tooltip -->
-                  <td
-                    v-for="mp in activeMealPlans"
-                    :key="mp._id"
-                    class="px-2 py-2 text-center border-r border-gray-100 dark:border-slate-700 relative group"
-                  >
-                    <template v-if="getPeriodPrice(period, mp._id)">
-                      <div class="cursor-pointer">
-                        <span class="font-bold text-green-600 dark:text-green-400 text-sm">
-                          {{ getPeriodPrice(period, mp._id).pricePerNight.toLocaleString() }}
-                        </span>
-                        <!-- Tooltip -->
-                        <div
-                          v-if="hasExtraPricing(getPeriodPrice(period, mp._id))"
-                          class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 dark:bg-slate-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
-                        >
-                          <div class="space-y-1">
-                            <div v-if="getPeriodPrice(period, mp._id).extraAdult" class="flex items-center gap-2">
-                              <span class="material-icons text-amber-400 text-xs">person_add</span>
-                              <span>+{{ $t('planning.pricing.adult') }}: {{ getPeriodPrice(period, mp._id).extraAdult.toLocaleString() }}</span>
-                            </div>
-                            <div v-if="getPeriodPrice(period, mp._id).extraChild" class="flex items-center gap-2">
-                              <span class="material-icons text-pink-400 text-xs">child_care</span>
-                              <span>+{{ $t('planning.pricing.child') }}: {{ getPeriodPrice(period, mp._id).extraChild.toLocaleString() }}</span>
-                            </div>
-                            <div v-if="getPeriodPrice(period, mp._id).extraInfant" class="flex items-center gap-2">
-                              <span class="material-icons text-purple-400 text-xs">baby_changing_station</span>
-                              <span>+{{ $t('planning.pricing.infant') }}: {{ getPeriodPrice(period, mp._id).extraInfant.toLocaleString() }}</span>
-                            </div>
-                            <div v-if="getPeriodPrice(period, mp._id).singleSupplement" class="flex items-center gap-2 pt-1 border-t border-slate-600">
-                              <span class="material-icons text-blue-400 text-xs">person</span>
-                              <span>{{ $t('planning.pricing.singleOccupancy') }}: -{{ getPeriodPrice(period, mp._id).singleSupplement.toLocaleString() }}</span>
-                            </div>
-                          </div>
-                          <!-- Tooltip Arrow -->
-                          <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-900"></div>
-                        </div>
-                      </div>
-                      <!-- Extra pricing indicator -->
-                      <div v-if="hasExtraPricing(getPeriodPrice(period, mp._id))" class="text-[9px] text-purple-500 dark:text-purple-400 mt-0.5">
-                        +{{ $t('planning.pricing.extras') }}
-                      </div>
-                    </template>
+                  <!-- Price Per Night -->
+                  <td class="px-4 py-3 text-right">
+                    <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                      {{ period.pricePerNight?.toLocaleString() || '-' }}
+                    </span>
+                  </td>
+
+                  <!-- Single Supplement (Tek Kişi İndirimi) -->
+                  <td class="px-4 py-3 text-center">
+                    <span v-if="period.singleSupplement" class="text-purple-600 dark:text-purple-400 font-medium">
+                      -{{ period.singleSupplement.toLocaleString() }}
+                    </span>
                     <span v-else class="text-gray-300 dark:text-slate-600">-</span>
                   </td>
 
-                  <!-- Min Stay Column -->
-                  <td class="px-2 py-2 text-center border-r border-gray-100 dark:border-slate-700">
-                    <span
-                      v-if="getFirstPeriodRate(period)?.minStay !== undefined"
-                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium"
-                      :class="getFirstPeriodRate(period).minStay > 1 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-slate-600 text-gray-500 dark:text-slate-400'"
-                    >
-                      {{ getFirstPeriodRate(period).minStay || 1 }}
+                  <!-- Extra Adult -->
+                  <td class="px-4 py-3 text-center">
+                    <span v-if="period.extraAdult" class="text-amber-600 dark:text-amber-400 font-medium">
+                      +{{ period.extraAdult.toLocaleString() }}
                     </span>
-                    <span v-else class="text-gray-300 dark:text-slate-600">1</span>
+                    <span v-else class="text-gray-300 dark:text-slate-600">-</span>
                   </td>
 
-                  <!-- Release Days Column -->
-                  <td class="px-2 py-2 text-center">
+                  <!-- Child Prices (All children from childOrderPricing) -->
+                  <td class="px-4 py-3 text-center">
+                    <div v-if="period.childOrderPricing?.length > 0" class="flex flex-wrap gap-1 justify-center">
+                      <span
+                        v-for="(childPrice, cIdx) in period.childOrderPricing"
+                        :key="cIdx"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400"
+                        :title="$t('planning.pricing.childN', { n: cIdx + 1 })"
+                      >
+                        {{ cIdx + 1 }}: +{{ childPrice?.toLocaleString() || 0 }}
+                      </span>
+                    </div>
+                    <span v-else-if="period.extraChild" class="text-pink-600 dark:text-pink-400 font-medium">
+                      +{{ period.extraChild.toLocaleString() }}
+                    </span>
+                    <span v-else class="text-gray-300 dark:text-slate-600">-</span>
+                  </td>
+
+                  <!-- Extra Infant -->
+                  <td class="px-4 py-3 text-center">
+                    <span v-if="period.extraInfant" class="text-cyan-600 dark:text-cyan-400 font-medium">
+                      +{{ period.extraInfant.toLocaleString() }}
+                    </span>
+                    <span v-else class="text-gray-300 dark:text-slate-600">-</span>
+                  </td>
+
+                  <!-- Min Stay -->
+                  <td class="px-4 py-3 text-center">
                     <span
-                      v-if="getFirstPeriodRate(period)?.releaseDays !== undefined && getFirstPeriodRate(period).releaseDays > 0"
-                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                      v-if="period.minStay > 1"
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                     >
-                      {{ getFirstPeriodRate(period).releaseDays }}
+                      {{ period.minStay }}
+                    </span>
+                    <span v-else class="text-gray-400 dark:text-slate-500">1</span>
+                  </td>
+
+                  <!-- Release Days -->
+                  <td class="px-4 py-3 text-center">
+                    <span
+                      v-if="period.releaseDays > 0"
+                      class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+                    >
+                      {{ period.releaseDays }}
                     </span>
                     <span v-else class="text-gray-300 dark:text-slate-600">-</span>
                   </td>
@@ -323,17 +399,10 @@
           </div>
 
           <!-- Footer -->
-          <div class="px-4 py-2 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-600 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-            <div class="flex items-center gap-4">
-              <span>{{ selectedMarket?.currency }}</span>
-              <span>•</span>
-              <span>{{ unifiedPeriods.length }} {{ $t('planning.pricing.periods') }}</span>
-            </div>
-            <div class="flex items-center gap-2 text-[10px]">
-              <span class="flex items-center gap-1">
-                <span class="material-icons text-xs text-purple-500">info</span>
-                {{ $t('planning.pricing.hoverForExtras') }}
-              </span>
+          <div class="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-600 flex items-center justify-between text-sm text-gray-500 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-lg text-purple-500">date_range</span>
+              <span class="font-medium">{{ periodListData.length }} {{ $t('planning.pricing.periods') }}</span>
             </div>
           </div>
         </div>
@@ -352,10 +421,13 @@
     </div>
 
     <!-- Season Form Modal -->
-    <Modal v-model="showSeasonForm" :title="editingSeason ? $t('planning.pricing.editSeason') : $t('planning.pricing.addSeason')" size="md">
+    <Modal v-model="showSeasonForm" :title="editingSeason ? $t('planning.pricing.editSeason') : $t('planning.pricing.addSeason')" size="lg">
       <SeasonForm
         :hotel="hotel"
         :season="editingSeason"
+        :market="selectedMarket"
+        :room-types="filteredRoomTypes"
+        :meal-plans="filteredMealPlans"
         @saved="handleSeasonSaved"
         @cancel="showSeasonForm = false"
       />
@@ -366,8 +438,8 @@
       <RateForm
         :hotel="hotel"
         :rate="editingRate"
-        :room-types="roomTypes"
-        :meal-plans="mealPlans"
+        :room-types="filteredRoomTypes"
+        :meal-plans="filteredMealPlans"
         :market="selectedMarket"
         :seasons="seasons"
         :selected-cells="bulkEditCells"
@@ -395,17 +467,27 @@
       v-model="showBulkEditModal"
       :hotel-id="hotel._id"
       :selected-cells="bulkEditCells"
-      :room-types="roomTypes"
-      :meal-plans="mealPlans"
+      :room-types="filteredRoomTypes"
+      :meal-plans="filteredMealPlans"
       :rates="rates"
       :market="selectedMarket"
       @saved="handleBulkEditSaved"
+    />
+
+    <!-- Price Query Modal -->
+    <PriceQueryModal
+      v-model="showPriceQueryModal"
+      :hotel-id="hotel._id"
+      :hotel-name="hotel.name?.tr || hotel.name?.en || hotel.code"
+      :room-types="filteredRoomTypes"
+      :meal-plans="filteredMealPlans"
+      :markets="markets"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
@@ -414,6 +496,7 @@ import SeasonForm from './SeasonForm.vue'
 import RateForm from './RateForm.vue'
 import BulkEditModal from './BulkEditModal.vue'
 import AIPricingAssistant from './AIPricingAssistant.vue'
+import PriceQueryModal from './PriceQueryModal.vue'
 import planningService from '@/services/planningService'
 
 const props = defineProps({
@@ -453,6 +536,8 @@ const deleteType = ref(null)
 const deleting = ref(false)
 const bulkEditCells = ref([])
 const showBulkEditModal = ref(false)
+const showPriceQueryModal = ref(false)
+const calendarRef = ref(null)
 
 // Current calendar month - load from localStorage if available
 const getStoredMonth = () => {
@@ -491,6 +576,52 @@ const filters = reactive({
 })
 
 // Computed
+
+/**
+ * Filtered room types based on market's active room types
+ * Algorithm:
+ * 1. If no market selected → return all room types
+ * 2. If market has activeRoomTypes defined → filter to only those
+ * 3. Empty activeRoomTypes array = all room types are active
+ */
+const filteredRoomTypes = computed(() => {
+  if (!selectedMarket.value) return roomTypes.value
+
+  const activeIds = selectedMarket.value.activeRoomTypes || []
+
+  // Empty array means all are active
+  if (activeIds.length === 0) return roomTypes.value
+
+  // Normalize IDs (could be objects or strings)
+  const normalizedIds = activeIds.map(id => typeof id === 'object' ? id._id : id)
+
+  return roomTypes.value.filter(rt => normalizedIds.includes(rt._id))
+})
+
+/**
+ * Filtered meal plans based on market's active meal plans
+ * Algorithm:
+ * 1. If no market selected → return all meal plans (excluding inactive status)
+ * 2. If market has activeMealPlans defined → filter to only those
+ * 3. Empty activeMealPlans array = all meal plans are active
+ */
+const filteredMealPlans = computed(() => {
+  // First filter out inactive meal plans
+  let activeMPs = mealPlans.value.filter(mp => mp.status !== 'inactive')
+
+  if (!selectedMarket.value) return activeMPs
+
+  const activeIds = selectedMarket.value.activeMealPlans || []
+
+  // Empty array means all are active
+  if (activeIds.length === 0) return activeMPs
+
+  // Normalize IDs (could be objects or strings)
+  const normalizedIds = activeIds.map(id => typeof id === 'object' ? id._id : id)
+
+  return activeMPs.filter(mp => normalizedIds.includes(mp._id))
+})
+
 const filteredRates = computed(() => {
   let result = rates.value
 
@@ -573,6 +704,57 @@ const getFirstPeriodRate = (period) => {
   const mealPlanIds = Object.keys(period.prices)
   if (mealPlanIds.length === 0) return null
   return period.prices[mealPlanIds[0]]
+}
+
+// Period List Data - Get periods for selected room type + meal plan combination
+const periodListData = computed(() => {
+  if (!filters.mealPlan) return []
+
+  // Find the data for the selected meal plan
+  const mpData = priceListData.value.find(item => {
+    const mpId = item.mealPlan?._id || item.mealPlan
+    return mpId === filters.mealPlan
+  })
+
+  if (!mpData || !mpData.periods) return []
+
+  return mpData.periods
+})
+
+// Seasons that overlap with current displayed month
+const currentMonthSeasons = computed(() => {
+  if (!seasons.value.length || !currentMonth.value) return []
+
+  const year = currentMonth.value.year
+  const month = currentMonth.value.month
+  const monthStart = new Date(year, month - 1, 1)
+  const monthEnd = new Date(year, month, 0) // Last day of month
+
+  return seasons.value.filter(season => {
+    if (!season.dateRanges?.length) return false
+
+    return season.dateRanges.some(range => {
+      const rangeStart = new Date(range.startDate)
+      const rangeEnd = new Date(range.endDate)
+      // Check if date range overlaps with current month
+      return rangeStart <= monthEnd && rangeEnd >= monthStart
+    })
+  })
+})
+
+// Get selected room type name
+const getSelectedRoomTypeName = () => {
+  if (!filters.roomType) return ''
+  const rt = roomTypes.value.find(r => r._id === filters.roomType)
+  if (!rt) return ''
+  return rt.name?.[locale.value] || rt.name?.tr || rt.name?.en || rt.code || ''
+}
+
+// Get selected meal plan code
+const getSelectedMealPlanCode = () => {
+  if (!filters.mealPlan) return ''
+  const mp = mealPlans.value.find(m => m._id === filters.mealPlan)
+  return mp?.code || ''
 }
 
 // Helpers
@@ -686,9 +868,14 @@ const hasExtraPricing = (rate) => {
 
 // API Calls
 const fetchSeasons = async () => {
+  if (!selectedMarket.value?._id) {
+    seasons.value = []
+    return
+  }
+
   loadingSeasons.value = true
   try {
-    const response = await planningService.getSeasons(props.hotel._id)
+    const response = await planningService.getSeasons(props.hotel._id, selectedMarket.value._id)
     if (response.success) seasons.value = response.data
   } catch (error) {
     console.error('Error fetching seasons:', error)
@@ -723,7 +910,12 @@ const fetchRates = async (params = {}) => {
     }
 
     console.log('fetchRates queryParams:', queryParams)
-    const response = await planningService.getRates(props.hotel._id, queryParams)
+
+    // Use getRatesCalendar for calendar view to get both rates AND overrides
+    // Use getRates for other views (only returns rates)
+    const response = viewMode.value === 'calendar'
+      ? await planningService.getRatesCalendar(props.hotel._id, queryParams)
+      : await planningService.getRates(props.hotel._id, queryParams)
 
     // Handle both old format (array) and new format ({ rates, overrides })
     if (response.success) {
@@ -746,7 +938,7 @@ const fetchRates = async (params = {}) => {
 }
 
 const fetchPriceList = async () => {
-  if (!filters.roomType || !selectedMarket.value) {
+  if (!filters.roomType || !filters.mealPlan || !selectedMarket.value) {
     priceListData.value = []
     return
   }
@@ -755,6 +947,7 @@ const fetchPriceList = async () => {
   try {
     const params = {
       roomType: filters.roomType,
+      mealPlan: filters.mealPlan,
       market: selectedMarket.value._id
     }
 
@@ -826,6 +1019,25 @@ const handleAIExecuted = () => {
   if (viewMode.value === 'period') {
     fetchPriceList()
   }
+  // Clear selection after AI command execution
+  bulkEditCells.value = []
+  // Also clear calendar selection
+  if (calendarRef.value?.clearSelection) {
+    calendarRef.value.clearSelection()
+  }
+}
+
+// Handle calendar selection changes for AI assistant
+const handleSelectionChange = (cells) => {
+  bulkEditCells.value = cells
+}
+
+// Clear calendar selection (for AI assistant)
+const clearCalendarSelection = () => {
+  bulkEditCells.value = []
+  if (calendarRef.value?.clearSelection) {
+    calendarRef.value.clearSelection()
+  }
 }
 
 const editSeason = (season) => {
@@ -886,7 +1098,22 @@ const executeDelete = async () => {
 
 // Watchers
 watch(selectedMarket, () => {
+  fetchSeasons()
   fetchRates()
+
+  // Reset filters if current selection is not in filtered list
+  // Use nextTick to ensure filteredRoomTypes/filteredMealPlans are updated
+  nextTick(() => {
+    // Check if current room type filter is still valid
+    if (filters.roomType && !filteredRoomTypes.value.find(rt => rt._id === filters.roomType)) {
+      filters.roomType = filteredRoomTypes.value[0]?._id || ''
+    }
+    // Check if current meal plan filter is still valid
+    if (filters.mealPlan && !filteredMealPlans.value.find(mp => mp._id === filters.mealPlan)) {
+      filters.mealPlan = filteredMealPlans.value[0]?._id || ''
+    }
+  })
+
   if (viewMode.value === 'period') {
     fetchPriceList()
   }
@@ -894,15 +1121,25 @@ watch(selectedMarket, () => {
 
 watch(viewMode, (newMode) => {
   if (newMode === 'period') {
-    // Auto-select first room type if none selected
-    if (!filters.roomType && roomTypes.value.length > 0) {
-      filters.roomType = roomTypes.value[0]._id
+    // Auto-select first filtered room type if none selected
+    if (!filters.roomType && filteredRoomTypes.value.length > 0) {
+      filters.roomType = filteredRoomTypes.value[0]._id
+    }
+    // Auto-select first filtered meal plan if none selected
+    if (!filters.mealPlan && filteredMealPlans.value.length > 0) {
+      filters.mealPlan = filteredMealPlans.value[0]._id
     }
     fetchPriceList()
   }
 })
 
 watch(() => filters.roomType, () => {
+  if (viewMode.value === 'period') {
+    fetchPriceList()
+  }
+})
+
+watch(() => filters.mealPlan, () => {
   if (viewMode.value === 'period') {
     fetchPriceList()
   }

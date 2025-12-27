@@ -52,6 +52,17 @@
                 {{ $t(`common.status.${roomType.status}`) }}
               </span>
             </div>
+            <!-- Markets that have this room type active -->
+            <div v-if="markets.length > 0" class="mt-1 flex items-center gap-1 flex-wrap">
+              <span class="material-icons text-xs text-indigo-500">public</span>
+              <span
+                v-for="market in getMarketsForRoomType(roomType._id)"
+                :key="market._id"
+                class="px-1.5 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded"
+              >
+                {{ market.code }}
+              </span>
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -118,6 +129,17 @@
             <span v-if="plan.includedMeals?.dinner" class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded">D</span>
             <span v-if="plan.includedMeals?.drinks" class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded">DR</span>
           </div>
+          <!-- Markets that have this meal plan active -->
+          <div v-if="markets.length > 0" class="mt-2 flex flex-wrap justify-center gap-1">
+            <span
+              v-for="market in getMarketsForMealPlan(plan._id)"
+              :key="market._id"
+              class="px-1.5 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded"
+              :title="getMarketName(market)"
+            >
+              {{ market.code }}
+            </span>
+          </div>
           <div class="mt-2">
             <button
               @click="confirmDeleteMealPlan(plan)"
@@ -170,9 +192,23 @@
       :title="$t('common.delete')"
       size="sm"
     >
-      <p class="text-gray-600 dark:text-slate-400">
-        {{ $t('common.confirm') }}?
-      </p>
+      <div class="space-y-3">
+        <p class="text-gray-600 dark:text-slate-400">
+          {{ $t('common.confirm') }}?
+        </p>
+        <!-- Rate count warning for meal plans -->
+        <div v-if="deleteType === 'mealPlan' && deleteTarget?.rateCount > 0" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+          <div class="flex items-start gap-2">
+            <span class="material-icons text-amber-500 text-lg">warning</span>
+            <div class="text-sm">
+              <p class="font-medium text-amber-700 dark:text-amber-400">{{ $t('planning.mealPlans.hasRates') }}</p>
+              <p class="text-amber-600 dark:text-amber-300 mt-1">
+                {{ deleteTarget.rateCount }} {{ $t('planning.pricing.rates') }} {{ $t('planning.mealPlans.willBeDeleted') }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       <template #footer>
         <button @click="showDeleteModal = false" type="button" class="btn-secondary">
           {{ $t('common.no') }}
@@ -187,7 +223,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
@@ -216,6 +252,9 @@ const loadingRoomTypes = ref(false)
 // Meal Plans
 const mealPlans = ref([])
 const loadingMealPlans = ref(false)
+
+// Markets (for showing which markets use each room type/meal plan)
+const markets = ref([])
 const showMealPlanForm = ref(false)
 const showStandardSelector = ref(false)
 
@@ -239,6 +278,30 @@ const getRoomTypeName = (roomType) => {
 
 const getMealPlanName = (plan) => {
   return plan.name?.[locale.value] || plan.name?.tr || plan.name?.en || plan.code
+}
+
+const getMarketName = (market) => {
+  return market.name?.[locale.value] || market.name?.tr || market.name?.en || market.code
+}
+
+// Get markets that have this room type active (empty activeRoomTypes = all active)
+const getMarketsForRoomType = (rtId) => {
+  return markets.value.filter(market => {
+    const activeIds = (market.activeRoomTypes || []).map(id => typeof id === 'object' ? id._id : id)
+    // If empty, this market has all room types active
+    if (activeIds.length === 0) return true
+    return activeIds.includes(rtId)
+  })
+}
+
+// Get markets that have this meal plan active (empty activeMealPlans = all active)
+const getMarketsForMealPlan = (mpId) => {
+  return markets.value.filter(market => {
+    const activeIds = (market.activeMealPlans || []).map(id => typeof id === 'object' ? id._id : id)
+    // If empty, this market has all meal plans active
+    if (activeIds.length === 0) return true
+    return activeIds.includes(mpId)
+  })
 }
 
 const fetchRoomTypes = async () => {
@@ -266,6 +329,17 @@ const fetchMealPlans = async () => {
     toast.error(t('common.fetchError'))
   } finally {
     loadingMealPlans.value = false
+  }
+}
+
+const fetchMarkets = async () => {
+  try {
+    const response = await planningService.getMarkets(props.hotel._id)
+    if (response.success) {
+      markets.value = response.data || []
+    }
+  } catch (error) {
+    console.error('Failed to fetch markets:', error)
   }
 }
 
@@ -299,9 +373,17 @@ const confirmDeleteRoomType = (roomType) => {
   showDeleteModal.value = true
 }
 
-const confirmDeleteMealPlan = (plan) => {
+const confirmDeleteMealPlan = async (plan) => {
   deleteTarget.value = plan
   deleteType.value = 'mealPlan'
+  // Check if meal plan has rates - show warning
+  try {
+    const ratesRes = await planningService.getRates(props.hotel._id, { mealPlan: plan._id })
+    const rates = Array.isArray(ratesRes.data) ? ratesRes.data : (ratesRes.data?.rates || [])
+    deleteTarget.value.rateCount = rates.length
+  } catch {
+    deleteTarget.value.rateCount = 0
+  }
   showDeleteModal.value = true
 }
 
@@ -330,6 +412,7 @@ watch(() => props.hotel?._id, (newId) => {
   if (newId) {
     fetchRoomTypes()
     fetchMealPlans()
+    fetchMarkets()
   }
 }, { immediate: true })
 </script>

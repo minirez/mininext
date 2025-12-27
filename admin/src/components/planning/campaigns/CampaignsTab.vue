@@ -52,6 +52,9 @@
                 <span class="font-bold text-green-600 dark:text-green-400">
                   {{ formatDiscount(campaign.discount) }}
                 </span>
+                <span v-if="campaign.conditions?.minNights > 1" class="text-orange-600 dark:text-orange-400">
+                  {{ campaign.conditions.minNights }}+ {{ $t('planning.campaigns.nightsShort') }}
+                </span>
               </div>
             </div>
           </div>
@@ -64,14 +67,47 @@
             </button>
           </div>
         </div>
+        <!-- Settings Badges -->
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <!-- B2C -->
+          <span v-if="campaign.visibility?.b2c" class="px-1.5 py-0.5 text-[10px] rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span class="material-icons text-[10px] align-middle">person</span> B2C
+          </span>
+          <!-- B2B -->
+          <span v-if="campaign.visibility?.b2b" class="px-1.5 py-0.5 text-[10px] rounded bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+            <span class="material-icons text-[10px] align-middle">business</span> B2B
+          </span>
+          <!-- Combinable -->
+          <span v-if="campaign.combinable" class="px-1.5 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+            <span class="material-icons text-[10px] align-middle">link</span> {{ $t('planning.campaigns.combinableShort') }}
+          </span>
+          <!-- Calculation Type -->
+          <span class="px-1.5 py-0.5 text-[10px] rounded"
+                :class="campaign.calculationType === 'sequential'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'">
+            {{ campaign.calculationType === 'sequential' ? $t('planning.campaigns.calculationTypeSequential') : $t('planning.campaigns.calculationTypeCumulative') }}
+          </span>
+          <!-- Calculation Order -->
+          <span v-if="campaign.calculationOrder > 0" class="px-1.5 py-0.5 text-[10px] rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            #{{ campaign.calculationOrder }}
+          </span>
+          <!-- Application Type -->
+          <span class="px-1.5 py-0.5 text-[10px] rounded"
+                :class="campaign.applicationType === 'checkin'
+                  ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'">
+            {{ campaign.applicationType === 'checkin' ? $t('planning.campaigns.applicationTypeCheckin') : $t('planning.campaigns.applicationTypeStay') }}
+          </span>
+        </div>
         <!-- Date Info -->
-        <div class="mt-3 text-xs text-gray-500 dark:text-slate-400 flex gap-4">
-          <span>
-            <span class="font-medium">{{ $t('planning.campaigns.bookingWindow') }}:</span>
+        <div class="mt-2 text-xs text-gray-500 dark:text-slate-400 flex gap-4">
+          <span class="flex items-center gap-1" :title="$t('planning.campaigns.bookingWindow')">
+            <span class="material-icons text-xs">event_available</span>
             {{ formatDate(campaign.bookingWindow?.startDate) }} - {{ formatDate(campaign.bookingWindow?.endDate) }}
           </span>
-          <span>
-            <span class="font-medium">{{ $t('planning.campaigns.stayWindow') }}:</span>
+          <span class="flex items-center gap-1" :title="$t('planning.campaigns.stayWindow')">
+            <span class="material-icons text-xs">date_range</span>
             {{ formatDate(campaign.stayWindow?.startDate) }} - {{ formatDate(campaign.stayWindow?.endDate) }}
           </span>
         </div>

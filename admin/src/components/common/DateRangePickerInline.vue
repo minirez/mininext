@@ -446,6 +446,8 @@ watch(() => props.modelValue, (newVal) => {
     const newStart = new Date(y, m - 1, d)
     if (!startDate.value || startDate.value.getTime() !== newStart.getTime()) {
       startDate.value = newStart
+      // Navigate calendar to show the start date's month
+      currentMonth.value = new Date(y, m - 1, 1)
     }
   }
   if (newVal?.end) {

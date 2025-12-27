@@ -1,22 +1,24 @@
 <template>
   <div>
-    <!-- Header with back button -->
-    <div class="mb-6">
+    <!-- Header with back button and save button -->
+    <div class="mb-6 flex items-center justify-between">
       <router-link to="/hotels" class="inline-flex items-center text-gray-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400">
         <span class="material-icons mr-1">arrow_back</span>
         {{ $t('common.back') }}
       </router-link>
+      <button @click="handleSave" class="btn-primary" :disabled="saving">
+        <span v-if="saving" class="flex items-center">
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ $t('common.loading') }}
+        </span>
+        <span v-else>{{ $t('common.save') }}</span>
+      </button>
     </div>
 
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
-      <div class="p-6 border-b border-gray-200 dark:border-slate-700">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
-          {{ isNew ? $t('hotels.newHotel') : $t('hotels.editHotel') }}
-        </h2>
-        <p class="text-gray-600 dark:text-slate-400 mt-1">
-          {{ isNew ? $t('hotels.description') : getHotelName(hotel) }}
-        </p>
-      </div>
 
       <!-- Tabs with Error Badges -->
       <FormTabs
@@ -46,20 +48,6 @@
 
       <!-- Tab Content -->
       <form v-else @submit.prevent="handleSave" class="p-6">
-        <!-- Save Button (Top) -->
-        <div class="flex justify-end mb-6">
-          <button type="submit" class="btn-primary" :disabled="saving">
-            <span v-if="saving" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {{ $t('common.loading') }}
-            </span>
-            <span v-else>{{ $t('common.save') }}</span>
-          </button>
-        </div>
-
         <!-- Basic Info Tab -->
         <div v-show="activeTab === 'basic'">
           <HotelBasicForm
@@ -94,6 +82,15 @@
           />
         </div>
 
+        <!-- Profile Tab -->
+        <div v-show="activeTab === 'profile'">
+          <HotelProfile
+            ref="profileFormRef"
+            :hotel="hotel"
+            :saving="saving"
+          />
+        </div>
+
         <!-- Gallery Tab -->
         <div v-show="activeTab === 'gallery'">
           <HotelGallery
@@ -123,6 +120,15 @@
           />
         </div>
 
+        <!-- Pricing Tab -->
+        <div v-show="activeTab === 'pricing'">
+          <HotelPricingForm
+            ref="pricingFormRef"
+            :hotel="hotel"
+            :saving="saving"
+          />
+        </div>
+
         <!-- SEO Tab -->
         <div v-show="activeTab === 'seo'">
           <HotelSeoForm
@@ -131,27 +137,13 @@
             :saving="saving"
           />
         </div>
-
-        <!-- Save Button (Bottom) -->
-        <div class="pt-6 border-t border-gray-200 dark:border-slate-700 flex justify-end mt-6">
-          <button type="submit" class="btn-primary" :disabled="saving">
-            <span v-if="saving" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {{ $t('common.loading') }}
-            </span>
-            <span v-else>{{ $t('common.save') }}</span>
-          </button>
-        </div>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -164,11 +156,15 @@ import HotelGallery from '@/components/hotels/HotelGallery.vue'
 import HotelAmenities from '@/components/hotels/HotelAmenities.vue'
 import HotelPolicies from '@/components/hotels/HotelPolicies.vue'
 import HotelSeoForm from '@/components/hotels/HotelSeoForm.vue'
+import HotelProfile from '@/components/hotels/HotelProfile.vue'
+import HotelPricingForm from '@/components/hotels/HotelPricingForm.vue'
+import { useUIStore } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const { t, locale } = useI18n()
+const uiStore = useUIStore()
 
 // All supported languages for multilingual fields
 const SUPPORTED_LANGUAGES = ['tr', 'en', 'ru', 'el', 'de', 'es', 'it', 'fr', 'ro', 'bg', 'pt', 'da', 'zh', 'ar', 'fa', 'he', 'sq', 'uk', 'pl', 'az']
@@ -245,6 +241,26 @@ function getEmptyHotel() {
       floors: 1,
       hasElevator: false
     },
+    profile: {
+      overview: { content: createMultiLangObject(), establishedYear: null, renovationYear: null, chainBrand: '', officialRating: '' },
+      facilities: { content: createMultiLangObject(), features: [] },
+      dining: { content: createMultiLangObject(), features: [] },
+      sportsEntertainment: { content: createMultiLangObject(), features: [] },
+      spaWellness: { content: createMultiLangObject(), features: [], spaDetails: { area: null } },
+      familyKids: { content: createMultiLangObject(), features: [], kidsClubAges: { min: null, max: null } },
+      beachPool: { content: createMultiLangObject(), features: [], beachDetails: { distance: null, type: '', length: null } },
+      honeymoon: { content: createMultiLangObject(), features: [], available: false },
+      importantInfo: { content: createMultiLangObject() },
+      location: { content: createMultiLangObject(), distances: [] }
+    },
+    pricingSettings: {
+      model: 'net',
+      defaultMarkup: 20,
+      defaultCommission: 15,
+      currency: 'EUR',
+      taxIncluded: true,
+      taxRate: 10
+    },
     status: 'draft',
     featured: false
   }
@@ -262,15 +278,19 @@ const addressFormRef = ref(null)
 const amenitiesFormRef = ref(null)
 const policiesFormRef = ref(null)
 const seoFormRef = ref(null)
+const profileFormRef = ref(null)
+const pricingFormRef = ref(null)
 
 // Tab errors tracking
 const tabErrors = reactive({
   basic: {},
   contact: {},
   address: {},
+  profile: {},
   gallery: {},
   amenities: {},
   policies: {},
+  pricing: {},
   seo: {}
 })
 
@@ -279,9 +299,11 @@ const tabFields = {
   basic: ['name', 'slug', 'stars', 'type'],
   contact: ['contact.phone', 'contact.email'],
   address: ['address.city', 'address.country'],
+  profile: [],
   gallery: [],
   amenities: [],
   policies: [],
+  pricing: [],
   seo: []
 }
 
@@ -336,6 +358,8 @@ const collectFormData = () => {
   const amenitiesData = amenitiesFormRef.value?.getFormData?.() || {}
   const policiesData = policiesFormRef.value?.getFormData?.() || {}
   const seoData = seoFormRef.value?.getFormData?.() || {}
+  const profileData = profileFormRef.value?.getFormData?.() || {}
+  const pricingData = pricingFormRef.value?.getFormData?.() || {}
 
   // Merge all form data
   return {
@@ -344,7 +368,9 @@ const collectFormData = () => {
     ...addressData,
     ...amenitiesData,
     ...policiesData,
-    ...seoData
+    ...seoData,
+    ...profileData,
+    ...pricingData
   }
 }
 
@@ -354,9 +380,11 @@ const tabs = computed(() => [
   { id: 'basic', label: t('hotels.tabs.basic'), icon: 'info', requiresSave: false },
   { id: 'contact', label: t('hotels.tabs.contact'), icon: 'contacts', requiresSave: false },
   { id: 'address', label: t('hotels.tabs.address'), icon: 'location_on', requiresSave: false },
+  { id: 'profile', label: t('hotels.tabs.profile'), icon: 'description', requiresSave: false },
   { id: 'gallery', label: t('hotels.tabs.gallery'), icon: 'photo_library', requiresSave: true },
   { id: 'amenities', label: t('hotels.tabs.amenities'), icon: 'wifi', requiresSave: false },
   { id: 'policies', label: t('hotels.tabs.policies'), icon: 'policy', requiresSave: false },
+  { id: 'pricing', label: t('hotels.tabs.pricing'), icon: 'sell', requiresSave: false },
   { id: 'seo', label: t('hotels.tabs.seo'), icon: 'search', requiresSave: false }
 ])
 
@@ -376,10 +404,6 @@ const handleTabChange = (tab) => {
       addressFormRef.value.invalidateMapSize()
     })
   }
-}
-
-const getHotelName = (hotel) => {
-  return hotel?.name || ''
 }
 
 const fetchHotel = async () => {
@@ -422,11 +446,71 @@ const fetchHotel = async () => {
           description: { ...emptyHotel.seo.description, ...data.seo?.description },
           keywords: { ...emptyHotel.seo.keywords, ...data.seo?.keywords }
         },
-        roomConfig: { ...emptyHotel.roomConfig, ...data.roomConfig }
+        roomConfig: { ...emptyHotel.roomConfig, ...data.roomConfig },
+        pricingSettings: { ...emptyHotel.pricingSettings, ...data.pricingSettings },
+        profile: {
+          overview: {
+            ...emptyHotel.profile.overview,
+            ...data.profile?.overview,
+            content: { ...emptyHotel.profile.overview.content, ...data.profile?.overview?.content }
+          },
+          facilities: {
+            ...emptyHotel.profile.facilities,
+            ...data.profile?.facilities,
+            content: { ...emptyHotel.profile.facilities.content, ...data.profile?.facilities?.content }
+          },
+          dining: {
+            ...emptyHotel.profile.dining,
+            ...data.profile?.dining,
+            content: { ...emptyHotel.profile.dining.content, ...data.profile?.dining?.content }
+          },
+          sportsEntertainment: {
+            ...emptyHotel.profile.sportsEntertainment,
+            ...data.profile?.sportsEntertainment,
+            content: { ...emptyHotel.profile.sportsEntertainment.content, ...data.profile?.sportsEntertainment?.content }
+          },
+          spaWellness: {
+            ...emptyHotel.profile.spaWellness,
+            ...data.profile?.spaWellness,
+            content: { ...emptyHotel.profile.spaWellness.content, ...data.profile?.spaWellness?.content },
+            spaDetails: { ...emptyHotel.profile.spaWellness.spaDetails, ...data.profile?.spaWellness?.spaDetails }
+          },
+          familyKids: {
+            ...emptyHotel.profile.familyKids,
+            ...data.profile?.familyKids,
+            content: { ...emptyHotel.profile.familyKids.content, ...data.profile?.familyKids?.content },
+            kidsClubAges: { ...emptyHotel.profile.familyKids.kidsClubAges, ...data.profile?.familyKids?.kidsClubAges }
+          },
+          beachPool: {
+            ...emptyHotel.profile.beachPool,
+            ...data.profile?.beachPool,
+            content: { ...emptyHotel.profile.beachPool.content, ...data.profile?.beachPool?.content },
+            beachDetails: { ...emptyHotel.profile.beachPool.beachDetails, ...data.profile?.beachPool?.beachDetails }
+          },
+          honeymoon: {
+            ...emptyHotel.profile.honeymoon,
+            ...data.profile?.honeymoon,
+            content: { ...emptyHotel.profile.honeymoon.content, ...data.profile?.honeymoon?.content }
+          },
+          importantInfo: {
+            ...emptyHotel.profile.importantInfo,
+            ...data.profile?.importantInfo,
+            content: { ...emptyHotel.profile.importantInfo.content, ...data.profile?.importantInfo?.content }
+          },
+          location: {
+            ...emptyHotel.profile.location,
+            ...data.profile?.location,
+            content: { ...emptyHotel.profile.location.content, ...data.profile?.location?.content },
+            distances: data.profile?.location?.distances || []
+          }
+        }
       }
 
       // Clear all validation errors when data is loaded
       clearAllTabErrors()
+
+      // Set page title with hotel name
+      uiStore.setPageTitleSuffix(hotel.value.name)
     }
   } catch (error) {
     toast.error(error.response?.data?.message || t('hotels.fetchError'))
@@ -517,6 +601,14 @@ watch(() => route.params.id, (newId) => {
 onMounted(() => {
   if (!isNew.value) {
     fetchHotel()
+  } else {
+    // Set title for new hotel
+    uiStore.setPageTitleSuffix(t('hotels.newHotel'))
   }
+})
+
+onUnmounted(() => {
+  // Clear custom title when leaving the page
+  uiStore.clearPageTitle()
 })
 </script>

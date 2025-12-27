@@ -22,12 +22,14 @@
     </div>
 
     <!-- Calendar Popup -->
-    <transition name="calendar-fade">
-      <div
-        v-if="isOpen"
-        class="absolute z-50 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-600 p-4"
-        style="min-width: 600px;"
-      >
+    <Teleport to="body">
+      <transition name="calendar-fade">
+        <div
+          v-if="isOpen"
+          ref="calendarPopup"
+          class="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-600 p-4"
+          :style="popupStyle"
+        >
         <div class="flex space-x-4">
           <!-- Left Calendar -->
           <div class="flex-1">
@@ -109,8 +111,9 @@
             {{ $t('dateRangePicker.daysSelected', { count: dayCount }) }}
           </div>
         </div>
-      </div>
-    </transition>
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
@@ -143,11 +146,44 @@ const { t, locale } = useI18n()
 
 const pickerContainer = ref(null)
 const inputElement = ref(null)
+const calendarPopup = ref(null)
 const isOpen = ref(false)
 const currentMonth = ref(new Date())
 const startDate = ref(props.modelValue?.start ? new Date(props.modelValue.start) : null)
 const endDate = ref(props.modelValue?.end ? new Date(props.modelValue.end) : null)
 const hoverDate = ref(null)
+const popupPosition = ref({ top: 0, left: 0 })
+
+// Calculate popup position based on input element
+const popupStyle = computed(() => {
+  return {
+    top: `${popupPosition.value.top}px`,
+    left: `${popupPosition.value.left}px`,
+    minWidth: '600px'
+  }
+})
+
+const updatePopupPosition = () => {
+  if (inputElement.value) {
+    const rect = inputElement.value.getBoundingClientRect()
+    const popupWidth = 600
+    const popupHeight = 400 // approximate
+
+    // Check if popup would overflow right edge
+    let left = rect.left
+    if (left + popupWidth > window.innerWidth) {
+      left = window.innerWidth - popupWidth - 20
+    }
+
+    // Check if popup would overflow bottom edge
+    let top = rect.bottom + 8
+    if (top + popupHeight > window.innerHeight) {
+      top = rect.top - popupHeight - 8
+    }
+
+    popupPosition.value = { top, left }
+  }
+}
 
 const weekDays = computed(() => {
   if (locale.value === 'tr') {
@@ -349,6 +385,7 @@ function toggleCalendar() {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     currentMonth.value = startDate.value ? new Date(startDate.value) : new Date()
+    updatePopupPosition()
   }
 }
 
@@ -365,7 +402,9 @@ function nextMonthAction() {
 }
 
 function handleClickOutside(event) {
-  if (pickerContainer.value && !pickerContainer.value.contains(event.target)) {
+  const isInsideContainer = pickerContainer.value?.contains(event.target)
+  const isInsidePopup = calendarPopup.value?.contains(event.target)
+  if (!isInsideContainer && !isInsidePopup) {
     isOpen.value = false
   }
 }

@@ -151,9 +151,10 @@ export const updateHotel = asyncHandler(async (req, res) => {
 
 	// Fields that can be updated
 	const allowedFields = [
-		'name', 'description', 'stars', 'type',
-		'address', 'contact', 'amenities', 'policies',
-		'seo', 'featured', 'displayOrder'
+		'name', 'description', 'slug', 'logo', 'stars', 'type', 'category',
+		'visibility', 'address', 'location', 'contact', 'amenities', 'policies',
+		'roomConfig', 'pricingSettings', 'seo', 'profile', 'tags',
+		'featured', 'displayOrder'
 	]
 
 	allowedFields.forEach(field => {

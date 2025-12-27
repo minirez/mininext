@@ -80,6 +80,45 @@ const deactivateAgency = async (id) => {
   }
 }
 
+const suspendAgency = async (id) => {
+  try {
+    const response = await apiClient.post(`/agencies/${id}/suspend`)
+    return response.data
+  } catch (error) {
+    console.error('Agency Service: Failed to suspend agency', error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Document Management
+const uploadDocument = async (agencyId, formData) => {
+  try {
+    const response = await apiClient.post(`/agencies/${agencyId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Agency Service: Failed to upload document', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const deleteDocument = async (agencyId, documentId) => {
+  try {
+    const response = await apiClient.delete(`/agencies/${agencyId}/documents/${documentId}`)
+    return response.data
+  } catch (error) {
+    console.error('Agency Service: Failed to delete document', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const getDocumentUrl = (agencyId, documentId) => {
+  return `/agencies/${agencyId}/documents/${documentId}/file`
+}
+
 // Agency Users
 const getAgencyUsers = async (agencyId, params = {}) => {
   try {
@@ -130,6 +169,10 @@ export default {
   approveAgency,
   activateAgency,
   deactivateAgency,
+  suspendAgency,
+  uploadDocument,
+  deleteDocument,
+  getDocumentUrl,
   getAgencyUsers,
   createAgencyUser,
   updateAgencyUser,

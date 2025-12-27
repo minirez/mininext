@@ -39,47 +39,66 @@
         </div>
       </div>
 
-      <!-- Date Range -->
-      <div>
+      <!-- No seasons warning -->
+      <div v-if="seasons.length === 0" class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <div class="flex items-start gap-3">
+          <span class="material-icons text-amber-500">warning</span>
+          <div>
+            <div class="font-medium text-amber-700 dark:text-amber-400">{{ $t('planning.pricing.noSeasonsWarning') }}</div>
+            <p class="text-sm text-amber-600 dark:text-amber-300 mt-1">{{ $t('planning.pricing.noSeasonsHint') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date Range with Season Info -->
+      <div v-else>
         <label class="form-label flex items-center gap-2 mb-3">
           <span class="material-icons text-blue-600">date_range</span>
           {{ $t('planning.pricing.period') }} <span class="text-red-500">*</span>
         </label>
+
+        <!-- Available Seasons Legend -->
+        <div class="mb-3 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+          <div class="text-xs text-gray-500 dark:text-slate-400 mb-2">{{ $t('planning.pricing.availableSeasons') }}:</div>
+          <div class="flex flex-wrap gap-2">
+            <div
+              v-for="s in seasons"
+              :key="s._id"
+              class="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
+              :class="detectedSeason?._id === s._id
+                ? 'bg-purple-100 dark:bg-purple-900/30 ring-2 ring-purple-500'
+                : 'bg-white dark:bg-slate-600'"
+            >
+              <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: s.color }"></div>
+              <span class="font-medium">{{ s.code }}</span>
+              <span class="text-gray-400 dark:text-slate-400">{{ formatSeasonDates(s) }}</span>
+            </div>
+          </div>
+        </div>
+
         <DateRangePickerInline
           v-model="dateRange"
           :allow-past="true"
-          :min-date="seasonMinDate"
-          :max-date="seasonMaxDate"
+          :min-date="allSeasonsMinDate"
+          :max-date="allSeasonsMaxDate"
+          :disabled-dates="disabledDates"
         />
-      </div>
 
-      <!-- Season (Optional) -->
-      <div v-if="seasons.length > 0">
-        <label class="form-label">{{ $t('planning.pricing.season') }} <span class="text-gray-400">({{ $t('common.optional') }})</span></label>
-        <div class="flex flex-wrap gap-2 mt-2">
-          <button
-            type="button"
-            @click="form.season = ''"
-            class="px-3 py-1.5 rounded-lg border-2 text-sm transition-all"
-            :class="!form.season
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-200 dark:border-slate-600'"
-          >
-            {{ $t('common.none') }}
-          </button>
-          <button
-            v-for="s in seasons"
-            :key="s._id"
-            type="button"
-            @click="form.season = s._id"
-            class="px-3 py-1.5 rounded-lg border-2 text-sm transition-all flex items-center gap-2"
-            :class="form.season === s._id
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-200 dark:border-slate-600'"
-          >
-            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: s.color }"></div>
-            {{ s.code }}
-          </button>
+        <!-- Detected Season Info -->
+        <div v-if="detectedSeason" class="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div class="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300">
+            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: detectedSeason.color }"></div>
+            <span class="font-medium">{{ detectedSeason.code }}</span>
+            <span class="text-purple-500">{{ $t('planning.pricing.seasonAutoDetected') }}</span>
+          </div>
+        </div>
+
+        <!-- No season for selected dates -->
+        <div v-else-if="dateRange.start && dateRange.end && !detectedSeason" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div class="flex items-start gap-2">
+            <span class="material-icons text-red-500 text-sm">error</span>
+            <div class="text-sm text-red-700 dark:text-red-300">{{ $t('planning.pricing.noSeasonForDates') }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -118,7 +137,7 @@
       <div class="border-b border-gray-200 dark:border-slate-700">
         <div class="flex gap-1 overflow-x-auto pb-px">
           <button
-            v-for="rt in roomTypes"
+            v-for="rt in filteredRoomTypes"
             :key="rt._id"
             type="button"
             @click="selectedRoomTab = rt._id"
@@ -167,130 +186,199 @@
           </div>
         </div>
 
-        <!-- Meal Plan Pricing Cards -->
-        <div class="space-y-4">
-          <div
-            v-for="mp in mealPlans"
-            :key="mp._id"
-            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
-          >
-            <!-- Meal Plan Header -->
-            <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-600">
-              <span
-                class="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold"
-                :class="getMealPlanBg(mp.code)"
-              >
-                {{ mp.code }}
-              </span>
-              <div class="font-medium text-gray-800 dark:text-white">{{ getMealPlanName(mp) }}</div>
-            </div>
-
-            <!-- Pricing Fields -->
-            <div class="p-4 space-y-3">
-              <!-- Base Price -->
-              <div class="flex items-center gap-4">
-                <label class="text-sm text-gray-600 dark:text-slate-400 w-32">{{ $t('planning.pricing.basePrice') }}</label>
-                <div class="flex items-center gap-2">
-                  <input
-                    v-if="roomPrices[selectedRoomTab]?.[mp._id]"
-                    v-model.number="roomPrices[selectedRoomTab][mp._id].pricePerNight"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="w-28 text-center text-lg font-bold border-2 rounded-lg px-2 py-1.5 transition-colors"
-                    :class="roomPrices[selectedRoomTab][mp._id]?.pricePerNight > 0
-                      ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
-                      : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'"
-                    placeholder="0"
-                  />
-                  <span class="text-sm text-gray-500">{{ currency }}</span>
-                </div>
-              </div>
-
-              <!-- Extra Person Prices -->
-              <div class="pt-3 border-t border-gray-100 dark:border-slate-700 space-y-2">
-                <div class="text-xs font-medium text-gray-500 dark:text-slate-400 mb-2">{{ $t('planning.pricing.extraPrices') }}</div>
-
-                <!-- Extra Adult -->
-                <div class="flex items-center gap-4">
-                  <div class="flex items-center gap-2 w-32">
-                    <span class="material-icons text-amber-500 text-sm">person_add</span>
-                    <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.extraAdultShort') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-400">+</span>
+        <!-- Meal Plan Pricing Table -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <!-- Header: Meal Plan Codes -->
+              <thead>
+                <tr class="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-600">
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 w-40">
+                    {{ currency }}
+                  </th>
+                  <th
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-3 text-center"
+                  >
+                    <div
+                      class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm font-bold"
+                      :class="getMealPlanBg(mp.code)"
+                    >
+                      {{ mp.code }}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Base Price Row -->
+                <tr class="border-b border-gray-100 dark:border-slate-700 bg-green-50/50 dark:bg-green-900/10">
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-green-600 text-lg">hotel</span>
+                      <span class="font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.basePrice') }}</span>
+                    </div>
+                  </td>
+                  <td
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-3 text-center"
+                  >
                     <input
                       v-if="roomPrices[selectedRoomTab]?.[mp._id]"
-                      v-model.number="roomPrices[selectedRoomTab][mp._id].extraAdult"
+                      v-model.number="roomPrices[selectedRoomTab][mp._id].pricePerNight"
                       type="number"
                       min="0"
-                      class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
+                      step="1"
+                      class="w-24 text-center text-lg font-bold border-2 rounded-lg px-2 py-1.5 transition-colors"
+                      :class="roomPrices[selectedRoomTab][mp._id]?.pricePerNight > 0
+                        ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                        : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'"
                       placeholder="0"
                     />
-                  </div>
-                </div>
+                  </td>
+                </tr>
 
-                <!-- Child Order Pricing -->
-                <div
-                  v-for="(childPrice, childIndex) in roomPrices[selectedRoomTab]?.[mp._id]?.childOrderPricing || []"
-                  :key="childIndex"
-                  class="flex items-center gap-4"
+                <!-- Extra Adult Row -->
+                <tr class="border-b border-gray-100 dark:border-slate-700">
+                  <td class="px-4 py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-amber-500 text-sm">person_add</span>
+                      <span class="text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.extraAdultShort') }}</span>
+                    </div>
+                  </td>
+                  <td
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-2 text-center"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span class="text-xs text-gray-400">+</span>
+                      <input
+                        v-if="roomPrices[selectedRoomTab]?.[mp._id]"
+                        v-model.number="roomPrices[selectedRoomTab][mp._id].extraAdult"
+                        type="number"
+                        min="0"
+                        class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
+                        placeholder="0"
+                      />
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Child Order Pricing Rows -->
+                <tr
+                  v-for="childIndex in maxChildrenForCurrentRoom"
+                  :key="'child-' + childIndex"
+                  class="border-b border-gray-100 dark:border-slate-700"
                 >
-                  <div class="flex items-center gap-2 w-32">
-                    <span class="material-icons text-pink-500 text-sm">child_care</span>
-                    <span class="text-xs text-gray-600 dark:text-slate-400">{{ childIndex + 1 }}. {{ $t('planning.pricing.child') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-400">+</span>
-                    <input
-                      v-model.number="roomPrices[selectedRoomTab][mp._id].childOrderPricing[childIndex]"
-                      type="number"
-                      min="0"
-                      class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+                  <td class="px-4 py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-pink-500 text-sm">child_care</span>
+                      <span class="text-gray-600 dark:text-slate-400">{{ childIndex }}. {{ $t('planning.pricing.child') }}</span>
+                      <!-- Age source indicator - only show on first child row -->
+                      <span
+                        v-if="childIndex === 1"
+                        class="text-xs px-1.5 py-0.5 rounded"
+                        :class="{
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': ageSettings.childSource === 'hotel',
+                          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': ageSettings.childSource === 'market',
+                          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': ageSettings.childSource === 'season'
+                        }"
+                        :title="$t('planning.pricing.ageSourceTooltip.' + ageSettings.childSource)"
+                      >
+                        0-{{ ageSettings.childMaxAge }} {{ $t('planning.pricing.age') }}
+                        <span class="opacity-70">({{ $t('planning.pricing.ageSource.' + ageSettings.childSource) }})</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-2 text-center"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span class="text-xs text-gray-400">+</span>
+                      <input
+                        v-if="roomPrices[selectedRoomTab]?.[mp._id]?.childOrderPricing"
+                        v-model.number="roomPrices[selectedRoomTab][mp._id].childOrderPricing[childIndex - 1]"
+                        type="number"
+                        min="0"
+                        class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
+                        placeholder="0"
+                      />
+                    </div>
+                  </td>
+                </tr>
 
-                <!-- Extra Infant -->
-                <div class="flex items-center gap-4">
-                  <div class="flex items-center gap-2 w-32">
-                    <span class="material-icons text-purple-500 text-sm">baby_changing_station</span>
-                    <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.extraInfantShort') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-400">+</span>
-                    <input
-                      v-if="roomPrices[selectedRoomTab]?.[mp._id]"
-                      v-model.number="roomPrices[selectedRoomTab][mp._id].extraInfant"
-                      type="number"
-                      min="0"
-                      class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+                <!-- Extra Infant Row -->
+                <tr class="border-b border-gray-100 dark:border-slate-700">
+                  <td class="px-4 py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-purple-500 text-sm">baby_changing_station</span>
+                      <span class="text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.extraInfantShort') }}</span>
+                      <!-- Age source indicator -->
+                      <span
+                        class="text-xs px-1.5 py-0.5 rounded"
+                        :class="{
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': ageSettings.infantSource === 'hotel',
+                          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': ageSettings.infantSource === 'market',
+                          'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': ageSettings.infantSource === 'season'
+                        }"
+                        :title="$t('planning.pricing.ageSourceTooltip.' + ageSettings.infantSource)"
+                      >
+                        0-{{ ageSettings.infantMaxAge }} {{ $t('planning.pricing.age') }}
+                        <span class="opacity-70">({{ $t('planning.pricing.ageSource.' + ageSettings.infantSource) }})</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-2 text-center"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span class="text-xs text-gray-400">+</span>
+                      <input
+                        v-if="roomPrices[selectedRoomTab]?.[mp._id]"
+                        v-model.number="roomPrices[selectedRoomTab][mp._id].extraInfant"
+                        type="number"
+                        min="0"
+                        class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
+                        placeholder="0"
+                      />
+                    </div>
+                  </td>
+                </tr>
 
-                <!-- Single Occupancy Discount -->
-                <div class="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-slate-700 mt-2">
-                  <div class="flex items-center gap-2 w-32">
-                    <span class="material-icons text-blue-500 text-sm">person</span>
-                    <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.singleOccupancy') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-400">-</span>
-                    <input
-                      v-if="roomPrices[selectedRoomTab]?.[mp._id]"
-                      v-model.number="roomPrices[selectedRoomTab][mp._id].singleSupplement"
-                      type="number"
-                      min="0"
-                      class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+                <!-- Single Occupancy Discount Row -->
+                <tr class="bg-blue-50/50 dark:bg-blue-900/10">
+                  <td class="px-4 py-2">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-blue-500 text-sm">person</span>
+                      <span class="text-gray-600 dark:text-slate-400">{{ $t('planning.pricing.singleOccupancy') }}</span>
+                    </div>
+                  </td>
+                  <td
+                    v-for="mp in filteredMealPlans"
+                    :key="mp._id"
+                    class="px-2 py-2 text-center"
+                  >
+                    <div class="flex items-center justify-center gap-1">
+                      <span class="text-xs text-gray-400">−</span>
+                      <input
+                        v-if="roomPrices[selectedRoomTab]?.[mp._id]"
+                        v-model.number="roomPrices[selectedRoomTab][mp._id].singleSupplement"
+                        type="number"
+                        min="0"
+                        class="w-20 text-center text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800"
+                        placeholder="0"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -327,7 +415,7 @@
       <div class="border-b border-gray-200 dark:border-slate-700">
         <div class="flex gap-1 overflow-x-auto pb-px">
           <button
-            v-for="rt in roomTypes"
+            v-for="rt in filteredRoomTypes"
             :key="rt._id"
             type="button"
             @click="selectedRoomTab = rt._id"
@@ -436,7 +524,7 @@
         <div class="space-y-3">
           <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.bookingRestrictions') }}</label>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <!-- Stop Sale -->
             <label
               class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
@@ -456,6 +544,28 @@
                   {{ $t('planning.pricing.stopSale') }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.stopSaleHint') }}</div>
+              </div>
+            </label>
+
+            <!-- Single Stop -->
+            <label
+              class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
+              :class="roomRestrictions[selectedRoomTab].singleStop
+                ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20'
+                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+            >
+              <input type="checkbox" v-model="roomRestrictions[selectedRoomTab].singleStop" class="sr-only" />
+              <div
+                class="w-10 h-10 rounded-full flex items-center justify-center"
+                :class="roomRestrictions[selectedRoomTab].singleStop ? 'bg-pink-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
+              >
+                <span class="material-icons">person_off</span>
+              </div>
+              <div>
+                <div class="font-medium" :class="roomRestrictions[selectedRoomTab].singleStop ? 'text-pink-600' : 'text-gray-700 dark:text-slate-300'">
+                  {{ $t('planning.pricing.singleStop') }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.singleStopHint') }}</div>
               </div>
             </label>
 
@@ -616,8 +726,97 @@ const roomRestrictions = reactive({})
 // Currency from selected market
 const currency = computed(() => props.market?.currency || 'EUR')
 
+// Filtered room types and meal plans based on selected season
+const filteredRoomTypes = computed(() => {
+  if (!form.season) return props.roomTypes
+
+  const season = props.seasons.find(s => s._id === form.season)
+  if (!season) return props.roomTypes
+
+  // If season has activeRoomTypes defined, filter by them
+  if (season.activeRoomTypes?.length > 0) {
+    const activeIds = season.activeRoomTypes.map(rt => typeof rt === 'object' ? rt._id : rt)
+    return props.roomTypes.filter(rt => activeIds.includes(rt._id))
+  }
+
+  // Otherwise, check market's activeRoomTypes
+  if (props.market?.activeRoomTypes?.length > 0) {
+    const activeIds = props.market.activeRoomTypes.map(rt => typeof rt === 'object' ? rt._id : rt)
+    return props.roomTypes.filter(rt => activeIds.includes(rt._id))
+  }
+
+  return props.roomTypes
+})
+
+const filteredMealPlans = computed(() => {
+  if (!form.season) return props.mealPlans
+
+  const season = props.seasons.find(s => s._id === form.season)
+  if (!season) return props.mealPlans
+
+  // If season has activeMealPlans defined, filter by them
+  if (season.activeMealPlans?.length > 0) {
+    const activeIds = season.activeMealPlans.map(mp => typeof mp === 'object' ? mp._id : mp)
+    return props.mealPlans.filter(mp => activeIds.includes(mp._id))
+  }
+
+  // Otherwise, check market's activeMealPlans
+  if (props.market?.activeMealPlans?.length > 0) {
+    const activeIds = props.market.activeMealPlans.map(mp => typeof mp === 'object' ? mp._id : mp)
+    return props.mealPlans.filter(mp => activeIds.includes(mp._id))
+  }
+
+  return props.mealPlans
+})
+
 // Current room type
-const currentRoomType = computed(() => props.roomTypes.find(rt => rt._id === selectedRoomTab.value))
+const currentRoomType = computed(() => filteredRoomTypes.value.find(rt => rt._id === selectedRoomTab.value))
+
+// Age settings with source (Season > Market > Hotel)
+const ageSettings = computed(() => {
+  const hotel = props.hotel
+  const market = props.market
+  const selectedSeasonId = form.season
+  const season = selectedSeasonId ? props.seasons.find(s => s._id === selectedSeasonId) : null
+
+  // Default from hotel
+  let childMaxAge = hotel?.policies?.maxChildAge ?? 12
+  let infantMaxAge = hotel?.policies?.maxBabyAge ?? 2
+  let childSource = 'hotel'
+  let infantSource = 'hotel'
+
+  // Override from market if set
+  if (market?.childAgeRange?.max != null) {
+    childMaxAge = market.childAgeRange.max
+    childSource = 'market'
+  }
+  if (market?.infantAgeRange?.max != null) {
+    infantMaxAge = market.infantAgeRange.max
+    infantSource = 'market'
+  }
+
+  // Future: Override from season if set
+  if (season?.childAgeRange?.max != null) {
+    childMaxAge = season.childAgeRange.max
+    childSource = 'season'
+  }
+  if (season?.infantAgeRange?.max != null) {
+    infantMaxAge = season.infantAgeRange.max
+    infantSource = 'season'
+  }
+
+  return {
+    childMaxAge,
+    infantMaxAge,
+    childSource,
+    infantSource
+  }
+})
+
+// Max children for current room (for table rows)
+const maxChildrenForCurrentRoom = computed(() => {
+  return currentRoomType.value?.occupancy?.maxChildren ?? 2
+})
 
 const calculateNights = computed(() => {
   if (!dateRange.value.start || !dateRange.value.end) return 0
@@ -636,19 +835,23 @@ const hasRoomPrices = (roomTypeId) => {
   return Object.values(prices).some(mp => mp.pricePerNight > 0)
 }
 
-// Check if ALL rooms have at least one meal plan price (required)
+// Check if ALL filtered rooms have at least one meal plan price (required)
 const allRoomsHavePrices = computed(() => {
-  return props.roomTypes.every(rt => hasRoomPrices(rt._id))
+  return filteredRoomTypes.value.every(rt => hasRoomPrices(rt._id))
 })
 
-// Get rooms that are missing prices
+// Get filtered rooms that are missing prices
 const roomsMissingPrices = computed(() => {
-  return props.roomTypes.filter(rt => !hasRoomPrices(rt._id))
+  return filteredRoomTypes.value.filter(rt => !hasRoomPrices(rt._id))
 })
 
 const canProceed = computed(() => {
   if (currentStep.value === 0) {
-    return dateRange.value.start && dateRange.value.end
+    // Must have dates
+    if (!dateRange.value.start || !dateRange.value.end) return false
+    // Must have a detected season (dates within a season)
+    if (!detectedSeason.value) return false
+    return true
   }
   if (currentStep.value === 1) {
     return allRoomsHavePrices.value
@@ -690,7 +893,7 @@ const getMaxChildrenForRoom = (roomTypeId) => {
   return roomType?.occupancy?.maxChildren ?? 2
 }
 
-// Initialize prices and restrictions for all room types
+// Initialize prices and restrictions for all room types (use all props, not filtered)
 const initializeRoomData = () => {
   props.roomTypes.forEach(rt => {
     const maxChildren = getMaxChildrenForRoom(rt._id)
@@ -727,6 +930,7 @@ const initializeRoomData = () => {
         maxStay: 30,
         releaseDays: 0,
         stopSale: false,
+        singleStop: false,
         closedToArrival: false,
         closedToDeparture: false,
         singleSupplement: 0
@@ -734,9 +938,21 @@ const initializeRoomData = () => {
     }
   })
 
-  // Set first room as selected if not set
-  if (!selectedRoomTab.value && props.roomTypes.length > 0) {
-    selectedRoomTab.value = props.roomTypes[0]._id
+  // Set first filtered room as selected if not set or current selection is not in filtered list
+  updateSelectedRoomTab()
+}
+
+// Update selected room tab when filter changes
+const updateSelectedRoomTab = () => {
+  const filtered = filteredRoomTypes.value
+  if (filtered.length === 0) {
+    selectedRoomTab.value = ''
+    return
+  }
+
+  // If current selection is not in filtered list, select first one
+  if (!selectedRoomTab.value || !filtered.find(rt => rt._id === selectedRoomTab.value)) {
+    selectedRoomTab.value = filtered[0]._id
   }
 }
 
@@ -745,47 +961,129 @@ watch([() => props.roomTypes, () => props.mealPlans], () => {
   initializeRoomData()
 }, { immediate: true, deep: true })
 
-// Computed min/max dates based on selected season
-const seasonMinDate = computed(() => {
-  if (!form.season) return null
-  const season = props.seasons.find(s => s._id === form.season)
-  if (season?.dateRanges?.length > 0) {
-    return new Date(season.dateRanges[0].startDate)
-  }
-  return null
-})
-
-const seasonMaxDate = computed(() => {
-  if (!form.season) return null
-  const season = props.seasons.find(s => s._id === form.season)
-  if (season?.dateRanges?.length > 0) {
-    return new Date(season.dateRanges[0].endDate)
-  }
-  return null
-})
-
-// Reset date range when season changes if dates are outside new season bounds
+// Watch for season change to update filtered room types
 watch(() => form.season, () => {
-  if (form.season && dateRange.value.start && dateRange.value.end) {
-    // Clear dates if they're outside season bounds
-    const start = new Date(dateRange.value.start)
-    const end = new Date(dateRange.value.end)
-    if (seasonMinDate.value && start < seasonMinDate.value) {
-      dateRange.value = { start: '', end: '' }
-    }
-    if (seasonMaxDate.value && end > seasonMaxDate.value) {
-      dateRange.value = { start: '', end: '' }
-    }
+  updateSelectedRoomTab()
+})
+
+// Selected season info
+const selectedSeasonInfo = computed(() => {
+  if (!form.season) return null
+  const season = props.seasons.find(s => s._id === form.season)
+  if (!season?.dateRanges?.length) return null
+
+  // Find the overall min start and max end from all date ranges
+  let minStart = null
+  let maxEnd = null
+
+  season.dateRanges.forEach(range => {
+    const start = new Date(range.startDate)
+    const end = new Date(range.endDate)
+    if (!minStart || start < minStart) minStart = start
+    if (!maxEnd || end > maxEnd) maxEnd = end
+  })
+
+  return {
+    startDate: minStart?.toISOString().split('T')[0],
+    endDate: maxEnd?.toISOString().split('T')[0],
+    dateRanges: season.dateRanges
   }
 })
 
-// Copy first meal plan price to all meal plans (current room)
+// Get all seasons' combined min/max dates for DateRangePicker bounds
+const allSeasonsMinDate = computed(() => {
+  let minDate = null
+  props.seasons.forEach(season => {
+    season.dateRanges?.forEach(range => {
+      const start = new Date(range.startDate)
+      if (!minDate || start < minDate) minDate = start
+    })
+  })
+  return minDate
+})
+
+const allSeasonsMaxDate = computed(() => {
+  let maxDate = null
+  props.seasons.forEach(season => {
+    season.dateRanges?.forEach(range => {
+      const end = new Date(range.endDate)
+      if (!maxDate || end > maxDate) maxDate = end
+    })
+  })
+  return maxDate
+})
+
+// Build array of all valid season date ranges for checking
+const allSeasonDateRanges = computed(() => {
+  const ranges = []
+  props.seasons.forEach(season => {
+    season.dateRanges?.forEach(range => {
+      ranges.push({
+        seasonId: season._id,
+        season: season,
+        start: new Date(range.startDate),
+        end: new Date(range.endDate)
+      })
+    })
+  })
+  return ranges
+})
+
+// Disabled dates (dates outside any season) - for DateRangePickerInline
+const disabledDates = computed(() => {
+  // We'll pass the season ranges to the picker component
+  // For now, return null as the picker doesn't support this yet
+  return null
+})
+
+// Auto-detect season based on selected date range
+const detectedSeason = computed(() => {
+  if (!dateRange.value.start || !dateRange.value.end) return null
+
+  const selectedStart = new Date(dateRange.value.start)
+  const selectedEnd = new Date(dateRange.value.end)
+  selectedStart.setHours(0, 0, 0, 0)
+  selectedEnd.setHours(0, 0, 0, 0)
+
+  // Find season that contains the entire selected range
+  for (const season of props.seasons) {
+    const matchingRange = season.dateRanges?.some(range => {
+      const rangeStart = new Date(range.startDate)
+      const rangeEnd = new Date(range.endDate)
+      rangeStart.setHours(0, 0, 0, 0)
+      rangeEnd.setHours(0, 0, 0, 0)
+      return selectedStart >= rangeStart && selectedEnd <= rangeEnd
+    })
+    if (matchingRange) return season
+  }
+  return null
+})
+
+// Auto-update form.season when detectedSeason changes
+watch(detectedSeason, (newSeason) => {
+  if (newSeason) {
+    form.season = newSeason._id
+  } else {
+    form.season = ''
+  }
+})
+
+// Format season dates for display in legend
+const formatSeasonDates = (season) => {
+  if (!season?.dateRanges?.length) return ''
+  const range = season.dateRanges[0]
+  const start = new Date(range.startDate)
+  const end = new Date(range.endDate)
+  return `${start.getDate()}.${start.getMonth() + 1} - ${end.getDate()}.${end.getMonth() + 1}`
+}
+
+// Copy first meal plan price to all meal plans (current room) - uses filtered
 const copyFirstPriceToAllMealPlans = () => {
-  const firstMealPlan = props.mealPlans[0]
+  const firstMealPlan = filteredMealPlans.value[0]
   if (!firstMealPlan || !roomPrices[selectedRoomTab.value]?.[firstMealPlan._id]) return
 
   const source = roomPrices[selectedRoomTab.value][firstMealPlan._id]
-  props.mealPlans.forEach(mp => {
+  filteredMealPlans.value.forEach(mp => {
     if (mp._id !== firstMealPlan._id) {
       roomPrices[selectedRoomTab.value][mp._id] = { ...source }
     }
@@ -793,15 +1091,15 @@ const copyFirstPriceToAllMealPlans = () => {
   toast.success(t('planning.pricing.copiedToMealPlans'))
 }
 
-// Copy current room's prices to all rooms
+// Copy current room's prices to all rooms - uses filtered
 const copyCurrentRoomToAll = () => {
   const source = roomPrices[selectedRoomTab.value]
   if (!source) return
 
-  props.roomTypes.forEach(rt => {
+  filteredRoomTypes.value.forEach(rt => {
     if (rt._id !== selectedRoomTab.value) {
       roomPrices[rt._id] = {}
-      props.mealPlans.forEach(mp => {
+      filteredMealPlans.value.forEach(mp => {
         roomPrices[rt._id][mp._id] = { ...source[mp._id] }
       })
     }
@@ -809,12 +1107,12 @@ const copyCurrentRoomToAll = () => {
   toast.success(t('planning.pricing.copiedToRooms'))
 }
 
-// Copy current room's restrictions to all rooms
+// Copy current room's restrictions to all rooms - uses filtered
 const copyRestrictionsToAllRooms = () => {
   const source = roomRestrictions[selectedRoomTab.value]
   if (!source) return
 
-  props.roomTypes.forEach(rt => {
+  filteredRoomTypes.value.forEach(rt => {
     if (rt._id !== selectedRoomTab.value) {
       roomRestrictions[rt._id] = { ...source }
     }
@@ -843,13 +1141,13 @@ const handleSave = async () => {
   try {
     const promises = []
 
-    // Create rates for each room type that has prices
-    props.roomTypes.forEach(rt => {
+    // Create rates for each filtered room type that has prices
+    filteredRoomTypes.value.forEach(rt => {
       const prices = roomPrices[rt._id]
       const restrictions = roomRestrictions[rt._id]
 
-      // For each meal plan that has a price > 0
-      props.mealPlans.forEach(mp => {
+      // For each filtered meal plan that has a price > 0
+      filteredMealPlans.value.forEach(mp => {
         const mealPlanPrice = prices?.[mp._id]
         if (mealPlanPrice?.pricePerNight > 0) {
           const data = {
@@ -870,6 +1168,7 @@ const handleSave = async () => {
             maxStay: restrictions?.maxStay || 30,
             releaseDays: restrictions?.releaseDays || 0,
             stopSale: restrictions?.stopSale || false,
+            singleStop: restrictions?.singleStop || false,
             closedToArrival: restrictions?.closedToArrival || false,
             closedToDeparture: restrictions?.closedToDeparture || false
           }
@@ -905,7 +1204,7 @@ const fetchLastRateAndSetDates = async () => {
       market: props.market._id
     })
 
-    // Handle both old format (array) and new format ({ rates, overrides })
+    // Handle response format
     let rates = []
     if (response.success) {
       if (Array.isArray(response.data)) {
@@ -916,27 +1215,24 @@ const fetchLastRateAndSetDates = async () => {
     }
 
     if (rates.length > 0) {
-      // Find the rate with the latest end date
+      // Daily rate model: each rate has a single 'date' field
+      // Find the rate with the latest date
       const sortedRates = [...rates].sort((a, b) => {
-        const endA = new Date(a.endDate)
-        const endB = new Date(b.endDate)
-        return endB - endA // Sort descending
+        const dateA = new Date(a.date)
+        const dateB = new Date(b.date)
+        return dateB - dateA // Sort descending
       })
 
       const lastRate = sortedRates[0]
-      const lastEndDate = new Date(lastRate.endDate)
-      const lastStartDate = new Date(lastRate.startDate)
+      const lastDate = new Date(lastRate.date)
 
-      // Calculate duration of last rate
-      const lastDuration = Math.ceil((lastEndDate - lastStartDate) / (1000 * 60 * 60 * 24)) + 1
-
-      // Set start date to day after last rate ends
-      const nextStartDate = new Date(lastEndDate)
+      // Set start date to day after last rate
+      const nextStartDate = new Date(lastDate)
       nextStartDate.setDate(nextStartDate.getDate() + 1)
 
-      // Set end date with same duration
+      // Set end date to 30 days later (default duration)
       const nextEndDate = new Date(nextStartDate)
-      nextEndDate.setDate(nextEndDate.getDate() + lastDuration - 1)
+      nextEndDate.setDate(nextEndDate.getDate() + 29)
 
       // Format dates as YYYY-MM-DD
       const formatDate = (date) => {
@@ -949,11 +1245,40 @@ const fetchLastRateAndSetDates = async () => {
       dateRange.value.start = formatDate(nextStartDate)
       dateRange.value.end = formatDate(nextEndDate)
 
-      console.log('Last rate period:', formatDate(lastStartDate), '-', formatDate(lastEndDate), `(${lastDuration} days)`)
+      console.log('Last rate date:', formatDate(lastDate))
       console.log('Suggested next period:', dateRange.value.start, '-', dateRange.value.end)
+    } else {
+      // No existing rates - set default dates (today + 30 days)
+      const today = new Date()
+      const endDate = new Date(today)
+      endDate.setDate(endDate.getDate() + 30)
+
+      const formatDate = (date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+
+      dateRange.value.start = formatDate(today)
+      dateRange.value.end = formatDate(endDate)
     }
   } catch (error) {
     console.error('Error fetching last rate:', error)
+    // Set default dates on error
+    const today = new Date()
+    const endDate = new Date(today)
+    endDate.setDate(endDate.getDate() + 30)
+
+    const formatDate = (date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    dateRange.value.start = formatDate(today)
+    dateRange.value.end = formatDate(endDate)
   }
 }
 

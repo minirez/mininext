@@ -413,6 +413,36 @@
               </div>
             </div>
 
+            <!-- Single Stop -->
+            <div
+              class="p-5 rounded-xl border-2 cursor-pointer transition-all"
+              :class="form.singleStop
+                ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20'
+                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+              @click="form.singleStop = !form.singleStop"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-14 h-14 rounded-full flex items-center justify-center transition-colors"
+                  :class="form.singleStop ? 'bg-pink-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
+                >
+                  <span class="material-icons text-2xl">person_off</span>
+                </div>
+                <div class="flex-1">
+                  <div class="font-bold text-lg" :class="form.singleStop ? 'text-pink-600' : 'text-gray-700 dark:text-slate-300'">
+                    {{ $t('planning.pricing.singleStop') }}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.singleStopHint') }}</div>
+                </div>
+                <div class="w-12 h-7 rounded-full transition-colors" :class="form.singleStop ? 'bg-pink-500' : 'bg-gray-300 dark:bg-slate-600'">
+                  <div
+                    class="w-5 h-5 mt-1 rounded-full bg-white shadow-md transition-transform"
+                    :class="form.singleStop ? 'translate-x-6' : 'translate-x-1'"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
             <!-- CTA/CTD -->
             <div class="grid grid-cols-2 gap-4">
               <div
@@ -552,6 +582,7 @@ const form = reactive({
   releaseDays: 0,
   // Restrictions
   stopSale: false,
+  singleStop: false,
   closedToArrival: false,
   closedToDeparture: false
 })
@@ -797,6 +828,7 @@ const save = async () => {
     // Restrictions tab
     if (activeTab.value === 'restrictions') {
       updateFields.stopSale = form.stopSale
+      updateFields.singleStop = form.singleStop
       updateFields.closedToArrival = form.closedToArrival
       updateFields.closedToDeparture = form.closedToDeparture
     }
@@ -993,6 +1025,7 @@ watch(() => props.modelValue, (val) => {
     form.minStay = 1
     form.releaseDays = 0
     form.stopSale = false
+    form.singleStop = false
     form.closedToArrival = false
     form.closedToDeparture = false
 

@@ -24,6 +24,22 @@
         >
           {{ $t('planning.pricing.today') }}
         </button>
+
+        <!-- Current Month Seasons -->
+        <template v-if="currentSeasons.length > 0">
+          <span class="hidden sm:block w-px h-5 bg-gray-300 dark:bg-slate-600 mx-1"></span>
+          <div class="hidden sm:flex items-center gap-1">
+            <span
+              v-for="season in currentSeasons"
+              :key="season._id"
+              class="px-2 py-0.5 text-xs font-medium text-white rounded-full"
+              :style="{ backgroundColor: season.color || '#6366f1' }"
+              :title="getSeasonName(season)"
+            >
+              {{ season.code }}
+            </span>
+          </div>
+        </template>
       </div>
 
       <!-- Quick Actions -->
@@ -111,7 +127,7 @@
             {{ getSelectionDateRange }}
           </span>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button
             @click="quickAction('stopSale', true)"
             class="px-2 py-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded hover:bg-red-200 transition-colors"
@@ -125,6 +141,20 @@
           >
             <span class="material-icons text-xs align-middle">check_circle</span>
             Open Sale
+          </button>
+          <button
+            @click="quickAction('singleStop', true)"
+            class="px-2 py-1 text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded hover:bg-pink-200 transition-colors"
+          >
+            <span class="material-icons text-xs align-middle">person_off</span>
+            1P Stop
+          </button>
+          <button
+            @click="quickAction('singleStop', false)"
+            class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700/30 text-gray-600 dark:text-gray-400 rounded hover:bg-gray-200 transition-colors"
+          >
+            <span class="material-icons text-xs align-middle">person</span>
+            1P Open
           </button>
         </div>
       </div>
@@ -257,6 +287,10 @@
           <span>{{ $t('planning.pricing.stopSale') }}</span>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2">
+          <div class="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-pink-500"></div>
+          <span>{{ $t('planning.pricing.singleStop') }}</span>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2">
           <div class="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-amber-500"></div>
           <span>{{ $t('planning.pricing.lowAllotment') }}</span>
         </div>
@@ -308,7 +342,7 @@
       <div
         v-if="editingCell"
         ref="popoverRef"
-        class="fixed z-50 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-4 min-w-[280px]"
+        class="fixed z-50 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-4 min-w-[280px] max-h-[calc(100vh-16px)] overflow-y-auto"
         :style="popoverStyle"
       >
         <div class="flex items-center justify-between mb-3">
@@ -416,6 +450,10 @@
               <span class="text-xs text-red-600">Stop Sale</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="inlineForm.singleStop" class="rounded border-gray-300 text-pink-600" />
+              <span class="text-xs text-pink-600">1P Stop</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" v-model="inlineForm.closedToArrival" class="rounded border-gray-300 text-orange-600" />
               <span class="text-xs">CTA</span>
             </label>
@@ -458,10 +496,11 @@ const props = defineProps({
   rates: { type: Array, default: () => [] },
   overrides: { type: Array, default: () => [] }, // RateOverride records (daily exceptions)
   loading: { type: Boolean, default: false },
-  initialMonth: { type: Object, default: null } // { year, month }
+  initialMonth: { type: Object, default: null }, // { year, month }
+  currentSeasons: { type: Array, default: () => [] } // Seasons in current month
 })
 
-const emit = defineEmits(['update', 'bulk-edit', 'refresh'])
+const emit = defineEmits(['update', 'bulk-edit', 'refresh', 'selection-change'])
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -497,6 +536,7 @@ const inlineForm = reactive({
   allotment: 0,
   minStay: 1,
   stopSale: false,
+  singleStop: false,
   closedToArrival: false,
   closedToDeparture: false,
   extraAdult: '',
@@ -551,8 +591,6 @@ const calendarDays = computed(() => {
     ? ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt']
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-  console.log('calendarDays: year=', year, 'month=', month, 'daysInMonth=', daysInMonth.value)
-
   for (let i = 1; i <= daysInMonth.value; i++) {
     const date = new Date(year, month, i)
     const dayOfWeek = date.getDay()
@@ -567,7 +605,6 @@ const calendarDays = computed(() => {
     })
   }
 
-  console.log('calendarDays: generated', days.length, 'days, last:', days[days.length - 1]?.date)
   return days
 })
 
@@ -620,6 +657,10 @@ const getMealPlanName = (mealPlan) => {
   return mealPlan.name?.[locale.value] || mealPlan.name?.tr || mealPlan.name?.en || ''
 }
 
+const getSeasonName = (season) => {
+  return season.name?.[locale.value] || season.name?.tr || season.name?.en || season.code
+}
+
 const getMealPlanColor = (code) => {
   const colors = {
     'RO': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -633,102 +674,17 @@ const getMealPlanColor = (code) => {
 }
 
 const getRateForCell = (roomTypeId, mealPlanId, dateStr) => {
-  // First check if there's an override for this specific date
-  const override = props.overrides.find(o => {
-    const rtId = o.roomType?._id || o.roomType
-    const mpId = o.mealPlan?._id || o.mealPlan
-    if (rtId !== roomTypeId || mpId !== mealPlanId) return false
-
-    // Override date is a single date (ISO string)
-    const overrideDateStr = o.date?.substring?.(0, 10) || ''
-    return overrideDateStr === dateStr
-  })
-
-  // Find the base rate (period-based) for this cell
-  const matchingRates = props.rates.filter(rate => {
+  // Daily rate model - find the rate that matches this exact date
+  return props.rates.find(rate => {
     const rtId = rate.roomType?._id || rate.roomType
     const mpId = rate.mealPlan?._id || rate.mealPlan
 
     if (rtId !== roomTypeId || mpId !== mealPlanId) return false
 
-    // Compare date strings directly (YYYY-MM-DD format)
-    const rateStartStr = rate.startDate.substring(0, 10)
-    const rateEndStr = rate.endDate.substring(0, 10)
-
-    return dateStr >= rateStartStr && dateStr <= rateEndStr
-  })
-
-  // Get base rate (prefer shorter range if multiple match)
-  let baseRate = null
-  if (matchingRates.length === 1) {
-    baseRate = matchingRates[0]
-  } else if (matchingRates.length > 1) {
-    baseRate = matchingRates.reduce((best, current) => {
-      const bestRange = new Date(best.endDate.substring(0, 10)) - new Date(best.startDate.substring(0, 10))
-      const currRange = new Date(current.endDate.substring(0, 10)) - new Date(current.startDate.substring(0, 10))
-      return currRange < bestRange ? current : best
-    })
-  }
-
-  // If there's an override, merge it with base rate
-  if (override) {
-    const mergedRate = baseRate ? { ...baseRate } : {
-      _id: null,
-      roomType: roomTypeId,
-      mealPlan: mealPlanId,
-      pricePerNight: 0,
-      allotment: 0,
-      stopSale: false,
-      closedToArrival: false,
-      closedToDeparture: false
-    }
-
-    // Apply override values (only non-null values)
-    if (override.pricePerNight !== null && override.pricePerNight !== undefined) {
-      mergedRate.pricePerNight = override.pricePerNight
-    }
-    if (override.allotment !== null && override.allotment !== undefined) {
-      mergedRate.allotment = override.allotment
-    }
-    if (override.stopSale !== null && override.stopSale !== undefined) {
-      mergedRate.stopSale = override.stopSale
-    }
-    if (override.stopSaleReason !== null && override.stopSaleReason !== undefined) {
-      mergedRate.stopSaleReason = override.stopSaleReason
-    }
-    if (override.closedToArrival !== null && override.closedToArrival !== undefined) {
-      mergedRate.closedToArrival = override.closedToArrival
-    }
-    if (override.closedToDeparture !== null && override.closedToDeparture !== undefined) {
-      mergedRate.closedToDeparture = override.closedToDeparture
-    }
-    if (override.minStay !== null && override.minStay !== undefined) {
-      mergedRate.minStay = override.minStay
-    }
-    if (override.maxStay !== null && override.maxStay !== undefined) {
-      mergedRate.maxStay = override.maxStay
-    }
-    if (override.singleSupplement !== null && override.singleSupplement !== undefined) {
-      mergedRate.singleSupplement = override.singleSupplement
-    }
-    if (override.extraAdult !== null && override.extraAdult !== undefined) {
-      mergedRate.extraAdult = override.extraAdult
-    }
-    if (override.extraChild !== null && override.extraChild !== undefined) {
-      mergedRate.extraChild = override.extraChild
-    }
-    if (override.extraInfant !== null && override.extraInfant !== undefined) {
-      mergedRate.extraInfant = override.extraInfant
-    }
-
-    // Mark that this is an override for UI indication
-    mergedRate.isOverride = true
-    mergedRate.overrideId = override._id
-
-    return mergedRate
-  }
-
-  return baseRate
+    // Compare date string directly (YYYY-MM-DD format)
+    const rateDateStr = rate.date?.substring?.(0, 10) || ''
+    return rateDateStr === dateStr
+  }) || null
 }
 
 const isCellSelected = (roomTypeId, mealPlanId, date) => {
@@ -738,7 +694,9 @@ const isCellSelected = (roomTypeId, mealPlanId, date) => {
 }
 
 const handleCellClick = (event, roomTypeId, mealPlanId, date) => {
-  const cellKey = { roomTypeId, mealPlanId, date }
+  // Get rate ID if exists
+  const rate = getRateForCell(roomTypeId, mealPlanId, date)
+  const cellKey = { roomTypeId, mealPlanId, date, rateId: rate?._id || null }
 
   if (event.shiftKey && selectedCells.value.length > 0) {
     // Range select
@@ -777,10 +735,13 @@ const selectRange = (start, end) => {
   if (start.roomTypeId === end.roomTypeId && start.mealPlanId === end.mealPlanId) {
     const current = new Date(minDate)
     while (current <= maxDate) {
+      const dateStr = formatDateToString(current)
+      const rate = getRateForCell(start.roomTypeId, start.mealPlanId, dateStr)
       newSelection.push({
         roomTypeId: start.roomTypeId,
         mealPlanId: start.mealPlanId,
-        date: formatDateToString(current)
+        date: dateStr,
+        rateId: rate?._id || null
       })
       current.setDate(current.getDate() + 1)
     }
@@ -795,9 +756,6 @@ const clearSelection = () => {
 
 const bulkEdit = () => {
   if (selectedCells.value.length > 0) {
-    const dates = [...new Set(selectedCells.value.map(c => c.date))].sort()
-    console.log('bulkEdit: emitting', selectedCells.value.length, 'cells for', dates.length, 'dates')
-    console.log('bulkEdit: first date:', dates[0], 'last date:', dates[dates.length - 1])
     emit('bulk-edit', selectedCells.value)
   }
 }
@@ -808,10 +766,12 @@ const selectDateColumn = (date, event) => {
 
   for (const roomType of props.roomTypes) {
     for (const mealPlan of filteredMealPlans.value) {
+      const rate = getRateForCell(roomType._id, mealPlan._id, date)
       newCells.push({
         roomTypeId: roomType._id,
         mealPlanId: mealPlan._id,
-        date
+        date,
+        rateId: rate?._id || null
       })
     }
   }
@@ -825,23 +785,21 @@ const selectDateColumn = (date, event) => {
 
     const rangeCells = []
     const current = new Date(startDateObj)
-    console.log('Range select: start=', startDateObj.toISOString(), 'end=', endDateObj.toISOString())
-    let dateCount = 0
     while (current <= endDateObj) {
       const dateStr = formatDateToString(current)
-      dateCount++
       for (const roomType of props.roomTypes) {
         for (const mealPlan of filteredMealPlans.value) {
+          const rate = getRateForCell(roomType._id, mealPlan._id, dateStr)
           rangeCells.push({
             roomTypeId: roomType._id,
             mealPlanId: mealPlan._id,
-            date: dateStr
+            date: dateStr,
+            rateId: rate?._id || null
           })
         }
       }
       current.setDate(current.getDate() + 1)
     }
-    console.log('Range select: generated', dateCount, 'dates, last date:', rangeCells[rangeCells.length - 1]?.date)
     selectedCells.value = rangeCells
   } else if (event.ctrlKey || event.metaKey) {
     // Toggle date column
@@ -865,11 +823,15 @@ const isDateColumnSelected = (date) => {
 
 // Select all cells in a room row (all dates for that room/meal plan)
 const selectRoomRow = (roomTypeId, mealPlanId, event) => {
-  const newCells = calendarDays.value.map(day => ({
-    roomTypeId,
-    mealPlanId,
-    date: day.date
-  }))
+  const newCells = calendarDays.value.map(day => {
+    const rate = getRateForCell(roomTypeId, mealPlanId, day.date)
+    return {
+      roomTypeId,
+      mealPlanId,
+      date: day.date,
+      rateId: rate?._id || null
+    }
+  })
 
   if (event.ctrlKey || event.metaKey) {
     // Toggle row
@@ -1054,6 +1016,7 @@ const copyWeek = () => {
           allotment: rate.allotment,
           minStay: rate.minStay,
           stopSale: rate.stopSale,
+          singleStop: rate.singleStop,
           closedToArrival: rate.closedToArrival,
           closedToDeparture: rate.closedToDeparture
         })
@@ -1102,6 +1065,7 @@ const pasteWeek = async () => {
         allotment: rateInfo.allotment,
         minStay: rateInfo.minStay,
         stopSale: rateInfo.stopSale,
+        singleStop: rateInfo.singleStop,
         closedToArrival: rateInfo.closedToArrival,
         closedToDeparture: rateInfo.closedToDeparture
       }
@@ -1175,6 +1139,7 @@ const openInlineEdit = async (roomTypeId, mealPlanId, date, rate) => {
   inlineForm.allotment = rate?.allotment || 0
   inlineForm.minStay = rate?.minStay || 1
   inlineForm.stopSale = rate?.stopSale || false
+  inlineForm.singleStop = rate?.singleStop || false
   inlineForm.closedToArrival = rate?.closedToArrival || false
   inlineForm.closedToDeparture = rate?.closedToDeparture || false
   inlineForm.extraAdult = rate?.extraAdult ?? ''
@@ -1186,14 +1151,44 @@ const openInlineEdit = async (roomTypeId, mealPlanId, date, rate) => {
     return typeof existing === 'number' ? existing : ''
   })
 
-  // Position popover near the click
+  // Position popover near the click - smart positioning to avoid going off-screen
   await nextTick()
   const cellEl = document.querySelector(`[data-cell="${roomTypeId}-${mealPlanId}-${date}"]`)
   if (cellEl) {
     const rect = cellEl.getBoundingClientRect()
+    const popoverHeight = 480 // Approximate height of the popover
+    const popoverWidth = 300 // Width of the popover
+    const margin = 8 // Margin from cell and viewport edges
+
+    // Calculate available space above and below the cell
+    const spaceBelow = window.innerHeight - rect.bottom - margin
+    const spaceAbove = rect.top - margin
+
+    // Decide whether to show above or below
+    let top
+    if (spaceBelow >= popoverHeight) {
+      // Enough space below - show below the cell
+      top = rect.bottom + margin
+    } else if (spaceAbove >= popoverHeight) {
+      // Not enough space below but enough above - show above the cell
+      top = rect.top - popoverHeight - margin
+    } else {
+      // Not enough space either way - position at top with some offset
+      top = Math.max(margin, Math.min(rect.top, window.innerHeight - popoverHeight - margin))
+    }
+
+    // Calculate left position - ensure popover stays within viewport
+    let left = rect.left
+    if (left + popoverWidth > window.innerWidth - margin) {
+      left = window.innerWidth - popoverWidth - margin
+    }
+    if (left < margin) {
+      left = margin
+    }
+
     popoverStyle.value = {
-      top: `${Math.min(rect.bottom + 8, window.innerHeight - 350)}px`,
-      left: `${Math.min(rect.left, window.innerWidth - 300)}px`
+      top: `${top}px`,
+      left: `${left}px`
     }
   } else {
     popoverStyle.value = {
@@ -1225,6 +1220,7 @@ const saveInlineEdit = async () => {
       allotment: inlineForm.allotment,
       minStay: inlineForm.minStay,
       stopSale: inlineForm.stopSale,
+      singleStop: inlineForm.singleStop,
       closedToArrival: inlineForm.closedToArrival,
       closedToDeparture: inlineForm.closedToDeparture,
       currency: currency.value
@@ -1284,6 +1280,16 @@ onUnmounted(() => {
 // Watch for month changes
 watch(currentDate, () => {
   clearSelection()
+})
+
+// Emit selection change for AI assistant
+watch(() => [...selectedCells.value], (newVal) => {
+  emit('selection-change', newVal)
+})
+
+// Expose clearSelection for parent component (AI assistant)
+defineExpose({
+  clearSelection
 })
 </script>
 

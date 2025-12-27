@@ -1,16 +1,17 @@
 <template>
   <div class="space-y-6">
-    <!-- Code & Name -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="form-label">{{ $t('planning.markets.code') }} <span class="text-red-500">*</span></label>
-        <input v-model="form.code" type="text" class="form-input uppercase" maxlength="10" />
-      </div>
-      <div>
-        <label class="form-label">{{ $t('planning.markets.name') }} ({{ currentLang.toUpperCase() }}) <span class="text-red-500">*</span></label>
-        <input v-model="form.name[currentLang]" type="text" class="form-input" />
-      </div>
+    <!-- Code -->
+    <div>
+      <label class="form-label">{{ $t('planning.markets.code') }} <span class="text-red-500">*</span></label>
+      <input v-model="form.code" type="text" class="form-input uppercase" maxlength="10" />
     </div>
+
+    <!-- Name (Multilingual) -->
+    <MultiLangInput
+      v-model="form.name"
+      :languages="SUPPORTED_LANGUAGES"
+      :label="$t('planning.markets.name') + ' *'"
+    />
 
     <!-- Currency -->
     <div>
@@ -43,54 +44,78 @@
     </div>
 
     <!-- Age Ranges -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Child Age Range -->
-      <div class="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-        <label class="form-label mb-3">{{ $t('planning.markets.childAgeRange') }}</label>
-        <div class="flex items-center gap-2">
-          <input
-            v-model.number="form.childAgeRange.min"
-            type="number"
-            min="0"
-            max="17"
-            class="form-input w-20 text-center"
-            placeholder="3"
-          />
-          <span class="text-gray-500">-</span>
-          <input
-            v-model.number="form.childAgeRange.max"
-            type="number"
-            min="1"
-            max="17"
-            class="form-input w-20 text-center"
-            placeholder="12"
-          />
-          <span class="text-sm text-gray-500">{{ $t('planning.markets.years') }}</span>
-        </div>
+    <div class="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-icons text-pink-500">child_care</span>
+        <label class="form-label mb-0">{{ $t('planning.markets.ageSettings') }}</label>
       </div>
+      <p class="text-xs text-gray-500 dark:text-slate-400 mb-4">
+        {{ $t('planning.markets.ageSettingsHint') }}
+      </p>
 
-      <!-- Infant Age Range -->
-      <div class="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-        <label class="form-label mb-3">{{ $t('planning.markets.infantAgeRange') }}</label>
-        <div class="flex items-center gap-2">
-          <input
-            v-model.number="form.infantAgeRange.min"
-            type="number"
-            min="0"
-            max="5"
-            class="form-input w-20 text-center"
-            placeholder="0"
-          />
-          <span class="text-gray-500">-</span>
-          <input
-            v-model.number="form.infantAgeRange.max"
-            type="number"
-            min="0"
-            max="5"
-            class="form-input w-20 text-center"
-            placeholder="2"
-          />
-          <span class="text-sm text-gray-500">{{ $t('planning.markets.years') }}</span>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Child Age Range -->
+        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-icons text-pink-500 text-sm">child_care</span>
+            <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.markets.childAgeRange') }}</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              v-model.number="form.childAgeRange.min"
+              type="number"
+              min="0"
+              max="17"
+              class="form-input w-16 text-center"
+              :placeholder="hotel?.policies?.maxBabyAge ? String(hotel.policies.maxBabyAge + 1) : '3'"
+            />
+            <span class="text-gray-500">-</span>
+            <input
+              v-model.number="form.childAgeRange.max"
+              type="number"
+              min="1"
+              max="17"
+              class="form-input w-16 text-center"
+              :placeholder="String(hotel?.policies?.maxChildAge || 12)"
+            />
+            <span class="text-sm text-gray-500">{{ $t('planning.markets.years') }}</span>
+          </div>
+          <p v-if="!form.childAgeRange.max" class="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+            <span class="material-icons text-xs">info</span>
+            {{ $t('planning.markets.usingHotelDefault') }}: 0-{{ hotel?.policies?.maxChildAge || 12 }}
+          </p>
+        </div>
+
+        <!-- Infant Age Range -->
+        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-icons text-purple-500 text-sm">baby_changing_station</span>
+            <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.markets.infantAgeRange') }}</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              v-model.number="form.infantAgeRange.min"
+              type="number"
+              min="0"
+              max="5"
+              class="form-input w-16 text-center"
+              placeholder="0"
+            />
+            <span class="text-gray-500">-</span>
+            <input
+              v-model.number="form.infantAgeRange.max"
+              type="number"
+              min="0"
+              max="5"
+              class="form-input w-16 text-center"
+              :placeholder="String(hotel?.policies?.maxBabyAge || 2)"
+            />
+            <span class="text-sm text-gray-500">{{ $t('planning.markets.years') }}</span>
+          </div>
+          <p v-if="!form.infantAgeRange.max" class="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+            <span class="material-icons text-xs">info</span>
+            {{ $t('planning.markets.usingHotelDefault') }}: 0-{{ hotel?.policies?.maxBabyAge || 2 }}
+          </p>
         </div>
       </div>
     </div>
@@ -107,6 +132,79 @@
           <input type="checkbox" v-model="form.salesChannels.b2b" class="rounded border-gray-300 text-indigo-600" />
           <span class="text-sm">B2B</span>
         </label>
+      </div>
+    </div>
+
+    <!-- Active Products -->
+    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-4">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="material-icons text-blue-500">inventory_2</span>
+        <label class="form-label mb-0">{{ $t('planning.markets.activeProducts') }}</label>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-slate-400">
+        {{ $t('planning.markets.activeProductsHint') }}
+      </p>
+
+      <!-- Active Room Types -->
+      <div v-if="roomTypes.length" class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-icons text-blue-500 text-sm">hotel</span>
+          <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.markets.activeRoomTypes') }}</label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label
+            v-for="rt in roomTypes"
+            :key="rt._id"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+            :class="form.activeRoomTypes.includes(rt._id)
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+          >
+            <input
+              type="checkbox"
+              :value="rt._id"
+              v-model="form.activeRoomTypes"
+              class="sr-only"
+            />
+            <span>{{ rt.code }}</span>
+            <span class="text-xs text-gray-500 dark:text-slate-400">{{ rt.name?.[locale] || rt.name?.tr }}</span>
+          </label>
+        </div>
+        <p class="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">info</span>
+          {{ $t('planning.markets.emptyMeansAll') }}
+        </p>
+      </div>
+
+      <!-- Active Meal Plans -->
+      <div v-if="mealPlans.length" class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-icons text-green-500 text-sm">restaurant</span>
+          <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.markets.activeMealPlans') }}</label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label
+            v-for="mp in mealPlans"
+            :key="mp._id"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+            :class="form.activeMealPlans.includes(mp._id)
+              ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+          >
+            <input
+              type="checkbox"
+              :value="mp._id"
+              v-model="form.activeMealPlans"
+              class="sr-only"
+            />
+            <span>{{ mp.code }}</span>
+            <span class="text-xs text-gray-500 dark:text-slate-400">{{ mp.name?.[locale] || mp.name?.tr }}</span>
+          </label>
+        </div>
+        <p class="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+          <span class="material-icons text-xs">info</span>
+          {{ $t('planning.markets.emptyMeansAll') }}
+        </p>
       </div>
     </div>
 
@@ -301,17 +399,19 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import planningService from '@/services/planningService'
+import MultiLangInput from '@/components/common/MultiLangInput.vue'
 
 const props = defineProps({
   hotel: { type: Object, required: true },
-  market: { type: Object, default: null }
+  market: { type: Object, default: null },
+  roomTypes: { type: Array, default: () => [] },
+  mealPlans: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['saved', 'cancel'])
 
 const { t, locale } = useI18n()
 const toast = useToast()
-const currentLang = computed(() => locale.value)
 const saving = ref(false)
 
 const currencies = ['TRY', 'USD', 'EUR', 'GBP', 'RUB', 'SAR', 'AED', 'CHF', 'JPY', 'CNY']
@@ -356,6 +456,8 @@ const form = reactive({
   salesChannels: { b2c: true, b2b: true },
   childAgeRange: { min: null, max: null },
   infantAgeRange: { min: null, max: null },
+  activeRoomTypes: [],
+  activeMealPlans: [],
   ratePolicy: 'refundable',
   nonRefundableDiscount: 10,
   taxes: {
@@ -385,7 +487,9 @@ const removePenaltyRule = (index) => {
 }
 
 const handleSave = async () => {
-  if (!form.code || !form.name[currentLang.value]) {
+  // Check if at least one language has a name
+  const hasName = SUPPORTED_LANGUAGES.some(l => form.name[l]?.trim())
+  if (!form.code || !hasName) {
     toast.error(t('validation.required'))
     return
   }
@@ -416,6 +520,8 @@ onMounted(() => {
     form.salesChannels = { ...form.salesChannels, ...props.market.salesChannels }
     form.childAgeRange = { ...form.childAgeRange, ...props.market.childAgeRange }
     form.infantAgeRange = { ...form.infantAgeRange, ...props.market.infantAgeRange }
+    form.activeRoomTypes = [...(props.market.activeRoomTypes || [])].map(id => typeof id === 'object' ? id._id : id)
+    form.activeMealPlans = [...(props.market.activeMealPlans || [])].map(id => typeof id === 'object' ? id._id : id)
     form.ratePolicy = props.market.ratePolicy || 'refundable'
     form.nonRefundableDiscount = props.market.nonRefundableDiscount ?? 10
 

@@ -131,6 +131,7 @@ const currentModuleIcon = computed(() => {
   const routeIconMap = {
     '/dashboard': 'dashboard',
     '/partners': 'business',
+    '/admin/regions': 'map',
     '/agencies': 'groups',
     '/site-management': 'language',
     '/hotels': 'hotel',
@@ -164,6 +165,7 @@ const mainSection = computed(() => {
   // Only platform admin can see partners
   if (authStore.isPlatformAdmin) {
     items.push({ name: 'partners', to: '/partners', icon: 'business', label: t('nav.partners') })
+    items.push({ name: 'region-management', to: '/admin/regions', icon: 'map', label: t('nav.regionManagement') })
   }
 
   // Partners and platform admins can see agencies

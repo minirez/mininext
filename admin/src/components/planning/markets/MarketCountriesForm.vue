@@ -87,7 +87,7 @@
           class="px-3 py-1.5 text-sm rounded-full border transition-all flex items-center gap-1"
           :class="getCountryButtonClass(country.code)"
         >
-          <span class="text-base">{{ country.flag }}</span>
+          <img :src="`/flags/${country.code.toLowerCase()}.svg`" :alt="country.code" class="w-5 h-4 object-contain" />
           {{ getCountryLabel(country.code) }}
           <span v-if="isAssigned(country.code)" class="ml-1 text-xs opacity-70">
             ({{ getAssignedMarketCode(country.code) }})
@@ -116,7 +116,7 @@
                 :disabled="isAssigned(country.code)"
                 class="form-checkbox h-4 w-4 text-purple-600"
               />
-              <span class="text-lg">{{ country.flag }}</span>
+              <img :src="`/flags/${country.code.toLowerCase()}.svg`" :alt="country.code" class="w-6 h-5 object-contain" />
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
                   {{ getCountryLabel(country.code) }}

@@ -5,18 +5,29 @@
       <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">{{ $t('hotels.basic.title') }}</h3>
       <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">{{ $t('hotels.basic.hotelName') }}</p>
 
-      <!-- Hotel Name -->
-      <FormField
-        ref="nameFieldRef"
-        v-model="form.name"
-        name="name"
-        :label="$t('hotels.basic.hotelName')"
-        :placeholder="$t('hotels.basic.hotelName')"
-        :required="true"
-        :rules="[{ required: true, message: $t('validation.required') }]"
-        @validation-change="({ field, error }) => handleFieldValidation(field || 'name', error)"
-        class="mb-6"
-      />
+      <!-- Hotel Name and Tags Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Hotel Name -->
+        <FormField
+          ref="nameFieldRef"
+          v-model="form.name"
+          name="name"
+          :label="$t('hotels.basic.hotelName')"
+          :placeholder="$t('hotels.basic.hotelName')"
+          :required="true"
+          :rules="[{ required: true, message: $t('validation.required') }]"
+          @validation-change="({ field, error }) => handleFieldValidation(field || 'name', error)"
+        />
+
+        <!-- Hotel Tags -->
+        <TagInput
+          v-model="form.tags"
+          :label="$t('hotels.basic.tags')"
+          :placeholder="$t('hotels.basic.tagsPlaceholder')"
+          :help="$t('hotels.basic.tagsHelp')"
+          :allow-create="true"
+        />
+      </div>
 
       <!-- Hotel Description (Multilingual - All 20 languages) -->
       <div class="mb-6">
@@ -92,7 +103,7 @@
 
         <!-- Status -->
         <div>
-          <label class="form-label">{{ $t('common.status') }}</label>
+          <label class="form-label">{{ $t('common.status.label') }}</label>
           <select v-model="form.status" class="form-input">
             <option value="draft">{{ $t('hotels.statuses.draft') }}</option>
             <option value="active">{{ $t('hotels.statuses.active') }}</option>
@@ -276,6 +287,7 @@ import { useI18n } from 'vue-i18n'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 import FormField from '@/components/common/FormField.vue'
 import StarSelector from '@/components/common/StarSelector.vue'
+import TagInput from '@/components/common/TagInput.vue'
 import hotelService from '@/services/hotelService'
 
 const props = defineProps({
@@ -327,6 +339,7 @@ const form = ref({
   description: createMultiLangObject(),
   slug: '',
   logo: '',
+  tags: [],
   stars: 3,
   type: 'hotel',
   category: 'standard',
@@ -369,6 +382,7 @@ watch(() => props.hotel, (newHotel) => {
       description: { ...createMultiLangObject(), ...newHotel.description },
       slug: newHotel.slug || '',
       logo: newHotel.logo || '',
+      tags: newHotel.tags || [],
       stars: newHotel.stars || 3,
       type: newHotel.type || 'hotel',
       category: newHotel.category || 'standard',

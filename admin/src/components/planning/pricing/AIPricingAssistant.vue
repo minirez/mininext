@@ -30,8 +30,46 @@
           </button>
         </div>
 
+        <!-- Selected Cells Badge -->
+        <Transition name="fade">
+          <div v-if="hasSelection && !parsedResult" class="flex items-center gap-3 mt-3 ml-12">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg">
+              <span class="material-icons text-sm">grid_on</span>
+              <span class="text-sm font-medium">
+                {{ selectionInfo.count }} {{ $t('planning.pricing.cellsSelected') }}
+              </span>
+              <span class="text-xs opacity-75">
+                ({{ selectionInfo.startDate }} - {{ selectionInfo.endDate }})
+              </span>
+            </div>
+            <div class="flex gap-1">
+              <span
+                v-for="code in selectionInfo.roomTypeCodes"
+                :key="code"
+                class="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs font-medium"
+              >
+                {{ code }}
+              </span>
+              <span
+                v-for="code in selectionInfo.mealPlanCodes"
+                :key="code"
+                class="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded text-xs font-medium"
+              >
+                {{ code }}
+              </span>
+            </div>
+            <button
+              @click="clearSelection"
+              class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              :title="$t('common.clear')"
+            >
+              <span class="material-icons text-sm">close</span>
+            </button>
+          </div>
+        </Transition>
+
         <!-- Example Commands -->
-        <div v-if="!parsedResult && !command" class="flex flex-wrap gap-2 mt-3 ml-12">
+        <div v-if="!parsedResult && !command && !hasSelection" class="flex flex-wrap gap-2 mt-3 ml-12">
           <button
             v-for="(example, i) in examples"
             :key="i"
@@ -108,8 +146,42 @@
 
                 <!-- Details -->
                 <div class="p-4 space-y-3">
-                  <!-- Editable Date Range with DateRangePicker -->
-                  <div class="flex items-start gap-3">
+                  <!-- Selected Cells Info (when selection exists) -->
+                  <div v-if="hasSelection" class="flex items-start gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center flex-shrink-0 mt-1">
+                      <span class="material-icons text-purple-600 dark:text-purple-400 text-sm">grid_on</span>
+                    </span>
+                    <div class="flex-1">
+                      <div class="text-xs font-medium text-gray-600 dark:text-slate-400 mb-2">{{ $t('planning.pricing.selectedCells') }}</div>
+                      <div class="flex items-center gap-3 flex-wrap">
+                        <div class="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium">
+                          {{ selectionInfo.count }} {{ $t('planning.pricing.cellsSelected') }}
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-slate-400">
+                          {{ selectionInfo.startDate }} - {{ selectionInfo.endDate }}
+                        </div>
+                      </div>
+                      <div class="flex gap-1 mt-2">
+                        <span
+                          v-for="code in selectionInfo.roomTypeCodes"
+                          :key="code"
+                          class="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded text-xs font-medium"
+                        >
+                          {{ code }}
+                        </span>
+                        <span
+                          v-for="code in selectionInfo.mealPlanCodes"
+                          :key="code"
+                          class="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded text-xs font-medium"
+                        >
+                          {{ code }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Editable Date Range with DateRangePicker (when no selection) -->
+                  <div v-else class="flex items-start gap-3">
                     <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center flex-shrink-0 mt-1">
                       <span class="material-icons text-blue-600 dark:text-blue-400 text-sm">date_range</span>
                     </span>
@@ -218,10 +290,13 @@ import DateRangePicker from '@/components/common/DateRangePicker.vue'
 
 const props = defineProps({
   hotelId: { type: String, required: true },
-  currentMonth: { type: Object, default: () => ({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 }) }
+  currentMonth: { type: Object, default: () => ({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 }) },
+  selectedCells: { type: Array, default: () => [] },
+  roomTypes: { type: Array, default: () => [] },
+  mealPlans: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['executed'])
+const emit = defineEmits(['executed', 'clear-selection'])
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -239,13 +314,70 @@ const examples = computed(() => [
   t('planning.pricing.aiExample3')
 ])
 
+// Selected cells info
+const hasSelection = computed(() => props.selectedCells.length > 0)
+
+const selectionInfo = computed(() => {
+  if (!hasSelection.value) return null
+
+  const cells = props.selectedCells
+  const dates = cells.map(c => c.date).sort()
+  const roomTypeIds = [...new Set(cells.map(c => c.roomTypeId))]
+  const mealPlanIds = [...new Set(cells.map(c => c.mealPlanId))]
+
+  const roomTypeCodes = props.roomTypes
+    .filter(rt => roomTypeIds.includes(rt._id))
+    .map(rt => rt.code)
+
+  const mealPlanCodes = props.mealPlans
+    .filter(mp => mealPlanIds.includes(mp._id))
+    .map(mp => mp.code)
+
+  // Collect rate IDs (only existing rates)
+  const rateIds = cells.map(c => c.rateId).filter(id => id != null)
+
+  return {
+    count: cells.length,
+    startDate: dates[0],
+    endDate: dates[dates.length - 1],
+    roomTypeCodes,
+    mealPlanCodes,
+    rateIds,
+    cells // Include full cell data for backend
+  }
+})
+
+const clearSelection = () => {
+  emit('clear-selection')
+}
+
+// Build selected cells context for AI
+const buildSelectionContext = () => {
+  if (!hasSelection.value) return null
+
+  const info = selectionInfo.value
+  return {
+    count: info.count,
+    startDate: info.startDate,
+    endDate: info.endDate,
+    roomTypes: info.roomTypeCodes,
+    mealPlans: info.mealPlanCodes
+  }
+}
+
 // Parse command
 const parseCommand = async () => {
   if (!command.value.trim() || parsing.value) return
 
   parsing.value = true
   try {
-    const response = await planningService.parseAIPricingCommand(props.hotelId, command.value, props.currentMonth)
+    const selectionContext = buildSelectionContext()
+    const response = await planningService.parseAIPricingCommand(
+      props.hotelId,
+      command.value,
+      props.currentMonth,
+      selectionContext
+    )
     if (response.success) {
       parsedResult.value = response.data
     }
@@ -269,7 +401,13 @@ const selectClarification = async (option) => {
   parsedResult.value = null
 
   try {
-    const response = await planningService.parseAIPricingCommand(props.hotelId, clarifiedCommand, props.currentMonth)
+    const selectionContext = buildSelectionContext()
+    const response = await planningService.parseAIPricingCommand(
+      props.hotelId,
+      clarifiedCommand,
+      props.currentMonth,
+      selectionContext
+    )
     if (response.success) {
       parsedResult.value = response.data
     }
@@ -290,7 +428,23 @@ const executeCommand = async () => {
 
   executing.value = true
   try {
-    const response = await planningService.executeAIPricingCommand(props.hotelId, parsedResult.value)
+    let commandToExecute = { ...parsedResult.value }
+
+    // If we have selected cells, send rate IDs directly
+    if (hasSelection.value) {
+      const info = selectionInfo.value
+      // Send rate IDs directly for existing rates
+      commandToExecute.rateIds = info.rateIds
+      // Also send full cell data for cells without existing rates (for upsert operations)
+      commandToExecute.selectedCells = info.cells
+      // Keep dateRange for reference but rateIds will be used primarily
+      commandToExecute.dateRange = {
+        startDate: info.startDate,
+        endDate: info.endDate
+      }
+    }
+
+    const response = await planningService.executeAIPricingCommand(props.hotelId, commandToExecute)
     if (response.success) {
       toast.success(t('planning.pricing.aiExecuteSuccess', { count: response.data.affected }))
       emit('executed')

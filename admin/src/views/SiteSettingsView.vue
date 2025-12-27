@@ -1,11 +1,6 @@
 <template>
   <div>
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
-      <div class="p-6 border-b border-gray-200 dark:border-slate-700">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ $t('siteSettings.title') }}</h2>
-        <p class="text-gray-600 dark:text-slate-400 mt-1">{{ $t('siteSettings.description') }}</p>
-      </div>
-
       <!-- Tabs -->
       <div class="border-b border-gray-200 dark:border-slate-700">
         <nav class="flex -mb-px">

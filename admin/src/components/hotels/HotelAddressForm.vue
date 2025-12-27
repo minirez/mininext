@@ -1,6 +1,20 @@
 <template>
   <div class="space-y-6">
+    <!-- Hierarchical Location Selection - TOP -->
     <div>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">{{ $t('locations.hierarchicalLocation') }}</h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">{{ $t('locations.hierarchicalLocationHelp') }}</p>
+
+      <CascadingLocationSelect
+        v-model:country-code="location.countryCode"
+        v-model:city-id="location.cityId"
+        v-model:region-ids="location.regionIds"
+        @city-selected="handleCitySelected"
+      />
+    </div>
+
+    <!-- Address & Map Section -->
+    <div class="pt-6 border-t border-gray-200 dark:border-slate-700">
       <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">{{ $t('hotels.address.title') }}</h3>
       <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">{{ $t('hotels.address.mapHelp') }}</p>
 
@@ -78,74 +92,19 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Street -->
-        <div class="md:col-span-2">
-          <label class="form-label">{{ $t('hotels.address.street') }}</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <span class="material-icons text-lg">home</span>
-            </span>
-            <input
-              v-model="form.street"
-              type="text"
-              class="form-input pl-10"
-            />
-          </div>
-        </div>
-
-        <!-- District -->
-        <div>
-          <label class="form-label">{{ $t('hotels.address.district') }}</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <span class="material-icons text-lg">location_city</span>
-            </span>
-            <input
-              v-model="form.district"
-              type="text"
-              class="form-input pl-10"
-            />
-          </div>
-        </div>
-
-        <!-- City -->
-        <FormField
-          ref="cityFieldRef"
-          v-model="form.city"
-          name="address.city"
-          :label="$t('hotels.city')"
-          icon="apartment"
-          :required="true"
-          :rules="[{ required: true, message: $t('validation.required') }]"
-          @validation-change="({ field, error }) => handleFieldValidation(field || 'address.city', error)"
-        />
-
-        <!-- Country -->
-        <FormField
-          ref="countryFieldRef"
-          v-model="form.country"
-          name="address.country"
-          :label="$t('hotels.country')"
-          icon="flag"
-          :required="true"
-          :rules="[{ required: true, message: $t('validation.required') }]"
-          @validation-change="({ field, error }) => handleFieldValidation(field || 'address.country', error)"
-        />
-
-        <!-- Postal Code -->
-        <div>
-          <label class="form-label">{{ $t('hotels.address.postalCode') }}</label>
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <span class="material-icons text-lg">markunread_mailbox</span>
-            </span>
-            <input
-              v-model="form.postalCode"
-              type="text"
-              class="form-input pl-10"
-            />
-          </div>
+      <!-- Street Address Only -->
+      <div>
+        <label class="form-label">{{ $t('hotels.address.street') }}</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <span class="material-icons text-lg">home</span>
+          </span>
+          <input
+            v-model="form.street"
+            type="text"
+            class="form-input pl-10"
+            :placeholder="$t('hotels.address.streetPlaceholder')"
+          />
         </div>
       </div>
     </div>
@@ -232,7 +191,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 })
 
-import FormField from '@/components/common/FormField.vue'
+import CascadingLocationSelect from '@/components/common/CascadingLocationSelect.vue'
 
 const toast = useToast()
 const { t } = useI18n()
@@ -250,24 +209,6 @@ const props = defineProps({
 
 const emit = defineEmits(['validation-change'])
 
-// FormField refs for validation
-const cityFieldRef = ref(null)
-const countryFieldRef = ref(null)
-
-// Track field errors for parent notification
-const fieldErrors = ref({})
-
-const handleFieldValidation = (fieldName, error) => {
-  if (error) {
-    fieldErrors.value[fieldName] = error
-  } else {
-    delete fieldErrors.value[fieldName]
-  }
-  emit('validation-change', { ...fieldErrors.value })
-}
-
-const hasErrors = computed(() => Object.keys(fieldErrors.value).length > 0)
-
 const searchQuery = ref('')
 const searching = ref(false)
 const gettingLocation = ref(false)
@@ -283,17 +224,29 @@ const defaultZoom = 13
 
 const form = ref({
   street: '',
-  city: '',
-  district: '',
-  country: 'Türkiye',
-  postalCode: '',
   coordinates: {
     lat: null,
     lng: null
   },
-  formattedAddress: '',
-  placeId: ''
+  formattedAddress: ''
 })
+
+// Hierarchical location state
+const location = ref({
+  countryCode: '',
+  cityId: '',
+  regionIds: []
+})
+
+// Handle city selection - focus map on city coordinates
+const handleCitySelected = (city) => {
+  if (city?.coordinates?.lat && city?.coordinates?.lng) {
+    // Focus map on city coordinates
+    if (map) {
+      map.setView([city.coordinates.lat, city.coordinates.lng], city.zoom || 12)
+    }
+  }
+}
 
 // Custom marker icon
 const createMarkerIcon = () => {
@@ -413,10 +366,6 @@ const reverseGeocodeLocation = async (lat, lng) => {
     if (data && data.address) {
       form.value.formattedAddress = data.display_name
       form.value.street = data.address.road || data.address.street || ''
-      form.value.district = data.address.suburb || data.address.district || data.address.neighbourhood || ''
-      form.value.city = data.address.city || data.address.town || data.address.municipality || data.address.province || ''
-      form.value.country = data.address.country || 'Türkiye'
-      form.value.postalCode = data.address.postcode || ''
     }
   } catch (error) {
     console.error('Reverse geocode error:', error)
@@ -443,22 +392,20 @@ watch(() => props.hotel, (newHotel) => {
   if (newHotel?.address) {
     form.value = {
       street: newHotel.address.street || '',
-      city: newHotel.address.city || '',
-      district: newHotel.address.district || '',
-      country: newHotel.address.country || 'Türkiye',
-      postalCode: newHotel.address.postalCode || '',
       coordinates: {
         lat: newHotel.address.coordinates?.lat || null,
         lng: newHotel.address.coordinates?.lng || null
       },
-      formattedAddress: newHotel.address.formattedAddress || '',
-      placeId: newHotel.address.placeId || ''
+      formattedAddress: newHotel.address.formattedAddress || ''
     }
 
-    // Clear any existing validation errors when data loads
-    if (Object.keys(fieldErrors.value).length > 0) {
-      fieldErrors.value = {}
-      emit('validation-change', {})
+    // Update hierarchical location
+    if (newHotel.location) {
+      location.value = {
+        countryCode: newHotel.location.countryCode || '',
+        cityId: newHotel.location.city || '',
+        regionIds: newHotel.location.tourismRegions || []
+      }
     }
 
     // Update map if it exists
@@ -498,13 +445,9 @@ const searchAddress = async () => {
       form.value.coordinates.lng = lng
       form.value.formattedAddress = result.display_name
 
-      // Parse address components
+      // Parse street address
       if (result.address) {
         form.value.street = result.address.road || result.address.street || ''
-        form.value.district = result.address.suburb || result.address.district || result.address.neighbourhood || ''
-        form.value.city = result.address.city || result.address.town || result.address.municipality || ''
-        form.value.country = result.address.country || 'Türkiye'
-        form.value.postalCode = result.address.postcode || ''
       }
 
       // Update map
@@ -561,28 +504,26 @@ const getCurrentLocation = () => {
   )
 }
 
-// Validate all fields by calling each FormField's validate method
+// Validate all fields
 const validateAll = () => {
-  let isValid = true
-
-  // Validate city field
-  if (cityFieldRef.value) {
-    const result = cityFieldRef.value.validate()
-    if (!result.valid) isValid = false
-  }
-
-  // Validate country field
-  if (countryFieldRef.value) {
-    const result = countryFieldRef.value.validate()
-    if (!result.valid) isValid = false
-  }
-
-  return isValid
+  // Location is selected via dropdowns, no validation needed
+  return true
 }
 
 // Get current form data (called by parent)
 const getFormData = () => {
-  return { address: form.value }
+  return {
+    address: {
+      street: form.value.street,
+      coordinates: form.value.coordinates,
+      formattedAddress: form.value.formattedAddress
+    },
+    location: {
+      countryCode: location.value.countryCode,
+      city: location.value.cityId || null,
+      tourismRegions: location.value.regionIds || []
+    }
+  }
 }
 
 // Invalidate map size when component becomes visible (for tab switching)

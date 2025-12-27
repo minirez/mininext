@@ -1,6 +1,6 @@
 /**
  * UI Store
- * Manages UI state like sidebar visibility, mobile detection, dark mode, etc.
+ * Manages UI state like sidebar visibility, mobile detection, dark mode, page titles, etc.
  */
 
 import { defineStore } from 'pinia'
@@ -11,6 +11,11 @@ export const useUIStore = defineStore('ui', () => {
 	const sidebarOpen = ref(false)
 	const isMobile = ref(false)
 	const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+
+	// Page title state (for dynamic titles set by views)
+	const customPageTitle = ref(null)
+	const customPageDescription = ref(null)
+	const pageTitleSuffix = ref(null) // e.g., hotel name for detail pages
 
 	// Dark mode - check localStorage and system preference
 	const getInitialDarkMode = () => {
@@ -101,6 +106,22 @@ export const useUIStore = defineStore('ui', () => {
 		}
 	}
 
+	// Page title actions
+	const setPageTitle = (title, description = null) => {
+		customPageTitle.value = title
+		customPageDescription.value = description
+	}
+
+	const setPageTitleSuffix = (suffix) => {
+		pageTitleSuffix.value = suffix
+	}
+
+	const clearPageTitle = () => {
+		customPageTitle.value = null
+		customPageDescription.value = null
+		pageTitleSuffix.value = null
+	}
+
 	return {
 		// State
 		sidebarOpen,
@@ -108,6 +129,9 @@ export const useUIStore = defineStore('ui', () => {
 		isMobile,
 		windowWidth,
 		darkMode,
+		customPageTitle,
+		customPageDescription,
+		pageTitleSuffix,
 		// Computed
 		isDesktop,
 		// Actions
@@ -120,6 +144,9 @@ export const useUIStore = defineStore('ui', () => {
 		applyDarkMode,
 		checkMobile,
 		initializeUI,
-		cleanupUI
+		cleanupUI,
+		setPageTitle,
+		setPageTitleSuffix,
+		clearPageTitle
 	}
 })

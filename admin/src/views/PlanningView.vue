@@ -1,32 +1,5 @@
 <template>
   <div>
-    <!-- Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ $t('planning.title') }}</h1>
-      <p class="text-gray-600 dark:text-slate-400 mt-1">{{ $t('planning.description') }}</p>
-    </div>
-
-    <!-- Hotel Selector Card -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow mb-6">
-      <div class="p-4 border-b border-gray-200 dark:border-slate-700">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="material-icons text-2xl text-indigo-600 dark:text-indigo-400">apartment</span>
-            <div>
-              <h2 class="font-semibold text-gray-800 dark:text-white">{{ $t('planning.hotelSelection') }}</h2>
-              <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('planning.hotelSelectionHint') }}</p>
-            </div>
-          </div>
-          <div class="w-72">
-            <HotelSelector
-              v-model="selectedHotel"
-              @change="handleHotelChange"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- No Hotel Selected State -->
     <div v-if="!selectedHotel" class="bg-white dark:bg-slate-800 rounded-lg shadow">
       <div class="p-12 text-center">
@@ -128,22 +101,22 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { usePartnerContext } from '@/composables/usePartnerContext'
-import HotelSelector from '@/components/common/HotelSelector.vue'
+import { useHotelStore } from '@/stores/hotel'
 import RoomsTab from '@/components/planning/rooms/RoomsTab.vue'
 import MarketsTab from '@/components/planning/markets/MarketsTab.vue'
 import CampaignsTab from '@/components/planning/campaigns/CampaignsTab.vue'
 import PricingTab from '@/components/planning/pricing/PricingTab.vue'
-import hotelService from '@/services/hotelService'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const hotelStore = useHotelStore()
 
-const selectedHotel = ref(null)
+// Get selected hotel from store
+const selectedHotel = computed(() => hotelStore.selectedHotel)
 
 // Valid tab IDs
 const validTabs = ['rooms', 'markets', 'campaigns', 'pricing']
@@ -169,79 +142,6 @@ watch(activeTab, (newTab) => {
 watch(() => route.query.tab, (newTab) => {
   if (newTab && validTabs.includes(newTab) && newTab !== activeTab.value) {
     activeTab.value = newTab
-  }
-})
-
-// Storage key for persisting hotel selection
-const STORAGE_KEY_PREFIX = 'planning_selected_hotel_'
-
-// Helper functions for localStorage
-const getStorageKey = (partnerId) => `${STORAGE_KEY_PREFIX}${partnerId}`
-
-const saveSelectedHotel = (partnerId, hotelId) => {
-  if (partnerId && hotelId) {
-    localStorage.setItem(getStorageKey(partnerId), hotelId)
-  }
-}
-
-const getSavedHotelId = (partnerId) => {
-  if (!partnerId) return null
-  return localStorage.getItem(getStorageKey(partnerId))
-}
-
-const clearSavedHotel = (partnerId) => {
-  if (partnerId) {
-    localStorage.removeItem(getStorageKey(partnerId))
-  }
-}
-
-// Load saved hotel for partner
-const loadSavedHotel = async (partnerId) => {
-  const savedHotelId = getSavedHotelId(partnerId)
-  if (savedHotelId) {
-    try {
-      const response = await hotelService.getHotel(savedHotelId)
-      if (response.success && response.data) {
-        selectedHotel.value = response.data
-        return true
-      }
-    } catch (error) {
-      // Hotel might have been deleted, clear the saved reference
-      clearSavedHotel(partnerId)
-    }
-  }
-  return false
-}
-
-// Partner context
-const { currentPartnerId } = usePartnerContext({
-  onPartnerChange: async (partner) => {
-    // Clear current selection
-    selectedHotel.value = null
-    // Keep the current tab from route, or default to 'rooms'
-    activeTab.value = getInitialTab()
-
-    // Try to load saved hotel for this partner
-    if (partner?._id) {
-      await loadSavedHotel(partner._id)
-    }
-  },
-  immediate: false // We'll handle initial load in onMounted
-})
-
-// Watch for hotel selection changes to persist
-watch(selectedHotel, (newHotel) => {
-  if (currentPartnerId.value) {
-    if (newHotel) {
-      saveSelectedHotel(currentPartnerId.value, newHotel._id)
-    }
-  }
-})
-
-// Initial load
-onMounted(async () => {
-  if (currentPartnerId.value) {
-    await loadSavedHotel(currentPartnerId.value)
   }
 })
 
@@ -280,11 +180,6 @@ const getImageUrl = (url) => {
 const getMainImage = (hotel) => {
   const mainImage = hotel.images?.find(img => img.isMain)
   return mainImage?.url || hotel.images?.[0]?.url || null
-}
-
-const handleHotelChange = (hotel) => {
-  // Keep the current tab when changing hotels
-  // activeTab.value = getInitialTab()
 }
 
 const handleRefresh = () => {

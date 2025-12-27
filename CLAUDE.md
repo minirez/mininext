@@ -1,5 +1,31 @@
 # Booking Engine Project - Claude Documentation
 
+## !! EN ONEMLI KURAL - COMPONENT TABANLI YAPI !!
+
+**Bu proje COMPONENT TABANLI bir projedir!**
+
+1. **Mevcut componentleri MUTLAKA kullan**: Yeni bir ozellik eklerken once `/admin/src/components/common/` klasorunu kontrol et
+2. **Ayni isi yapan kodu tekrar yazma**: Eger bir component varsa, onu kullan. Sifirdan yazma!
+3. **Mevcut common componentler**:
+   - `MultiLangInput.vue` - Coklu dil input/textarea (ceviri butonu dahil)
+   - `FormField.vue` - Validasyonlu form alani
+   - `DatePicker.vue` - Tarih secici
+   - `DateRangePicker.vue` - Tarih araligi secici
+   - `Modal.vue` - Modal pencere
+   - `DataTable.vue` - Tablo componenti
+   - `StarSelector.vue` - Yildiz secici
+   - `HotelSelector.vue` - Otel secici
+   - `PartnerSelector.vue` - Partner secici
+   - `LanguageSelector.vue` - Dil secici
+   - `Lightbox.vue` - Resim/PDF onizleme
+
+4. **Yeni component olusturma**: Eger benzer bir ihtiyac baska yerlerde de olacaksa, `/admin/src/components/common/` altina yeni component olustur
+
+**YANLIS**: Her formda ayni coklu dil inputunu sifirdan yazmak
+**DOGRU**: `<MultiLangInput v-model="form.name" :languages="SUPPORTED_LANGUAGES" />`
+
+---
+
 ## Project Overview
 
 Bu proje, seyahat acenteleri için bir rezervasyon motoru platformudur. Multi-tenant yapıda, platformda birden fazla partner (acente) bulunur ve her partner kendi B2C ve B2B sistemlerini yönetir.

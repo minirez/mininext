@@ -53,8 +53,11 @@
           <MarketBasicForm
             ref="basicFormRef"
             :market="market"
+            :hotel="hotel"
             :saving="saving"
             :is-new="isNew"
+            :room-types="roomTypes"
+            :meal-plans="mealPlans"
           />
         </div>
 
@@ -171,7 +174,10 @@ function getEmptyMarket() {
 }
 
 const market = ref(getEmptyMarket())
+const hotel = ref(null)
 const assignedCountries = ref({})
+const roomTypes = ref([])
+const mealPlans = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const activeTab = ref('basic')
@@ -232,6 +238,17 @@ const fetchMarket = async () => {
   }
 }
 
+const fetchHotel = async () => {
+  try {
+    const response = await planningService.getHotel(hotelId.value)
+    if (response.success) {
+      hotel.value = response.data
+    }
+  } catch (error) {
+    console.error('Failed to fetch hotel:', error)
+  }
+}
+
 const fetchAssignedCountries = async () => {
   try {
     const excludeId = isNew.value ? null : marketId.value
@@ -241,6 +258,28 @@ const fetchAssignedCountries = async () => {
     }
   } catch (error) {
     console.error('Failed to fetch assigned countries:', error)
+  }
+}
+
+const fetchRoomTypes = async () => {
+  try {
+    const response = await planningService.getRoomTypes(hotelId.value)
+    if (response.success) {
+      roomTypes.value = response.data || []
+    }
+  } catch (error) {
+    console.error('Failed to fetch room types:', error)
+  }
+}
+
+const fetchMealPlans = async () => {
+  try {
+    const response = await planningService.getMealPlans(hotelId.value)
+    if (response.success) {
+      mealPlans.value = response.data || []
+    }
+  } catch (error) {
+    console.error('Failed to fetch meal plans:', error)
   }
 }
 
@@ -308,7 +347,10 @@ watch(() => route.params.id, (newId) => {
 }, { immediate: true })
 
 onMounted(() => {
+  fetchHotel()
   fetchAssignedCountries()
+  fetchRoomTypes()
+  fetchMealPlans()
   if (!isNew.value) {
     fetchMarket()
   }

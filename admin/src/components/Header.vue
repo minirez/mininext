@@ -22,29 +22,18 @@
         </div>
       </div>
 
-      <!-- Right side: Language, Partner Selector, Dark Mode, User menu -->
+      <!-- Right side: Hotel Selector, Partner Selector, User menu -->
       <div class="flex items-center gap-2">
-        <!-- Language Selector -->
-        <LanguageSelector />
+        <!-- Hotel Selector (only on routes that need it) -->
+        <div v-if="showHotelSelector" class="w-48 md:w-56">
+          <HotelSelector
+            :model-value="hotelStore.selectedHotel"
+            @update:model-value="hotelStore.setHotel"
+          />
+        </div>
 
         <!-- Partner Selector (Platform Admin Only) -->
         <PartnerSelector />
-
-        <!-- Dark Mode Toggle -->
-        <button
-          @click="uiStore.toggleDarkMode"
-          class="p-2 text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-          :title="uiStore.darkMode ? $t('common.lightMode') : $t('common.darkMode')"
-        >
-          <!-- Sun icon (show in dark mode) -->
-          <svg v-if="uiStore.darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <!-- Moon icon (show in light mode) -->
-          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
 
         <!-- User Dropdown -->
         <div class="relative border-l border-gray-200 dark:border-slate-700 pl-3" ref="userDropdownRef">
@@ -138,15 +127,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
-import LanguageSelector from '@/components/common/LanguageSelector.vue'
+import { useHotelStore } from '@/stores/hotel'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
+import HotelSelector from '@/components/common/HotelSelector.vue'
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
 // Props
@@ -163,6 +154,13 @@ defineProps({
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const hotelStore = useHotelStore()
+
+// Routes that need hotel selector
+const hotelRequiredRoutes = ['planning', 'pricing', 'rooms', 'campaigns']
+const showHotelSelector = computed(() => {
+  return hotelRequiredRoutes.includes(route.name)
+})
 
 // User dropdown
 const userDropdownRef = ref(null)

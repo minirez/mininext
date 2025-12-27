@@ -38,10 +38,33 @@
                   {{ $t('planning.markets.default') }}
                 </span>
               </div>
-              <div class="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-3">
+              <div class="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-3 flex-wrap">
                 <span class="font-mono">{{ market.code }}</span>
                 <span class="font-bold text-green-600 dark:text-green-400">{{ market.currency }}</span>
-                <span>{{ market.countries?.length || 0 }} {{ $t('planning.markets.countries') }}</span>
+                <span v-if="market.countries?.length > 0">
+                  {{ market.countries.length }} {{ $t('planning.markets.countries') }}
+                </span>
+                <span v-else class="text-amber-600 dark:text-amber-400 font-medium">
+                  {{ $t('planning.markets.allOtherCountries') }}
+                </span>
+              </div>
+              <!-- Extra Info Row -->
+              <div class="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-3 mt-1 flex-wrap">
+                <!-- Prepayment -->
+                <span v-if="market.paymentTerms?.prepaymentRequired" class="flex items-center gap-1">
+                  <span class="material-icons text-xs">payments</span>
+                  %{{ market.paymentTerms.prepaymentPercentage || 30 }} {{ $t('planning.markets.prepaymentShort') }}
+                </span>
+                <!-- Child Age -->
+                <span v-if="market.childAgeRange?.max" class="flex items-center gap-1">
+                  <span class="material-icons text-xs">child_care</span>
+                  {{ $t('planning.markets.childShort') }}: {{ market.childAgeRange.min || 0 }}-{{ market.childAgeRange.max }}
+                </span>
+                <!-- Infant Age -->
+                <span v-if="market.infantAgeRange?.max" class="flex items-center gap-1">
+                  <span class="material-icons text-xs">baby_changing_station</span>
+                  {{ $t('planning.markets.infantShort') }}: {{ market.infantAgeRange.min || 0 }}-{{ market.infantAgeRange.max }}
+                </span>
               </div>
             </div>
           </div>
@@ -84,19 +107,56 @@
           </div>
         </div>
         <!-- Countries Preview -->
-        <div v-if="market.countries?.length > 0" class="mt-3 flex flex-wrap gap-1">
-          <span
-            v-for="country in market.countries.slice(0, 15)"
-            :key="country"
-            class="px-2 py-0.5 text-xs bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-slate-300 rounded flex items-center gap-1"
-            :title="getCountryName(country, locale)"
-          >
-            <span>{{ getCountryFlag(country) }}</span>
-            <span>{{ country }}</span>
-          </span>
-          <span v-if="market.countries.length > 15" class="px-2 py-0.5 text-xs text-gray-500 dark:text-slate-400">
-            +{{ market.countries.length - 15 }}
-          </span>
+        <div class="mt-3 flex flex-wrap gap-1">
+          <template v-if="market.countries?.length > 0">
+            <span
+              v-for="country in market.countries.slice(0, 15)"
+              :key="country"
+              class="px-2 py-0.5 text-xs bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-slate-300 rounded flex items-center gap-1"
+              :title="getCountryName(country, locale)"
+            >
+              <img :src="`/flags/${country.toLowerCase()}.svg`" :alt="country" class="w-4 h-3 object-contain" />
+              <span>{{ country }}</span>
+            </span>
+            <span v-if="market.countries.length > 15" class="px-2 py-0.5 text-xs text-gray-500 dark:text-slate-400">
+              +{{ market.countries.length - 15 }}
+            </span>
+          </template>
+          <template v-else>
+            <span class="px-3 py-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full flex items-center gap-1">
+              <span class="material-icons text-xs">language</span>
+              {{ $t('planning.markets.catchAllHint') }}
+            </span>
+          </template>
+        </div>
+        <!-- Active Products Info -->
+        <div v-if="market.activeRoomTypes?.length || market.activeMealPlans?.length" class="mt-3 flex flex-wrap gap-2">
+          <!-- Active Room Types -->
+          <div v-if="market.activeRoomTypes?.length" class="flex items-center gap-1">
+            <span class="material-icons text-xs text-blue-500">hotel</span>
+            <div class="flex gap-1">
+              <span
+                v-for="rtId in market.activeRoomTypes"
+                :key="rtId"
+                class="px-1.5 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded"
+              >
+                {{ getRoomTypeCode(rtId) }}
+              </span>
+            </div>
+          </div>
+          <!-- Active Meal Plans -->
+          <div v-if="market.activeMealPlans?.length" class="flex items-center gap-1">
+            <span class="material-icons text-xs text-green-500">restaurant</span>
+            <div class="flex gap-1">
+              <span
+                v-for="mpId in market.activeMealPlans"
+                :key="mpId"
+                class="px-1.5 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded"
+              >
+                {{ getMealPlanCode(mpId) }}
+              </span>
+            </div>
+          </div>
         </div>
         <!-- Commission Info -->
         <div v-if="market.salesChannels?.b2b && market.agencyCommission" class="mt-2 text-xs text-gray-500 dark:text-slate-400">
@@ -136,7 +196,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import planningService from '@/services/planningService'
-import { getCountryFlag, getCountryName } from '@/data/countries'
+import { getCountryName } from '@/data/countries'
 
 const props = defineProps({
   hotel: { type: Object, required: true }
@@ -147,6 +207,8 @@ const { t, locale } = useI18n()
 const toast = useToast()
 
 const markets = ref([])
+const roomTypes = ref([])
+const mealPlans = ref([])
 const loading = ref(false)
 const showDeleteModal = ref(false)
 const deleteTarget = ref(null)
@@ -154,6 +216,18 @@ const deleting = ref(false)
 
 const getMarketName = (market) => {
   return market.name?.[locale.value] || market.name?.tr || market.name?.en || market.code
+}
+
+const getRoomTypeCode = (id) => {
+  const rtId = typeof id === 'object' ? id._id : id
+  const rt = roomTypes.value.find(r => r._id === rtId)
+  return rt?.code || '?'
+}
+
+const getMealPlanCode = (id) => {
+  const mpId = typeof id === 'object' ? id._id : id
+  const mp = mealPlans.value.find(m => m._id === mpId)
+  return mp?.code || '?'
 }
 
 const fetchMarkets = async () => {
@@ -167,6 +241,19 @@ const fetchMarkets = async () => {
     toast.error(t('common.fetchError'))
   } finally {
     loading.value = false
+  }
+}
+
+const fetchRoomTypesAndMealPlans = async () => {
+  try {
+    const [rtRes, mpRes] = await Promise.all([
+      planningService.getRoomTypes(props.hotel._id),
+      planningService.getMealPlans(props.hotel._id)
+    ])
+    if (rtRes.success) roomTypes.value = rtRes.data || []
+    if (mpRes.success) mealPlans.value = mpRes.data || []
+  } catch (error) {
+    console.error('Failed to fetch room types/meal plans:', error)
   }
 }
 
@@ -214,6 +301,9 @@ const executeDelete = async () => {
 }
 
 watch(() => props.hotel?._id, (newId) => {
-  if (newId) fetchMarkets()
+  if (newId) {
+    fetchMarkets()
+    fetchRoomTypesAndMealPlans()
+  }
 }, { immediate: true })
 </script>
