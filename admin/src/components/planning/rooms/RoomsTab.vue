@@ -586,11 +586,14 @@ const toggleRoomTypeStatus = async (roomType, newStatus) => {
 const toggleBaseRoom = async (roomType) => {
   try {
     if (roomType.isBaseRoom) {
-      // Already base - clear it (no explicit base, first room will be implicit base)
-      roomTypes.value.forEach(rt => {
-        rt.isBaseRoom = false
-      })
-      toast.success(t('planning.pricing.baseRoomCleared'))
+      // Already base - clear it by updating to isBaseRoom: false
+      const response = await planningService.updateRoomType(props.hotel._id, roomType._id, { isBaseRoom: false })
+      if (response.success) {
+        roomTypes.value.forEach(rt => {
+          rt.isBaseRoom = false
+        })
+        toast.success(t('planning.pricing.baseRoomCleared'))
+      }
     } else {
       // Set as base
       const response = await planningService.setBaseRoom(props.hotel._id, roomType._id)
@@ -624,11 +627,14 @@ const updateRoomTypeAdjustment = async (roomType) => {
 const toggleBaseMealPlan = async (plan) => {
   try {
     if (plan.isBaseMealPlan) {
-      // Already base - clear it (no explicit base, first meal plan will be implicit base)
-      mealPlans.value.forEach(mp => {
-        mp.isBaseMealPlan = false
-      })
-      toast.success(t('planning.pricing.baseMealPlanCleared'))
+      // Already base - clear it by updating to isBaseMealPlan: false
+      const response = await planningService.updateMealPlan(props.hotel._id, plan._id, { isBaseMealPlan: false })
+      if (response.success) {
+        mealPlans.value.forEach(mp => {
+          mp.isBaseMealPlan = false
+        })
+        toast.success(t('planning.pricing.baseMealPlanCleared'))
+      }
     } else {
       // Set as base
       const response = await planningService.setBaseMealPlan(props.hotel._id, plan._id)
