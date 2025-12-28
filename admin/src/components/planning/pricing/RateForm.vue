@@ -190,17 +190,80 @@
       </div>
 
       <!-- Selected Room Tab Content -->
-      <div v-if="selectedRoomTab" class="space-y-4">
-        <!-- Room Info -->
-        <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-          <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-bold">
-            {{ currentRoomType?.code }}
-          </div>
-          <div>
-            <div class="font-medium text-gray-800 dark:text-white">{{ getRoomTypeName(currentRoomType) }}</div>
-            <div class="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-2">
-              <span class="material-icons text-xs">person</span>
-              {{ currentRoomType?.occupancy?.baseOccupancy || 2 }} {{ $t('planning.pricing.standardOccupancy') }}
+      <div v-if="selectedRoomTab && roomRestrictions[selectedRoomTab]" class="space-y-4">
+        <!-- Room Info with Allotment, MinStay, Release -->
+        <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <!-- Room Info -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                {{ currentRoomType?.code }}
+              </div>
+              <div>
+                <div class="font-medium text-gray-800 dark:text-white text-sm">{{ getRoomTypeName(currentRoomType) }}</div>
+                <div class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ currentRoomType?.occupancy?.maxAdults || 2 }}+{{ currentRoomType?.occupancy?.maxChildren || 2 }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Allotment, MinStay, Release Inputs -->
+            <div class="flex items-center gap-6">
+              <!-- Allotment -->
+              <div class="flex flex-col items-center">
+                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase mb-1">{{ $t('planning.pricing.allotment') }}</span>
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    @click="roomRestrictions[selectedRoomTab].allotment = Math.max(0, roomRestrictions[selectedRoomTab].allotment - 1)"
+                    class="w-7 h-7 rounded bg-gray-200 dark:bg-slate-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors"
+                  >
+                    <span class="material-icons text-sm">remove</span>
+                  </button>
+                  <input
+                    v-model.number="roomRestrictions[selectedRoomTab].allotment"
+                    type="number"
+                    min="0"
+                    class="w-14 text-center text-sm font-bold border-2 border-blue-300 dark:border-blue-700 rounded-lg py-1.5 bg-white dark:bg-slate-800"
+                  />
+                  <button
+                    type="button"
+                    @click="roomRestrictions[selectedRoomTab].allotment++"
+                    class="w-7 h-7 rounded bg-gray-200 dark:bg-slate-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors"
+                  >
+                    <span class="material-icons text-sm">add</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- MinStay -->
+              <div class="flex flex-col items-center">
+                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase mb-1">{{ $t('planning.pricing.minStay') }}</span>
+                <div class="flex items-center gap-1">
+                  <input
+                    v-model.number="roomRestrictions[selectedRoomTab].minStay"
+                    type="number"
+                    min="1"
+                    max="30"
+                    class="w-14 text-center text-sm font-bold border-2 border-purple-300 dark:border-purple-700 rounded-lg py-1.5 bg-white dark:bg-slate-800"
+                  />
+                  <span class="text-xs text-gray-400">{{ $t('planning.pricing.nightsShort') }}</span>
+                </div>
+              </div>
+
+              <!-- Release Days -->
+              <div class="flex flex-col items-center">
+                <span class="text-[10px] text-gray-400 dark:text-slate-500 uppercase mb-1">Release</span>
+                <div class="flex items-center gap-1">
+                  <input
+                    v-model.number="roomRestrictions[selectedRoomTab].releaseDays"
+                    type="number"
+                    min="0"
+                    class="w-14 text-center text-sm font-bold border-2 border-amber-300 dark:border-amber-700 rounded-lg py-1.5 bg-white dark:bg-slate-800"
+                  />
+                  <span class="text-xs text-gray-400">{{ $t('planning.pricing.daysShort') }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -528,230 +591,6 @@
       </div>
     </div>
 
-    <!-- Step 3: Inventory & Restrictions -->
-    <div v-show="currentStep === 2" class="space-y-5">
-      <div class="text-center mb-6">
-        <h3 class="text-lg font-bold text-gray-800 dark:text-white">{{ $t('planning.pricing.step3Title') }}</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.step3Desc') }}</p>
-      </div>
-
-      <!-- Room Tabs for Restrictions -->
-      <div class="border-b border-gray-200 dark:border-slate-700">
-        <div class="flex gap-1 overflow-x-auto pb-px">
-          <button
-            v-for="rt in filteredRoomTypes"
-            :key="rt._id"
-            type="button"
-            @click="selectedRoomTab = rt._id"
-            class="px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px"
-            :class="selectedRoomTab === rt._id
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 hover:border-gray-300'"
-          >
-            {{ rt.code }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Restrictions for Selected Room -->
-      <div v-if="selectedRoomTab && roomRestrictions[selectedRoomTab]" class="space-y-4">
-        <!-- Allotment -->
-        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center gap-2">
-                <span class="material-icons text-blue-600">inventory_2</span>
-                {{ $t('planning.pricing.allotment') }}
-              </label>
-              <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">{{ $t('planning.pricing.allotmentHint') }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-              <button
-                type="button"
-                @click="roomRestrictions[selectedRoomTab].allotment = Math.max(0, roomRestrictions[selectedRoomTab].allotment - 1)"
-                class="w-10 h-10 rounded-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 flex items-center justify-center hover:bg-gray-100"
-              >
-                <span class="material-icons">remove</span>
-              </button>
-              <input
-                v-model.number="roomRestrictions[selectedRoomTab].allotment"
-                type="number"
-                min="0"
-                class="w-20 text-center text-2xl font-bold border-2 border-blue-300 dark:border-blue-700 rounded-lg py-2 bg-white dark:bg-slate-800"
-              />
-              <button
-                type="button"
-                @click="roomRestrictions[selectedRoomTab].allotment++"
-                class="w-10 h-10 rounded-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 flex items-center justify-center hover:bg-gray-100"
-              >
-                <span class="material-icons">add</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stay Restrictions -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-            <label class="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center gap-2">
-              <span class="material-icons text-purple-600 text-lg">nights_stay</span>
-              {{ $t('planning.pricing.minStay') }}
-            </label>
-            <div class="flex items-center gap-2 mt-2">
-              <input
-                v-model.number="roomRestrictions[selectedRoomTab].minStay"
-                type="number"
-                min="1"
-                max="30"
-                class="form-input"
-              />
-              <span class="text-sm text-gray-500">{{ $t('planning.pricing.nights') }}</span>
-            </div>
-          </div>
-          <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-            <label class="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center gap-2">
-              <span class="material-icons text-purple-600 text-lg">date_range</span>
-              {{ $t('planning.pricing.maxStay') }}
-            </label>
-            <div class="flex items-center gap-2 mt-2">
-              <input
-                v-model.number="roomRestrictions[selectedRoomTab].maxStay"
-                type="number"
-                min="1"
-                max="365"
-                class="form-input"
-              />
-              <span class="text-sm text-gray-500">{{ $t('planning.pricing.nights') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Release Days -->
-        <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4">
-          <label class="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center gap-2">
-            <span class="material-icons text-orange-600 text-lg">schedule</span>
-            {{ $t('planning.pricing.releaseDays') }}
-          </label>
-          <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">{{ $t('planning.pricing.releaseDaysHint') }}</p>
-          <div class="flex items-center gap-2 mt-2">
-            <input
-              v-model.number="roomRestrictions[selectedRoomTab].releaseDays"
-              type="number"
-              min="0"
-              class="w-24 form-input"
-            />
-            <span class="text-sm text-gray-500">{{ $t('planning.pricing.daysBeforeArrival') }}</span>
-          </div>
-        </div>
-
-        <!-- Booking Restrictions -->
-        <div class="space-y-3">
-          <label class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ $t('planning.pricing.bookingRestrictions') }}</label>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <!-- Stop Sale -->
-            <label
-              class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="roomRestrictions[selectedRoomTab].stopSale
-                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
-            >
-              <input type="checkbox" v-model="roomRestrictions[selectedRoomTab].stopSale" class="sr-only" />
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center"
-                :class="roomRestrictions[selectedRoomTab].stopSale ? 'bg-red-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
-              >
-                <span class="material-icons">block</span>
-              </div>
-              <div>
-                <div class="font-medium" :class="roomRestrictions[selectedRoomTab].stopSale ? 'text-red-600' : 'text-gray-700 dark:text-slate-300'">
-                  {{ $t('planning.pricing.stopSale') }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.stopSaleHint') }}</div>
-              </div>
-            </label>
-
-            <!-- Single Stop -->
-            <label
-              class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="roomRestrictions[selectedRoomTab].singleStop
-                ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
-            >
-              <input type="checkbox" v-model="roomRestrictions[selectedRoomTab].singleStop" class="sr-only" />
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center"
-                :class="roomRestrictions[selectedRoomTab].singleStop ? 'bg-pink-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
-              >
-                <span class="material-icons">person_off</span>
-              </div>
-              <div>
-                <div class="font-medium" :class="roomRestrictions[selectedRoomTab].singleStop ? 'text-pink-600' : 'text-gray-700 dark:text-slate-300'">
-                  {{ $t('planning.pricing.singleStop') }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.singleStopHint') }}</div>
-              </div>
-            </label>
-
-            <!-- CTA -->
-            <label
-              class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="roomRestrictions[selectedRoomTab].closedToArrival
-                ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
-            >
-              <input type="checkbox" v-model="roomRestrictions[selectedRoomTab].closedToArrival" class="sr-only" />
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center"
-                :class="roomRestrictions[selectedRoomTab].closedToArrival ? 'bg-orange-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
-              >
-                <span class="material-icons">no_meeting_room</span>
-              </div>
-              <div>
-                <div class="font-medium" :class="roomRestrictions[selectedRoomTab].closedToArrival ? 'text-orange-600' : 'text-gray-700 dark:text-slate-300'">
-                  CTA
-                </div>
-                <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.closedToArrival') }}</div>
-              </div>
-            </label>
-
-            <!-- CTD -->
-            <label
-              class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="roomRestrictions[selectedRoomTab].closedToDeparture
-                ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
-            >
-              <input type="checkbox" v-model="roomRestrictions[selectedRoomTab].closedToDeparture" class="sr-only" />
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center"
-                :class="roomRestrictions[selectedRoomTab].closedToDeparture ? 'bg-orange-500 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-500'"
-              >
-                <span class="material-icons">logout</span>
-              </div>
-              <div>
-                <div class="font-medium" :class="roomRestrictions[selectedRoomTab].closedToDeparture ? 'text-orange-600' : 'text-gray-700 dark:text-slate-300'">
-                  CTD
-                </div>
-                <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('planning.pricing.closedToDeparture') }}</div>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <!-- Copy restrictions to all rooms -->
-        <div class="flex justify-end">
-          <button
-            type="button"
-            @click="copyRestrictionsToAllRooms"
-            class="text-sm px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            {{ $t('planning.pricing.copyRestrictionsToAll') }}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Navigation Buttons -->
     <div class="flex items-center justify-between pt-6 mt-6 border-t border-gray-200 dark:border-slate-700">
       <button
@@ -830,8 +669,7 @@ const selectedRoomTab = ref('')
 
 const steps = [
   { key: 'period', label: 'Period' },
-  { key: 'pricing', label: 'Pricing' },
-  { key: 'inventory', label: 'Inventory' }
+  { key: 'pricing', label: 'Pricing' }
 ]
 
 // Date range ref object
@@ -1370,18 +1208,6 @@ const copyCurrentRoomToAll = () => {
   toast.success(t('planning.pricing.copiedToRooms'))
 }
 
-// Copy current room's restrictions to all rooms - uses filtered
-const copyRestrictionsToAllRooms = () => {
-  const source = roomRestrictions[selectedRoomTab.value]
-  if (!source) return
-
-  filteredRoomTypes.value.forEach(rt => {
-    if (rt._id !== selectedRoomTab.value) {
-      roomRestrictions[rt._id] = { ...source }
-    }
-  })
-  toast.success(t('planning.pricing.copiedRestrictionsToRooms'))
-}
 
 const nextStep = () => {
   if (canProceed.value && currentStep.value < steps.length - 1) {
