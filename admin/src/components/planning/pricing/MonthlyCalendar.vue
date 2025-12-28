@@ -590,9 +590,12 @@ const setCellRef = (el, roomTypeId, mealPlanId, date) => {
 
 // Navigate between cells with arrow keys
 const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) => {
+  const meals = filteredMealPlans.value
+  const rooms = props.roomTypes
+
   // Get current indices
-  const roomIndex = props.roomTypes.findIndex(r => r._id === currentRoomId)
-  const mealIndex = props.mealPlans.findIndex(m => m._id === currentMealPlanId)
+  const roomIndex = rooms.findIndex(r => r._id === currentRoomId)
+  const mealIndex = meals.findIndex(m => m._id === currentMealPlanId)
 
   if (roomIndex === -1 || mealIndex === -1) return
 
@@ -600,20 +603,20 @@ const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) 
   let newMealIndex = mealIndex
 
   if (direction === 'up') {
-    // Move to previous meal plan, or previous room's last meal plan
+    // Move to previous meal plan row, or previous room's last meal plan
     if (mealIndex > 0) {
       newMealIndex = mealIndex - 1
     } else if (roomIndex > 0) {
       newRoomIndex = roomIndex - 1
-      newMealIndex = props.mealPlans.length - 1
+      newMealIndex = meals.length - 1
     } else {
       return // Already at top
     }
   } else if (direction === 'down') {
-    // Move to next meal plan, or next room's first meal plan
-    if (mealIndex < props.mealPlans.length - 1) {
+    // Move to next meal plan row, or next room's first meal plan
+    if (mealIndex < meals.length - 1) {
       newMealIndex = mealIndex + 1
-    } else if (roomIndex < props.roomTypes.length - 1) {
+    } else if (roomIndex < rooms.length - 1) {
       newRoomIndex = roomIndex + 1
       newMealIndex = 0
     } else {
@@ -621,8 +624,8 @@ const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) 
     }
   }
 
-  const newRoomId = props.roomTypes[newRoomIndex]._id
-  const newMealPlanId = props.mealPlans[newMealIndex]._id
+  const newRoomId = rooms[newRoomIndex]._id
+  const newMealPlanId = meals[newMealIndex]._id
   const key = `${newRoomId}-${newMealPlanId}-${currentDate}`
 
   // Focus the input in the target cell
