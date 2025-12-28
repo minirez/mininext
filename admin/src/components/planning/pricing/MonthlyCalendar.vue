@@ -279,7 +279,6 @@
                 }"
               >
                 <RateCell
-                  :ref="el => setCellRef(el, roomType._id, mealPlan._id, day.date)"
                   :rate="getRateForCell(roomType._id, mealPlan._id, day.date)"
                   :date="day.date"
                   :room-type-id="roomType._id"
@@ -576,18 +575,6 @@ const isCalculatedCell = (roomTypeId, mealPlanId) => {
   return !isBaseCellFn(roomTypeId, mealPlanId)
 }
 
-// Cell refs for keyboard navigation
-const cellRefs = reactive({})
-
-const setCellRef = (el, roomTypeId, mealPlanId, date) => {
-  const key = `${roomTypeId}-${mealPlanId}-${date}`
-  if (el) {
-    cellRefs[key] = el
-  } else {
-    delete cellRefs[key]
-  }
-}
-
 // Navigate between cells with arrow keys
 const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) => {
   const meals = filteredMealPlans.value
@@ -626,18 +613,15 @@ const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) 
 
   const newRoomId = rooms[newRoomIndex]._id
   const newMealPlanId = meals[newMealIndex]._id
-  const key = `${newRoomId}-${newMealPlanId}-${currentDate}`
 
-  // Focus the input in the target cell
-  const targetCell = cellRefs[key]
-  if (targetCell) {
-    // Handle both component instance ($el) and direct DOM element
-    const element = targetCell.$el || targetCell
-    const input = element?.querySelector?.('input')
+  // Find the target cell using data attribute and focus its input
+  nextTick(() => {
+    const selector = `[data-cell="${newRoomId}-${newMealPlanId}-${currentDate}"] input`
+    const input = document.querySelector(selector)
     if (input) {
-      nextTick(() => input.focus())
+      input.focus()
     }
-  }
+  })
 }
 
 // Inline edit state
