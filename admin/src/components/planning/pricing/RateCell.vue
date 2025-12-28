@@ -191,6 +191,8 @@ const isHovered = ref(false)
 const popoverStyle = ref({})
 
 const showPopover = () => {
+  // Don't show popover in inline edit mode
+  if (props.inlineEditMode) return
   if (!props.rate || !hasExtraPrices.value) return
 
   isHovered.value = true
