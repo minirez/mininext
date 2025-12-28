@@ -630,8 +630,10 @@ const navigateCell = (currentRoomId, currentMealPlanId, currentDate, direction) 
 
   // Focus the input in the target cell
   const targetCell = cellRefs[key]
-  if (targetCell?.$el) {
-    const input = targetCell.$el.querySelector('input')
+  if (targetCell) {
+    // Handle both component instance ($el) and direct DOM element
+    const element = targetCell.$el || targetCell
+    const input = element?.querySelector?.('input')
     if (input) {
       nextTick(() => input.focus())
     }
