@@ -978,10 +978,49 @@ const maxAdultsForCurrentRoom = computed(() => {
   return currentRoomType.value?.occupancy?.maxAdults ?? 4
 })
 
-// Current room's pricing type (from room type, read-only)
+// Get effective pricing type for a room considering override hierarchy:
+// RoomType (base) → Market (override) → Season (override)
+const getEffectivePricingType = (roomTypeId) => {
+  const roomType = props.roomTypes.find(rt => rt._id === roomTypeId)
+  if (!roomType) return 'unit'
+
+  const basePricingType = roomType.pricingType || 'unit'
+
+  // Check Market override
+  let marketOverride = null
+  if (props.market?.pricingOverrides?.length > 0) {
+    const override = props.market.pricingOverrides.find(po => {
+      const rtId = typeof po.roomType === 'object' ? po.roomType._id : po.roomType
+      return rtId === roomTypeId && po.usePricingTypeOverride
+    })
+    if (override) {
+      marketOverride = override.pricingType
+    }
+  }
+
+  // Check Season override (most specific wins)
+  let seasonOverride = null
+  if (form.season) {
+    const season = props.seasons.find(s => s._id === form.season)
+    if (season?.pricingOverrides?.length > 0) {
+      const override = season.pricingOverrides.find(po => {
+        const rtId = typeof po.roomType === 'object' ? po.roomType._id : po.roomType
+        return rtId === roomTypeId && po.usePricingTypeOverride
+      })
+      if (override) {
+        seasonOverride = override.pricingType
+      }
+    }
+  }
+
+  // Priority: Season > Market > RoomType
+  return seasonOverride || marketOverride || basePricingType
+}
+
+// Current room's pricing type (considering override hierarchy)
 const currentRoomPricingType = computed(() => {
   if (!currentRoomType.value) return 'unit'
-  return currentRoomType.value.pricingType || 'unit'
+  return getEffectivePricingType(currentRoomType.value._id)
 })
 
 const calculateNights = computed(() => {
@@ -999,9 +1038,8 @@ const hasRoomPrices = (roomTypeId) => {
   const prices = roomPrices[roomTypeId]
   if (!prices) return false
 
-  // Get pricing type from room type
-  const roomType = props.roomTypes.find(rt => rt._id === roomTypeId)
-  const pricingType = roomType?.pricingType || 'unit'
+  // Get effective pricing type considering override hierarchy
+  const pricingType = getEffectivePricingType(roomTypeId)
 
   return Object.values(prices).some(mp => {
     if (pricingType === 'per_person') {
@@ -1373,7 +1411,7 @@ const handleSave = async () => {
     filteredRoomTypes.value.forEach(rt => {
       const prices = roomPrices[rt._id]
       const restrictions = roomRestrictions[rt._id]
-      const pricingType = rt.pricingType || 'unit' // Get from room type
+      const pricingType = getEffectivePricingType(rt._id) // Get from override hierarchy
 
       // For each filtered meal plan that has valid pricing
       filteredMealPlans.value.forEach(mp => {
