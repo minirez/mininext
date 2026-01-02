@@ -243,7 +243,7 @@ const columns = [
   { key: 'name', label: t('agencies.userName') },
   { key: 'email', label: t('agencies.userEmail') },
   { key: 'role', label: t('agencies.userRole') },
-  { key: 'status', label: t('common.status') }
+  { key: 'status', label: t('common.status.label') }
 ]
 
 const fetchAgencyAndUsers = async () => {

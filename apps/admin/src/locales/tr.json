@@ -1,5 +1,6 @@
 {
   "common": {
+    "showingOf": "{from}-{to} / {total} gösteriliyor",
     "free": "Ücretsiz",
     "all": "Tümü",
     "allMarkets": "Tüm Pazarlar",

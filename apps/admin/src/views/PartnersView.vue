@@ -336,7 +336,7 @@ const columns = [
   { key: 'code', label: t('partners.code') },
   { key: 'email', label: t('partners.contactEmail') },
   { key: 'phone', label: t('partners.contactPhone') },
-  { key: 'status', label: t('common.status') }
+  { key: 'status', label: t('common.status.label') }
 ]
 
 const fetchPartners = async () => {

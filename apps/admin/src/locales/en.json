@@ -1,5 +1,6 @@
 {
   "common": {
+    "showingOf": "Showing {from}-{to} of {total}",
     "free": "Free",
     "all": "All",
     "allMarkets": "All Markets",
