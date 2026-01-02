@@ -116,7 +116,17 @@
           <div class="flex items-center">
             <span class="material-icons text-purple-500 mr-2">domain</span>
             <span class="font-medium text-gray-900 dark:text-white">{{ domainVerification.domain }}</span>
-            <StatusBadge :status="domainVerification.status" class="ml-3" />
+            <span
+              class="ml-3 px-2 py-1 text-xs font-medium rounded-full"
+              :class="{
+                'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300': domainVerification.status === 'verified',
+                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300': domainVerification.status === 'pending',
+                'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300': domainVerification.status === 'failed',
+                'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300': !['verified', 'pending', 'failed'].includes(domainVerification.status)
+              }"
+            >
+              {{ $t('siteSettings.notifications.email.' + domainVerification.status) }}
+            </span>
           </div>
           <button
             @click="handleDeleteIdentity"
@@ -265,11 +275,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import partnerEmailService from '@/services/partnerEmailService'
-import StatusBadge from '@/components/ui/display/StatusBadge.vue'
 
 const { t } = useI18n()
 const toast = useToast()
