@@ -1,8 +1,48 @@
 import { GoogleGenAI } from '@google/genai'
 import logger from '../core/logger.js'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 const GEMINI_MODEL = 'gemini-3-flash-preview'
+
+// Cache for API key and client
+let cachedApiKey = null
+let cachedApiKeyExpiry = 0
+const API_KEY_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+/**
+ * Get Gemini API key from PlatformSettings or environment
+ */
+const getGeminiApiKey = async () => {
+  // Check cache first
+  if (cachedApiKey && Date.now() < cachedApiKeyExpiry) {
+    return cachedApiKey
+  }
+
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { default: PlatformSettings } = await import('../modules/platform-settings/platformSettings.model.js')
+    const settings = await PlatformSettings.getSettings()
+    const credentials = settings.getGeminiCredentials()
+
+    if (credentials?.apiKey) {
+      cachedApiKey = credentials.apiKey
+      cachedApiKeyExpiry = Date.now() + API_KEY_CACHE_TTL
+      logger.info('Using Gemini API key from PlatformSettings')
+      return cachedApiKey
+    }
+  } catch (error) {
+    logger.warn('Failed to load Gemini API key from database:', error.message)
+  }
+
+  // Fall back to environment variable
+  if (process.env.GEMINI_API_KEY) {
+    cachedApiKey = process.env.GEMINI_API_KEY
+    cachedApiKeyExpiry = Date.now() + API_KEY_CACHE_TTL
+    logger.info('Using Gemini API key from environment')
+    return cachedApiKey
+  }
+
+  return null
+}
 
 /**
  * Pre-process content to extract room information and group images
@@ -272,9 +312,17 @@ const resetUsedCodes = () => {
 
 // Initialize the AI client
 let ai = null
-const getAI = () => {
-  if (!ai && GEMINI_API_KEY) {
-    ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
+let aiKeyHash = null
+
+const getAI = async () => {
+  const apiKey = await getGeminiApiKey()
+  if (!apiKey) return null
+
+  // Create new client if key changed or not initialized
+  const keyHash = apiKey.substring(0, 10)
+  if (!ai || aiKeyHash !== keyHash) {
+    ai = new GoogleGenAI({ apiKey })
+    aiKeyHash = keyHash
   }
   return ai
 }
@@ -307,9 +355,9 @@ const languageNames = {
  * Generate content using Gemini AI
  */
 const generateContent = async (prompt, options = {}) => {
-  const client = getAI()
+  const client = await getAI()
   if (!client) {
-    throw new Error('GEMINI_API_KEY is not configured')
+    throw new Error('GEMINI_API_KEY is not configured. Please configure it in Platform Settings.')
   }
 
   const config = {
@@ -1143,9 +1191,9 @@ export const extractHotelDataFromUrl = async (url, options = {}) => {
     throw new Error('URL is required')
   }
 
-  const client = getAI()
+  const client = await getAI()
   if (!client) {
-    throw new Error('GEMINI_API_KEY is not configured')
+    throw new Error('GEMINI_API_KEY is not configured. Please configure it in Platform Settings.')
   }
 
   // Initialize progress steps if emitter provided
@@ -1589,9 +1637,9 @@ Sadece JSON döndür:`
  * @returns {object} Parsed contract data with periods, rooms, meal plans, and prices
  */
 export const parseHotelContract = async (fileContent, mimeType, context = {}) => {
-  const client = getAI()
+  const client = await getAI()
   if (!client) {
-    throw new Error('GEMINI_API_KEY is not configured')
+    throw new Error('GEMINI_API_KEY is not configured. Please configure it in Platform Settings.')
   }
 
   // Convert Buffer to base64 if needed
