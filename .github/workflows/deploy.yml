@@ -54,6 +54,16 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          # API Environment Variables
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SES_REGION: ${{ secrets.AWS_SES_REGION }}
+          AWS_SES_FROM_EMAIL: ${{ secrets.AWS_SES_FROM_EMAIL }}
+          AWS_SES_FROM_NAME: ${{ secrets.AWS_SES_FROM_NAME }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -61,13 +71,47 @@ jobs:
           port: 22
           timeout: 120s
           command_timeout: 30m
-          envs: TURBO_TOKEN
+          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,AWS_SES_FROM_EMAIL,AWS_SES_FROM_NAME,GEMINI_API_KEY,FIRECRAWL_API_KEY
           script: |
             export PNPM_HOME="/root/.local/share/pnpm"
             export PATH="$PNPM_HOME:$PATH"
             export TURBO_TOKEN="${TURBO_TOKEN}"
             cd /var/www/booking-engine
             git pull origin main
+
+            # Create/Update .env file for API
+            cat > apps/api/.env << EOF
+            NODE_ENV=production
+            PORT=4000
+
+            # MongoDB
+            MONGODB_URI=mongodb://localhost:27017/booking-engine
+
+            # JWT
+            JWT_SECRET=${JWT_SECRET}
+            JWT_ACCESS_EXPIRE=15m
+            JWT_REFRESH_EXPIRE=7d
+
+            # CORS
+            CORS_ORIGIN=https://app.minires.com
+
+            # Encryption
+            ENCRYPTION_KEY=${ENCRYPTION_KEY}
+
+            # AWS SES (Email)
+            AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            AWS_SES_REGION=${AWS_SES_REGION}
+            AWS_SES_FROM_EMAIL=${AWS_SES_FROM_EMAIL}
+            AWS_SES_FROM_NAME=${AWS_SES_FROM_NAME}
+
+            # AI Translation (Gemini)
+            GEMINI_API_KEY=${GEMINI_API_KEY}
+
+            # Firecrawl (Web Scraping)
+            FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+            EOF
+
             pnpm install --frozen-lockfile
             VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com VITE_IMAGES_URL=https://images.minires.com pnpm turbo run build --filter=booking-engine-admin
             pm2 restart booking-engine-api || pm2 start ecosystem.config.js
