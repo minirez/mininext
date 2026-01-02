@@ -6,6 +6,10 @@ on:
       - main
       - master
 
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,27 +28,43 @@ jobs:
         with:
           version: 9
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        run: pnpm --filter admin run build
+      - name: Build with Turbo (Remote Cache)
+        run: pnpm turbo run build --filter=admin
         env:
-          VITE_API_URL: https://api.minires.com
+          VITE_API_BASE_URL: https://api.minires.com/api
           VITE_SOCKET_URL: https://api.minires.com
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: TURBO_TOKEN
           script: |
             export PNPM_HOME="/root/.local/share/pnpm"
             export PATH="$PNPM_HOME:$PATH"
+            export TURBO_TOKEN="${TURBO_TOKEN}"
             cd /var/www/booking-engine
             git pull origin main
             pnpm install --frozen-lockfile
-            VITE_API_URL=https://api.minires.com VITE_SOCKET_URL=https://api.minires.com pnpm --filter admin run build
+            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com pnpm turbo run build --filter=admin
             pm2 restart booking-engine-api || pm2 start ecosystem.config.js
             echo "Deploy completed at $(date)"
