@@ -395,31 +395,58 @@ const handleFieldValidation = ({ field, error }) => {
   emit('validation-change', { ...fieldErrors.value })
 }
 
-// Amenities list with icons
+// Amenities list with icons - must match roomType.model.js enum values
 const amenitiesList = computed(() => [
+  // Climate
   { key: 'airConditioning', icon: 'ac_unit', label: t('planning.roomTypes.amenities.airConditioning') },
   { key: 'heating', icon: 'whatshot', label: t('planning.roomTypes.amenities.heating') },
+  { key: 'fan', icon: 'mode_fan', label: t('planning.roomTypes.amenities.fan') },
+  // Entertainment
   { key: 'tv', icon: 'tv', label: t('planning.roomTypes.amenities.tv') },
+  { key: 'satelliteTV', icon: 'satellite_alt', label: t('planning.roomTypes.amenities.satelliteTV') },
+  // Connectivity
   { key: 'wifi', icon: 'wifi', label: t('planning.roomTypes.amenities.wifi') },
+  { key: 'telephone', icon: 'phone', label: t('planning.roomTypes.amenities.telephone') },
+  // Mini Bar & Kitchen
   { key: 'minibar', icon: 'kitchen', label: t('planning.roomTypes.amenities.minibar') },
-  { key: 'safe', icon: 'lock', label: t('planning.roomTypes.amenities.safe') },
-  { key: 'hairDryer', icon: 'air', label: t('planning.roomTypes.amenities.hairDryer') },
-  { key: 'iron', icon: 'iron', label: t('planning.roomTypes.amenities.iron') },
+  { key: 'refrigerator', icon: 'kitchen', label: t('planning.roomTypes.amenities.refrigerator') },
   { key: 'kettle', icon: 'coffee', label: t('planning.roomTypes.amenities.kettle') },
   { key: 'coffeeMachine', icon: 'coffee_maker', label: t('planning.roomTypes.amenities.coffeeMachine') },
-  { key: 'balcony', icon: 'balcony', label: t('planning.roomTypes.amenities.balcony') },
-  { key: 'terrace', icon: 'deck', label: t('planning.roomTypes.amenities.terrace') },
-  { key: 'seaView', icon: 'waves', label: t('planning.roomTypes.amenities.seaView') },
-  { key: 'gardenView', icon: 'local_florist', label: t('planning.roomTypes.amenities.gardenView') },
-  { key: 'poolView', icon: 'pool', label: t('planning.roomTypes.amenities.poolView') },
+  { key: 'kitchenette', icon: 'microwave', label: t('planning.roomTypes.amenities.kitchenette') },
+  // Bathroom
+  { key: 'privateBathroom', icon: 'bathroom', label: t('planning.roomTypes.amenities.privateBathroom') },
   { key: 'bathtub', icon: 'bathtub', label: t('planning.roomTypes.amenities.bathtub') },
   { key: 'shower', icon: 'shower', label: t('planning.roomTypes.amenities.shower') },
-  { key: 'jacuzzi', icon: 'hot_tub', label: t('planning.roomTypes.amenities.jacuzzi') },
+  { key: 'hairdryer', icon: 'air', label: t('planning.roomTypes.amenities.hairdryer') },
+  { key: 'toiletries', icon: 'soap', label: t('planning.roomTypes.amenities.toiletries') },
+  { key: 'bathrobes', icon: 'checkroom', label: t('planning.roomTypes.amenities.bathrobes') },
+  { key: 'slippers', icon: 'steps', label: t('planning.roomTypes.amenities.slippers') },
+  // View
+  { key: 'seaView', icon: 'waves', label: t('planning.roomTypes.amenities.seaView') },
+  { key: 'poolView', icon: 'pool', label: t('planning.roomTypes.amenities.poolView') },
+  { key: 'gardenView', icon: 'local_florist', label: t('planning.roomTypes.amenities.gardenView') },
+  { key: 'cityView', icon: 'location_city', label: t('planning.roomTypes.amenities.cityView') },
+  { key: 'mountainView', icon: 'landscape', label: t('planning.roomTypes.amenities.mountainView') },
+  // Outdoor
+  { key: 'balcony', icon: 'balcony', label: t('planning.roomTypes.amenities.balcony') },
+  { key: 'terrace', icon: 'deck', label: t('planning.roomTypes.amenities.terrace') },
   { key: 'privatePool', icon: 'pool', label: t('planning.roomTypes.amenities.privatePool') },
-  { key: 'kitchen', icon: 'countertops', label: t('planning.roomTypes.amenities.kitchen') },
-  { key: 'kitchenette', icon: 'microwave', label: t('planning.roomTypes.amenities.kitchenette') },
-  { key: 'washingMachine', icon: 'local_laundry_service', label: t('planning.roomTypes.amenities.washingMachine') },
-  { key: 'dishwasher', icon: 'dry_cleaning', label: t('planning.roomTypes.amenities.dishwasher') }
+  { key: 'jacuzzi', icon: 'hot_tub', label: t('planning.roomTypes.amenities.jacuzzi') },
+  // Comfort
+  { key: 'safe', icon: 'lock', label: t('planning.roomTypes.amenities.safe') },
+  { key: 'desk', icon: 'desk', label: t('planning.roomTypes.amenities.desk') },
+  { key: 'sofa', icon: 'chair', label: t('planning.roomTypes.amenities.sofa') },
+  { key: 'wardrobe', icon: 'checkroom', label: t('planning.roomTypes.amenities.wardrobe') },
+  { key: 'ironingEquipment', icon: 'iron', label: t('planning.roomTypes.amenities.ironingEquipment') },
+  // Services
+  { key: 'roomService', icon: 'room_service', label: t('planning.roomTypes.amenities.roomService') },
+  { key: 'dailyHousekeeping', icon: 'cleaning_services', label: t('planning.roomTypes.amenities.dailyHousekeeping') },
+  { key: 'laundryService', icon: 'local_laundry_service', label: t('planning.roomTypes.amenities.laundryService') },
+  // Special
+  { key: 'nonSmoking', icon: 'smoke_free', label: t('planning.roomTypes.amenities.nonSmoking') },
+  { key: 'petFriendly', icon: 'pets', label: t('planning.roomTypes.amenities.petFriendly') },
+  { key: 'wheelchairAccessible', icon: 'accessible', label: t('planning.roomTypes.amenities.wheelchairAccessible') },
+  { key: 'connectedRooms', icon: 'meeting_room', label: t('planning.roomTypes.amenities.connectedRooms') }
 ])
 
 const toggleAmenity = (key) => {
