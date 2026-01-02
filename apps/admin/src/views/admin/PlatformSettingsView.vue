@@ -212,6 +212,46 @@
 				</div>
 			</div>
 
+			<!-- Gemini AI Settings -->
+			<div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+				<div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<span class="material-icons text-purple-500">auto_awesome</span>
+						<div>
+							<h2 class="font-semibold text-gray-900 dark:text-white">
+								{{ $t('platformSettings.gemini.title') }}
+							</h2>
+							<p class="text-sm text-gray-500 dark:text-slate-400">
+								{{ $t('platformSettings.gemini.description') }}
+							</p>
+						</div>
+					</div>
+					<label class="relative inline-flex items-center cursor-pointer">
+						<input type="checkbox" v-model="settings.gemini.enabled" class="sr-only peer">
+						<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+					</label>
+				</div>
+				<div v-if="settings.gemini.enabled" class="p-6 space-y-4">
+					<div class="grid grid-cols-1 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.gemini.apiKey') }}
+							</label>
+							<input
+								type="password"
+								v-model="settings.gemini.apiKey"
+								:placeholder="settings.gemini.apiKey ? '********' : 'AIzaSy...'"
+								autocomplete="off"
+								class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+							>
+							<p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+								{{ $t('platformSettings.gemini.apiKeyHint') }}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- Web Push Settings -->
 			<div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
 				<div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
@@ -334,6 +374,10 @@ const settings = ref({
 		password: '',
 		msgheader: ''
 	},
+	gemini: {
+		enabled: false,
+		apiKey: ''
+	},
 	webPush: {
 		enabled: false,
 		publicKey: '',
@@ -365,6 +409,10 @@ const loadSettings = async () => {
 				usercode: '', // Don't show masked value
 				password: '', // Don't show masked value
 				msgheader: data.netgsm?.msgheader || ''
+			},
+			gemini: {
+				enabled: data.gemini?.enabled || false,
+				apiKey: '' // Don't show masked value
 			},
 			webPush: {
 				enabled: data.webPush?.enabled || false,
@@ -399,6 +447,9 @@ const saveSettings = async () => {
 				enabled: settings.value.netgsm.enabled,
 				msgheader: settings.value.netgsm.msgheader
 			},
+			gemini: {
+				enabled: settings.value.gemini.enabled
+			},
 			webPush: {
 				enabled: settings.value.webPush.enabled,
 				publicKey: settings.value.webPush.publicKey,
@@ -418,6 +469,9 @@ const saveSettings = async () => {
 		}
 		if (settings.value.netgsm.password) {
 			update.netgsm.password = settings.value.netgsm.password
+		}
+		if (settings.value.gemini.apiKey) {
+			update.gemini.apiKey = settings.value.gemini.apiKey
 		}
 		if (settings.value.webPush.privateKey) {
 			update.webPush.privateKey = settings.value.webPush.privateKey

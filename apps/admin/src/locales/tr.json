@@ -2707,6 +2707,12 @@
       "generateKeys": "Yeni Anahtar Oluştur",
       "generateKeysHint": "Dikkat: Yeni anahtar oluşturmak mevcut abonelikleri geçersiz kılar",
       "keysGenerated": "VAPID anahtarları başarıyla oluşturuldu"
+    },
+    "gemini": {
+      "title": "Gemini AI",
+      "description": "Google Gemini AI entegrasyonu (çeviri, otel verisi çekme)",
+      "apiKey": "API Key",
+      "apiKeyHint": "Google AI Studio'dan alınan API anahtarı"
     }
   },
   "developers": {

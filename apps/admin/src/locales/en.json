@@ -2737,6 +2737,12 @@
       "generateKeys": "Generate New Keys",
       "generateKeysHint": "Warning: Generating new keys will invalidate existing subscriptions",
       "keysGenerated": "VAPID keys generated successfully"
+    },
+    "gemini": {
+      "title": "Gemini AI",
+      "description": "Google Gemini AI integration (translation, hotel data extraction)",
+      "apiKey": "API Key",
+      "apiKeyHint": "API key from Google AI Studio"
     }
   },
   "developers": {
