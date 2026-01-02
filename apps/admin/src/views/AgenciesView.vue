@@ -805,7 +805,7 @@
           <button type="button" @click="showModal = false" class="btn-secondary">
             {{ $t('common.cancel') }}
           </button>
-          <button @click="handleSubmit" :disabled="submitting" class="btn-primary min-w-[120px]">
+          <button type="button" @click="handleSubmit" :disabled="submitting" class="btn-primary min-w-[120px]">
             <span v-if="submitting" class="material-icons animate-spin mr-2 text-lg">sync</span>
             {{ submitting ? $t('common.saving') : (isEditing ? $t('common.save') : $t('common.create')) }}
           </button>
