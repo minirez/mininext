@@ -426,7 +426,7 @@ import { usePmsAuthStore } from '@/stores/pms/pmsAuth'
 // Check if current domain is a PMS custom domain
 const isPmsCustomDomain = () => {
 	const hostname = window.location.hostname
-	const defaultDomains = ['localhost', '127.0.0.1', 'admin.booking-engine.com']
+	const defaultDomains = ['localhost', '127.0.0.1', 'admin.booking-engine.com', 'app.minires.com', 'minires.com']
 	return !defaultDomains.some(d => hostname.includes(d))
 }
 
