@@ -48,6 +48,7 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.minires.com/api
           VITE_SOCKET_URL: https://api.minires.com
+          VITE_IMAGES_URL: https://images.minires.com
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -68,6 +69,6 @@ jobs:
             cd /var/www/booking-engine
             git pull origin main
             pnpm install --frozen-lockfile
-            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com pnpm turbo run build --filter=booking-engine-admin
+            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com VITE_IMAGES_URL=https://images.minires.com pnpm turbo run build --filter=booking-engine-admin
             pm2 restart booking-engine-api || pm2 start ecosystem.config.js
             echo "Deploy completed at $(date)"

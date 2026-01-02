@@ -271,6 +271,7 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 import hotelService from '@/services/hotelService'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   hotelId: {
@@ -462,13 +463,7 @@ const uploading = ref(false)
 const isDragging = ref(false)
 const fileInput = ref(null)
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.minires.com'
-
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return `${apiBaseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const addBed = () => {
   form.bedConfiguration.push({ type: '', count: 1 })

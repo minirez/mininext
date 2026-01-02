@@ -124,6 +124,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import hotelService from '@/services/hotelService'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   modelValue: {
@@ -181,13 +182,7 @@ const selectedHotels = computed(() => {
 
 const isSelected = (hotelId) => props.modelValue.includes(hotelId)
 
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const getHotelImage = (hotel) => {
   const mainImage = hotel.images?.find(img => img.isMain)

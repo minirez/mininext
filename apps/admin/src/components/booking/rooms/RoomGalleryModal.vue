@@ -91,6 +91,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
 	modelValue: {
@@ -110,14 +111,7 @@ const { locale } = useI18n()
 // Image carousel state
 const currentImageIndex = ref(0)
 
-// Get image URL
-const getImageUrl = (url) => {
-	if (!url) return ''
-	if (url.startsWith('http')) return url
-	const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-	const baseUrl = apiBaseUrl.replace('/api', '')
-	return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 // Get images array
 const images = computed(() => {

@@ -409,6 +409,7 @@ import MealPlanForm from './MealPlanForm.vue'
 import StandardMealPlanSelector from './StandardMealPlanSelector.vue'
 import RoomTemplateImportModal from './RoomTemplateImportModal.vue'
 import planningService from '@/services/planningService'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   hotel: {
@@ -470,13 +471,7 @@ const filteredMealPlans = computed(() => {
   return mealPlans.value.filter(mp => mp.status !== 'deleted')
 })
 
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const getRoomTypeName = (roomType) => {
   return roomType.name?.[locale.value] || roomType.name?.tr || roomType.name?.en || roomType.code

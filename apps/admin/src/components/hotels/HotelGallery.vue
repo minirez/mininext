@@ -139,6 +139,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/components/common/Modal.vue'
 import hotelService from '@/services/hotelService'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   hotel: {
@@ -170,14 +171,7 @@ const uploadProgress = reactive({
 
 const images = computed(() => props.hotel?.images || [])
 
-// Get full image URL
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const getCaption = (image) => {
   const lang = locale.value

@@ -696,6 +696,7 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/components/common/Modal.vue'
 import hotelService from '@/services/hotelService'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const router = useRouter()
 const toast = useToast()
@@ -887,14 +888,7 @@ const getHotelImage = (hotel) => {
   return getImageUrl(mainImage.url)
 }
 
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  // VITE_API_BASE_URL is like https://api.minires.com/api, we need just the base
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const toggleStatus = async (hotel) => {
   const newStatus = hotel.status === 'active' ? 'inactive' : 'active'

@@ -248,6 +248,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import siteSettingsService from '@/services/siteSettingsService'
 import translationService from '@/services/translationService'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -338,11 +339,7 @@ const isDefaultLanguage = (code) => {
   return form.value.defaultLanguage === code
 }
 
-const getImageUrl = (path) => {
-  if (!path) return ''
-  if (path.startsWith('http')) return path
-  return import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + path
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const toggleLanguage = (code) => {
   const index = form.value.activeLanguages.indexOf(code)

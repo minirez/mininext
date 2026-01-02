@@ -331,6 +331,7 @@ import { useI18n } from 'vue-i18n'
 import hotelService from '@/services/hotelService'
 import Modal from '@/components/common/Modal.vue'
 import HotelAIImporter from '@/components/hotels/HotelAIImporter.vue'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const router = useRouter()
 const toast = useToast()
@@ -476,14 +477,7 @@ const getMainImage = (hotel) => {
   return mainImage?.url || hotel.images[0]?.url
 }
 
-// Get image URL
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 // Get status badge class
 const getStatusClass = (status) => {

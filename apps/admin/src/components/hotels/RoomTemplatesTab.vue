@@ -272,6 +272,7 @@ import { useToast } from 'vue-toastification'
 import hotelService from '@/services/hotelService'
 import Modal from '@/components/common/Modal.vue'
 import RoomTemplateForm from './RoomTemplateForm.vue'
+import { getImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   hotelId: {
@@ -298,13 +299,7 @@ const galleryImages = ref([])
 const galleryRoomName = ref('')
 const currentImageIndex = ref(0)
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.minires.com'
-
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return `${apiBaseUrl}${url}`
-}
+// getImageUrl imported from @/utils/imageUrl
 
 const getMainImage = (template) => {
   if (!template.images?.length) return null
