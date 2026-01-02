@@ -443,10 +443,11 @@ export const PMS_CONTEXT_KEY = Symbol('pmsContext')
  * }
  */
 export function usePmsContextInjection() {
-  const context = inject(PMS_CONTEXT_KEY)
+  // Default değer vererek Vue uyarısını önle
+  const context = inject(PMS_CONTEXT_KEY, null)
 
   if (!context) {
-    console.warn('[usePmsContextInjection] PMS Context not provided. Using fallback.')
+    // Context yoksa fallback olarak usePmsContext kullan
     return usePmsContext()
   }
 
