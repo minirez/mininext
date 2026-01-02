@@ -198,9 +198,10 @@ L.Icon.Default.mergeOptions({
 })
 
 import CascadingLocationSelect from '@/components/common/CascadingLocationSelect.vue'
+import { COUNTRIES } from '@/data/countries'
 
 const toast = useToast()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps({
   hotel: {
@@ -248,14 +249,29 @@ const location = ref({
   regionIds: []
 })
 
+// Store selected city name for address.city field
+const selectedCityName = ref('')
+
 // Handle city selection - focus map on city coordinates
 const handleCitySelected = (city) => {
+  // Store city name for address field
+  selectedCityName.value = city?.name || ''
+
   if (city?.coordinates?.lat && city?.coordinates?.lng) {
     // Focus map on city coordinates
     if (map) {
       map.setView([city.coordinates.lat, city.coordinates.lng], city.zoom || 12)
     }
   }
+}
+
+// Get country name from code
+const getCountryName = (countryCode) => {
+  if (!countryCode) return ''
+  const country = COUNTRIES.find(c => c.code === countryCode)
+  if (!country) return ''
+  const lang = locale.value || 'tr'
+  return country.name[lang] || country.name.tr || country.name.en || ''
 }
 
 // Custom marker icon
@@ -430,6 +446,13 @@ watch(() => props.hotel, (newHotel) => {
       cityId: newHotel.location.city?._id || newHotel.location.city || '',
       regionIds: (newHotel.location.tourismRegions || []).map(r => r?._id || r)
     }
+
+    // Set city name from location or address
+    if (newHotel.location.city?.name) {
+      selectedCityName.value = newHotel.location.city.name
+    } else if (newHotel.address?.city) {
+      selectedCityName.value = newHotel.address.city
+    }
   }
 }, { immediate: true, deep: true })
 
@@ -531,7 +554,10 @@ const getFormData = () => {
     address: {
       street: form.value.street,
       coordinates: form.value.coordinates,
-      formattedAddress: form.value.formattedAddress
+      formattedAddress: form.value.formattedAddress,
+      // Required fields - get from hierarchical location selection
+      city: selectedCityName.value || '',
+      country: getCountryName(location.value.countryCode)
     },
     location: {
       countryCode: location.value.countryCode,

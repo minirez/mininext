@@ -22,7 +22,7 @@ export const getSettings = asyncHandler(async (req, res) => {
  * Update platform settings
  */
 export const updateSettings = asyncHandler(async (req, res) => {
-  const { aws, netgsm, webPush, gemini } = req.body
+  const { aws, netgsm, webPush, gemini, firecrawl } = req.body
 
   let settings = await PlatformSettings.getSettings()
 
@@ -66,6 +66,14 @@ export const updateSettings = asyncHandler(async (req, res) => {
 
     if (gemini.enabled !== undefined) settings.gemini.enabled = gemini.enabled
     if (gemini.apiKey) settings.gemini.apiKey = gemini.apiKey
+  }
+
+  // Update Firecrawl settings
+  if (firecrawl !== undefined) {
+    settings.firecrawl = settings.firecrawl || {}
+
+    if (firecrawl.enabled !== undefined) settings.firecrawl.enabled = firecrawl.enabled
+    if (firecrawl.apiKey) settings.firecrawl.apiKey = firecrawl.apiKey
   }
 
   await settings.save()
