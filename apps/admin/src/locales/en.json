@@ -702,7 +702,8 @@
         "testEmailAddress": "Test Email Address",
         "testEmailSent": "Test email sent",
         "deleteIdentity": "Remove Domain",
-        "deleteIdentityConfirm": "Are you sure you want to remove this domain? Your DNS records will become invalid."
+        "deleteIdentityConfirm": "Are you sure you want to remove this domain? Your DNS records will become invalid.",
+        "noDomainFound": "No domain found. Please create a domain first."
       }
     },
     "setupSaved": "Domain settings saved successfully",

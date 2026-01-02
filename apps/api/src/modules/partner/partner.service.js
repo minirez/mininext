@@ -476,8 +476,12 @@ export const getVerificationStatus = asyncHandler(async (req, res) => {
 
   const domainVerification = partner.notifications?.email?.domainVerification
 
+  // Domain yoksa boş response dön (404 yerine)
   if (!domainVerification || !domainVerification.domain) {
-    throw new NotFoundError('NO_DOMAIN_VERIFICATION')
+    return res.json({
+      success: true,
+      data: null
+    })
   }
 
   try {

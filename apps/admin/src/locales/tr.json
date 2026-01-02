@@ -675,7 +675,8 @@
         "testEmailAddress": "Test E-posta Adresi",
         "testEmailSent": "Test e-postası gönderildi",
         "deleteIdentity": "Domaini Kaldır",
-        "deleteIdentityConfirm": "Bu domaini kaldırmak istediğinizden emin misiniz? DNS kayıtlarınız geçersiz hale gelecektir."
+        "deleteIdentityConfirm": "Bu domaini kaldırmak istediğinizden emin misiniz? DNS kayıtlarınız geçersiz hale gelecektir.",
+        "noDomainFound": "Domain bulunamadı. Önce bir domain oluşturun."
       }
     },
     "setupSaved": "Domain ayarları başarıyla kaydedildi",

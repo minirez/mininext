@@ -796,6 +796,14 @@ const handleCheckVerification = async () => {
     const partnerId = currentPartnerId.value || authStore.user?.partner
     const result = await partnerEmailService.getVerificationStatus(partnerId)
 
+    // Backend null döndüyse domain yoktur - state'i temizle
+    if (!result) {
+      domainVerification.value = null
+      dnsRecords.value = []
+      toast.warning(t('siteSettings.notifications.email.noDomainFound'))
+      return
+    }
+
     domainVerification.value = {
       ...domainVerification.value,
       status: result.status,
