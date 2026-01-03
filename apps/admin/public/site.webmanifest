@@ -1,7 +1,7 @@
 {
-  "name": "Booking Platform - Travel Booking System",
-  "short_name": "Booking",
-  "description": "Multi-tenant B2B/B2C travel booking platform",
+  "name": "MiniRez - Hotel Booking Platform",
+  "short_name": "MiniRez",
+  "description": "MiniRez - Hotel Booking Platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1f2937",
@@ -9,21 +9,10 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/web-app-manifest-192x192.png",
-      "sizes": "192x192",
+      "src": "/minirez.png",
+      "sizes": "171x171",
       "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/web-app-manifest-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/favicon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["travel", "business"],

@@ -76,6 +76,24 @@ export const updateSettings = asyncHandler(async (req, res) => {
     if (firecrawl.apiKey) settings.firecrawl.apiKey = firecrawl.apiKey
   }
 
+  // Update Paximum settings
+  const { paximum } = req.body
+  if (paximum !== undefined) {
+    settings.paximum = settings.paximum || {}
+
+    if (paximum.enabled !== undefined) settings.paximum.enabled = paximum.enabled
+    if (paximum.endpoint) settings.paximum.endpoint = paximum.endpoint
+    if (paximum.agency) settings.paximum.agency = paximum.agency
+    if (paximum.user) settings.paximum.user = paximum.user
+    if (paximum.password) settings.paximum.password = paximum.password
+    if (paximum.defaultMarkup !== undefined) settings.paximum.defaultMarkup = paximum.defaultMarkup
+    // Clear token cache when credentials change
+    if (paximum.agency || paximum.user || paximum.password) {
+      settings.paximum.token = null
+      settings.paximum.tokenExpiresOn = null
+    }
+  }
+
   await settings.save()
 
   logger.info('Platform settings updated by user:', req.user?.email)
@@ -316,11 +334,79 @@ export const getVAPIDPublicKey = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Test Paximum connection
+ * Attempts to authenticate with Paximum API
+ */
+export const testPaximum = asyncHandler(async (req, res) => {
+  const settings = await PlatformSettings.getSettings()
+  const credentials = settings.getPaximumCredentials()
+
+  if (!credentials) {
+    return res.status(400).json({
+      success: false,
+      error: 'Paximum is not configured or not enabled'
+    })
+  }
+
+  if (!credentials.agency || !credentials.user || !credentials.password) {
+    return res.status(400).json({
+      success: false,
+      error: 'Paximum credentials are not complete'
+    })
+  }
+
+  try {
+    // Try to authenticate with Paximum
+    const response = await axios.post(
+      `${credentials.endpoint}/api/authenticationservice/login`,
+      {
+        Agency: credentials.agency,
+        User: credentials.user,
+        Password: credentials.password
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000
+      }
+    )
+
+    if (response.data?.body?.token) {
+      // Update token cache
+      await settings.updatePaximumToken(
+        response.data.body.token,
+        new Date(response.data.body.expiresOn)
+      )
+
+      logger.info('Paximum connection test successful')
+
+      res.json({
+        success: true,
+        message: 'Paximum bağlantısı başarılı',
+        data: {
+          agency: credentials.agency,
+          tokenExpiry: response.data.body.expiresOn
+        }
+      })
+    } else {
+      throw new Error('Token not received from Paximum')
+    }
+  } catch (error) {
+    logger.error('Paximum connection test failed:', error.message)
+
+    res.status(400).json({
+      success: false,
+      error: error.response?.data?.header?.messages?.[0]?.message || error.message || 'Paximum bağlantı testi başarısız'
+    })
+  }
+})
+
 export default {
   getSettings,
   updateSettings,
   testEmail,
   testSMS,
   generateVAPIDKeys,
-  getVAPIDPublicKey
+  getVAPIDPublicKey,
+  testPaximum
 }

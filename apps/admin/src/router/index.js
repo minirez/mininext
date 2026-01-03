@@ -419,10 +419,6 @@ const router = createRouter({
 	]
 })
 
-// Navigation Guard
-import { useAuthStore } from '@/stores/auth'
-import { usePmsAuthStore } from '@/stores/pms/pmsAuth'
-
 // Check if current domain is a PMS custom domain
 const isPmsCustomDomain = () => {
 	const hostname = window.location.hostname
@@ -430,7 +426,13 @@ const isPmsCustomDomain = () => {
 	return !defaultDomains.some(d => hostname.includes(d))
 }
 
+// Navigation Guard
 router.beforeEach(async (to, from, next) => {
+	// Import stores inside beforeEach to ensure Pinia is initialized
+	// This prevents "getActivePinia()" errors during HMR
+	const { useAuthStore } = await import('@/stores/auth')
+	const { usePmsAuthStore } = await import('@/stores/pms/pmsAuth')
+
 	const authStore = useAuthStore()
 	const pmsAuthStore = usePmsAuthStore()
 

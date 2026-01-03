@@ -1,11 +1,13 @@
 import dotenv from 'dotenv'
 
 // Load environment variables
+// Try environment-specific file first, then fallback to .env
 const envFile = process.env.NODE_ENV === 'production'
   ? '.env.production'
   : '.env.development'
 
 dotenv.config({ path: envFile })
+dotenv.config() // Fallback to .env if specific file doesn't have all vars
 
 const config = {
   // Environment

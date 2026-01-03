@@ -422,7 +422,7 @@ const bookingSchema = new mongoose.Schema({
 	source: {
 		type: {
 			type: String,
-			enum: ['b2c', 'b2b', 'admin', 'api', 'channel'],
+			enum: ['b2c', 'b2b', 'admin', 'api', 'channel', 'paximum'],
 			default: 'b2c'
 		},
 		channel: { type: String }, // Booking source channel name
@@ -437,7 +437,33 @@ const bookingSchema = new mongoose.Schema({
 		},
 		sessionId: { type: String }, // For B2C tracking
 		ipAddress: { type: String },
-		userAgent: { type: String }
+		userAgent: { type: String },
+		// Paximum OTA booking data
+		paximumData: {
+			reservationNumber: { type: String }, // Paximum reservation number
+			transactionId: { type: String }, // Paximum transaction ID
+			offerId: { type: String }, // Selected offer ID
+			hotelId: { type: String }, // Paximum hotel ID
+			hotelName: { type: String }, // Paximum hotel name
+			roomName: { type: String }, // Room type name from Paximum
+			boardName: { type: String }, // Board/meal plan from Paximum
+			originalPrice: { type: Number }, // Original price from Paximum
+			currency: { type: String }, // Original currency
+			markupRate: { type: Number }, // Applied markup percentage
+			markupAmount: { type: Number }, // Markup amount applied
+			checkIn: { type: Date },
+			checkOut: { type: Date },
+			nights: { type: Number },
+			adults: { type: Number },
+			children: [{ type: Number }], // Child ages array
+			isRefundable: { type: Boolean },
+			cancellationPolicies: [{ // Cancellation policy from Paximum
+				dueDate: { type: Date },
+				price: { type: Number },
+				currency: { type: String }
+			}],
+			rawResponse: mongoose.Schema.Types.Mixed // Full Paximum response for debugging
+		}
 	},
 
 	// Cancellation

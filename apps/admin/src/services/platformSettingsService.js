@@ -48,11 +48,20 @@ export const getVAPIDPublicKey = async () => {
   return response.data.data.publicKey
 }
 
+/**
+ * Test Paximum connection
+ */
+export const testPaximum = async () => {
+  const response = await apiClient.post('/platform-settings/test-paximum')
+  return response.data
+}
+
 export default {
   getSettings,
   updateSettings,
   testEmail,
   testSMS,
   generateVAPIDKeys,
-  getVAPIDPublicKey
+  getVAPIDPublicKey,
+  testPaximum
 }

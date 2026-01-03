@@ -292,6 +292,109 @@
 				</div>
 			</div>
 
+			<!-- Paximum OTA Integration Settings -->
+			<div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+				<div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<span class="material-icons text-indigo-500">travel_explore</span>
+						<div>
+							<h2 class="font-semibold text-gray-900 dark:text-white">
+								{{ $t('platformSettings.paximum.title') }}
+							</h2>
+							<p class="text-sm text-gray-500 dark:text-slate-400">
+								{{ $t('platformSettings.paximum.description') }}
+							</p>
+						</div>
+					</div>
+					<label class="relative inline-flex items-center cursor-pointer">
+						<input type="checkbox" v-model="settings.paximum.enabled" class="sr-only peer">
+						<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+					</label>
+				</div>
+				<div v-if="settings.paximum.enabled" class="p-6 space-y-4">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div class="md:col-span-2">
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.paximum.endpoint') }}
+							</label>
+							<input
+								type="text"
+								v-model="settings.paximum.endpoint"
+								placeholder="https://service.paximum.com/v2"
+								autocomplete="off"
+								class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+							>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.paximum.agency') }}
+							</label>
+							<input
+								type="text"
+								v-model="settings.paximum.agency"
+								:placeholder="settings.paximum.agency ? '********' : 'PXM...'"
+								autocomplete="off"
+								class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+							>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.paximum.user') }}
+							</label>
+							<input
+								type="text"
+								v-model="settings.paximum.user"
+								:placeholder="settings.paximum.user ? '********' : 'USR...'"
+								autocomplete="off"
+								class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+							>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.paximum.password') }}
+							</label>
+							<input
+								type="password"
+								v-model="settings.paximum.password"
+								:placeholder="settings.paximum.password ? '********' : ''"
+								autocomplete="off"
+								class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+							>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+								{{ $t('platformSettings.paximum.defaultMarkup') }}
+							</label>
+							<div class="flex items-center gap-2">
+								<input
+									type="number"
+									v-model.number="settings.paximum.defaultMarkup"
+									min="0"
+									max="100"
+									class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+								>
+								<span class="text-gray-500">%</span>
+							</div>
+							<p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+								{{ $t('platformSettings.paximum.defaultMarkupHint') }}
+							</p>
+						</div>
+					</div>
+					<!-- Test Connection Button -->
+					<div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
+						<button
+							@click="testPaximumConnection"
+							:disabled="testingPaximum"
+							class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors disabled:opacity-50"
+						>
+							<span v-if="testingPaximum" class="material-icons animate-spin text-sm">refresh</span>
+							<span v-else class="material-icons text-sm">wifi_tethering</span>
+							{{ $t('platformSettings.paximum.testConnection') }}
+						</button>
+					</div>
+				</div>
+			</div>
+
 			<!-- Web Push Settings -->
 			<div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
 				<div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
@@ -392,6 +495,7 @@ const loading = ref(true)
 const saving = ref(false)
 const testingEmail = ref(false)
 const testingSMS = ref(false)
+const testingPaximum = ref(false)
 const generatingVAPID = ref(false)
 
 const testEmailAddress = ref('')
@@ -421,6 +525,14 @@ const settings = ref({
 	firecrawl: {
 		enabled: false,
 		apiKey: ''
+	},
+	paximum: {
+		enabled: false,
+		endpoint: 'https://service.paximum.com/v2',
+		agency: '',
+		user: '',
+		password: '',
+		defaultMarkup: 10
 	},
 	webPush: {
 		enabled: false,
@@ -462,6 +574,14 @@ const loadSettings = async () => {
 				enabled: data.firecrawl?.enabled || false,
 				apiKey: '' // Don't show masked value
 			},
+			paximum: {
+				enabled: data.paximum?.enabled || false,
+				endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
+				agency: '', // Don't show masked value
+				user: '', // Don't show masked value
+				password: '', // Don't show masked value
+				defaultMarkup: data.paximum?.defaultMarkup ?? 10
+			},
 			webPush: {
 				enabled: data.webPush?.enabled || false,
 				publicKey: data.webPush?.publicKey || '',
@@ -501,6 +621,11 @@ const saveSettings = async () => {
 			firecrawl: {
 				enabled: settings.value.firecrawl.enabled
 			},
+			paximum: {
+				enabled: settings.value.paximum.enabled,
+				endpoint: settings.value.paximum.endpoint,
+				defaultMarkup: settings.value.paximum.defaultMarkup
+			},
 			webPush: {
 				enabled: settings.value.webPush.enabled,
 				publicKey: settings.value.webPush.publicKey,
@@ -526,6 +651,15 @@ const saveSettings = async () => {
 		}
 		if (settings.value.firecrawl.apiKey) {
 			update.firecrawl.apiKey = settings.value.firecrawl.apiKey
+		}
+		if (settings.value.paximum.agency) {
+			update.paximum.agency = settings.value.paximum.agency
+		}
+		if (settings.value.paximum.user) {
+			update.paximum.user = settings.value.paximum.user
+		}
+		if (settings.value.paximum.password) {
+			update.paximum.password = settings.value.paximum.password
 		}
 		if (settings.value.webPush.privateKey) {
 			update.webPush.privateKey = settings.value.webPush.privateKey
@@ -581,6 +715,19 @@ const generateVAPID = async () => {
 		toast.error(error.response?.data?.error || error.message)
 	} finally {
 		generatingVAPID.value = false
+	}
+}
+
+// Test Paximum connection
+const testPaximumConnection = async () => {
+	try {
+		testingPaximum.value = true
+		const result = await platformSettingsService.testPaximum()
+		toast.success(result.message || t('platformSettings.paximum.testSuccess'))
+	} catch (error) {
+		toast.error(error.response?.data?.error || error.message)
+	} finally {
+		testingPaximum.value = false
 	}
 }
 

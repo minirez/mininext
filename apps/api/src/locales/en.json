@@ -124,5 +124,22 @@
   "ROOM_TEMPLATE_CODE_REQUIRED": "Room template code is required",
   "ROOM_TEMPLATE_CODE_EXISTS": "A room template with this code already exists",
   "BASE_HOTEL_NOT_FOUND": "Base hotel not found",
-  "HOTEL_NOT_LINKED": "This hotel is not linked to a base hotel"
+  "HOTEL_NOT_LINKED": "This hotel is not linked to a base hotel",
+
+  "PARTNER_REQUIRED": "Partner is required",
+  "INVALID_SSL_TYPE": "Invalid SSL type",
+  "DOMAIN_NOT_SET": "Domain is not set",
+  "DOMAIN_REQUIRED": "Domain is required",
+  "SSL_REQUEST_SUBMITTED": "SSL certificate request submitted",
+  "DNS_VERIFIED": "DNS verified",
+  "DNS_RECORD_NOT_FOUND": "DNS record not found. Please check your A record.",
+  "DNS_NOT_POINTING_TO_SERVER": "Domain is not pointing to this server. Please update your A record.",
+  "SSL_SETUP_COMPLETE": "SSL setup completed successfully",
+  "CERTIFICATE_OBTAINED": "SSL certificate obtained successfully",
+  "CERTIFICATE_REQUEST_FAILED": "Failed to obtain SSL certificate. Please try again later.",
+  "DNS_VERIFICATION_FAILED": "DNS verification failed",
+  "RATE_LIMIT_EXCEEDED": "Too many requests. Please wait a moment.",
+  "NGINX_CONFIG_INSTALLED": "Nginx configuration installed successfully",
+  "NGINX_CONFIG_FAILED": "Nginx configuration failed",
+  "SERVER_IP_FETCH_FAILED": "Failed to fetch server IP address"
 }

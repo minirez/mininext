@@ -112,6 +112,36 @@ const requestSsl = async (type) => {
   }
 }
 
+const verifyDns = async (type, domain) => {
+  try {
+    const response = await apiClient.post('/site-settings/ssl/verify-dns', { type, domain })
+    return response.data
+  } catch (error) {
+    console.error('SiteSettings Service: Failed to verify DNS', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const setupSsl = async (type) => {
+  try {
+    const response = await apiClient.post('/site-settings/ssl/setup', { type })
+    return response.data
+  } catch (error) {
+    console.error('SiteSettings Service: Failed to setup SSL', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const getSslStatus = async (type) => {
+  try {
+    const response = await apiClient.get(`/site-settings/ssl/status/${type}`)
+    return response.data
+  } catch (error) {
+    console.error('SiteSettings Service: Failed to get SSL status', error.response?.data || error.message)
+    throw error
+  }
+}
+
 // File uploads
 const uploadImage = async (file, type) => {
   try {
@@ -155,6 +185,9 @@ export default {
   updateSliderItem,
   deleteSliderItem,
   requestSsl,
+  verifyDns,
+  setupSsl,
+  getSslStatus,
   uploadImage,
   deleteImage
 }

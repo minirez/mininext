@@ -35,5 +35,8 @@ router.delete('/slider/:sliderId', siteSettingsService.deleteSliderItem)
 
 // SSL management
 router.post('/ssl/request', siteSettingsService.requestSsl)
+router.post('/ssl/verify-dns', siteSettingsService.verifyDns)
+router.post('/ssl/setup', siteSettingsService.setupSsl)
+router.get('/ssl/status/:type', siteSettingsService.getSslStatus)
 
 export default router

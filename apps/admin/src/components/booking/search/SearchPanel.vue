@@ -1,5 +1,37 @@
 <template>
 	<div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
+		<!-- Provider Tab Bar -->
+		<div v-if="bookingStore.paximumEnabled" class="flex border-b border-gray-200 dark:border-slate-700">
+			<button
+				@click="bookingStore.setProvider('local')"
+				:class="[
+					'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+					bookingStore.activeProvider === 'local'
+						? 'text-purple-600 border-b-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+						: 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white'
+				]"
+			>
+				<span class="flex items-center justify-center gap-1.5">
+					<span class="material-icons text-sm">home</span>
+					{{ $t('booking.provider.local') }}
+				</span>
+			</button>
+			<button
+				@click="bookingStore.setProvider('paximum')"
+				:class="[
+					'flex-1 px-4 py-2 text-sm font-medium transition-colors',
+					bookingStore.activeProvider === 'paximum'
+						? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+						: 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white'
+				]"
+			>
+				<span class="flex items-center justify-center gap-1.5">
+					<span class="material-icons text-sm">travel_explore</span>
+					Bedbank
+				</span>
+			</button>
+		</div>
+
 		<!-- Header - Always Visible -->
 		<div
 			@click="toggleExpanded"
@@ -7,7 +39,7 @@
 			:class="{ 'border-b border-gray-200 dark:border-slate-700': isExpanded }"
 		>
 			<div class="flex items-center gap-2">
-				<span class="material-icons text-purple-500">search</span>
+				<span class="material-icons" :class="bookingStore.activeProvider === 'paximum' ? 'text-indigo-500' : 'text-purple-500'">search</span>
 				<span class="font-medium text-gray-900 dark:text-white text-sm">{{ $t('booking.searchTitle') }}</span>
 			</div>
 			<div class="flex items-center gap-2">
@@ -31,6 +63,14 @@
 		<!-- Collapsible Content -->
 		<transition name="collapse">
 			<div v-show="isExpanded" class="p-4 space-y-4">
+				<!-- Paximum Search Form -->
+				<PaximumSearchForm
+					v-if="bookingStore.activeProvider === 'paximum'"
+					@search="handlePaximumSearch"
+				/>
+
+				<!-- Local Search Form -->
+				<template v-else>
 				<!-- Hotel/Region Selection -->
 				<div>
 					<label class="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -172,23 +212,30 @@
 					<span v-else class="material-icons mr-1.5 text-sm">search</span>
 					{{ $t('booking.searchAvailability') }}
 				</button>
+				</template>
 			</div>
 		</transition>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookingStore } from '@/stores/booking'
 import HotelRegionSelector from './HotelRegionSelector.vue'
 import BookingDateRangePicker from './BookingDateRangePicker.vue'
+import PaximumSearchForm from './PaximumSearchForm.vue'
 import CountrySelect from '@/components/common/CountrySelect.vue'
 
 const { locale } = useI18n()
 const bookingStore = useBookingStore()
 
-const emit = defineEmits(['search'])
+const emit = defineEmits(['search', 'paximum-search'])
+
+// Check Paximum status on mount
+onMounted(() => {
+	bookingStore.checkPaximumStatus()
+})
 
 // Collapsed state
 const isExpanded = ref(true)
@@ -362,6 +409,13 @@ const handleSearch = () => {
 	// Reset validation on successful search
 	showValidation.value = false
 	emit('search')
+	// Collapse after search
+	isExpanded.value = false
+}
+
+// Handle Paximum search
+const handlePaximumSearch = () => {
+	emit('paximum-search')
 	// Collapse after search
 	isExpanded.value = false
 }

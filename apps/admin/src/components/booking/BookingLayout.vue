@@ -5,14 +5,22 @@
 			<!-- Left Column: Search + Hotel List (Fixed Width, Independent Scroll) -->
 			<div class="w-full lg:w-[400px] flex-shrink-0 h-full overflow-y-auto">
 				<div class="space-y-4 pb-4">
-					<SearchPanel @search="handleSearch" />
+					<SearchPanel @search="handleSearch" @paximum-search="handlePaximumSearch" />
+
+					<!-- Local Hotel List -->
 					<HotelList
-						v-if="bookingStore.searchResults.hotels.length > 0 || (bookingStore.searchResults.unavailableHotels?.length > 0)"
+						v-if="bookingStore.activeProvider === 'local' && (bookingStore.searchResults.hotels.length > 0 || (bookingStore.searchResults.unavailableHotels?.length > 0))"
 						:hotels="bookingStore.searchResults.hotels"
 						:unavailable-hotels="bookingStore.searchResults.unavailableHotels || []"
 						:selected-hotel-id="bookingStore.searchResults.selectedHotelId"
 						:loading="bookingStore.loading.hotels"
 						@select="handleSelectHotel"
+					/>
+
+					<!-- Paximum Hotel List -->
+					<PaximumHotelList
+						v-if="bookingStore.activeProvider === 'paximum' && (bookingStore.paximumResults.hotels.length > 0 || bookingStore.paximumResults.searchPerformed)"
+						@hotel-selected="handlePaximumHotelSelected"
 					/>
 				</div>
 			</div>
@@ -31,8 +39,9 @@
 						@remove="handleRemoveFromCart"
 					/>
 
+					<!-- Local Room Panel -->
 					<RoomPanel
-						v-if="bookingStore.searchResults.selectedHotelId"
+						v-if="bookingStore.activeProvider === 'local' && bookingStore.searchResults.selectedHotelId"
 						:hotel="bookingStore.searchResults.selectedHotel"
 						:rooms="bookingStore.searchResults.selectedHotelRooms"
 						:loading="bookingStore.loading.rooms"
@@ -40,9 +49,29 @@
 						class="flex-1"
 					/>
 
-					<!-- Empty State -->
+					<!-- Paximum Room Panel -->
+					<PaximumRoomPanel
+						v-if="bookingStore.activeProvider === 'paximum' && bookingStore.paximumResults.selectedHotel"
+						@add-to-cart="handlePaximumAddToCart"
+						class="flex-1"
+					/>
+
+					<!-- Empty State - Local -->
 					<div
-						v-else-if="bookingStore.searchResults.hotels.length > 0"
+						v-else-if="bookingStore.activeProvider === 'local' && bookingStore.searchResults.hotels.length > 0"
+						class="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 min-h-[400px]"
+					>
+						<div class="text-center p-8">
+							<span class="material-icons text-6xl text-gray-300 dark:text-slate-600">hotel</span>
+							<p class="mt-4 text-gray-500 dark:text-slate-400">
+								{{ $t('booking.selectHotelToViewRooms') }}
+							</p>
+						</div>
+					</div>
+
+					<!-- Empty State - Paximum -->
+					<div
+						v-else-if="bookingStore.activeProvider === 'paximum' && bookingStore.paximumResults.hotels.length > 0"
 						class="flex-1 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 min-h-[400px]"
 					>
 						<div class="text-center p-8">
@@ -75,8 +104,8 @@
 				<!-- Left Column: Booking Summary (Sticky on Desktop) -->
 				<div class="w-full lg:w-[400px] flex-shrink-0 lg:sticky lg:top-0">
 					<div class="space-y-4 pb-4">
-					<!-- Draft Info Banner -->
-					<div v-if="bookingStore.draftBookingNumber" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
+					<!-- Draft Info Banner (not shown for Paximum bookings) -->
+					<div v-if="bookingStore.draftBookingNumber && !bookingStore.hasPaximumItems()" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-2">
 								<span class="material-icons text-purple-600 dark:text-purple-400">drafts</span>
@@ -257,7 +286,9 @@ import { useBookingStore } from '@/stores/booking'
 import { savePhase1Data, clearPhase1Data } from '@/services/bookingStorageService'
 import SearchPanel from './search/SearchPanel.vue'
 import HotelList from './search/HotelList.vue'
+import PaximumHotelList from './search/PaximumHotelList.vue'
 import RoomPanel from './rooms/RoomPanel.vue'
+import PaximumRoomPanel from './search/PaximumRoomPanel.vue'
 import CartSummary from './cart/CartSummary.vue'
 import BookingSummary from './checkout/BookingSummary.vue'
 import GuestForms from './checkout/GuestForms.vue'
@@ -313,8 +344,10 @@ watch(
 	{ deep: true }
 )
 
-// Trigger auto-save for Phase 2
+// Trigger auto-save for Phase 2 (local bookings only)
 const triggerAutoSave = () => {
+	// Skip auto-save for Paximum bookings (no draft)
+	if (bookingStore.hasPaximumItems()) return
 	if (bookingStore.currentPhase !== 2 || !bookingStore.draftBookingNumber) return
 
 	// Debounce auto-save
@@ -468,8 +501,17 @@ const handleTryCreateBooking = async () => {
 		return
 	}
 
-	// All valid, complete draft (this also checks allotment)
-	const result = await bookingStore.completeDraft()
+	let result = null
+
+	// Check if this is a Paximum booking
+	if (bookingStore.hasPaximumItems()) {
+		console.log('[Paximum] Creating Paximum booking...')
+		result = await bookingStore.createPaximumBooking()
+	} else {
+		// Local booking - complete draft (this also checks allotment)
+		result = await bookingStore.completeDraft()
+	}
+
 	if (result) {
 		// Clear localStorage on successful booking
 		clearPhase1Data()
@@ -481,6 +523,23 @@ const handleTryCreateBooking = async () => {
 // Search handler
 const handleSearch = async () => {
 	await bookingStore.searchHotels()
+}
+
+// Paximum search handler
+const handlePaximumSearch = () => {
+	// Search is handled in SearchPanel, just log for now
+	console.log('Paximum search completed')
+}
+
+// Paximum hotel selected handler
+const handlePaximumHotelSelected = (hotel) => {
+	console.log('Paximum hotel selected:', hotel.name)
+}
+
+// Paximum add to cart handler
+const handlePaximumAddToCart = (offer) => {
+	console.log('Paximum offer added to cart:', offer)
+	bookingStore.addPaximumToCart(offer)
 }
 
 // Select hotel
@@ -500,9 +559,16 @@ const handleRemoveFromCart = (index) => {
 	bookingStore.removeFromCart(index)
 }
 
-// Proceed to checkout - creates draft
+// Proceed to checkout - creates draft (for local) or just goes to Phase 2 (for Paximum)
 const handleProceedToCheckout = async () => {
-	// Create draft in database
+	// For Paximum bookings, skip draft creation and go directly to Phase 2
+	if (bookingStore.hasPaximumItems()) {
+		console.log('[Paximum] Skipping draft, going to Phase 2')
+		bookingStore.goToCheckout()
+		return
+	}
+
+	// For local bookings, create draft in database
 	const success = await bookingStore.createDraft()
 	if (success) {
 		// Clear localStorage since data is now in database

@@ -26,4 +26,7 @@ router.post('/test-sms', service.testSMS)
 // Generate VAPID keys
 router.post('/generate-vapid', service.generateVAPIDKeys)
 
+// Test Paximum connection
+router.post('/test-paximum', service.testPaximum)
+
 export default router

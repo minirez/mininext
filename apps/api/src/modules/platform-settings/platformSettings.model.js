@@ -129,6 +129,54 @@ const platformSettingsSchema = new mongoose.Schema({
         return isEncrypted(val) ? val : encrypt(val)
       }
     }
+  },
+
+  // Paximum OTA Integration
+  paximum: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    endpoint: {
+      type: String,
+      default: 'https://service.paximum.com/v2',
+      trim: true
+    },
+    agency: {
+      type: String,
+      set: function(val) {
+        if (!val) return val
+        return isEncrypted(val) ? val : encrypt(val)
+      }
+    },
+    user: {
+      type: String,
+      set: function(val) {
+        if (!val) return val
+        return isEncrypted(val) ? val : encrypt(val)
+      }
+    },
+    password: {
+      type: String,
+      set: function(val) {
+        if (!val) return val
+        return isEncrypted(val) ? val : encrypt(val)
+      }
+    },
+    // Token cache - updated automatically by service
+    token: {
+      type: String
+    },
+    tokenExpiresOn: {
+      type: Date
+    },
+    // Default markup percentage for Paximum hotels
+    defaultMarkup: {
+      type: Number,
+      default: 10,
+      min: 0,
+      max: 100
+    }
   }
 
 }, {
@@ -211,6 +259,30 @@ platformSettingsSchema.methods.getFirecrawlCredentials = function() {
   }
 }
 
+// Instance method to get decrypted Paximum credentials
+platformSettingsSchema.methods.getPaximumCredentials = function() {
+  if (!this.paximum?.enabled) {
+    return null
+  }
+
+  return {
+    endpoint: this.paximum.endpoint,
+    agency: this.paximum.agency ? decrypt(this.paximum.agency) : null,
+    user: this.paximum.user ? decrypt(this.paximum.user) : null,
+    password: this.paximum.password ? decrypt(this.paximum.password) : null,
+    token: this.paximum.token,
+    tokenExpiresOn: this.paximum.tokenExpiresOn,
+    defaultMarkup: this.paximum.defaultMarkup
+  }
+}
+
+// Instance method to update Paximum token cache
+platformSettingsSchema.methods.updatePaximumToken = async function(token, expiresOn) {
+  this.paximum.token = token
+  this.paximum.tokenExpiresOn = expiresOn
+  await this.save()
+}
+
 // Transform output - mask sensitive fields
 platformSettingsSchema.methods.toSafeJSON = function() {
   const obj = this.toObject()
@@ -244,6 +316,22 @@ platformSettingsSchema.methods.toSafeJSON = function() {
   // Mask Firecrawl API key
   if (obj.firecrawl?.apiKey) {
     obj.firecrawl.apiKey = '********'
+  }
+
+  // Mask Paximum credentials
+  if (obj.paximum?.agency) {
+    obj.paximum.agency = '********'
+  }
+  if (obj.paximum?.user) {
+    obj.paximum.user = '********'
+  }
+  if (obj.paximum?.password) {
+    obj.paximum.password = '********'
+  }
+  // Don't expose token in API responses
+  if (obj.paximum?.token) {
+    delete obj.paximum.token
+    delete obj.paximum.tokenExpiresOn
   }
 
   return obj

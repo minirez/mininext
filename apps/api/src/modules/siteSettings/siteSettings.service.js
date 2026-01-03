@@ -4,6 +4,7 @@ import { NotFoundError, BadRequestError } from '../../core/errors.js'
 import { asyncHandler } from '../../helpers/asyncHandler.js'
 import { getSiteFileUrl, deleteSiteFile } from '../../helpers/siteUpload.js'
 import logger from '../../core/logger.js'
+import sslService from '../../services/sslService.js'
 
 // Get partner ID from request (partner user or platform admin viewing as partner)
 const getPartnerId = (req) => {
@@ -396,6 +397,152 @@ export const requestSsl = asyncHandler(async (req, res) => {
     success: true,
     message: req.t('SSL_REQUEST_SUBMITTED'),
     data: settings.setup
+  })
+})
+
+// Verify DNS A record for a domain
+export const verifyDns = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  const { type, domain } = req.body // 'b2c', 'b2b', or 'pms'
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_REQUIRED')
+  }
+
+  if (!['b2c', 'b2b', 'pms'].includes(type)) {
+    throw new BadRequestError('INVALID_SSL_TYPE')
+  }
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_REQUIRED')
+  }
+
+  // DNS doğrulama yap
+  const result = await sslService.verifyDNS(domain)
+
+  res.json({
+    success: result.success,
+    message: req.t(result.message),
+    data: {
+      verified: result.success,
+      serverIP: result.serverIP,
+      domainIP: result.domainIP
+    }
+  })
+})
+
+// Full SSL setup (DNS verify + Certificate + Nginx)
+export const setupSsl = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  const { type } = req.body // 'b2c', 'b2b', or 'pms'
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_REQUIRED')
+  }
+
+  if (!['b2c', 'b2b', 'pms'].includes(type)) {
+    throw new BadRequestError('INVALID_SSL_TYPE')
+  }
+
+  const settings = await SiteSettings.getOrCreateForPartner(partnerId)
+
+  const domainFieldMap = { b2c: 'b2cDomain', b2b: 'b2bDomain', pms: 'pmsDomain' }
+  const statusFieldMap = { b2c: 'b2cSslStatus', b2b: 'b2bSslStatus', pms: 'pmsSslStatus' }
+  const expiryFieldMap = { b2c: 'b2cSslExpiresAt', b2b: 'b2bSslExpiresAt', pms: 'pmsSslExpiresAt' }
+
+  const domainField = domainFieldMap[type]
+  const statusField = statusFieldMap[type]
+  const expiryField = expiryFieldMap[type]
+
+  const domain = settings.setup[domainField]
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_NOT_SET')
+  }
+
+  // Status'u pending yap
+  settings.setup[statusField] = 'pending'
+  await settings.save()
+
+  logger.info(`[SSL] Starting SSL setup for ${domain} (${type}, partner: ${partnerId})`)
+
+  // Tam SSL kurulumu yap
+  const result = await sslService.setupSSL(domain, type, partnerId.toString())
+
+  if (result.success) {
+    // Başarılı - status'u active yap
+    settings.setup[statusField] = 'active'
+    settings.setup[expiryField] = result.expiresAt
+    await settings.save()
+
+    logger.info(`[SSL] SSL setup completed for ${domain}`)
+
+    res.json({
+      success: true,
+      message: req.t('SSL_SETUP_COMPLETE'),
+      data: {
+        status: 'active',
+        expiresAt: result.expiresAt,
+        setup: settings.setup
+      }
+    })
+  } else {
+    // Başarısız - status'u failed yap
+    settings.setup[statusField] = 'failed'
+    await settings.save()
+
+    logger.error(`[SSL] SSL setup failed for ${domain}: ${result.message}`)
+
+    res.status(400).json({
+      success: false,
+      message: req.t(result.message),
+      data: {
+        status: 'failed',
+        step: result.step,
+        details: result.details || null,
+        setup: settings.setup
+      }
+    })
+  }
+})
+
+// Get SSL status for a domain type
+export const getSslStatus = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  const { type } = req.params // 'b2c', 'b2b', or 'pms'
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_REQUIRED')
+  }
+
+  if (!['b2c', 'b2b', 'pms'].includes(type)) {
+    throw new BadRequestError('INVALID_SSL_TYPE')
+  }
+
+  const settings = await SiteSettings.getOrCreateForPartner(partnerId)
+
+  const domainFieldMap = { b2c: 'b2cDomain', b2b: 'b2bDomain', pms: 'pmsDomain' }
+  const statusFieldMap = { b2c: 'b2cSslStatus', b2b: 'b2bSslStatus', pms: 'pmsSslStatus' }
+  const expiryFieldMap = { b2c: 'b2cSslExpiresAt', b2b: 'b2bSslExpiresAt', pms: 'pmsSslExpiresAt' }
+
+  const domain = settings.setup[domainFieldMap[type]]
+  const status = settings.setup[statusFieldMap[type]] || 'none'
+  const expiresAt = settings.setup[expiryFieldMap[type]]
+
+  // Eğer domain varsa ve status active ise, sertifika bilgilerini kontrol et
+  let certInfo = null
+  if (domain && status === 'active') {
+    certInfo = await sslService.checkCertificate(domain)
+  }
+
+  res.json({
+    success: true,
+    data: {
+      domain,
+      status,
+      expiresAt,
+      certInfo
+    }
   })
 })
 

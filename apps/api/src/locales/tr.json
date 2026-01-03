@@ -124,5 +124,22 @@
   "ROOM_TEMPLATE_CODE_REQUIRED": "Oda şablonu kodu gereklidir",
   "ROOM_TEMPLATE_CODE_EXISTS": "Bu kodla bir oda şablonu zaten mevcut",
   "BASE_HOTEL_NOT_FOUND": "HotelBase oteli bulunamadı",
-  "HOTEL_NOT_LINKED": "Bu otel bir HotelBase'e bağlı değil"
+  "HOTEL_NOT_LINKED": "Bu otel bir HotelBase'e bağlı değil",
+
+  "PARTNER_REQUIRED": "Partner bilgisi gereklidir",
+  "INVALID_SSL_TYPE": "Geçersiz SSL tipi",
+  "DOMAIN_NOT_SET": "Domain ayarlanmamış",
+  "DOMAIN_REQUIRED": "Domain gereklidir",
+  "SSL_REQUEST_SUBMITTED": "SSL sertifikası talebi gönderildi",
+  "DNS_VERIFIED": "DNS doğrulandı",
+  "DNS_RECORD_NOT_FOUND": "DNS kaydı bulunamadı. Lütfen A kaydınızı kontrol edin.",
+  "DNS_NOT_POINTING_TO_SERVER": "Domain bu sunucuya yönlendirilmemiş. Lütfen A kaydını doğru IP adresine yönlendirin.",
+  "SSL_SETUP_COMPLETE": "SSL başarıyla kuruldu",
+  "CERTIFICATE_OBTAINED": "SSL sertifikası başarıyla alındı",
+  "CERTIFICATE_REQUEST_FAILED": "SSL sertifikası alınamadı. Lütfen daha sonra tekrar deneyin.",
+  "DNS_VERIFICATION_FAILED": "DNS doğrulama başarısız oldu",
+  "RATE_LIMIT_EXCEEDED": "Çok fazla istek yapıldı. Lütfen bir süre bekleyin.",
+  "NGINX_CONFIG_INSTALLED": "Nginx yapılandırması başarıyla kuruldu",
+  "NGINX_CONFIG_FAILED": "Nginx yapılandırması başarısız oldu",
+  "SERVER_IP_FETCH_FAILED": "Sunucu IP adresi alınamadı"
 }
