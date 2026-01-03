@@ -146,19 +146,7 @@ const getHotelId = (hotel) => {
 }
 
 pmsUserSchema.methods.hasAccessToHotel = function(hotelId) {
-  console.log('[hasAccessToHotel] Checking access:', {
-    hotelId,
-    hotelIdStr: hotelId?.toString(),
-    assignedHotels: this.assignedHotels?.map(h => ({
-      rawHotel: h.hotel,
-      extracted: getHotelId(h.hotel),
-      extractedStr: getHotelId(h.hotel)?.toString(),
-      role: h.role
-    }))
-  })
-  const hasAccess = this.assignedHotels.some(h => getHotelId(h.hotel)?.toString() === hotelId.toString())
-  console.log('[hasAccessToHotel] Result:', hasAccess)
-  return hasAccess
+  return this.assignedHotels.some(h => getHotelId(h.hotel)?.toString() === hotelId.toString())
 }
 
 pmsUserSchema.methods.getRoleForHotel = function(hotelId) {

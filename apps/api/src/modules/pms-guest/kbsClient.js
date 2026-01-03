@@ -573,7 +573,6 @@ export const scheduleAutoSend = async (hotelId, stay, room) => {
 
     // Check if KBS and autoSend are enabled
     if (!settings?.kbs?.enabled || !settings?.kbs?.autoSend?.enabled) {
-      console.log('[KBS AutoSend] Disabled for hotel:', hotelId)
       return
     }
 
@@ -586,25 +585,14 @@ export const scheduleAutoSend = async (hotelId, stay, room) => {
       const nightEnd = autoSend.nightEndHour ?? 7
 
       if (isNightTime(nightStart, nightEnd)) {
-        console.log('[KBS AutoSend] Paused during night hours for hotel:', hotelId)
         return
       }
     }
 
-    console.log(`[KBS AutoSend] Scheduling KBS send in ${autoSend.delayMinutes} minutes for stay:`, stay._id)
-
     // Schedule the send
     setTimeout(async () => {
       try {
-        console.log('[KBS AutoSend] Sending notifications for stay:', stay._id)
-
         const result = await sendStayNotifications(hotelId, 'checkin', stay, room)
-
-        console.log('[KBS AutoSend] Result:', {
-          stayId: stay._id,
-          success: result.success,
-          failed: result.failed
-        })
 
         // Update guest KBS status in database
         const Guest = (await import('./guest.model.js')).default

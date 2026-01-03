@@ -123,7 +123,6 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
     }).populate('roomType', 'name code')
   } catch (e) {
     // Booking model might not exist yet
-    console.log('Booking model not available:', e.message)
   }
 
   // Get pending Stays (direct reservations created in PMS, not yet checked in)
@@ -377,7 +376,6 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       stay.specialRequests = specialRequests
     }
     await stay.save()
-    console.log(`[CheckIn] Updated pending stay ${stay.stayNumber} to checked_in`)
   } else {
     // No pending Stay exists (backward compatibility) - create new one
     stay = await Stay.create({
@@ -405,7 +403,6 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       status: STAY_STATUS.CHECKED_IN,
       checkedInBy: req.user._id
     })
-    console.log(`[CheckIn] Created new stay ${stay.stayNumber} for booking ${booking.bookingNumber}`)
   }
 
   // Update room status
@@ -415,7 +412,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
   try {
     await Booking.findByIdAndUpdate(bookingId, { status: 'checked_in' })
   } catch (e) {
-    console.log('Could not update booking status:', e.message)
+    // Non-critical - booking status update failed
   }
 
   // Update PMS guest record with stay history
@@ -442,10 +439,9 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         nights: stay.nights,
         status: stay.status
       })
-      console.log(`[Guest] Stay ${stay._id} added to guest ${guest._id} history`)
     }
   } catch (e) {
-    console.error('[Guest] Error updating guest stay history:', e.message)
+    // Non-critical - guest history update failed
   }
 
   const populatedStay = await Stay.findById(stay._id)
@@ -514,7 +510,7 @@ export const checkOut = asyncHandler(async (req, res) => {
     try {
       await Booking.findByIdAndUpdate(stay.booking, { status: 'completed' })
     } catch (e) {
-      console.log('Could not update booking status:', e.message)
+      // Non-critical - booking status update failed
     }
   }
 
@@ -947,7 +943,6 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
   }
 
   await stay.save()
-  console.log(`[CheckIn] Updated pending stay ${stay.stayNumber} to checked_in`)
 
   // Update room status
   await room.checkIn(stay.booking, stay.guests, stay.checkOutDate)
@@ -957,7 +952,7 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
     try {
       await Booking.findByIdAndUpdate(stay.booking, { status: 'checked_in' })
     } catch (e) {
-      console.log('Could not update booking status:', e.message)
+      // Non-critical - booking status update failed
     }
   }
 
@@ -986,11 +981,10 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
           nights: stay.nights,
           status: stay.status
         })
-        console.log(`[Guest] Stay ${stay._id} added to guest ${guest._id} history`)
       }
     }
   } catch (e) {
-    console.error('[Guest] Error updating guest stay history:', e.message)
+    // Non-critical - guest history update failed
   }
 
   const populatedStay = await Stay.findById(stay._id)

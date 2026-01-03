@@ -11,6 +11,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 // Lazy load components for better performance
 const LoginView = () => import('../views/LoginView.vue')
 const RegisterView = () => import('../views/RegisterView.vue')
+const ForcePasswordChangeView = () => import('../views/ForcePasswordChangeView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const PartnersView = () => import('../views/PartnersView.vue')
 const AgenciesView = () => import('../views/AgenciesView.vue')
@@ -388,6 +389,12 @@ const router = createRouter({
 					path: 'register',
 					name: 'register',
 					component: RegisterView
+				},
+				{
+					path: 'force-password-change',
+					name: 'force-password-change',
+					component: ForcePasswordChangeView,
+					meta: { requiresAuth: true }
 				}
 			]
 		},
@@ -499,6 +506,9 @@ router.beforeEach(async (to, from, next) => {
 	if (!isPmsRoute && requiresAuth && !authStore.isAuthenticated) {
 		// Redirect to login page if not authenticated
 		next({ name: 'login', query: { redirect: to.fullPath } })
+	} else if (authStore.isAuthenticated && authStore.forcePasswordChange && to.name !== 'force-password-change') {
+		// Force password change is required - redirect to password change page
+		next({ name: 'force-password-change' })
 	} else if (requiresPlatformAdmin && !authStore.isPlatformAdmin) {
 		// Redirect to dashboard if not platform admin
 		console.warn(`Authorization failed: User is not a platform admin`)

@@ -365,19 +365,11 @@ export const getReceipt = asyncHandler(async (req, res) => {
 		? req.query.partnerId
 		: req.user.partner
 
-	console.log('[getReceipt] START - bookingId:', bookingId, 'paymentId:', paymentId, 'partnerId:', partnerId, 'role:', req.user.role)
-
-	// First try to find any payment with this ID to debug
-	const anyPayment = await Payment.findOne({ _id: paymentId })
-	console.log('[getReceipt] Any payment found:', anyPayment ? 'yes' : 'no', 'type:', anyPayment?.type, 'booking:', anyPayment?.booking?.toString())
-
 	const payment = await Payment.findOne({
 		_id: paymentId,
 		booking: bookingId,
 		...(partnerId && { partner: partnerId })
 	})
-
-	console.log('[getReceipt] Filtered payment found:', payment ? 'yes' : 'no', 'receiptUrl:', payment?.bankTransfer?.receiptUrl)
 
 	if (!payment) {
 		return res.status(404).json({
@@ -397,18 +389,13 @@ export const getReceipt = asyncHandler(async (req, res) => {
 	const filename = path.basename(payment.bankTransfer.receiptUrl)
 	const filePath = path.join(process.cwd(), 'uploads', 'payments', filename)
 
-	console.log('[getReceipt] filename:', filename, 'filePath:', filePath, 'cwd:', process.cwd())
-
 	// Check if file exists
 	if (!fs.existsSync(filePath)) {
-		console.log('[getReceipt] FILE NOT FOUND at:', filePath)
 		return res.status(404).json({
 			success: false,
 			message: 'FILE_NOT_FOUND'
 		})
 	}
-
-	console.log('[getReceipt] Serving file:', filePath)
 
 	// Get file extension and set content type
 	const ext = path.extname(filename).toLowerCase()

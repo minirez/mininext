@@ -103,8 +103,7 @@
 			<div>
 				<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
 					{{ $t('booking.invoiceDetails.tcNumber') }}
-					<span v-if="isTurkishCitizen" class="text-red-500">*</span>
-					<span v-else class="text-gray-400 text-xs">({{ $t('booking.invoiceDetails.trCitizensOnly') }})</span>
+					<span v-if="!isTurkishCitizen" class="text-gray-400 text-xs">({{ $t('booking.invoiceDetails.trCitizensOnly') }})</span>
 				</label>
 				<input
 					type="text"
@@ -117,8 +116,7 @@
 					inputmode="numeric"
 					autocomplete="off"
 				>
-				<p v-if="showValidation && isTurkishCitizen && !invoiceDetails.individual?.tcNumber" class="text-red-500 text-xs mt-1">{{ $t('validation.required') }}</p>
-				<p v-else-if="showValidation && invoiceDetails.individual?.tcNumber && !isValidTcNumber(invoiceDetails.individual?.tcNumber)" class="text-red-500 text-xs mt-1">{{ $t('validation.invalidTcNumber') }}</p>
+				<p v-if="showValidation && invoiceDetails.individual?.tcNumber && !isValidTcNumber(invoiceDetails.individual?.tcNumber)" class="text-red-500 text-xs mt-1">{{ $t('validation.invalidTcNumber') }}</p>
 			</div>
 
 			<!-- Address -->
@@ -358,10 +356,7 @@ const getFieldClass = (type, field) => {
 	// Required fields
 	const requiredIndividual = ['firstName', 'lastName']
 	const requiredCorporate = ['companyName', 'taxNumber', 'taxOffice']
-
-	if (type === 'individual' && isTurkishCitizen.value) {
-		requiredIndividual.push('tcNumber')
-	}
+	// TC Number is optional - only validate format if provided
 
 	const requiredFields = type === 'individual' ? requiredIndividual : requiredCorporate
 

@@ -403,13 +403,6 @@ export const updateHousekeepingStatus = asyncHandler(async (req, res) => {
 
   // Send notification based on housekeeping status change
   const currentStatus = housekeepingStatus || room.housekeepingStatus
-  console.log('[Housekeeping] Status check for notification:', {
-    currentStatus,
-    housekeepingStatus,
-    roomStatus: room.housekeepingStatus,
-    CLEAN: HOUSEKEEPING_STATUS.CLEAN,
-    DIRTY: HOUSEKEEPING_STATUS.DIRTY
-  })
   if (currentStatus === HOUSEKEEPING_STATUS.CLEAN) {
     notifyHotelUsers(hotelId, req.user._id, {
       type: 'pms:room_ready',

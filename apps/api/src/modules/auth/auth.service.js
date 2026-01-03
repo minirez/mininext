@@ -91,7 +91,8 @@ export const login = asyncHandler(async (req, res) => {
           accountType: user.accountType
         },
         accessToken,
-        refreshToken
+        refreshToken,
+        forcePasswordChange: user.forcePasswordChange || false
       }
     })
   }
@@ -171,7 +172,8 @@ export const login = asyncHandler(async (req, res) => {
         type: accountType
       },
       accessToken,
-      refreshToken
+      refreshToken,
+      forcePasswordChange: user.forcePasswordChange || false
     }
   })
 })
@@ -310,7 +312,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new BadRequestError('REQUIRED_PASSWORDS')
   }
 
-  if (newPassword.length < 6) {
+  if (newPassword.length < 8) {
     throw new BadRequestError('PASSWORD_TOO_SHORT')
   }
 
@@ -322,6 +324,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword
+  user.forcePasswordChange = false // Clear force password change flag
   await user.save()
 
   res.json({

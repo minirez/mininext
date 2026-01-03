@@ -290,18 +290,6 @@ rateSchema.statics.findInRange = async function(hotelId, startDate, endDate, fil
 	if (filters.mealPlan) query.mealPlan = filters.mealPlan
 	if (filters.market) query.market = filters.market
 
-	// Debug log
-	const count = await this.countDocuments(query)
-	console.log('🔍 Rate.findInRange query:', JSON.stringify({
-		hotelId: hotelId?.toString(),
-		startDate,
-		endDate,
-		roomType: filters.roomType?.toString(),
-		mealPlan: filters.mealPlan?.toString(),
-		market: filters.market?.toString(),
-		foundCount: count
-	}))
-
 	return this.find(query)
 		.populate('roomType', '_id name code')
 		.populate('mealPlan', '_id name code')

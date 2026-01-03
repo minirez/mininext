@@ -158,7 +158,19 @@
     "registerHere": "Buradan kayıt olun",
     "passwordsDoNotMatch": "Şifreler eşleşmiyor",
     "registrationSuccess": "Kayıt başarılı! Hesabınız onay bekliyor. Onaylandığında e-posta alacaksınız.",
-    "registrationFailed": "Kayıt başarısız. Lütfen tekrar deneyin."
+    "registrationFailed": "Kayıt başarısız. Lütfen tekrar deneyin.",
+    "changePasswordRequired": "Şifre Değişikliği Gerekli",
+    "changePasswordRequiredDesc": "Güvenliğiniz için şifrenizi değiştirmeniz gerekmektedir.",
+    "securityNotice": "Güvenlik Bildirimi",
+    "passwordRequirements": "Yeni şifreniz en az 8 karakter uzunluğunda olmalıdır.",
+    "currentPassword": "Mevcut Şifre",
+    "newPassword": "Yeni Şifre",
+    "enterCurrentPassword": "Mevcut şifrenizi girin",
+    "enterNewPassword": "Yeni şifrenizi girin",
+    "confirmNewPassword": "Yeni şifrenizi tekrar girin",
+    "minPasswordLength": "En az 8 karakter",
+    "changingPassword": "Şifre değiştiriliyor...",
+    "changePassword": "Şifreyi Değiştir"
   },
   "nav": {
     "dashboard": "Ana Sayfa",

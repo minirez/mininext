@@ -37,9 +37,8 @@ export const emitPMSEvent = (hotelId, event, data) => {
 
   try {
     emitToRoom(roomName, event, payload)
-    console.log(`[PMS Socket] Emitted ${event} to ${roomName}`)
   } catch (error) {
-    console.error(`[PMS Socket] Failed to emit ${event}:`, error)
+    // Socket emit errors are non-critical, silently ignore
   }
 }
 

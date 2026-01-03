@@ -109,10 +109,10 @@
 				<p v-if="showValidation && isChild && !modelValue.birthDate" class="text-red-500 text-xs mt-1">{{ $t('validation.required') }}</p>
 			</div>
 
-			<!-- TC Number (only for Turkish citizens) -->
+			<!-- TC Number (only for Turkish citizens - optional) -->
 			<div v-if="isTurkishCitizen" :class="compact ? 'col-span-2' : ''">
 				<label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-					{{ $t('booking.tcNumber') }} <span class="text-red-500">*</span>
+					{{ $t('booking.tcNumber') }}
 				</label>
 				<input
 					type="text"
@@ -125,8 +125,7 @@
 					inputmode="numeric"
 					autocomplete="off"
 				>
-				<p v-if="showValidation && !modelValue.tcNumber" class="text-red-500 text-xs mt-1">{{ $t('validation.required') }}</p>
-				<p v-else-if="showValidation && modelValue.tcNumber && !isValidTcNumber(modelValue.tcNumber)" class="text-red-500 text-xs mt-1">{{ $t('validation.invalidTcNumber') }}</p>
+				<p v-if="showValidation && modelValue.tcNumber && !isValidTcNumber(modelValue.tcNumber)" class="text-red-500 text-xs mt-1">{{ $t('validation.invalidTcNumber') }}</p>
 			</div>
 
 			<!-- Email (Lead Guest Only) -->
@@ -289,9 +288,7 @@ const getFieldClass = (field) => {
 	if (props.isChild) {
 		requiredFields.push('birthDate')
 	}
-	if (isTurkishCitizen.value) {
-		requiredFields.push('tcNumber')
-	}
+	// TC Number is optional - only validate format if provided
 
 	if (requiredFields.includes(field)) {
 		const value = props.modelValue[field]

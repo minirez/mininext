@@ -6,6 +6,7 @@
 import mongoose from 'mongoose'
 import axios from 'axios'
 import xml2js from 'xml2js'
+import logger from '../core/logger.js'
 
 const parser = new xml2js.Parser({
   explicitRoot: false,
@@ -153,7 +154,6 @@ exchangeSchema.statics.retrieve = async function() {
     const existing = await this.findOne({ bulletin: tcmbData.bulletin }).lean()
 
     if (existing) {
-      console.log('Exchange rates already up to date (bulletin:', tcmbData.bulletin, ')')
       return existing
     }
 
@@ -169,15 +169,13 @@ exchangeSchema.statics.retrieve = async function() {
       isActive: true
     })
 
-    console.log('Exchange rates updated (bulletin:', tcmbData.bulletin, ')')
     return newRates
   } catch (error) {
-    console.error('Exchange rate retrieval error:', error.message)
+    logger.error('Exchange rate retrieval error', { error: error.message })
 
     // Return latest available rates on error
     const fallback = await this.findOne({ isActive: true }).sort('-createdAt').lean()
     if (fallback) {
-      console.log('Using fallback rates from:', fallback.createdAt)
       return fallback
     }
 

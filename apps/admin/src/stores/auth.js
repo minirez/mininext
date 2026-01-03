@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null)
   const refreshTokenValue = ref(localStorage.getItem('refreshToken') || null)
   const requires2FA = ref(false)
+  const forcePasswordChange = ref(JSON.parse(localStorage.getItem('forcePasswordChange')) || false)
   const tempCredentials = ref(null)
   const isRefreshing = ref(false)
 
@@ -37,13 +38,16 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = response.data.accessToken
         refreshTokenValue.value = response.data.refreshToken
         user.value = response.data.user
+        forcePasswordChange.value = response.data.forcePasswordChange || false
 
         // Store in localStorage
         localStorage.setItem('token', response.data.accessToken)
         localStorage.setItem('refreshToken', response.data.refreshToken)
         localStorage.setItem('user', JSON.stringify(response.data.user))
+        localStorage.setItem('forcePasswordChange', JSON.stringify(response.data.forcePasswordChange || false))
 
-        return true
+        // Return forcePasswordChange status along with success
+        return { success: true, forcePasswordChange: response.data.forcePasswordChange || false }
       } else {
         throw new Error(response.message || 'Login failed')
       }
@@ -69,16 +73,18 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = response.data.accessToken
         refreshTokenValue.value = response.data.refreshToken
         user.value = response.data.user
+        forcePasswordChange.value = response.data.forcePasswordChange || false
 
         localStorage.setItem('token', response.data.accessToken)
         localStorage.setItem('refreshToken', response.data.refreshToken)
         localStorage.setItem('user', JSON.stringify(response.data.user))
+        localStorage.setItem('forcePasswordChange', JSON.stringify(response.data.forcePasswordChange || false))
 
         // Clear temp data
         tempCredentials.value = null
         requires2FA.value = false
 
-        return true
+        return { success: true, forcePasswordChange: response.data.forcePasswordChange || false }
       } else {
         throw new Error(response.message || '2FA verification failed')
       }
@@ -92,12 +98,19 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     refreshTokenValue.value = null
     user.value = null
+    forcePasswordChange.value = false
 
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
+    localStorage.removeItem('forcePasswordChange')
 
     router.push({ name: 'login' })
+  }
+
+  function clearForcePasswordChange() {
+    forcePasswordChange.value = false
+    localStorage.setItem('forcePasswordChange', JSON.stringify(false))
   }
 
   // Refresh access token using refresh token
@@ -170,6 +183,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     refreshTokenValue,
     requires2FA,
+    forcePasswordChange,
     tempCredentials,
     isRefreshing,
     // Getters
@@ -185,6 +199,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     checkAuth,
     updateUser,
-    refreshAccessToken
+    refreshAccessToken,
+    clearForcePasswordChange
   }
 })

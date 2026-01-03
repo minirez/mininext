@@ -57,6 +57,12 @@ const userSchema = new mongoose.Schema({
     select: false
   },
 
+  // Force password change on first login
+  forcePasswordChange: {
+    type: Boolean,
+    default: false
+  },
+
   // Yetki
   role: {
     type: String,

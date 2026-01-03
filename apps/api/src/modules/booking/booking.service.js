@@ -110,11 +110,8 @@ const createGuestFromBooking = async (booking) => {
 		}
 
 		const guest = await Guest.findOrCreate(hotelId, guestData)
-		console.log(`[Guest] Guest ${guest._id} ${guest.isNew ? 'created' : 'found'} for booking ${booking.bookingNumber}`)
-
 		return guest
 	} catch (error) {
-		console.error('[Guest] Error creating guest from booking:', error)
 		return null
 	}
 }
@@ -133,7 +130,6 @@ const createPendingStayFromBooking = async (booking) => {
 		// Check if Stay already exists for this booking
 		const existingStay = await Stay.findOne({ booking: booking._id })
 		if (existingStay) {
-			console.log(`[Stay] Stay already exists for booking ${booking.bookingNumber}`)
 			return existingStay
 		}
 
@@ -218,10 +214,8 @@ const createPendingStayFromBooking = async (booking) => {
 			isVip: booking.leadGuest?.isVip || false
 		})
 
-		console.log(`[Stay] Pending stay ${stay.stayNumber} created for booking ${booking.bookingNumber}`)
 		return stay
 	} catch (error) {
-		console.error('[Stay] Error creating pending stay from booking:', error)
 		return null
 	}
 }
@@ -487,14 +481,6 @@ export const searchHotelsAndRegions = asyncHandler(async (req, res) => {
 export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 	const partnerId = getPartnerId(req)
 
-	// Debug log
-	console.log('🔍 searchHotelsWithPrices called:', {
-		partnerId,
-		user: req.user ? { accountType: req.user.accountType, accountId: req.user.accountId } : null,
-		reqPartnerId: req.partnerId,
-		body: req.body
-	})
-
 	if (!partnerId) {
 		throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
 	}
@@ -552,13 +538,6 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 	const hotels = await Hotel.find(hotelQuery)
 		.select('_id code name slug stars type address images childAgeGroups pricingSettings paymentMethods location')
 		.lean()
-
-	// Debug log
-	console.log('🔍 Hotel query result:', {
-		query: hotelQuery,
-		hotelCount: hotels.length,
-		hotelIds: hotels.map(h => ({ _id: h._id, name: h.name }))
-	})
 
 	if (hotels.length === 0) {
 		return res.json({
@@ -685,12 +664,6 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 							})
 						}
 					} catch (err) {
-						console.log('🔴 Pricing error:', {
-							hotelId: hotel._id,
-							roomType: roomType.code,
-							mealPlan: mealPlan.code,
-							error: err.message
-						})
 						priceErrors.push({
 							roomType: roomType.code,
 							mealPlan: mealPlan.code,
@@ -727,7 +700,6 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 		} catch (err) {
 			hotelDebug.issues.push(`ERROR: ${err.message}`)
 			debugInfo.push(hotelDebug)
-			console.error(`Error processing hotel ${hotel._id}:`, err.message)
 		}
 	}
 
@@ -931,17 +903,6 @@ export const searchAvailability = asyncHandler(async (req, res) => {
 					nonRefundable: priceResult.nonRefundable
 				}
 
-				// Debug log for pricing
-				console.log(`✅ Price calculated for ${roomType.code}/${mealPlan.code}:`, {
-					available: priceResult.availability?.isAvailable,
-					nonRefundable: priceResult.nonRefundable?.enabled,
-					discountPercent: priceResult.nonRefundable?.discountPercent,
-					finalTotal: priceResult.pricing?.finalTotal,
-					hotelCost: priceResult.pricing?.hotelCost,
-					b2bPrice: priceResult.pricing?.b2bPrice,
-					b2cPrice: priceResult.pricing?.b2cPrice
-				})
-
 				if (priceResult.availability?.isAvailable) {
 					roomResult.options.push(optionData)
 				} else {
@@ -954,7 +915,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
 					})
 				}
 			} catch (error) {
-				console.error(`❌ Pricing error for ${roomType.code}/${mealPlan.code}:`, error.message)
+				// Pricing error - silently continue
 			}
 		}
 
@@ -2259,11 +2220,8 @@ export const updateDraft = asyncHandler(async (req, res) => {
 	if (rooms && rooms.length > 0) {
 		rooms.forEach((roomData, index) => {
 			if (draft.rooms[index] && roomData.guests) {
-				// Debug: log incoming guest data
-				console.log('📋 Incoming guests for room', index, ':', JSON.stringify(roomData.guests, null, 2))
 				// Sanitize guest data before saving
 				const sanitized = sanitizeRoomGuests(roomData.guests)
-				console.log('✅ Sanitized guests:', JSON.stringify(sanitized, null, 2))
 				draft.rooms[index].guests = sanitized
 			}
 			if (draft.rooms[index] && roomData.specialRequests !== undefined) {
@@ -2725,7 +2683,6 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 	// If booking doesn't have a market, try to get the default market for the hotel
 	let effectiveMarket = booking.market
 	if (!effectiveMarket?._id) {
-		console.log('Booking has no market, fetching default market for hotel:', booking.hotel._id)
 		effectiveMarket = await Market.findOne({
 			hotel: booking.hotel._id,
 			isDefault: true,
@@ -2745,7 +2702,6 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 				message: 'Bu otel için aktif bir pazar bulunamadı. Lütfen önce bir pazar tanımlayın.'
 			})
 		}
-		console.log('Using market:', effectiveMarket._id, effectiveMarket.code)
 	}
 
 	// Check if booking can be amended
@@ -2819,17 +2775,12 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 	let totalDiscount = 0
 	const currency = effectiveMarket?.currency || booking.pricing?.currency || 'TRY'
 
-	// Debug: Log all rooms to process
-	console.log('Amendment - roomsToProcess:', JSON.stringify(roomsToProcess, null, 2))
-	console.log('Amendment - effectiveCheckIn:', effectiveCheckIn, 'effectiveCheckOut:', effectiveCheckOut)
-
 	for (let i = 0; i < roomsToProcess.length; i++) {
 		const roomData = roomsToProcess[i]
 		const originalRoom = booking.rooms[i]
 
 		// Validate roomTypeId and mealPlanId
 		if (!roomData.roomTypeId || roomData.roomTypeId === 'undefined') {
-			console.error('Invalid roomTypeId for room', i, ':', roomData.roomTypeId)
 			availabilityIssues.push({
 				roomIndex: i,
 				error: 'INVALID_ROOM_TYPE_ID',
@@ -2839,7 +2790,6 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 		}
 
 		if (!roomData.mealPlanId || roomData.mealPlanId === 'undefined') {
-			console.error('Invalid mealPlanId for room', i, ':', roomData.mealPlanId)
 			availabilityIssues.push({
 				roomIndex: i,
 				error: 'INVALID_MEAL_PLAN_ID',
@@ -2849,7 +2799,6 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 		}
 
 		try {
-			// Debug: Log pricing request parameters
 			const pricingParams = {
 				hotelId: booking.hotel._id.toString(),
 				roomTypeId: roomData.roomTypeId,
@@ -2861,20 +2810,12 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 				children: roomData.children?.map(age => ({ age })) || [],
 				includeCampaigns: true
 			}
-			console.log('Amendment pricing params:', JSON.stringify(pricingParams, null, 2))
 
 			// Calculate new price
 			const priceResult = await pricingService.calculatePriceWithCampaigns(pricingParams)
-			console.log('Amendment priceResult:', JSON.stringify({
-				pricing: priceResult.pricing,
-				availability: priceResult.availability,
-				success: priceResult.success,
-				error: priceResult.error
-			}, null, 2))
 
 			// Check if pricing calculation was successful
 			if (!priceResult.success || !priceResult.pricing) {
-				console.error('Pricing calculation failed for room', i, ':', priceResult.error || priceResult.message)
 				availabilityIssues.push({
 					roomIndex: i,
 					roomType: roomData.roomTypeId,
@@ -2976,15 +2917,6 @@ export const previewAmendment = asyncHandler(async (req, res) => {
 	// Calculate price difference
 	const originalTotal = booking.pricing?.grandTotal || 0
 	const difference = grandTotal - originalTotal
-
-	// Debug: Log final results
-	console.log('Amendment preview result:', {
-		subtotal,
-		totalDiscount,
-		grandTotal,
-		roomsProcessed: newRoomsProcessed.length,
-		availabilityIssues: availabilityIssues.length
-	})
 
 	res.json({
 		success: true,

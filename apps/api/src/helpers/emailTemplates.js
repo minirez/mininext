@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
+import logger from '../core/logger.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -246,9 +247,9 @@ export const TEMPLATE_LABELS = {
 export const buildTemplates = async () => {
   try {
     execSync('npm run build', { cwd: MAIZZLE_DIR, stdio: 'inherit' })
-    console.log('Email templates built successfully')
+    logger.info('Email templates built successfully')
   } catch (error) {
-    console.error('Failed to build email templates:', error.message)
+    logger.error('Failed to build email templates', { error: error.message })
     throw error
   }
 }

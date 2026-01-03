@@ -32,12 +32,6 @@ const upload = multer({
 	}
 })
 
-// Debug - log all payment route requests
-router.use((req, res, next) => {
-	console.log('💳 Payment router hit:', req.method, req.path, 'params:', req.params)
-	next()
-})
-
 // All routes require authentication
 router.use(protect)
 

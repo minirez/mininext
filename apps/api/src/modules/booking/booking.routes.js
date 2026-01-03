@@ -11,12 +11,6 @@ import paymentRoutes from './payment.routes.js'
 
 const router = express.Router()
 
-// Debug middleware - log all requests to this router
-router.use((req, res, next) => {
-	console.log('📍 Booking router hit:', req.method, req.path, req.originalUrl)
-	next()
-})
-
 // All routes require authentication and admin role
 router.use(protect)
 router.use(requireAdmin)

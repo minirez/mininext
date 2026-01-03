@@ -4,6 +4,7 @@
  */
 
 import Exchange from '../models/exchange.model.js'
+import logger from '../core/logger.js'
 
 // Configuration
 const CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes in milliseconds
@@ -44,17 +45,15 @@ function isWithinWorkingHours() {
  */
 async function fetchRatesIfNeeded() {
   if (!isWithinWorkingHours()) {
-    console.log('[Exchange Scheduler] Outside working hours, skipping...')
     return null
   }
 
   try {
-    console.log('[Exchange Scheduler] Fetching rates from TCMB...')
     const result = await Exchange.retrieve()
-    console.log('[Exchange Scheduler] Rates updated successfully')
+    logger.info('Exchange rates updated from TCMB')
     return result
   } catch (error) {
-    console.error('[Exchange Scheduler] Error fetching rates:', error.message)
+    logger.error('Exchange rate fetch failed', { error: error.message })
     return null
   }
 }
@@ -64,26 +63,20 @@ async function fetchRatesIfNeeded() {
  */
 export function startExchangeScheduler() {
   if (isRunning) {
-    console.log('[Exchange Scheduler] Already running')
     return
   }
 
-  console.log('[Exchange Scheduler] Starting...')
-  console.log(`[Exchange Scheduler] Will fetch rates every ${CHECK_INTERVAL / 60000} minutes`)
-  console.log(`[Exchange Scheduler] Working hours: ${WORKING_HOURS_START}:00 - ${WORKING_HOURS_END}:00 (Turkey time)`)
+  logger.info('Exchange scheduler started', {
+    interval: `${CHECK_INTERVAL / 60000} minutes`,
+    workingHours: `${WORKING_HOURS_START}:00-${WORKING_HOURS_END}:00 (Turkey)`
+  })
 
   // Fetch immediately on start
-  fetchRatesIfNeeded().then(result => {
-    if (result) {
-      console.log('[Exchange Scheduler] Initial fetch completed')
-    }
-  })
+  fetchRatesIfNeeded()
 
   // Set up interval
   schedulerInterval = setInterval(fetchRatesIfNeeded, CHECK_INTERVAL)
   isRunning = true
-
-  console.log('[Exchange Scheduler] Started successfully')
 }
 
 /**
@@ -91,7 +84,6 @@ export function startExchangeScheduler() {
  */
 export function stopExchangeScheduler() {
   if (!isRunning) {
-    console.log('[Exchange Scheduler] Not running')
     return
   }
 
@@ -101,20 +93,19 @@ export function stopExchangeScheduler() {
   }
 
   isRunning = false
-  console.log('[Exchange Scheduler] Stopped')
+  logger.info('Exchange scheduler stopped')
 }
 
 /**
  * Force fetch rates (bypass time check)
  */
 export async function forceFetchRates() {
-  console.log('[Exchange Scheduler] Force fetching rates...')
   try {
     const result = await Exchange.retrieve()
-    console.log('[Exchange Scheduler] Force fetch completed')
+    logger.info('Exchange rates force-fetched from TCMB')
     return result
   } catch (error) {
-    console.error('[Exchange Scheduler] Force fetch error:', error.message)
+    logger.error('Exchange rate force-fetch failed', { error: error.message })
     throw error
   }
 }

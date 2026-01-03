@@ -190,18 +190,6 @@ export const pmsDualAuth = async (req, res, next) => {
       // PMS User authentication
       const user = await PmsUser.findById(decoded.pmsUserId)
 
-      console.log('[pmsDualAuth] PMS token:', {
-        pmsUserId: decoded.pmsUserId,
-        hotelId: decoded.hotelId,
-        userFound: !!user,
-        userActive: user?.isActive,
-        assignedHotels: user?.assignedHotels?.map(h => ({
-          hotel: h.hotel,
-          hotelId: h.hotel?._id || h.hotel,
-          role: h.role
-        }))
-      })
-
       if (!user) {
         throw new UnauthorizedError('USER_NOT_FOUND')
       }
@@ -212,11 +200,6 @@ export const pmsDualAuth = async (req, res, next) => {
 
       // Check hotel access
       const hasAccess = user.hasAccessToHotel(decoded.hotelId)
-      console.log('[pmsDualAuth] hasAccessToHotel check:', {
-        hotelId: decoded.hotelId,
-        hasAccess
-      })
-
       if (!hasAccess) {
         throw new UnauthorizedError('NO_ACCESS_TO_HOTEL')
       }

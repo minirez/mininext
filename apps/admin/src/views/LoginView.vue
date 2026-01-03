@@ -198,10 +198,14 @@ const handleLogin = async () => {
       // Show 2FA form
       show2FAForm.value = true
       errorMessage.value = null
-    } else if (result === true) {
-      // Login successful
-      const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
-      router.push(redirectPath)
+    } else if (result && result.success) {
+      // Login successful - check if password change is required
+      if (result.forcePasswordChange) {
+        router.push({ name: 'force-password-change' })
+      } else {
+        const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+        router.push(redirectPath)
+      }
     }
   } catch (error) {
     console.error('Login failed:', error)
@@ -225,12 +229,16 @@ const handle2FAVerification = async () => {
   errorMessage.value = null
 
   try {
-    const success = await authStore.verify2FA(twoFactorCode.value)
-    
-    if (success) {
-      // 2FA verification successful
-      const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
-      router.push(redirectPath)
+    const result = await authStore.verify2FA(twoFactorCode.value)
+
+    if (result && result.success) {
+      // 2FA verification successful - check if password change is required
+      if (result.forcePasswordChange) {
+        router.push({ name: 'force-password-change' })
+      } else {
+        const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+        router.push(redirectPath)
+      }
     }
   } catch (error) {
     console.error('2FA verification failed:', error)
