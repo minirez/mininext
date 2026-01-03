@@ -237,14 +237,17 @@ export const createReservation = asyncHandler(async (req, res) => {
     checkIn,
     checkOut,
     adults,
-    children = 0,
+    childrenAges = [],
     leadGuest,
     contact,
     pricing,
     specialRequests,
     paymentMethod,
-    paymentAmount
+    paymentAmount,
+    agencyId
   } = req.body
+
+  const children = childrenAges.length
 
   // Validate required fields
   if (!roomTypeId || !mealPlanId || !checkIn || !checkOut || !leadGuest || !contact) {
@@ -353,8 +356,9 @@ export const createReservation = asyncHandler(async (req, res) => {
     status: 'confirmed',
     confirmedAt: new Date(),
     source: {
-      type: 'admin',
-      channel: 'PMS'
+      type: 'pms',
+      channel: 'PMS',
+      agencyId: agencyId || undefined
     },
     specialRequests
   })

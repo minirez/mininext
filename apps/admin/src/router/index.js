@@ -430,11 +430,19 @@ const isPmsCustomDomain = () => {
 router.beforeEach(async (to, from, next) => {
 	// Import stores inside beforeEach to ensure Pinia is initialized
 	// This prevents "getActivePinia()" errors during HMR
-	const { useAuthStore } = await import('@/stores/auth')
-	const { usePmsAuthStore } = await import('@/stores/pms/pmsAuth')
+	let authStore, pmsAuthStore
 
-	const authStore = useAuthStore()
-	const pmsAuthStore = usePmsAuthStore()
+	try {
+		const { useAuthStore } = await import('@/stores/auth')
+		const { usePmsAuthStore } = await import('@/stores/pms/pmsAuth')
+		authStore = useAuthStore()
+		pmsAuthStore = usePmsAuthStore()
+	} catch (error) {
+		// Pinia not ready yet (initial load), allow navigation and let component handle auth
+		console.warn('[Router Guard] Store not ready, allowing navigation')
+		next()
+		return
+	}
 
 	// If on custom PMS domain and trying to access non-PMS routes, redirect to PMS
 	if (isPmsCustomDomain()) {

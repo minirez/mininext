@@ -212,13 +212,12 @@ const bookingSchema = new mongoose.Schema({
 	hotelCode: { type: String },
 	hotelName: { type: String },
 
-	// Market reference (required - used for pricing calculations)
+	// Market reference (optional for PMS reservations, used for pricing calculations)
 	market: {
 		type: mongoose.Schema.Types.ObjectId,
-		ref: 'Market',
-		required: [true, 'Rezervasyon için market alanı zorunludur']
+		ref: 'Market'
 	},
-	marketCode: { type: String, required: true },
+	marketCode: { type: String },
 	marketName: { type: mongoose.Schema.Types.Mixed }, // Cache market name for display (can be string or multi-lang object)
 
 	// Season reference (primary season - typically first night's season)
@@ -422,7 +421,7 @@ const bookingSchema = new mongoose.Schema({
 	source: {
 		type: {
 			type: String,
-			enum: ['b2c', 'b2b', 'admin', 'api', 'channel', 'paximum'],
+			enum: ['b2c', 'b2b', 'admin', 'api', 'channel', 'paximum', 'pms'],
 			default: 'b2c'
 		},
 		channel: { type: String }, // Booking source channel name

@@ -144,6 +144,7 @@
         <thead class="bg-gray-50 dark:bg-slate-700/50">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Rez. No</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Olusturma</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Misafir</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Oda Tipi</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Tarihler</th>
@@ -166,6 +167,12 @@
                 <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                   {{ getSourceInfo(reservation.source?.type).label }}
                 </p>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div>
+                <p class="text-gray-900 dark:text-white text-sm">{{ formatDate(reservation.createdAt) }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ formatTime(reservation.createdAt) }}</p>
               </div>
             </td>
             <td class="px-4 py-3">
@@ -516,6 +523,14 @@ const formatDate = (date) => {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
+  })
+}
+
+const formatTime = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleTimeString('tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 

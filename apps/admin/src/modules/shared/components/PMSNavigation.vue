@@ -23,7 +23,7 @@
           class="flex items-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
         >
           <span class="material-icons text-lg">login</span>
-          <span class="hidden md:inline">Check-in</span>
+          <span class="hidden md:inline">{{ $t('pms.nav.quickCheckin') }}</span>
         </button>
 
         <!-- Quick Walk-in -->
@@ -33,7 +33,7 @@
           class="flex items-center gap-1 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors"
         >
           <span class="material-icons text-lg">person_add</span>
-          <span class="hidden md:inline">Walk-in</span>
+          <span class="hidden md:inline">{{ $t('pms.nav.quickWalkin') }}</span>
         </button>
 
         <!-- New Reservation -->
@@ -43,7 +43,7 @@
           class="flex items-center gap-1 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors"
         >
           <span class="material-icons text-lg">add</span>
-          <span class="hidden md:inline">Rezervasyon</span>
+          <span class="hidden md:inline">{{ $t('pms.nav.newReservation') }}</span>
         </button>
       </div>
     </div>
@@ -53,9 +53,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { usePmsAuthStore } from '@/stores/pms/pmsAuth'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
 
+const { t } = useI18n()
 const route = useRoute()
 const pmsAuthStore = usePmsAuthStore()
 const { isPmsUser } = usePmsContextInjection()
@@ -73,25 +75,25 @@ const hasAccess = (permissions) => {
 }
 
 // All navigation items with permission requirements
-const allNavItems = [
-  { name: 'dashboard', to: '/pms/dashboard', icon: 'dashboard', label: 'Dashboard', permissions: ['dashboard.view'] },
-  { name: 'room-plan', to: '/pms/room-plan', icon: 'calendar_view_week', label: 'Oda Plani', permissions: ['reservations.view', 'frontdesk.roomMove'] },
-  { name: 'reservations', to: '/pms/reservations', icon: 'event_note', label: 'Rezervasyonlar', permissions: ['reservations.view'] },
-  { name: 'front-desk', to: '/pms/front-desk', icon: 'meeting_room', label: 'Front Desk', permissions: ['frontdesk.checkin', 'frontdesk.checkout', 'frontdesk.walkin'] },
-  { name: 'housekeeping', to: '/pms/housekeeping', icon: 'cleaning_services', label: 'Housekeeping', permissions: ['housekeeping.view'] },
-  { name: 'guests', to: '/pms/guests', icon: 'people', label: 'Misafirler', permissions: ['guests.view'] },
-  { name: 'cashier', to: '/pms/cashier', icon: 'point_of_sale', label: 'Kasa', permissions: ['billing.view', 'billing.payment'] },
-  { name: 'billing', to: '/pms/billing', icon: 'receipt_long', label: 'Faturalama', permissions: ['billing.view', 'billing.invoice'] },
-  { name: 'reports', to: '/pms/reports', icon: 'assessment', label: 'Raporlar', permissions: ['reports.operational', 'reports.financial'] },
-  { name: 'kbs', to: '/pms/kbs', icon: 'verified_user', label: 'KBS', permissions: ['guests.view'] },
-  { name: 'night-audit', to: '/pms/night-audit', icon: 'nightlight', label: 'Night Audit', permissions: ['reports.operational', 'reports.financial'] },
-  { name: 'users', to: '/pms/users', icon: 'manage_accounts', label: 'Kullanicilar', partnerOnly: true },
-  { name: 'settings', to: '/pms/settings', icon: 'settings', label: 'Ayarlar', partnerOnly: true }
-]
+const allNavItems = computed(() => [
+  { name: 'dashboard', to: '/pms/dashboard', icon: 'dashboard', label: t('pms.nav.dashboard'), permissions: ['dashboard.view'] },
+  { name: 'room-plan', to: '/pms/room-plan', icon: 'calendar_view_week', label: t('pms.nav.roomPlan'), permissions: ['reservations.view', 'frontdesk.roomMove'] },
+  { name: 'reservations', to: '/pms/reservations', icon: 'event_note', label: t('pms.nav.reservations'), permissions: ['reservations.view'] },
+  { name: 'front-desk', to: '/pms/front-desk', icon: 'meeting_room', label: t('pms.nav.frontDesk'), permissions: ['frontdesk.checkin', 'frontdesk.checkout', 'frontdesk.walkin'] },
+  { name: 'housekeeping', to: '/pms/housekeeping', icon: 'cleaning_services', label: t('pms.nav.housekeeping'), permissions: ['housekeeping.view'] },
+  { name: 'guests', to: '/pms/guests', icon: 'people', label: t('pms.nav.guests'), permissions: ['guests.view'] },
+  { name: 'cashier', to: '/pms/cashier', icon: 'point_of_sale', label: t('pms.nav.cashier'), permissions: ['billing.view', 'billing.payment'] },
+  { name: 'billing', to: '/pms/billing', icon: 'receipt_long', label: t('pms.nav.billing'), permissions: ['billing.view', 'billing.invoice'] },
+  { name: 'reports', to: '/pms/reports', icon: 'assessment', label: t('pms.nav.reports'), permissions: ['reports.operational', 'reports.financial'] },
+  { name: 'kbs', to: '/pms/kbs', icon: 'verified_user', label: t('pms.nav.kbs'), permissions: ['guests.view'] },
+  { name: 'night-audit', to: '/pms/night-audit', icon: 'nightlight', label: t('pms.nav.nightAudit'), permissions: ['reports.operational', 'reports.financial'] },
+  { name: 'users', to: '/pms/users', icon: 'manage_accounts', label: t('pms.nav.users'), partnerOnly: true },
+  { name: 'settings', to: '/pms/settings', icon: 'settings', label: t('pms.nav.settings'), partnerOnly: true }
+])
 
 // Filter nav items based on user's permissions
 const navItems = computed(() => {
-  return allNavItems.filter(item => {
+  return allNavItems.value.filter(item => {
     // Partner-only items
     if (item.partnerOnly) {
       return !isPmsUser.value

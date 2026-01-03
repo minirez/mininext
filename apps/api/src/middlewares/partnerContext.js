@@ -23,6 +23,12 @@ export const partnerContext = (req, res, next) => {
     req.partnerId = req.user.accountId
   }
 
+  // For PMS users, use their partner ID from the PMS token
+  // This allows PMS users to access agency and other partner-scoped resources
+  if (req.pmsPartnerId && !req.partnerId) {
+    req.partnerId = req.pmsPartnerId
+  }
+
   // For agency users, their partner ID is stored in the agency document
   // This will be handled in specific routes that need it
 

@@ -96,7 +96,7 @@
     <!-- Timeline Container -->
     <div class="flex-1 overflow-hidden flex">
       <!-- Room Labels (Fixed Left Column) -->
-      <div class="w-32 flex-shrink-0 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 z-10">
+      <div class="w-48 flex-shrink-0 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 z-10">
         <!-- Header spacer -->
         <div class="h-16 border-b border-gray-200 dark:border-slate-700 flex items-center justify-center">
           <span class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Odalar</span>
@@ -104,34 +104,37 @@
 
         <!-- Room labels -->
         <div class="overflow-y-auto" :style="{ height: 'calc(100% - 64px)' }" ref="roomLabelsRef">
-          <div v-for="floor in floors" :key="floor.floor" class="border-b border-gray-100 dark:border-slate-700">
-            <!-- Floor header -->
-            <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0">
-              <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">
-                {{ floor.floor }}. Kat
+          <div v-for="group in roomTypeGroups" :key="group.roomTypeId" class="border-b border-gray-100 dark:border-slate-700">
+            <!-- Room Type header (collapsible) -->
+            <div
+              @click="toggleGroup(group.roomTypeId)"
+              class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 sticky top-0 z-10"
+            >
+              <span class="material-icons text-gray-500 dark:text-slate-400 text-sm transition-transform" :class="{ '-rotate-90': collapsedGroups.has(group.roomTypeId) }">
+                expand_more
+              </span>
+              <span class="text-xs font-semibold text-gray-600 dark:text-slate-300 truncate flex-1">
+                {{ group.roomTypeName }}
               </span>
             </div>
 
             <!-- Room rows -->
-            <div
-              v-for="room in floor.rooms"
-              :key="room._id"
-              class="h-10 px-3 flex items-center border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <span
-                  class="w-2 h-2 rounded-full flex-shrink-0"
-                  :class="{
-                    'bg-green-500': room.status === 'vacant_clean',
-                    'bg-red-500': room.status === 'occupied',
-                    'bg-amber-500': room.status === 'checkout',
-                    'bg-gray-400': room.status === 'maintenance'
-                  }"
-                ></span>
-                <span class="font-medium text-gray-900 dark:text-white text-sm">{{ room.roomNumber }}</span>
-                <span class="text-xs text-gray-400 truncate">{{ room.roomType?.code || '' }}</span>
+            <template v-if="!collapsedGroups.has(group.roomTypeId)">
+              <div
+                v-for="room in group.rooms"
+                :key="room._id"
+                class="h-10 px-3 flex items-center border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <!-- Room status indicator -->
+                  <span
+                    class="w-4 h-4 rounded flex-shrink-0"
+                    :class="getRoomStatusColor(room)"
+                  ></span>
+                  <span class="font-medium text-gray-900 dark:text-white text-sm">{{ room.roomNumber }}</span>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -172,75 +175,88 @@
           </div>
         </div>
 
-        <!-- Room Rows with Stays -->
+        <!-- Room Type Groups with Rooms -->
         <div>
-          <div v-for="floor in floors" :key="floor.floor">
-            <!-- Floor spacer -->
+          <div v-for="group in roomTypeGroups" :key="group.roomTypeId">
+            <!-- Room Type header row with availability counters -->
             <div
-              class="h-8 bg-gray-50 dark:bg-slate-700/50"
+              class="h-8 flex bg-gray-50 dark:bg-slate-700/50"
               :style="{ width: `${dateHeaders.length * currentZoom.cellWidth}px` }"
-            ></div>
-
-            <!-- Room rows -->
-            <div
-              v-for="room in floor.rooms"
-              :key="room._id"
-              class="h-10 relative border-b border-gray-100 dark:border-slate-700/50 transition-colors"
-              :class="{
-                'bg-indigo-100/50 dark:bg-indigo-900/30 ring-2 ring-inset ring-indigo-400': dropTarget?.roomId === room._id,
-                'bg-red-100/50 dark:bg-red-900/30': dropTarget?.roomId === room._id && !dropTarget?.isAvailable
-              }"
-              :style="{ width: `${dateHeaders.length * currentZoom.cellWidth}px` }"
-              @click="handleCellClick($event, room)"
-              @dragover="handleDragOver($event, room)"
-              @dragleave="handleDragLeave"
-              @drop="handleDrop($event, room)"
             >
-              <!-- Grid lines (for each day) -->
-              <div class="absolute inset-0 flex pointer-events-none">
-                <div
-                  v-for="(day, index) in dateHeaders"
-                  :key="index"
-                  class="flex-shrink-0 border-r border-gray-100 dark:border-slate-700/30 h-full"
-                  :class="{
-                    'bg-indigo-50/50 dark:bg-indigo-900/10': day.isToday,
-                    'bg-gray-50/50 dark:bg-slate-700/10': day.isWeekend && !day.isToday
-                  }"
-                  :style="{ width: `${currentZoom.cellWidth}px` }"
-                ></div>
-              </div>
-
-              <!-- Stay/Reservation bars -->
               <div
-                v-for="stay in room.stays"
-                :key="stay._id"
-                class="absolute top-1 h-8 rounded cursor-pointer transition-all hover:ring-2 hover:ring-indigo-400 hover:z-20 flex items-center px-2 overflow-hidden"
-                :class="[
-                  getBarColorClass(stay),
-                  { 'opacity-50': draggingStay && draggingStay._id !== stay._id }
-                ]"
-                :style="{
-                  left: `${getBarPosition(stay.checkInDate, viewStartDate, currentZoom.cellWidth)}px`,
-                  width: `${getBarWidth(stay.checkInDate, stay.checkOutDate, currentZoom.cellWidth)}px`
+                v-for="(day, dayIndex) in dateHeaders"
+                :key="dayIndex"
+                class="flex-shrink-0 flex items-center justify-center text-xs border-r border-gray-100 dark:border-slate-700/50"
+                :class="{
+                  'bg-indigo-50/50 dark:bg-indigo-900/10': day.isToday
                 }"
-                :title="`${stay.guestName} (${formatDate(stay.checkInDate)} - ${formatDate(stay.checkOutDate)})`"
-                :draggable="stay.type === 'stay'"
-                @dragstart="handleDragStart($event, stay, room)"
-                @dragend="handleDragEnd"
-                @click.stop="showStayDetails(stay)"
+                :style="{ width: `${currentZoom.cellWidth}px` }"
               >
-                <!-- VIP badge -->
-                <span v-if="stay.isVip" class="material-icons text-xs text-white mr-1">star</span>
-
-                <!-- Guest name -->
-                <span class="text-xs font-medium text-white truncate">
-                  {{ stay.guestName }}
+                <span
+                  class="text-xs font-medium"
+                  :class="getAvailabilityColor(group, day.date)"
+                >
+                  {{ getAvailabilityText(group, day.date) }}
                 </span>
-
-                <!-- Reservation indicator -->
-                <span v-if="stay.type === 'reservation'" class="ml-1 material-icons text-xs text-white/80">event</span>
               </div>
             </div>
+
+            <!-- Room rows -->
+            <template v-if="!collapsedGroups.has(group.roomTypeId)">
+              <div
+                v-for="room in group.rooms"
+                :key="room._id"
+                class="h-10 relative border-b border-gray-100 dark:border-slate-700/50 transition-colors"
+                :class="{
+                  'bg-indigo-100/50 dark:bg-indigo-900/30 ring-2 ring-inset ring-indigo-400': dropTarget?.roomId === room._id,
+                  'bg-red-100/50 dark:bg-red-900/30': dropTarget?.roomId === room._id && !dropTarget?.isAvailable
+                }"
+                :style="{ width: `${dateHeaders.length * currentZoom.cellWidth}px` }"
+                @click="handleCellClick($event, room)"
+                @dragover="handleDragOver($event, room)"
+                @dragleave="handleDragLeave"
+                @drop="handleDrop($event, room)"
+              >
+                <!-- Grid lines (for each day) -->
+                <div class="absolute inset-0 flex pointer-events-none">
+                  <div
+                    v-for="(day, index) in dateHeaders"
+                    :key="index"
+                    class="flex-shrink-0 border-r border-gray-100 dark:border-slate-700/30 h-full"
+                    :class="{
+                      'bg-indigo-50/50 dark:bg-indigo-900/10': day.isToday,
+                      'bg-gray-50/50 dark:bg-slate-700/10': day.isWeekend && !day.isToday
+                    }"
+                    :style="{ width: `${currentZoom.cellWidth}px` }"
+                  ></div>
+                </div>
+
+                <!-- Stay/Reservation bars (parallelogram style) -->
+                <div
+                  v-for="stay in room.stays"
+                  :key="stay._id"
+                  class="absolute top-1 h-8 cursor-pointer transition-all hover:z-20 flex items-center overflow-hidden room-bar"
+                  :class="[
+                    getBarColorClass(stay),
+                    { 'opacity-50': draggingStay && draggingStay._id !== stay._id }
+                  ]"
+                  :style="getBarStyle(stay)"
+                  :title="`${stay.guestName} (${formatDate(stay.checkInDate)} - ${formatDate(stay.checkOutDate)})`"
+                  :draggable="stay.type === 'stay'"
+                  @dragstart="handleDragStart($event, stay, room)"
+                  @dragend="handleDragEnd"
+                  @click.stop="showStayDetails(stay)"
+                >
+                  <!-- Guest name -->
+                  <span class="text-xs font-medium text-white truncate px-2 relative z-10">
+                    {{ stay.guestName }}
+                  </span>
+
+                  <!-- VIP indicator dot -->
+                  <span v-if="stay.isVip" class="absolute top-0 right-1 w-2 h-2 bg-black rounded-full"></span>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -388,7 +404,7 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div v-if="loading && !floors.length" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-900/80">
+    <div v-if="loading && !roomTypeGroups.length" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-900/80">
       <div class="text-center">
         <span class="material-icons animate-spin text-4xl text-indigo-500">refresh</span>
         <p class="mt-2 text-gray-500 dark:text-slate-400">Yukleniyor...</p>
@@ -414,6 +430,9 @@ const loading = ref(false)
 const floors = ref([])
 const statistics = ref({ totalRooms: 0, activeStays: 0, pendingReservations: 0 })
 
+// Collapsed groups state
+const collapsedGroups = ref(new Set())
+
 // View state
 const viewStartDate = ref(new Date())
 const currentZoom = ref(roomPlanService.ZOOM_LEVELS.DAY)
@@ -435,6 +454,47 @@ const moveLoading = ref(false)
 // Refs
 const timelineRef = ref(null)
 const roomLabelsRef = ref(null)
+
+// Helper to get string from multilang field
+const getLocalizedName = (field) => {
+  if (!field) return ''
+  if (typeof field === 'string') return field
+  if (typeof field === 'object') {
+    // Try common locale keys
+    return field.tr || field.en || field.default || Object.values(field)[0] || ''
+  }
+  return String(field)
+}
+
+// Transform floor-based data to room type groups
+const roomTypeGroups = computed(() => {
+  const groupMap = new Map()
+
+  for (const floor of floors.value) {
+    for (const room of floor.rooms) {
+      const roomTypeId = room.roomType?._id || 'unknown'
+      const roomTypeName = getLocalizedName(room.roomType?.name) || 'Diger'
+
+      if (!groupMap.has(roomTypeId)) {
+        groupMap.set(roomTypeId, {
+          roomTypeId,
+          roomTypeName,
+          roomTypeCode: room.roomType?.code || '',
+          rooms: []
+        })
+      }
+
+      groupMap.get(roomTypeId).rooms.push(room)
+    }
+  }
+
+  // Sort groups by name and rooms by roomNumber
+  const groups = Array.from(groupMap.values())
+  groups.sort((a, b) => String(a.roomTypeName).localeCompare(String(b.roomTypeName)))
+  groups.forEach(g => g.rooms.sort((a, b) => String(a.roomNumber || '').localeCompare(String(b.roomNumber || ''))))
+
+  return groups
+})
 
 // Computed
 const dateHeaders = computed(() => {
@@ -489,6 +549,16 @@ const fetchData = async () => {
   }
 }
 
+const toggleGroup = (groupId) => {
+  if (collapsedGroups.value.has(groupId)) {
+    collapsedGroups.value.delete(groupId)
+  } else {
+    collapsedGroups.value.add(groupId)
+  }
+  // Trigger reactivity
+  collapsedGroups.value = new Set(collapsedGroups.value)
+}
+
 const navigateDays = (days) => {
   const newDate = new Date(viewStartDate.value)
   newDate.setDate(newDate.getDate() + days)
@@ -513,15 +583,102 @@ const handleScroll = () => {
 }
 
 const getBarColorClass = (item) => {
-  return roomPlanService.getBarColorClass(item)
+  // Status based colors matching reference
+  if (item.type === 'reservation') {
+    return 'bar-blue' // Blue for reservations
+  }
+
+  if (item.isVip) {
+    return 'bar-amber' // Amber/orange for VIP
+  }
+
+  if (item.paymentStatus === 'pending') {
+    return 'bar-yellow' // Yellow for payment pending
+  }
+
+  return 'bar-green' // Green for active stays
 }
 
-const getBarPosition = (checkIn, startDate, cellWidth) => {
-  return roomPlanService.getBarPosition(checkIn, startDate, cellWidth)
+// Get bar style with half-day positioning and parallelogram shape
+const getBarStyle = (stay) => {
+  const checkIn = new Date(stay.checkInDate)
+  const checkOut = new Date(stay.checkOutDate)
+  const startDate = new Date(viewStartDate.value)
+  startDate.setHours(0, 0, 0, 0)
+
+  // Calculate days from view start
+  const checkInDays = Math.floor((checkIn - startDate) / (1000 * 60 * 60 * 24))
+  const checkOutDays = Math.floor((checkOut - startDate) / (1000 * 60 * 60 * 24))
+
+  const cellWidth = currentZoom.value.cellWidth
+
+  // Half-day positioning: start at 50% of check-in cell, end at 50% of check-out cell
+  const left = (checkInDays * cellWidth) + (cellWidth / 2)
+  const right = (checkOutDays * cellWidth) + (cellWidth / 2)
+  const width = right - left
+
+  return {
+    left: `${left}px`,
+    width: `${Math.max(width, 20)}px`
+  }
 }
 
-const getBarWidth = (checkIn, checkOut, cellWidth) => {
-  return roomPlanService.getBarWidth(checkIn, checkOut, cellWidth)
+const getRoomStatusColor = (room) => {
+  // Room status colors matching reference image
+  if (room.status === 'occupied') {
+    return 'bg-red-500' // Red/orange for occupied
+  }
+  if (room.status === 'maintenance') {
+    return 'bg-gray-400'
+  }
+  if (room.housekeepingStatus === 'dirty') {
+    return 'bg-amber-500' // Orange for dirty
+  }
+  if (room.housekeepingStatus === 'inspecting') {
+    return 'bg-yellow-400'
+  }
+  return 'bg-blue-400' // Blue for available/clean
+}
+
+// Calculate availability for a room type on a specific date
+const getAvailability = (group, date) => {
+  const targetDate = new Date(date)
+  targetDate.setHours(0, 0, 0, 0)
+
+  let occupied = 0
+  const total = group.rooms.length
+
+  for (const room of group.rooms) {
+    for (const stay of (room.stays || [])) {
+      const checkIn = new Date(stay.checkInDate)
+      const checkOut = new Date(stay.checkOutDate)
+      checkIn.setHours(0, 0, 0, 0)
+      checkOut.setHours(0, 0, 0, 0)
+
+      // Room is occupied if date is between check-in (inclusive) and check-out (exclusive)
+      if (targetDate >= checkIn && targetDate < checkOut) {
+        occupied++
+        break
+      }
+    }
+  }
+
+  return { occupied, total, available: total - occupied }
+}
+
+const getAvailabilityText = (group, date) => {
+  const { occupied, total } = getAvailability(group, date)
+  return `${occupied}/${total}`
+}
+
+const getAvailabilityColor = (group, date) => {
+  const { occupied, total } = getAvailability(group, date)
+  const ratio = occupied / total
+
+  if (ratio >= 1) return 'text-red-600 dark:text-red-400' // Full
+  if (ratio >= 0.8) return 'text-amber-600 dark:text-amber-400' // Almost full
+  if (ratio >= 0.5) return 'text-yellow-600 dark:text-yellow-400' // Half full
+  return 'text-green-600 dark:text-green-400' // Mostly available
 }
 
 const getMonthName = (month) => {
@@ -848,5 +1005,45 @@ onUnmounted(() => {
 
 .dark .overflow-auto::-webkit-scrollbar-thumb {
   background: #475569;
+}
+
+/* Parallelogram bar styles */
+.room-bar {
+  /* Skew for parallelogram effect */
+  transform: skewX(-15deg);
+  border-radius: 2px;
+}
+
+.room-bar > * {
+  /* Counter-skew text so it remains readable */
+  transform: skewX(15deg);
+}
+
+/* Color classes for bars */
+.bar-green {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.bar-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.bar-amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.bar-yellow {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+}
+
+.bar-red {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Hover effect for bars */
+.room-bar:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 20;
 }
 </style>

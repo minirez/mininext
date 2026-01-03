@@ -6,6 +6,7 @@ import Agency from '../modules/agency/agency.model.js'
 import { UnauthorizedError } from '../core/errors.js'
 
 // Protect middleware - Require authentication
+// Supports both regular user tokens and PMS tokens
 export const protect = async (req, res, next) => {
   try {
     // Get token from header
@@ -21,7 +22,51 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, config.jwt.secret)
 
-    // Get user
+    // Check if it's a PMS token
+    if (decoded.type === 'pms') {
+      // PMS token - get PMS user
+      const { default: PmsUser } = await import('../modules/pms-settings/pmsUser.model.js')
+      const pmsUser = await PmsUser.findById(decoded.pmsUserId)
+
+      if (!pmsUser || !pmsUser.isActive) {
+        throw new UnauthorizedError('UNAUTHORIZED')
+      }
+
+      // Check hotel access
+      if (!pmsUser.hasAccessToHotel(decoded.hotelId)) {
+        throw new UnauthorizedError('NO_ACCESS_TO_HOTEL')
+      }
+
+      // Attach PMS user info to request
+      req.pmsUser = pmsUser
+      req.pmsUserId = pmsUser._id
+      req.pmsHotelId = decoded.hotelId
+      req.pmsPartnerId = decoded.partnerId
+      req.pmsRole = decoded.role
+      req.authMode = 'pms'
+
+      // Create a pseudo user object for compatibility with existing code
+      req.user = {
+        _id: pmsUser._id,
+        name: pmsUser.name,
+        email: pmsUser.email,
+        role: decoded.role === 'pms_admin' ? 'admin' : 'user',
+        accountType: 'partner', // Treat PMS users as partner users for authorization
+        accountId: decoded.partnerId,
+        isAdmin: () => decoded.role === 'pms_admin',
+        isActive: () => pmsUser.isActive
+      }
+
+      // Get partner account
+      const partner = await Partner.findById(decoded.partnerId)
+      if (partner) {
+        req.account = partner
+      }
+
+      return next()
+    }
+
+    // Regular token - get user
     const user = await User.findById(decoded.userId)
     if (!user || !user.isActive()) {
       throw new UnauthorizedError('UNAUTHORIZED')
@@ -45,6 +90,7 @@ export const protect = async (req, res, next) => {
     req.user = user
     req.account = account
     req.token = decoded
+    req.authMode = 'regular'
 
     next()
   } catch (error) {

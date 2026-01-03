@@ -57,6 +57,11 @@
           @change="markChanged"
         />
 
+        <!-- Agency Settings -->
+        <AgencySettings
+          v-else-if="activeTab === 'agencies'"
+        />
+
         <!-- Tax Settings -->
         <TaxSettings
           v-else-if="activeTab === 'taxes'"
@@ -167,6 +172,7 @@ import ReservationSettings from '@/modules/settings/components/ReservationSettin
 import GuestSettings from '@/modules/settings/components/GuestSettings.vue'
 import KBSSettings from '@/modules/settings/components/KBSSettings.vue'
 import ExchangeSettings from '@/modules/settings/components/ExchangeSettings.vue'
+import AgencySettings from '@/modules/settings/components/AgencySettings.vue'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
 
 const toast = useToast()
@@ -200,6 +206,7 @@ const currencies = ref([])
 const tabs = [
   { id: 'general', label: 'Genel', icon: 'settings' },
   { id: 'frontDesk', label: 'Resepsiyon', icon: 'desk' },
+  { id: 'agencies', label: 'Acenteler', icon: 'business' },
   { id: 'taxes', label: 'Vergiler', icon: 'receipt' },
   { id: 'invoicing', label: 'Faturalama', icon: 'description' },
   { id: 'housekeeping', label: 'Kat Hizmetleri', icon: 'cleaning_services' },

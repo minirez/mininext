@@ -802,30 +802,45 @@ export const getDashboardReport = asyncHandler(async (req, res) => {
     inHouseGuests,
     todayRevenue,
     monthlyRevenue,
-    housekeepingStatus
+    housekeepingStatus,
+    pendingReservations
   ] = await Promise.all([
     Room.countDocuments({ hotel: hotelId, isActive: true }),
-    Stay.countDocuments({
+    // Count rooms with status 'occupied' (matches room plan)
+    Room.countDocuments({
       hotel: hotelId,
-      status: 'checked_in'
+      isActive: true,
+      status: 'occupied'
     }),
-    Stay.countDocuments({
+    // Count reservations with today's check-in (not Stay records)
+    Booking.countDocuments({
       hotel: hotelId,
-      checkInDate: { $gte: today, $lt: tomorrow }
+      checkIn: { $gte: today, $lt: tomorrow },
+      status: { $in: ['pending', 'confirmed'] }
     }),
-    Stay.countDocuments({
+    // Count reservations with today's check-out (not Stay records)
+    Booking.countDocuments({
       hotel: hotelId,
-      checkOutDate: { $gte: today, $lt: tomorrow }
+      checkOut: { $gte: today, $lt: tomorrow },
+      status: 'confirmed'
     }),
+    // In-house guests: from Stay records with checked_in status
     Stay.aggregate([
       {
-        $match: { hotel: new mongoose.Types.ObjectId(hotelId), status: 'checked_in' }
+        $match: {
+          hotel: new mongoose.Types.ObjectId(hotelId),
+          status: 'checked_in'
+        }
       },
       {
         $group: {
           _id: null,
-          adults: { $sum: '$adultsCount' },
-          children: { $sum: '$childrenCount' }
+          // Count from guests array (more reliable)
+          totalGuests: { $sum: { $size: { $ifNull: ['$guests', []] } } },
+          // Also get adultsCount/childrenCount as fallback
+          adults: { $sum: { $ifNull: ['$adultsCount', 1] } },
+          children: { $sum: { $ifNull: ['$childrenCount', 0] } },
+          roomCount: { $sum: 1 }
         }
       }
     ]),
@@ -863,11 +878,20 @@ export const getDashboardReport = asyncHandler(async (req, res) => {
           count: { $sum: 1 }
         }
       }
-    ])
+    ]),
+    // Count pending reservations
+    Booking.countDocuments({
+      hotel: hotelId,
+      status: 'pending'
+    })
   ])
 
+  const guestCount = inHouseGuests[0] || { totalGuests: 0, adults: 0, children: 0, roomCount: 0 }
+  // Use guests array count if available, otherwise fall back to adults+children
+  const totalGuestsCount = guestCount.totalGuests > 0
+    ? guestCount.totalGuests
+    : (guestCount.adults || 0) + (guestCount.children || 0)
   const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms * 100).toFixed(1) : 0
-  const guestCount = inHouseGuests[0] || { adults: 0, children: 0 }
   const hkStatus = {}
   housekeepingStatus.forEach(h => { hkStatus[h._id] = h.count })
 
@@ -886,9 +910,9 @@ export const getDashboardReport = asyncHandler(async (req, res) => {
       },
       guests: {
         inHouseRooms: occupiedRooms,
-        adults: guestCount.adults,
-        children: guestCount.children,
-        total: guestCount.adults + guestCount.children
+        adults: guestCount.adults || 0,
+        children: guestCount.children || 0,
+        total: totalGuestsCount
       },
       revenue: {
         today: todayRevenue[0]?.total || 0,
@@ -900,7 +924,8 @@ export const getDashboardReport = asyncHandler(async (req, res) => {
         inspected: hkStatus.inspected || 0,
         outOfOrder: hkStatus.out_of_order || 0,
         inProgress: hkStatus.in_progress || 0
-      }
+      },
+      pendingReservations
     }
   })
 })

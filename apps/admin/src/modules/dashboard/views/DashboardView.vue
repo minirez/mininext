@@ -183,6 +183,130 @@
         </div>
       </div>
 
+      <!-- Today's Arrivals & Departures Lists -->
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Today's Arrivals Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
+          <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-green-500">flight_land</span>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bugun Giris Yapacaklar</h2>
+            </div>
+            <span class="text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+              {{ todayArrivalsList.length }} misafir
+            </span>
+          </div>
+          <div class="divide-y divide-gray-100 dark:divide-slate-700 max-h-80 overflow-y-auto">
+            <!-- Loading -->
+            <div v-if="arrivalsLoading" class="p-6 text-center">
+              <span class="material-icons animate-spin text-2xl text-green-500">refresh</span>
+            </div>
+            <!-- Empty State -->
+            <div v-else-if="todayArrivalsList.length === 0" class="p-6 text-center text-gray-500 dark:text-slate-400">
+              <span class="material-icons text-3xl text-gray-300 dark:text-slate-600 mb-2">event_available</span>
+              <p class="text-sm">Bugun giris yapacak misafir yok</p>
+            </div>
+            <!-- Arrivals List -->
+            <router-link
+              v-else
+              v-for="reservation in todayArrivalsList"
+              :key="reservation._id"
+              :to="`/pms/reservations`"
+              class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                  <span class="material-icons text-green-600 dark:text-green-400 text-lg">person</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="font-medium text-gray-900 dark:text-white truncate">
+                    {{ reservation.leadGuest?.firstName }} {{ reservation.leadGuest?.lastName }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ reservation.rooms?.[0]?.roomTypeName?.tr || reservation.rooms?.[0]?.roomTypeCode }} •
+                    {{ reservation.nights }} gece
+                  </p>
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0 ml-3">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ reservation.bookingNumber }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ reservation.totalAdults }} yetiskin<span v-if="reservation.totalChildren">, {{ reservation.totalChildren }} cocuk</span>
+                </p>
+              </div>
+            </router-link>
+          </div>
+          <div v-if="todayArrivalsList.length > 0" class="p-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/30">
+            <router-link to="/pms/front-desk" class="text-sm text-green-600 dark:text-green-400 hover:underline flex items-center justify-center gap-1">
+              <span class="material-icons text-sm">login</span>
+              Check-in Yap
+            </router-link>
+          </div>
+        </div>
+
+        <!-- Today's Departures Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
+          <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-red-500">flight_takeoff</span>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bugun Cikis Yapacaklar</h2>
+            </div>
+            <span class="text-xs font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full">
+              {{ todayDeparturesList.length }} misafir
+            </span>
+          </div>
+          <div class="divide-y divide-gray-100 dark:divide-slate-700 max-h-80 overflow-y-auto">
+            <!-- Loading -->
+            <div v-if="departuresLoading" class="p-6 text-center">
+              <span class="material-icons animate-spin text-2xl text-red-500">refresh</span>
+            </div>
+            <!-- Empty State -->
+            <div v-else-if="todayDeparturesList.length === 0" class="p-6 text-center text-gray-500 dark:text-slate-400">
+              <span class="material-icons text-3xl text-gray-300 dark:text-slate-600 mb-2">event_busy</span>
+              <p class="text-sm">Bugun cikis yapacak misafir yok</p>
+            </div>
+            <!-- Departures List -->
+            <router-link
+              v-else
+              v-for="reservation in todayDeparturesList"
+              :key="reservation._id"
+              :to="`/pms/reservations`"
+              class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <span class="material-icons text-red-600 dark:text-red-400 text-lg">person</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="font-medium text-gray-900 dark:text-white truncate">
+                    {{ reservation.leadGuest?.firstName }} {{ reservation.leadGuest?.lastName }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ reservation.rooms?.[0]?.roomTypeName?.tr || reservation.rooms?.[0]?.roomTypeCode }} •
+                    {{ formatDate(reservation.checkIn) }} - {{ formatDate(reservation.checkOut) }}
+                  </p>
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0 ml-3">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ reservation.bookingNumber }}</p>
+                <span
+                  class="inline-block px-2 py-0.5 text-xs rounded-full"
+                  :class="reservation.payment?.status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+                >
+                  {{ reservation.payment?.status === 'paid' ? 'Odendi' : 'Odeme Bekliyor' }}
+                </span>
+              </div>
+            </router-link>
+          </div>
+          <div v-if="todayDeparturesList.length > 0" class="p-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/30">
+            <router-link to="/pms/front-desk" class="text-sm text-red-600 dark:text-red-400 hover:underline flex items-center justify-center gap-1">
+              <span class="material-icons text-sm">logout</span>
+              Check-out Yap
+            </router-link>
+          </div>
+        </div>
+      </div>
+
       <!-- Pending Tasks -->
       <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
         <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
@@ -226,6 +350,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 import { getDashboardReport } from '@/services/pms/reportsService'
+import reservationService from '@/services/pms/reservationService'
 import { usePMSSocket } from '@/composables/usePMSSocket'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
 
@@ -244,19 +369,19 @@ const setupSocketListeners = () => {
     if (data.action === 'created') {
       toast.info(`Yeni rezervasyon: ${data.bookingNumber}`, { timeout: 5000 })
     }
-    fetchDashboard() // Refresh stats
+    fetchAllData() // Refresh all data
   }))
 
   // Check-in events
   unsubscribers.push(onCheckIn((data) => {
     toast.success(`Check-in: Oda ${data.roomNumber} - ${data.guestName}`, { timeout: 4000 })
-    fetchDashboard()
+    fetchAllData()
   }))
 
   // Check-out events
   unsubscribers.push(onCheckOut((data) => {
     toast.info(`Check-out: Oda ${data.roomNumber}`, { timeout: 4000 })
-    fetchDashboard()
+    fetchAllData()
   }))
 }
 
@@ -285,6 +410,12 @@ const housekeepingData = ref({
   inProgress: 0,
   outOfOrder: 0
 })
+
+// Today's arrivals and departures lists
+const todayArrivalsList = ref([])
+const todayDeparturesList = ref([])
+const arrivalsLoading = ref(false)
+const departuresLoading = ref(false)
 
 // Hotel name
 const hotelName = computed(() => {
@@ -322,6 +453,15 @@ const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'TRY'
   }).format(amount || 0)
+}
+
+// Format date
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit'
+  })
 }
 
 // Fetch dashboard data
@@ -365,10 +505,47 @@ const fetchDashboard = async () => {
   }
 }
 
+// Fetch today's arrivals
+const fetchTodayArrivals = async () => {
+  if (!hotelId.value) return
+
+  arrivalsLoading.value = true
+  try {
+    const response = await reservationService.getTodayArrivals(hotelId.value)
+    todayArrivalsList.value = response.data || []
+  } catch (error) {
+    console.error('Error fetching arrivals:', error)
+  } finally {
+    arrivalsLoading.value = false
+  }
+}
+
+// Fetch today's departures
+const fetchTodayDepartures = async () => {
+  if (!hotelId.value) return
+
+  departuresLoading.value = true
+  try {
+    const response = await reservationService.getTodayDepartures(hotelId.value)
+    todayDeparturesList.value = response.data || []
+  } catch (error) {
+    console.error('Error fetching departures:', error)
+  } finally {
+    departuresLoading.value = false
+  }
+}
+
+// Fetch all data
+const fetchAllData = () => {
+  fetchDashboard()
+  fetchTodayArrivals()
+  fetchTodayDepartures()
+}
+
 // Watch hotel changes
 watch(hotelId, (newId) => {
   if (newId) {
-    fetchDashboard()
+    fetchAllData()
   }
 }, { immediate: true })
 
@@ -377,7 +554,7 @@ onMounted(() => {
   setupSocketListeners()
 
   if (hotelId.value) {
-    fetchDashboard()
+    fetchAllData()
   }
 })
 </script>
