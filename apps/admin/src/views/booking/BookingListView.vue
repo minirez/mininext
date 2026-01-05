@@ -543,6 +543,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import bookingService from '@/services/bookingService'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import Modal from '@/components/common/Modal.vue'
@@ -584,10 +585,14 @@ const columns = computed(() => [
   { key: 'payment', label: t('payment.paidAmount'), sortable: false }
 ])
 
+// Async action composables
+const { isLoading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeStats } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeAction } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 // State
 const bookings = ref([])
 const stats = ref({})
-const isLoading = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalItems = ref(0)
@@ -698,36 +703,38 @@ onUnmounted(() => {
 
 // Fetch bookings
 const fetchBookings = async () => {
-  isLoading.value = true
-  try {
-    const params = {
-      page: currentPage.value,
-      limit: perPage,
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
-    }
-
-    if (filters.value.search) {
-      params.search = filters.value.search
-    }
-    if (filters.value.status) {
-      params.status = filters.value.status
-    }
-    if (filters.value.dateRange) {
-      applyDateFilter(params)
-    }
-
-    const response = await bookingService.getBookings(params)
-    if (response.success) {
-      bookings.value = response.data
-      totalPages.value = response.pagination?.totalPages || 1
-      totalItems.value = response.pagination?.total || 0
-    }
-  } catch (error) {
-    console.error('Failed to fetch bookings:', error)
-  } finally {
-    isLoading.value = false
+  const params = {
+    page: currentPage.value,
+    limit: perPage,
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
   }
+
+  if (filters.value.search) {
+    params.search = filters.value.search
+  }
+  if (filters.value.status) {
+    params.status = filters.value.status
+  }
+  if (filters.value.dateRange) {
+    applyDateFilter(params)
+  }
+
+  await executeLoad(
+    () => bookingService.getBookings(params),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          bookings.value = response.data
+          totalPages.value = response.pagination?.totalPages || 1
+          totalItems.value = response.pagination?.total || 0
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch bookings:', error)
+      }
+    }
+  )
 }
 
 // Apply date filter
@@ -763,14 +770,19 @@ const applyDateFilter = params => {
 
 // Fetch stats
 const fetchStats = async () => {
-  try {
-    const response = await bookingService.getBookingStats()
-    if (response.success) {
-      stats.value = response.data
+  await executeStats(
+    () => bookingService.getBookingStats(),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          stats.value = response.data
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch stats:', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error)
-  }
+  )
 }
 
 // Debounced search
@@ -828,27 +840,37 @@ const deleteDraft = booking => {
 const confirmDeleteDraft = async () => {
   if (!selectedBooking.value) return
 
-  try {
-    await bookingService.deleteDraft(selectedBooking.value.bookingNumber)
-    showDeleteModal.value = false
-    selectedBooking.value = null
-    fetchBookings()
-    fetchStats()
-  } catch (error) {
-    console.error('Failed to delete draft:', error)
-  }
+  await executeAction(
+    () => bookingService.deleteDraft(selectedBooking.value.bookingNumber),
+    {
+      onSuccess: () => {
+        showDeleteModal.value = false
+        selectedBooking.value = null
+        fetchBookings()
+        fetchStats()
+      },
+      onError: error => {
+        console.error('Failed to delete draft:', error)
+      }
+    }
+  )
 }
 
 // Confirm booking
 const confirmBooking = async booking => {
   openMenuId.value = null
-  try {
-    await bookingService.updateBookingStatus(booking._id, 'confirmed')
-    fetchBookings()
-    fetchStats()
-  } catch (error) {
-    console.error('Failed to confirm booking:', error)
-  }
+  await executeAction(
+    () => bookingService.updateBookingStatus(booking._id, 'confirmed'),
+    {
+      onSuccess: () => {
+        fetchBookings()
+        fetchStats()
+      },
+      onError: error => {
+        console.error('Failed to confirm booking:', error)
+      }
+    }
+  )
 }
 
 // Cancel booking

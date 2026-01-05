@@ -537,6 +537,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import bookingService, { getAmendmentHistory } from '@/services/bookingService'
 import BookingStatusBadge from '@/components/booking/BookingStatusBadge.vue'
 import Modal from '@/components/common/Modal.vue'
@@ -566,12 +567,15 @@ const navItems = computed(() => [
   }
 ])
 
+// Async action composables
+const { isLoading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: isUpdating, execute: executeUpdate } = useAsyncAction({ showErrorToast: false })
+const { isLoading: isAddingNote, execute: executeAddNote } = useAsyncAction({ showErrorToast: false })
+const { isLoading: isCancelling, execute: executeCancel } = useAsyncAction({ showErrorToast: false })
+const { isLoading: isLoadingHistory, execute: executeHistory } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 // State
 const booking = ref(null)
-const isLoading = ref(false)
-const isUpdating = ref(false)
-const isAddingNote = ref(false)
-const isCancelling = ref(false)
 const newNote = ref('')
 const showCancelModal = ref(false)
 const cancelReason = ref('')
@@ -579,7 +583,6 @@ const cancelReason = ref('')
 // Amendment state
 const showAmendmentModal = ref(false)
 const amendmentHistory = ref([])
-const isLoadingHistory = ref(false)
 
 // Can cancel
 const canCancel = computed(() => {
@@ -601,18 +604,20 @@ const nights = computed(() => {
 
 // Fetch booking
 const fetchBooking = async () => {
-  isLoading.value = true
-  try {
-    const response = await bookingService.getBooking(route.params.id)
-    if (response.success) {
-      booking.value = response.data
+  await executeLoad(
+    () => bookingService.getBooking(route.params.id),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          booking.value = response.data
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch booking:', error)
+        toast.error(t('booking.fetchFailed'))
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch booking:', error)
-    toast.error(t('booking.fetchFailed'))
-  } finally {
-    isLoading.value = false
-  }
+  )
 }
 
 // Format date
@@ -687,61 +692,62 @@ const getMealPlanName = mealPlan => {
 
 // Handle confirm
 const handleConfirm = async () => {
-  isUpdating.value = true
-  try {
-    const response = await bookingService.updateBookingStatus(booking.value._id, 'confirmed')
-    if (response.success) {
-      booking.value.status = 'confirmed'
-      toast.success(t('booking.confirmSuccess'))
+  await executeUpdate(
+    () => bookingService.updateBookingStatus(booking.value._id, 'confirmed'),
+    {
+      successMessage: 'booking.confirmSuccess',
+      onSuccess: () => {
+        booking.value.status = 'confirmed'
+      },
+      onError: error => {
+        toast.error(error.message || t('booking.confirmFailed'))
+      }
     }
-  } catch (error) {
-    toast.error(error.message || t('booking.confirmFailed'))
-  } finally {
-    isUpdating.value = false
-  }
+  )
 }
 
 // Handle cancel
 const handleCancel = async () => {
-  isCancelling.value = true
-  try {
-    const response = await bookingService.cancelBooking(booking.value._id, cancelReason.value)
-    if (response.success) {
-      booking.value.status = 'cancelled'
-      showCancelModal.value = false
-      cancelReason.value = ''
-      toast.success(t('booking.cancelSuccess'))
+  await executeCancel(
+    () => bookingService.cancelBooking(booking.value._id, cancelReason.value),
+    {
+      successMessage: 'booking.cancelSuccess',
+      onSuccess: () => {
+        booking.value.status = 'cancelled'
+        showCancelModal.value = false
+        cancelReason.value = ''
+      },
+      onError: error => {
+        toast.error(error.message || t('booking.cancelFailed'))
+      }
     }
-  } catch (error) {
-    toast.error(error.message || t('booking.cancelFailed'))
-  } finally {
-    isCancelling.value = false
-  }
+  )
 }
 
 // Handle add note
 const handleAddNote = async () => {
   if (!newNote.value.trim()) return
 
-  isAddingNote.value = true
-  try {
-    const response = await bookingService.addBookingNote(booking.value._id, newNote.value)
-    if (response.success) {
-      if (!booking.value.notes) booking.value.notes = []
-      booking.value.notes.push(
-        response.data.note || {
-          content: newNote.value,
-          createdAt: new Date().toISOString()
-        }
-      )
-      newNote.value = ''
-      toast.success(t('booking.noteAdded'))
+  const noteContent = newNote.value
+  await executeAddNote(
+    () => bookingService.addBookingNote(booking.value._id, noteContent),
+    {
+      successMessage: 'booking.noteAdded',
+      onSuccess: response => {
+        if (!booking.value.notes) booking.value.notes = []
+        booking.value.notes.push(
+          response.data.note || {
+            content: noteContent,
+            createdAt: new Date().toISOString()
+          }
+        )
+        newNote.value = ''
+      },
+      onError: error => {
+        toast.error(error.message || t('booking.noteAddFailed'))
+      }
     }
-  } catch (error) {
-    toast.error(error.message || t('booking.noteAddFailed'))
-  } finally {
-    isAddingNote.value = false
-  }
+  )
 }
 
 // Print booking
@@ -764,17 +770,20 @@ const handleAmendmentComplete = () => {
 // Fetch amendment history
 const fetchAmendmentHistory = async () => {
   if (!booking.value?._id) return
-  isLoadingHistory.value = true
-  try {
-    const response = await getAmendmentHistory(booking.value._id)
-    if (response.success) {
-      amendmentHistory.value = response.data.amendments || []
+
+  await executeHistory(
+    () => getAmendmentHistory(booking.value._id),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          amendmentHistory.value = response.data.amendments || []
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch amendment history:', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch amendment history:', error)
-  } finally {
-    isLoadingHistory.value = false
-  }
+  )
 }
 
 // Get source display text
