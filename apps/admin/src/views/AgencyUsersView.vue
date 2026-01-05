@@ -200,27 +200,28 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from 'vue-toastification'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import agencyService from '@/services/agencyService'
 import { useI18n } from 'vue-i18n'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const { t } = useI18n()
-const toast = useToast()
 const route = useRoute()
 const router = useRouter()
+
+// Async action composables
+const { isLoading: loading, execute: executeFetch } = useAsyncAction({ showSuccessToast: false })
+const { isLoading: submitting, execute: executeSubmit } = useAsyncAction()
+const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
 
 const agencyId = route.params.id
 const agency = ref(null)
 const users = ref([])
-const loading = ref(false)
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
-const submitting = ref(false)
-const deleting = ref(false)
 const selectedUser = ref(null)
 
 const form = ref({
@@ -240,19 +241,19 @@ const columns = [
 ]
 
 const fetchAgencyAndUsers = async () => {
-  loading.value = true
-  try {
-    const response = await agencyService.getAgencyUsers(agencyId)
-    if (response.success) {
-      agency.value = response.data.agency
-      users.value = response.data.users || []
+  await executeFetch(
+    () => agencyService.getAgencyUsers(agencyId),
+    {
+      errorMessage: 'common.loadFailed',
+      onSuccess: response => {
+        agency.value = response.data.agency
+        users.value = response.data.users || []
+      },
+      onError: () => {
+        router.push('/agencies')
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to fetch users')
-    router.push('/agencies')
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 const openCreateModal = () => {
@@ -283,34 +284,23 @@ const openEditModal = user => {
 }
 
 const handleSubmit = async () => {
-  submitting.value = true
-  try {
-    if (isEditing.value) {
-      const updateData = { ...form.value }
-      delete updateData.password
-      const response = await agencyService.updateAgencyUser(
-        agencyId,
-        selectedUser.value._id,
-        updateData
-      )
-      if (response.success) {
-        toast.success(t('agencies.userUpdateSuccess'))
-        await fetchAgencyAndUsers()
-        showModal.value = false
-      }
-    } else {
-      const response = await agencyService.createAgencyUser(agencyId, form.value)
-      if (response.success) {
-        toast.success(t('agencies.userCreateSuccess'))
-        await fetchAgencyAndUsers()
-        showModal.value = false
-      }
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    submitting.value = false
+  let actionFn
+  if (isEditing.value) {
+    const updateData = { ...form.value }
+    delete updateData.password
+    actionFn = () => agencyService.updateAgencyUser(agencyId, selectedUser.value._id, updateData)
+  } else {
+    actionFn = () => agencyService.createAgencyUser(agencyId, form.value)
   }
+
+  await executeSubmit(actionFn, {
+    successMessage: isEditing.value ? 'agencies.userUpdateSuccess' : 'agencies.userCreateSuccess',
+    errorMessage: 'common.operationFailed',
+    onSuccess: () => {
+      showModal.value = false
+      fetchAgencyAndUsers()
+    }
+  })
 }
 
 const confirmDelete = user => {
@@ -319,19 +309,17 @@ const confirmDelete = user => {
 }
 
 const handleDelete = async () => {
-  deleting.value = true
-  try {
-    const response = await agencyService.deleteAgencyUser(agencyId, selectedUser.value._id)
-    if (response.success) {
-      toast.success(t('agencies.userDeleteSuccess'))
-      await fetchAgencyAndUsers()
-      showDeleteModal.value = false
+  await executeDelete(
+    () => agencyService.deleteAgencyUser(agencyId, selectedUser.value._id),
+    {
+      successMessage: 'agencies.userDeleteSuccess',
+      errorMessage: 'common.deleteFailed',
+      onSuccess: () => {
+        showDeleteModal.value = false
+        fetchAgencyAndUsers()
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.deleteFailed'))
-  } finally {
-    deleting.value = false
-  }
+  )
 }
 
 // React to partner changes - redirect to agencies when partner is switched

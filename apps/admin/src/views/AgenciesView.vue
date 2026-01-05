@@ -1058,23 +1058,26 @@ import hotelService from '@/services/hotelService'
 import { useI18n } from 'vue-i18n'
 import { usePartnerContext } from '@/composables/usePartnerContext'
 import { getCountryName } from '@/data/countries'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const { t, locale } = useI18n()
 const toast = useToast()
 const router = useRouter()
 
+// Async action composables
+const { isLoading: loading, execute: executeFetch } = useAsyncAction({ showSuccessToast: false })
+const { isLoading: submitting, execute: executeSubmit } = useAsyncAction()
+const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
+const { isLoading: approving, execute: executeApprove } = useAsyncAction()
+const { isLoading: uploading, execute: executeUpload } = useAsyncAction()
+
 // State
 const agencies = ref([])
 const hotels = ref([])
-const loading = ref(false)
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const showApproveModal = ref(false)
 const isEditing = ref(false)
-const submitting = ref(false)
-const deleting = ref(false)
-const approving = ref(false)
-const uploading = ref(false)
 const selectedAgency = ref(null)
 const activeTab = ref('basic')
 
@@ -1315,19 +1318,17 @@ const togglePaymentMethod = method => {
 
 // API calls
 const fetchAgencies = async () => {
-  loading.value = true
-  try {
-    const response = await agencyService.getAgencies()
-    if (response.success) {
-      agencies.value = Array.isArray(response.data)
-        ? response.data
-        : response.data.agencies || response.data.items || []
+  await executeFetch(
+    () => agencyService.getAgencies(),
+    {
+      errorMessage: 'common.loadFailed',
+      onSuccess: response => {
+        agencies.value = Array.isArray(response.data)
+          ? response.data
+          : response.data.agencies || response.data.items || []
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.loadFailed'))
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 const fetchHotels = async () => {
@@ -1402,22 +1403,18 @@ const handleSubmit = async () => {
     return
   }
 
-  submitting.value = true
-  try {
-    if (isEditing.value) {
-      await agencyService.updateAgency(selectedAgency.value._id, form.value)
-      toast.success(t('agencies.updateSuccess'))
-    } else {
-      await agencyService.createAgency(form.value)
-      toast.success(t('agencies.createSuccess'))
+  const actionFn = isEditing.value
+    ? () => agencyService.updateAgency(selectedAgency.value._id, form.value)
+    : () => agencyService.createAgency(form.value)
+
+  await executeSubmit(actionFn, {
+    successMessage: isEditing.value ? 'agencies.updateSuccess' : 'agencies.createSuccess',
+    errorMessage: 'common.operationFailed',
+    onSuccess: () => {
+      showModal.value = false
+      fetchAgencies()
     }
-    showModal.value = false
-    fetchAgencies()
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    submitting.value = false
-  }
+  })
 }
 
 const confirmDelete = agency => {
@@ -1426,17 +1423,17 @@ const confirmDelete = agency => {
 }
 
 const deleteAgency = async () => {
-  deleting.value = true
-  try {
-    await agencyService.deleteAgency(selectedAgency.value._id)
-    toast.success(t('agencies.deleteSuccess'))
-    showDeleteModal.value = false
-    fetchAgencies()
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.deleteFailed'))
-  } finally {
-    deleting.value = false
-  }
+  await executeDelete(
+    () => agencyService.deleteAgency(selectedAgency.value._id),
+    {
+      successMessage: 'agencies.deleteSuccess',
+      errorMessage: 'common.deleteFailed',
+      onSuccess: () => {
+        showDeleteModal.value = false
+        fetchAgencies()
+      }
+    }
+  )
 }
 
 const confirmApprove = agency => {
@@ -1445,17 +1442,17 @@ const confirmApprove = agency => {
 }
 
 const approveAgency = async () => {
-  approving.value = true
-  try {
-    await agencyService.approveAgency(selectedAgency.value._id)
-    toast.success(t('agencies.approveSuccess'))
-    showApproveModal.value = false
-    fetchAgencies()
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    approving.value = false
-  }
+  await executeApprove(
+    () => agencyService.approveAgency(selectedAgency.value._id),
+    {
+      successMessage: 'agencies.approveSuccess',
+      errorMessage: 'common.operationFailed',
+      onSuccess: () => {
+        showApproveModal.value = false
+        fetchAgencies()
+      }
+    }
+  )
 }
 
 const goToUsers = agency => {
@@ -1464,33 +1461,38 @@ const goToUsers = agency => {
 
 const uploadDocument = async file => {
   if (!selectedAgency.value) return
-  uploading.value = true
-  try {
-    // Create FormData for file upload - field name must be 'document' to match backend
-    const formData = new FormData()
-    formData.append('document', file)
-    formData.append('documentType', 'license') // Default document type
-    await agencyService.uploadDocument(selectedAgency.value._id, formData)
-    toast.success(t('common.uploadSuccess'))
-    const response = await agencyService.getAgency(selectedAgency.value._id)
-    if (response.success) selectedAgency.value = response.data
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.uploadFailed'))
-  } finally {
-    uploading.value = false
-  }
+
+  const formData = new FormData()
+  formData.append('document', file)
+  formData.append('documentType', 'license')
+
+  await executeUpload(
+    () => agencyService.uploadDocument(selectedAgency.value._id, formData),
+    {
+      successMessage: 'common.uploadSuccess',
+      errorMessage: 'common.uploadFailed',
+      onSuccess: async () => {
+        const response = await agencyService.getAgency(selectedAgency.value._id)
+        if (response.success) selectedAgency.value = response.data
+      }
+    }
+  )
 }
 
 const confirmDeleteDocument = async documentId => {
   if (!selectedAgency.value) return
-  try {
-    await agencyService.deleteDocument(selectedAgency.value._id, documentId)
-    toast.success(t('common.deleteSuccess'))
-    const response = await agencyService.getAgency(selectedAgency.value._id)
-    if (response.success) selectedAgency.value = response.data
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.deleteFailed'))
-  }
+
+  await executeDelete(
+    () => agencyService.deleteDocument(selectedAgency.value._id, documentId),
+    {
+      successMessage: 'common.deleteSuccess',
+      errorMessage: 'common.deleteFailed',
+      onSuccess: async () => {
+        const response = await agencyService.getAgency(selectedAgency.value._id)
+        if (response.success) selectedAgency.value = response.data
+      }
+    }
+  )
 }
 
 // Lifecycle
