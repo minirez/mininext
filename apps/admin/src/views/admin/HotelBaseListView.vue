@@ -287,6 +287,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import hotelService from '@/services/hotelService'
 import Modal from '@/components/common/Modal.vue'
 import DataTable from '@/components/ui/data/DataTable.vue'
@@ -297,8 +298,11 @@ const router = useRouter()
 const toast = useToast()
 const { t } = useI18n()
 
-const loading = ref(false)
-const deleting = ref(false)
+// Async action composables
+const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: deleting, execute: executeDelete } = useAsyncAction({ showErrorToast: false })
+const { execute: executeCities } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loadingPartners, execute: executePartners } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 const searchQuery = ref('')
 const hotels = ref([])
 const cities = ref([])
@@ -308,7 +312,6 @@ const showAIImporter = ref(false)
 const showPartnersModal = ref(false)
 const selectedHotel = ref(null)
 const linkedPartners = ref([])
-const loadingPartners = ref(false)
 
 const filters = reactive({
   stars: '',
@@ -344,40 +347,47 @@ const debouncedSearch = () => {
 
 // Fetch base hotels
 const fetchHotels = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      limit: pagination.limit
-    }
-    if (searchQuery.value) params.search = searchQuery.value
-    if (filters.stars) params.stars = filters.stars
-    if (filters.city) params.city = filters.city
-    if (filters.status) params.status = filters.status
-
-    const response = await hotelService.getBaseHotels(params)
-    if (response.success) {
-      hotels.value = response.data.items
-      pagination.total = response.data.pagination.total
-      pagination.pages = response.data.pagination.pages
-    }
-  } catch {
-    toast.error(t('common.fetchError'))
-  } finally {
-    loading.value = false
+  const params = {
+    page: pagination.page,
+    limit: pagination.limit
   }
+  if (searchQuery.value) params.search = searchQuery.value
+  if (filters.stars) params.stars = filters.stars
+  if (filters.city) params.city = filters.city
+  if (filters.status) params.status = filters.status
+
+  await executeLoad(
+    () => hotelService.getBaseHotels(params),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          hotels.value = response.data.items
+          pagination.total = response.data.pagination.total
+          pagination.pages = response.data.pagination.pages
+        }
+      },
+      onError: () => {
+        toast.error(t('common.fetchError'))
+      }
+    }
+  )
 }
 
 // Fetch cities for filter
 const fetchCities = async () => {
-  try {
-    const response = await hotelService.getCities()
-    if (response.success) {
-      cities.value = response.data.map(c => c.city).filter(Boolean)
+  await executeCities(
+    () => hotelService.getCities(),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          cities.value = response.data.map(c => c.city).filter(Boolean)
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch cities', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch cities', error)
-  }
+  )
 }
 
 // Handle DataTable page change
@@ -420,25 +430,25 @@ const confirmDelete = hotel => {
 const deleteHotel = async () => {
   if (!hotelToDelete.value) return
 
-  deleting.value = true
-  try {
-    const response = await hotelService.deleteBaseHotel(hotelToDelete.value._id)
-    if (response.success) {
-      toast.success(t('hotels.deleteSuccess'))
-      showDeleteModal.value = false
-      hotelToDelete.value = null
-      fetchHotels()
+  await executeDelete(
+    () => hotelService.deleteBaseHotel(hotelToDelete.value._id),
+    {
+      successMessage: 'hotels.deleteSuccess',
+      onSuccess: () => {
+        showDeleteModal.value = false
+        hotelToDelete.value = null
+        fetchHotels()
+      },
+      onError: error => {
+        const message = error.response?.data?.message
+        if (message === 'CANNOT_DELETE_WITH_LINKED') {
+          toast.error(t('hotels.hotelBase.cannotDeleteWithLinked'))
+        } else {
+          toast.error(t('common.operationFailed'))
+        }
+      }
     }
-  } catch (error) {
-    const message = error.response?.data?.message
-    if (message === 'CANNOT_DELETE_WITH_LINKED') {
-      toast.error(t('hotels.hotelBase.cannotDeleteWithLinked'))
-    } else {
-      toast.error(t('common.operationFailed'))
-    }
-  } finally {
-    deleting.value = false
-  }
+  )
 }
 
 // Get main image from hotel
@@ -478,19 +488,21 @@ const getPartnerStatusClass = status => {
 const showLinkedPartners = async hotel => {
   selectedHotel.value = hotel
   showPartnersModal.value = true
-  loadingPartners.value = true
   linkedPartners.value = []
 
-  try {
-    const response = await hotelService.getLinkedPartners(hotel._id)
-    if (response.success) {
-      linkedPartners.value = response.data.partners
+  await executePartners(
+    () => hotelService.getLinkedPartners(hotel._id),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          linkedPartners.value = response.data.partners
+        }
+      },
+      onError: () => {
+        toast.error(t('common.fetchError'))
+      }
     }
-  } catch {
-    toast.error(t('common.fetchError'))
-  } finally {
-    loadingPartners.value = false
-  }
+  )
 }
 
 onMounted(() => {

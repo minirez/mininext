@@ -541,15 +541,19 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import auditService from '@/services/auditService'
 
 const { t } = useI18n()
 const toast = useToast()
 
+// Async action composables
+const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: exporting, execute: executeExport } = useAsyncAction({ showErrorToast: false })
+const { execute: executeStats } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 // State
-const loading = ref(false)
-const exporting = ref(false)
 const logs = ref([])
 const stats = ref({})
 const pagination = ref({ page: 1, limit: 50, total: 0, pages: 0 })
@@ -630,56 +634,63 @@ const handlePeriodChange = () => {
 
 // Fetch logs
 const fetchLogs = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.value.page,
-      limit: pagination.value.limit
-    }
-
-    if (filters.search) params.search = filters.search
-    if (filters.module) params.module = filters.module
-    if (filters.action) params.action = filters.action
-    if (filters.status) params.status = filters.status
-
-    // Date filter based on period
-    if (filters.period === 'custom' && filters.startDate) {
-      params.startDate = filters.startDate
-      params.endDate = filters.endDate || new Date().toISOString().split('T')[0]
-    } else {
-      const now = new Date()
-      let startDate
-      switch (filters.period) {
-        case 'week':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          break
-        case 'month':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-          break
-        default: // day
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      }
-      params.startDate = startDate.toISOString().split('T')[0]
-    }
-
-    const response = await auditService.getAuditLogs(params)
-    logs.value = response.data.logs
-    pagination.value = response.data.pagination
-  } catch {
-    toast.error(t('audit.error.loadFailed'))
-  } finally {
-    loading.value = false
+  const params = {
+    page: pagination.value.page,
+    limit: pagination.value.limit
   }
+
+  if (filters.search) params.search = filters.search
+  if (filters.module) params.module = filters.module
+  if (filters.action) params.action = filters.action
+  if (filters.status) params.status = filters.status
+
+  // Date filter based on period
+  if (filters.period === 'custom' && filters.startDate) {
+    params.startDate = filters.startDate
+    params.endDate = filters.endDate || new Date().toISOString().split('T')[0]
+  } else {
+    const now = new Date()
+    let startDate
+    switch (filters.period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      default: // day
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    }
+    params.startDate = startDate.toISOString().split('T')[0]
+  }
+
+  await executeLoad(
+    () => auditService.getAuditLogs(params),
+    {
+      onSuccess: response => {
+        logs.value = response.data.logs
+        pagination.value = response.data.pagination
+      },
+      onError: () => {
+        toast.error(t('audit.error.loadFailed'))
+      }
+    }
+  )
 }
 
 // Fetch stats
 const fetchStats = async () => {
-  try {
-    const response = await auditService.getAuditStats(filters.period)
-    stats.value = response.data.summary
-  } catch (error) {
-    console.error('Failed to fetch stats:', error)
-  }
+  await executeStats(
+    () => auditService.getAuditStats(filters.period),
+    {
+      onSuccess: response => {
+        stats.value = response.data.summary
+      },
+      onError: error => {
+        console.error('Failed to fetch stats:', error)
+      }
+    }
+  )
 }
 
 // Handle DataTable page change
@@ -699,29 +710,29 @@ const openDetail = log => {
 
 // Export logs
 const exportLogs = async () => {
-  exporting.value = true
-  try {
-    const blob = await auditService.exportAuditLogs({
+  await executeExport(
+    () => auditService.exportAuditLogs({
       module: filters.module,
       action: filters.action,
       startDate: filters.startDate,
       endDate: filters.endDate
-    })
-
-    // Download file
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-
-    toast.success(t('audit.exportSuccess'))
-  } catch {
-    toast.error(t('audit.error.exportFailed'))
-  } finally {
-    exporting.value = false
-  }
+    }),
+    {
+      successMessage: 'audit.exportSuccess',
+      onSuccess: blob => {
+        // Download file
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      },
+      onError: () => {
+        toast.error(t('audit.error.exportFailed'))
+      }
+    }
+  )
 }
 
 // Helpers

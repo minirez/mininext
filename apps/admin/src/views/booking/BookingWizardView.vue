@@ -78,6 +78,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/booking'
 import { useUIStore } from '@/stores/ui'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import { loadPhase1Data, clearPhase1Data } from '@/services/bookingStorageService'
 import BookingLayout from '@/components/booking/BookingLayout.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
@@ -89,7 +90,9 @@ const router = useRouter()
 const bookingStore = useBookingStore()
 const uiStore = useUIStore()
 
-const loading = ref(false)
+// Async action composables
+const { isLoading: loading, execute: executeInit } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 const loadError = ref(null)
 const showContinueModal = ref(false)
 const existingDraftNumber = ref(null)
@@ -193,42 +196,41 @@ onUnmounted(() => {
 
 // Initialize booking based on route
 const initializeBooking = async () => {
-  loading.value = true
   loadError.value = null
+  const bookingNumber = route.params.bookingNumber
 
-  try {
-    const bookingNumber = route.params.bookingNumber
-
-    if (bookingNumber) {
-      // Loading existing draft from URL
-      console.log('📂 Loading draft from URL:', bookingNumber)
-      await bookingStore.loadDraft(bookingNumber)
-    } else {
-      // New booking - check for existing data
-      const phase1Data = loadPhase1Data()
-      const hasExistingDraft = bookingStore.draftBookingNumber
-      const hasCartInStore = bookingStore.cart.length > 0
-      const hasCartInStorage = phase1Data?.cart?.length > 0
-
-      // Only show modal if there's meaningful data: cart items or a saved draft
-      // Don't show modal just for search results or empty data
-      if (hasExistingDraft || hasCartInStore || hasCartInStorage) {
-        // Store the data and show the modal
-        pendingPhase1Data.value = phase1Data
-        existingDraftNumber.value = hasExistingDraft || null
-        hasLocalStorageData.value = !!phase1Data && !hasExistingDraft
-        showContinueModal.value = true
-      } else {
-        // Fresh start or only search data - no need to ask
-        clearPhase1Data()
-        bookingStore.resetAll()
+  if (bookingNumber) {
+    // Loading existing draft from URL
+    console.log('📂 Loading draft from URL:', bookingNumber)
+    await executeInit(
+      () => bookingStore.loadDraft(bookingNumber),
+      {
+        onError: error => {
+          console.error('Failed to initialize booking:', error)
+          loadError.value = error.message || t('booking.loadError')
+        }
       }
+    )
+  } else {
+    // New booking - check for existing data
+    const phase1Data = loadPhase1Data()
+    const hasExistingDraft = bookingStore.draftBookingNumber
+    const hasCartInStore = bookingStore.cart.length > 0
+    const hasCartInStorage = phase1Data?.cart?.length > 0
+
+    // Only show modal if there's meaningful data: cart items or a saved draft
+    // Don't show modal just for search results or empty data
+    if (hasExistingDraft || hasCartInStore || hasCartInStorage) {
+      // Store the data and show the modal
+      pendingPhase1Data.value = phase1Data
+      existingDraftNumber.value = hasExistingDraft || null
+      hasLocalStorageData.value = !!phase1Data && !hasExistingDraft
+      showContinueModal.value = true
+    } else {
+      // Fresh start or only search data - no need to ask
+      clearPhase1Data()
+      bookingStore.resetAll()
     }
-  } catch (error) {
-    console.error('Failed to initialize booking:', error)
-    loadError.value = error.message || t('booking.loadError')
-  } finally {
-    loading.value = false
   }
 }
 
