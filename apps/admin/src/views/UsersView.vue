@@ -346,11 +346,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { usePartnerStore } from '@/stores/partner'
 import { useAuthStore } from '@/stores/auth'
+import { useListView } from '@/composables/useListView'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import {
   getUsers,
   activateUser,
@@ -406,11 +408,38 @@ const tableFilters = computed(() => [
   }
 ])
 
-// State
-const loading = ref(false)
-const users = ref([])
-const searchQuery = ref('')
-const filterValues = ref({})
+// Use list view composable for users
+const {
+  items: users,
+  isLoading: loading,
+  pagination,
+  filters,
+  fetch: fetchUsers,
+  handlePageChange
+} = useListView(
+  params => {
+    // Platform admin - filter based on view context
+    if (authStore.user?.accountType === 'platform') {
+      if (partnerStore.selectedPartner) {
+        params.accountType = 'partner'
+        params.accountId = partnerStore.selectedPartner._id
+      } else {
+        params.accountType = 'platform'
+      }
+    }
+    return getUsers(params)
+  },
+  {
+    defaultFilters: { search: '', status: '', role: '' },
+    itemsKey: 'users',
+    errorMessage: 'common.error'
+  }
+)
+
+// Use async action for delete
+const { isLoading: deleteLoading, execute: executeDelete } = useAsyncAction()
+
+// Additional state
 const activeActionMenu = ref(null)
 
 // Modals
@@ -421,15 +450,6 @@ const showSessionsModal = ref(false)
 const showDeleteConfirm = ref(false)
 const selectedUser = ref(null)
 const userToDelete = ref(null)
-const deleteLoading = ref(false)
-
-// Pagination
-const pagination = reactive({
-  page: 1,
-  limit: 20,
-  total: 0,
-  pages: 0
-})
 
 // Stats
 const stats = computed(() => {
@@ -441,57 +461,17 @@ const stats = computed(() => {
   return { total, active, pending, inactive, with2FA }
 })
 
-// Fetch users
-const fetchUsers = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      limit: pagination.limit
-    }
-    if (searchQuery.value) params.search = searchQuery.value
-    if (filterValues.value.status) params.status = filterValues.value.status
-    if (filterValues.value.role) params.role = filterValues.value.role
-
-    // Platform admin - filter based on view context
-    if (authStore.user?.accountType === 'platform') {
-      if (partnerStore.selectedPartner) {
-        // Viewing a specific partner - show only that partner's users
-        params.accountType = 'partner'
-        params.accountId = partnerStore.selectedPartner._id
-      } else {
-        // Platform view - show only platform users
-        params.accountType = 'platform'
-      }
-    }
-
-    const response = await getUsers(params)
-    users.value = response.data.users
-    pagination.total = response.data.pagination.total
-    pagination.pages = response.data.pagination.pages
-  } catch (error) {
-    toast.error(error.message || t('common.error'))
-  } finally {
-    loading.value = false
-  }
-}
-
 // DataTable event handlers
 const handleSearch = query => {
-  searchQuery.value = query
+  filters.search = query
   pagination.page = 1
   fetchUsers()
 }
 
-const handleFilter = filters => {
-  filterValues.value = filters
+const handleFilter = filterValues => {
+  if (filterValues.status !== undefined) filters.status = filterValues.status
+  if (filterValues.role !== undefined) filters.role = filterValues.role
   pagination.page = 1
-  fetchUsers()
-}
-
-const handlePageChange = ({ page, perPage }) => {
-  pagination.page = page
-  pagination.limit = perPage
   fetchUsers()
 }
 
@@ -603,18 +583,21 @@ const handleDelete = user => {
 
 const confirmDelete = async () => {
   if (!userToDelete.value) return
-  deleteLoading.value = true
-  try {
-    await deleteUser(userToDelete.value._id)
-    toast.success(t('common.deleted'))
-    fetchUsers()
-  } catch (error) {
-    toast.error(error.message)
-  } finally {
-    deleteLoading.value = false
-    showDeleteConfirm.value = false
-    userToDelete.value = null
-  }
+  await executeDelete(
+    () => deleteUser(userToDelete.value._id),
+    {
+      successMessage: 'common.deleted',
+      onSuccess: () => {
+        showDeleteConfirm.value = false
+        userToDelete.value = null
+        fetchUsers()
+      },
+      onFinally: () => {
+        showDeleteConfirm.value = false
+        userToDelete.value = null
+      }
+    }
+  )
 }
 
 // Success handlers
