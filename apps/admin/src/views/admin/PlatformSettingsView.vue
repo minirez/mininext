@@ -523,18 +523,21 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import platformSettingsService from '@/services/platformSettingsService'
 
 const { t } = useI18n()
 const toast = useToast()
 
+// Async action composables
+const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: saving, execute: executeSave } = useAsyncAction({ showErrorToast: false })
+const { isLoading: testingEmail, execute: executeTestEmail } = useAsyncAction({ showErrorToast: false })
+const { isLoading: testingSMS, execute: executeTestSMS } = useAsyncAction({ showErrorToast: false })
+const { isLoading: testingPaximum, execute: executeTestPaximum } = useAsyncAction({ showErrorToast: false })
+const { isLoading: generatingVAPID, execute: executeGenerateVAPID } = useAsyncAction({ showErrorToast: false })
+
 // State
-const loading = ref(true)
-const saving = ref(false)
-const testingEmail = ref(false)
-const testingSMS = ref(false)
-const testingPaximum = ref(false)
-const generatingVAPID = ref(false)
 
 const testEmailAddress = ref('')
 const testPhoneNumber = ref('')
@@ -582,191 +585,196 @@ const settings = ref({
 
 // Load settings
 const loadSettings = async () => {
-  try {
-    loading.value = true
-    const data = await platformSettingsService.getSettings()
-
-    // Merge with defaults
-    settings.value = {
-      aws: {
-        ses: {
-          enabled: data.aws?.ses?.enabled || false,
-          region: data.aws?.ses?.region || 'eu-west-1',
-          accessKeyId: '', // Don't show masked value
-          secretAccessKey: '', // Don't show masked value
-          fromEmail: data.aws?.ses?.fromEmail || '',
-          fromName: data.aws?.ses?.fromName || ''
+  await executeLoad(
+    () => platformSettingsService.getSettings(),
+    {
+      onSuccess: data => {
+        // Merge with defaults
+        settings.value = {
+          aws: {
+            ses: {
+              enabled: data.aws?.ses?.enabled || false,
+              region: data.aws?.ses?.region || 'eu-west-1',
+              accessKeyId: '', // Don't show masked value
+              secretAccessKey: '', // Don't show masked value
+              fromEmail: data.aws?.ses?.fromEmail || '',
+              fromName: data.aws?.ses?.fromName || ''
+            }
+          },
+          netgsm: {
+            enabled: data.netgsm?.enabled || false,
+            usercode: '', // Don't show masked value
+            password: '', // Don't show masked value
+            msgheader: data.netgsm?.msgheader || ''
+          },
+          gemini: {
+            enabled: data.gemini?.enabled || false,
+            apiKey: '' // Don't show masked value
+          },
+          firecrawl: {
+            enabled: data.firecrawl?.enabled || false,
+            apiKey: '' // Don't show masked value
+          },
+          paximum: {
+            enabled: data.paximum?.enabled || false,
+            endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
+            agency: '', // Don't show masked value
+            user: '', // Don't show masked value
+            password: '', // Don't show masked value
+            defaultMarkup: data.paximum?.defaultMarkup ?? 10
+          },
+          webPush: {
+            enabled: data.webPush?.enabled || false,
+            publicKey: data.webPush?.publicKey || '',
+            privateKey: '', // Don't show masked value
+            contactEmail: data.webPush?.contactEmail || ''
+          }
         }
       },
-      netgsm: {
-        enabled: data.netgsm?.enabled || false,
-        usercode: '', // Don't show masked value
-        password: '', // Don't show masked value
-        msgheader: data.netgsm?.msgheader || ''
-      },
-      gemini: {
-        enabled: data.gemini?.enabled || false,
-        apiKey: '' // Don't show masked value
-      },
-      firecrawl: {
-        enabled: data.firecrawl?.enabled || false,
-        apiKey: '' // Don't show masked value
-      },
-      paximum: {
-        enabled: data.paximum?.enabled || false,
-        endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
-        agency: '', // Don't show masked value
-        user: '', // Don't show masked value
-        password: '', // Don't show masked value
-        defaultMarkup: data.paximum?.defaultMarkup ?? 10
-      },
-      webPush: {
-        enabled: data.webPush?.enabled || false,
-        publicKey: data.webPush?.publicKey || '',
-        privateKey: '', // Don't show masked value
-        contactEmail: data.webPush?.contactEmail || ''
+      onError: error => {
+        toast.error(t('common.error') + ': ' + error.message)
       }
     }
-  } catch (error) {
-    toast.error(t('common.error') + ': ' + error.message)
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // Save settings
 const saveSettings = async () => {
-  try {
-    saving.value = true
+  // Build update object - only include non-empty credential fields
+  const update = {
+    aws: {
+      ses: {
+        enabled: settings.value.aws.ses.enabled,
+        region: settings.value.aws.ses.region,
+        fromEmail: settings.value.aws.ses.fromEmail,
+        fromName: settings.value.aws.ses.fromName
+      }
+    },
+    netgsm: {
+      enabled: settings.value.netgsm.enabled,
+      msgheader: settings.value.netgsm.msgheader
+    },
+    gemini: {
+      enabled: settings.value.gemini.enabled
+    },
+    firecrawl: {
+      enabled: settings.value.firecrawl.enabled
+    },
+    paximum: {
+      enabled: settings.value.paximum.enabled,
+      endpoint: settings.value.paximum.endpoint,
+      defaultMarkup: settings.value.paximum.defaultMarkup
+    },
+    webPush: {
+      enabled: settings.value.webPush.enabled,
+      publicKey: settings.value.webPush.publicKey,
+      contactEmail: settings.value.webPush.contactEmail
+    }
+  }
 
-    // Build update object - only include non-empty credential fields
-    const update = {
-      aws: {
-        ses: {
-          enabled: settings.value.aws.ses.enabled,
-          region: settings.value.aws.ses.region,
-          fromEmail: settings.value.aws.ses.fromEmail,
-          fromName: settings.value.aws.ses.fromName
-        }
+  // Only include credentials if they were changed
+  if (settings.value.aws.ses.accessKeyId) {
+    update.aws.ses.accessKeyId = settings.value.aws.ses.accessKeyId
+  }
+  if (settings.value.aws.ses.secretAccessKey) {
+    update.aws.ses.secretAccessKey = settings.value.aws.ses.secretAccessKey
+  }
+  if (settings.value.netgsm.usercode) {
+    update.netgsm.usercode = settings.value.netgsm.usercode
+  }
+  if (settings.value.netgsm.password) {
+    update.netgsm.password = settings.value.netgsm.password
+  }
+  if (settings.value.gemini.apiKey) {
+    update.gemini.apiKey = settings.value.gemini.apiKey
+  }
+  if (settings.value.firecrawl.apiKey) {
+    update.firecrawl.apiKey = settings.value.firecrawl.apiKey
+  }
+  if (settings.value.paximum.agency) {
+    update.paximum.agency = settings.value.paximum.agency
+  }
+  if (settings.value.paximum.user) {
+    update.paximum.user = settings.value.paximum.user
+  }
+  if (settings.value.paximum.password) {
+    update.paximum.password = settings.value.paximum.password
+  }
+  if (settings.value.webPush.privateKey) {
+    update.webPush.privateKey = settings.value.webPush.privateKey
+  }
+
+  await executeSave(
+    () => platformSettingsService.updateSettings(update),
+    {
+      successMessage: 'platformSettings.saved',
+      onSuccess: async () => {
+        // Reload to get updated values
+        await loadSettings()
       },
-      netgsm: {
-        enabled: settings.value.netgsm.enabled,
-        msgheader: settings.value.netgsm.msgheader
-      },
-      gemini: {
-        enabled: settings.value.gemini.enabled
-      },
-      firecrawl: {
-        enabled: settings.value.firecrawl.enabled
-      },
-      paximum: {
-        enabled: settings.value.paximum.enabled,
-        endpoint: settings.value.paximum.endpoint,
-        defaultMarkup: settings.value.paximum.defaultMarkup
-      },
-      webPush: {
-        enabled: settings.value.webPush.enabled,
-        publicKey: settings.value.webPush.publicKey,
-        contactEmail: settings.value.webPush.contactEmail
+      onError: error => {
+        toast.error(t('common.error') + ': ' + error.message)
       }
     }
-
-    // Only include credentials if they were changed
-    if (settings.value.aws.ses.accessKeyId) {
-      update.aws.ses.accessKeyId = settings.value.aws.ses.accessKeyId
-    }
-    if (settings.value.aws.ses.secretAccessKey) {
-      update.aws.ses.secretAccessKey = settings.value.aws.ses.secretAccessKey
-    }
-    if (settings.value.netgsm.usercode) {
-      update.netgsm.usercode = settings.value.netgsm.usercode
-    }
-    if (settings.value.netgsm.password) {
-      update.netgsm.password = settings.value.netgsm.password
-    }
-    if (settings.value.gemini.apiKey) {
-      update.gemini.apiKey = settings.value.gemini.apiKey
-    }
-    if (settings.value.firecrawl.apiKey) {
-      update.firecrawl.apiKey = settings.value.firecrawl.apiKey
-    }
-    if (settings.value.paximum.agency) {
-      update.paximum.agency = settings.value.paximum.agency
-    }
-    if (settings.value.paximum.user) {
-      update.paximum.user = settings.value.paximum.user
-    }
-    if (settings.value.paximum.password) {
-      update.paximum.password = settings.value.paximum.password
-    }
-    if (settings.value.webPush.privateKey) {
-      update.webPush.privateKey = settings.value.webPush.privateKey
-    }
-
-    await platformSettingsService.updateSettings(update)
-    toast.success(t('platformSettings.saved'))
-
-    // Reload to get updated values
-    await loadSettings()
-  } catch (error) {
-    toast.error(t('common.error') + ': ' + error.message)
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 // Send test email
 const sendTestEmail = async () => {
-  try {
-    testingEmail.value = true
-    await platformSettingsService.testEmail(testEmailAddress.value)
-    toast.success(t('platformSettings.email.testSent'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || error.message)
-  } finally {
-    testingEmail.value = false
-  }
+  await executeTestEmail(
+    () => platformSettingsService.testEmail(testEmailAddress.value),
+    {
+      successMessage: 'platformSettings.email.testSent',
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
 }
 
 // Send test SMS
 const sendTestSMS = async () => {
-  try {
-    testingSMS.value = true
-    await platformSettingsService.testSMS(testPhoneNumber.value)
-    toast.success(t('platformSettings.sms.testSent'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || error.message)
-  } finally {
-    testingSMS.value = false
-  }
+  await executeTestSMS(
+    () => platformSettingsService.testSMS(testPhoneNumber.value),
+    {
+      successMessage: 'platformSettings.sms.testSent',
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
 }
 
 // Generate VAPID keys
 const generateVAPID = async () => {
-  try {
-    generatingVAPID.value = true
-    const keys = await platformSettingsService.generateVAPIDKeys()
-    settings.value.webPush.publicKey = keys.publicKey
-    settings.value.webPush.privateKey = keys.privateKey
-    toast.success(t('platformSettings.push.keysGenerated'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || error.message)
-  } finally {
-    generatingVAPID.value = false
-  }
+  await executeGenerateVAPID(
+    () => platformSettingsService.generateVAPIDKeys(),
+    {
+      successMessage: 'platformSettings.push.keysGenerated',
+      onSuccess: keys => {
+        settings.value.webPush.publicKey = keys.publicKey
+        settings.value.webPush.privateKey = keys.privateKey
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
 }
 
 // Test Paximum connection
 const testPaximumConnection = async () => {
-  try {
-    testingPaximum.value = true
-    const result = await platformSettingsService.testPaximum()
-    toast.success(result.message || t('platformSettings.paximum.testSuccess'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || error.message)
-  } finally {
-    testingPaximum.value = false
-  }
+  await executeTestPaximum(
+    () => platformSettingsService.testPaximum(),
+    {
+      onSuccess: result => {
+        toast.success(result.message || t('platformSettings.paximum.testSuccess'))
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
 }
 
 // Copy to clipboard

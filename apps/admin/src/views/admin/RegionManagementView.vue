@@ -563,6 +563,9 @@ import 'leaflet/dist/leaflet.css'
 // Components
 import Modal from '@/components/common/Modal.vue'
 
+// Composables
+import { useAsyncAction } from '@/composables/useAsyncAction'
+
 // Data & Services
 import { COUNTRIES } from '@/data/countries'
 import {
@@ -606,6 +609,14 @@ const regionIcon = L.divIcon({
 const { t, locale } = useI18n()
 const toast = useToast()
 
+// Async action composables
+const { isLoading: loadingCities, execute: executeLoadCities } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loadingRegions, execute: executeLoadRegions } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: savingCity, execute: executeSaveCity } = useAsyncAction({ showErrorToast: false })
+const { isLoading: savingRegion, execute: executeSaveRegion } = useAsyncAction({ showErrorToast: false })
+const { execute: executeDeleteCity } = useAsyncAction({ showErrorToast: false })
+const { execute: executeDeleteRegion } = useAsyncAction({ showErrorToast: false })
+
 // LocalStorage key
 const STORAGE_KEY = 'regionManagement_selectedCountry'
 
@@ -614,8 +625,6 @@ const selectedCountryCode = ref(localStorage.getItem(STORAGE_KEY) || '')
 const cities = ref([])
 const regions = ref([])
 const selectedCity = ref(null)
-const loadingCities = ref(false)
-const loadingRegions = ref(false)
 
 // Country dropdown state
 const showCountryDropdown = ref(false)
@@ -635,7 +644,6 @@ watch(selectedCountryCode, newVal => {
 // City Modal
 const showCityModal = ref(false)
 const editingCity = ref(null)
-const savingCity = ref(false)
 const cityForm = ref({
   name: '',
   coordinates: { lat: null, lng: null },
@@ -645,7 +653,6 @@ const cityForm = ref({
 // Region Modal
 const showRegionModal = ref(false)
 const editingRegion = ref(null)
-const savingRegion = ref(false)
 const regionForm = ref({
   name: '',
   coordinates: { lat: null, lng: null },
@@ -745,23 +752,25 @@ const loadCities = async () => {
     return
   }
 
-  loadingCities.value = true
-  try {
-    const result = await getCities(selectedCountryCode.value)
-    if (result.success) {
-      // Ensure coordinates object exists
-      cities.value = result.data.map(city => ({
-        ...city,
-        coordinates: city.coordinates || { lat: null, lng: null },
-        zoom: city.zoom || 10
-      }))
+  await executeLoadCities(
+    () => getCities(selectedCountryCode.value),
+    {
+      onSuccess: result => {
+        if (result.success) {
+          // Ensure coordinates object exists
+          cities.value = result.data.map(city => ({
+            ...city,
+            coordinates: city.coordinates || { lat: null, lng: null },
+            zoom: city.zoom || 10
+          }))
+        }
+      },
+      onError: error => {
+        console.error('Failed to load cities:', error)
+        toast.error(t('common.fetchError'))
+      }
     }
-  } catch (error) {
-    console.error('Failed to load cities:', error)
-    toast.error(t('common.fetchError'))
-  } finally {
-    loadingCities.value = false
-  }
+  )
 
   // Reset selection
   selectedCity.value = null
@@ -782,26 +791,28 @@ const selectCity = async city => {
 
 // Load regions for a city
 const loadRegionsForCity = async cityId => {
-  loadingRegions.value = true
-  try {
-    const result = await getRegions(cityId)
-    if (result.success) {
-      regions.value = result.data.map(region => ({
-        ...region,
-        coordinates: region.coordinates || { lat: null, lng: null },
-        zoom: region.zoom || 14
-      }))
-      nextTick(() => {
-        initMainMap()
-        updateMainMapMarkers()
-      })
+  await executeLoadRegions(
+    () => getRegions(cityId),
+    {
+      onSuccess: result => {
+        if (result.success) {
+          regions.value = result.data.map(region => ({
+            ...region,
+            coordinates: region.coordinates || { lat: null, lng: null },
+            zoom: region.zoom || 14
+          }))
+          nextTick(() => {
+            initMainMap()
+            updateMainMapMarkers()
+          })
+        }
+      },
+      onError: error => {
+        console.error('Failed to load regions:', error)
+        regions.value = []
+      }
     }
-  } catch (error) {
-    console.error('Failed to load regions:', error)
-    regions.value = []
-  } finally {
-    loadingRegions.value = false
-  }
+  )
 }
 
 // ============= City Modal =============
@@ -833,51 +844,49 @@ const saveCity = async () => {
     return
   }
 
-  savingCity.value = true
-  try {
-    const data = {
-      name: cityForm.value.name,
-      coordinates: cityForm.value.coordinates.lat ? cityForm.value.coordinates : null,
-      zoom: cityForm.value.zoom
-    }
-
-    if (editingCity.value) {
-      await updateCity(editingCity.value._id, data)
-      toast.success(t('locations.cityUpdated'))
-    } else {
-      await createCity({
-        ...data,
-        countryCode: selectedCountryCode.value
-      })
-      toast.success(t('locations.cityCreated'))
-    }
-    showCityModal.value = false
-    await loadCities()
-  } catch (error) {
-    console.error('Failed to save city:', error)
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    savingCity.value = false
+  const data = {
+    name: cityForm.value.name,
+    coordinates: cityForm.value.coordinates.lat ? cityForm.value.coordinates : null,
+    zoom: cityForm.value.zoom
   }
+
+  const actionFn = editingCity.value
+    ? () => updateCity(editingCity.value._id, data)
+    : () => createCity({ ...data, countryCode: selectedCountryCode.value })
+
+  await executeSaveCity(actionFn, {
+    successMessage: editingCity.value ? 'locations.cityUpdated' : 'locations.cityCreated',
+    onSuccess: async () => {
+      showCityModal.value = false
+      await loadCities()
+    },
+    onError: error => {
+      console.error('Failed to save city:', error)
+      toast.error(error.response?.data?.message || t('common.operationFailed'))
+    }
+  })
 }
 
 const confirmDeleteCity = async city => {
   if (!confirm(t('locations.deleteCityConfirm'))) return
 
-  try {
-    await deleteCityApi(city._id)
-    toast.success(t('locations.cityDeleted'))
-
-    if (selectedCity.value?._id === city._id) {
-      selectedCity.value = null
-      regions.value = []
+  await executeDeleteCity(
+    () => deleteCityApi(city._id),
+    {
+      successMessage: 'locations.cityDeleted',
+      onSuccess: async () => {
+        if (selectedCity.value?._id === city._id) {
+          selectedCity.value = null
+          regions.value = []
+        }
+        await loadCities()
+      },
+      onError: error => {
+        console.error('Failed to delete city:', error)
+        toast.error(t('common.operationFailed'))
+      }
     }
-
-    await loadCities()
-  } catch (error) {
-    console.error('Failed to delete city:', error)
-    toast.error(t('common.operationFailed'))
-  }
+  )
 }
 
 // ============= Region Modal =============
@@ -912,45 +921,45 @@ const saveRegion = async () => {
     return
   }
 
-  savingRegion.value = true
-  try {
-    const data = {
-      name: regionForm.value.name,
-      coordinates: regionForm.value.coordinates.lat ? regionForm.value.coordinates : null,
-      zoom: regionForm.value.zoom
-    }
-
-    if (editingRegion.value) {
-      await updateRegion(editingRegion.value._id, data)
-      toast.success(t('locations.regionUpdated'))
-    } else {
-      await createRegion({
-        ...data,
-        city: selectedCity.value._id
-      })
-      toast.success(t('locations.regionCreated'))
-    }
-    showRegionModal.value = false
-    await loadRegionsForCity(selectedCity.value._id)
-  } catch (error) {
-    console.error('Failed to save region:', error)
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    savingRegion.value = false
+  const data = {
+    name: regionForm.value.name,
+    coordinates: regionForm.value.coordinates.lat ? regionForm.value.coordinates : null,
+    zoom: regionForm.value.zoom
   }
+
+  const actionFn = editingRegion.value
+    ? () => updateRegion(editingRegion.value._id, data)
+    : () => createRegion({ ...data, city: selectedCity.value._id })
+
+  await executeSaveRegion(actionFn, {
+    successMessage: editingRegion.value ? 'locations.regionUpdated' : 'locations.regionCreated',
+    onSuccess: async () => {
+      showRegionModal.value = false
+      await loadRegionsForCity(selectedCity.value._id)
+    },
+    onError: error => {
+      console.error('Failed to save region:', error)
+      toast.error(error.response?.data?.message || t('common.operationFailed'))
+    }
+  })
 }
 
 const confirmDeleteRegion = async region => {
   if (!confirm(t('locations.deleteRegionConfirm'))) return
 
-  try {
-    await deleteRegionApi(region._id)
-    toast.success(t('locations.regionDeleted'))
-    await loadRegionsForCity(selectedCity.value._id)
-  } catch (error) {
-    console.error('Failed to delete region:', error)
-    toast.error(t('common.operationFailed'))
-  }
+  await executeDeleteRegion(
+    () => deleteRegionApi(region._id),
+    {
+      successMessage: 'locations.regionDeleted',
+      onSuccess: async () => {
+        await loadRegionsForCity(selectedCity.value._id)
+      },
+      onError: error => {
+        console.error('Failed to delete region:', error)
+        toast.error(t('common.operationFailed'))
+      }
+    }
+  )
 }
 
 // ============= Main Map Functions =============
