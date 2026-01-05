@@ -173,8 +173,12 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import apiClient from '@/services/api'
 import { useI18n } from 'vue-i18n'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const { t } = useI18n()
+
+// Async action composable
+const { isLoading: loading, execute: executeRegister } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 
 const form = ref({
   companyName: '',
@@ -185,7 +189,6 @@ const form = ref({
   confirmPassword: ''
 })
 
-const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
@@ -199,33 +202,32 @@ const handleRegister = async () => {
     return
   }
 
-  loading.value = true
-
-  try {
-    const response = await apiClient.post('/auth/register', {
+  await executeRegister(
+    () => apiClient.post('/auth/register', {
       companyName: form.value.companyName,
       name: form.value.name,
       email: form.value.email,
       phone: form.value.phone,
       password: form.value.password
-    })
-
-    if (response.data.success) {
-      success.value = t('auth.registrationSuccess')
-      // Reset form
-      form.value = {
-        companyName: '',
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: ''
+    }),
+    {
+      onSuccess: response => {
+        if (response.data.success) {
+          success.value = t('auth.registrationSuccess')
+          form.value = {
+            companyName: '',
+            name: '',
+            email: '',
+            phone: '',
+            password: '',
+            confirmPassword: ''
+          }
+        }
+      },
+      onError: err => {
+        error.value = err.response?.data?.message || t('auth.registrationFailed')
       }
     }
-  } catch (err) {
-    error.value = err.response?.data?.message || t('auth.registrationFailed')
-  } finally {
-    loading.value = false
-  }
+  )
 }
 </script>

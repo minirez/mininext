@@ -251,92 +251,85 @@
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Async action composable
+const { isLoading: loading, execute: executeAuth } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 // Form state
 const email = ref('')
 const password = ref('')
-const loading = ref(false)
 const errorMessage = ref(null)
 const show2FAForm = ref(false)
 const twoFactorCode = ref('')
 
 // Handle login
 const handleLogin = async () => {
-  loading.value = true
   errorMessage.value = null
 
-  try {
-    const result = await authStore.login({
-      email: email.value,
-      password: password.value
-    })
-
-    if (result && result.requires2FA) {
-      // Show 2FA form
-      show2FAForm.value = true
-      errorMessage.value = null
-    } else if (result && result.success) {
-      // Login successful - check if password change is required
-      if (result.forcePasswordChange) {
-        router.push({ name: 'force-password-change' })
-      } else {
-        const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
-        router.push(redirectPath)
+  await executeAuth(
+    () => authStore.login({ email: email.value, password: password.value }),
+    {
+      onSuccess: result => {
+        if (result && result.requires2FA) {
+          show2FAForm.value = true
+          errorMessage.value = null
+        } else if (result && result.success) {
+          if (result.forcePasswordChange) {
+            router.push({ name: 'force-password-change' })
+          } else {
+            const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+            router.push(redirectPath)
+          }
+        }
+      },
+      onError: error => {
+        console.error('Login failed:', error)
+        if (error.response?.data?.error) {
+          errorMessage.value = error.response.data.error
+        } else if (error.message) {
+          errorMessage.value = error.message
+        } else {
+          errorMessage.value = 'An error occurred during login. Please try again.'
+        }
       }
     }
-  } catch (error) {
-    console.error('Login failed:', error)
-
-    // Display error message
-    if (error.response?.data?.error) {
-      errorMessage.value = error.response.data.error
-    } else if (error.message) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = 'An error occurred during login. Please try again.'
-    }
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // Handle 2FA verification
 const handle2FAVerification = async () => {
-  loading.value = true
   errorMessage.value = null
 
-  try {
-    const result = await authStore.verify2FA(twoFactorCode.value)
-
-    if (result && result.success) {
-      // 2FA verification successful - check if password change is required
-      if (result.forcePasswordChange) {
-        router.push({ name: 'force-password-change' })
-      } else {
-        const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
-        router.push(redirectPath)
+  await executeAuth(
+    () => authStore.verify2FA(twoFactorCode.value),
+    {
+      onSuccess: result => {
+        if (result && result.success) {
+          if (result.forcePasswordChange) {
+            router.push({ name: 'force-password-change' })
+          } else {
+            const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+            router.push(redirectPath)
+          }
+        }
+      },
+      onError: error => {
+        console.error('2FA verification failed:', error)
+        if (error.response?.data?.error) {
+          errorMessage.value = error.response.data.error
+        } else if (error.message) {
+          errorMessage.value = error.message
+        } else {
+          errorMessage.value = 'Verification failed. Please check the code and try again.'
+        }
+        twoFactorCode.value = ''
       }
     }
-  } catch (error) {
-    console.error('2FA verification failed:', error)
-
-    // Display error message
-    if (error.response?.data?.error) {
-      errorMessage.value = error.response.data.error
-    } else if (error.message) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = 'Verification failed. Please check the code and try again.'
-    }
-
-    // Clear the code
-    twoFactorCode.value = ''
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // Handle code input - only allow numbers

@@ -724,7 +724,7 @@ const toast = useToast()
 const authStore = useAuthStore()
 
 // Async action composables
-const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 const { isLoading: creatingIdentity, execute: executeCreateIdentity } = useAsyncAction({ showErrorToast: false })
 const { isLoading: checkingVerification, execute: executeCheckVerification } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 const { isLoading: deletingIdentity, execute: executeDeleteIdentity } = useAsyncAction({ showErrorToast: false })

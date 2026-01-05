@@ -180,15 +180,18 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import authService from '@/services/authService'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// Async action composable
+const { isLoading: loading, execute: executeChangePassword } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 
 // Form state
 const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
-const loading = ref(false)
 const errorMessage = ref(null)
 const successMessage = ref(null)
 
@@ -215,38 +218,34 @@ const handleChangePassword = async () => {
     return
   }
 
-  loading.value = true
   errorMessage.value = null
   successMessage.value = null
 
-  try {
-    const response = await authService.changePassword(currentPassword.value, newPassword.value)
-
-    if (response.success) {
-      // Clear force password change flag
-      authStore.clearForcePasswordChange()
-
-      successMessage.value = response.message || 'Password changed successfully'
-
-      // Redirect to dashboard after short delay
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 1500)
-    } else {
-      throw new Error(response.message || 'Failed to change password')
+  await executeChangePassword(
+    () => authService.changePassword(currentPassword.value, newPassword.value),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          authStore.clearForcePasswordChange()
+          successMessage.value = response.message || 'Password changed successfully'
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 1500)
+        } else {
+          throw new Error(response.message || 'Failed to change password')
+        }
+      },
+      onError: error => {
+        console.error('Password change failed:', error)
+        if (error.response?.data?.error) {
+          errorMessage.value = error.response.data.error
+        } else if (error.message) {
+          errorMessage.value = error.message
+        } else {
+          errorMessage.value = 'An error occurred. Please try again.'
+        }
+      }
     }
-  } catch (error) {
-    console.error('Password change failed:', error)
-
-    if (error.response?.data?.error) {
-      errorMessage.value = error.response.data.error
-    } else if (error.message) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = 'An error occurred. Please try again.'
-    }
-  } finally {
-    loading.value = false
-  }
+  )
 }
 </script>

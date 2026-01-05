@@ -61,6 +61,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerStore } from '@/stores/partner'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import * as dashboardService from '@/services/dashboardService'
 import PlatformDashboard from '@/components/dashboard/PlatformDashboard.vue'
 import PartnerDashboard from '@/components/dashboard/PartnerDashboard.vue'
@@ -70,7 +71,9 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const partnerStore = usePartnerStore()
 
-const loading = ref(true)
+// Async action composable
+const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 const error = ref(null)
 const dashboardData = ref({
   stats: {},
@@ -94,29 +97,30 @@ const isPartner = computed(
 const isAgency = computed(() => authStore.accountType === 'agency')
 
 const loadDashboard = async () => {
-  loading.value = true
   error.value = null
 
-  try {
-    let data
-
-    if (isPlatformAdmin.value) {
-      data = await dashboardService.getPlatformDashboard()
-    } else if (isPartner.value) {
-      data = await dashboardService.getPartnerDashboard()
-    } else if (isAgency.value) {
-      data = await dashboardService.getAgencyDashboard()
+  await executeLoad(
+    async () => {
+      if (isPlatformAdmin.value) {
+        return dashboardService.getPlatformDashboard()
+      } else if (isPartner.value) {
+        return dashboardService.getPartnerDashboard()
+      } else if (isAgency.value) {
+        return dashboardService.getAgencyDashboard()
+      }
+    },
+    {
+      onSuccess: data => {
+        if (data) {
+          dashboardData.value = data
+        }
+      },
+      onError: err => {
+        console.error('Dashboard load error:', err)
+        error.value = t('dashboard.loadError')
+      }
     }
-
-    if (data) {
-      dashboardData.value = data
-    }
-  } catch (err) {
-    console.error('Dashboard load error:', err)
-    error.value = t('dashboard.loadError')
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // Reload dashboard when partner selection changes

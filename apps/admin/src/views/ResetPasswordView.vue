@@ -198,14 +198,17 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import authService from '@/services/authService'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const route = useRoute()
 const { t } = useI18n()
 
+// Async action composable
+const { isLoading: loading, execute: executeSubmit } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 const password = ref('')
 const confirmPassword = ref('')
 const showPassword = ref(false)
-const loading = ref(false)
 const success = ref(false)
 const errorMessage = ref('')
 
@@ -238,16 +241,18 @@ const handleSubmit = async () => {
   if (passwordMismatch.value) return
   if (passwordStrength.value < 4) return
 
-  loading.value = true
   errorMessage.value = ''
 
-  try {
-    await authService.resetPassword(token.value, password.value)
-    success.value = true
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message || t('auth.resetPasswordError')
-  } finally {
-    loading.value = false
-  }
+  await executeSubmit(
+    () => authService.resetPassword(token.value, password.value),
+    {
+      onSuccess: () => {
+        success.value = true
+      },
+      onError: error => {
+        errorMessage.value = error.response?.data?.message || t('auth.resetPasswordError')
+      }
+    }
+  )
 }
 </script>
