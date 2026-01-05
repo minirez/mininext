@@ -438,6 +438,11 @@ const {
 
 // Use async action for delete
 const { isLoading: deleteLoading, execute: executeDelete } = useAsyncAction()
+const { execute: executeActivate } = useAsyncAction({ showErrorToast: false })
+const { execute: executeDeactivate } = useAsyncAction({ showErrorToast: false })
+const { execute: executeForcePasswordReset } = useAsyncAction({ showErrorToast: false })
+const { execute: executeReset2FA } = useAsyncAction({ showErrorToast: false })
+const { execute: executeResendActivation } = useAsyncAction({ showErrorToast: false })
 
 // Additional state
 const activeActionMenu = ref(null)
@@ -534,45 +539,49 @@ const openSessionsModal = user => {
 // Action handlers
 const handleActivate = async user => {
   activeActionMenu.value = null
-  try {
-    await activateUser(user._id)
-    toast.success(t('users.activated'))
-    fetchUsers()
-  } catch (error) {
-    toast.error(error.message)
-  }
+  await executeActivate(
+    () => activateUser(user._id),
+    {
+      successMessage: 'users.activated',
+      onSuccess: () => fetchUsers(),
+      onError: error => toast.error(error.message)
+    }
+  )
 }
 
 const handleDeactivate = async user => {
   activeActionMenu.value = null
-  try {
-    await deactivateUser(user._id)
-    toast.success(t('users.deactivated'))
-    fetchUsers()
-  } catch (error) {
-    toast.error(error.message)
-  }
+  await executeDeactivate(
+    () => deactivateUser(user._id),
+    {
+      successMessage: 'users.deactivated',
+      onSuccess: () => fetchUsers(),
+      onError: error => toast.error(error.message)
+    }
+  )
 }
 
 const handleForcePasswordReset = async user => {
   activeActionMenu.value = null
-  try {
-    await forcePasswordReset(user._id)
-    toast.success(t('users.passwordResetForced'))
-  } catch (error) {
-    toast.error(error.message)
-  }
+  await executeForcePasswordReset(
+    () => forcePasswordReset(user._id),
+    {
+      successMessage: 'users.passwordResetForced',
+      onError: error => toast.error(error.message)
+    }
+  )
 }
 
 const handleReset2FA = async user => {
   activeActionMenu.value = null
-  try {
-    await resetUser2FA(user._id)
-    toast.success(t('users.twoFactorReset'))
-    fetchUsers()
-  } catch (error) {
-    toast.error(error.message)
-  }
+  await executeReset2FA(
+    () => resetUser2FA(user._id),
+    {
+      successMessage: 'users.twoFactorReset',
+      onSuccess: () => fetchUsers(),
+      onError: error => toast.error(error.message)
+    }
+  )
 }
 
 const handleDelete = user => {
@@ -623,12 +632,13 @@ const handlePermissionsSuccess = () => {
 // Resend activation email for pending user
 const handleResendActivation = async user => {
   activeActionMenu.value = null
-  try {
-    await resendActivation(user._id)
-    toast.success(t('users.activationResent'))
-  } catch (error) {
-    toast.error(error.message)
-  }
+  await executeResendActivation(
+    () => resendActivation(user._id),
+    {
+      successMessage: 'users.activationResent',
+      onError: error => toast.error(error.message)
+    }
+  )
 }
 
 // Lifecycle

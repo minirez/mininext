@@ -1070,6 +1070,7 @@ const { isLoading: submitting, execute: executeSubmit } = useAsyncAction()
 const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
 const { isLoading: approving, execute: executeApprove } = useAsyncAction()
 const { isLoading: uploading, execute: executeUpload } = useAsyncAction()
+const { execute: executeFetchHotels } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
 
 // State
 const agencies = ref([])
@@ -1332,14 +1333,19 @@ const fetchAgencies = async () => {
 }
 
 const fetchHotels = async () => {
-  try {
-    const response = await hotelService.getHotels({ limit: 1000 })
-    if (response.success) {
-      hotels.value = response.data.items || response.data.hotels || []
+  await executeFetchHotels(
+    () => hotelService.getHotels({ limit: 1000 }),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          hotels.value = response.data.items || response.data.hotels || []
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch hotels', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch hotels', error)
-  }
+  )
 }
 
 const openCreateModal = () => {

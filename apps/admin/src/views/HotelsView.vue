@@ -590,6 +590,10 @@ const {
 
 // Use async action for delete operations
 const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
+const { execute: executeFetchCities } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeFetchStats } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeToggleStatus } = useAsyncAction({ showErrorToast: false })
+const { execute: executeToggleFeatured } = useAsyncAction({ showErrorToast: false })
 
 // Alias for bulk delete loading state (uses useBulkActions.isProcessing)
 const bulkDeleting = computed(() => isProcessing.value)
@@ -642,30 +646,40 @@ const activeFilterCount = computed(() => {
 
 // Fetch cities for filter dropdown
 const fetchCities = async () => {
-  try {
-    const response = await hotelService.getCities()
-    if (response.success) {
-      cities.value = response.data || []
+  await executeFetchCities(
+    () => hotelService.getCities(),
+    {
+      onSuccess: response => {
+        if (response.success) {
+          cities.value = response.data || []
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch cities:', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch cities:', error)
-  }
+  )
 }
 
 // Fetch stats separately
 const fetchStats = async () => {
-  try {
-    const response = await hotelService.getHotels({ limit: 1 })
-    if (response.success && response.data.stats) {
-      stats.total = response.data.stats.total || 0
-      stats.active = response.data.stats.active || 0
-      stats.inactive = response.data.stats.inactive || 0
-      stats.draft = response.data.stats.draft || 0
-      stats.featured = response.data.stats.featured || 0
+  await executeFetchStats(
+    () => hotelService.getHotels({ limit: 1 }),
+    {
+      onSuccess: response => {
+        if (response.success && response.data.stats) {
+          stats.total = response.data.stats.total || 0
+          stats.active = response.data.stats.active || 0
+          stats.inactive = response.data.stats.inactive || 0
+          stats.draft = response.data.stats.draft || 0
+          stats.featured = response.data.stats.featured || 0
+        }
+      },
+      onError: error => {
+        console.error('Failed to fetch stats:', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error)
-  }
+  )
 }
 
 const getHotelName = hotel => {
@@ -690,30 +704,40 @@ const getHotelImage = hotel => {
 
 const toggleStatus = async hotel => {
   const newStatus = hotel.status === 'active' ? 'inactive' : 'active'
-  try {
-    const response = await hotelService.updateHotelStatus(hotel._id, newStatus)
-    if (response.success) {
-      hotel.status = newStatus
-      toast.success(t('hotels.statusUpdated'))
-      fetchStats()
+  await executeToggleStatus(
+    () => hotelService.updateHotelStatus(hotel._id, newStatus),
+    {
+      successMessage: 'hotels.statusUpdated',
+      onSuccess: response => {
+        if (response.success) {
+          hotel.status = newStatus
+          fetchStats()
+        }
+      },
+      onError: error => {
+        toast.error(error.response?.data?.message || t('common.operationFailed'))
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  }
+  )
 }
 
 const toggleFeatured = async hotel => {
   const newFeatured = !hotel.featured
-  try {
-    const response = await hotelService.toggleFeatured(hotel._id, newFeatured)
-    if (response.success) {
-      hotel.featured = newFeatured
-      toast.success(newFeatured ? t('hotels.markedFeatured') : t('hotels.unmarkedFeatured'))
-      fetchStats()
+  await executeToggleFeatured(
+    () => hotelService.toggleFeatured(hotel._id, newFeatured),
+    {
+      successMessage: newFeatured ? 'hotels.markedFeatured' : 'hotels.unmarkedFeatured',
+      onSuccess: response => {
+        if (response.success) {
+          hotel.featured = newFeatured
+          fetchStats()
+        }
+      },
+      onError: error => {
+        toast.error(error.response?.data?.message || t('common.operationFailed'))
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  }
+  )
 }
 
 const confirmDelete = hotel => {
