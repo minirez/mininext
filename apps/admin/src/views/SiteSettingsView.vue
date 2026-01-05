@@ -74,7 +74,6 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import siteSettingsService from '@/services/siteSettingsService'
 import SetupTab from '@/components/siteSettings/SetupTab.vue'
@@ -83,13 +82,15 @@ import HomepageTab from '@/components/siteSettings/HomepageTab.vue'
 import ContactTab from '@/components/siteSettings/ContactTab.vue'
 import TrackingTab from '@/components/siteSettings/TrackingTab.vue'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const { t } = useI18n()
-const toast = useToast()
+
+// Async action composables
+const { isLoading: loading, execute: executeFetch } = useAsyncAction({ showSuccessToast: false })
+const { isLoading: saving, execute: executeSave } = useAsyncAction()
 
 const settings = ref(null)
-const loading = ref(true)
-const saving = ref(false)
 const activeTab = ref('setup')
 
 const tabs = computed(() => [
@@ -101,17 +102,15 @@ const tabs = computed(() => [
 ])
 
 const fetchSettings = async () => {
-  loading.value = true
-  try {
-    const response = await siteSettingsService.getSiteSettings()
-    if (response.success) {
-      settings.value = response.data
+  await executeFetch(
+    () => siteSettingsService.getSiteSettings(),
+    {
+      errorMessage: 'siteSettings.fetchError',
+      onSuccess: response => {
+        settings.value = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('siteSettings.fetchError'))
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // React to partner changes - reload settings when partner is switched
@@ -126,148 +125,122 @@ usePartnerContext({
 
 // Setup handlers
 const handleSetupSave = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateSetup(data)
-    if (response.success) {
-      settings.value.setup = response.data
-      toast.success(t('siteSettings.setupSaved'))
+  await executeSave(
+    () => siteSettingsService.updateSetup(data),
+    {
+      successMessage: 'siteSettings.setupSaved',
+      onSuccess: response => {
+        settings.value.setup = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 const handleSslRequest = async ({ type, formData }) => {
-  saving.value = true
-  try {
-    // First save the domain settings
-    const saveResponse = await siteSettingsService.updateSetup(formData)
-    if (saveResponse.success) {
-      settings.value.setup = saveResponse.data
+  await executeSave(
+    async () => {
+      // First save the domain settings
+      const saveResponse = await siteSettingsService.updateSetup(formData)
+      if (saveResponse.success) {
+        settings.value.setup = saveResponse.data
+      }
+      // Then request SSL
+      return siteSettingsService.requestSsl(type)
+    },
+    {
+      successMessage: 'siteSettings.sslRequested',
+      onSuccess: response => {
+        settings.value.setup = response.data
+      }
     }
-
-    // Then request SSL
-    const response = await siteSettingsService.requestSsl(type)
-    if (response.success) {
-      settings.value.setup = response.data
-      toast.success(t('siteSettings.sslRequested'))
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 // General handlers
 const handleGeneralSave = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateGeneral(data)
-    if (response.success) {
-      settings.value.general = response.data
-      toast.success(t('siteSettings.generalSaved'))
+  await executeSave(
+    () => siteSettingsService.updateGeneral(data),
+    {
+      successMessage: 'siteSettings.generalSaved',
+      onSuccess: response => {
+        settings.value.general = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 // Homepage handlers
 const handleHomepageSave = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateHomepage(data)
-    if (response.success) {
-      settings.value.homepage = response.data
-      toast.success(t('siteSettings.homepageSaved'))
+  await executeSave(
+    () => siteSettingsService.updateHomepage(data),
+    {
+      successMessage: 'siteSettings.homepageSaved',
+      onSuccess: response => {
+        settings.value.homepage = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 const handleAddSlider = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.addSliderItem(data)
-    if (response.success) {
-      settings.value.homepage.slider = response.data
-      toast.success(t('siteSettings.sliderAdded'))
+  await executeSave(
+    () => siteSettingsService.addSliderItem(data),
+    {
+      successMessage: 'siteSettings.sliderAdded',
+      onSuccess: response => {
+        settings.value.homepage.slider = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 const handleUpdateSlider = async ({ sliderId, data }) => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateSliderItem(sliderId, data)
-    if (response.success) {
-      settings.value.homepage.slider = response.data
-      toast.success(t('siteSettings.sliderUpdated'))
+  await executeSave(
+    () => siteSettingsService.updateSliderItem(sliderId, data),
+    {
+      successMessage: 'siteSettings.sliderUpdated',
+      onSuccess: response => {
+        settings.value.homepage.slider = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 const handleDeleteSlider = async sliderId => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.deleteSliderItem(sliderId)
-    if (response.success) {
-      settings.value.homepage.slider = response.data
-      toast.success(t('siteSettings.sliderDeleted'))
+  await executeSave(
+    () => siteSettingsService.deleteSliderItem(sliderId),
+    {
+      successMessage: 'siteSettings.sliderDeleted',
+      onSuccess: response => {
+        settings.value.homepage.slider = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 // Contact handlers
 const handleContactSave = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateContact(data)
-    if (response.success) {
-      settings.value.contact = response.data
-      toast.success(t('siteSettings.contactSaved'))
+  await executeSave(
+    () => siteSettingsService.updateContact(data),
+    {
+      successMessage: 'siteSettings.contactSaved',
+      onSuccess: response => {
+        settings.value.contact = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 
 // Tracking handlers
 const handleTrackingSave = async data => {
-  saving.value = true
-  try {
-    const response = await siteSettingsService.updateTracking(data)
-    if (response.success) {
-      settings.value.tracking = response.data
-      toast.success(t('siteSettings.trackingSaved'))
+  await executeSave(
+    () => siteSettingsService.updateTracking(data),
+    {
+      successMessage: 'siteSettings.trackingSaved',
+      onSuccess: response => {
+        settings.value.tracking = response.data
+      }
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || t('common.operationFailed'))
-  } finally {
-    saving.value = false
-  }
+  )
 }
 </script>

@@ -376,11 +376,16 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import Modal from '@/components/common/Modal.vue'
 import authService from '@/services/authService'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const { t, locale } = useI18n()
 const toast = useToast()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+
+// Async action composables
+const { isLoading: savingNotifications, execute: executeSaveNotifications } = useAsyncAction()
+const { isLoading: savingPassword, execute: executeSavePassword } = useAsyncAction({ showErrorToast: false })
 
 // Languages
 const languages = [
@@ -397,7 +402,6 @@ const changeLanguage = lang => {
 }
 
 // Notification Preferences
-const savingNotifications = ref(false)
 const notificationPreferences = reactive({
   email: {
     bookingConfirmation: true,
@@ -442,19 +446,17 @@ const toggleNotification = (channel, key) => {
 }
 
 const saveNotificationPreferences = async () => {
-  savingNotifications.value = true
-  try {
-    await authService.updateNotificationPreferences({
+  await executeSaveNotifications(
+    () => authService.updateNotificationPreferences({
       email: notificationPreferences.email,
       sms: notificationPreferences.sms,
       push: notificationPreferences.push
-    })
-    toast.success(t('profile.notifications.saved'))
-  } catch {
-    toast.error(t('common.operationFailed'))
-  } finally {
-    savingNotifications.value = false
-  }
+    }),
+    {
+      successMessage: 'profile.notifications.saved',
+      errorMessage: 'common.operationFailed'
+    }
+  )
 }
 
 onMounted(() => {
@@ -484,7 +486,6 @@ const getRoleName = () => {
 
 // Password change
 const showPasswordModal = ref(false)
-const savingPassword = ref(false)
 const passwordError = ref('')
 
 const passwordForm = reactive({
@@ -514,20 +515,20 @@ const handlePasswordChange = async () => {
     return
   }
 
-  savingPassword.value = true
-  try {
-    await authService.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
-    toast.success(t('profile.passwordChanged'))
-    closePasswordModal()
-  } catch (error) {
-    const message = error.response?.data?.message
-    if (message === 'INVALID_PASSWORD') {
-      passwordError.value = t('profile.invalidCurrentPassword')
-    } else {
-      toast.error(t('common.operationFailed'))
+  await executeSavePassword(
+    () => authService.changePassword(passwordForm.currentPassword, passwordForm.newPassword),
+    {
+      successMessage: 'profile.passwordChanged',
+      onSuccess: () => closePasswordModal(),
+      onError: error => {
+        const message = error.response?.data?.message
+        if (message === 'INVALID_PASSWORD') {
+          passwordError.value = t('profile.invalidCurrentPassword')
+        } else {
+          toast.error(t('common.operationFailed'))
+        }
+      }
     }
-  } finally {
-    savingPassword.value = false
-  }
+  )
 }
 </script>
