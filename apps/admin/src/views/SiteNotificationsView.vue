@@ -715,6 +715,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import * as partnerEmailService from '@/services/partnerEmailService'
 import * as partnerSmsService from '@/services/partnerSmsService'
 
@@ -722,17 +723,17 @@ const { t } = useI18n()
 const toast = useToast()
 const authStore = useAuthStore()
 
-const activeTab = ref('email')
-const loading = ref(true)
-const savingSMS = ref(false)
-const sendingTestSMS = ref(false)
-const testPhone = ref('')
+// Async action composables
+const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: creatingIdentity, execute: executeCreateIdentity } = useAsyncAction({ showErrorToast: false })
+const { isLoading: checkingVerification, execute: executeCheckVerification } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: deletingIdentity, execute: executeDeleteIdentity } = useAsyncAction({ showErrorToast: false })
+const { isLoading: sendingTestEmail, execute: executeTestEmail } = useAsyncAction({ showErrorToast: false })
+const { isLoading: savingSMS, execute: executeSaveSMS } = useAsyncAction({ showErrorToast: false })
+const { isLoading: sendingTestSMS, execute: executeTestSMS } = useAsyncAction({ showErrorToast: false })
 
-// Domain identity states
-const creatingIdentity = ref(false)
-const deletingIdentity = ref(false)
-const checkingVerification = ref(false)
-const sendingTestEmail = ref(false)
+const activeTab = ref('email')
+const testPhone = ref('')
 const testEmailAddress = ref('')
 const domainVerification = ref(null)
 const dnsRecords = ref([])
@@ -801,52 +802,54 @@ const { currentPartnerId } = usePartnerContext({
 })
 
 const loadSettings = async () => {
-  try {
-    loading.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    if (!partnerId) return
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  if (!partnerId) return
 
-    // Load email settings
-    const emailSettings = await partnerEmailService.getEmailSettings(partnerId)
-    if (emailSettings) {
-      emailForm.useOwnSES = emailSettings.useOwnSES || false
-      emailForm.aws = {
-        region: emailSettings.aws?.region || 'eu-west-1',
-        accessKeyId: emailSettings.aws?.accessKeyId || '',
-        secretAccessKey: '',
-        fromEmail: emailSettings.aws?.fromEmail || '',
-        fromName: emailSettings.aws?.fromName || ''
-      }
-
-      // Load domain verification data - sadece domain varsa
-      if (emailSettings.domainVerification?.domain) {
-        domainVerification.value = emailSettings.domainVerification
-        // Generate DNS records from tokens
-        if (emailSettings.domainVerification.dkimTokens?.length > 0) {
-          dnsRecords.value = generateDnsRecords(
-            emailSettings.domainVerification.domain,
-            emailSettings.domainVerification.dkimTokens
-          )
+  await executeLoad(
+    async () => {
+      // Load email settings
+      const emailSettings = await partnerEmailService.getEmailSettings(partnerId)
+      if (emailSettings) {
+        emailForm.useOwnSES = emailSettings.useOwnSES || false
+        emailForm.aws = {
+          region: emailSettings.aws?.region || 'eu-west-1',
+          accessKeyId: emailSettings.aws?.accessKeyId || '',
+          secretAccessKey: '',
+          fromEmail: emailSettings.aws?.fromEmail || '',
+          fromName: emailSettings.aws?.fromName || ''
         }
-      } else {
-        // Domain yoksa null yap
-        domainVerification.value = null
-        dnsRecords.value = []
+
+        // Load domain verification data - sadece domain varsa
+        if (emailSettings.domainVerification?.domain) {
+          domainVerification.value = emailSettings.domainVerification
+          // Generate DNS records from tokens
+          if (emailSettings.domainVerification.dkimTokens?.length > 0) {
+            dnsRecords.value = generateDnsRecords(
+              emailSettings.domainVerification.domain,
+              emailSettings.domainVerification.dkimTokens
+            )
+          }
+        } else {
+          // Domain yoksa null yap
+          domainVerification.value = null
+          dnsRecords.value = []
+        }
+      }
+
+      // Load SMS settings
+      const smsSettings = await partnerSmsService.getSMSSettings(partnerId)
+      if (smsSettings) {
+        smsForm.enabled = smsSettings.enabled !== false
+        smsForm.provider = smsSettings.provider || 'platform'
+        // Config is masked on server, so we don't load it
+      }
+    },
+    {
+      onError: error => {
+        console.error('Failed to load settings:', error)
       }
     }
-
-    // Load SMS settings
-    const smsSettings = await partnerSmsService.getSMSSettings(partnerId)
-    if (smsSettings) {
-      smsForm.enabled = smsSettings.enabled !== false
-      smsForm.provider = smsSettings.provider || 'platform'
-      // Config is masked on server, so we don't load it
-    }
-  } catch (error) {
-    console.error('Failed to load settings:', error)
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 // Generate DNS records from DKIM tokens
@@ -875,106 +878,106 @@ const generateDnsRecords = (domain, dkimTokens) => {
 const handleCreateIdentity = async () => {
   if (!domainForm.domain) return
 
-  creatingIdentity.value = true
-  try {
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    const result = await partnerEmailService.createIdentity(partnerId, {
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeCreateIdentity(
+    () => partnerEmailService.createIdentity(partnerId, {
       domain: domainForm.domain,
       fromEmail: domainForm.fromEmail,
       fromName: domainForm.fromName
-    })
-
-    domainVerification.value = {
-      domain: result.domain,
-      status: result.dkimStatus || 'pending',
-      dkimTokens: result.dkimTokens
+    }),
+    {
+      successMessage: 'siteSettings.notifications.email.identityCreated',
+      onSuccess: result => {
+        domainVerification.value = {
+          domain: result.domain,
+          status: result.dkimStatus || 'pending',
+          dkimTokens: result.dkimTokens
+        }
+        dnsRecords.value = result.dnsRecords || generateDnsRecords(result.domain, result.dkimTokens)
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || t('common.operationFailed'))
+      }
     }
-
-    dnsRecords.value = result.dnsRecords || generateDnsRecords(result.domain, result.dkimTokens)
-
-    toast.success(t('siteSettings.notifications.email.identityCreated'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || t('common.operationFailed'))
-  } finally {
-    creatingIdentity.value = false
-  }
+  )
 }
 
 // Check verification status
 const handleCheckVerification = async () => {
-  checkingVerification.value = true
-  try {
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    const result = await partnerEmailService.getVerificationStatus(partnerId)
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeCheckVerification(
+    () => partnerEmailService.getVerificationStatus(partnerId),
+    {
+      onSuccess: result => {
+        // Backend null döndüyse domain yoktur - state'i temizle
+        if (!result) {
+          domainVerification.value = null
+          dnsRecords.value = []
+          toast.warning(t('siteSettings.notifications.email.noDomainFound'))
+          return
+        }
 
-    // Backend null döndüyse domain yoktur - state'i temizle
-    if (!result) {
-      domainVerification.value = null
-      dnsRecords.value = []
-      toast.warning(t('siteSettings.notifications.email.noDomainFound'))
-      return
-    }
+        domainVerification.value = {
+          ...domainVerification.value,
+          status: result.status,
+          verified: result.verified
+        }
 
-    domainVerification.value = {
-      ...domainVerification.value,
-      status: result.status,
-      verified: result.verified
-    }
+        if (result.dnsRecords) {
+          dnsRecords.value = result.dnsRecords
+        }
 
-    if (result.dnsRecords) {
-      dnsRecords.value = result.dnsRecords
+        if (result.verified) {
+          toast.success(t('siteSettings.notifications.email.verified'))
+        } else {
+          toast.info(t('siteSettings.notifications.email.' + result.status))
+        }
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || t('common.operationFailed'))
+      }
     }
-
-    if (result.verified) {
-      toast.success(t('siteSettings.notifications.email.verified'))
-    } else {
-      toast.info(t('siteSettings.notifications.email.' + result.status))
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.error || t('common.operationFailed'))
-  } finally {
-    checkingVerification.value = false
-  }
+  )
 }
 
 // Delete domain identity
 const handleDeleteIdentity = async () => {
   if (!confirm(t('siteSettings.notifications.email.deleteIdentityConfirm'))) return
 
-  deletingIdentity.value = true
-  try {
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    await partnerEmailService.deleteIdentity(partnerId)
-
-    domainVerification.value = null
-    dnsRecords.value = []
-    domainForm.domain = ''
-    domainForm.fromEmail = ''
-    domainForm.fromName = ''
-    emailForm.useOwnSES = false
-
-    toast.success(t('siteSettings.notifications.email.identityDeleted'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || t('common.operationFailed'))
-  } finally {
-    deletingIdentity.value = false
-  }
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeDeleteIdentity(
+    () => partnerEmailService.deleteIdentity(partnerId),
+    {
+      successMessage: 'siteSettings.notifications.email.identityDeleted',
+      onSuccess: () => {
+        domainVerification.value = null
+        dnsRecords.value = []
+        domainForm.domain = ''
+        domainForm.fromEmail = ''
+        domainForm.fromName = ''
+        emailForm.useOwnSES = false
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || t('common.operationFailed'))
+      }
+    }
+  )
 }
 
 // Send test email
 const handleTestEmail = async () => {
   if (!testEmailAddress.value) return
 
-  sendingTestEmail.value = true
-  try {
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    await partnerEmailService.testEmail(partnerId, testEmailAddress.value)
-    toast.success(t('siteSettings.notifications.email.testEmailSent'))
-  } catch (error) {
-    toast.error(error.response?.data?.error || t('common.operationFailed'))
-  } finally {
-    sendingTestEmail.value = false
-  }
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeTestEmail(
+    () => partnerEmailService.testEmail(partnerId, testEmailAddress.value),
+    {
+      successMessage: 'siteSettings.notifications.email.testEmailSent',
+      onError: error => {
+        toast.error(error.response?.data?.error || t('common.operationFailed'))
+      }
+    }
+  )
 }
 
 // Copy to clipboard
@@ -988,38 +991,35 @@ const copyToClipboard = record => {
 
 
 const saveSMSSettings = async () => {
-  try {
-    savingSMS.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-
-    await partnerSmsService.updateSMSSettings(partnerId, {
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeSaveSMS(
+    () => partnerSmsService.updateSMSSettings(partnerId, {
       enabled: smsForm.enabled,
       provider: smsForm.provider,
       config: smsForm.provider !== 'platform' ? smsForm.config : null
-    })
-
-    toast.success(t('smsSetup.settingsSaved'))
-  } catch (error) {
-    console.error('Save failed:', error)
-    toast.error(error.response?.data?.message || t('smsSetup.saveError'))
-  } finally {
-    savingSMS.value = false
-  }
+    }),
+    {
+      successMessage: 'smsSetup.settingsSaved',
+      onError: error => {
+        console.error('Save failed:', error)
+        toast.error(error.response?.data?.message || t('smsSetup.saveError'))
+      }
+    }
+  )
 }
 
 const sendTestSMS = async () => {
-  try {
-    sendingTestSMS.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-
-    await partnerSmsService.testSMS(partnerId, testPhone.value)
-    toast.success(t('smsSetup.testSmsSent'))
-  } catch (error) {
-    console.error('Test SMS failed:', error)
-    toast.error(error.response?.data?.error || t('smsSetup.testSmsError'))
-  } finally {
-    sendingTestSMS.value = false
-  }
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  await executeTestSMS(
+    () => partnerSmsService.testSMS(partnerId, testPhone.value),
+    {
+      successMessage: 'smsSetup.testSmsSent',
+      onError: error => {
+        console.error('Test SMS failed:', error)
+        toast.error(error.response?.data?.error || t('smsSetup.testSmsError'))
+      }
+    }
+  )
 }
 
 onMounted(() => {

@@ -212,17 +212,20 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import { verifyInviteToken, acceptInvite } from '@/services/userService'
 
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
 
-const loading = ref(true)
+// Async action composables
+const { isLoading: loading, execute: executeVerify } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: saving, execute: executeAccept } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 const error = ref(false)
 const errorMessage = ref('')
 const success = ref(false)
-const saving = ref(false)
 const invite = ref(null)
 
 const showPassword = ref(false)
@@ -281,19 +284,21 @@ onMounted(async () => {
   if (!token) {
     error.value = true
     errorMessage.value = t('users.invite.noToken')
-    loading.value = false
     return
   }
 
-  try {
-    const response = await verifyInviteToken(token)
-    invite.value = response.data
-  } catch (err) {
-    error.value = true
-    errorMessage.value = err.response?.data?.message || t('users.invite.invalidOrExpired')
-  } finally {
-    loading.value = false
-  }
+  await executeVerify(
+    () => verifyInviteToken(token),
+    {
+      onSuccess: response => {
+        invite.value = response.data
+      },
+      onError: err => {
+        error.value = true
+        errorMessage.value = err.response?.data?.message || t('users.invite.invalidOrExpired')
+      }
+    }
+  )
 })
 
 // Handle form submit
@@ -303,18 +308,18 @@ const handleSubmit = async () => {
     return
   }
 
-  saving.value = true
-  try {
-    await acceptInvite(route.params.token, {
-      password: form.value.password
-    })
-    success.value = true
-    invite.value = null
-  } catch (err) {
-    const message = err.response?.data?.message || err.message || t('common.error')
-    toast.error(message)
-  } finally {
-    saving.value = false
-  }
+  await executeAccept(
+    () => acceptInvite(route.params.token, { password: form.value.password }),
+    {
+      onSuccess: () => {
+        success.value = true
+        invite.value = null
+      },
+      onError: err => {
+        const message = err.response?.data?.message || err.message || t('common.error')
+        toast.error(message)
+      }
+    }
+  )
 }
 </script>

@@ -212,17 +212,20 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import { verifyActivationToken, activateAccount } from '@/services/userService'
 
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
 
-const loading = ref(true)
+// Async action composables
+const { isLoading: loading, execute: executeVerify } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: saving, execute: executeActivate } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+
 const error = ref(false)
 const errorMessage = ref('')
 const success = ref(false)
-const saving = ref(false)
 const user = ref(null)
 
 const showPassword = ref(false)
@@ -289,19 +292,21 @@ onMounted(async () => {
   if (!token) {
     error.value = true
     errorMessage.value = t('users.activation.noToken')
-    loading.value = false
     return
   }
 
-  try {
-    const response = await verifyActivationToken(token)
-    user.value = response.data
-  } catch (err) {
-    error.value = true
-    errorMessage.value = err.response?.data?.message || t('users.activation.invalidOrExpired')
-  } finally {
-    loading.value = false
-  }
+  await executeVerify(
+    () => verifyActivationToken(token),
+    {
+      onSuccess: response => {
+        user.value = response.data
+      },
+      onError: err => {
+        error.value = true
+        errorMessage.value = err.response?.data?.message || t('users.activation.invalidOrExpired')
+      }
+    }
+  )
 })
 
 // Handle form submit
@@ -311,18 +316,18 @@ const handleSubmit = async () => {
     return
   }
 
-  saving.value = true
-  try {
-    await activateAccount(route.params.token, {
-      password: form.value.password
-    })
-    success.value = true
-    user.value = null
-  } catch (err) {
-    const message = err.response?.data?.message || err.message || t('common.error')
-    toast.error(message)
-  } finally {
-    saving.value = false
-  }
+  await executeActivate(
+    () => activateAccount(route.params.token, { password: form.value.password }),
+    {
+      onSuccess: () => {
+        success.value = true
+        user.value = null
+      },
+      onError: err => {
+        const message = err.response?.data?.message || err.message || t('common.error')
+        toast.error(message)
+      }
+    }
+  )
 }
 </script>
