@@ -335,17 +335,20 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAsyncAction } from '@/composables/useAsyncAction'
 import * as partnerEmailService from '@/services/partnerEmailService'
 
 const { t } = useI18n()
 const toast = useToast()
 const authStore = useAuthStore()
 
-const loading = ref(true)
-const saving = ref(false)
-const verifyingDomain = ref(false)
-const checkingStatus = ref(false)
-const sendingTest = ref(false)
+// Async action composables
+const { execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: saving, execute: executeSave } = useAsyncAction({ showErrorToast: false })
+const { isLoading: verifyingDomain, execute: executeVerifyDomain } = useAsyncAction({ showErrorToast: false })
+const { isLoading: checkingStatus, execute: executeCheckStatus } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: sendingTest, execute: executeSendTest } = useAsyncAction({ showErrorToast: false })
+
 const showSecretKey = ref(false)
 const testEmail = ref('')
 
@@ -373,31 +376,32 @@ const { currentPartnerId } = usePartnerContext({
 })
 
 const loadSettings = async () => {
-  try {
-    loading.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
-    if (!partnerId) return
+  const partnerId = currentPartnerId.value || authStore.user?.partner
+  if (!partnerId) return
 
-    const settings = await partnerEmailService.getEmailSettings(partnerId)
-
-    if (settings) {
-      form.useOwnSES = settings.useOwnSES || false
-      form.aws = {
-        region: settings.aws?.region || 'eu-west-1',
-        accessKeyId: settings.aws?.accessKeyId || '',
-        secretAccessKey: '', // Never load secret key
-        fromEmail: settings.aws?.fromEmail || '',
-        fromName: settings.aws?.fromName || ''
+  await executeLoad(
+    () => partnerEmailService.getEmailSettings(partnerId),
+    {
+      onSuccess: settings => {
+        if (settings) {
+          form.useOwnSES = settings.useOwnSES || false
+          form.aws = {
+            region: settings.aws?.region || 'eu-west-1',
+            accessKeyId: settings.aws?.accessKeyId || '',
+            secretAccessKey: '', // Never load secret key
+            fromEmail: settings.aws?.fromEmail || '',
+            fromName: settings.aws?.fromName || ''
+          }
+          form.domain = settings.domainVerification?.domain || ''
+          form.domainVerification = settings.domainVerification || null
+        }
+      },
+      onError: error => {
+        console.error('Failed to load email settings:', error)
+        toast.error(t('emailSetup.loadError'))
       }
-      form.domain = settings.domainVerification?.domain || ''
-      form.domainVerification = settings.domainVerification || null
     }
-  } catch (error) {
-    console.error('Failed to load email settings:', error)
-    toast.error(t('emailSetup.loadError'))
-  } finally {
-    loading.value = false
-  }
+  )
 }
 
 const handleToggleChange = () => {
@@ -416,75 +420,76 @@ const handleToggleChange = () => {
 }
 
 const verifyDomain = async () => {
-  try {
-    verifyingDomain.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
+  const partnerId = currentPartnerId.value || authStore.user?.partner
 
-    const result = await partnerEmailService.verifyDomain(partnerId, form.domain)
-    form.domainVerification = result.domainVerification
-
-    toast.success(t('emailSetup.domainVerificationStarted'))
-  } catch (error) {
-    console.error('Domain verification failed:', error)
-    toast.error(error.response?.data?.message || t('emailSetup.domainVerificationError'))
-  } finally {
-    verifyingDomain.value = false
-  }
+  await executeVerifyDomain(
+    () => partnerEmailService.verifyDomain(partnerId, form.domain),
+    {
+      successMessage: 'emailSetup.domainVerificationStarted',
+      onSuccess: result => {
+        form.domainVerification = result.domainVerification
+      },
+      onError: error => {
+        console.error('Domain verification failed:', error)
+        toast.error(error.response?.data?.message || t('emailSetup.domainVerificationError'))
+      }
+    }
+  )
 }
 
 const checkDomainStatus = async () => {
-  try {
-    checkingStatus.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
+  const partnerId = currentPartnerId.value || authStore.user?.partner
 
-    const result = await partnerEmailService.getDomainStatus(partnerId)
-    form.domainVerification = result.domainVerification
-
-    if (result.domainVerification?.status === 'verified') {
-      toast.success(t('emailSetup.domainVerified'))
-    } else {
-      toast.info(t('emailSetup.domainStillPending'))
+  await executeCheckStatus(
+    () => partnerEmailService.getDomainStatus(partnerId),
+    {
+      onSuccess: result => {
+        form.domainVerification = result.domainVerification
+        if (result.domainVerification?.status === 'verified') {
+          toast.success(t('emailSetup.domainVerified'))
+        } else {
+          toast.info(t('emailSetup.domainStillPending'))
+        }
+      },
+      onError: error => {
+        console.error('Status check failed:', error)
+        toast.error(t('emailSetup.statusCheckError'))
+      }
     }
-  } catch (error) {
-    console.error('Status check failed:', error)
-    toast.error(t('emailSetup.statusCheckError'))
-  } finally {
-    checkingStatus.value = false
-  }
+  )
 }
 
 const sendTestEmail = async () => {
-  try {
-    sendingTest.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
+  const partnerId = currentPartnerId.value || authStore.user?.partner
 
-    await partnerEmailService.testEmail(partnerId, testEmail.value)
-    toast.success(t('emailSetup.testEmailSent'))
-  } catch (error) {
-    console.error('Test email failed:', error)
-    toast.error(error.response?.data?.message || t('emailSetup.testEmailError'))
-  } finally {
-    sendingTest.value = false
-  }
+  await executeSendTest(
+    () => partnerEmailService.testEmail(partnerId, testEmail.value),
+    {
+      successMessage: 'emailSetup.testEmailSent',
+      onError: error => {
+        console.error('Test email failed:', error)
+        toast.error(error.response?.data?.message || t('emailSetup.testEmailError'))
+      }
+    }
+  )
 }
 
 const saveSettings = async () => {
-  try {
-    saving.value = true
-    const partnerId = currentPartnerId.value || authStore.user?.partner
+  const partnerId = currentPartnerId.value || authStore.user?.partner
 
-    await partnerEmailService.updateEmailSettings(partnerId, {
+  await executeSave(
+    () => partnerEmailService.updateEmailSettings(partnerId, {
       useOwnSES: form.useOwnSES,
       aws: form.useOwnSES ? form.aws : null
-    })
-
-    toast.success(t('emailSetup.settingsSaved'))
-  } catch (error) {
-    console.error('Save failed:', error)
-    toast.error(error.response?.data?.message || t('emailSetup.saveError'))
-  } finally {
-    saving.value = false
-  }
+    }),
+    {
+      successMessage: 'emailSetup.settingsSaved',
+      onError: error => {
+        console.error('Save failed:', error)
+        toast.error(error.response?.data?.message || t('emailSetup.saveError'))
+      }
+    }
+  )
 }
 
 const copyToClipboard = async text => {
