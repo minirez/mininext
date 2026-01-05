@@ -135,8 +135,8 @@
     "starRange": "Stars must be between 1 and 5",
     "invalidTcNumber": "Invalid Turkish ID Number",
     "invalidEmail": "Please enter a valid email address",
-    "passwordMinLength": "Password must be at least 12 characters",
-    "passwordComplexity": "Password must contain uppercase, lowercase, number and special character"
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordComplexity": "Password must contain uppercase, lowercase and number"
   },
   "titles": {
     "mr": "Mr",

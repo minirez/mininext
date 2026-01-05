@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
     // Authentication
     password: {
       type: String,
-      minlength: [12, 'PASSWORD_MIN_LENGTH'],
+      minlength: [8, 'PASSWORD_MIN_LENGTH'],
       validate: {
         validator: function (password) {
           // Skip validation if no password (pending user)
@@ -52,12 +52,11 @@ const userSchema = new mongoose.Schema(
           if (password.startsWith('$2a$') || password.startsWith('$2b$')) {
             return true
           }
-          // Require: uppercase, lowercase, number, special char
+          // Require: uppercase, lowercase, number (special char optional)
           const hasUppercase = /[A-Z]/.test(password)
           const hasLowercase = /[a-z]/.test(password)
           const hasNumber = /[0-9]/.test(password)
-          const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password)
-          return hasUppercase && hasLowercase && hasNumber && hasSpecial
+          return hasUppercase && hasLowercase && hasNumber
         },
         message: 'PASSWORD_COMPLEXITY_REQUIRED'
       },

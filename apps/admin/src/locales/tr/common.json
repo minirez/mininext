@@ -135,8 +135,8 @@
     "starRange": "Yıldız 1-5 arasında olmalıdır",
     "invalidTcNumber": "Geçersiz TC Kimlik Numarası",
     "invalidEmail": "Geçerli bir e-posta adresi giriniz",
-    "passwordMinLength": "Şifre en az 12 karakter olmalıdır",
-    "passwordComplexity": "Şifre büyük harf, küçük harf, rakam ve özel karakter içermelidir"
+    "passwordMinLength": "Şifre en az 8 karakter olmalıdır",
+    "passwordComplexity": "Şifre büyük harf, küçük harf ve rakam içermelidir"
   },
   "titles": {
     "mr": "Bay",

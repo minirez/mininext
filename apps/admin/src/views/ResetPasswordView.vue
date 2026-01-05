@@ -67,7 +67,7 @@
             required
             :disabled="loading"
             autocomplete="new-password"
-            minlength="12"
+            minlength="8"
           />
           <button
             type="button"
@@ -110,7 +110,7 @@
             required
             :disabled="loading"
             autocomplete="new-password"
-            minlength="12"
+            minlength="8"
           />
         </div>
         <p v-if="passwordMismatch" class="text-xs text-red-500 mt-1">

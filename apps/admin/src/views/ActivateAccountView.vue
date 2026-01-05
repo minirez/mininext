@@ -246,15 +246,14 @@ const validateField = field => {
     case 'password':
       if (!form.value.password) {
         errors.password = t('validation.required')
-      } else if (form.value.password.length < 12) {
-        errors.password = t('validation.minLength', { min: 12 })
+      } else if (form.value.password.length < 8) {
+        errors.password = t('validation.minLength', { min: 8 })
       } else {
-        // Check complexity
+        // Check complexity (uppercase, lowercase, number - special char optional)
         const hasUppercase = /[A-Z]/.test(form.value.password)
         const hasLowercase = /[a-z]/.test(form.value.password)
         const hasNumber = /[0-9]/.test(form.value.password)
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(form.value.password)
-        if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+        if (!hasUppercase || !hasLowercase || !hasNumber) {
           errors.password = t('validation.passwordComplexity')
         } else {
           errors.password = ''
