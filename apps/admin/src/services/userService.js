@@ -197,6 +197,20 @@ export const changePassword = async (id, passwordData) => {
   return response.data
 }
 
+// ============================================
+// Invite
+// ============================================
+
+export const verifyInviteToken = async token => {
+  const response = await api.get(`/users/invite/verify/${token}`)
+  return response.data
+}
+
+export const acceptInvite = async (token, data) => {
+  const response = await api.post(`/users/invite/accept/${token}`, data)
+  return response.data
+}
+
 export default {
   // CRUD
   getUsers,
@@ -224,5 +238,8 @@ export default {
   updateUserPermissions,
   // 2FA & Password
   resetUser2FA,
-  changePassword
+  changePassword,
+  // Invite
+  verifyInviteToken,
+  acceptInvite
 }

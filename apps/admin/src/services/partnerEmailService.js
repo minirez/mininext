@@ -65,11 +65,31 @@ export const testEmail = async (partnerId, email) => {
   return response.data
 }
 
+/**
+ * Verify domain in AWS SES
+ * @param {string} partnerId - Partner ID
+ */
+export const verifyDomain = async partnerId => {
+  const response = await apiClient.post(`/partners/${partnerId}/email-settings/verify-domain`)
+  return response.data.data
+}
+
+/**
+ * Get domain status from AWS SES
+ * @param {string} partnerId - Partner ID
+ */
+export const getDomainStatus = async partnerId => {
+  const response = await apiClient.get(`/partners/${partnerId}/email-settings/domain-status`)
+  return response.data.data
+}
+
 export default {
   getEmailSettings,
   updateEmailSettings,
   createIdentity,
   getVerificationStatus,
   deleteIdentity,
-  testEmail
+  testEmail,
+  verifyDomain,
+  getDomainStatus
 }

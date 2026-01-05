@@ -241,7 +241,6 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import { validateEmail } from '@/composables/useBookingValidation'
 
@@ -251,11 +250,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:form-data'])
-
-const { t } = useI18n()
-
-// Flag to prevent infinite loops
-let isUpdatingFromProps = false
 
 // Local copies
 const localRooms = ref(JSON.parse(JSON.stringify(props.formData.rooms || [])))
@@ -309,10 +303,8 @@ initializeGuests()
 watch(
   () => props.formData.rooms?.map(r => ({ adults: r.adults, children: r.children?.length })),
   () => {
-    isUpdatingFromProps = true
     localRooms.value = JSON.parse(JSON.stringify(props.formData.rooms || []))
     initializeGuests()
-    isUpdatingFromProps = false
   },
   { deep: true }
 )
