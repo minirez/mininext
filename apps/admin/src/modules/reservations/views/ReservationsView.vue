@@ -163,217 +163,143 @@
     </div>
 
     <!-- Reservations Table -->
-    <div
-      class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+    <DataTable
+      :data="reservations"
+      :columns="columns"
+      :loading="loading"
+      :total="pagination.total"
+      :page="pagination.page"
+      :per-page="pagination.limit"
+      :show-header="false"
+      responsive
+      card-title-key="bookingNumber"
+      empty-icon="event_busy"
+      empty-text="Rezervasyon bulunamadi"
+      @page-change="handlePageChange"
+      @row-click="openDetail"
     >
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-2 text-gray-500 dark:text-slate-400">Yukleniyor...</p>
-      </div>
+      <template #cell-bookingNumber="{ row }">
+        <div>
+          <span class="font-medium text-indigo-600 dark:text-indigo-400">{{
+            row.bookingNumber
+          }}</span>
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {{ getSourceInfo(row.source?.type).label }}
+          </p>
+        </div>
+      </template>
 
-      <div v-else-if="reservations.length === 0" class="p-8 text-center">
-        <span class="material-icons text-4xl text-gray-400 mb-2">event_busy</span>
-        <p class="text-gray-500 dark:text-slate-400">Rezervasyon bulunamadi</p>
-      </div>
+      <template #cell-createdAt="{ row }">
+        <div>
+          <p class="text-gray-900 dark:text-white text-sm">
+            {{ formatDate(row.createdAt) }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ formatTime(row.createdAt) }}
+          </p>
+        </div>
+      </template>
 
-      <table v-else class="w-full">
-        <thead class="bg-gray-50 dark:bg-slate-700/50">
-          <tr>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Rez. No
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Olusturma
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Misafir
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Oda Tipi
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Tarihler
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Durum
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Odeme
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Tutar
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Islemler
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-          <tr
-            v-for="reservation in reservations"
-            :key="reservation._id"
-            class="hover:bg-gray-50 dark:hover:bg-slate-700/30 cursor-pointer"
-            @click="openDetail(reservation)"
-          >
-            <td class="px-4 py-3">
-              <div>
-                <span class="font-medium text-indigo-600 dark:text-indigo-400">{{
-                  reservation.bookingNumber
-                }}</span>
-                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  {{ getSourceInfo(reservation.source?.type).label }}
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-gray-900 dark:text-white text-sm">
-                  {{ formatDate(reservation.createdAt) }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ formatTime(reservation.createdAt) }}
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="font-medium text-gray-900 dark:text-white">
-                  {{ reservation.leadGuest?.firstName }} {{ reservation.leadGuest?.lastName }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ reservation.contact?.email }}
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-gray-900 dark:text-white">
-                  {{
-                    reservation.rooms?.[0]?.roomTypeName?.tr || reservation.rooms?.[0]?.roomTypeCode
-                  }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ reservation.totalAdults }} yetiskin
-                  <span v-if="reservation.totalChildren"
-                    >, {{ reservation.totalChildren }} cocuk</span
-                  >
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-gray-900 dark:text-white">
-                  {{ formatDate(reservation.checkIn) }} - {{ formatDate(reservation.checkOut) }}
-                </p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ reservation.nights }} gece
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-medium"
-                :class="getStatusClasses(reservation.status)"
-              >
-                {{ getStatusLabel(reservation.status) }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-medium"
-                :class="getPaymentStatusClasses(reservation.payment?.status)"
-              >
-                {{ getPaymentStatusLabel(reservation.payment?.status) }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="font-medium text-gray-900 dark:text-white">
-                  {{ formatCurrency(reservation.pricing?.grandTotal) }}
-                </p>
-                <p v-if="reservation.payment?.paidAmount > 0" class="text-xs text-green-600">
-                  {{ formatCurrency(reservation.payment?.paidAmount) }} odendi
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex items-center justify-end gap-1">
-                <button
-                  v-if="reservation.status === 'pending'"
-                  class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
-                  title="Onayla"
-                  @click.stop="confirmReservation(reservation)"
-                >
-                  <span class="material-icons text-lg">check_circle</span>
-                </button>
-                <button
-                  v-if="['pending', 'confirmed'].includes(reservation.status)"
-                  class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                  title="Iptal Et"
-                  @click.stop="openCancelModal(reservation)"
-                >
-                  <span class="material-icons text-lg">cancel</span>
-                </button>
-                <button
-                  class="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
-                  title="Detay"
-                  @click.stop="openDetail(reservation)"
-                >
-                  <span class="material-icons text-lg">visibility</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <template #cell-guest="{ row }">
+        <div>
+          <p class="font-medium text-gray-900 dark:text-white">
+            {{ row.leadGuest?.firstName }} {{ row.leadGuest?.lastName }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ row.contact?.email }}
+          </p>
+        </div>
+      </template>
 
-      <!-- Pagination -->
-      <div
-        v-if="pagination.totalPages > 1"
-        class="px-4 py-3 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between"
-      >
-        <p class="text-sm text-gray-500 dark:text-slate-400">
-          Toplam {{ pagination.total }} rezervasyon
-        </p>
-        <div class="flex items-center gap-2">
+      <template #cell-roomType="{ row }">
+        <div>
+          <p class="text-gray-900 dark:text-white">
+            {{ row.rooms?.[0]?.roomTypeName?.tr || row.rooms?.[0]?.roomTypeCode }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ row.totalAdults }} yetiskin
+            <span v-if="row.totalChildren">, {{ row.totalChildren }} cocuk</span>
+          </p>
+        </div>
+      </template>
+
+      <template #cell-dates="{ row }">
+        <div>
+          <p class="text-gray-900 dark:text-white">
+            {{ formatDate(row.checkIn) }} - {{ formatDate(row.checkOut) }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ row.nights }} gece
+          </p>
+        </div>
+      </template>
+
+      <template #cell-status="{ row }">
+        <span
+          class="px-2 py-1 rounded-full text-xs font-medium"
+          :class="getStatusClasses(row.status)"
+        >
+          {{ getStatusLabel(row.status) }}
+        </span>
+      </template>
+
+      <template #cell-paymentStatus="{ row }">
+        <span
+          class="px-2 py-1 rounded-full text-xs font-medium"
+          :class="getPaymentStatusClasses(row.payment?.status)"
+        >
+          {{ getPaymentStatusLabel(row.payment?.status) }}
+        </span>
+      </template>
+
+      <template #cell-amount="{ row }">
+        <div>
+          <p class="font-medium text-gray-900 dark:text-white">
+            {{ formatCurrency(row.pricing?.grandTotal) }}
+          </p>
+          <p v-if="row.payment?.paidAmount > 0" class="text-xs text-green-600">
+            {{ formatCurrency(row.payment?.paidAmount) }} odendi
+          </p>
+        </div>
+      </template>
+
+      <template #row-actions="{ row }">
+        <div class="flex items-center justify-end gap-1">
           <button
-            :disabled="pagination.page === 1"
-            class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-slate-700"
-            @click="changePage(pagination.page - 1)"
+            v-if="row.status === 'pending'"
+            class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
+            title="Onayla"
+            @click.stop="confirmReservation(row)"
           >
-            <span class="material-icons text-sm">chevron_left</span>
+            <span class="material-icons text-lg">check_circle</span>
           </button>
-          <span class="text-sm text-gray-600 dark:text-gray-400">
-            {{ pagination.page }} / {{ pagination.totalPages }}
-          </span>
           <button
-            :disabled="pagination.page === pagination.totalPages"
-            class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-slate-700"
-            @click="changePage(pagination.page + 1)"
+            v-if="['pending', 'confirmed'].includes(row.status)"
+            class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+            title="Iptal Et"
+            @click.stop="openCancelModal(row)"
           >
-            <span class="material-icons text-sm">chevron_right</span>
+            <span class="material-icons text-lg">cancel</span>
+          </button>
+          <button
+            class="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
+            title="Detay"
+            @click.stop="openDetail(row)"
+          >
+            <span class="material-icons text-lg">visibility</span>
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <template #empty-action>
+        <button
+          class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+          @click="showNewReservationModal = true"
+        >
+          Yeni Rezervasyon Olustur
+        </button>
+      </template>
+    </DataTable>
 
     <!-- Modals -->
     <NewReservationModal
@@ -399,7 +325,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import reservationService, {
   RESERVATION_STATUS_INFO,
@@ -409,6 +335,7 @@ import reservationService, {
 import { usePMSSocket } from '@/composables/usePMSSocket'
 import { useAccessibility } from '@/composables/useAccessibility'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import NewReservationModal from '@/modules/reservations/components/NewReservationModal.vue'
 import ReservationDetailModal from '@/modules/reservations/components/ReservationDetailModal.vue'
 import CancelReservationModal from '@/modules/reservations/components/CancelReservationModal.vue'
@@ -481,6 +408,17 @@ const filters = ref({
   endDate: ''
 })
 
+const columns = computed(() => [
+  { key: 'bookingNumber', label: 'Rez. No', sortable: false },
+  { key: 'createdAt', label: 'Olusturma', sortable: false },
+  { key: 'guest', label: 'Misafir', sortable: false },
+  { key: 'roomType', label: 'Oda Tipi', sortable: false },
+  { key: 'dates', label: 'Tarihler', sortable: false },
+  { key: 'status', label: 'Durum', sortable: false },
+  { key: 'paymentStatus', label: 'Odeme', sortable: false },
+  { key: 'amount', label: 'Tutar', sortable: false }
+])
+
 let debounceTimer = null
 const debouncedFetch = () => {
   clearTimeout(debounceTimer)
@@ -544,8 +482,9 @@ const openCancelModal = reservation => {
   showCancelModal.value = true
 }
 
-const changePage = page => {
+const handlePageChange = ({ page, perPage }) => {
   pagination.value.page = page
+  if (perPage) pagination.value.limit = perPage
   fetchReservations()
 }
 

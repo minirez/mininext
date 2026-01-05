@@ -170,190 +170,109 @@
 
     <!-- Logs Table -->
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-      <!-- Loading -->
-      <div v-if="loading" class="p-12 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600 dark:text-slate-400">{{ $t('common.loading') }}</p>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="logs.length === 0" class="p-12 text-center">
-        <span class="material-icons text-5xl text-gray-300 dark:text-slate-600">history</span>
-        <p class="mt-4 text-gray-500 dark:text-slate-400">{{ $t('audit.noLogs') }}</p>
-      </div>
-
-      <!-- Table -->
-      <div v-else class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-slate-700">
-            <tr>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.timestamp') }}
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.user') }}
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.module') }}
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.action') }}
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.target') }}
-              </th>
-              <th
-                class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('audit.status.label') }}
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('common.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-            <tr
-              v-for="log in logs"
-              :key="log._id"
-              class="hover:bg-gray-50 dark:hover:bg-slate-700/50"
-            >
-              <!-- Timestamp -->
-              <td class="px-4 py-3 whitespace-nowrap">
-                <div class="text-sm text-gray-900 dark:text-white">
-                  {{ formatDate(log.timestamp) }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ formatTime(log.timestamp) }}
-                </div>
-              </td>
-
-              <!-- User -->
-              <td class="px-4 py-3">
-                <div class="flex items-center">
-                  <div
-                    class="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center text-sm font-medium"
-                  >
-                    {{ getInitials(log.actor?.name || log.actor?.email) }}
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ log.actor?.name || log.actor?.email || 'System' }}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">
-                      {{ getRoleBadge(log.actor?.role) }}
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- Module -->
-              <td class="px-4 py-3 whitespace-nowrap">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getModuleClass(log.module)"
-                >
-                  {{ $t(`audit.modules.${log.module}`) }}
-                </span>
-                <div v-if="log.subModule" class="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                  {{ log.subModule }}
-                </div>
-              </td>
-
-              <!-- Action -->
-              <td class="px-4 py-3 whitespace-nowrap">
-                <span
-                  class="inline-flex items-center gap-1 text-sm"
-                  :class="getActionClass(log.action)"
-                >
-                  <span class="material-icons text-base">{{ getActionIcon(log.action) }}</span>
-                  {{ $t(`audit.actions.${log.action}`) }}
-                </span>
-              </td>
-
-              <!-- Target -->
-              <td class="px-4 py-3">
-                <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                  {{ log.target?.documentName || log.target?.documentId || '-' }}
-                </div>
-                <div
-                  v-if="log.target?.collection"
-                  class="text-xs text-gray-500 dark:text-slate-400"
-                >
-                  {{ log.target.collection }}
-                </div>
-              </td>
-
-              <!-- Status -->
-              <td class="px-4 py-3 text-center">
-                <span
-                  v-if="log.status === 'success'"
-                  class="inline-flex items-center text-green-600 dark:text-green-400"
-                >
-                  <span class="material-icons text-base">check_circle</span>
-                </span>
-                <span v-else class="inline-flex items-center text-red-600 dark:text-red-400">
-                  <span class="material-icons text-base">error</span>
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-4 py-3 text-right">
-                <button
-                  class="text-gray-400 hover:text-gray-600 dark:hover:text-white"
-                  @click="openDetail(log)"
-                >
-                  <span class="material-icons">visibility</span>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        v-if="pagination.pages > 1"
-        class="px-4 py-3 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between"
+      <DataTable
+        :data="logs"
+        :columns="columns"
+        :loading="loading"
+        :total="pagination.total"
+        :page="pagination.page"
+        :per-page="pagination.limit"
+        :show-header="false"
+        responsive
+        :card-title-key="'actor.name'"
+        :empty-icon="'history'"
+        :empty-text="$t('audit.noLogs')"
+        @page-change="handlePageChange"
       >
-        <div class="text-sm text-gray-500 dark:text-slate-400">
-          {{
-            $t('audit.showing', {
-              from: (pagination.page - 1) * pagination.limit + 1,
-              to: Math.min(pagination.page * pagination.limit, pagination.total),
-              total: pagination.total
-            })
-          }}
-        </div>
-        <div class="flex gap-2">
-          <button
-            :disabled="pagination.page === 1"
-            class="px-3 py-1 rounded border border-gray-300 dark:border-slate-600 disabled:opacity-50"
-            @click="changePage(pagination.page - 1)"
+        <!-- Timestamp Cell -->
+        <template #cell-timestamp="{ row }">
+          <div class="text-sm text-gray-900 dark:text-white">
+            {{ formatDate(row.timestamp) }}
+          </div>
+          <div class="text-xs text-gray-500 dark:text-slate-400">
+            {{ formatTime(row.timestamp) }}
+          </div>
+        </template>
+
+        <!-- User Cell -->
+        <template #cell-actor="{ row }">
+          <div class="flex items-center">
+            <div
+              class="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-600 flex items-center justify-center text-sm font-medium"
+            >
+              {{ getInitials(row.actor?.name || row.actor?.email) }}
+            </div>
+            <div class="ml-3">
+              <div class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ row.actor?.name || row.actor?.email || 'System' }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-slate-400">
+                {{ getRoleBadge(row.actor?.role) }}
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Module Cell -->
+        <template #cell-module="{ row }">
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+            :class="getModuleClass(row.module)"
           >
-            <span class="material-icons">chevron_left</span>
-          </button>
-          <button
-            :disabled="pagination.page === pagination.pages"
-            class="px-3 py-1 rounded border border-gray-300 dark:border-slate-600 disabled:opacity-50"
-            @click="changePage(pagination.page + 1)"
+            {{ $t(`audit.modules.${row.module}`) }}
+          </span>
+          <div v-if="row.subModule" class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+            {{ row.subModule }}
+          </div>
+        </template>
+
+        <!-- Action Cell -->
+        <template #cell-action="{ row }">
+          <span
+            class="inline-flex items-center gap-1 text-sm"
+            :class="getActionClass(row.action)"
           >
-            <span class="material-icons">chevron_right</span>
+            <span class="material-icons text-base">{{ getActionIcon(row.action) }}</span>
+            {{ $t(`audit.actions.${row.action}`) }}
+          </span>
+        </template>
+
+        <!-- Target Cell -->
+        <template #cell-target="{ row }">
+          <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate">
+            {{ row.target?.documentName || row.target?.documentId || '-' }}
+          </div>
+          <div
+            v-if="row.target?.collection"
+            class="text-xs text-gray-500 dark:text-slate-400"
+          >
+            {{ row.target.collection }}
+          </div>
+        </template>
+
+        <!-- Status Cell -->
+        <template #cell-status="{ row }">
+          <span
+            v-if="row.status === 'success'"
+            class="inline-flex items-center text-green-600 dark:text-green-400"
+          >
+            <span class="material-icons text-base">check_circle</span>
+          </span>
+          <span v-else class="inline-flex items-center text-red-600 dark:text-red-400">
+            <span class="material-icons text-base">error</span>
+          </span>
+        </template>
+
+        <!-- Row Actions -->
+        <template #row-actions="{ row }">
+          <button
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+            @click="openDetail(row)"
+          >
+            <span class="material-icons">visibility</span>
           </button>
-        </div>
-      </div>
+        </template>
+      </DataTable>
     </div>
 
     <!-- Detail Modal -->
@@ -619,9 +538,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import auditService from '@/services/auditService'
 
 const { t } = useI18n()
@@ -648,6 +568,16 @@ const filters = reactive({
 const showDetail = ref(false)
 const selectedLog = ref(null)
 const showJson = ref(false)
+
+// DataTable columns
+const columns = computed(() => [
+  { key: 'timestamp', label: t('audit.timestamp'), sortable: true },
+  { key: 'actor', label: t('audit.user'), sortable: false },
+  { key: 'module', label: t('audit.module'), sortable: true },
+  { key: 'action', label: t('audit.action'), sortable: true },
+  { key: 'target', label: t('audit.target'), sortable: false },
+  { key: 'status', label: t('audit.status.label'), sortable: true }
+])
 
 // Filter options
 const modules = [
@@ -752,10 +682,12 @@ const fetchStats = async () => {
   }
 }
 
-// Change page
-const changePage = page => {
+// Handle DataTable page change
+const handlePageChange = ({ page, perPage }) => {
   pagination.value.page = page
+  if (perPage) pagination.value.limit = perPage
   fetchLogs()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // Open detail modal

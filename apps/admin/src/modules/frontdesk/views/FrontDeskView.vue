@@ -175,84 +175,79 @@
 
           <!-- Active Stays -->
           <div v-if="activeTab === 'inhouse'">
-            <div v-if="activeStays.length === 0" class="text-center py-8">
-              <span class="material-icons text-4xl text-gray-300 dark:text-gray-600">hotel</span>
-              <p class="mt-2 text-gray-500 dark:text-slate-400">Aktif konaklama yok</p>
-            </div>
-            <div v-else class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr
-                    class="text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
+            <DataTable
+              :data="activeStays"
+              :columns="activeStaysColumns"
+              :loading="false"
+              :show-header="false"
+              :show-pagination="false"
+              responsive
+              card-title-key="stayNumber"
+              empty-icon="hotel"
+              empty-text="Aktif konaklama yok"
+            >
+              <template #cell-room="{ row }">
+                <span class="font-medium text-gray-900 dark:text-white">{{
+                  row.room?.roomNumber
+                }}</span>
+                <span class="text-xs text-gray-500 dark:text-slate-400 ml-1">{{
+                  row.roomType?.code
+                }}</span>
+              </template>
+
+              <template #cell-guest="{ row }">
+                <p class="text-gray-900 dark:text-white">
+                  {{ row.guests?.[0]?.firstName }} {{ row.guests?.[0]?.lastName }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ row.stayNumber }}</p>
+              </template>
+
+              <template #cell-checkInDate="{ row }">
+                <span class="text-sm text-gray-600 dark:text-slate-300">
+                  {{ formatDate(row.checkInDate) }}
+                </span>
+              </template>
+
+              <template #cell-checkOutDate="{ row }">
+                <span class="text-sm text-gray-600 dark:text-slate-300">
+                  {{ formatDate(row.checkOutDate) }}
+                </span>
+              </template>
+
+              <template #cell-nights="{ row }">
+                <span class="text-sm text-gray-600 dark:text-slate-300">
+                  {{ row.nights }}
+                </span>
+              </template>
+
+              <template #cell-balance="{ row }">
+                <span
+                  class="text-sm font-medium"
+                  :class="row.balance > 0 ? 'text-red-600' : 'text-green-600'"
+                >
+                  {{ formatCurrency(row.balance) }}
+                </span>
+              </template>
+
+              <template #row-actions="{ row }">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
+                    title="Detay"
+                    @click="openStayDetail(row)"
                   >
-                    <th class="pb-3">Oda</th>
-                    <th class="pb-3">Misafir</th>
-                    <th class="pb-3">Giris</th>
-                    <th class="pb-3">Cikis</th>
-                    <th class="pb-3">Gece</th>
-                    <th class="pb-3">Bakiye</th>
-                    <th class="pb-3 text-right">Islemler</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-                  <tr
-                    v-for="stay in activeStays"
-                    :key="stay._id"
-                    class="hover:bg-gray-50 dark:hover:bg-slate-700/50"
+                    <span class="material-icons text-lg">visibility</span>
+                  </button>
+                  <button
+                    class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
+                    title="Check-out"
+                    @click="openCheckOutModal(row)"
                   >
-                    <td class="py-3">
-                      <span class="font-medium text-gray-900 dark:text-white">{{
-                        stay.room?.roomNumber
-                      }}</span>
-                      <span class="text-xs text-gray-500 dark:text-slate-400 ml-1">{{
-                        stay.roomType?.code
-                      }}</span>
-                    </td>
-                    <td class="py-3">
-                      <p class="text-gray-900 dark:text-white">
-                        {{ stay.guests?.[0]?.firstName }} {{ stay.guests?.[0]?.lastName }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-slate-400">{{ stay.stayNumber }}</p>
-                    </td>
-                    <td class="py-3 text-sm text-gray-600 dark:text-slate-300">
-                      {{ formatDate(stay.checkInDate) }}
-                    </td>
-                    <td class="py-3 text-sm text-gray-600 dark:text-slate-300">
-                      {{ formatDate(stay.checkOutDate) }}
-                    </td>
-                    <td class="py-3 text-sm text-gray-600 dark:text-slate-300">
-                      {{ stay.nights }}
-                    </td>
-                    <td class="py-3">
-                      <span
-                        class="text-sm font-medium"
-                        :class="stay.balance > 0 ? 'text-red-600' : 'text-green-600'"
-                      >
-                        {{ formatCurrency(stay.balance) }}
-                      </span>
-                    </td>
-                    <td class="py-3 text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <button
-                          class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
-                          title="Detay"
-                          @click="openStayDetail(stay)"
-                        >
-                          <span class="material-icons text-lg">visibility</span>
-                        </button>
-                        <button
-                          class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
-                          title="Check-out"
-                          @click="openCheckOutModal(stay)"
-                        >
-                          <span class="material-icons text-lg">logout</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                    <span class="material-icons text-lg">logout</span>
+                  </button>
+                </div>
+              </template>
+            </DataTable>
           </div>
 
           <!-- Today's Check-ins -->
@@ -332,6 +327,7 @@ import stayService from '@/services/pms/stayService'
 import { usePMSSocket } from '@/composables/usePMSSocket'
 import { useAccessibility } from '@/composables/useAccessibility'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import WalkInModal from '@/modules/frontdesk/components/WalkInModal.vue'
 import CheckInModal from '@/modules/frontdesk/components/CheckInModal.vue'
 import CheckOutModal from '@/modules/frontdesk/components/CheckOutModal.vue'
@@ -374,6 +370,15 @@ const tabs = computed(() => [
     label: 'Bugun Check-in',
     count: todayActivity.value.todayCheckIns?.length || 0
   }
+])
+
+const activeStaysColumns = computed(() => [
+  { key: 'room', label: 'Oda', sortable: false },
+  { key: 'guest', label: 'Misafir', sortable: false },
+  { key: 'checkInDate', label: 'Giris', sortable: false },
+  { key: 'checkOutDate', label: 'Cikis', sortable: false },
+  { key: 'nights', label: 'Gece', sortable: false },
+  { key: 'balance', label: 'Bakiye', sortable: false }
 ])
 
 const statsCards = computed(() => [

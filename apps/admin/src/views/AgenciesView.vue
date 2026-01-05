@@ -198,236 +198,159 @@
         </div>
       </div>
 
-      <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-slate-700/50">
-            <tr>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('agencies.agency') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('agencies.contact') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('common.status.label') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('agencies.creditLimit') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('agencies.commission') }}
-              </th>
-              <th
-                class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('common.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-            <!-- Loading State -->
-            <tr v-if="loading">
-              <td colspan="6" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <span class="material-icons text-4xl text-purple-600 animate-spin mb-2"
-                    >refresh</span
-                  >
-                  <span class="text-gray-500 dark:text-slate-400">{{ $t('common.loading') }}</span>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr v-else-if="!filteredAgencies.length">
-              <td colspan="6" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <div
-                    class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4"
-                  >
-                    <span class="material-icons text-3xl text-gray-400">storefront</span>
-                  </div>
-                  <p class="text-gray-500 dark:text-slate-400 font-medium">
-                    {{ $t('agencies.noAgencies') }}
-                  </p>
-                  <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">
-                    {{ $t('agencies.noAgenciesDesc') }}
-                  </p>
-                  <button class="btn-primary mt-4" @click="openCreateModal">
-                    <span class="material-icons mr-2">add</span>
-                    {{ $t('agencies.addAgency') }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Data Rows -->
-            <tr
-              v-for="agency in filteredAgencies"
-              v-else
-              :key="agency._id"
-              class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
-            >
-              <!-- Agency Info -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                  >
-                    {{ getInitials(agency.companyName || agency.name) }}
-                  </div>
-                  <div>
-                    <div class="font-semibold text-gray-900 dark:text-white">
-                      {{ agency.companyName || agency.name }}
-                    </div>
-                    <div v-if="agency.tradeName" class="text-xs text-gray-500 dark:text-slate-400">
-                      {{ agency.tradeName }}
-                    </div>
-                    <div v-if="agency.taxNumber" class="text-xs text-gray-400 dark:text-slate-500">
-                      VKN: {{ agency.taxNumber }}
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- Contact -->
-              <td class="px-6 py-4">
-                <div class="space-y-1">
-                  <div class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-slate-300">
-                    <span class="material-icons text-sm text-gray-400">email</span>
-                    {{ agency.email }}
-                  </div>
-                  <div
-                    v-if="agency.phone"
-                    class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400"
-                  >
-                    <span class="material-icons text-sm text-gray-400">phone</span>
-                    {{ agency.phone }}
-                  </div>
-                </div>
-              </td>
-
-              <!-- Status -->
-              <td class="px-6 py-4">
-                <span
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
-                  :class="getStatusClass(agency.status)"
-                >
-                  <span
-                    class="w-1.5 h-1.5 rounded-full"
-                    :class="getStatusDotClass(agency.status)"
-                  ></span>
-                  {{ getStatusLabel(agency.status) }}
-                </span>
-              </td>
-
-              <!-- Credit Limit -->
-              <td class="px-6 py-4">
-                <div v-if="agency.creditLimit?.enabled">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="flex-1 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden max-w-[100px]"
-                    >
-                      <div
-                        class="h-full rounded-full transition-all"
-                        :class="getCreditBarClass(agency.creditLimit)"
-                        :style="{ width: getCreditPercentage(agency.creditLimit) + '%' }"
-                      ></div>
-                    </div>
-                    <span class="text-xs text-gray-500 dark:text-slate-400"
-                      >{{ getCreditPercentage(agency.creditLimit) }}%</span
-                    >
-                  </div>
-                  <div class="mt-1 text-sm">
-                    <span class="font-medium text-gray-900 dark:text-white">{{
-                      formatCurrency(
-                        getAvailableCredit(agency.creditLimit),
-                        agency.creditLimit.currency
-                      )
-                    }}</span>
-                    <span class="text-gray-400 dark:text-slate-500">
-                      /
-                      {{
-                        formatCurrency(agency.creditLimit.amount, agency.creditLimit.currency)
-                      }}</span
-                    >
-                  </div>
-                </div>
-                <span v-else class="text-sm text-gray-400 dark:text-slate-500">{{
-                  $t('agencies.noCredit')
-                }}</span>
-              </td>
-
-              <!-- Commission -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-1">
-                  <span class="material-icons text-sm text-green-500">percent</span>
-                  <span class="font-medium text-gray-900 dark:text-white"
-                    >{{ agency.commission?.default || 10 }}%</span
-                  >
-                </div>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    v-if="agency.status === 'pending'"
-                    class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                    :title="$t('agencies.approve')"
-                    @click="confirmApprove(agency)"
-                  >
-                    <span class="material-icons">check_circle</span>
-                  </button>
-                  <button
-                    class="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                    :title="$t('agencies.users')"
-                    @click="goToUsers(agency)"
-                  >
-                    <span class="material-icons">group</span>
-                  </button>
-                  <button
-                    class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                    :title="$t('common.edit')"
-                    @click="openEditModal(agency)"
-                  >
-                    <span class="material-icons">edit</span>
-                  </button>
-                  <button
-                    class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    :title="$t('common.delete')"
-                    @click="confirmDelete(agency)"
-                  >
-                    <span class="material-icons">delete</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        v-if="filteredAgencies.length"
-        class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between"
+      <!-- DataTable -->
+      <DataTable
+        :data="filteredAgencies"
+        :columns="columns"
+        :loading="loading"
+        :total="filteredAgencies.length"
+        :show-header="false"
+        responsive
+        :card-title-key="'companyName'"
+        :empty-icon="'storefront'"
+        :empty-text="$t('agencies.noAgencies')"
       >
-        <p class="text-sm text-gray-500 dark:text-slate-400">
-          {{ $t('common.showing') }} <span class="font-medium">{{ filteredAgencies.length }}</span>
-          {{ $t('common.of') }} <span class="font-medium">{{ agencies.length }}</span>
-          {{ $t('agencies.agencies') }}
-        </p>
-      </div>
+        <!-- Empty State Action -->
+        <template #empty-action>
+          <button class="btn-primary mt-4" @click="openCreateModal">
+            <span class="material-icons mr-2">add</span>
+            {{ $t('agencies.addAgency') }}
+          </button>
+        </template>
+
+        <!-- Agency Info Cell -->
+        <template #cell-companyName="{ row }">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm"
+            >
+              {{ getInitials(row.companyName || row.name) }}
+            </div>
+            <div>
+              <div class="font-semibold text-gray-900 dark:text-white">
+                {{ row.companyName || row.name }}
+              </div>
+              <div v-if="row.tradeName" class="text-xs text-gray-500 dark:text-slate-400">
+                {{ row.tradeName }}
+              </div>
+              <div v-if="row.taxNumber" class="text-xs text-gray-400 dark:text-slate-500">
+                VKN: {{ row.taxNumber }}
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Contact Cell -->
+        <template #cell-email="{ row }">
+          <div class="space-y-1">
+            <div class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-slate-300">
+              <span class="material-icons text-sm text-gray-400">email</span>
+              {{ row.email }}
+            </div>
+            <div
+              v-if="row.phone"
+              class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400"
+            >
+              <span class="material-icons text-sm text-gray-400">phone</span>
+              {{ row.phone }}
+            </div>
+          </div>
+        </template>
+
+        <!-- Status Cell -->
+        <template #cell-status="{ row }">
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+            :class="getStatusClass(row.status)"
+          >
+            <span
+              class="w-1.5 h-1.5 rounded-full"
+              :class="getStatusDotClass(row.status)"
+            ></span>
+            {{ getStatusLabel(row.status) }}
+          </span>
+        </template>
+
+        <!-- Credit Limit Cell -->
+        <template #cell-creditLimit="{ row }">
+          <div v-if="row.creditLimit?.enabled">
+            <div class="flex items-center gap-2">
+              <div
+                class="flex-1 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden max-w-[100px]"
+              >
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="getCreditBarClass(row.creditLimit)"
+                  :style="{ width: getCreditPercentage(row.creditLimit) + '%' }"
+                ></div>
+              </div>
+              <span class="text-xs text-gray-500 dark:text-slate-400"
+                >{{ getCreditPercentage(row.creditLimit) }}%</span
+              >
+            </div>
+            <div class="mt-1 text-sm">
+              <span class="font-medium text-gray-900 dark:text-white">{{
+                formatCurrency(
+                  getAvailableCredit(row.creditLimit),
+                  row.creditLimit.currency
+                )
+              }}</span>
+              <span class="text-gray-400 dark:text-slate-500">
+                /
+                {{ formatCurrency(row.creditLimit.amount, row.creditLimit.currency) }}</span
+              >
+            </div>
+          </div>
+          <span v-else class="text-sm text-gray-400 dark:text-slate-500">{{
+            $t('agencies.noCredit')
+          }}</span>
+        </template>
+
+        <!-- Commission Cell -->
+        <template #cell-commission="{ row }">
+          <div class="flex items-center gap-1">
+            <span class="material-icons text-sm text-green-500">percent</span>
+            <span class="font-medium text-gray-900 dark:text-white"
+              >{{ row.commission?.default || 10 }}%</span
+            >
+          </div>
+        </template>
+
+        <!-- Row Actions -->
+        <template #row-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <button
+              v-if="row.status === 'pending'"
+              class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+              :title="$t('agencies.approve')"
+              @click="confirmApprove(row)"
+            >
+              <span class="material-icons">check_circle</span>
+            </button>
+            <button
+              class="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+              :title="$t('agencies.users')"
+              @click="goToUsers(row)"
+            >
+              <span class="material-icons">group</span>
+            </button>
+            <button
+              class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              :title="$t('common.edit')"
+              @click="openEditModal(row)"
+            >
+              <span class="material-icons">edit</span>
+            </button>
+            <button
+              class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              :title="$t('common.delete')"
+              @click="confirmDelete(row)"
+            >
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+        </template>
+      </DataTable>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -1126,6 +1049,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import FormField from '@/components/common/FormField.vue'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import CountrySelect from '@/components/common/CountrySelect.vue'
 import HotelAutocomplete from '@/components/common/HotelAutocomplete.vue'
@@ -1216,6 +1140,15 @@ const filteredAgencies = computed(() => {
 const hasActiveFilters = computed(
   () => searchQuery.value || statusFilter.value || creditFilter.value
 )
+
+// DataTable columns
+const columns = computed(() => [
+  { key: 'companyName', label: t('agencies.agency'), sortable: true },
+  { key: 'email', label: t('agencies.contact'), sortable: false },
+  { key: 'status', label: t('common.status.label'), sortable: true },
+  { key: 'creditLimit', label: t('agencies.creditLimit'), sortable: false },
+  { key: 'commission', label: t('agencies.commission'), sortable: false }
+])
 
 // Tabs
 const tabs = computed(() => [

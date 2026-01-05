@@ -38,13 +38,13 @@
             </span>
           </template>
 
-          <template #actions="{ item }">
+          <template #row-actions="{ row }">
             <div class="flex items-center justify-end gap-2">
               <button
-                v-if="item.status === 'pending'"
+                v-if="row.status === 'pending'"
                 class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                 :title="$t('partners.approve')"
-                @click="confirmApprove(item)"
+                @click="confirmApprove(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -58,7 +58,7 @@
               <button
                 class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                 :title="$t('common.edit')"
-                @click="openEditModal(item)"
+                @click="openEditModal(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -72,7 +72,7 @@
               <button
                 class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 :title="$t('common.delete')"
-                @click="confirmDelete(item)"
+                @click="confirmDelete(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -261,7 +261,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
-import DataTable from '@/components/common/DataTable.vue'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import partnerService from '@/services/partnerService'

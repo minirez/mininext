@@ -379,183 +379,123 @@
         </div>
 
         <!-- Transactions Table -->
-        <div v-if="loadingTransactions" class="p-8 text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        </div>
-
-        <div v-else-if="transactions.length === 0" class="p-8 text-center">
-          <span class="material-icons text-4xl text-gray-400 mb-2">receipt_long</span>
-          <p class="text-gray-500 dark:text-slate-400">Islem bulunamadi</p>
-        </div>
-
-        <table v-else class="w-full">
-          <thead class="bg-gray-50 dark:bg-slate-700/50">
-            <tr>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Islem No
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Tip
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Aciklama
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Odeme
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Tutar
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Durum
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Tarih
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-              >
-                Islem
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-            <tr
-              v-for="txn in transactions"
-              :key="txn._id"
-              class="hover:bg-gray-50 dark:hover:bg-slate-700/30"
-            >
-              <td class="px-4 py-3">
-                <span class="font-mono text-sm text-gray-900 dark:text-white">{{
-                  txn.transactionNumber
-                }}</span>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2">
-                  <span class="material-icons text-sm" :class="getTransactionTypeColor(txn.type)">{{
-                    getTransactionTypeIcon(txn.type)
-                  }}</span>
-                  <span class="text-sm text-gray-900 dark:text-white">{{
-                    getTransactionTypeLabel(txn.type)
-                  }}</span>
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <p class="text-sm text-gray-900 dark:text-white">{{ txn.description }}</p>
-                <p v-if="txn.stay" class="text-xs text-gray-500 dark:text-slate-400">
-                  Konaklama: {{ txn.stay.stayNumber }}
-                </p>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-1">
-                  <span class="material-icons text-sm text-gray-400">{{
-                    getPaymentMethodIcon(txn.paymentMethod)
-                  }}</span>
-                  <span class="text-sm text-gray-600 dark:text-gray-400">{{
-                    getPaymentMethodLabel(txn.paymentMethod)
-                  }}</span>
-                </div>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <div class="flex flex-col items-end">
-                  <span
-                    class="font-medium"
-                    :class="
-                      txn.amount >= 0
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    "
-                  >
-                    {{ getCurrencySymbol(txn.currency || 'TRY')
-                    }}{{ formatAmount(txn.amount, txn.currency || 'TRY') }}
-                  </span>
-                  <span
-                    v-if="txn.currency && txn.currency !== 'TRY' && txn.amountInTRY"
-                    class="text-xs text-gray-400"
-                  >
-                    ≈ ₺{{ formatAmount(txn.amountInTRY, 'TRY') }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getStatusClasses(txn.status)"
-                >
-                  {{ getStatusLabel(txn.status) }}
-                </span>
-              </td>
-              <td class="px-4 py-3">
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{
-                  formatDateTime(txn.createdAt)
-                }}</span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    v-if="txn.status === 'completed'"
-                    class="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
-                    title="Iptal Et"
-                    @click="openVoidModal(txn)"
-                  >
-                    <span class="material-icons text-sm">cancel</span>
-                  </button>
-                  <button
-                    v-if="txn.status === 'completed' && txn.type !== 'refund'"
-                    class="p-1.5 text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded"
-                    title="Iade"
-                    @click="openRefundModal(txn)"
-                  >
-                    <span class="material-icons text-sm">replay</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Pagination -->
-        <div
-          v-if="transactionPagination.totalPages > 1"
-          class="mt-4 flex items-center justify-between"
+        <DataTable
+          :data="transactions"
+          :columns="transactionColumns"
+          :loading="loadingTransactions"
+          :total="transactionPagination.total"
+          :page="transactionPagination.page"
+          :per-page="transactionPagination.limit"
+          :show-header="false"
+          responsive
+          card-title-key="transactionNumber"
+          empty-icon="receipt_long"
+          empty-text="Islem bulunamadi"
+          @page-change="handleTransactionPageChange"
         >
-          <p class="text-sm text-gray-500 dark:text-slate-400">
-            Toplam {{ transactionPagination.total }} islem
-          </p>
-          <div class="flex items-center gap-2">
+          <template #cell-transactionNumber="{ row }">
+            <span class="font-mono text-sm text-gray-900 dark:text-white">{{
+              row.transactionNumber
+            }}</span>
+          </template>
+
+          <template #cell-type="{ row }">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-sm" :class="getTransactionTypeColor(row.type)">{{
+                getTransactionTypeIcon(row.type)
+              }}</span>
+              <span class="text-sm text-gray-900 dark:text-white">{{
+                getTransactionTypeLabel(row.type)
+              }}</span>
+            </div>
+          </template>
+
+          <template #cell-description="{ row }">
+            <p class="text-sm text-gray-900 dark:text-white">{{ row.description }}</p>
+            <p v-if="row.stay" class="text-xs text-gray-500 dark:text-slate-400">
+              Konaklama: {{ row.stay.stayNumber }}
+            </p>
+          </template>
+
+          <template #cell-paymentMethod="{ row }">
+            <div class="flex items-center gap-1">
+              <span class="material-icons text-sm text-gray-400">{{
+                getPaymentMethodIcon(row.paymentMethod)
+              }}</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{
+                getPaymentMethodLabel(row.paymentMethod)
+              }}</span>
+            </div>
+          </template>
+
+          <template #cell-amount="{ row }">
+            <div class="flex flex-col items-end">
+              <span
+                class="font-medium"
+                :class="
+                  row.amount >= 0
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                "
+              >
+                {{ getCurrencySymbol(row.currency || 'TRY')
+                }}{{ formatAmount(row.amount, row.currency || 'TRY') }}
+              </span>
+              <span
+                v-if="row.currency && row.currency !== 'TRY' && row.amountInTRY"
+                class="text-xs text-gray-400"
+              >
+                ≈ ₺{{ formatAmount(row.amountInTRY, 'TRY') }}
+              </span>
+            </div>
+          </template>
+
+          <template #cell-status="{ row }">
+            <span
+              class="px-2 py-1 rounded-full text-xs font-medium"
+              :class="getStatusClasses(row.status)"
+            >
+              {{ getStatusLabel(row.status) }}
+            </span>
+          </template>
+
+          <template #cell-createdAt="{ row }">
+            <span class="text-sm text-gray-600 dark:text-gray-400">{{
+              formatDateTime(row.createdAt)
+            }}</span>
+          </template>
+
+          <template #row-actions="{ row }">
+            <div class="flex items-center justify-end gap-1">
+              <button
+                v-if="row.status === 'completed'"
+                class="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                title="Iptal Et"
+                @click="openVoidModal(row)"
+              >
+                <span class="material-icons text-sm">cancel</span>
+              </button>
+              <button
+                v-if="row.status === 'completed' && row.type !== 'refund'"
+                class="p-1.5 text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded"
+                title="Iade"
+                @click="openRefundModal(row)"
+              >
+                <span class="material-icons text-sm">replay</span>
+              </button>
+            </div>
+          </template>
+
+          <template #empty-action>
             <button
-              :disabled="transactionPagination.page === 1"
-              class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
-              @click="changeTransactionPage(transactionPagination.page - 1)"
+              :disabled="!activeShift"
+              class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+              @click="showTransactionModal = true"
             >
-              <span class="material-icons text-sm">chevron_left</span>
+              Yeni Islem Ekle
             </button>
-            <span class="text-sm"
-              >{{ transactionPagination.page }} / {{ transactionPagination.totalPages }}</span
-            >
-            <button
-              :disabled="transactionPagination.page === transactionPagination.totalPages"
-              class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
-              @click="changeTransactionPage(transactionPagination.page + 1)"
-            >
-              <span class="material-icons text-sm">chevron_right</span>
-            </button>
-          </div>
-        </div>
+          </template>
+        </DataTable>
       </div>
 
       <!-- Shifts Tab -->
@@ -805,6 +745,7 @@ import ShiftDetailModal from '@/modules/billing/components/ShiftDetailModal.vue'
 import VoidTransactionModal from '@/modules/billing/components/VoidTransactionModal.vue'
 import RefundTransactionModal from '@/modules/billing/components/RefundTransactionModal.vue'
 import CurrencyBalanceCard from '@/modules/billing/components/CurrencyBalanceCard.vue'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
 
 const { hotelId } = usePmsContextInjection()
@@ -938,6 +879,16 @@ const filters = ref({
 })
 const transactionTypeOptions = computed(() => getTransactionTypeOptions())
 
+const transactionColumns = computed(() => [
+  { key: 'transactionNumber', label: 'Islem No', sortable: false },
+  { key: 'type', label: 'Tip', sortable: false },
+  { key: 'description', label: 'Aciklama', sortable: false },
+  { key: 'paymentMethod', label: 'Odeme', sortable: false },
+  { key: 'amount', label: 'Tutar', sortable: false },
+  { key: 'status', label: 'Durum', sortable: false },
+  { key: 'createdAt', label: 'Tarih', sortable: false }
+])
+
 // Shifts
 const loadingShifts = ref(false)
 const shifts = ref([])
@@ -1040,8 +991,9 @@ const fetchShifts = async () => {
   }
 }
 
-const changeTransactionPage = page => {
+const handleTransactionPageChange = ({ page, perPage }) => {
   transactionPagination.value.page = page
+  if (perPage) transactionPagination.value.limit = perPage
   fetchTransactions()
 }
 

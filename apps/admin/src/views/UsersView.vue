@@ -78,413 +78,228 @@
       </div>
     </div>
 
-    <!-- Main Content Card -->
-    <div
-      class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700"
+    <!-- Users DataTable -->
+    <DataTable
+      :data="users"
+      :columns="columns"
+      :loading="loading"
+      :total="pagination.total"
+      :page="pagination.page"
+      :per-page="pagination.limit"
+      searchable
+      :search-placeholder="$t('users.searchPlaceholder')"
+      filterable
+      :filters="tableFilters"
+      responsive
+      :card-title-key="'name'"
+      :empty-icon="'people'"
+      :empty-text="$t('users.noUsers')"
+      @search="handleSearch"
+      @filter="handleFilter"
+      @page-change="handlePageChange"
     >
-      <!-- Toolbar -->
-      <div class="p-4 border-b border-gray-200 dark:border-slate-700">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <!-- Search & Filters -->
-          <div class="flex flex-col sm:flex-row gap-3 flex-1">
-            <!-- Search -->
-            <div class="relative flex-1 max-w-md">
-              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                >search</span
-              >
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="form-input pl-10 w-full"
-                :placeholder="$t('users.searchPlaceholder')"
-                @input="debouncedSearch"
-              />
-              <button
-                v-if="searchQuery"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                @click="searchQuery = ''; applyFilters()"
-              >
-                <span class="material-icons text-sm">close</span>
-              </button>
-            </div>
-
-            <!-- Status Filter -->
-            <select v-model="statusFilter" class="form-input w-full sm:w-40" @change="applyFilters">
-              <option value="">{{ $t('users.allStatuses') }}</option>
-              <option value="active">{{ $t('common.active') }}</option>
-              <option value="pending">{{ $t('common.pending') }}</option>
-              <option value="inactive">{{ $t('common.inactive') }}</option>
-            </select>
-
-            <!-- Role Filter -->
-            <select v-model="roleFilter" class="form-input w-full sm:w-40" @change="applyFilters">
-              <option value="">{{ $t('users.allRoles') }}</option>
-              <option value="admin">{{ $t('users.admin') }}</option>
-              <option value="user">{{ $t('users.user') }}</option>
-            </select>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center gap-2">
-            <button
-              class="p-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              :title="$t('common.refresh')"
-              @click="fetchUsers"
-            >
-              <span class="material-icons" :class="{ 'animate-spin': loading }">refresh</span>
-            </button>
-            <button class="btn-primary flex items-center gap-2" @click="showAddModal = true">
-              <span class="material-icons text-lg">person_add</span>
-              <span class="hidden sm:inline">{{ $t('users.addUser') }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Active Filters -->
-        <div
-          v-if="hasActiveFilters"
-          class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-slate-700"
+      <!-- Actions slot in header -->
+      <template #actions>
+        <button
+          class="p-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          :title="$t('common.refresh')"
+          @click="fetchUsers"
         >
-          <span class="text-sm text-gray-500 dark:text-slate-400"
-            >{{ $t('common.activeFilters') }}:</span
+          <span class="material-icons" :class="{ 'animate-spin': loading }">refresh</span>
+        </button>
+        <button class="btn-primary flex items-center gap-2" @click="showAddModal = true">
+          <span class="material-icons text-lg">person_add</span>
+          <span class="hidden sm:inline">{{ $t('users.addUser') }}</span>
+        </button>
+      </template>
+
+      <!-- User Info Cell -->
+      <template #cell-name="{ row }">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm"
           >
-          <span
-            v-if="searchQuery"
-            class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-sm"
-          >
-            {{ $t('common.search') }}: "{{ searchQuery }}"
-            <button
-              class="hover:text-purple-900 dark:hover:text-purple-100"
-              @click="searchQuery = ''; applyFilters()"
-            >
-              <span class="material-icons text-sm">close</span>
-            </button>
-          </span>
-          <span
-            v-if="statusFilter"
-            class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm"
-          >
-            {{ $t('common.status.label') }}: {{ statusFilter === 'active' ? $t('common.active') : $t('common.inactive') }}
-            <button
-              class="hover:text-blue-900 dark:hover:text-blue-100"
-              @click="statusFilter = ''; applyFilters()"
-            >
-              <span class="material-icons text-sm">close</span>
-            </button>
-          </span>
-          <span
-            v-if="roleFilter"
-            class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm"
-          >
-            {{ $t('users.role') }}: {{ roleFilter === 'admin' ? $t('users.admin') : $t('users.user') }}
-            <button
-              class="hover:text-green-900 dark:hover:text-green-100"
-              @click="roleFilter = ''; applyFilters()"
-            >
-              <span class="material-icons text-sm">close</span>
-            </button>
-          </span>
-          <button
-            class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1"
-            @click="clearAllFilters"
-          >
-            <span class="material-icons text-sm">clear_all</span>
-            {{ $t('common.clearAll') }}
-          </button>
+            {{ getInitials(row.name) }}
+          </div>
+          <div>
+            <div class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              {{ row.name }}
+              <span
+                v-if="row.isOnline"
+                class="w-2 h-2 bg-green-500 rounded-full"
+                :title="$t('users.online')"
+              ></span>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-slate-400">
+              {{ row.email }}
+            </div>
+          </div>
         </div>
-      </div>
+      </template>
 
-      <!-- Table -->
-      <div>
-        <table class="w-full min-w-[800px]">
-          <thead class="bg-gray-50 dark:bg-slate-700/50">
-            <tr>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('users.name') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('users.role') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('common.status.label') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('users.lastLogin') }}
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                2FA
-              </th>
-              <th
-                class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                {{ $t('common.actions') }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-            <!-- Loading State -->
-            <tr v-if="loading">
-              <td colspan="6" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <span class="material-icons text-4xl text-purple-600 animate-spin mb-2"
-                    >refresh</span
-                  >
-                  <span class="text-gray-500 dark:text-slate-400">{{ $t('common.loading') }}</span>
-                </div>
-              </td>
-            </tr>
+      <!-- Role Cell -->
+      <template #cell-role="{ row }">
+        <span
+          :class="[
+            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+            row.role === 'admin'
+              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+              : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
+          ]"
+        >
+          <span class="material-icons text-sm mr-1">{{
+            row.role === 'admin' ? 'admin_panel_settings' : 'person'
+          }}</span>
+          {{ row.role === 'admin' ? $t('users.admin') : $t('users.user') }}
+        </span>
+      </template>
 
-            <!-- Empty State -->
-            <tr v-else-if="!filteredUsers.length">
-              <td colspan="6" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <div
-                    class="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4"
-                  >
-                    <span class="material-icons text-3xl text-gray-400">people</span>
-                  </div>
-                  <p class="text-gray-500 dark:text-slate-400 font-medium">
-                    {{ $t('users.noUsers') }}
-                  </p>
-                  <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">
-                    {{ $t('users.noUsersDesc') }}
-                  </p>
-                  <button class="btn-primary mt-4" @click="showAddModal = true">
-                    <span class="material-icons mr-2">person_add</span>
-                    {{ $t('users.addUser') }}
-                  </button>
-                </div>
-              </td>
-            </tr>
+      <!-- Status Cell -->
+      <template #cell-status="{ row }">
+        <span
+          :class="[
+            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+            row.status === 'active'
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+              : row.status === 'pending'
+                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
+          ]"
+        >
+          <span
+            :class="[
+              'w-1.5 h-1.5 rounded-full mr-1.5',
+              row.status === 'active' ? 'bg-green-500' : row.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-400'
+            ]"
+          ></span>
+          {{ row.status === 'active' ? $t('common.active') : row.status === 'pending' ? $t('common.pending') : $t('common.inactive') }}
+        </span>
+      </template>
 
-            <!-- Data Rows -->
-            <tr
-              v-for="user in filteredUsers"
-              v-else
-              :key="user._id"
-              class="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors"
-            >
-              <!-- User Info -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                  >
-                    {{ getInitials(user.name) }}
-                  </div>
-                  <div>
-                    <div class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      {{ user.name }}
-                      <span
-                        v-if="user.isOnline"
-                        class="w-2 h-2 bg-green-500 rounded-full"
-                        :title="$t('users.online')"
-                      ></span>
-                    </div>
-                    <div class="text-sm text-gray-500 dark:text-slate-400">
-                      {{ user.email }}
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- Role -->
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-                    user.role === 'admin'
-                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                      : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
-                  ]"
-                >
-                  <span class="material-icons text-sm mr-1">{{
-                    user.role === 'admin' ? 'admin_panel_settings' : 'person'
-                  }}</span>
-                  {{ user.role === 'admin' ? $t('users.admin') : $t('users.user') }}
-                </span>
-              </td>
-
-              <!-- Status -->
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-                    user.status === 'active'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                      : user.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'w-1.5 h-1.5 rounded-full mr-1.5',
-                      user.status === 'active' ? 'bg-green-500' : user.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-400'
-                    ]"
-                  ></span>
-                  {{ user.status === 'active' ? $t('common.active') : user.status === 'pending' ? $t('common.pending') : $t('common.inactive') }}
-                </span>
-              </td>
-
-              <!-- Last Login -->
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-600 dark:text-slate-400">
-                  {{ user.lastLogin ? formatRelativeTime(user.lastLogin) : $t('users.never') }}
-                </div>
-              </td>
-
-              <!-- 2FA -->
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'inline-flex items-center',
-                    user.twoFactorEnabled
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-gray-400 dark:text-slate-500'
-                  ]"
-                >
-                  <span class="material-icons text-lg">{{
-                    user.twoFactorEnabled ? 'verified_user' : 'shield'
-                  }}</span>
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    class="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                    :title="$t('users.actions.viewPermissions')"
-                    @click="openPermissionsModal(user)"
-                  >
-                    <span class="material-icons text-lg">security</span>
-                  </button>
-                  <button
-                    class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                    :title="$t('users.actions.viewSessions')"
-                    @click="openSessionsModal(user)"
-                  >
-                    <span class="material-icons text-lg">devices</span>
-                  </button>
-                  <button
-                    class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    :title="$t('common.edit')"
-                    @click="openEditModal(user)"
-                  >
-                    <span class="material-icons text-lg">edit</span>
-                  </button>
-                  <div class="relative" @click.stop>
-                    <button
-                      class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                      :title="$t('common.moreActions')"
-                      @click="toggleActionMenu(user._id)"
-                    >
-                      <span class="material-icons text-lg">more_vert</span>
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <div
-                      v-if="activeActionMenu === user._id"
-                      class="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50"
-                    >
-                      <button
-                        v-if="user.status === 'pending'"
-                        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        @click="handleResendActivation(user)"
-                      >
-                        <span class="material-icons text-purple-500 text-lg">send</span>
-                        {{ $t('users.actions.resendActivation') }}
-                      </button>
-                      <button
-                        v-if="user.status === 'inactive'"
-                        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        @click="handleActivate(user)"
-                      >
-                        <span class="material-icons text-green-500 text-lg">check_circle</span>
-                        {{ $t('users.actions.activate') }}
-                      </button>
-                      <button
-                        v-if="user.status === 'active'"
-                        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        @click="handleDeactivate(user)"
-                      >
-                        <span class="material-icons text-yellow-500 text-lg">pause_circle</span>
-                        {{ $t('users.actions.deactivate') }}
-                      </button>
-                      <button
-                        v-if="user.status !== 'pending'"
-                        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        @click="handleForcePasswordReset(user)"
-                      >
-                        <span class="material-icons text-blue-500 text-lg">lock_reset</span>
-                        {{ $t('users.actions.forcePasswordReset') }}
-                      </button>
-                      <button
-                        v-if="user.twoFactorEnabled"
-                        class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                        @click="handleReset2FA(user)"
-                      >
-                        <span class="material-icons text-orange-500 text-lg">shield</span>
-                        {{ $t('users.actions.reset2FA') }}
-                      </button>
-                      <!-- Cannot delete yourself -->
-                      <template v-if="user._id !== authStore.user?.id">
-                        <hr class="my-1 border-gray-200 dark:border-slate-700" />
-                        <button
-                          class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                          @click="handleDelete(user)"
-                        >
-                          <span class="material-icons text-lg">delete</span>
-                          {{ $t('common.delete') }}
-                        </button>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div
-        v-if="pagination.total > pagination.limit"
-        class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-slate-700"
-      >
-        <div class="text-sm text-gray-500 dark:text-slate-400">
-          {{ (pagination.page - 1) * pagination.limit + 1 }} -
-          {{ Math.min(pagination.page * pagination.limit, pagination.total) }} /
-          {{ pagination.total }}
+      <!-- Last Login Cell -->
+      <template #cell-lastLogin="{ row }">
+        <div class="text-sm text-gray-600 dark:text-slate-400">
+          {{ row.lastLogin ? formatRelativeTime(row.lastLogin) : $t('users.never') }}
         </div>
-        <div class="flex items-center gap-2">
+      </template>
+
+      <!-- 2FA Cell -->
+      <template #cell-twoFactorEnabled="{ row }">
+        <span
+          :class="[
+            'inline-flex items-center',
+            row.twoFactorEnabled
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-gray-400 dark:text-slate-500'
+          ]"
+        >
+          <span class="material-icons text-lg">{{
+            row.twoFactorEnabled ? 'verified_user' : 'shield'
+          }}</span>
+        </span>
+      </template>
+
+      <!-- Row Actions -->
+      <template #row-actions="{ row }">
+        <div class="flex items-center justify-end gap-1">
           <button
-            class="px-3 py-1.5 text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="pagination.page === 1"
-            @click="goToPage(pagination.page - 1)"
+            class="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+            :title="$t('users.actions.viewPermissions')"
+            @click="openPermissionsModal(row)"
           >
-            {{ $t('common.previous') }}
+            <span class="material-icons text-lg">security</span>
           </button>
           <button
-            class="px-3 py-1.5 text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="pagination.page >= pagination.pages"
-            @click="goToPage(pagination.page + 1)"
+            class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            :title="$t('users.actions.viewSessions')"
+            @click="openSessionsModal(row)"
           >
-            {{ $t('common.next') }}
+            <span class="material-icons text-lg">devices</span>
           </button>
+          <button
+            class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            :title="$t('common.edit')"
+            @click="openEditModal(row)"
+          >
+            <span class="material-icons text-lg">edit</span>
+          </button>
+          <div class="relative" @click.stop>
+            <button
+              class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              :title="$t('common.moreActions')"
+              @click="toggleActionMenu(row._id)"
+            >
+              <span class="material-icons text-lg">more_vert</span>
+            </button>
+            <!-- Dropdown Menu -->
+            <div
+              v-if="activeActionMenu === row._id"
+              class="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50"
+            >
+              <button
+                v-if="row.status === 'pending'"
+                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                @click="handleResendActivation(row)"
+              >
+                <span class="material-icons text-purple-500 text-lg">send</span>
+                {{ $t('users.actions.resendActivation') }}
+              </button>
+              <button
+                v-if="row.status === 'inactive'"
+                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                @click="handleActivate(row)"
+              >
+                <span class="material-icons text-green-500 text-lg">check_circle</span>
+                {{ $t('users.actions.activate') }}
+              </button>
+              <button
+                v-if="row.status === 'active'"
+                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                @click="handleDeactivate(row)"
+              >
+                <span class="material-icons text-yellow-500 text-lg">pause_circle</span>
+                {{ $t('users.actions.deactivate') }}
+              </button>
+              <button
+                v-if="row.status !== 'pending'"
+                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                @click="handleForcePasswordReset(row)"
+              >
+                <span class="material-icons text-blue-500 text-lg">lock_reset</span>
+                {{ $t('users.actions.forcePasswordReset') }}
+              </button>
+              <button
+                v-if="row.twoFactorEnabled"
+                class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                @click="handleReset2FA(row)"
+              >
+                <span class="material-icons text-orange-500 text-lg">shield</span>
+                {{ $t('users.actions.reset2FA') }}
+              </button>
+              <!-- Cannot delete yourself -->
+              <template v-if="row._id !== authStore.user?.id">
+                <hr class="my-1 border-gray-200 dark:border-slate-700" />
+                <button
+                  class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                  @click="handleDelete(row)"
+                >
+                  <span class="material-icons text-lg">delete</span>
+                  {{ $t('common.delete') }}
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <!-- Empty State Action -->
+      <template #empty-action>
+        <button class="btn-primary mt-4" @click="showAddModal = true">
+          <span class="material-icons mr-2">person_add</span>
+          {{ $t('users.addUser') }}
+        </button>
+      </template>
+    </DataTable>
 
     <!-- Add User Modal -->
     <AddUserModal
@@ -545,6 +360,7 @@ import {
   deleteUser,
   resendActivation
 } from '@/services/userService'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import AddUserModal from '@/components/users/AddUserModal.vue'
 import UserEditModal from '@/components/users/UserEditModal.vue'
 import PermissionsModal from '@/components/users/PermissionsModal.vue'
@@ -556,12 +372,45 @@ const toast = useToast()
 const partnerStore = usePartnerStore()
 const authStore = useAuthStore()
 
+// DataTable columns
+const columns = computed(() => [
+  { key: 'name', label: t('users.name'), sortable: true },
+  { key: 'role', label: t('users.role'), sortable: true },
+  { key: 'status', label: t('common.status.label'), sortable: true },
+  { key: 'lastLogin', label: t('users.lastLogin'), sortable: true },
+  { key: 'twoFactorEnabled', label: '2FA', sortable: false }
+])
+
+// DataTable filters
+const tableFilters = computed(() => [
+  {
+    key: 'status',
+    label: t('common.status.label'),
+    type: 'select',
+    placeholder: t('users.allStatuses'),
+    options: [
+      { value: 'active', label: t('common.active') },
+      { value: 'pending', label: t('common.pending') },
+      { value: 'inactive', label: t('common.inactive') }
+    ]
+  },
+  {
+    key: 'role',
+    label: t('users.role'),
+    type: 'select',
+    placeholder: t('users.allRoles'),
+    options: [
+      { value: 'admin', label: t('users.admin') },
+      { value: 'user', label: t('users.user') }
+    ]
+  }
+])
+
 // State
 const loading = ref(false)
 const users = ref([])
 const searchQuery = ref('')
-const statusFilter = ref('')
-const roleFilter = ref('')
+const filterValues = ref({})
 const activeActionMenu = ref(null)
 
 // Modals
@@ -592,25 +441,6 @@ const stats = computed(() => {
   return { total, active, pending, inactive, with2FA }
 })
 
-// Filtered users
-const filteredUsers = computed(() => {
-  return users.value
-})
-
-// Has active filters
-const hasActiveFilters = computed(() => {
-  return searchQuery.value || statusFilter.value || roleFilter.value
-})
-
-// Debounced search
-let searchTimeout = null
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    applyFilters()
-  }, 300)
-}
-
 // Fetch users
 const fetchUsers = async () => {
   loading.value = true
@@ -620,8 +450,8 @@ const fetchUsers = async () => {
       limit: pagination.limit
     }
     if (searchQuery.value) params.search = searchQuery.value
-    if (statusFilter.value) params.status = statusFilter.value
-    if (roleFilter.value) params.role = roleFilter.value
+    if (filterValues.value.status) params.status = filterValues.value.status
+    if (filterValues.value.role) params.role = filterValues.value.role
 
     // Platform admin - filter based on view context
     if (authStore.user?.accountType === 'platform') {
@@ -646,23 +476,22 @@ const fetchUsers = async () => {
   }
 }
 
-// Apply filters
-const applyFilters = () => {
+// DataTable event handlers
+const handleSearch = query => {
+  searchQuery.value = query
   pagination.page = 1
   fetchUsers()
 }
 
-// Clear all filters
-const clearAllFilters = () => {
-  searchQuery.value = ''
-  statusFilter.value = ''
-  roleFilter.value = ''
-  applyFilters()
+const handleFilter = filters => {
+  filterValues.value = filters
+  pagination.page = 1
+  fetchUsers()
 }
 
-// Go to page
-const goToPage = page => {
+const handlePageChange = ({ page, perPage }) => {
   pagination.page = page
+  pagination.limit = perPage
   fetchUsers()
 }
 

@@ -114,34 +114,6 @@
             </div>
           </div>
 
-          <!-- View Mode Toggle -->
-          <div class="flex items-center bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
-            <button
-              class="p-2 rounded-md transition-colors"
-              :class="
-                viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-600 shadow'
-                  : 'hover:bg-gray-200 dark:hover:bg-slate-600'
-              "
-              :title="$t('hotels.tableView')"
-              @click="viewMode = 'table'"
-            >
-              <span class="material-icons text-lg">view_list</span>
-            </button>
-            <button
-              class="p-2 rounded-md transition-colors"
-              :class="
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-600 shadow'
-                  : 'hover:bg-gray-200 dark:hover:bg-slate-600'
-              "
-              :title="$t('hotels.gridView')"
-              @click="viewMode = 'grid'"
-            >
-              <span class="material-icons text-lg">grid_view</span>
-            </button>
-          </div>
-
           <!-- Sort Dropdown -->
           <div class="relative">
             <select v-model="sortBy" class="form-input pr-8 min-w-[150px]" @change="fetchHotels">
@@ -313,444 +285,179 @@
       </div>
 
       <div class="p-6">
-        <!-- Loading State -->
-        <div v-if="loading" class="py-12 text-center">
-          <div
-            class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"
-          ></div>
-          <p class="mt-4 text-gray-600 dark:text-slate-400">{{ $t('common.loading') }}</p>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="hotels.length === 0" class="py-12 text-center">
-          <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">hotel</span>
-          <p class="mt-4 text-gray-600 dark:text-slate-400">
-            {{ activeFilterCount > 0 ? $t('hotels.noResults') : $t('hotels.noHotels') }}
-          </p>
-          <p v-if="activeFilterCount > 0" class="text-sm text-gray-500 dark:text-slate-500 mt-1">
-            {{ $t('hotels.tryDifferentFilters') }}
-          </p>
-          <button v-if="activeFilterCount > 0" class="btn-secondary mt-4" @click="clearAllFilters">
-            {{ $t('hotels.clearFilters') }}
-          </button>
-        </div>
-
-        <!-- Table View -->
-        <div v-else-if="viewMode === 'table'" class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-            <thead class="bg-gray-50 dark:bg-slate-700/50">
-              <tr>
-                <th class="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    :indeterminate="isPartialSelected"
-                    class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    @change="toggleSelectAll"
-                  />
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('hotels.name') }}
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('hotels.city') }}
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('hotels.stars') }}
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('hotels.type') }}
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('common.status.label') }}
-                </th>
-                <th
-                  class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
-                >
-                  {{ $t('common.actions') }}
-                </th>
-              </tr>
-            </thead>
-            <tbody
-              class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700"
-            >
-              <tr
-                v-for="hotel in hotels"
-                :key="hotel._id"
-                class="hover:bg-gray-50 dark:hover:bg-slate-700/50"
-                :class="{
-                  'bg-purple-50 dark:bg-purple-900/10': selectedHotels.includes(hotel._id)
-                }"
-              >
-                <td class="px-4 py-4 whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    :checked="selectedHotels.includes(hotel._id)"
-                    class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    @change="toggleSelect(hotel._id)"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div
-                      class="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-700"
-                    >
-                      <img
-                        v-if="getHotelImage(hotel)"
-                        :src="getHotelImage(hotel)"
-                        :alt="getHotelName(hotel)"
-                        class="h-12 w-12 object-cover"
-                      />
-                      <div v-else class="h-12 w-12 flex items-center justify-center">
-                        <span class="material-icons text-gray-400">hotel</span>
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="flex items-center gap-2">
-                        <router-link
-                          :to="`/hotels/${hotel._id}`"
-                          class="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400"
-                        >
-                          {{ getHotelName(hotel) }}
-                        </router-link>
-                        <span
-                          v-if="hotel.hotelType === 'linked'"
-                          class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                        >
-                          <span class="material-icons text-xs mr-0.5">link</span>
-                          HotelBase
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-2 mt-1">
-                        <span
-                          v-if="hotel.featured"
-                          class="inline-flex items-center text-xs text-orange-600"
-                        >
-                          <span class="material-icons text-sm mr-0.5">star</span>
-                          {{ $t('hotels.featured') }}
-                        </span>
-                        <span
-                          v-if="hotel.totalRooms"
-                          class="text-xs text-gray-500 dark:text-slate-400"
-                        >
-                          {{ hotel.totalRooms }} {{ $t('hotels.rooms') }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
-                  {{ hotel.address?.city || '-' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center text-yellow-500">
-                    <span v-for="n in hotel.stars" :key="n" class="material-icons text-sm"
-                      >star</span
-                    >
-                    <span
-                      v-for="n in 5 - hotel.stars"
-                      :key="'e' + n"
-                      class="material-icons text-sm text-gray-300 dark:text-slate-600"
-                      >star</span
-                    >
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
-                  {{ $t(`hotels.types.${hotel.type}`) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="badge"
-                    :class="{
-                      'badge-success': hotel.status === 'active',
-                      'badge-danger': hotel.status === 'inactive',
-                      'badge-warning': hotel.status === 'draft'
-                    }"
-                  >
-                    {{ $t(`hotels.statuses.${hotel.status}`) }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex items-center justify-end gap-1">
-                    <button
-                      class="p-2 rounded-lg transition-colors"
-                      :class="
-                        hotel.featured
-                          ? 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                          : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'
-                      "
-                      :title="
-                        hotel.featured ? $t('hotels.removeFeatured') : $t('hotels.makeFeatured')
-                      "
-                      @click="toggleFeatured(hotel)"
-                    >
-                      <span class="material-icons text-lg">{{
-                        hotel.featured ? 'star' : 'star_border'
-                      }}</span>
-                    </button>
-                    <router-link
-                      :to="`/hotels/${hotel._id}`"
-                      class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                      :title="$t('common.edit')"
-                    >
-                      <span class="material-icons text-lg">edit</span>
-                    </router-link>
-                    <button
-                      class="p-2 rounded-lg transition-colors"
-                      :class="
-                        hotel.status === 'active'
-                          ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                          : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                      "
-                      :title="
-                        hotel.status === 'active' ? $t('common.deactivate') : $t('common.activate')
-                      "
-                      @click="toggleStatus(hotel)"
-                    >
-                      <span class="material-icons text-lg">{{
-                        hotel.status === 'active' ? 'pause_circle' : 'play_circle'
-                      }}</span>
-                    </button>
-                    <button
-                      class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      :title="$t('common.delete')"
-                      @click="confirmDelete(hotel)"
-                    >
-                      <span class="material-icons text-lg">delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Grid View -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div
-            v-for="hotel in hotels"
-            :key="hotel._id"
-            class="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-gray-200 dark:border-slate-600 overflow-hidden hover:shadow-lg transition-shadow group"
-            :class="{ 'ring-2 ring-purple-500': selectedHotels.includes(hotel._id) }"
-          >
-            <!-- Card Image -->
-            <div class="relative aspect-video bg-gray-100 dark:bg-slate-600">
-              <img
-                v-if="getHotelImage(hotel)"
-                :src="getHotelImage(hotel)"
-                :alt="getHotelName(hotel)"
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <span class="material-icons text-5xl text-gray-300 dark:text-slate-500">hotel</span>
-              </div>
-              <!-- Checkbox Overlay -->
-              <div class="absolute top-3 left-3">
-                <input
-                  type="checkbox"
-                  :checked="selectedHotels.includes(hotel._id)"
-                  class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-5 h-5"
-                  @change="toggleSelect(hotel._id)"
-                />
-              </div>
-              <!-- Status Badge -->
-              <div class="absolute top-3 right-3">
-                <span
-                  class="badge"
-                  :class="{
-                    'badge-success': hotel.status === 'active',
-                    'badge-danger': hotel.status === 'inactive',
-                    'badge-warning': hotel.status === 'draft'
-                  }"
-                >
-                  {{ $t(`hotels.statuses.${hotel.status}`) }}
-                </span>
-              </div>
-              <!-- Featured Badge -->
-              <div v-if="hotel.featured" class="absolute bottom-3 left-3">
-                <span
-                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-500 text-white"
-                >
-                  <span class="material-icons text-sm mr-0.5">star</span>
-                  {{ $t('hotels.featured') }}
-                </span>
-              </div>
-            </div>
-            <!-- Card Content -->
-            <div class="p-4">
-              <div class="flex items-center gap-2">
-                <router-link
-                  :to="`/hotels/${hotel._id}`"
-                  class="text-lg font-semibold text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 truncate"
-                >
-                  {{ getHotelName(hotel) }}
-                </router-link>
-                <span
-                  v-if="hotel.hotelType === 'linked'"
-                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 flex-shrink-0"
-                >
-                  <span class="material-icons text-xs mr-0.5">link</span>
-                  HotelBase
-                </span>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="material-icons text-sm text-gray-400">location_on</span>
-                <span class="text-sm text-gray-500 dark:text-slate-400 truncate">
-                  {{ hotel.address?.city || '-' }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between mt-3">
-                <div class="flex items-center text-yellow-500">
-                  <span v-for="n in hotel.stars" :key="n" class="material-icons text-sm">star</span>
-                  <span
-                    v-for="n in 5 - hotel.stars"
-                    :key="'e' + n"
-                    class="material-icons text-sm text-gray-300 dark:text-slate-600"
-                    >star</span
-                  >
-                </div>
-                <span
-                  class="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-600 rounded text-gray-600 dark:text-slate-300"
-                >
-                  {{ $t(`hotels.types.${hotel.type}`) }}
-                </span>
-              </div>
-              <!-- Card Actions -->
-              <div
-                class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-slate-600"
-              >
-                <router-link
-                  :to="`/hotels/${hotel._id}`"
-                  class="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center"
-                >
-                  <span class="material-icons text-sm mr-1">edit</span>
-                  {{ $t('common.edit') }}
-                </router-link>
-                <div class="flex items-center gap-1">
-                  <button
-                    class="p-1.5 rounded-lg transition-colors"
-                    :class="
-                      hotel.featured
-                        ? 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                        : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'
-                    "
-                    :title="
-                      hotel.featured ? $t('hotels.removeFeatured') : $t('hotels.makeFeatured')
-                    "
-                    @click="toggleFeatured(hotel)"
-                  >
-                    <span class="material-icons text-lg">{{
-                      hotel.featured ? 'star' : 'star_border'
-                    }}</span>
-                  </button>
-                  <button
-                    class="p-1.5 rounded-lg transition-colors"
-                    :class="
-                      hotel.status === 'active'
-                        ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                        : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                    "
-                    :title="
-                      hotel.status === 'active' ? $t('common.deactivate') : $t('common.activate')
-                    "
-                    @click="toggleStatus(hotel)"
-                  >
-                    <span class="material-icons text-lg">{{
-                      hotel.status === 'active' ? 'pause_circle' : 'play_circle'
-                    }}</span>
-                  </button>
-                  <button
-                    class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    :title="$t('common.delete')"
-                    @click="confirmDelete(hotel)"
-                  >
-                    <span class="material-icons text-lg">delete</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div
-          v-if="pagination.total > 0"
-          class="mt-6 flex flex-wrap items-center justify-between gap-4"
+        <DataTable
+          :data="hotels"
+          :columns="columns"
+          :loading="loading"
+          :total="pagination.total"
+          :page="pagination.page"
+          :per-page="pagination.limit"
+          :show-header="false"
+          responsive
+          card-title-key="name"
+          empty-icon="hotel"
+          :empty-text="activeFilterCount > 0 ? $t('hotels.noResults') : $t('hotels.noHotels')"
+          :row-class="row => selectedHotels.includes(row._id) ? 'bg-purple-50 dark:bg-purple-900/10' : ''"
+          @page-change="handlePageChange"
         >
-          <div class="flex items-center gap-4">
-            <p class="text-sm text-gray-600 dark:text-slate-400">
-              {{
-                $t('hotels.showing', {
-                  from: (pagination.page - 1) * pagination.limit + 1,
-                  to: Math.min(pagination.page * pagination.limit, pagination.total),
-                  total: pagination.total
-                })
-              }}
-            </p>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-500 dark:text-slate-400"
-                >{{ $t('hotels.perPage') }}:</span
+          <template #header-checkbox>
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate="isPartialSelected"
+              class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              @change="toggleSelectAll"
+            />
+          </template>
+
+          <template #cell-checkbox="{ row }">
+            <input
+              type="checkbox"
+              :checked="selectedHotels.includes(row._id)"
+              class="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              @change="toggleSelect(row._id)"
+            />
+          </template>
+
+          <template #cell-name="{ row }">
+            <div class="flex items-center">
+              <div
+                class="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-700"
               >
-              <select
-                v-model="pagination.limit"
-                class="form-input py-1 px-2 text-sm w-20"
-                @change="fetchHotels"
-              >
-                <option :value="10">10</option>
-                <option :value="20">20</option>
-                <option :value="50">50</option>
-                <option :value="100">100</option>
-              </select>
+                <img
+                  v-if="getHotelImage(row)"
+                  :src="getHotelImage(row)"
+                  :alt="getHotelName(row)"
+                  class="h-12 w-12 object-cover"
+                />
+                <div v-else class="h-12 w-12 flex items-center justify-center">
+                  <span class="material-icons text-gray-400">hotel</span>
+                </div>
+              </div>
+              <div class="ml-4">
+                <div class="flex items-center gap-2">
+                  <router-link
+                    :to="`/hotels/${row._id}`"
+                    class="text-sm font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400"
+                  >
+                    {{ getHotelName(row) }}
+                  </router-link>
+                  <span
+                    v-if="row.hotelType === 'linked'"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                  >
+                    <span class="material-icons text-xs mr-0.5">link</span>
+                    HotelBase
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span
+                    v-if="row.featured"
+                    class="inline-flex items-center text-xs text-orange-600"
+                  >
+                    <span class="material-icons text-sm mr-0.5">star</span>
+                    {{ $t('hotels.featured') }}
+                  </span>
+                  <span
+                    v-if="row.totalRooms"
+                    class="text-xs text-gray-500 dark:text-slate-400"
+                  >
+                    {{ row.totalRooms }} {{ $t('hotels.rooms') }}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              :disabled="pagination.page <= 1"
-              class="btn-secondary p-2"
-              :class="{ 'opacity-50 cursor-not-allowed': pagination.page <= 1 }"
-              @click="changePage(1)"
-            >
-              <span class="material-icons text-lg">first_page</span>
-            </button>
-            <button
-              :disabled="pagination.page <= 1"
-              class="btn-secondary p-2"
-              :class="{ 'opacity-50 cursor-not-allowed': pagination.page <= 1 }"
-              @click="changePage(pagination.page - 1)"
-            >
-              <span class="material-icons text-lg">chevron_left</span>
-            </button>
-            <span class="px-4 py-2 text-sm text-gray-600 dark:text-slate-400">
-              {{ pagination.page }} / {{ pagination.pages }}
+          </template>
+
+          <template #cell-city="{ row }">
+            <span class="text-sm text-gray-500 dark:text-slate-400">
+              {{ row.address?.city || '-' }}
             </span>
-            <button
-              :disabled="pagination.page >= pagination.pages"
-              class="btn-secondary p-2"
-              :class="{ 'opacity-50 cursor-not-allowed': pagination.page >= pagination.pages }"
-              @click="changePage(pagination.page + 1)"
+          </template>
+
+          <template #cell-stars="{ row }">
+            <div class="flex items-center text-yellow-500">
+              <span v-for="n in row.stars" :key="n" class="material-icons text-sm">star</span>
+              <span
+                v-for="n in 5 - row.stars"
+                :key="'e' + n"
+                class="material-icons text-sm text-gray-300 dark:text-slate-600"
+              >star</span>
+            </div>
+          </template>
+
+          <template #cell-type="{ row }">
+            <span class="text-sm text-gray-500 dark:text-slate-400">
+              {{ $t(`hotels.types.${row.type}`) }}
+            </span>
+          </template>
+
+          <template #cell-status="{ row }">
+            <span
+              class="badge"
+              :class="{
+                'badge-success': row.status === 'active',
+                'badge-danger': row.status === 'inactive',
+                'badge-warning': row.status === 'draft'
+              }"
             >
-              <span class="material-icons text-lg">chevron_right</span>
+              {{ $t(`hotels.statuses.${row.status}`) }}
+            </span>
+          </template>
+
+          <template #row-actions="{ row }">
+            <div class="flex items-center justify-end gap-1">
+              <button
+                class="p-2 rounded-lg transition-colors"
+                :class="
+                  row.featured
+                    ? 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+                "
+                :title="row.featured ? $t('hotels.removeFeatured') : $t('hotels.makeFeatured')"
+                @click="toggleFeatured(row)"
+              >
+                <span class="material-icons text-lg">{{ row.featured ? 'star' : 'star_border' }}</span>
+              </button>
+              <router-link
+                :to="`/hotels/${row._id}`"
+                class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                :title="$t('common.edit')"
+              >
+                <span class="material-icons text-lg">edit</span>
+              </router-link>
+              <button
+                class="p-2 rounded-lg transition-colors"
+                :class="
+                  row.status === 'active'
+                    ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                    : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                "
+                :title="row.status === 'active' ? $t('common.deactivate') : $t('common.activate')"
+                @click="toggleStatus(row)"
+              >
+                <span class="material-icons text-lg">{{ row.status === 'active' ? 'pause_circle' : 'play_circle' }}</span>
+              </button>
+              <button
+                class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                :title="$t('common.delete')"
+                @click="confirmDelete(row)"
+              >
+                <span class="material-icons text-lg">delete</span>
+              </button>
+            </div>
+          </template>
+
+          <template #empty-action>
+            <button v-if="activeFilterCount > 0" class="btn-secondary mt-4" @click="clearAllFilters">
+              {{ $t('hotels.clearFilters') }}
             </button>
-            <button
-              :disabled="pagination.page >= pagination.pages"
-              class="btn-secondary p-2"
-              :class="{ 'opacity-50 cursor-not-allowed': pagination.page >= pagination.pages }"
-              @click="changePage(pagination.pages)"
-            >
-              <span class="material-icons text-lg">last_page</span>
-            </button>
-          </div>
-        </div>
+            <router-link v-else to="/hotels/new" class="btn-primary mt-4 inline-flex items-center">
+              <span class="material-icons text-lg mr-2">add</span>
+              {{ $t('hotels.addHotel') }}
+            </router-link>
+          </template>
+        </DataTable>
       </div>
     </div>
 
@@ -794,6 +501,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import hotelService from '@/services/hotelService'
 import { usePartnerContext } from '@/composables/usePartnerContext'
@@ -811,7 +519,6 @@ const deleting = ref(false)
 const bulkDeleting = ref(false)
 const selectedHotel = ref(null)
 const selectedHotels = ref([])
-const viewMode = ref('table')
 const sortBy = ref('')
 const showBulkMenu = ref(false)
 
@@ -839,6 +546,16 @@ const stats = reactive({
   draft: 0,
   featured: 0
 })
+
+// Columns for DataTable
+const columns = computed(() => [
+  { key: 'checkbox', label: '', sortable: false, width: '48px' },
+  { key: 'name', label: t('hotels.name'), sortable: false },
+  { key: 'city', label: t('hotels.city'), sortable: false },
+  { key: 'stars', label: t('hotels.stars'), sortable: false },
+  { key: 'type', label: t('hotels.type'), sortable: false },
+  { key: 'status', label: t('common.status.label'), sortable: false }
+])
 
 // Hotel types for filter dropdown
 const hotelTypes = computed(() => ({
@@ -1040,8 +757,9 @@ const handleDelete = async () => {
   }
 }
 
-const changePage = page => {
+const handlePageChange = ({ page, perPage }) => {
   pagination.page = page
+  if (perPage) pagination.limit = perPage
   fetchHotels()
 }
 

@@ -61,12 +61,12 @@
             <span class="capitalize">{{ value }}</span>
           </template>
 
-          <template #actions="{ item }">
+          <template #row-actions="{ row }">
             <div class="flex items-center justify-end gap-2">
               <button
                 class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                 :title="$t('common.edit')"
-                @click="openEditModal(item)"
+                @click="openEditModal(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -80,7 +80,7 @@
               <button
                 class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 :title="$t('common.delete')"
-                @click="confirmDelete(item)"
+                @click="confirmDelete(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -201,7 +201,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
-import DataTable from '@/components/common/DataTable.vue'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import agencyService from '@/services/agencyService'
 import { useI18n } from 'vue-i18n'

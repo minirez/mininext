@@ -217,188 +217,136 @@
       </div>
 
       <!-- Guest List -->
-      <div
-        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+      <DataTable
+        :data="filteredGuests"
+        :columns="columns"
+        :loading="loading"
+        :show-header="false"
+        :show-pagination="false"
+        responsive
+        card-title-key="firstName"
+        empty-icon="check_circle"
+        :empty-text="guests.length === 0 ? 'Bekleyen KBS bildirimi yok' : 'Filtre kriterlerine uyan sonuc yok'"
+        :row-class="row => !row.isValid ? 'bg-red-50 dark:bg-red-900/10' : ''"
       >
-        <!-- Loading -->
-        <div v-if="loading" class="p-8 text-center">
-          <span class="material-icons animate-spin text-4xl text-indigo-500">refresh</span>
-          <p class="mt-2 text-gray-500 dark:text-slate-400">Yukleniyor...</p>
-        </div>
+        <template #header-checkbox>
+          <input
+            type="checkbox"
+            :checked="allSelected"
+            class="w-4 h-4 rounded border-gray-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500"
+            @change="toggleSelectAll"
+          />
+        </template>
 
-        <!-- Empty State -->
-        <div v-else-if="filteredGuests.length === 0" class="p-8 text-center">
-          <span class="material-icons text-5xl text-gray-300 dark:text-slate-600"
-            >check_circle</span
-          >
-          <p class="mt-2 text-gray-500 dark:text-slate-400">
-            {{
-              guests.length === 0
-                ? 'Bekleyen KBS bildirimi yok'
-                : 'Filtre kriterlerine uyan sonuc yok'
-            }}
-          </p>
-        </div>
+        <template #cell-checkbox="{ row }">
+          <input
+            type="checkbox"
+            :checked="selectedGuests.includes(row.guestId)"
+            :disabled="!row.isValid || row.kbsStatus === 'sent'"
+            class="w-4 h-4 rounded border-gray-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+            @change="toggleGuest(row.guestId)"
+          />
+        </template>
 
-        <!-- Table -->
-        <div v-else class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 dark:bg-slate-700">
-              <tr>
-                <th class="w-12 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    :checked="allSelected"
-                    class="w-4 h-4 rounded border-gray-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500"
-                    @change="toggleSelectAll"
-                  />
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Misafir
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Kimlik
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Oda
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Giris
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Durum
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-                >
-                  Islem
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-              <tr
-                v-for="guest in filteredGuests"
-                :key="guest.guestId"
-                class="hover:bg-gray-50 dark:hover:bg-slate-700/50"
-                :class="{ 'bg-red-50 dark:bg-red-900/10': !guest.isValid }"
+        <template #cell-guest="{ row }">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center"
+              :class="
+                row.isTurkish
+                  ? 'bg-blue-100 dark:bg-blue-900/30'
+                  : 'bg-purple-100 dark:bg-purple-900/30'
+              "
+            >
+              <span
+                class="material-icons text-sm"
+                :class="
+                  row.isTurkish
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-purple-600 dark:text-purple-400'
+                "
               >
-                <td class="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    :checked="selectedGuests.includes(guest.guestId)"
-                    :disabled="!guest.isValid || guest.kbsStatus === 'sent'"
-                    class="w-4 h-4 rounded border-gray-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
-                    @change="toggleGuest(guest.guestId)"
-                  />
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="w-8 h-8 rounded-full flex items-center justify-center"
-                      :class="
-                        guest.isTurkish
-                          ? 'bg-blue-100 dark:bg-blue-900/30'
-                          : 'bg-purple-100 dark:bg-purple-900/30'
-                      "
-                    >
-                      <span
-                        class="material-icons text-sm"
-                        :class="
-                          guest.isTurkish
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-purple-600 dark:text-purple-400'
-                        "
-                      >
-                        {{ guest.isTurkish ? 'badge' : 'flight' }}
-                      </span>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900 dark:text-white">
-                        {{ guest.firstName }} {{ guest.lastName }}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-slate-400">
-                        {{ guest.nationality || '-' }}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  <p class="text-sm text-gray-900 dark:text-white font-mono">
-                    {{ guest.idNumber || '-' }}
-                  </p>
-                  <p class="text-xs text-gray-500 dark:text-slate-400">
-                    {{ getIdTypeLabel(guest.idType) }}
-                  </p>
-                </td>
-                <td class="px-4 py-3">
-                  <span
-                    class="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    {{ guest.roomNumber }}
-                  </span>
-                </td>
-                <td class="px-4 py-3">
-                  <p class="text-sm text-gray-900 dark:text-white">
-                    {{ formatDate(guest.checkInDate) }}
-                  </p>
-                </td>
-                <td class="px-4 py-3">
-                  <!-- KBS Status -->
-                  <div
-                    v-if="guest.kbsStatus === 'sent'"
-                    class="flex items-center gap-1 text-green-600 dark:text-green-400 mb-1"
-                  >
-                    <span class="material-icons text-sm">send</span>
-                    <span class="text-sm">Gonderildi</span>
-                  </div>
-                  <div
-                    v-else-if="guest.isValid"
-                    class="flex items-center gap-1 text-amber-600 dark:text-amber-400 mb-1"
-                  >
-                    <span class="material-icons text-sm">pending</span>
-                    <span class="text-sm">Hazir</span>
-                  </div>
-                  <div v-else class="space-y-1">
-                    <div class="flex items-center gap-1 text-red-600 dark:text-red-400">
-                      <span class="material-icons text-sm">error</span>
-                      <span class="text-sm">Eksik</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1">
-                      <span
-                        v-for="field in guest.missingFields"
-                        :key="field"
-                        class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs rounded"
-                      >
-                        {{ getFieldLabel(field) }}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <button
-                    v-if="!guest.isValid"
-                    class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    title="Bilgileri Duzenle"
-                    @click="openEditModal(guest)"
-                  >
-                    <span class="material-icons text-gray-600 dark:text-gray-400">edit</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+                {{ row.isTurkish ? 'badge' : 'flight' }}
+              </span>
+            </div>
+            <div>
+              <p class="font-medium text-gray-900 dark:text-white">
+                {{ row.firstName }} {{ row.lastName }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                {{ row.nationality || '-' }}
+              </p>
+            </div>
+          </div>
+        </template>
+
+        <template #cell-identity="{ row }">
+          <p class="text-sm text-gray-900 dark:text-white font-mono">
+            {{ row.idNumber || '-' }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ getIdTypeLabel(row.idType) }}
+          </p>
+        </template>
+
+        <template #cell-roomNumber="{ row }">
+          <span
+            class="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ row.roomNumber }}
+          </span>
+        </template>
+
+        <template #cell-checkInDate="{ row }">
+          <p class="text-sm text-gray-900 dark:text-white">
+            {{ formatDate(row.checkInDate) }}
+          </p>
+        </template>
+
+        <template #cell-status="{ row }">
+          <!-- KBS Status -->
+          <div
+            v-if="row.kbsStatus === 'sent'"
+            class="flex items-center gap-1 text-green-600 dark:text-green-400 mb-1"
+          >
+            <span class="material-icons text-sm">send</span>
+            <span class="text-sm">Gonderildi</span>
+          </div>
+          <div
+            v-else-if="row.isValid"
+            class="flex items-center gap-1 text-amber-600 dark:text-amber-400 mb-1"
+          >
+            <span class="material-icons text-sm">pending</span>
+            <span class="text-sm">Hazir</span>
+          </div>
+          <div v-else class="space-y-1">
+            <div class="flex items-center gap-1 text-red-600 dark:text-red-400">
+              <span class="material-icons text-sm">error</span>
+              <span class="text-sm">Eksik</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <span
+                v-for="field in row.missingFields"
+                :key="field"
+                class="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs rounded"
+              >
+                {{ getFieldLabel(field) }}
+              </span>
+            </div>
+          </div>
+        </template>
+
+        <template #row-actions="{ row }">
+          <button
+            v-if="!row.isValid"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Bilgileri Duzenle"
+            @click="openEditModal(row)"
+          >
+            <span class="material-icons text-gray-600 dark:text-gray-400">edit</span>
+          </button>
+        </template>
+      </DataTable>
 
       <!-- Edit Guest Modal -->
       <div
@@ -574,6 +522,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import * as kbsService from '@/services/pms/kbsService'
 
 const toast = useToast()
@@ -603,6 +552,16 @@ const showMarkSentModal = ref(false)
 const editingGuest = ref(null)
 const editForm = ref({})
 const kbsReference = ref('')
+
+// Columns
+const columns = computed(() => [
+  { key: 'checkbox', label: '', sortable: false, width: '48px' },
+  { key: 'guest', label: 'Misafir', sortable: false },
+  { key: 'identity', label: 'Kimlik', sortable: false },
+  { key: 'roomNumber', label: 'Oda', sortable: false },
+  { key: 'checkInDate', label: 'Giris', sortable: false },
+  { key: 'status', label: 'Durum', sortable: false }
+])
 
 // Computed
 const filteredGuests = computed(() => {

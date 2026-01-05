@@ -158,170 +158,104 @@
     </div>
 
     <!-- Guests Table -->
-    <div
-      class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+    <DataTable
+      :data="guests"
+      :columns="columns"
+      :loading="loading"
+      :total="pagination.total"
+      :page="pagination.page"
+      :per-page="pagination.limit"
+      :show-header="false"
+      responsive
+      card-title-key="firstName"
+      empty-icon="person_off"
+      empty-text="Misafir bulunamadi"
+      @page-change="handlePageChange"
+      @row-click="openDetail"
     >
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-2 text-gray-500 dark:text-slate-400">Yukleniyor...</p>
-      </div>
-
-      <div v-else-if="guests.length === 0" class="p-8 text-center">
-        <span class="material-icons text-4xl text-gray-400 mb-2">person_off</span>
-        <p class="text-gray-500 dark:text-slate-400">Misafir bulunamadi</p>
-      </div>
-
-      <table v-else class="w-full">
-        <thead class="bg-gray-50 dark:bg-slate-700/50">
-          <tr>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Misafir
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Iletisim
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Kimlik
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              VIP
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Istatistik
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Son Konaklama
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Islemler
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-          <tr
-            v-for="guest in guests"
-            :key="guest._id"
-            class="hover:bg-gray-50 dark:hover:bg-slate-700/30 cursor-pointer"
-            @click="openDetail(guest)"
+      <template #cell-guest="{ row }">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+            :class="row.isBlacklisted ? 'bg-red-500' : 'bg-indigo-500'"
           >
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
-                  :class="guest.isBlacklisted ? 'bg-red-500' : 'bg-indigo-500'"
-                >
-                  {{ getInitials(guest) }}
-                </div>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    {{ guest.firstName }} {{ guest.lastName }}
-                    <span v-if="guest.isBlacklisted" class="ml-1 text-red-500">
-                      <span class="material-icons text-sm align-middle">block</span>
-                    </span>
-                  </p>
-                  <p v-if="guest.nationality" class="text-xs text-gray-500 dark:text-slate-400">
-                    {{ guest.nationality }}
-                  </p>
-                </div>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-sm text-gray-900 dark:text-white">{{ guest.phone || '-' }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ guest.email || '-' }}</p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-sm text-gray-900 dark:text-white">{{ guest.idNumber || '-' }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ getIdTypeLabel(guest.idType) }}
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-medium"
-                :class="getVipClasses(guest.vipLevel)"
-              >
-                {{ getVipLabel(guest.vipLevel) }}
+            {{ getInitials(row) }}
+          </div>
+          <div>
+            <p class="font-medium text-gray-900 dark:text-white">
+              {{ row.firstName }} {{ row.lastName }}
+              <span v-if="row.isBlacklisted" class="ml-1 text-red-500">
+                <span class="material-icons text-sm align-middle">block</span>
               </span>
-            </td>
-            <td class="px-4 py-3">
-              <div>
-                <p class="text-sm text-gray-900 dark:text-white">
-                  {{ guest.statistics?.totalStays || 0 }} konaklama
-                </p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ formatCurrency(guest.statistics?.totalSpent) }}
-                </p>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <p class="text-sm text-gray-900 dark:text-white">
-                {{
-                  guest.statistics?.lastStayDate ? formatDate(guest.statistics.lastStayDate) : '-'
-                }}
-              </p>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <div class="flex items-center justify-end gap-1">
-                <button
-                  class="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
-                  title="Detay"
-                  @click.stop="openDetail(guest)"
-                >
-                  <span class="material-icons text-lg">visibility</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination -->
-      <div
-        v-if="pagination.totalPages > 1"
-        class="px-4 py-3 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between"
-      >
-        <p class="text-sm text-gray-500 dark:text-slate-400">
-          Toplam {{ pagination.total }} misafir
-        </p>
-        <div class="flex items-center gap-2">
-          <button
-            :disabled="pagination.page === 1"
-            class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-slate-700"
-            @click="changePage(pagination.page - 1)"
-          >
-            <span class="material-icons text-sm">chevron_left</span>
-          </button>
-          <span class="text-sm text-gray-600 dark:text-gray-400">
-            {{ pagination.page }} / {{ pagination.totalPages }}
-          </span>
-          <button
-            :disabled="pagination.page === pagination.totalPages"
-            class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-slate-700"
-            @click="changePage(pagination.page + 1)"
-          >
-            <span class="material-icons text-sm">chevron_right</span>
-          </button>
+            </p>
+            <p v-if="row.nationality" class="text-xs text-gray-500 dark:text-slate-400">
+              {{ row.nationality }}
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <template #cell-contact="{ row }">
+        <div>
+          <p class="text-sm text-gray-900 dark:text-white">{{ row.phone || '-' }}</p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">{{ row.email || '-' }}</p>
+        </div>
+      </template>
+
+      <template #cell-identity="{ row }">
+        <div>
+          <p class="text-sm text-gray-900 dark:text-white">{{ row.idNumber || '-' }}</p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ getIdTypeLabel(row.idType) }}
+          </p>
+        </div>
+      </template>
+
+      <template #cell-vipLevel="{ row }">
+        <span
+          class="px-2 py-1 rounded-full text-xs font-medium"
+          :class="getVipClasses(row.vipLevel)"
+        >
+          {{ getVipLabel(row.vipLevel) }}
+        </span>
+      </template>
+
+      <template #cell-statistics="{ row }">
+        <div>
+          <p class="text-sm text-gray-900 dark:text-white">
+            {{ row.statistics?.totalStays || 0 }} konaklama
+          </p>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            {{ formatCurrency(row.statistics?.totalSpent) }}
+          </p>
+        </div>
+      </template>
+
+      <template #cell-lastStay="{ row }">
+        <p class="text-sm text-gray-900 dark:text-white">
+          {{ row.statistics?.lastStayDate ? formatDate(row.statistics.lastStayDate) : '-' }}
+        </p>
+      </template>
+
+      <template #row-actions="{ row }">
+        <button
+          class="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
+          title="Detay"
+          @click.stop="openDetail(row)"
+        >
+          <span class="material-icons text-lg">visibility</span>
+        </button>
+      </template>
+
+      <template #empty-action>
+        <button
+          class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+          @click="showAddModal = true"
+        >
+          Yeni Misafir Ekle
+        </button>
+      </template>
+    </DataTable>
 
     <!-- Modals -->
     <AddGuestModal v-model="showAddModal" :hotel-id="hotelId" @created="onGuestCreated" />
@@ -336,10 +270,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import guestService, { VIP_LEVEL_INFO, ID_TYPES } from '@/services/pms/guestService'
 import { usePmsContextInjection } from '@/composables/usePmsContext'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import AddGuestModal from '@/modules/guests/components/AddGuestModal.vue'
 import GuestDetailModal from '@/modules/guests/components/GuestDetailModal.vue'
 
@@ -373,6 +308,15 @@ const filters = ref({
   vipLevel: 'all',
   isBlacklisted: ''
 })
+
+const columns = computed(() => [
+  { key: 'guest', label: 'Misafir', sortable: false },
+  { key: 'contact', label: 'Iletisim', sortable: false },
+  { key: 'identity', label: 'Kimlik', sortable: false },
+  { key: 'vipLevel', label: 'VIP', sortable: false },
+  { key: 'statistics', label: 'Istatistik', sortable: false },
+  { key: 'lastStay', label: 'Son Konaklama', sortable: false }
+])
 
 let debounceTimer = null
 const debouncedFetch = () => {
@@ -422,8 +366,9 @@ const openDetail = guest => {
   showDetailModal.value = true
 }
 
-const changePage = page => {
+const handlePageChange = ({ page, perPage }) => {
   pagination.value.page = page
+  if (perPage) pagination.value.limit = perPage
   fetchGuests()
 }
 

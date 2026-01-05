@@ -180,185 +180,148 @@
     </div>
 
     <!-- Users Table -->
-    <div
+    <DataTable
       v-if="canAccess"
-      class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+      :data="users"
+      :columns="columns"
+      :loading="loading"
+      :show-header="false"
+      :show-pagination="false"
+      responsive
+      card-title-key="firstName"
+      empty-icon="person_off"
+      empty-text="Kullanici bulunamadi"
     >
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-2 text-gray-500 dark:text-slate-400">Yukleniyor...</p>
-      </div>
-
-      <div v-else-if="users.length === 0" class="p-8 text-center">
-        <span class="material-icons text-4xl text-gray-400 mb-2">person_off</span>
-        <p class="text-gray-500 dark:text-slate-400">Kullanici bulunamadi</p>
-      </div>
-
-      <table v-else class="w-full">
-        <thead class="bg-gray-50 dark:bg-slate-700/50">
-          <tr>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Kullanici
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Departman
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Atanan Oteller
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Son Giris
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Durum
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase"
-            >
-              Islemler
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-          <tr
-            v-for="user in users"
-            :key="user._id"
-            class="hover:bg-gray-50 dark:hover:bg-slate-700/50"
+      <template #cell-user="{ row }">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center"
           >
-            <!-- User Info -->
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center"
-                >
-                  <span class="text-indigo-600 dark:text-indigo-400 font-medium">{{
-                    getUserInitials(user)
-                  }}</span>
-                </div>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    {{ user.firstName }} {{ user.lastName }}
-                  </p>
-                  <p class="text-sm text-gray-500 dark:text-slate-400">@{{ user.username }}</p>
-                </div>
-              </div>
-            </td>
-            <!-- Department -->
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 text-xs rounded-full"
-                :class="getDepartmentClass(user.department)"
-              >
-                {{ getDepartmentLabel(user.department) }}
-              </span>
-              <p v-if="user.position" class="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                {{ user.position }}
-              </p>
-            </td>
-            <!-- Assigned Hotels -->
-            <td class="px-4 py-3">
-              <div v-if="user.assignedHotels?.length > 0" class="space-y-1">
-                <div
-                  v-for="(assignment, i) in user.assignedHotels.slice(0, 2)"
-                  :key="i"
-                  class="flex items-center gap-2"
-                >
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{
-                    assignment.hotel?.name || 'Otel'
-                  }}</span>
-                  <span
-                    class="px-1.5 py-0.5 text-xs rounded bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300"
-                  >
-                    {{ getRoleLabel(assignment.role) }}
-                  </span>
-                </div>
-                <p v-if="user.assignedHotels.length > 2" class="text-xs text-gray-400">
-                  +{{ user.assignedHotels.length - 2 }} daha
-                </p>
-              </div>
-              <span v-else class="text-sm text-gray-400">Atanmamis</span>
-            </td>
-            <!-- Last Login -->
-            <td class="px-4 py-3">
-              <p v-if="user.lastLogin" class="text-sm text-gray-700 dark:text-gray-300">
-                {{ formatDate(user.lastLogin) }}
-              </p>
-              <span v-else class="text-sm text-gray-400">-</span>
-            </td>
-            <!-- Status -->
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 text-xs rounded-full"
-                :class="
-                  user.isActive
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                "
-              >
-                {{ user.isActive ? 'Aktif' : 'Pasif' }}
-              </span>
-            </td>
-            <!-- Actions -->
-            <td class="px-4 py-3 text-right">
-              <div class="flex items-center justify-end gap-1">
-                <button
-                  class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg"
-                  title="Duzenle"
-                  @click="openEditModal(user)"
-                >
-                  <span class="material-icons text-lg">edit</span>
-                </button>
-                <button
-                  class="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg"
-                  title="Otel Ata"
-                  @click="openAssignHotelModal(user)"
-                >
-                  <span class="material-icons text-lg">add_business</span>
-                </button>
-                <button
-                  class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg"
-                  title="Sifre Sifirla"
-                  @click="openResetPasswordModal(user)"
-                >
-                  <span class="material-icons text-lg">lock_reset</span>
-                </button>
-                <button
-                  class="p-1.5 rounded-lg"
-                  :class="
-                    user.isActive
-                      ? 'text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30'
-                      : 'text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30'
-                  "
-                  :title="user.isActive ? 'Pasif Yap' : 'Aktif Yap'"
-                  @click="toggleUserStatus(user)"
-                >
-                  <span class="material-icons text-lg">{{
-                    user.isActive ? 'block' : 'check_circle'
-                  }}</span>
-                </button>
-                <button
-                  class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
-                  title="Sil"
-                  @click="confirmDelete(user)"
-                >
-                  <span class="material-icons text-lg">delete</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <span class="text-indigo-600 dark:text-indigo-400 font-medium">{{
+              getUserInitials(row)
+            }}</span>
+          </div>
+          <div>
+            <p class="font-medium text-gray-900 dark:text-white">
+              {{ row.firstName }} {{ row.lastName }}
+            </p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">@{{ row.username }}</p>
+          </div>
+        </div>
+      </template>
+
+      <template #cell-department="{ row }">
+        <span
+          class="px-2 py-1 text-xs rounded-full"
+          :class="getDepartmentClass(row.department)"
+        >
+          {{ getDepartmentLabel(row.department) }}
+        </span>
+        <p v-if="row.position" class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+          {{ row.position }}
+        </p>
+      </template>
+
+      <template #cell-assignedHotels="{ row }">
+        <div v-if="row.assignedHotels?.length > 0" class="space-y-1">
+          <div
+            v-for="(assignment, i) in row.assignedHotels.slice(0, 2)"
+            :key="i"
+            class="flex items-center gap-2"
+          >
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{
+              assignment.hotel?.name || 'Otel'
+            }}</span>
+            <span
+              class="px-1.5 py-0.5 text-xs rounded bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-gray-300"
+            >
+              {{ getRoleLabel(assignment.role) }}
+            </span>
+          </div>
+          <p v-if="row.assignedHotels.length > 2" class="text-xs text-gray-400">
+            +{{ row.assignedHotels.length - 2 }} daha
+          </p>
+        </div>
+        <span v-else class="text-sm text-gray-400">Atanmamis</span>
+      </template>
+
+      <template #cell-lastLogin="{ row }">
+        <p v-if="row.lastLogin" class="text-sm text-gray-700 dark:text-gray-300">
+          {{ formatDate(row.lastLogin) }}
+        </p>
+        <span v-else class="text-sm text-gray-400">-</span>
+      </template>
+
+      <template #cell-isActive="{ row }">
+        <span
+          class="px-2 py-1 text-xs rounded-full"
+          :class="
+            row.isActive
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+          "
+        >
+          {{ row.isActive ? 'Aktif' : 'Pasif' }}
+        </span>
+      </template>
+
+      <template #row-actions="{ row }">
+        <div class="flex items-center justify-end gap-1">
+          <button
+            class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg"
+            title="Duzenle"
+            @click="openEditModal(row)"
+          >
+            <span class="material-icons text-lg">edit</span>
+          </button>
+          <button
+            class="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg"
+            title="Otel Ata"
+            @click="openAssignHotelModal(row)"
+          >
+            <span class="material-icons text-lg">add_business</span>
+          </button>
+          <button
+            class="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg"
+            title="Sifre Sifirla"
+            @click="openResetPasswordModal(row)"
+          >
+            <span class="material-icons text-lg">lock_reset</span>
+          </button>
+          <button
+            class="p-1.5 rounded-lg"
+            :class="
+              row.isActive
+                ? 'text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30'
+                : 'text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30'
+            "
+            :title="row.isActive ? 'Pasif Yap' : 'Aktif Yap'"
+            @click="toggleUserStatus(row)"
+          >
+            <span class="material-icons text-lg">{{
+              row.isActive ? 'block' : 'check_circle'
+            }}</span>
+          </button>
+          <button
+            class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+            title="Sil"
+            @click="confirmDelete(row)"
+          >
+            <span class="material-icons text-lg">delete</span>
+          </button>
+        </div>
+      </template>
+
+      <template #empty-action>
+        <button
+          :disabled="hotels.length === 0"
+          class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+          @click="showAddModal = true"
+        >
+          Yeni Kullanici Ekle
+        </button>
+      </template>
+    </DataTable>
 
     <!-- Add User Modal -->
     <AddUserModal
@@ -427,6 +390,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import pmsAdminUserService from '@/services/pms/pmsAdminUserService'
 import hotelService from '@/services/hotelService'
+import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import AddUserModal from '@/modules/settings/components/AddUserModal.vue'
 import EditUserModal from '@/modules/settings/components/EditUserModal.vue'
@@ -494,6 +458,15 @@ const filters = ref({
 const roles = pmsAdminUserService.getRoles()
 const departments = pmsAdminUserService.getDepartments()
 const hotels = ref([])
+
+// Columns
+const columns = computed(() => [
+  { key: 'user', label: 'Kullanici', sortable: false },
+  { key: 'department', label: 'Departman', sortable: false },
+  { key: 'assignedHotels', label: 'Atanan Oteller', sortable: false },
+  { key: 'lastLogin', label: 'Son Giris', sortable: false },
+  { key: 'isActive', label: 'Durum', sortable: false }
+])
 
 // Fetch hotels
 const fetchHotels = async () => {
