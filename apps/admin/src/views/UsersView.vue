@@ -195,8 +195,8 @@
       </div>
 
       <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full">
+      <div>
+        <table class="w-full min-w-[800px]">
           <thead class="bg-gray-50 dark:bg-slate-700/50">
             <tr>
               <th
@@ -395,7 +395,7 @@
                     <!-- Dropdown Menu -->
                     <div
                       v-if="activeActionMenu === user._id"
-                      class="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-20"
+                      class="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-50"
                     >
                       <button
                         v-if="user.status === 'pending'"
