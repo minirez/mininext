@@ -163,13 +163,30 @@ export const updateAgency = asyncHandler(async (req, res) => {
     throw new NotFoundError('AGENCY_NOT_FOUND')
   }
 
-  // Partner değişikliğine izin verme
-  if (req.body.partner && req.body.partner.toString() !== agency.partner.toString()) {
-    throw new BadRequestError('CANNOT_CHANGE_PARTNER')
-  }
+  // Update only allowed fields (security: prevent mass assignment)
+  const allowedFields = [
+    'companyName',
+    'tradeName',
+    'name',
+    'taxOffice',
+    'taxNumber',
+    'contactPerson',
+    'email',
+    'phone',
+    'address',
+    'settings',
+    'commission',
+    'notes',
+    'preferredCurrency',
+    'paymentTerms'
+  ]
 
-  // Update fields
-  Object.assign(agency, req.body)
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      agency[field] = req.body[field]
+    }
+  })
+
   await agency.save()
 
   res.json({
@@ -360,13 +377,24 @@ export const updateAgencyUser = asyncHandler(async (req, res) => {
     throw new NotFoundError('USER_NOT_FOUND')
   }
 
-  // Prevent changing accountType and accountId
-  delete req.body.accountType
-  delete req.body.accountId
-  delete req.body.password
+  // Update only allowed fields (security: prevent mass assignment)
+  const allowedFields = [
+    'name',
+    'email',
+    'phone',
+    'role',
+    'permissions',
+    'preferredLanguage',
+    'avatar',
+    'notificationSettings'
+  ]
 
-  // Update fields
-  Object.assign(user, req.body)
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      user[field] = req.body[field]
+    }
+  })
+
   await user.save()
 
   const userObj = user.toObject()

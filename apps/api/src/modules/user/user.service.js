@@ -197,18 +197,24 @@ export const updateUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // Prevent changing accountType and accountId
-  if (req.body.accountType || req.body.accountId) {
-    throw new BadRequestError('CANNOT_CHANGE_ACCOUNT')
-  }
+  // Update only allowed fields (security: prevent mass assignment)
+  const allowedFields = [
+    'name',
+    'email',
+    'phone',
+    'role',
+    'permissions',
+    'preferredLanguage',
+    'avatar',
+    'notificationSettings'
+  ]
 
-  // Prevent changing password through this endpoint
-  if (req.body.password) {
-    delete req.body.password
-  }
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      user[field] = req.body[field]
+    }
+  })
 
-  // Update fields
-  Object.assign(user, req.body)
   await user.save()
 
   const userObj = user.toObject()

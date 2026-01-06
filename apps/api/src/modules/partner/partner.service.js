@@ -124,8 +124,28 @@ export const updatePartner = asyncHandler(async (req, res) => {
     throw new NotFoundError('PARTNER_NOT_FOUND')
   }
 
-  // Update fields
-  Object.assign(partner, req.body)
+  // Update only allowed fields (security: prevent mass assignment)
+  const allowedFields = [
+    'companyName',
+    'tradeName',
+    'email',
+    'phone',
+    'taxOffice',
+    'taxNumber',
+    'address',
+    'branding',
+    'settings',
+    'contactPerson',
+    'notes',
+    'code'
+  ]
+
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      partner[field] = req.body[field]
+    }
+  })
+
   await partner.save()
 
   res.json({
