@@ -4,6 +4,18 @@
   "description": "Booking Engine API - Multi-tenant B2B/B2C Platform",
   "type": "module",
   "main": "src/index.js",
+  "imports": {
+    "#config": "./src/config/index.js",
+    "#constants/*": "./src/constants/*",
+    "#core/*": "./src/core/*",
+    "#helpers": "./src/helpers/index.js",
+    "#helpers/*": "./src/helpers/*",
+    "#middleware/*": "./src/middleware/*",
+    "#modules/*": "./src/modules/*",
+    "#services/*": "./src/services/*",
+    "#plugins/*": "./src/plugins/*",
+    "#utils/*": "./src/utils/*"
+  },
   "scripts": {
     "dev": "NODE_ENV=development node --watch src/index.js",
     "start": "NODE_ENV=production node src/index.js",
@@ -45,6 +57,8 @@
     "soap": "^1.6.1",
     "socket.io": "^4.8.3",
     "speakeasy": "^2.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.11.0",
     "xml2js": "^0.6.2"
   },

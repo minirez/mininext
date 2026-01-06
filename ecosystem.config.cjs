@@ -1,29 +1,16 @@
 module.exports = {
   apps: [
     {
-      name: 'booking-api',
+      name: 'booking-engine-api',
       cwd: './apps/api',
       script: 'src/index.js',
-      watch: ['src'],
-      ignore_watch: ['node_modules', 'logs'],
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
       env: {
-        NODE_ENV: 'development',
-        PORT: 4000
-      },
-      env_production: {
         NODE_ENV: 'production',
         PORT: 4000
-      }
-    },
-    {
-      name: 'booking-admin',
-      cwd: './apps/admin',
-      script: 'npx',
-      args: 'vite --host',
-      interpreter: 'none',
-      watch: false,
-      env: {
-        NODE_ENV: 'development'
       }
     }
   ]
