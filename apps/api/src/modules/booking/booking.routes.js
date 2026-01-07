@@ -570,6 +570,39 @@ router.get('/:id', bookingService.getBookingDetail)
 
 /**
  * @swagger
+ * /api/booking/{id}:
+ *   delete:
+ *     tags: [Bookings]
+ *     summary: Delete booking permanently (Superadmin only)
+ *     description: Hard delete a booking from the system. Only platform admins can perform this action.
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     responses:
+ *       200:
+ *         description: Booking deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bookingNumber:
+ *                       type: string
+ *       400:
+ *         description: Superadmin access required
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+router.delete('/:id', bookingService.deleteBooking)
+
+/**
+ * @swagger
  * /api/booking/{id}/status:
  *   patch:
  *     tags: [Bookings]

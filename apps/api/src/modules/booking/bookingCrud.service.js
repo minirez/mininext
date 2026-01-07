@@ -737,6 +737,67 @@ export const cancelBooking = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Hard delete booking (superadmin only)
+ * DELETE /api/bookings/:id
+ */
+export const deleteBooking = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
+  }
+
+  // Check if user is platform admin (superadmin)
+  if (req.user?.accountType !== 'platform' || req.user?.role !== 'admin') {
+    throw new BadRequestError('SUPERADMIN_REQUIRED')
+  }
+
+  const { id } = req.params
+
+  const booking = await Booking.findOne({
+    _id: id,
+    partner: partnerId
+  })
+
+  if (!booking) {
+    throw new NotFoundError('BOOKING_NOT_FOUND')
+  }
+
+  // Release allotment if booking was confirmed
+  if (['pending', 'confirmed'].includes(booking.status)) {
+    for (const room of booking.rooms || []) {
+      const dates = (room.dailyBreakdown || []).map(d => d.date)
+      if (dates.length > 0) {
+        try {
+          await pricingService.releaseAllotment({
+            hotelId: booking.hotel?.toString(),
+            roomTypeId: room.roomType?.toString(),
+            mealPlanId: room.mealPlan?.toString(),
+            marketId: booking.market?.toString(),
+            dates,
+            rooms: 1
+          })
+        } catch (error) {
+          logger.error('Allotment release error during delete:', error.message)
+        }
+      }
+    }
+  }
+
+  // Hard delete the booking
+  await Booking.findByIdAndDelete(id)
+
+  logger.info(`Booking ${booking.bookingNumber} permanently deleted by ${req.user?.email}`)
+
+  res.json({
+    success: true,
+    message: 'BOOKING_DELETED',
+    data: {
+      bookingNumber: booking.bookingNumber
+    }
+  })
+})
+
+/**
  * Add note to booking
  * POST /api/bookings/:id/notes
  */

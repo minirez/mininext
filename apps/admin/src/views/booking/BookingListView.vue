@@ -451,44 +451,11 @@
             </button>
 
             <!-- More Actions Menu -->
-            <div v-if="row.status !== 'draft'" class="relative">
-              <button
-                class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                @click.stop="toggleMenu(row._id)"
-              >
-                <span class="material-icons">more_vert</span>
-              </button>
-
-              <!-- Dropdown Menu -->
-              <div
-                v-if="openMenuId === row._id"
-                class="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 z-20"
-              >
-                <button
-                  v-if="canConfirm(row)"
-                  class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center"
-                  @click.stop="confirmBooking(row)"
-                >
-                  <span class="material-icons text-green-500 mr-2 text-sm">check_circle</span>
-                  {{ $t('booking.confirmBooking') }}
-                </button>
-                <button
-                  v-if="canCancel(row)"
-                  class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center"
-                  @click.stop="cancelBooking(row)"
-                >
-                  <span class="material-icons mr-2 text-sm">cancel</span>
-                  {{ $t('booking.cancelBooking') }}
-                </button>
-                <button
-                  class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center"
-                  @click.stop="printBooking(row)"
-                >
-                  <span class="material-icons mr-2 text-sm">print</span>
-                  {{ $t('booking.printBooking') }}
-                </button>
-              </div>
-            </div>
+            <ActionMenu
+              v-if="row.status !== 'draft'"
+              :items="getActionMenuItems(row)"
+              @select="handleActionSelect($event, row)"
+            />
 
             <!-- Delete Draft -->
             <button
@@ -504,7 +471,7 @@
       </DataTable>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Draft Confirmation Modal -->
     <Modal v-model="showDeleteModal" :title="$t('booking.deleteDraft')">
       <div class="py-4">
         <p class="text-gray-600 dark:text-slate-400">
@@ -521,6 +488,40 @@
           </button>
           <button class="btn-danger px-4 py-2" @click="confirmDeleteDraft">
             {{ $t('common.delete') }}
+          </button>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- Hard Delete Booking Modal (Superadmin Only) -->
+    <Modal v-model="showHardDeleteModal" :title="$t('booking.deleteBookingTitle')">
+      <div class="py-4">
+        <div class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 mb-4">
+          <span class="material-icons text-red-500 text-2xl">warning</span>
+          <div>
+            <p class="font-medium text-red-700 dark:text-red-400">
+              {{ $t('booking.deleteWarning') }}
+            </p>
+            <p class="text-sm text-red-600 dark:text-red-500 mt-1">
+              {{ $t('booking.deleteWarningDescription') }}
+            </p>
+          </div>
+        </div>
+        <p class="text-gray-600 dark:text-slate-400">
+          {{ $t('booking.deleteBookingConfirm') }}
+        </p>
+        <p class="mt-2 font-medium text-gray-900 dark:text-white">
+          {{ bookingToDelete?.bookingNumber }}
+        </p>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <button class="btn-secondary px-4 py-2" @click="showHardDeleteModal = false; bookingToDelete = null">
+            {{ $t('common.cancel') }}
+          </button>
+          <button class="btn-danger px-4 py-2" @click="confirmHardDelete">
+            <span class="material-icons text-sm mr-1">delete_forever</span>
+            {{ $t('booking.deletePermanently') }}
           </button>
         </div>
       </template>
@@ -551,6 +552,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { usePartnerContext } from '@/composables/usePartnerContext'
+import { useAuthStore } from '@/stores/auth'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { useStatusHelpers } from '@/composables/useStatusHelpers'
 import { useDateFiltering } from '@/composables/useDateFiltering'
@@ -560,12 +562,17 @@ import bookingService from '@/services/bookingService'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import Modal from '@/components/common/Modal.vue'
 import DataTable from '@/components/ui/data/DataTable.vue'
+import ActionMenu from '@/components/ui/buttons/ActionMenu.vue'
 import BookingAmendmentModal from '@/components/booking/amendment/BookingAmendmentModal.vue'
 import PaymentModal from '@/components/booking/payment/PaymentModal.vue'
 import PaymentStatusBadge from '@/components/booking/payment/PaymentStatusBadge.vue'
 
 const { locale, t } = useI18n()
 const router = useRouter()
+const authStore = useAuthStore()
+
+// Check if user is superadmin (platform admin)
+const isSuperAdmin = computed(() => authStore.isPlatformAdmin)
 
 // Status helpers
 const { getStatusClass, getStatusDotClass, getBookingStatusLabel } = useStatusHelpers()
@@ -615,6 +622,8 @@ const perPage = DEFAULT_PAGE_SIZE
 const openMenuId = ref(null)
 const showDeleteModal = ref(false)
 const selectedBooking = ref(null)
+const showHardDeleteModal = ref(false)
+const bookingToDelete = ref(null)
 const showAmendmentModal = ref(false)
 const selectedBookingForAmendment = ref(null)
 const showPaymentModal = ref(false)
@@ -1086,6 +1095,86 @@ const getSalesChannelClass = booking => {
     return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
   }
   return 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300'
+}
+
+// Get action menu items for a booking row
+const getActionMenuItems = row => {
+  const items = []
+
+  if (canConfirm(row)) {
+    items.push({
+      key: 'confirm',
+      label: t('booking.confirmBooking'),
+      icon: 'check_circle'
+    })
+  }
+
+  if (canCancel(row)) {
+    items.push({
+      key: 'cancel',
+      label: t('booking.cancelBooking'),
+      icon: 'cancel',
+      danger: true
+    })
+  }
+
+  items.push({
+    key: 'print',
+    label: t('booking.printBooking'),
+    icon: 'print'
+  })
+
+  // Only superadmin can hard delete bookings
+  if (isSuperAdmin.value) {
+    items.push({ divider: true })
+    items.push({
+      key: 'delete',
+      label: t('booking.deleteBooking'),
+      icon: 'delete_forever',
+      danger: true
+    })
+  }
+
+  return items
+}
+
+// Handle action menu selection
+const handleActionSelect = (item, row) => {
+  switch (item.key) {
+    case 'confirm':
+      confirmBooking(row)
+      break
+    case 'cancel':
+      cancelBooking(row)
+      break
+    case 'print':
+      printBooking(row)
+      break
+    case 'delete':
+      bookingToDelete.value = row
+      showHardDeleteModal.value = true
+      break
+  }
+}
+
+// Hard delete booking (superadmin only)
+const confirmHardDelete = async () => {
+  if (!bookingToDelete.value) return
+
+  await executeAction(
+    () => bookingService.deleteBooking(bookingToDelete.value._id),
+    {
+      onSuccess: () => {
+        showHardDeleteModal.value = false
+        bookingToDelete.value = null
+        fetchBookings()
+        fetchStats()
+      },
+      onError: error => {
+        console.error('Failed to delete booking:', error)
+      }
+    }
+  )
 }
 
 </script>

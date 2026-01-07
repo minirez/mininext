@@ -35,7 +35,8 @@ export {
   createBooking,
   updateBookingStatus,
   cancelBooking,
-  addBookingNote
+  addBookingNote,
+  deleteBooking
 } from './bookingCrud.service.js'
 
 // Statistics

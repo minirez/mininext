@@ -241,7 +241,8 @@
       "completed": "Completed",
       "expired": "Expired",
       "noShow": "No Show",
-      "onRequest": "On Request"
+      "onRequest": "On Request",
+      "amended": "Amended"
     },
     "stats": {
       "totalBookings": "Total Bookings",
@@ -284,6 +285,12 @@
     "noteAdded": "Note added",
     "noteAddFailed": "Failed to add note",
     "cancelBooking": "Cancel Booking",
+    "deleteBooking": "Delete Booking",
+    "deletePermanently": "Delete Permanently",
+    "deleteBookingTitle": "Permanently Delete Booking",
+    "deleteWarning": "You are about to permanently delete this booking",
+    "deleteWarningDescription": "This action cannot be undone! The booking will be completely removed from the system along with all its data. This feature is only available to super administrators and should be used with caution.",
+    "deleteBookingConfirm": "Yes, Delete Permanently",
     "cancelConfirmMessage": "Are you sure you want to cancel this booking? This action cannot be undone.",
     "cancelReasonPlaceholder": "Enter cancellation reason (optional)",
     "confirmCancel": "Confirm Cancellation",

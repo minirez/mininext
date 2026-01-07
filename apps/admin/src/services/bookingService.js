@@ -116,6 +116,15 @@ const addBookingNote = async (id, content, isInternal = true) => {
 }
 
 /**
+ * Hard delete booking (superadmin only)
+ * @param {string} id - Booking ID
+ */
+const deleteBooking = async id => {
+  const response = await apiClient.delete(`/bookings/${id}`)
+  return response.data
+}
+
+/**
  * Get booking statistics
  * @param {Object} params - { hotelId, period }
  */
