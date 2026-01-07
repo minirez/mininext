@@ -660,6 +660,7 @@ const { t } = useI18n()
 
 // Use extraction progress composable
 const {
+  operationId,
   progress,
   elapsedTime,
   isSocketConnected,
@@ -731,7 +732,7 @@ const extractData = async () => {
       const callbacks = {
         onComplete: async () => {
           try {
-            const result = await hotelService.getExtractionResult(progress.operationId)
+            const result = await hotelService.getExtractionResult(operationId.value)
             if (result.success && result.data) {
               extractedData.value = initializeExtractedData(result.data)
               step.value = 'preview'

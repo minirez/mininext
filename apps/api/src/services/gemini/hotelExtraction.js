@@ -1,6 +1,90 @@
 import logger from '../../core/logger.js'
 import { getAI, generateContent, GEMINI_MODEL } from './client.js'
 import { preprocessRoomContent, isJsonTruncated, repairTruncatedJson } from './helpers.js'
+import { JSDOM } from 'jsdom'
+
+/**
+ * Fetch URL content using HTTP with browser-like headers
+ * This is a fallback for when Firecrawl is not available and Gemini direct fails
+ */
+const fetchUrlContent = async (url, options = {}) => {
+  const { progress } = options
+
+  try {
+    logger.info('Fetching URL content with HTTP: ' + url)
+
+    // Fetch with browser-like headers to bypass basic bot protection
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
+        Connection: 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0'
+      },
+      redirect: 'follow',
+      timeout: 30000 // 30 seconds
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const html = await response.text()
+    logger.info(`Fetched ${html.length} characters from ${url}`)
+
+    // Parse HTML and extract text content
+    const dom = new JSDOM(html)
+    const document = dom.window.document
+
+    // Remove script and style tags
+    const scripts = document.querySelectorAll('script, style, noscript')
+    scripts.forEach(script => script.remove())
+
+    // Get text content
+    const textContent = document.body.textContent || ''
+
+    // Extract meta description
+    const metaDescription =
+      document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+
+    // Extract all image URLs
+    const images = Array.from(document.querySelectorAll('img'))
+      .map(img => img.src)
+      .filter(src => src && (src.startsWith('http') || src.startsWith('//')))
+      .map(src => (src.startsWith('//') ? 'https:' + src : src))
+
+    // Combine content
+    const combinedContent = `
+URL: ${url}
+Meta Description: ${metaDescription}
+
+${textContent}
+
+Images found: ${images.join('\n')}
+    `.trim()
+
+    logger.info(
+      `Extracted content: ${combinedContent.length} chars, ${images.length} images from ${url}`
+    )
+
+    return {
+      success: true,
+      content: combinedContent,
+      images: images.slice(0, 100), // Limit to first 100 images
+      textLength: textContent.length
+    }
+  } catch (error) {
+    logger.error(`Failed to fetch URL with HTTP: ${error.message}`)
+    throw error
+  }
+}
 
 /**
  * Extract hotel data from text, URL content, or document using Gemini AI
@@ -427,8 +511,83 @@ export const extractHotelDataFromUrl = async (url, options = {}) => {
     }
   }
 
-  // Fallback: Use Gemini's direct URL reading capability
-  logger.info('Falling back to Gemini direct URL reading: ' + url)
+  // Try HTTP fetch fallback before Gemini direct
+  try {
+    logger.info('Trying HTTP fetch fallback: ' + url)
+
+    if (progress) {
+      if (!progress.steps.find(s => s.id === 'crawl')?.status) {
+        progress.completeStep('init')
+      }
+      progress.startStep('crawl', { method: 'http_fetch' })
+    }
+
+    const fetchResult = await fetchUrlContent(url, { progress })
+
+    if (fetchResult.success && fetchResult.content && fetchResult.content.length > 500) {
+      logger.info(
+        `HTTP fetch success: ${fetchResult.textLength} chars, ${fetchResult.images.length} images`
+      )
+
+      if (progress) {
+        progress.completeStep('crawl', {
+          method: 'http_fetch',
+          textLength: fetchResult.textLength,
+          imagesFound: fetchResult.images.length
+        })
+        progress.startStep('preprocess')
+      }
+
+      // Pre-process to get room hints
+      const preprocessed = preprocessRoomContent(fetchResult.content)
+
+      if (progress) {
+        progress.completeStep('preprocess', {
+          roomsFound: preprocessed.roomNames?.length || 0,
+          imagesFound: preprocessed.totalImages || 0,
+          roomNames: preprocessed.roomNames || []
+        })
+        progress.startStep('extract', { method: 'http_fetch_content' })
+      }
+
+      const result = await extractHotelData(fetchResult.content, 'url', 0, progress)
+
+      if (result.success) {
+        if (progress) {
+          progress.completeStep('extract', {
+            fieldsExtracted: Object.keys(result.data).length,
+            roomTemplates: result.data.roomTemplates?.length || 0
+          })
+          progress.startStep('validate')
+          progress.completeStep('validate', {
+            valid: true,
+            roomCodes: result.data.roomTemplates?.map(r => r.code) || []
+          })
+          progress.complete({
+            success: true,
+            method: 'http_fetch',
+            hotelName: result.data.name,
+            roomCount: result.data.roomTemplates?.length || 0,
+            imageCount: result.data.images?.length || 0
+          })
+        }
+
+        return {
+          ...result,
+          sourceUrl: url,
+          method: 'http_fetch'
+        }
+      }
+    }
+  } catch (httpError) {
+    logger.warn('HTTP fetch fallback failed: ' + httpError.message)
+    if (progress) {
+      progress.updateStep('crawl', { httpError: httpError.message, fallback: true })
+    }
+  }
+
+  // Last Fallback: Use Gemini's direct URL reading capability
+  logger.info('Falling back to Gemini direct URL reading (last resort): ' + url)
 
   if (progress) {
     if (!progress.steps.find(s => s.id === 'crawl')?.status) {
