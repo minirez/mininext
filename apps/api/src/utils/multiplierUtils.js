@@ -214,6 +214,11 @@ export function generateCombinationTable(
     })
 
     // Yetişkin + çocuk kombinasyonları
+    // ÖNEMLI: Yetişkin kapasitesi doluysa (adults === maxAdults), çocuk eklenemez
+    if (adults >= maxAdults) {
+      continue // Kapasite dolu, çocuk kombinasyonu oluşturma
+    }
+
     const remainingCapacity = totalMaxGuests - adults
     const maxChildrenForThisAdult = Math.min(maxChildren, remainingCapacity)
 
