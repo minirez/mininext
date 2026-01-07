@@ -64,6 +64,33 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
   adults = adults + childrenAsAdults
   children = validChildren
 
+  // Capacity validation
+  const maxAdults = roomType?.occupancy?.maxAdults || 30
+  const maxChildren = roomType?.occupancy?.maxChildren || 20
+  const totalMaxGuests = roomType?.occupancy?.totalMaxGuests || 50
+
+  // Check adult capacity
+  if (adults > maxAdults) {
+    throw new BadRequestError(
+      `Room capacity exceeded: ${adults} adults requested but room accepts maximum ${maxAdults} adults`
+    )
+  }
+
+  // Check children capacity
+  if (children.length > maxChildren) {
+    throw new BadRequestError(
+      `Room capacity exceeded: ${children.length} children requested but room accepts maximum ${maxChildren} children`
+    )
+  }
+
+  // Check total capacity
+  const totalGuests = adults + children.length
+  if (totalGuests > totalMaxGuests) {
+    throw new BadRequestError(
+      `Room capacity exceeded: ${totalGuests} total guests requested but room accepts maximum ${totalMaxGuests} guests`
+    )
+  }
+
   const result = {
     pricingType,
     adults,
