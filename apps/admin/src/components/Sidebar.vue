@@ -205,11 +205,13 @@ const mainSection = computed(() => {
   // Determine effective view mode:
   // - Platform admin with no partner selected -> Admin view
   // - Platform admin with partner selected -> Partner view (as if logged in as that partner)
+  // - Platform user (non-admin) -> Partner view (permission-based)
   // - Partner user -> Partner view
   const isAdminView = authStore.isPlatformAdmin && !partnerStore.hasSelectedPartner
   const isPartnerView =
     authStore.accountType === 'partner' ||
-    (authStore.isPlatformAdmin && partnerStore.hasSelectedPartner)
+    (authStore.isPlatformAdmin && partnerStore.hasSelectedPartner) ||
+    (authStore.accountType === 'platform' && !authStore.isPlatformAdmin) // Non-admin platform users
 
   // Admin-only menu items (visible only when in admin view)
   if (isAdminView) {

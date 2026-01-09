@@ -1,0 +1,27 @@
+{
+  "name": "@booking-engine/utils",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./date": "./src/date.js",
+    "./format": "./src/format.js",
+    "./pricing": "./src/pricing.js",
+    "./string": "./src/string.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+  },
+  "devDependencies": {
+    "jest": "^30.0.0"
+  },
+  "keywords": [
+    "utils",
+    "helpers",
+    "booking-engine"
+  ]
+}
