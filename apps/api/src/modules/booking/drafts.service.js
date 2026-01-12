@@ -10,7 +10,6 @@ import Market from '../planning/market.model.js'
 import Booking from './booking.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError, ForbiddenError } from '#core/errors.js'
-import { emitReservationUpdate, getGuestDisplayName } from '../pms/pmsSocket.js'
 import logger from '#core/logger.js'
 import { validateData } from '@booking-engine/validation/adapters/mongoose'
 import {
@@ -22,7 +21,7 @@ import {
   bookingValidationSchema
 } from '@booking-engine/validation/schemas'
 import { getPartnerId, getSourceInfo } from '#services/helpers.js'
-import { sanitizeRoomGuests, createGuestFromBooking, createPendingStayFromBooking } from './helpers.js'
+import { sanitizeRoomGuests } from './helpers.js'
 
 // ==================== DRAFT BOOKING MANAGEMENT ====================
 
@@ -577,32 +576,10 @@ export const completeDraft = asyncHandler(async (req, res) => {
 
   await draft.save()
 
-  // Emit socket event for PMS real-time updates
-  const hotelId = draft.hotel?._id?.toString() || draft.hotel?.toString()
-  if (hotelId) {
-    emitReservationUpdate(hotelId, 'confirmed', {
-      reservationId: draft._id,
-      bookingNumber: draft.bookingNumber,
-      guestName: getGuestDisplayName(draft.leadGuest),
-      checkIn: draft.checkIn,
-      checkOut: draft.checkOut,
-      roomType: draft.rooms[0]?.roomType,
-      status: 'confirmed',
-      source: draft.source?.type || 'b2c'
-    })
-  }
-
-  // Create or find PMS guest record
-  await createGuestFromBooking(draft)
-
-  // Create pending Stay for PMS (full integration)
-  const pendingStay = await createPendingStayFromBooking(draft)
-
   res.json({
     success: true,
     data: {
       bookingNumber: draft.bookingNumber,
-      stayNumber: pendingStay?.stayNumber,
       _id: draft._id,
       status: draft.status,
       confirmedAt: draft.confirmedAt,

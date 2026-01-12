@@ -96,6 +96,7 @@
     "refresh": "Refresh",
     "confirmDelete": "Are you sure you want to delete?",
     "records": "records",
+    "items": "items",
     "perPage": "per page",
     "activeFilters": "Active Filters",
     "languages": {

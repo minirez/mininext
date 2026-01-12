@@ -179,38 +179,6 @@ export const broadcastNotification = async ({
 }
 
 /**
- * Send notification to all PMS users of a hotel (excluding one)
- */
-export const notifyHotelUsers = async (hotelId, excludeUserId, notificationData) => {
-  try {
-    // Dynamically import to avoid circular dependencies
-    const PMSUser = (await import('../pms-settings/pmsUser.model.js')).default
-
-    const users = await PMSUser.find({
-      'assignedHotels.hotel': hotelId,
-      _id: { $ne: excludeUserId },
-      isActive: true
-    }).select('_id name')
-
-    if (users.length === 0) {
-      return []
-    }
-
-    const result = await broadcastNotification({
-      recipientIds: users.map(u => u._id),
-      recipientModel: 'PMSUser',
-      ...notificationData,
-      hotel: hotelId
-    })
-
-    return result
-  } catch (error) {
-    logger.error('Failed to notify hotel users', { error: error.message, hotelId })
-    return []
-  }
-}
-
-/**
  * Send notification to partner admin users
  */
 export const notifyPartnerAdmins = async (partnerId, notificationData) => {
@@ -342,7 +310,6 @@ export const cleanupOldNotifications = async (daysToKeep = 30) => {
 export default {
   createNotification,
   broadcastNotification,
-  notifyHotelUsers,
   notifyPartnerAdmins,
   notifyPlatformAdmins,
   getNotifications,

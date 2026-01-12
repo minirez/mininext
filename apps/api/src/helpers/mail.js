@@ -192,17 +192,49 @@ export const sendWelcomeEmail = async ({
   password,
   accountType,
   loginUrl,
-  partnerId
+  partnerId,
+  language = 'tr'
 }) => {
-  const subject = 'Welcome to Booking Engine'
+  const subject = language === 'tr' ? 'Booking Engine\'e Hoş Geldiniz' : 'Welcome to Booking Engine'
+
+  // Get partner info for branding
+  let companyName = 'Booking Engine'
+  let companyAddress = language === 'tr' ? 'İstanbul, Türkiye' : 'Istanbul, Turkey'
+  let siteUrl = config.adminUrl
+
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('companyName branding address').lean()
+      if (partner) {
+        companyName = partner.companyName || companyName
+        companyAddress = partner.address?.city || companyAddress
+        if (partner.branding?.extranetDomain) {
+          siteUrl = `https://${partner.branding.extranetDomain}`
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to get partner info for welcome email:', error.message)
+    }
+  }
 
   const html = await renderEmailTemplate('welcome', {
-    NAME: name,
-    EMAIL: email,
+    // Dynamic values with correct variable names
+    USER_NAME: name,
+    USER_EMAIL: email,
     PASSWORD: password,
     ACCOUNT_TYPE: accountType,
-    LOGIN_URL: loginUrl
-  })
+    DASHBOARD_URL: loginUrl || siteUrl,
+    // Layout variables
+    TITLE: language === 'tr' ? 'Hoş Geldiniz' : 'Welcome',
+    PREVIEW_TEXT: language === 'tr' ? 'Hesabınız başarıyla oluşturuldu' : 'Your account has been created',
+    LOGO_URL: 'https://booking-engine.com/logo.png',
+    SITE_URL: siteUrl,
+    COMPANY_NAME: companyName,
+    COMPANY_ADDRESS: companyAddress,
+    SUPPORT_EMAIL: 'support@booking-engine.com',
+    UNSUBSCRIBE_URL: '#'
+  }, language)
 
   const text = htmlToText(html)
 
@@ -210,16 +242,65 @@ export const sendWelcomeEmail = async ({
 }
 
 /**
- * Send 2FA setup email with QR code
+ * Send 2FA setup email with backup codes
  */
-export const send2FASetupEmail = async ({ to, name, qrCodeUrl, secretCode, partnerId }) => {
-  const subject = 'Two-Factor Authentication Setup'
+export const send2FASetupEmail = async ({
+  to,
+  name,
+  backupCodes,
+  securityUrl,
+  partnerId,
+  language = 'tr'
+}) => {
+  // Import TEMPLATE_LABELS for language-specific text
+  const { TEMPLATE_LABELS } = await import('./emailTemplates.js')
+  const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
+
+  const subject = language === 'tr'
+    ? 'İki Faktörlü Doğrulama Etkinleştirildi'
+    : 'Two-Factor Authentication Enabled'
+
+  // Get partner info for branding
+  let companyName = 'Booking Engine'
+  let companyAddress = language === 'tr' ? 'İstanbul, Türkiye' : 'Istanbul, Turkey'
+  let siteUrl = config.adminUrl
+
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('companyName branding address').lean()
+      if (partner) {
+        companyName = partner.companyName || companyName
+        companyAddress = partner.address?.city || companyAddress
+        if (partner.branding?.extranetDomain) {
+          siteUrl = `https://${partner.branding.extranetDomain}`
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to get partner info for 2FA email:', error.message)
+    }
+  }
+
+  // Format backup codes as a string
+  const formattedCodes = Array.isArray(backupCodes) ? backupCodes.join('\n') : backupCodes
 
   const html = await renderEmailTemplate('2fa-setup', {
-    NAME: name,
-    QR_CODE_URL: qrCodeUrl,
-    SECRET_CODE: secretCode
-  })
+    // Use labels for title/subtitle
+    TITLE: labels.TWO_FA_TITLE,
+    SUBTITLE: labels.TWO_FA_SUBTITLE,
+    // Dynamic values
+    USER_NAME: name,
+    BACKUP_CODES: formattedCodes,
+    SECURITY_URL: securityUrl || `${siteUrl}/settings/security`,
+    // Layout variables
+    PREVIEW_TEXT: labels.TWO_FA_SUBTITLE,
+    LOGO_URL: 'https://booking-engine.com/logo.png',
+    SITE_URL: siteUrl,
+    COMPANY_NAME: companyName,
+    COMPANY_ADDRESS: companyAddress,
+    SUPPORT_EMAIL: 'support@booking-engine.com',
+    UNSUBSCRIBE_URL: '#'
+  }, language)
 
   const text = htmlToText(html)
 
@@ -312,22 +393,74 @@ export const sendBookingConfirmation = async ({
   to,
   bookingNumber,
   hotelName,
+  hotelAddress,
   checkIn,
   checkOut,
+  nights,
+  roomType,
+  guests,
+  boardType,
   totalPrice,
+  guestName,
+  guestEmail,
+  guestPhone,
   bookingUrl,
-  partnerId
+  partnerId,
+  language = 'tr'
 }) => {
-  const subject = `Booking Confirmation - ${bookingNumber}`
+  const subject = language === 'tr'
+    ? `Rezervasyon Onayı - ${bookingNumber}`
+    : `Booking Confirmation - ${bookingNumber}`
+
+  // Get partner info for branding
+  let companyName = 'Booking Engine'
+  let companyAddress = language === 'tr' ? 'İstanbul, Türkiye' : 'Istanbul, Turkey'
+  let siteUrl = config.adminUrl
+
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('companyName branding address').lean()
+      if (partner) {
+        companyName = partner.companyName || companyName
+        companyAddress = partner.address?.city || companyAddress
+        if (partner.branding?.extranetDomain) {
+          siteUrl = `https://${partner.branding.extranetDomain}`
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to get partner info for booking confirmation email:', error.message)
+    }
+  }
 
   const html = await renderEmailTemplate('booking-confirmation', {
+    // Booking details
     BOOKING_NUMBER: bookingNumber,
+    STATUS: language === 'tr' ? 'Onaylandı' : 'Confirmed',
     HOTEL_NAME: hotelName,
-    CHECK_IN_DATE: checkIn,
-    CHECK_OUT_DATE: checkOut,
+    HOTEL_ADDRESS: hotelAddress || '',
+    CHECKIN_DATE: checkIn,
+    CHECKOUT_DATE: checkOut,
+    NIGHTS: nights || '',
+    ROOM_TYPE: roomType || '',
+    GUESTS: guests || '',
+    BOARD_TYPE: boardType || '',
     TOTAL_PRICE: totalPrice,
-    BOOKING_URL: bookingUrl
-  })
+    // Guest info
+    GUEST_NAME: guestName || '',
+    GUEST_EMAIL: guestEmail || to,
+    GUEST_PHONE: guestPhone || '',
+    BOOKING_URL: bookingUrl,
+    // Layout variables
+    TITLE: language === 'tr' ? 'Rezervasyon Onayı' : 'Booking Confirmation',
+    PREVIEW_TEXT: language === 'tr' ? `Rezervasyonunuz onaylandı - ${bookingNumber}` : `Your booking is confirmed - ${bookingNumber}`,
+    LOGO_URL: 'https://booking-engine.com/logo.png',
+    SITE_URL: siteUrl,
+    COMPANY_NAME: companyName,
+    COMPANY_ADDRESS: companyAddress,
+    SUPPORT_EMAIL: 'support@booking-engine.com',
+    UNSUBSCRIBE_URL: '#'
+  }, language)
 
   const text = htmlToText(html)
 
@@ -343,18 +476,69 @@ export const sendBookingCancellation = async ({
   hotelName,
   checkIn,
   checkOut,
+  cancelledAt,
   reason,
-  partnerId
+  originalAmount,
+  cancellationFee,
+  refundAmount,
+  newBookingUrl,
+  partnerId,
+  language = 'tr'
 }) => {
-  const subject = `Booking Cancelled - ${bookingNumber}`
+  // Import TEMPLATE_LABELS for language-specific text
+  const { TEMPLATE_LABELS } = await import('./emailTemplates.js')
+  const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
+
+  const subject = language === 'tr'
+    ? `Rezervasyon İptal Edildi - ${bookingNumber}`
+    : `Booking Cancelled - ${bookingNumber}`
+
+  // Get partner info for branding
+  let companyName = 'Booking Engine'
+  let companyAddress = language === 'tr' ? 'İstanbul, Türkiye' : 'Istanbul, Turkey'
+  let siteUrl = config.adminUrl
+
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('companyName branding address').lean()
+      if (partner) {
+        companyName = partner.companyName || companyName
+        companyAddress = partner.address?.city || companyAddress
+        if (partner.branding?.extranetDomain) {
+          siteUrl = `https://${partner.branding.extranetDomain}`
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to get partner info for booking cancellation email:', error.message)
+    }
+  }
 
   const html = await renderEmailTemplate('booking-cancelled', {
+    // Use labels for title/subtitle
+    TITLE: labels.CANCELLED_TITLE,
+    SUBTITLE: labels.CANCELLED_SUBTITLE,
+    // Booking details
     BOOKING_NUMBER: bookingNumber,
     HOTEL_NAME: hotelName,
-    CHECK_IN_DATE: checkIn,
-    CHECK_OUT_DATE: checkOut,
-    REASON: reason || 'N/A'
-  })
+    CHECKIN_DATE: checkIn,
+    CHECKOUT_DATE: checkOut,
+    CANCELLED_AT: cancelledAt || new Date().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US'),
+    CANCELLATION_REASON: reason || '',
+    // Refund info (optional)
+    ORIGINAL_AMOUNT: originalAmount || '',
+    CANCELLATION_FEE: cancellationFee || '',
+    REFUND_AMOUNT: refundAmount || '',
+    NEW_BOOKING_URL: newBookingUrl || siteUrl,
+    // Layout variables
+    PREVIEW_TEXT: language === 'tr' ? `Rezervasyonunuz iptal edildi - ${bookingNumber}` : `Your booking has been cancelled - ${bookingNumber}`,
+    LOGO_URL: 'https://booking-engine.com/logo.png',
+    SITE_URL: siteUrl,
+    COMPANY_NAME: companyName,
+    COMPANY_ADDRESS: companyAddress,
+    SUPPORT_EMAIL: 'support@booking-engine.com',
+    UNSUBSCRIBE_URL: '#'
+  }, language)
 
   const text = htmlToText(html)
 
@@ -364,13 +548,56 @@ export const sendBookingCancellation = async ({
 /**
  * Send password reset email
  */
-export const sendPasswordResetEmail = async ({ to, name, resetUrl, partnerId }) => {
-  const subject = 'Password Reset Request'
+export const sendPasswordResetEmail = async ({ to, name, resetUrl, partnerId, language = 'tr' }) => {
+  // Import TEMPLATE_LABELS for language-specific text
+  const { TEMPLATE_LABELS } = await import('./emailTemplates.js')
+  const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
+
+  const subject = language === 'tr' ? 'Şifre Sıfırlama Talebi' : 'Password Reset Request'
+
+  // Get partner info for branding
+  let companyName = labels.COMPANY_NAME
+  let companyAddress = labels.COMPANY_ADDRESS
+  let siteUrl = config.adminUrl
+
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('companyName branding address').lean()
+      if (partner) {
+        companyName = partner.companyName || companyName
+        companyAddress = partner.address?.city || companyAddress
+        if (partner.branding?.extranetDomain) {
+          siteUrl = `https://${partner.branding.extranetDomain}`
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to get partner info for password reset email:', error.message)
+    }
+  }
 
   const html = await renderEmailTemplate('password-reset', {
-    NAME: name,
-    RESET_URL: resetUrl
-  })
+    // Map template variables to labels
+    TITLE: labels.PASSWORD_RESET_TITLE,
+    SUBTITLE: labels.PASSWORD_RESET_SUBTITLE,
+    DESCRIPTION: labels.PASSWORD_RESET_DESC,
+    RESET_BUTTON: labels.RESET_BUTTON,
+    ALTERNATIVE_TEXT: labels.ALTERNATIVE_TEXT,
+    EXPIRY_WARNING: labels.EXPIRY_WARNING,
+    SECURITY_NOTE: labels.SECURITY_NOTE,
+    // Dynamic values
+    RESET_URL: resetUrl,
+    USER_NAME: name,
+    // Layout variables
+    PREVIEW_TEXT: labels.PASSWORD_RESET_SUBTITLE,
+    LOGO_URL: 'https://booking-engine.com/logo.png',
+    SITE_URL: siteUrl,
+    COMPANY_NAME: companyName,
+    COMPANY_ADDRESS: companyAddress,
+    FOOTER_TEXT: labels.FOOTER_TEXT,
+    UNSUBSCRIBE_URL: '#',
+    UNSUBSCRIBE_TEXT: labels.UNSUBSCRIBE_TEXT
+  }, language)
 
   const text = htmlToText(html)
 

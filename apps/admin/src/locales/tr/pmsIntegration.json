@@ -1,0 +1,38 @@
+{
+  "title": "PMS Entegrasyonu",
+  "description": "Otelleriniz icin PMS hesabi acin ve yonetin.",
+  "selectHotel": "Otel secin",
+  "selectHotelPrompt": "PMS durumunu goruntulemek icin bir otel secin",
+  "notProvisioned": "PMS acilmamis",
+  "provisionTitle": "Bu Otel Icin PMS Ac",
+  "provisionDescription": "Bu otel icin henuz PMS hesabi acilmamis. PMS'i acmak icin asagidaki butona tiklayin.",
+  "provisionButton": "PMS'i Ac",
+  "syncButton": "Senkronize Et",
+  "provisioningDetails": "PMS Bilgileri",
+  "pmsHotelId": "PMS Otel ID",
+  "status": "Durum",
+  "provisionedAt": "Acilis Tarihi",
+  "provisionSuccess": "PMS basariyla acildi!",
+  "provisionSuccessDesc": "Asagidaki bilgilerle PMS sistemine giris yapabilirsiniz.",
+  "username": "Kullanici Adi",
+  "tempPassword": "Gecici Sifre",
+  "saveCredentialsWarning": "Bu bilgileri guvenli bir yerde saklayin. Sifre tekrar gosterilmeyecektir.",
+  "provisionModalTitle": "PMS Hesabi Olustur",
+  "provisionModalDesc": "Bu islem otel icin PMS hesabi olusturacak ve size giris bilgileri verecektir.",
+  "selectDataToSync": "Ilk acilista gonderilecek veriler (opsiyonel)",
+  "roomTypes": "Oda Tipleri",
+  "roomTypesDesc": "Otel oda tiplerini PMS'e gonder",
+  "boardTypes": "Pansiyon Tipleri",
+  "boardTypesDesc": "Konaklama tiplerini (AI, FB, HB vb.) PMS'e gonder",
+  "provisionWarning": "PMS acildiktan sonra bu bilgilerle giris yapabilirsiniz. Sifreyi guvenli bir yere kaydedin.",
+  "startProvisioning": "PMS'i Ac",
+  "hotelStatus": {
+    "pending": "Aciliyor",
+    "active": "Aktif",
+    "failed": "Basarisiz"
+  },
+  "errors": {
+    "pmsNotEnabled": "Bu partner icin PMS entegrasyonu aktif degil. Lutfen yonetici ile iletisime gecin.",
+    "alreadyProvisioned": "Bu otel icin PMS zaten acilmis."
+  }
+}

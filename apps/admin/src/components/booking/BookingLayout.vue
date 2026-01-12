@@ -329,7 +329,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useBookingStore } from '@/stores/booking'
@@ -357,6 +357,14 @@ const showValidation = ref(false)
 
 // Auto-save debounce timer
 let autoSaveTimer = null
+
+// Cleanup timer on unmount to prevent memory leak
+onUnmounted(() => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+})
 
 // Format time for display
 const formatTime = date => {

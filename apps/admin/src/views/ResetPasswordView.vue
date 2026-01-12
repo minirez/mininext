@@ -248,6 +248,12 @@ const handleSubmit = async () => {
     {
       onSuccess: () => {
         success.value = true
+        // Clear any existing auth tokens since password was changed
+        // This invalidates all previous sessions
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        localStorage.removeItem('forcePasswordChange')
       },
       onError: error => {
         errorMessage.value = error.response?.data?.message || t('auth.resetPasswordError')

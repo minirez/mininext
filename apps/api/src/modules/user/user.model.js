@@ -102,6 +102,11 @@ const userSchema = new mongoose.Schema(
       select: false
     },
 
+    // Track when password was last changed (for token invalidation)
+    passwordChangedAt: {
+      type: Date
+    },
+
     // Yetki
     role: {
       type: String,
@@ -219,7 +224,7 @@ userSchema.virtual('accountModelName').get(function () {
   return modelMap[this.accountType] || 'Partner'
 })
 
-// Pre-save: Hash password
+// Pre-save: Hash password and track password change
 userSchema.pre('save', async function (next) {
   // Lowercase email
   if (this.email) {
@@ -230,6 +235,13 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()
 
   this.password = await bcrypt.hash(this.password, 10)
+
+  // Track password change time (for invalidating existing tokens)
+  // Only set if this is not a new document (password change, not initial set)
+  if (!this.isNew) {
+    this.passwordChangedAt = new Date()
+  }
+
   next()
 })
 
@@ -288,6 +300,16 @@ userSchema.methods.getEffectivePermissions = function () {
 
 userSchema.methods.isActive = function () {
   return this.status === 'active'
+}
+
+// Check if password was changed after the token was issued
+userSchema.methods.changedPasswordAfter = function (tokenIssuedAt) {
+  if (this.passwordChangedAt) {
+    // Convert to seconds for comparison with JWT iat
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10)
+    return tokenIssuedAt < changedTimestamp
+  }
+  return false
 }
 
 userSchema.methods.updateLastLogin = async function () {

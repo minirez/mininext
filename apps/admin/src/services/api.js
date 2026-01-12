@@ -48,24 +48,11 @@ apiClient.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config
+    const errorMessage = error.response?.data?.message
 
     // If error is 401 and we haven't already tried to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-
-      // Check if this is a PMS user session
-      const pmsToken = localStorage.getItem('pmsToken')
-      if (pmsToken) {
-        // Clear PMS auth data
-        localStorage.removeItem('pmsToken')
-        localStorage.removeItem('pmsUser')
-        localStorage.removeItem('pmsCurrentHotel')
-        localStorage.removeItem('pmsAssignedHotels')
-
-        // Redirect to PMS login
-        window.location.href = '/pms/login'
-        return Promise.reject(error)
-      }
 
       try {
         // Dynamically import store inside interceptor
@@ -77,6 +64,14 @@ apiClient.interceptors.response.use(
           originalRequest.url?.includes('/auth/login') ||
           originalRequest.url?.includes('/auth/refresh-token')
         ) {
+          return Promise.reject(error)
+        }
+
+        // If password was changed, force logout without trying to refresh
+        // This invalidates all previous sessions
+        if (errorMessage === 'PASSWORD_CHANGED') {
+          apiLogger.warn('Password was changed, forcing logout')
+          authStore.logout()
           return Promise.reject(error)
         }
 

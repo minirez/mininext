@@ -3,7 +3,7 @@ import auth from './auth.json'
 import booking from './booking.json'
 import hotels from './hotels.json'
 import planning from './planning.json'
-import pms from './pms.json'
+import pmsIntegration from './pmsIntegration.json'
 import misc from './misc.json'
 import users from './users.json'
 
@@ -13,7 +13,7 @@ export default {
   ...booking,
   ...hotels,
   ...planning,
-  ...pms,
+  pmsIntegration,
   ...misc,
   ...users
 }

@@ -1,4 +1,4 @@
-import pmsApiClient from './pms/pmsApi'
+import apiClient from './api'
 
 const BASE_URL = '/notifications'
 
@@ -10,7 +10,7 @@ const BASE_URL = '/notifications'
  * @param {boolean} params.unreadOnly - Only return unread notifications
  */
 export const getNotifications = async (params = {}) => {
-  const response = await pmsApiClient.get(BASE_URL, { params })
+  const response = await apiClient.get(BASE_URL, { params })
   return response.data
 }
 
@@ -18,7 +18,7 @@ export const getNotifications = async (params = {}) => {
  * Get unread notification count
  */
 export const getUnreadCount = async () => {
-  const response = await pmsApiClient.get(`${BASE_URL}/unread-count`)
+  const response = await apiClient.get(`${BASE_URL}/unread-count`)
   return response.data
 }
 
@@ -27,7 +27,7 @@ export const getUnreadCount = async () => {
  * @param {string} notificationId - Notification ID
  */
 export const markAsRead = async notificationId => {
-  const response = await pmsApiClient.post(`${BASE_URL}/${notificationId}/read`)
+  const response = await apiClient.post(`${BASE_URL}/${notificationId}/read`)
   return response.data
 }
 
@@ -35,7 +35,7 @@ export const markAsRead = async notificationId => {
  * Mark all notifications as read
  */
 export const markAllAsRead = async () => {
-  const response = await pmsApiClient.post(`${BASE_URL}/read-all`)
+  const response = await apiClient.post(`${BASE_URL}/read-all`)
   return response.data
 }
 
@@ -44,7 +44,7 @@ export const markAllAsRead = async () => {
  * @param {string[]} ids - Array of notification IDs
  */
 export const markMultipleAsRead = async ids => {
-  const response = await pmsApiClient.post(`${BASE_URL}/read-multiple`, { ids })
+  const response = await apiClient.post(`${BASE_URL}/read-multiple`, { ids })
   return response.data
 }
 
@@ -53,7 +53,7 @@ export const markMultipleAsRead = async ids => {
  * @param {string} notificationId - Notification ID
  */
 export const deleteNotification = async notificationId => {
-  const response = await pmsApiClient.delete(`${BASE_URL}/${notificationId}`)
+  const response = await apiClient.delete(`${BASE_URL}/${notificationId}`)
   return response.data
 }
 

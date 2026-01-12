@@ -12,7 +12,6 @@ import Market from '../planning/market.model.js'
 import Booking from './booking.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
-import { emitReservationUpdate, getGuestDisplayName } from '../pms/pmsSocket.js'
 import logger from '#core/logger.js'
 import { getPartnerId } from '#services/helpers.js'
 import { createBookingSnapshot, compareValues, detectAmendmentType } from './helpers.js'
@@ -829,20 +828,6 @@ export const applyAmendment = asyncHandler(async (req, res) => {
 
   // Save booking
   await booking.save()
-
-  // Emit socket event
-  const hotelId = booking.hotel?._id?.toString() || booking.hotel?.toString()
-  if (hotelId) {
-    emitReservationUpdate(hotelId, 'updated', {
-      reservationId: booking._id,
-      bookingNumber: booking.bookingNumber,
-      guestName: getGuestDisplayName(booking.leadGuest),
-      checkIn: booking.checkIn,
-      checkOut: booking.checkOut,
-      status: booking.status,
-      amendmentType: snapshot.amendment.type
-    })
-  }
 
   res.json({
     success: true,

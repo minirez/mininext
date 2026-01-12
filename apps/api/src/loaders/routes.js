@@ -38,13 +38,7 @@ const ROUTE_CONFIG = {
   'platform-settings': 'platform-settings',
   'audit': 'audit-logs',
 
-  // Skip these - they're sub-modules loaded by parent
-  'pms-billing': false,
-  'pms-frontdesk': false,
-  'pms-guest': false,
-  'pms-housekeeping': false,
-  'pms-reservation': false,
-  'pms-settings': false,
+  // Skip sub-modules - loaded by parent
   'notification-log': false,
 }
 

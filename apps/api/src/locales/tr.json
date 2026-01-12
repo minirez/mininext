@@ -48,6 +48,7 @@
   "INVALID_ID": "Geçersiz ID",
   "INVALID_TOKEN": "Geçersiz token",
   "TOKEN_EXPIRED": "Token süresi dolmuş",
+  "PASSWORD_CHANGED": "Şifreniz değiştirildi. Lütfen tekrar giriş yapın.",
 
   "NAME_MIN_LENGTH": "İsim en az 2 karakter olmalıdır",
   "NAME_MAX_LENGTH": "İsim en fazla 100 karakter olabilir",

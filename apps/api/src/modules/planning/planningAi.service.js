@@ -421,19 +421,27 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
         )
 
         if (valueType === 'percentage') {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            const newPrice = Math.round(rate.pricePerNight * (1 + value / 100))
-            await Rate.findByIdAndUpdate(rate._id, {
-              pricePerNight: newPrice,
-              source: 'ai',
-              aiCommand: 'update_price'
-            })
-            updated++
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id pricePerNight').lean()
+          if (rates.length > 0) {
+            const bulkOps = rates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: {
+                  $set: {
+                    pricePerNight: Math.round(rate.pricePerNight * (1 + value / 100)),
+                    source: 'ai',
+                    aiCommand: 'update_price'
+                  }
+                }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
-          logger.info(`update_price (percentage): updated ${updated} rates`)
+          logger.info(`update_price (percentage): updated ${updateResult.modifiedCount} rates`)
         } else {
           updateResult = await Rate.updateMany(rateFilter, {
             $set: {
@@ -449,15 +457,24 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
       case 'update_single_supplement':
         if (valueType === 'percentage') {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            const currentSupplement = rate.singleSupplement || 0
-            const newSupplement = Math.round(currentSupplement * (1 + value / 100))
-            await Rate.findByIdAndUpdate(rate._id, { singleSupplement: newSupplement })
-            updated++
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id singleSupplement').lean()
+          if (rates.length > 0) {
+            const bulkOps = rates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: {
+                  $set: {
+                    singleSupplement: Math.round((rate.singleSupplement || 0) * (1 + value / 100))
+                  }
+                }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
         } else {
           updateData = { singleSupplement: value }
         }
@@ -465,16 +482,25 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
       case 'update_extra_adult':
         if (valueType === 'percentage') {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
-            const current = rate.extraAdult || 0
-            const newValue = Math.round(current * (1 + value / 100))
-            await Rate.findByIdAndUpdate(rate._id, { extraAdult: newValue })
-            updated++
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id date extraAdult').lean()
+          const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters?.daysOfWeek))
+          if (filteredRates.length > 0) {
+            const bulkOps = filteredRates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: {
+                  $set: {
+                    extraAdult: Math.round((rate.extraAdult || 0) * (1 + value / 100))
+                  }
+                }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
         } else {
           updateData = { extraAdult: value }
         }
@@ -482,16 +508,25 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
       case 'update_extra_child':
         if (valueType === 'percentage') {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
-            const current = rate.extraChild || 0
-            const newValue = Math.round(current * (1 + value / 100))
-            await Rate.findByIdAndUpdate(rate._id, { extraChild: newValue })
-            updated++
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id date extraChild').lean()
+          const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters?.daysOfWeek))
+          if (filteredRates.length > 0) {
+            const bulkOps = filteredRates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: {
+                  $set: {
+                    extraChild: Math.round((rate.extraChild || 0) * (1 + value / 100))
+                  }
+                }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
         } else {
           updateData = { extraChild: value }
         }
@@ -499,35 +534,53 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
 
       case 'update_extra_infant':
         if (valueType === 'percentage') {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
-            const current = rate.extraInfant || 0
-            const newValue = Math.round(current * (1 + value / 100))
-            await Rate.findByIdAndUpdate(rate._id, { extraInfant: newValue })
-            updated++
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id date extraInfant').lean()
+          const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters?.daysOfWeek))
+          if (filteredRates.length > 0) {
+            const bulkOps = filteredRates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: {
+                  $set: {
+                    extraInfant: Math.round((rate.extraInfant || 0) * (1 + value / 100))
+                  }
+                }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
         } else {
           updateData = { extraInfant: value }
         }
         break
 
       case 'update_child_free': {
-        const rates = await Rate.find(rateFilter)
-        let updated = 0
-        for (const rate of rates) {
-          if (!matchesDayOfWeek(rate.date, filters?.daysOfWeek)) continue
-          const childPricing = rate.childPricing || []
+        // Use bulkWrite for efficient batch update
+        const rates = await Rate.find(rateFilter).select('_id date childPricing').lean()
+        const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters?.daysOfWeek))
+        if (filteredRates.length > 0) {
           const idx = (childIndex || 1) - 1
-          if (childPricing[idx]) {
-            childPricing[idx].price = 0
-          }
-          await Rate.findByIdAndUpdate(rate._id, { childPricing })
-          updated++
+          const bulkOps = filteredRates.map(rate => {
+            const childPricing = [...(rate.childPricing || [])]
+            if (childPricing[idx]) {
+              childPricing[idx] = { ...childPricing[idx], price: 0 }
+            }
+            return {
+              updateOne: {
+                filter: { _id: rate._id },
+                update: { $set: { childPricing } }
+              }
+            }
+          })
+          const bulkResult = await Rate.bulkWrite(bulkOps)
+          updateResult = { modifiedCount: bulkResult.modifiedCount }
+        } else {
+          updateResult = { modifiedCount: 0 }
         }
-        updateResult = { modifiedCount: updated }
         break
       }
 
@@ -557,15 +610,21 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
           filters.daysOfWeek !== 'all' &&
           Array.isArray(filters.daysOfWeek)
         ) {
-          const rates = await Rate.find(rateFilter)
-          let updated = 0
-          for (const rate of rates) {
-            if (matchesDayOfWeek(rate.date, filters.daysOfWeek)) {
-              await Rate.findByIdAndUpdate(rate._id, { $set: updateData })
-              updated++
-            }
+          // Use bulkWrite for efficient batch update
+          const rates = await Rate.find(rateFilter).select('_id date').lean()
+          const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters.daysOfWeek))
+          if (filteredRates.length > 0) {
+            const bulkOps = filteredRates.map(rate => ({
+              updateOne: {
+                filter: { _id: rate._id },
+                update: { $set: updateData }
+              }
+            }))
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
           }
-          updateResult = { modifiedCount: updated }
         } else {
           updateResult = await Rate.updateMany(rateFilter, { $set: updateData })
         }

@@ -48,6 +48,7 @@
   "INVALID_ID": "Invalid ID",
   "INVALID_TOKEN": "Invalid token",
   "TOKEN_EXPIRED": "Token has expired",
+  "PASSWORD_CHANGED": "Your password has been changed. Please log in again.",
 
   "NAME_MIN_LENGTH": "Name must be at least 2 characters",
   "NAME_MAX_LENGTH": "Name cannot exceed 100 characters",

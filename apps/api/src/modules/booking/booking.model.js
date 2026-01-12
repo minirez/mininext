@@ -4,6 +4,7 @@
  */
 
 import mongoose from 'mongoose'
+import auditPlugin from '#plugins/auditPlugin.js'
 
 const SUPPORTED_LANGUAGES = [
   'tr',
@@ -753,5 +754,12 @@ bookingSchema.statics.getUpcoming = function (hotelId, days = 7) {
     status: { $in: ['pending', 'confirmed'] }
   }).sort({ checkIn: 1 })
 }
+
+// Apply audit plugin for change tracking
+bookingSchema.plugin(auditPlugin, {
+  module: 'booking',
+  subModule: 'reservation',
+  nameField: 'bookingNumber'
+})
 
 export default mongoose.model('Booking', bookingSchema)

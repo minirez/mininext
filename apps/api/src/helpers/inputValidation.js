@@ -303,6 +303,33 @@ export const sanitizeString = (input, options = {}) => {
   return result
 }
 
+/**
+ * Escape special regex characters in a string
+ * Prevents ReDoS attacks when using user input in MongoDB $regex queries
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string safe for regex use
+ */
+export const escapeRegex = str => {
+  if (!str) return ''
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Build safe search query for MongoDB
+ * @param {string} search - Search term
+ * @param {string[]} fields - Fields to search in
+ * @returns {object} MongoDB query object with escaped regex
+ */
+export const buildSearchQuery = (search, fields) => {
+  if (!search || !fields || fields.length === 0) return {}
+  const escapedSearch = escapeRegex(search)
+  return {
+    $or: fields.map(field => ({
+      [field]: { $regex: escapedSearch, $options: 'i' }
+    }))
+  }
+}
+
 export default {
   validateUrl,
   validateDomain,
@@ -313,5 +340,7 @@ export default {
   validatePhone,
   validatePositiveNumber,
   validateObjectId,
-  sanitizeString
+  sanitizeString,
+  escapeRegex,
+  buildSearchQuery
 }

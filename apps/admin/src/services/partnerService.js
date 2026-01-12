@@ -85,6 +85,27 @@ const deleteDocument = async (id, documentId) => {
   }
 }
 
+// PMS Integration - Hotel based
+const getHotelPmsStatus = async hotelId => {
+  try {
+    const response = await apiClient.get(`/hotels/${hotelId}/pms-status`)
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Get hotel PMS status failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const provisionHotelToPms = async (hotelId, options = {}) => {
+  try {
+    const response = await apiClient.post(`/hotels/${hotelId}/provision-pms`, options)
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Provision hotel to PMS failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   getPartners,
   getPartner,
@@ -93,5 +114,7 @@ export default {
   deletePartner,
   approvePartner,
   uploadDocument,
-  deleteDocument
+  deleteDocument,
+  getHotelPmsStatus,
+  provisionHotelToPms
 }

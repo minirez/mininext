@@ -7,8 +7,6 @@
 export {
   sanitizeGuest,
   sanitizeRoomGuests,
-  createGuestFromBooking,
-  createPendingStayFromBooking,
   createBookingSnapshot,
   compareValues,
   detectAmendmentType

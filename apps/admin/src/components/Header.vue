@@ -232,7 +232,6 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { useHotelStore } from '@/stores/hotel'
-import { usePmsAuthStore } from '@/stores/pms/pmsAuth'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
 import HotelSelector from '@/components/common/HotelSelector.vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
@@ -269,10 +268,6 @@ const props = defineProps({
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const hotelStore = useHotelStore()
-const pmsAuthStore = usePmsAuthStore()
-
-// Check if PMS user
-const isPmsUser = computed(() => !!localStorage.getItem('pmsToken'))
 
 // Routes that need hotel selector
 const hotelRequiredRoutes = [
@@ -284,40 +279,14 @@ const hotelRequiredRoutes = [
   'room-type-new',
   'room-type-detail',
   'market-new',
-  'market-detail',
-  // PMS routes
-  'pms-dashboard',
-  'pms-reservations',
-  'pms-front-desk',
-  'pms-housekeeping',
-  'pms-guests',
-  'pms-billing',
-  'pms-cashier',
-  'pms-reports',
-  'pms-settings',
-  'pms-night-audit',
-  'pms-night-audit-detail',
-  'pms-users',
-  'pms-room-plan',
-  'pms-kbs'
+  'market-detail'
 ]
 const showHotelSelector = computed(() => {
-  // Don't show hotel selector for PMS users (they have a hotel assigned via PMS login)
-  const pmsToken = localStorage.getItem('pmsToken')
-  if (pmsToken && route.path.startsWith('/pms')) {
-    return false
-  }
-
   // Check by route name
   if (hotelRequiredRoutes.includes(route.name)) return true
   // Also check by path for planning module
   if (route.path.startsWith('/planning')) return true
   return false
-})
-
-// Check if current route is PMS
-const isPmsRoute = computed(() => {
-  return route.path.startsWith('/pms')
 })
 
 // Check if current route is Planning
@@ -345,25 +314,8 @@ const planningTitles = computed(() => ({
   'market-detail': t('planning.markets.editMarket')
 }))
 
-// PMS route titles
-const pmsTitles = computed(() => ({
-  'pms-dashboard': t('pms.nav.dashboard'),
-  'pms-reservations': t('pms.nav.reservations'),
-  'pms-front-desk': t('pms.nav.frontDesk'),
-  'pms-housekeeping': t('pms.nav.housekeeping'),
-  'pms-guests': t('pms.nav.guests'),
-  'pms-billing': t('pms.nav.billing'),
-  'pms-cashier': t('pms.nav.cashier'),
-  'pms-reports': t('pms.nav.reports'),
-  'pms-settings': t('pms.nav.settings')
-}))
-
 // Dynamic title based on route
 const displayTitle = computed(() => {
-  if (isPmsRoute.value) {
-    const pageTitle = pmsTitles.value[route.name] || 'PMS'
-    return `PMS - ${pageTitle}`
-  }
   if (isPlanningRoute.value) {
     return planningTitles.value[route.name] || t('planning.title')
   }
@@ -372,9 +324,6 @@ const displayTitle = computed(() => {
 
 // Dynamic description based on route
 const displayDescription = computed(() => {
-  if (isPmsRoute.value && selectedHotelName.value) {
-    return selectedHotelName.value
-  }
   if (isPlanningRoute.value && selectedHotelName.value) {
     return selectedHotelName.value
   }
@@ -416,14 +365,8 @@ const goToProfile = () => {
 
 const handleLogout = async () => {
   userDropdownOpen.value = false
-
-  // PMS user uses pmsAuthStore, others use authStore
-  if (isPmsUser.value) {
-    pmsAuthStore.logout() // This redirects to pms-login
-  } else {
-    await authStore.logout()
-    router.push('/login')
-  }
+  await authStore.logout()
+  router.push('/login')
 }
 
 // Click outside handler

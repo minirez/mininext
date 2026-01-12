@@ -6,7 +6,6 @@ import Agency from '../modules/agency/agency.model.js'
 import { UnauthorizedError } from '../core/errors.js'
 
 // Protect middleware - Require authentication
-// Supports both regular user tokens and PMS tokens
 export const protect = async (req, res, next) => {
   try {
     // Get token from header
@@ -22,54 +21,15 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, config.jwt.secret)
 
-    // Check if it's a PMS token
-    if (decoded.type === 'pms') {
-      // PMS token - get PMS user
-      const { default: PmsUser } = await import('../modules/pms-settings/pmsUser.model.js')
-      const pmsUser = await PmsUser.findById(decoded.pmsUserId)
-
-      if (!pmsUser || !pmsUser.isActive) {
-        throw new UnauthorizedError('UNAUTHORIZED')
-      }
-
-      // Check hotel access
-      if (!pmsUser.hasAccessToHotel(decoded.hotelId)) {
-        throw new UnauthorizedError('NO_ACCESS_TO_HOTEL')
-      }
-
-      // Attach PMS user info to request
-      req.pmsUser = pmsUser
-      req.pmsUserId = pmsUser._id
-      req.pmsHotelId = decoded.hotelId
-      req.pmsPartnerId = decoded.partnerId
-      req.pmsRole = decoded.role
-      req.authMode = 'pms'
-
-      // Create a pseudo user object for compatibility with existing code
-      req.user = {
-        _id: pmsUser._id,
-        name: pmsUser.name,
-        email: pmsUser.email,
-        role: decoded.role === 'pms_admin' ? 'admin' : 'user',
-        accountType: 'partner', // Treat PMS users as partner users for authorization
-        accountId: decoded.partnerId,
-        isAdmin: () => decoded.role === 'pms_admin',
-        isActive: () => pmsUser.isActive
-      }
-
-      // Get partner account
-      const partner = await Partner.findById(decoded.partnerId)
-      if (partner) {
-        req.account = partner
-      }
-
-      return next()
-    }
-
-    // Regular token - get user
+    // Get user
     const user = await User.findById(decoded.userId)
     if (!user || !user.isActive()) {
       throw new UnauthorizedError('UNAUTHORIZED')
+    }
+
+    // Check if password was changed after token was issued
+    if (user.changedPasswordAfter(decoded.iat)) {
+      throw new UnauthorizedError('PASSWORD_CHANGED')
     }
 
     // Get account (skip for platform)
@@ -90,7 +50,6 @@ export const protect = async (req, res, next) => {
     req.user = user
     req.account = account
     req.token = decoded
-    req.authMode = 'regular'
 
     next()
   } catch (error) {
@@ -104,11 +63,10 @@ export const protect = async (req, res, next) => {
   }
 }
 
-// Require admin role OR user with permissions
+// Require admin role
 // - Platform admins: always allowed
 // - Partner/Agency admins (role: 'admin'): always allowed
-// - Partner/Agency users (role: 'user') with permissions: allowed
-// Specific module/action permission checks should be done in service layer
+// Note: For permission-based access, use requirePermission() middleware instead
 export const requireAdmin = (req, res, next) => {
   // Platform admins always have full access
   if (req.user.accountType === 'platform') {
@@ -120,12 +78,7 @@ export const requireAdmin = (req, res, next) => {
     return next()
   }
 
-  // Users with permissions can access (specific checks done in services)
-  const permissions = req.user.permissions || []
-  if (permissions.length > 0) {
-    return next()
-  }
-
+  // Non-admin users must use requirePermission() for specific module access
   throw new UnauthorizedError('FORBIDDEN')
 }
 

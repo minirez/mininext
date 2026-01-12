@@ -4,7 +4,7 @@
  * Split from booking.service.js for better maintainability
  */
 
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import Hotel from '../hotel/hotel.model.js'
 import RoomType from '../planning/roomType.model.js'
 import MealPlan from '../planning/mealPlan.model.js'
@@ -12,10 +12,9 @@ import Market from '../planning/market.model.js'
 import Booking from './booking.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
-import { emitReservationUpdate, getGuestDisplayName } from '../pms/pmsSocket.js'
 import logger from '#core/logger.js'
 import { getPartnerId, getSourceInfo } from '#services/helpers.js'
-import { sanitizeGuest, sanitizeRoomGuests, createGuestFromBooking } from './helpers.js'
+import { sanitizeGuest, sanitizeRoomGuests } from './helpers.js'
 
 // ==================== BOOKING CRUD ====================
 
@@ -55,12 +54,13 @@ export const listBookings = asyncHandler(async (req, res) => {
     if (checkInTo) query.checkIn.$lte = new Date(checkInTo)
   }
   if (search) {
+    const escapedSearch = escapeRegex(search)
     query.$or = [
-      { bookingNumber: { $regex: search, $options: 'i' } },
-      { 'contact.email': { $regex: search, $options: 'i' } },
-      { 'leadGuest.firstName': { $regex: search, $options: 'i' } },
-      { 'leadGuest.lastName': { $regex: search, $options: 'i' } },
-      { hotelName: { $regex: search, $options: 'i' } }
+      { bookingNumber: { $regex: escapedSearch, $options: 'i' } },
+      { 'contact.email': { $regex: escapedSearch, $options: 'i' } },
+      { 'leadGuest.firstName': { $regex: escapedSearch, $options: 'i' } },
+      { 'leadGuest.lastName': { $regex: escapedSearch, $options: 'i' } },
+      { hotelName: { $regex: escapedSearch, $options: 'i' } }
     ]
   }
 
@@ -496,18 +496,6 @@ export const createBooking = asyncHandler(async (req, res) => {
   // Populate for response
   await booking.populate('hotel', 'name slug')
 
-  // Emit socket event for PMS real-time updates
-  emitReservationUpdate(booking.hotel._id?.toString() || hotel._id.toString(), 'created', {
-    reservationId: booking._id,
-    bookingNumber: booking.bookingNumber,
-    guestName: getGuestDisplayName(booking.leadGuest),
-    checkIn: booking.checkIn,
-    checkOut: booking.checkOut,
-    roomType: booking.rooms[0]?.roomType,
-    status: booking.status,
-    source: booking.source?.type || 'admin'
-  })
-
   res.status(201).json({
     success: true,
     data: {
@@ -575,26 +563,6 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
 
   booking.status = status
   await booking.save()
-
-  // Emit socket event for PMS real-time updates
-  const hotelId = booking.hotel?._id?.toString() || booking.hotel?.toString()
-  if (hotelId) {
-    emitReservationUpdate(hotelId, status === 'confirmed' ? 'confirmed' : 'updated', {
-      reservationId: booking._id,
-      bookingNumber: booking.bookingNumber,
-      guestName: getGuestDisplayName(booking.leadGuest),
-      checkIn: booking.checkIn,
-      checkOut: booking.checkOut,
-      roomType: booking.rooms[0]?.roomType,
-      status: booking.status,
-      previousStatus
-    })
-  }
-
-  // Create PMS guest record when booking is confirmed
-  if (status === 'confirmed') {
-    await createGuestFromBooking(booking)
-  }
 
   res.json({
     success: true,
@@ -702,21 +670,6 @@ export const cancelBooking = asyncHandler(async (req, res) => {
     } catch (error) {
       logger.error('Allotment release error:', error.message)
     }
-  }
-
-  // Emit socket event for PMS real-time updates
-  const hotelId = booking.hotel?._id?.toString() || booking.hotel?.toString()
-  if (hotelId) {
-    emitReservationUpdate(hotelId, 'cancelled', {
-      reservationId: booking._id,
-      bookingNumber: booking.bookingNumber,
-      guestName: getGuestDisplayName(booking.leadGuest),
-      checkIn: booking.checkIn,
-      checkOut: booking.checkOut,
-      roomType: booking.rooms[0]?.roomType,
-      status: 'cancelled',
-      reason: reason || 'Not specified'
-    })
   }
 
   res.json({

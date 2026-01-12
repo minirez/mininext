@@ -257,6 +257,62 @@ const partnerSchema = new mongoose.Schema(
       }
     },
 
+    // PMS Entegrasyonu
+    pmsIntegration: {
+      // PMS hizmeti aktif mi?
+      enabled: {
+        type: Boolean,
+        default: false
+      },
+      // API yapılandırması
+      apiSettings: {
+        // PMS sistemine erişim için API key (şifreli)
+        apiKey: {
+          type: String
+        },
+        // HMAC imza için shared secret (şifreli)
+        sharedSecret: {
+          type: String
+        },
+        // PMS API URL
+        apiUrl: {
+          type: String,
+          default: 'https://pms.example.com/api'
+        }
+      },
+      // Provisioning durumu
+      provisioningStatus: {
+        type: String,
+        enum: ['none', 'pending', 'completed', 'failed'],
+        default: 'none'
+      },
+      // PMS'e aktarılan oteller
+      provisionedHotels: [
+        {
+          hotelId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Hotel'
+          },
+          pmsHotelId: String, // PMS sistemindeki ID
+          provisionedAt: Date,
+          status: {
+            type: String,
+            enum: ['pending', 'active', 'failed'],
+            default: 'pending'
+          },
+          lastError: String
+        }
+      ],
+      // Son sync tarihi
+      lastSyncAt: Date,
+      // Son hata
+      lastError: {
+        message: String,
+        timestamp: Date,
+        jobId: String
+      }
+    },
+
     // Güvenlik Ayarları
     securitySettings: {
       // 2FA zorunlu mu?
@@ -392,6 +448,99 @@ partnerSchema.methods.getSMSCredentials = function () {
   }
 }
 
+// Generate PMS API credentials
+partnerSchema.methods.generatePmsCredentials = async function () {
+  const crypto = await import('crypto')
+
+  const apiKey = crypto.randomBytes(32).toString('hex')
+  const sharedSecret = crypto.randomBytes(32).toString('hex')
+
+  // Initialize pmsIntegration if not exists
+  if (!this.pmsIntegration) {
+    this.pmsIntegration = {}
+  }
+  if (!this.pmsIntegration.apiSettings) {
+    this.pmsIntegration.apiSettings = {}
+  }
+
+  // Encrypt and store credentials
+  this.pmsIntegration.apiSettings.apiKey = encrypt(apiKey)
+  this.pmsIntegration.apiSettings.sharedSecret = encrypt(sharedSecret)
+
+  await this.save()
+
+  // Return unencrypted for one-time display
+  return { apiKey, sharedSecret }
+}
+
+// Get decrypted PMS credentials
+partnerSchema.methods.getPmsCredentials = function () {
+  if (!this.pmsIntegration?.apiSettings?.apiKey) {
+    return null
+  }
+
+  try {
+    return {
+      apiKey: decrypt(this.pmsIntegration.apiSettings.apiKey),
+      sharedSecret: decrypt(this.pmsIntegration.apiSettings.sharedSecret),
+      apiUrl: this.pmsIntegration.apiSettings.apiUrl
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+// Check if hotel is provisioned to PMS
+partnerSchema.methods.isHotelProvisioned = function (hotelId) {
+  const hotel = this.pmsIntegration?.provisionedHotels?.find(
+    h => h.hotelId?.toString() === hotelId?.toString()
+  )
+  return hotel?.status === 'active'
+}
+
+// Update hotel provisioning status
+partnerSchema.methods.updateHotelProvisioningStatus = async function (hotelId, status, pmsHotelId = null, error = null) {
+  if (!this.pmsIntegration) {
+    this.pmsIntegration = { provisionedHotels: [] }
+  }
+  if (!this.pmsIntegration.provisionedHotels) {
+    this.pmsIntegration.provisionedHotels = []
+  }
+
+  const hotelIndex = this.pmsIntegration.provisionedHotels.findIndex(
+    h => h.hotelId?.toString() === hotelId?.toString()
+  )
+
+  const updateData = {
+    hotelId,
+    status,
+    provisionedAt: status === 'active' ? new Date() : undefined,
+    pmsHotelId: pmsHotelId || undefined,
+    lastError: error || undefined
+  }
+
+  if (hotelIndex >= 0) {
+    this.pmsIntegration.provisionedHotels[hotelIndex] = {
+      ...this.pmsIntegration.provisionedHotels[hotelIndex],
+      ...updateData
+    }
+  } else {
+    this.pmsIntegration.provisionedHotels.push(updateData)
+  }
+
+  // Update overall status
+  const allActive = this.pmsIntegration.provisionedHotels.every(h => h.status === 'active')
+  const anyFailed = this.pmsIntegration.provisionedHotels.some(h => h.status === 'failed')
+
+  if (allActive && this.pmsIntegration.provisionedHotels.length > 0) {
+    this.pmsIntegration.provisioningStatus = 'completed'
+  } else if (anyFailed) {
+    this.pmsIntegration.provisioningStatus = 'failed'
+  }
+
+  await this.save()
+}
+
 // Get decrypted email credentials
 partnerSchema.methods.getEmailCredentials = function () {
   if (!this.notifications?.email?.useOwnSES) {
@@ -490,6 +639,25 @@ partnerSchema.pre('save', function (next) {
         }
       }
     }
+  }
+
+  // Encrypt PMS credentials if changed
+  if (this.isModified('pmsIntegration.apiSettings.apiKey')) {
+    const apiKey = this.pmsIntegration?.apiSettings?.apiKey
+    if (apiKey && !isEncrypted(apiKey)) {
+      this.pmsIntegration.apiSettings.apiKey = encrypt(apiKey)
+    }
+  }
+  if (this.isModified('pmsIntegration.apiSettings.sharedSecret')) {
+    const sharedSecret = this.pmsIntegration?.apiSettings?.sharedSecret
+    if (sharedSecret && !isEncrypted(sharedSecret)) {
+      this.pmsIntegration.apiSettings.sharedSecret = encrypt(sharedSecret)
+    }
+  }
+
+  // Lowercase PMS domain
+  if (this.branding?.pmsDomain) {
+    this.branding.pmsDomain = this.branding.pmsDomain.toLowerCase()
   }
 
   next()

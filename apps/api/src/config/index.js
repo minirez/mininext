@@ -86,6 +86,12 @@ const config = {
       pms: parseInt(process.env.PMS_FRONTEND_PORT) || 3002
     },
     apiBackend: process.env.API_BACKEND_URL || 'http://localhost:4000'
+  },
+
+  // PMS Integration - Message queue for standalone PMS system
+  pms: {
+    queueEnabled: process.env.PMS_QUEUE_ENABLED === 'true',
+    apiUrl: process.env.PMS_API_URL || 'https://pms.example.com/api'
   }
 }
 

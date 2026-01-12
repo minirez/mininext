@@ -20,15 +20,6 @@ export const requirePermission = (module, action) => {
       return next(new ForbiddenError('UNAUTHORIZED'))
     }
 
-    // PMS users have different permission system
-    if (req.authMode === 'pms') {
-      // PMS admin has all permissions, others only have view
-      if (req.pmsRole === 'pms_admin' || action === 'view') {
-        return next()
-      }
-      return next(new ForbiddenError('PERMISSION_DENIED'))
-    }
-
     // Admins have all permissions
     if (user.role === 'admin') {
       return next()

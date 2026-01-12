@@ -27,6 +27,10 @@ router.post('/:id/activate', partnerService.activatePartner)
 router.post('/:id/deactivate', partnerService.deactivatePartner)
 router.post('/:id/approve', partnerService.approvePartner)
 
+// PMS Integration
+router.post('/:id/activate-pms', partnerService.activatePms)
+router.get('/:id/pms-status', partnerService.getPmsStatus)
+
 // Document upload
 router.post('/:id/upload', upload.single('document'), partnerService.uploadDocument)
 router.delete('/:id/documents/:documentId', partnerService.deleteDocument)

@@ -2,7 +2,7 @@
   <div
     class="flex h-screen overflow-hidden bg-gray-100 dark:bg-slate-900 print:block print:h-auto print:overflow-visible print:bg-white"
   >
-    <!-- Mobile Backdrop (not shown for PMS users on PMS routes) -->
+    <!-- Mobile Backdrop -->
     <Transition
       enter-active-class="transition-opacity ease-linear duration-300"
       enter-from-class="opacity-0"
@@ -18,7 +18,7 @@
       ></div>
     </Transition>
 
-    <!-- Sidebar (hidden in print, hidden for PMS users) -->
+    <!-- Sidebar (hidden in print) -->
     <Transition
       enter-active-class="transition-transform ease-out duration-300"
       enter-from-class="-translate-x-full"
@@ -79,23 +79,8 @@ const route = useRoute()
 const uiStore = useUIStore()
 const { t } = useI18n()
 
-// Check if PMS user (logged in via PMS, not regular admin/partner)
-const isPmsUser = computed(() => {
-  return !!localStorage.getItem('pmsToken')
-})
-
-// Check if on PMS route
-const isPmsRoute = computed(() => {
-  return route.path.startsWith('/pms')
-})
-
-// Show sidebar: hide for PMS users on PMS routes
+// Show sidebar: show on desktop, toggle on mobile
 const showSidebar = computed(() => {
-  // Hide sidebar for PMS users on PMS routes
-  if (isPmsUser.value && isPmsRoute.value) {
-    return false
-  }
-  // Normal behavior: show on desktop, toggle on mobile
   return !uiStore.isMobile || uiStore.sidebarOpen
 })
 

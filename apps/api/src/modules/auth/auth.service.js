@@ -416,7 +416,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       to: user.email,
       name: user.name,
       resetUrl,
-      partnerId: user.accountType === 'partner' ? user.accountId : null
+      partnerId: user.accountType === 'partner' ? user.accountId : null,
+      language: user.language || 'tr'
     })
 
     logger.info(`Password reset email sent to: ${email}`)

@@ -160,7 +160,7 @@ const currentModuleIcon = computed(() => {
     '/bookings': 'book_online',
     '/profile': 'person',
     '/developers': 'code',
-    '/pms': 'apartment'
+    '/pms-integration': 'link'
   }
 
   // Find matching route
@@ -267,7 +267,7 @@ const mainSection = computed(() => {
       items.push({ name: 'bookings', to: '/bookings', icon: 'book_online', label: t('nav.bookings') })
     }
     if (hasPermission('pms')) {
-      items.push({ name: 'pms', to: '/pms', icon: 'apartment', label: 'PMS' })
+      items.push({ name: 'pms-integration', to: '/pms-integration', icon: 'link', label: 'PMS' })
     }
     if (hasPermission('settings')) {
       items.push({ name: 'developers', to: '/developers', icon: 'code', label: t('nav.developers') })

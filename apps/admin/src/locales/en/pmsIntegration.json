@@ -1,0 +1,38 @@
+{
+  "title": "PMS Integration",
+  "description": "Create PMS accounts for your hotels and manage them.",
+  "selectHotel": "Select hotel",
+  "selectHotelPrompt": "Select a hotel to view PMS status",
+  "notProvisioned": "PMS not opened",
+  "provisionTitle": "Open PMS for This Hotel",
+  "provisionDescription": "PMS account has not been created for this hotel yet. Click the button below to open PMS.",
+  "provisionButton": "Open PMS",
+  "syncButton": "Synchronize",
+  "provisioningDetails": "PMS Details",
+  "pmsHotelId": "PMS Hotel ID",
+  "status": "Status",
+  "provisionedAt": "Opened At",
+  "provisionSuccess": "PMS opened successfully!",
+  "provisionSuccessDesc": "You can log in to the PMS system with the credentials below.",
+  "username": "Username",
+  "tempPassword": "Temporary Password",
+  "saveCredentialsWarning": "Save these credentials in a secure place. The password will not be shown again.",
+  "provisionModalTitle": "Create PMS Account",
+  "provisionModalDesc": "This action will create a PMS account for the hotel and provide you with login credentials.",
+  "selectDataToSync": "Data to send on initial setup (optional)",
+  "roomTypes": "Room Types",
+  "roomTypesDesc": "Send hotel room types to PMS",
+  "boardTypes": "Board Types",
+  "boardTypesDesc": "Send board types (AI, FB, HB etc.) to PMS",
+  "provisionWarning": "After PMS is opened, you can log in with these credentials. Save the password securely.",
+  "startProvisioning": "Open PMS",
+  "hotelStatus": {
+    "pending": "Opening",
+    "active": "Active",
+    "failed": "Failed"
+  },
+  "errors": {
+    "pmsNotEnabled": "PMS integration is not enabled for this partner. Please contact the administrator.",
+    "alreadyProvisioned": "PMS is already opened for this hotel."
+  }
+}
