@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen overflow-y-auto flex items-start justify-center bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-12 px-4"
+    class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-12 px-4"
   >
     <!-- Top Bar: Language & Theme -->
     <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <div class="w-full max-w-2xl">
+    <div class="w-full max-w-2xl mx-auto">
       <!-- Success State -->
       <div v-if="success" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
         <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
