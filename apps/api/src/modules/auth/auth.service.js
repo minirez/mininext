@@ -4,7 +4,7 @@ import config from '#config'
 import User from '../user/user.model.js'
 import Partner from '../partner/partner.model.js'
 import Agency from '../agency/agency.model.js'
-import { UnauthorizedError, BadRequestError, TooManyRequestsError } from '#core/errors.js'
+import { UnauthorizedError, BadRequestError, TooManyRequestsError, ValidationError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { verify2FAToken } from '#helpers/twoFactor.js'
 import { sendPasswordResetEmail, getAdminUrl } from '#helpers/mail.js'
@@ -141,7 +141,8 @@ export const login = asyncHandler(async (req, res) => {
         role: user.role,
         accountType: user.accountType,
         accountId: user.accountId,
-        permissions: user.permissions || []
+        permissions: user.permissions || [],
+        avatar: user.avatar
       },
       account: {
         id: account._id,
@@ -231,7 +232,8 @@ export const me = asyncHandler(async (req, res) => {
         language: user.language,
         isOnline: user.isOnline,
         lastLogin: user.lastLogin,
-        notificationPreferences: user.notificationPreferences
+        notificationPreferences: user.notificationPreferences,
+        avatar: user.avatar
       },
       account: account
         ? {
@@ -500,5 +502,60 @@ export const unblockLoginBlock = asyncHandler(async (req, res) => {
     success: true,
     message: req.t ? req.t('ACCOUNT_UNBLOCKED') : 'Account has been unblocked successfully.',
     data: result
+  })
+})
+
+// Upload Avatar
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  const { getAvatarUrl, deleteOldAvatarExcept } = await import('#helpers/avatarUpload.js')
+
+  if (!req.file) {
+    throw new ValidationError('NO_FILE_UPLOADED')
+  }
+
+  // Delete any old avatar with different extension (but keep the new one)
+  deleteOldAvatarExcept(req.user._id, req.file.filename)
+
+  const avatarUrl = getAvatarUrl(req.file.filename)
+
+  const avatarData = {
+    filename: req.file.filename,
+    url: avatarUrl,
+    uploadedAt: new Date()
+  }
+
+  // Update user avatar using findByIdAndUpdate for reliability
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: avatarData },
+    { new: true }
+  )
+
+  res.json({
+    success: true,
+    message: 'Avatar uploaded successfully',
+    data: {
+      avatar: updatedUser.avatar
+    }
+  })
+})
+
+// Delete Avatar
+export const deleteAvatar = asyncHandler(async (req, res) => {
+  const { deleteOldAvatar } = await import('#helpers/avatarUpload.js')
+
+  if (req.user.avatar?.filename) {
+    deleteOldAvatar(req.user._id)
+  }
+
+  // Update user using findByIdAndUpdate for reliability
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { $unset: { avatar: 1 } }
+  )
+
+  res.json({
+    success: true,
+    message: 'Avatar deleted successfully'
   })
 })

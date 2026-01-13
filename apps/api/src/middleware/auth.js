@@ -126,6 +126,9 @@ export const requirePlatformAdmin = (req, res, next) => {
   next()
 }
 
+// Alias for requirePlatformAdmin (for semantic clarity)
+export const requirePlatformUser = requirePlatformAdmin
+
 // Require partner user or platform admin
 export const requirePartnerOrAdmin = (req, res, next) => {
   const isPlatformAdmin = req.user.accountType === 'platform'

@@ -70,6 +70,13 @@
           >
             <!-- User Avatar -->
             <div
+              v-if="userAvatarUrl"
+              class="w-8 h-8 rounded-full overflow-hidden"
+            >
+              <img :src="userAvatarUrl" :alt="authStore.user?.name" class="w-full h-full object-cover" />
+            </div>
+            <div
+              v-else
               class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium"
             >
               {{ getInitials(authStore.user?.name) }}
@@ -268,6 +275,18 @@ const props = defineProps({
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const hotelStore = useHotelStore()
+
+// API base URL for avatar
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
+const fileBaseUrl = apiBaseUrl.replace('/api', '')
+
+// User avatar URL
+const userAvatarUrl = computed(() => {
+  const avatar = authStore.user?.avatar
+  if (!avatar?.url) return null
+  if (avatar.url.startsWith('http')) return avatar.url
+  return `${fileBaseUrl}${avatar.url}`
+})
 
 // Routes that need hotel selector
 const hotelRequiredRoutes = [

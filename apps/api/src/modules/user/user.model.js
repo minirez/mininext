@@ -40,6 +40,13 @@ const userSchema = new mongoose.Schema(
 
     phone: String,
 
+    // Avatar
+    avatar: {
+      filename: String,
+      url: String,
+      uploadedAt: Date
+    },
+
     // Authentication
     password: {
       type: String,

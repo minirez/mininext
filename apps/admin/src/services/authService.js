@@ -108,6 +108,31 @@ const unblockAccount = async email => {
   }
 }
 
+const uploadAvatar = async file => {
+  try {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    const response = await apiClient.post('/auth/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Avatar upload failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const deleteAvatar = async () => {
+  try {
+    const response = await apiClient.delete('/auth/avatar')
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Avatar delete failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   login,
   verify2FA,
@@ -117,5 +142,7 @@ export default {
   refreshToken,
   forgotPassword,
   resetPassword,
-  unblockAccount
+  unblockAccount,
+  uploadAvatar,
+  deleteAvatar
 }

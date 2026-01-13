@@ -32,6 +32,8 @@ const ROUTE_CONFIG = {
   'location': 'locations',
   'booking': 'bookings',
   'notification': 'notifications',
+  'issue': 'issues',
+  'email-log': 'email-logs',
 
   // Kebab-case endpoints
   'siteSettings': 'site-settings',

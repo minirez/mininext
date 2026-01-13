@@ -1,0 +1,133 @@
+{
+  "issues": {
+    "title": "Talep Yonetimi",
+    "newIssue": "Yeni Talep",
+    "allIssues": "Tum Talepler",
+    "myIssues": "Taleplerim",
+    "assignedToMe": "Bana Atananlar",
+    "watching": "Takip Ettiklerim",
+    "attachments": "Dosyalar",
+
+    "fields": {
+      "issueNumber": "Talep No",
+      "title": "Baslik",
+      "description": "Aciklama",
+      "status": "Durum",
+      "priority": "Oncelik",
+      "category": "Kategori",
+      "assignee": "Atanan",
+      "reporter": "Olusturan",
+      "labels": "Etiketler",
+      "dueDate": "Son Tarih",
+      "createdAt": "Olusturulma",
+      "updatedAt": "Guncellenme",
+      "watchers": "Takipciler"
+    },
+
+    "status": {
+      "open": "Acik",
+      "in_progress": "Devam Ediyor",
+      "resolved": "Cozuldu",
+      "closed": "Kapatildi",
+      "reopened": "Yeniden Acildi"
+    },
+
+    "priority": {
+      "low": "Dusuk",
+      "medium": "Orta",
+      "high": "Yuksek",
+      "critical": "Kritik"
+    },
+
+    "category": {
+      "bug": "Hata",
+      "feature": "Ozellik",
+      "improvement": "Iyilestirme",
+      "question": "Soru",
+      "task": "Gorev",
+      "other": "Diger"
+    },
+
+    "actions": {
+      "create": "Talep Olustur",
+      "edit": "Duzenle",
+      "delete": "Sil",
+      "assign": "Ata",
+      "unassign": "Atamayi Kaldir",
+      "watch": "Takip Et",
+      "unwatch": "Takibi Birak",
+      "changeStatus": "Durum Degistir",
+      "addComment": "Yorum Ekle",
+      "uploadFile": "Dosya Yukle",
+      "resolve": "Cozuldu Olarak Isaretle",
+      "close": "Kapat",
+      "reopen": "Yeniden Ac"
+    },
+
+    "comments": {
+      "title": "Yorumlar",
+      "placeholder": "Yorum yazin... ({'@'}kullanici ile bahsetme yapabilirsiniz)",
+      "edited": "duzenlendi",
+      "noComments": "Henuz yorum yok"
+    },
+
+    "activity": {
+      "title": "Aktivite",
+      "created": "talep olusturdu",
+      "updated": "talebi guncelledi",
+      "status_changed": "durumu degistirdi",
+      "assigned": "atadi",
+      "unassigned": "atamayi kaldirdi",
+      "priority_changed": "onceligi degistirdi",
+      "comment_added": "yorum ekledi",
+      "comment_edited": "yorum duzenledi",
+      "comment_deleted": "yorum sildi",
+      "attachment_added": "dosya ekledi",
+      "attachment_removed": "dosya sildi",
+      "due_date_set": "son tarih belirledi",
+      "due_date_removed": "son tarihi kaldirdi",
+      "watcher_added": "takipci ekledi",
+      "watcher_removed": "takipciyi cikardi",
+      "resolved": "cozuldu olarak isaretledi",
+      "closed": "kapatti",
+      "reopened": "yeniden acti"
+    },
+
+    "stats": {
+      "total": "Toplam",
+      "open": "Acik",
+      "critical": "Kritik",
+      "assignedToMe": "Bana Atanan",
+      "avgResolution": "Ort. Cozum Suresi"
+    },
+
+    "placeholders": {
+      "searchIssues": "Talep ara...",
+      "selectAssignee": "Kisi secin",
+      "selectPriority": "Oncelik secin",
+      "selectCategory": "Kategori secin",
+      "enterTitle": "Talep basligi",
+      "enterDescription": "Detayli aciklama yazin..."
+    },
+
+    "messages": {
+      "created": "Talep olusturuldu",
+      "updated": "Talep guncellendi",
+      "deleted": "Talep silindi",
+      "statusChanged": "Durum degistirildi",
+      "assigned": "Talep atandi",
+      "commentAdded": "Yorum eklendi",
+      "commentDeleted": "Yorum silindi",
+      "fileUploaded": "Dosya yuklendi",
+      "fileDeleted": "Dosya silindi",
+      "watchingEnabled": "Talep takibe alindi",
+      "watchingDisabled": "Talep takipten cikarildi"
+    },
+
+    "confirmations": {
+      "delete": "Bu talebi silmek istediginize emin misiniz?",
+      "deleteComment": "Bu yorumu silmek istediginize emin misiniz?",
+      "close": "Talebi kapatmak istediginize emin misiniz?"
+    }
+  }
+}

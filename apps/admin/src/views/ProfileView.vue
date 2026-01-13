@@ -5,12 +5,36 @@
       <div class="bg-gradient-to-r from-purple-600 to-purple-800 px-6 py-8">
         <div class="flex items-center gap-4">
           <!-- Avatar -->
-          <div
-            class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl font-bold"
-          >
-            {{ getInitials(authStore.user?.name) }}
+          <div class="relative group">
+            <div
+              v-if="avatarUrl"
+              class="w-20 h-20 rounded-full overflow-hidden ring-4 ring-white/30"
+            >
+              <img :src="avatarUrl" :alt="authStore.user?.name" class="w-full h-full object-cover" />
+            </div>
+            <div
+              v-else
+              class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl font-bold ring-4 ring-white/30"
+            >
+              {{ getInitials(authStore.user?.name) }}
+            </div>
+            <!-- Upload overlay -->
+            <div
+              class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              @click="avatarInputRef?.click()"
+            >
+              <span class="material-icons text-white">camera_alt</span>
+            </div>
+            <!-- Hidden file input -->
+            <input
+              ref="avatarInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleAvatarSelect"
+            />
           </div>
-          <div class="text-white">
+          <div class="text-white flex-1">
             <h1 class="text-2xl font-bold">{{ authStore.user?.name || '-' }}</h1>
             <p class="text-purple-200">{{ authStore.user?.email }}</p>
             <span
@@ -19,6 +43,15 @@
               {{ getRoleName() }}
             </span>
           </div>
+          <!-- Delete avatar button -->
+          <button
+            v-if="avatarUrl"
+            class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            :title="$t('profile.deleteAvatar')"
+            @click="handleAvatarDelete"
+          >
+            <span class="material-icons">delete</span>
+          </button>
         </div>
       </div>
     </div>
@@ -365,6 +398,17 @@
         </div>
       </template>
     </Modal>
+
+    <!-- Avatar Cropper Modal -->
+    <AvatarCropperModal
+      v-model="showCropperModal"
+      :file="selectedFile"
+      :aspect-ratio="1"
+      :output-width="300"
+      :output-height="300"
+      @save="handleCroppedAvatar"
+      @close="handleCropperClose"
+    />
   </div>
 </template>
 
@@ -375,6 +419,7 @@ import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import Modal from '@/components/common/Modal.vue'
+import AvatarCropperModal from '@/components/common/AvatarCropperModal.vue'
 import authService from '@/services/authService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 
@@ -383,9 +428,93 @@ const toast = useToast()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 
+// API base URL for avatar
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
+const fileBaseUrl = apiBaseUrl.replace('/api', '')
+
 // Async action composables
 const { isLoading: savingNotifications, execute: executeSaveNotifications } = useAsyncAction()
 const { isLoading: savingPassword, execute: executeSavePassword } = useAsyncAction({ showErrorToast: false })
+
+// Avatar
+const avatarUrl = computed(() => {
+  const avatar = authStore.user?.avatar
+  if (!avatar?.url) return null
+  if (avatar.url.startsWith('http')) return avatar.url
+  return `${fileBaseUrl}${avatar.url}`
+})
+
+// Avatar cropper modal
+const showCropperModal = ref(false)
+const selectedFile = ref(null)
+const avatarInputRef = ref(null)
+
+const handleAvatarSelect = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    toast.error(t('profile.invalidImageType'))
+    e.target.value = ''
+    return
+  }
+
+  // Validate file size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error(t('profile.imageTooLarge'))
+    e.target.value = ''
+    return
+  }
+
+  // Open cropper modal with selected file
+  selectedFile.value = file
+  showCropperModal.value = true
+}
+
+const handleCroppedAvatar = async (croppedFile) => {
+  try {
+    const result = await authService.uploadAvatar(croppedFile)
+    // Update user in store and localStorage
+    if (authStore.user) {
+      const updatedUser = { ...authStore.user, avatar: result.data.avatar }
+      authStore.updateUser(updatedUser)
+    }
+    toast.success(t('profile.avatarUploaded'))
+  } catch (error) {
+    toast.error(t('common.operationFailed'))
+  }
+
+  // Reset input
+  if (avatarInputRef.value) {
+    avatarInputRef.value.value = ''
+  }
+  selectedFile.value = null
+}
+
+const handleCropperClose = () => {
+  showCropperModal.value = false
+  selectedFile.value = null
+  if (avatarInputRef.value) {
+    avatarInputRef.value.value = ''
+  }
+}
+
+const handleAvatarDelete = async () => {
+  if (!confirm(t('profile.deleteAvatarConfirm'))) return
+
+  try {
+    await authService.deleteAvatar()
+    // Update user in store and localStorage
+    if (authStore.user) {
+      const updatedUser = { ...authStore.user, avatar: null }
+      authStore.updateUser(updatedUser)
+    }
+    toast.success(t('profile.avatarDeleted'))
+  } catch (error) {
+    toast.error(t('common.operationFailed'))
+  }
+}
 
 // Languages
 const languages = [

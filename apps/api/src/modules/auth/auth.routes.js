@@ -2,6 +2,9 @@ import express from 'express'
 import * as authService from './auth.service.js'
 import { protect, requirePlatformAdmin } from '#middleware/auth.js'
 import { strictLimiter, loginLimiter } from '#middleware/rateLimiter.js'
+import { avatarUpload } from '#helpers/avatarUpload.js'
+
+// Auth routes - handles authentication, profile, and avatar management
 
 const router = express.Router()
 
@@ -319,5 +322,47 @@ router.put('/change-password', protect, strictLimiter, authService.changePasswor
  *         description: Platform admin access required
  */
 router.post('/admin/unblock-account', protect, requirePlatformAdmin, authService.unblockLoginBlock)
+
+/**
+ * @swagger
+ * /api/auth/avatar:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Upload user avatar
+ *     description: Upload a profile picture for the authenticated user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *       400:
+ *         description: No file uploaded or invalid file type
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post('/avatar', protect, avatarUpload.single('avatar'), authService.uploadAvatar)
+
+/**
+ * @swagger
+ * /api/auth/avatar:
+ *   delete:
+ *     tags: [Auth]
+ *     summary: Delete user avatar
+ *     description: Remove profile picture for the authenticated user
+ *     responses:
+ *       200:
+ *         description: Avatar deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.delete('/avatar', protect, authService.deleteAvatar)
 
 export default router

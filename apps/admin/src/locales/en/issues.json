@@ -1,0 +1,133 @@
+{
+  "issues": {
+    "title": "Issue Management",
+    "newIssue": "New Issue",
+    "allIssues": "All Issues",
+    "myIssues": "My Issues",
+    "assignedToMe": "Assigned to Me",
+    "watching": "Watching",
+    "attachments": "Attachments",
+
+    "fields": {
+      "issueNumber": "Issue No",
+      "title": "Title",
+      "description": "Description",
+      "status": "Status",
+      "priority": "Priority",
+      "category": "Category",
+      "assignee": "Assignee",
+      "reporter": "Reporter",
+      "labels": "Labels",
+      "dueDate": "Due Date",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "watchers": "Watchers"
+    },
+
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed",
+      "reopened": "Reopened"
+    },
+
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+
+    "category": {
+      "bug": "Bug",
+      "feature": "Feature",
+      "improvement": "Improvement",
+      "question": "Question",
+      "task": "Task",
+      "other": "Other"
+    },
+
+    "actions": {
+      "create": "Create Issue",
+      "edit": "Edit",
+      "delete": "Delete",
+      "assign": "Assign",
+      "unassign": "Unassign",
+      "watch": "Watch",
+      "unwatch": "Unwatch",
+      "changeStatus": "Change Status",
+      "addComment": "Add Comment",
+      "uploadFile": "Upload File",
+      "resolve": "Mark as Resolved",
+      "close": "Close",
+      "reopen": "Reopen"
+    },
+
+    "comments": {
+      "title": "Comments",
+      "placeholder": "Write a comment... (use {'@'}username to mention)",
+      "edited": "edited",
+      "noComments": "No comments yet"
+    },
+
+    "activity": {
+      "title": "Activity",
+      "created": "created issue",
+      "updated": "updated issue",
+      "status_changed": "changed status",
+      "assigned": "assigned",
+      "unassigned": "unassigned",
+      "priority_changed": "changed priority",
+      "comment_added": "added comment",
+      "comment_edited": "edited comment",
+      "comment_deleted": "deleted comment",
+      "attachment_added": "added attachment",
+      "attachment_removed": "removed attachment",
+      "due_date_set": "set due date",
+      "due_date_removed": "removed due date",
+      "watcher_added": "added watcher",
+      "watcher_removed": "removed watcher",
+      "resolved": "marked as resolved",
+      "closed": "closed",
+      "reopened": "reopened"
+    },
+
+    "stats": {
+      "total": "Total",
+      "open": "Open",
+      "critical": "Critical",
+      "assignedToMe": "Assigned to Me",
+      "avgResolution": "Avg Resolution Time"
+    },
+
+    "placeholders": {
+      "searchIssues": "Search issues...",
+      "selectAssignee": "Select assignee",
+      "selectPriority": "Select priority",
+      "selectCategory": "Select category",
+      "enterTitle": "Issue title",
+      "enterDescription": "Write detailed description..."
+    },
+
+    "messages": {
+      "created": "Issue created",
+      "updated": "Issue updated",
+      "deleted": "Issue deleted",
+      "statusChanged": "Status changed",
+      "assigned": "Issue assigned",
+      "commentAdded": "Comment added",
+      "commentDeleted": "Comment deleted",
+      "fileUploaded": "File uploaded",
+      "fileDeleted": "File deleted",
+      "watchingEnabled": "Now watching this issue",
+      "watchingDisabled": "Stopped watching this issue"
+    },
+
+    "confirmations": {
+      "delete": "Are you sure you want to delete this issue?",
+      "deleteComment": "Are you sure you want to delete this comment?",
+      "close": "Are you sure you want to close this issue?"
+    }
+  }
+}
