@@ -5,6 +5,13 @@
  * This middleware extracts the partner ID from the header and attaches it to the request.
  */
 
+import mongoose from 'mongoose'
+
+// Validate ObjectId format
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id
+}
+
 export const partnerContext = (req, res, next) => {
   // Get partner ID from header (sent by frontend when platform admin selects a partner)
   const partnerIdHeader = req.headers['x-partner-id']
@@ -12,8 +19,12 @@ export const partnerContext = (req, res, next) => {
   if (partnerIdHeader) {
     // Only platform admins can use this feature
     if (req.user?.accountType === 'platform' && req.user?.role === 'admin') {
-      req.partnerId = partnerIdHeader
-      req.viewingAsPartner = true
+      // Validate ObjectId format to prevent injection attacks
+      if (isValidObjectId(partnerIdHeader)) {
+        req.partnerId = partnerIdHeader
+        req.viewingAsPartner = true
+      }
+      // Invalid ObjectId format - silently ignore
     }
     // Regular users cannot spoof partner ID - silently ignore
   }

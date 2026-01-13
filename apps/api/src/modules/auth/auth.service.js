@@ -46,7 +46,7 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   // Check if account is locked out due to too many failed attempts
-  const lockoutStatus = checkLoginLockout(email)
+  const lockoutStatus = await checkLoginLockout(email)
   if (lockoutStatus.isLocked) {
     if (lockoutStatus.isBlocked) {
       logger.warn(`Login attempt for permanently blocked account: ${email}`)
@@ -65,7 +65,7 @@ export const login = asyncHandler(async (req, res) => {
 
   if (!user || !(await user.comparePassword(password))) {
     // Record failed attempt
-    const failedResult = recordFailedLogin(email)
+    const failedResult = await recordFailedLogin(email)
     logger.warn(`Failed login attempt for ${email}. Remaining attempts: ${failedResult.remainingAttempts}`)
 
     if (failedResult.isLocked) {

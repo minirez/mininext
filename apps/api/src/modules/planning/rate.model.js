@@ -228,6 +228,7 @@ rateSchema.index({ hotel: 1, roomType: 1, mealPlan: 1, market: 1, date: 1 }, { u
 
 // Efficient query indexes
 rateSchema.index({ partner: 1, hotel: 1, date: 1 })
+rateSchema.index({ partner: 1, roomType: 1, market: 1, date: 1 })
 rateSchema.index({ hotel: 1, date: 1, status: 1 })
 rateSchema.index({ hotel: 1, roomType: 1, date: 1 })
 rateSchema.index({ hotel: 1, market: 1, date: 1 })

@@ -328,11 +328,132 @@
           {{ $t('profile.security') }}
         </h2>
       </div>
-      <div class="p-6">
-        <button class="btn-secondary flex items-center gap-2" @click="showPasswordModal = true">
-          <span class="material-icons">lock</span>
-          {{ $t('profile.changePassword') }}
+      <div class="p-6 space-y-6">
+        <!-- Password -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">{{ $t('profile.password') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('profile.passwordDescription') }}</p>
+          </div>
+          <button class="btn-secondary flex items-center gap-2" @click="showPasswordModal = true">
+            <span class="material-icons">lock</span>
+            {{ $t('profile.changePassword') }}
+          </button>
+        </div>
+
+        <!-- Two-Factor Authentication -->
+        <div class="pt-6 border-t border-gray-200 dark:border-slate-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                {{ $t('profile.twoFactor.title') }}
+                <span
+                  v-if="is2FAEnabled"
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                >
+                  {{ $t('common.active') }}
+                </span>
+              </h3>
+              <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('profile.twoFactor.description') }}</p>
+            </div>
+            <button
+              v-if="!is2FAEnabled"
+              class="btn-primary flex items-center gap-2"
+              @click="startEnable2FA"
+            >
+              <span class="material-icons">phonelink_lock</span>
+              {{ $t('profile.twoFactor.enable') }}
+            </button>
+            <button
+              v-else
+              class="btn-danger flex items-center gap-2"
+              @click="showDisable2FAModal = true"
+            >
+              <span class="material-icons">phonelink_erase</span>
+              {{ $t('profile.twoFactor.disable') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Sessions -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+          <span class="material-icons text-purple-600">devices</span>
+          {{ $t('profile.sessions.title') }}
+        </h2>
+        <button
+          v-if="sessions.length > 1"
+          class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1"
+          :disabled="terminatingOthers"
+          @click="handleTerminateOthers"
+        >
+          <span v-if="terminatingOthers" class="material-icons animate-spin text-sm">refresh</span>
+          <span class="material-icons text-sm">logout</span>
+          {{ $t('profile.sessions.terminateOthers') }}
         </button>
+      </div>
+      <div class="p-6">
+        <div v-if="loadingSessions" class="flex items-center justify-center py-8">
+          <span class="material-icons animate-spin text-gray-400">refresh</span>
+        </div>
+        <div v-else-if="sessions.length === 0" class="text-center py-8 text-gray-500 dark:text-slate-400">
+          {{ $t('profile.sessions.noSessions') }}
+        </div>
+        <div v-else class="space-y-4">
+          <div
+            v-for="session in sessions"
+            :key="session._id"
+            class="flex items-center justify-between p-4 rounded-lg"
+            :class="session.isCurrent
+              ? 'bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-700'
+              : 'bg-gray-50 dark:bg-slate-700'"
+          >
+            <div class="flex items-center gap-4">
+              <!-- Device Icon -->
+              <div
+                class="w-10 h-10 rounded-full flex items-center justify-center"
+                :class="session.isCurrent ? 'bg-purple-100 dark:bg-purple-800' : 'bg-gray-200 dark:bg-slate-600'"
+              >
+                <span class="material-icons" :class="session.isCurrent ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-slate-400'">
+                  {{ getDeviceIcon(session.deviceType) }}
+                </span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-gray-900 dark:text-white">
+                    {{ session.browser || 'Unknown Browser' }} - {{ session.os || 'Unknown OS' }}
+                  </span>
+                  <span
+                    v-if="session.isCurrent"
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200"
+                  >
+                    {{ $t('profile.sessions.currentSession') }}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-2">
+                  <span>{{ session.ipAddress || '-' }}</span>
+                  <span v-if="session.location?.city">- {{ session.location.city }}, {{ session.location.country }}</span>
+                </div>
+                <div class="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                  {{ $t('profile.sessions.lastActivity') }}: {{ formatDate(session.lastActivity) }}
+                </div>
+              </div>
+            </div>
+            <button
+              v-if="!session.isCurrent"
+              class="text-red-600 hover:text-red-700 dark:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              :disabled="terminatingSession === session._id"
+              :title="$t('profile.sessions.terminate')"
+              @click="handleTerminateSession(session._id)"
+            >
+              <span v-if="terminatingSession === session._id" class="material-icons animate-spin">refresh</span>
+              <span v-else class="material-icons">logout</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -409,6 +530,150 @@
       @save="handleCroppedAvatar"
       @close="handleCropperClose"
     />
+
+    <!-- 2FA Enable Modal -->
+    <Modal
+      v-model="show2FAModal"
+      :title="$t('profile.twoFactor.setupTitle')"
+      size="md"
+      @close="close2FAModal"
+    >
+      <div class="space-y-6">
+        <!-- Step 1: QR Code -->
+        <div v-if="twoFactorSetup.step === 1" class="text-center">
+          <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
+            {{ $t('profile.twoFactor.scanQRCode') }}
+          </p>
+          <div v-if="twoFactorSetup.qrCode" class="flex justify-center mb-4">
+            <img :src="twoFactorSetup.qrCode" alt="QR Code" class="w-48 h-48 rounded-lg border" />
+          </div>
+          <div v-else class="flex justify-center mb-4">
+            <div class="w-48 h-48 rounded-lg border flex items-center justify-center bg-gray-100 dark:bg-slate-700">
+              <span class="material-icons animate-spin text-gray-400">refresh</span>
+            </div>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-slate-400 mb-2">
+            {{ $t('profile.twoFactor.orEnterCode') }}
+          </p>
+          <div class="bg-gray-100 dark:bg-slate-700 rounded-lg p-3">
+            <code class="text-sm font-mono text-gray-800 dark:text-slate-200 select-all">
+              {{ twoFactorSetup.secret }}
+            </code>
+          </div>
+        </div>
+
+        <!-- Step 2: Verify -->
+        <div v-if="twoFactorSetup.step === 2">
+          <p class="text-sm text-gray-600 dark:text-slate-400 mb-4 text-center">
+            {{ $t('profile.twoFactor.enterVerificationCode') }}
+          </p>
+          <div class="max-w-xs mx-auto">
+            <input
+              v-model="twoFactorSetup.verifyToken"
+              type="text"
+              maxlength="6"
+              pattern="[0-9]*"
+              inputmode="numeric"
+              class="form-input w-full text-center text-2xl tracking-widest font-mono"
+              :placeholder="$t('profile.twoFactor.codePlaceholder')"
+              @keyup.enter="verify2FASetup"
+            />
+            <p v-if="twoFactorSetup.error" class="text-red-500 text-sm mt-2 text-center">
+              {{ twoFactorSetup.error }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-between">
+          <button
+            v-if="twoFactorSetup.step === 2"
+            type="button"
+            class="btn-secondary"
+            @click="twoFactorSetup.step = 1"
+          >
+            {{ $t('common.back') }}
+          </button>
+          <div v-else></div>
+          <div class="flex gap-3">
+            <button type="button" class="btn-secondary" @click="close2FAModal">
+              {{ $t('common.cancel') }}
+            </button>
+            <button
+              v-if="twoFactorSetup.step === 1"
+              type="button"
+              class="btn-primary"
+              @click="twoFactorSetup.step = 2"
+            >
+              {{ $t('common.next') }}
+            </button>
+            <button
+              v-else
+              type="button"
+              :disabled="verifying2FA || !twoFactorSetup.verifyToken"
+              class="btn-primary flex items-center gap-2"
+              @click="verify2FASetup"
+            >
+              <span v-if="verifying2FA" class="material-icons animate-spin text-sm">refresh</span>
+              {{ $t('profile.twoFactor.verify') }}
+            </button>
+          </div>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- 2FA Disable Modal -->
+    <Modal
+      v-model="showDisable2FAModal"
+      :title="$t('profile.twoFactor.disableTitle')"
+      size="sm"
+      @close="closeDisable2FAModal"
+    >
+      <div class="space-y-4">
+        <div class="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+          <span class="material-icons text-amber-500">warning</span>
+          <p class="text-sm text-amber-700 dark:text-amber-300">
+            {{ $t('profile.twoFactor.disableWarning') }}
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            {{ $t('profile.twoFactor.enterCodeToDisable') }}
+          </label>
+          <input
+            v-model="disable2FAToken"
+            type="text"
+            maxlength="6"
+            pattern="[0-9]*"
+            inputmode="numeric"
+            class="form-input w-full text-center text-xl tracking-widest font-mono"
+            :placeholder="$t('profile.twoFactor.codePlaceholder')"
+            @keyup.enter="handleDisable2FA"
+          />
+          <p v-if="disable2FAError" class="text-red-500 text-sm mt-2">
+            {{ disable2FAError }}
+          </p>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn-secondary" @click="closeDisable2FAModal">
+            {{ $t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            :disabled="disabling2FA || !disable2FAToken"
+            class="btn-danger flex items-center gap-2"
+            @click="handleDisable2FA"
+          >
+            <span v-if="disabling2FA" class="material-icons animate-spin text-sm">refresh</span>
+            {{ $t('profile.twoFactor.disable') }}
+          </button>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -602,10 +867,6 @@ const saveNotificationPreferences = async () => {
   )
 }
 
-onMounted(() => {
-  loadNotificationPreferences()
-})
-
 // Helpers
 const getInitials = name => {
   if (!name) return 'U'
@@ -674,4 +935,193 @@ const handlePasswordChange = async () => {
     }
   )
 }
+
+// ==================== Two-Factor Authentication ====================
+const is2FAEnabled = computed(() => authStore.user?.twoFactorEnabled || false)
+const show2FAModal = ref(false)
+const showDisable2FAModal = ref(false)
+const verifying2FA = ref(false)
+const disabling2FA = ref(false)
+const disable2FAToken = ref('')
+const disable2FAError = ref('')
+
+const twoFactorSetup = reactive({
+  step: 1,
+  qrCode: null,
+  secret: null,
+  verifyToken: '',
+  error: ''
+})
+
+const startEnable2FA = async () => {
+  try {
+    twoFactorSetup.step = 1
+    twoFactorSetup.qrCode = null
+    twoFactorSetup.secret = null
+    twoFactorSetup.verifyToken = ''
+    twoFactorSetup.error = ''
+    show2FAModal.value = true
+
+    const result = await authService.enable2FA()
+    twoFactorSetup.qrCode = result.data.qrCode
+    twoFactorSetup.secret = result.data.secret
+  } catch (error) {
+    toast.error(t('common.operationFailed'))
+    show2FAModal.value = false
+  }
+}
+
+const verify2FASetup = async () => {
+  if (!twoFactorSetup.verifyToken || twoFactorSetup.verifyToken.length !== 6) {
+    twoFactorSetup.error = t('profile.twoFactor.invalidCode')
+    return
+  }
+
+  verifying2FA.value = true
+  twoFactorSetup.error = ''
+
+  try {
+    await authService.verify2FASetup(twoFactorSetup.verifyToken)
+
+    // Update user in store
+    if (authStore.user) {
+      authStore.updateUser({ ...authStore.user, twoFactorEnabled: true })
+    }
+
+    toast.success(t('profile.twoFactor.enabledSuccess'))
+    show2FAModal.value = false
+  } catch (error) {
+    const message = error.response?.data?.message
+    if (message === 'INVALID_2FA_TOKEN') {
+      twoFactorSetup.error = t('profile.twoFactor.invalidCode')
+    } else {
+      twoFactorSetup.error = t('common.operationFailed')
+    }
+  } finally {
+    verifying2FA.value = false
+  }
+}
+
+const close2FAModal = () => {
+  show2FAModal.value = false
+  twoFactorSetup.step = 1
+  twoFactorSetup.qrCode = null
+  twoFactorSetup.secret = null
+  twoFactorSetup.verifyToken = ''
+  twoFactorSetup.error = ''
+}
+
+const handleDisable2FA = async () => {
+  if (!disable2FAToken.value || disable2FAToken.value.length !== 6) {
+    disable2FAError.value = t('profile.twoFactor.invalidCode')
+    return
+  }
+
+  disabling2FA.value = true
+  disable2FAError.value = ''
+
+  try {
+    await authService.disable2FA(disable2FAToken.value)
+
+    // Update user in store
+    if (authStore.user) {
+      authStore.updateUser({ ...authStore.user, twoFactorEnabled: false })
+    }
+
+    toast.success(t('profile.twoFactor.disabledSuccess'))
+    showDisable2FAModal.value = false
+  } catch (error) {
+    const message = error.response?.data?.message
+    if (message === 'INVALID_2FA_TOKEN') {
+      disable2FAError.value = t('profile.twoFactor.invalidCode')
+    } else {
+      disable2FAError.value = t('common.operationFailed')
+    }
+  } finally {
+    disabling2FA.value = false
+  }
+}
+
+const closeDisable2FAModal = () => {
+  showDisable2FAModal.value = false
+  disable2FAToken.value = ''
+  disable2FAError.value = ''
+}
+
+// ==================== Session Management ====================
+const sessions = ref([])
+const loadingSessions = ref(false)
+const terminatingSession = ref(null)
+const terminatingOthers = ref(false)
+
+const loadSessions = async () => {
+  loadingSessions.value = true
+  try {
+    const result = await authService.getMySessions()
+    sessions.value = result.data || []
+  } catch (error) {
+    console.error('Failed to load sessions:', error)
+    sessions.value = []
+  } finally {
+    loadingSessions.value = false
+  }
+}
+
+const handleTerminateSession = async (sessionId) => {
+  if (!confirm(t('profile.sessions.terminateConfirm'))) return
+
+  terminatingSession.value = sessionId
+  try {
+    await authService.terminateSession(sessionId)
+    toast.success(t('profile.sessions.terminated'))
+    sessions.value = sessions.value.filter(s => s._id !== sessionId)
+  } catch (error) {
+    toast.error(t('common.operationFailed'))
+  } finally {
+    terminatingSession.value = null
+  }
+}
+
+const handleTerminateOthers = async () => {
+  if (!confirm(t('profile.sessions.terminateOthersConfirm'))) return
+
+  terminatingOthers.value = true
+  try {
+    await authService.terminateOtherSessions()
+    toast.success(t('profile.sessions.othersTerminated'))
+    // Keep only current session
+    sessions.value = sessions.value.filter(s => s.isCurrent)
+  } catch (error) {
+    toast.error(t('common.operationFailed'))
+  } finally {
+    terminatingOthers.value = false
+  }
+}
+
+const getDeviceIcon = (deviceType) => {
+  const icons = {
+    desktop: 'computer',
+    mobile: 'smartphone',
+    tablet: 'tablet_android',
+    unknown: 'devices'
+  }
+  return icons[deviceType] || icons.unknown
+}
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString(locale.value === 'tr' ? 'tr-TR' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Load sessions on mount
+onMounted(() => {
+  loadNotificationPreferences()
+  loadSessions()
+})
 </script>

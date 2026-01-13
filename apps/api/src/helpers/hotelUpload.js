@@ -43,7 +43,7 @@ const imageFilter = (req, file, cb) => {
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
   const mimetype = /image\/(jpeg|jpg|png|gif|webp)/.test(file.mimetype)
 
-  if (extname || mimetype) {
+  if (extname && mimetype) {
     return cb(null, true)
   } else {
     cb(new Error('Invalid file type. Only image files (JPEG, PNG, GIF, WEBP) are allowed.'))

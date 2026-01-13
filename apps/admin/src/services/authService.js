@@ -133,6 +133,68 @@ const deleteAvatar = async () => {
   }
 }
 
+// 2FA Methods
+const enable2FA = async () => {
+  try {
+    const response = await apiClient.post('/users/2fa/enable')
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Enable 2FA failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const verify2FASetup = async token => {
+  try {
+    const response = await apiClient.post('/users/2fa/verify', { token })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Verify 2FA setup failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const disable2FA = async token => {
+  try {
+    const response = await apiClient.post('/users/2fa/disable', { token })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Disable 2FA failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Session Methods
+const getMySessions = async () => {
+  try {
+    const response = await apiClient.get('/sessions/my-sessions')
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Get sessions failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const terminateSession = async sessionId => {
+  try {
+    const response = await apiClient.delete(`/sessions/my-sessions/${sessionId}`)
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Terminate session failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const terminateOtherSessions = async () => {
+  try {
+    const response = await apiClient.post('/sessions/my-sessions/terminate-others')
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Terminate other sessions failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   login,
   verify2FA,
@@ -144,5 +206,13 @@ export default {
   resetPassword,
   unblockAccount,
   uploadAvatar,
-  deleteAvatar
+  deleteAvatar,
+  // 2FA
+  enable2FA,
+  verify2FASetup,
+  disable2FA,
+  // Sessions
+  getMySessions,
+  terminateSession,
+  terminateOtherSessions
 }

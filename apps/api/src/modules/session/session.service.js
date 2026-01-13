@@ -1,5 +1,6 @@
 import Session from './session.model.js'
 import User from '../user/user.model.js'
+import { NotFoundError, BadRequestError } from '#core/errors.js'
 
 /**
  * Session Service
@@ -57,11 +58,11 @@ class SessionService {
   async terminateSession(sessionId, terminatedBy, reason = 'admin_action') {
     const session = await Session.findById(sessionId)
     if (!session) {
-      throw new Error('SESSION_NOT_FOUND')
+      throw new NotFoundError('SESSION_NOT_FOUND')
     }
 
     if (session.status !== 'active') {
-      throw new Error('SESSION_ALREADY_TERMINATED')
+      throw new BadRequestError('SESSION_ALREADY_TERMINATED')
     }
 
     return await session.terminate(terminatedBy, reason)
@@ -80,7 +81,7 @@ class SessionService {
   async terminateOtherSessions(userId, currentToken, terminatedBy) {
     const currentSession = await Session.findByToken(currentToken)
     if (!currentSession) {
-      throw new Error('CURRENT_SESSION_NOT_FOUND')
+      throw new NotFoundError('CURRENT_SESSION_NOT_FOUND')
     }
 
     // Terminate all except current

@@ -808,16 +808,255 @@
           </div>
         </div>
       </div>
+
+      <!-- Exchange Rates / TCMB Settings -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-amber-500">currency_exchange</span>
+            <div>
+              <h2 class="font-semibold text-gray-900 dark:text-white">
+                {{ $t('platformSettings.exchange.title') }}
+              </h2>
+              <p class="text-sm text-gray-500 dark:text-slate-400">
+                {{ $t('platformSettings.exchange.description') }}
+              </p>
+            </div>
+          </div>
+          <button
+            :disabled="refreshingRates"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors disabled:opacity-50"
+            @click="refreshExchangeRates"
+          >
+            <span :class="['material-icons text-sm', refreshingRates && 'animate-spin']">sync</span>
+            {{ $t('platformSettings.exchange.refresh') }}
+          </button>
+        </div>
+        <div class="p-6 space-y-6">
+          <!-- Scheduler Status -->
+          <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <span
+                :class="[
+                  'w-3 h-3 rounded-full',
+                  schedulerStatus.isRunning ? 'bg-green-500' : 'bg-gray-400'
+                ]"
+              ></span>
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {{ $t('platformSettings.exchange.scheduler') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ schedulerStatus.isRunning ? $t('platformSettings.exchange.schedulerRunning') : $t('platformSettings.exchange.schedulerStopped') }}
+                  <span v-if="schedulerStatus.isRunning">
+                    ({{ $t('platformSettings.exchange.every') }} {{ schedulerStatus.checkInterval }} {{ $t('platformSettings.exchange.minutes') }})
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                {{ $t('platformSettings.exchange.workingHours') }}: {{ schedulerStatus.workingHours?.start || 9 }}:00 - {{ schedulerStatus.workingHours?.end || 17 }}:00 (TR)
+              </p>
+              <p
+                :class="[
+                  'text-xs font-medium',
+                  schedulerStatus.isWithinWorkingHours ? 'text-green-600' : 'text-gray-500'
+                ]"
+              >
+                {{ schedulerStatus.isWithinWorkingHours ? $t('platformSettings.exchange.withinWorkingHours') : $t('platformSettings.exchange.outsideWorkingHours') }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Last Update Info -->
+          <div v-if="exchangeRates" class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-gray-400 text-sm">schedule</span>
+              <span class="text-sm text-gray-600 dark:text-slate-400">
+                {{ $t('platformSettings.exchange.lastUpdate') }}:
+                <span class="font-medium">{{ formatDateTime(exchangeRates.lastUpdated) }}</span>
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span
+                :class="[
+                  'px-2 py-1 text-xs rounded-full',
+                  exchangeRates.source === 'tcmb'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : exchangeRates.source === 'fallback'
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                ]"
+              >
+                {{ exchangeRates.source === 'tcmb' ? 'TCMB' : exchangeRates.source === 'fallback' ? $t('platformSettings.exchange.fallback') : $t('platformSettings.exchange.manual') }}
+              </span>
+              <span v-if="exchangeRates.bulletin" class="text-xs text-gray-500 dark:text-slate-400">
+                {{ $t('platformSettings.exchange.bulletin') }}: {{ exchangeRates.bulletin }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Exchange Rates Table -->
+          <div v-if="exchangeRates?.rates" class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200 dark:border-slate-700">
+                  <th class="text-left py-2 px-3 font-medium text-gray-600 dark:text-slate-400">
+                    {{ $t('platformSettings.exchange.currency') }}
+                  </th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-600 dark:text-slate-400">
+                    {{ $t('platformSettings.exchange.rate') }} (TRY)
+                  </th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-600 dark:text-slate-400">
+                    {{ $t('platformSettings.exchange.actions') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(rate, code) in mainCurrencies"
+                  :key="code"
+                  class="border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30"
+                >
+                  <td class="py-2 px-3">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-gray-900 dark:text-white">{{ code }}</span>
+                      <span class="text-xs text-gray-500">{{ getCurrencyName(code) }}</span>
+                    </div>
+                  </td>
+                  <td class="py-2 px-3 text-right font-mono text-gray-900 dark:text-white">
+                    {{ formatRate(rate) }}
+                  </td>
+                  <td class="py-2 px-3 text-right">
+                    <button
+                      v-if="code !== 'TRY'"
+                      class="text-blue-600 hover:text-blue-700 text-xs"
+                      @click="openManualRateModal(code, rate)"
+                    >
+                      {{ $t('common.edit') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Show All Currencies Toggle -->
+          <div class="flex items-center justify-center">
+            <button
+              class="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
+              @click="showAllCurrencies = !showAllCurrencies"
+            >
+              <span class="material-icons text-sm">{{ showAllCurrencies ? 'expand_less' : 'expand_more' }}</span>
+              {{ showAllCurrencies ? $t('platformSettings.exchange.showLess') : $t('platformSettings.exchange.showAll') }}
+              ({{ Object.keys(exchangeRates?.rates || {}).length }} {{ $t('platformSettings.exchange.currencies') }})
+            </button>
+          </div>
+
+          <!-- All Currencies (Collapsed) -->
+          <div v-if="showAllCurrencies && exchangeRates?.rates" class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200 dark:border-slate-700">
+                  <th class="text-left py-2 px-3 font-medium text-gray-600 dark:text-slate-400">
+                    {{ $t('platformSettings.exchange.currency') }}
+                  </th>
+                  <th class="text-right py-2 px-3 font-medium text-gray-600 dark:text-slate-400">
+                    {{ $t('platformSettings.exchange.rate') }} (TRY)
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(rate, code) in otherCurrencies"
+                  :key="code"
+                  class="border-b border-gray-100 dark:border-slate-700/50"
+                >
+                  <td class="py-2 px-3 font-medium text-gray-900 dark:text-white">{{ code }}</td>
+                  <td class="py-2 px-3 text-right font-mono text-gray-900 dark:text-white">
+                    {{ formatRate(rate) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Rate Modal -->
+      <div
+        v-if="manualRateModal.show"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="manualRateModal.show = false"
+      >
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full mx-4">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 class="font-semibold text-gray-900 dark:text-white">
+              {{ $t('platformSettings.exchange.setManualRate') }}
+            </h3>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {{ $t('platformSettings.exchange.currency') }}
+              </label>
+              <input
+                :value="manualRateModal.currency"
+                type="text"
+                readonly
+                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {{ $t('platformSettings.exchange.newRate') }} (TRY)
+              </label>
+              <input
+                v-model.number="manualRateModal.value"
+                type="number"
+                step="0.0001"
+                min="0"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+              />
+            </div>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('platformSettings.exchange.manualRateNote') }}
+            </p>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+            <button
+              class="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200"
+              @click="manualRateModal.show = false"
+            >
+              {{ $t('common.cancel') }}
+            </button>
+            <button
+              :disabled="settingManualRate"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
+              @click="saveManualRate"
+            >
+              <span v-if="settingManualRate" class="material-icons animate-spin text-sm mr-1">refresh</span>
+              {{ $t('common.save') }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import platformSettingsService from '@/services/platformSettingsService'
+import exchangeService from '@/services/exchangeService'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -829,11 +1068,93 @@ const { isLoading: testingEmail, execute: executeTestEmail } = useAsyncAction({ 
 const { isLoading: testingSMS, execute: executeTestSMS } = useAsyncAction({ showErrorToast: false })
 const { isLoading: testingPaximum, execute: executeTestPaximum } = useAsyncAction({ showErrorToast: false })
 const { isLoading: generatingVAPID, execute: executeGenerateVAPID } = useAsyncAction({ showErrorToast: false })
+const { isLoading: refreshingRates, execute: executeRefreshRates } = useAsyncAction({ showErrorToast: false })
+const { isLoading: settingManualRate, execute: executeSetManualRate } = useAsyncAction({ showErrorToast: false })
 
 // State
 
 const testEmailAddress = ref('')
 const testPhoneNumber = ref('')
+
+// Exchange state
+const exchangeRates = ref(null)
+const schedulerStatus = ref({
+  isRunning: false,
+  checkInterval: 5,
+  workingHours: { start: 9, end: 17 },
+  isWithinWorkingHours: false
+})
+const showAllCurrencies = ref(false)
+const manualRateModal = ref({
+  show: false,
+  currency: '',
+  value: 0
+})
+
+// Main currencies to show by default
+const MAIN_CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP', 'CHF', 'SAR', 'AED', 'RUB']
+
+// Currency names
+const CURRENCY_NAMES = {
+  TRY: 'Türk Lirası',
+  USD: 'ABD Doları',
+  EUR: 'Euro',
+  GBP: 'İngiliz Sterlini',
+  CHF: 'İsviçre Frangı',
+  JPY: 'Japon Yeni',
+  CNY: 'Çin Yuanı',
+  AUD: 'Avustralya Doları',
+  CAD: 'Kanada Doları',
+  DKK: 'Danimarka Kronu',
+  SEK: 'İsveç Kronu',
+  NOK: 'Norveç Kronu',
+  SAR: 'Suudi Riyali',
+  KWD: 'Kuveyt Dinarı',
+  AED: 'BAE Dirhemi',
+  BGN: 'Bulgar Levası',
+  RON: 'Romen Leyi',
+  RUB: 'Rus Rublesi'
+}
+
+// Computed: Main currencies
+const mainCurrencies = computed(() => {
+  if (!exchangeRates.value?.rates) return {}
+  const result = {}
+  for (const code of MAIN_CURRENCIES) {
+    if (exchangeRates.value.rates[code] !== undefined) {
+      result[code] = exchangeRates.value.rates[code]
+    }
+  }
+  return result
+})
+
+// Computed: Other currencies
+const otherCurrencies = computed(() => {
+  if (!exchangeRates.value?.rates) return {}
+  const result = {}
+  for (const [code, rate] of Object.entries(exchangeRates.value.rates)) {
+    if (!MAIN_CURRENCIES.includes(code)) {
+      result[code] = rate
+    }
+  }
+  return result
+})
+
+// Get currency name
+const getCurrencyName = code => CURRENCY_NAMES[code] || ''
+
+// Format rate
+const formatRate = rate => {
+  if (rate === null || rate === undefined) return '-'
+  if (rate >= 1) return rate.toFixed(4)
+  return rate.toFixed(6)
+}
+
+// Format date time
+const formatDateTime = date => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('tr-TR')
+}
 
 const settings = ref({
   aws: {
@@ -1142,7 +1463,61 @@ const removeBankAccount = index => {
   settings.value.billing.bankAccounts.splice(index, 1)
 }
 
+// Exchange functions
+const loadExchangeRates = async () => {
+  try {
+    const [ratesResponse, statusResponse] = await Promise.all([
+      exchangeService.getRates(),
+      exchangeService.getSchedulerStatus()
+    ])
+    exchangeRates.value = ratesResponse.data
+    schedulerStatus.value = statusResponse.data
+  } catch (error) {
+    console.error('Failed to load exchange rates:', error)
+  }
+}
+
+const refreshExchangeRates = async () => {
+  await executeRefreshRates(
+    () => exchangeService.refreshRates(),
+    {
+      successMessage: 'platformSettings.exchange.refreshed',
+      onSuccess: async () => {
+        await loadExchangeRates()
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
+}
+
+const openManualRateModal = (currency, currentRate) => {
+  manualRateModal.value = {
+    show: true,
+    currency,
+    value: currentRate
+  }
+}
+
+const saveManualRate = async () => {
+  await executeSetManualRate(
+    () => exchangeService.setManualRate(manualRateModal.value.currency, manualRateModal.value.value),
+    {
+      successMessage: 'platformSettings.exchange.manualRateSaved',
+      onSuccess: async () => {
+        manualRateModal.value.show = false
+        await loadExchangeRates()
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
+      }
+    }
+  )
+}
+
 onMounted(() => {
   loadSettings()
+  loadExchangeRates()
 })
 </script>
