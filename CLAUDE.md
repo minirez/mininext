@@ -183,4 +183,116 @@ import { capitalize, slugify, getInitials } from '@booking-engine/utils/string'
 
 ---
 
-**Son Güncelleme:** 2026-01-06
+## 🗃️ KRİTİK VERİ YAPILARI
+
+### Avatar (User, Partner, Agency modelleri)
+```javascript
+avatar: {
+  url: String,       // Relative path: /uploads/avatars/xxx.png
+  filename: String,  // Dosya adı: xxx.png
+  uploadedAt: Date
+}
+// ⚠️ DİKKAT: avatar bir OBJECT, string DEĞİL!
+// ❌ row.avatar
+// ✅ row.avatar?.url
+```
+
+### Session
+```javascript
+// Login'de MUTLAKA session oluştur:
+await Session.createFromToken(user._id, accessToken, {
+  userAgent: req.headers['user-agent'],
+  ipAddress: req.ip
+})
+
+// Logout'ta MUTLAKA session sonlandır:
+const session = await Session.findByToken(token)
+await session.terminate(req.user._id, 'logout')
+```
+
+### API Response Formatları
+```javascript
+// Standart
+{ success: boolean, data: any, message?: string }
+
+// Pagination ile
+{ success: true, data: { items: [], pagination: { page, limit, total } } }
+
+// Hata
+{ success: false, error: string, details?: any }
+```
+
+---
+
+## 🔗 URL OLUŞTURMA KURALLARI
+
+### Dosya/Resim URL'leri (Avatar, Upload, vb.)
+
+**Sorun:** Backend relative path döner (`/uploads/avatars/xxx.png`), frontend tam URL'e çevirmeli.
+
+```javascript
+// ✅ DOĞRU YÖNTEM - URL parse kullan
+const getFileUrl = (relativePath) => {
+  if (!relativePath) return null
+  if (relativePath.startsWith('http')) return relativePath
+
+  try {
+    const url = new URL(import.meta.env.VITE_API_BASE_URL)
+    return `${url.protocol}//${url.host}${relativePath}`
+  } catch {
+    return relativePath
+  }
+}
+
+// ❌ YANLIŞ - String replace kullanma!
+const url = API_URL.replace('/api', '') + path  // HATALI!
+```
+
+**Ortak Helper:** `apps/admin/src/utils/url.js` dosyasında `getFileUrl` fonksiyonu kullan.
+
+---
+
+## 🤖 CLAUDE İLE ÇALIŞMA REHBERİ
+
+### Görev Verirken
+
+| ✅ Yapın | ❌ Yapmayın |
+|----------|-------------|
+| Küçük, odaklı görevler | Belirsiz büyük görevler |
+| Bağlam verin: "avatar bir object" | Varsayımlara bırakma |
+| Referans gösterin: "ProfileView'a bak" | Sıfırdan bulmamı bekleme |
+| Adım adım onay isteyin | Tek seferde her şeyi bekleme |
+
+### İş Akışı (Context Rot Önleme)
+
+```
+1. GÖREV → 2. ARAŞTIRMA → 3. PLAN (onay) → 4. UYGULAMA → 5. DOĞRULAMA
+```
+
+**Araştırma adımını ATLAMA!** Önce:
+- İlgili model'i oku (veri yapısını öğren)
+- Mevcut kullanımları ara (pattern'ı öğren)
+- Sonra kod yaz
+
+### Hata Olduğunda
+
+```
+❌ "Düzelt"
+✅ "Sorun X. Muhtemelen Y yüzünden. Z dosyasına bak ve düzelt."
+```
+
+---
+
+## 📋 ENTEGRASYON KONTROL LİSTESİ
+
+Yeni özellik eklerken kontrol et:
+
+- [ ] Model yapısı doğru anlaşıldı mı? (nested object, array, vb.)
+- [ ] URL'ler doğru oluşturuluyor mu? (relative → absolute)
+- [ ] Session/Auth entegrasyonu gerekiyor mu?
+- [ ] i18n çevirileri eklendi mi? (tr + en)
+- [ ] Mevcut helper/util var mı? (yeniden yazma)
+
+---
+
+**Son Güncelleme:** 2026-01-13
