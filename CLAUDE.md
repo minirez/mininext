@@ -175,8 +175,36 @@ import { capitalize, slugify, getInitials } from '@booking-engine/utils/string'
 
 ---
 
+## 📘 TİP TANIMLARI (JSDoc)
+
+Frontend veri yapıları için JSDoc type tanımları:
+
+**Dosya:** `apps/admin/src/types/index.js`
+
+```javascript
+// Type'ları import etmeden IDE autocomplete için kullan:
+/** @type {import('@/types').User} */
+const user = authStore.user
+
+// Veya fonksiyon parametrelerinde:
+/** @param {import('@/types').Partner} partner */
+function processPartner(partner) { ... }
+```
+
+**Tanımlı Tipler:**
+- `User` - Kullanıcı objesi (avatar, permissions, vb.)
+- `Partner` - Partner objesi (subscription, branding, vb.)
+- `Agency` - Acente objesi (commission, creditLimit, vb.)
+- `Session` - Oturum objesi
+- `Avatar`, `Address`, `Document` - Ortak tipler
+- `ApiResponse`, `PaginatedResponse` - API yanıt formatları
+
+---
+
 ## 🔗 REFERANSLAR
 
+- Type Tanımları: `apps/admin/src/types/index.js`
+- URL Helpers: `apps/admin/src/utils/imageUrl.js`
 - Güvenlik notları: `docs/SECURITY.md`
 - Mimari detayları: `docs/ARCHITECTURE_V2.md`
 - Pricing modülü: `docs/pricing-module-research.md`
@@ -248,7 +276,10 @@ const getFileUrl = (relativePath) => {
 const url = API_URL.replace('/api', '') + path  // HATALI!
 ```
 
-**Ortak Helper:** `apps/admin/src/utils/url.js` dosyasında `getFileUrl` fonksiyonu kullan.
+**Ortak Helper:** `apps/admin/src/utils/imageUrl.js` dosyasında:
+- `getFileUrl(relativePath)` - API dosyaları için (avatar, document, vb.)
+- `getAvatarUrl(entity)` - User/Partner/Agency avatar'ı için
+- `getImageUrl(url)` - CDN resimleri için (otel, oda görselleri)
 
 ---
 

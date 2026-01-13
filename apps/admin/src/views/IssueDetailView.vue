@@ -378,31 +378,8 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import issueService from '@/services/issueService'
-
-// File base URL for uploads
-const getFileBaseUrl = () => {
-  if (import.meta.env.VITE_FILE_BASE_URL) {
-    return import.meta.env.VITE_FILE_BASE_URL
-  }
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
-  if (apiUrl.startsWith('http')) {
-    try {
-      const url = new URL(apiUrl)
-      return url.origin
-    } catch {
-      return ''
-    }
-  }
-  return ''
-}
-const fileBaseUrl = getFileBaseUrl()
-
-// Get full URL for attachment
-const getFileUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return fileBaseUrl ? `${fileBaseUrl}${url}` : url
-}
+import { sanitizeMarkdown } from '@/utils/sanitize'
+import { getFileUrl, getAvatarUrl } from '@/utils/imageUrl'
 
 // Simple markdown renderer (basic formatting without external dependency)
 const simpleMarkdown = (text) => {
@@ -441,12 +418,8 @@ const lightboxImage = ref(null)
 // Current user
 const currentUser = computed(() => authStore.user)
 
-// Avatar URL helper (reuses fileBaseUrl already defined above)
-const getUserAvatarUrl = (user) => {
-  if (!user?.avatar?.url) return null
-  if (user.avatar.url.startsWith('http')) return user.avatar.url
-  return fileBaseUrl ? `${fileBaseUrl}${user.avatar.url}` : user.avatar.url
-}
+// Avatar URL helper using shared utility
+const getUserAvatarUrl = (user) => getAvatarUrl(user)
 
 // Is watching
 const isWatching = computed(() => {
@@ -483,10 +456,11 @@ const priorityDotClass = computed(() => ({
   'bg-red-500': issue.value?.priority === 'critical'
 }))
 
-// Rendered description
+// Rendered description (sanitized for XSS protection)
 const renderedDescription = computed(() => {
   if (!issue.value?.description) return ''
-  return simpleMarkdown(issue.value.description)
+  const html = simpleMarkdown(issue.value.description)
+  return sanitizeMarkdown(html)
 })
 
 // Load issue
@@ -606,7 +580,7 @@ const canEditComment = (comment) => {
 // Start edit comment
 const startEditComment = (comment) => {
   // TODO: Implement inline editing
-  console.log('Edit comment:', comment)
+  void comment
 }
 
 // Confirm delete comment

@@ -687,41 +687,19 @@ import Modal from '@/components/common/Modal.vue'
 import AvatarCropperModal from '@/components/common/AvatarCropperModal.vue'
 import authService from '@/services/authService'
 import { useAsyncAction } from '@/composables/useAsyncAction'
+import { getAvatarUrl } from '@/utils/imageUrl'
 
 const { t, locale } = useI18n()
 const toast = useToast()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 
-// File base URL for uploads
-const getFileBaseUrl = () => {
-  if (import.meta.env.VITE_FILE_BASE_URL) {
-    return import.meta.env.VITE_FILE_BASE_URL
-  }
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
-  if (apiUrl.startsWith('http')) {
-    try {
-      const url = new URL(apiUrl)
-      return url.origin
-    } catch {
-      return ''
-    }
-  }
-  return ''
-}
-const fileBaseUrl = getFileBaseUrl()
-
 // Async action composables
 const { isLoading: savingNotifications, execute: executeSaveNotifications } = useAsyncAction()
 const { isLoading: savingPassword, execute: executeSavePassword } = useAsyncAction({ showErrorToast: false })
 
 // Avatar
-const avatarUrl = computed(() => {
-  const avatar = authStore.user?.avatar
-  if (!avatar?.url) return null
-  if (avatar.url.startsWith('http')) return avatar.url
-  return fileBaseUrl ? `${fileBaseUrl}${avatar.url}` : avatar.url
-})
+const avatarUrl = computed(() => getAvatarUrl(authStore.user))
 
 // Avatar cropper modal
 const showCropperModal = ref(false)

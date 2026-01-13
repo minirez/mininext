@@ -242,6 +242,7 @@ import { useHotelStore } from '@/stores/hotel'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
 import HotelSelector from '@/components/common/HotelSelector.vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
+import { getAvatarUrl } from '@/utils/imageUrl'
 
 const router = useRouter()
 const route = useRoute()
@@ -276,39 +277,8 @@ const authStore = useAuthStore()
 const uiStore = useUIStore()
 const hotelStore = useHotelStore()
 
-// File base URL for uploads (avatars, attachments, etc.)
-const getFileBaseUrl = () => {
-  // Use dedicated file URL if available
-  if (import.meta.env.VITE_FILE_BASE_URL) {
-    return import.meta.env.VITE_FILE_BASE_URL
-  }
-
-  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
-
-  // If API URL is absolute (starts with http), extract origin
-  if (apiUrl.startsWith('http')) {
-    try {
-      const url = new URL(apiUrl)
-      return url.origin
-    } catch {
-      return ''
-    }
-  }
-
-  // For relative paths or invalid URLs, use empty string (relative to current origin)
-  return ''
-}
-
-const fileBaseUrl = getFileBaseUrl()
-
-// User avatar URL
-const userAvatarUrl = computed(() => {
-  const avatar = authStore.user?.avatar
-  if (!avatar?.url) return null
-  if (avatar.url.startsWith('http')) return avatar.url
-  // Use relative path if fileBaseUrl is empty
-  return fileBaseUrl ? `${fileBaseUrl}${avatar.url}` : avatar.url
-})
+// User avatar URL using shared utility
+const userAvatarUrl = computed(() => getAvatarUrl(authStore.user))
 
 // Routes that need hotel selector
 const hotelRequiredRoutes = [
