@@ -118,7 +118,7 @@
         <div class="flex items-center gap-3">
           <img
             v-if="row.avatar?.url"
-            :src="row.avatar.url"
+            :src="getAvatarUrl(row.avatar.url)"
             :alt="row.name"
             class="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-purple-500 transition-all"
             @click="openAvatarModal(row)"
@@ -306,7 +306,7 @@
           </button>
           <div class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             <img
-              :src="avatarUser.avatar?.url"
+              :src="getAvatarUrl(avatarUser.avatar?.url)"
               :alt="avatarUser.name"
               class="w-full h-auto max-h-[70vh] object-contain"
             />
@@ -355,6 +355,16 @@ const { t } = useI18n()
 const toast = useToast()
 const partnerStore = usePartnerStore()
 const authStore = useAuthStore()
+
+// API base URL for avatar images
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || ''
+
+// Get full avatar URL
+const getAvatarUrl = (avatarPath) => {
+  if (!avatarPath) return null
+  if (avatarPath.startsWith('http')) return avatarPath
+  return `${API_BASE_URL}${avatarPath}`
+}
 
 // DataTable columns
 const columns = computed(() => [
