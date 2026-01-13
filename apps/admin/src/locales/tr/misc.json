@@ -20,7 +20,9 @@
     "collapseSidebar": "Daralt",
     "developers": "Geliştiriciler",
     "bookings": "Rezervasyonlar",
-    "mySubscription": "Aboneliğim"
+    "mySubscription": "Aboneliğim",
+    "issues": "Issue Yonetimi",
+    "emailLogs": "E-posta Logları"
   },
   "dashboard": {
     "title": "Ana Sayfa",

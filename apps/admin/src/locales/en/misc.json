@@ -20,7 +20,9 @@
     "platformSettings": "Platform Settings",
     "developers": "Developers",
     "bookings": "Bookings",
-    "mySubscription": "My Subscription"
+    "mySubscription": "My Subscription",
+    "issues": "Issues",
+    "emailLogs": "Email Logs"
   },
   "dashboard": {
     "title": "Dashboard",

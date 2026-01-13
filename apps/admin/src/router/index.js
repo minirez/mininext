@@ -33,6 +33,7 @@ const HotelBaseListView = () => import('../views/admin/HotelBaseListView.vue')
 const HotelBaseDetailView = () => import('../views/admin/HotelBaseDetailView.vue')
 const AuditLogsView = () => import('../views/admin/AuditLogsView.vue')
 const PlatformSettingsView = () => import('../views/admin/PlatformSettingsView.vue')
+const EmailLogsView = () => import('../views/admin/EmailLogsView.vue')
 const DevelopersView = () => import('../views/DevelopersView.vue')
 const UIShowcaseView = () => import('../views/UIShowcaseView.vue')
 const BookingListView = () => import('../views/booking/BookingListView.vue')
@@ -41,6 +42,8 @@ const BookingDetailView = () => import('../views/booking/BookingDetailView.vue')
 const UsersView = () => import('../views/UsersView.vue')
 const InviteAcceptView = () => import('../views/InviteAcceptView.vue')
 const ActivateAccountView = () => import('../views/ActivateAccountView.vue')
+const IssuesView = () => import('../views/IssuesView.vue')
+const IssueDetailView = () => import('../views/IssueDetailView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -120,6 +123,16 @@ const router = createRouter({
             requiresPlatformAdmin: true,
             titleKey: 'platformSettings.title',
             descriptionKey: 'platformSettings.description'
+          }
+        },
+        {
+          path: 'admin/email-logs',
+          name: 'email-logs',
+          component: EmailLogsView,
+          meta: {
+            requiresPlatformAdmin: true,
+            titleKey: 'emailLogs.title',
+            descriptionKey: 'emailLogs.description'
           }
         },
         {
@@ -311,6 +324,25 @@ const router = createRouter({
           meta: {
             requiresPartner: true,
             titleKey: 'mySubscription.title'
+          }
+        },
+        // Issues (Platform users only)
+        {
+          path: 'issues',
+          name: 'issues',
+          component: IssuesView,
+          meta: {
+            requiresPlatformAdmin: true,
+            titleKey: 'issues.title'
+          }
+        },
+        {
+          path: 'issues/:id',
+          name: 'issue-detail',
+          component: IssueDetailView,
+          meta: {
+            requiresPlatformAdmin: true,
+            titleKey: 'issues.title'
           }
         }
       ]

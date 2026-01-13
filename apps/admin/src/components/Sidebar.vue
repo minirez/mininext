@@ -153,6 +153,7 @@ const currentModuleIcon = computed(() => {
     '/admin/hotel-base': 'domain',
     '/admin/audit-logs': 'history',
     '/admin/platform-settings': 'settings',
+    '/admin/email-logs': 'mail',
     '/agencies': 'groups',
     '/site-management': 'language',
     '/hotels': 'hotel',
@@ -161,7 +162,8 @@ const currentModuleIcon = computed(() => {
     '/profile': 'person',
     '/developers': 'code',
     '/pms-integration': 'link',
-    '/my-subscription': 'card_membership'
+    '/my-subscription': 'card_membership',
+    '/issues': 'bug_report'
   }
 
   // Find matching route
@@ -241,6 +243,18 @@ const mainSection = computed(() => {
       to: '/admin/platform-settings',
       icon: 'settings',
       label: t('nav.platformSettings')
+    })
+    items.push({
+      name: 'email-logs',
+      to: '/admin/email-logs',
+      icon: 'mail',
+      label: t('nav.emailLogs')
+    })
+    items.push({
+      name: 'issues',
+      to: '/issues',
+      icon: 'bug_report',
+      label: t('nav.issues')
     })
   }
 

@@ -2,6 +2,7 @@ import { SESClient, SendEmailCommand, SendRawEmailCommand } from '@aws-sdk/clien
 import config from '../config/index.js'
 import logger from '../core/logger.js'
 import { renderEmailTemplate, htmlToText } from './emailTemplates.js'
+import EmailLog from '../modules/email-log/emailLog.model.js'
 
 // Cached SES clients (keyed by partnerId or 'platform')
 const sesClients = new Map()
@@ -111,8 +112,27 @@ const getSESClient = (settings, cacheKey = 'platform') => {
  * @param {string} options.text - Plain text content (optional)
  * @param {string} options.from - From email (optional, uses config default)
  * @param {string} options.partnerId - Partner ID for partner-specific settings (optional)
+ * @param {string} options.type - Email type for logging (optional)
+ * @param {string} options.userId - Related user ID (optional)
+ * @param {Object} options.metadata - Additional metadata (optional)
  */
-export const sendEmail = async ({ to, subject, html, text, from, partnerId }) => {
+export const sendEmail = async ({ to, subject, html, text, from, partnerId, type = 'other', userId, metadata }) => {
+  // Create email log entry
+  let emailLog = null
+  try {
+    emailLog = await EmailLog.create({
+      to: Array.isArray(to) ? to.join(', ') : to,
+      subject,
+      type,
+      status: 'pending',
+      partnerId: partnerId || null,
+      userId: userId || null,
+      metadata
+    })
+  } catch (logError) {
+    logger.warn('Failed to create email log entry:', logError.message)
+  }
+
   try {
     const settings = await getEmailSettings(partnerId)
 
@@ -126,9 +146,19 @@ export const sendEmail = async ({ to, subject, html, text, from, partnerId }) =>
           from: from || 'noreply@example.com',
           html: html?.substring(0, 200) + '...'
         })
+
+        // Update log
+        if (emailLog) {
+          await EmailLog.markSent(emailLog._id, 'dev-mode-no-email-sent', 'dev-mode')
+        }
+
         return { success: true, messageId: 'dev-mode-no-email-sent' }
       } else {
-        throw new Error('AWS SES is not configured')
+        const error = new Error('AWS SES is not configured')
+        if (emailLog) {
+          await EmailLog.markFailed(emailLog._id, error)
+        }
+        throw error
       }
     }
 
@@ -171,6 +201,11 @@ export const sendEmail = async ({ to, subject, html, text, from, partnerId }) =>
       `Email sent successfully to ${to} (source: ${settings.source}). MessageId: ${response.MessageId}`
     )
 
+    // Update log as sent
+    if (emailLog) {
+      await EmailLog.markSent(emailLog._id, response.MessageId, settings.source)
+    }
+
     return {
       success: true,
       messageId: response.MessageId,
@@ -178,6 +213,12 @@ export const sendEmail = async ({ to, subject, html, text, from, partnerId }) =>
     }
   } catch (error) {
     logger.error(`Failed to send email to ${to}:`, error)
+
+    // Update log as failed
+    if (emailLog) {
+      await EmailLog.markFailed(emailLog._id, error)
+    }
+
     throw error
   }
 }
@@ -238,7 +279,7 @@ export const sendWelcomeEmail = async ({
 
   const text = htmlToText(html)
 
-  return sendEmail({ to, subject, html, text, partnerId })
+  return sendEmail({ to, subject, html, text, partnerId, type: 'welcome' })
 }
 
 /**
@@ -304,7 +345,7 @@ export const send2FASetupEmail = async ({
 
   const text = htmlToText(html)
 
-  return sendEmail({ to, subject, html, text, partnerId })
+  return sendEmail({ to, subject, html, text, partnerId, type: '2fa-setup' })
 }
 
 /**
@@ -360,7 +401,7 @@ export const sendActivationEmail = async ({ to, name, inviterName, accountName, 
     const text = htmlToText(html)
     const subject = language === 'tr' ? 'Hesabınızı Aktifleştirin - Booking Engine' : 'Activate Your Account - Booking Engine'
 
-    return sendEmail({ to, subject, html, text, partnerId })
+    return sendEmail({ to, subject, html, text, partnerId, type: 'activation' })
   } catch (error) {
     // Fallback to simple HTML if template fails
     logger.warn('Failed to render activation template, using fallback:', error.message)
@@ -382,7 +423,7 @@ export const sendActivationEmail = async ({ to, name, inviterName, accountName, 
     `
     const text = `Merhaba ${name},\n\n${inviterName} sizi ${accountName} hesabına kullanıcı olarak ekledi.\n\nHesabınızı aktifleştirmek için: ${activationUrl}\n\nBu link 7 gün içinde geçerliliğini yitirecektir.`
 
-    return sendEmail({ to, subject, html, text, partnerId })
+    return sendEmail({ to, subject, html, text, partnerId, type: 'activation' })
   }
 }
 
@@ -464,7 +505,7 @@ export const sendBookingConfirmation = async ({
 
   const text = htmlToText(html)
 
-  return sendEmail({ to, subject, html, text, partnerId })
+  return sendEmail({ to, subject, html, text, partnerId, type: 'booking-confirmation' })
 }
 
 /**
@@ -542,7 +583,7 @@ export const sendBookingCancellation = async ({
 
   const text = htmlToText(html)
 
-  return sendEmail({ to, subject, html, text, partnerId })
+  return sendEmail({ to, subject, html, text, partnerId, type: 'booking-cancelled' })
 }
 
 /**
@@ -601,7 +642,7 @@ export const sendPasswordResetEmail = async ({ to, name, resetUrl, partnerId, la
 
   const text = htmlToText(html)
 
-  return sendEmail({ to, subject, html, text, partnerId })
+  return sendEmail({ to, subject, html, text, partnerId, type: 'password-reset' })
 }
 
 /**

@@ -6,6 +6,8 @@ import planning from './planning.json'
 import pmsIntegration from './pmsIntegration.json'
 import misc from './misc.json'
 import users from './users.json'
+import issues from './issues.json'
+import emailLogs from './emailLogs.json'
 
 export default {
   ...common,
@@ -15,5 +17,7 @@ export default {
   ...planning,
   pmsIntegration,
   ...misc,
-  ...users
+  ...users,
+  ...issues,
+  emailLogs
 }
