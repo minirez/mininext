@@ -276,7 +276,7 @@ export const verifyActivationToken = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     activationToken: hashedToken,
     activationTokenExpires: { $gt: Date.now() },
-    status: 'pending'
+    status: { $in: ['pending', 'pending_activation'] }
   }).select('+activationToken +activationTokenExpires')
 
   if (!user) {
@@ -320,7 +320,7 @@ export const activateAccount = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     activationToken: hashedToken,
     activationTokenExpires: { $gt: Date.now() },
-    status: 'pending'
+    status: { $in: ['pending', 'pending_activation'] }
   }).select('+activationToken +activationTokenExpires')
 
   if (!user) {
@@ -362,7 +362,7 @@ export const resendActivation = asyncHandler(async (req, res) => {
     }
   }
 
-  if (user.status !== 'pending') {
+  if (!['pending', 'pending_activation'].includes(user.status)) {
     throw new BadRequestError('USER_ALREADY_ACTIVATED')
   }
 
