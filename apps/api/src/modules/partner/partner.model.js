@@ -970,48 +970,10 @@ partnerSchema.pre('save', function (next) {
   next()
 })
 
-// Post-save middleware - Send email when partner is activated
-partnerSchema.post('save', async function (doc) {
-  // Check if status changed to active (from any other status, typically pending)
-  if (doc.status === 'active' && doc._previousStatus) {
-    const previousStatus = await doc._previousStatus
-    if (previousStatus && previousStatus !== 'active') {
-      try {
-        // Get partner admin user
-        const User = mongoose.model('User')
-        const adminUser = await User.findOne({
-          accountType: 'partner',
-          accountId: doc._id,
-          role: 'admin'
-        })
-
-        if (adminUser) {
-          // Import mail helper
-          const { sendWelcomeEmail } = await import('../../helpers/mail.js')
-          const logger = await import('../../core/logger.js')
-
-          // Send activation email
-          await sendWelcomeEmail({
-            to: adminUser.email,
-            name: adminUser.name,
-            email: adminUser.email,
-            password: '(Please use your registration password)', // Don't send password again
-            accountType: 'Partner',
-            loginUrl: doc.branding?.siteDomain
-              ? `https://${doc.branding.siteDomain}/login`
-              : 'https://admin.booking-engine.com/login'
-          })
-
-          logger.default.info(`Partner approval email sent to: ${adminUser.email}`)
-        }
-      } catch (error) {
-        // Import logger
-        const logger = await import('../../core/logger.js')
-        logger.default.error(`Failed to send partner approval email: ${error.message}`)
-      }
-    }
-  }
-})
+// NOTE: Welcome email is now sent when user completes activation (sets password)
+// See user.service.js - activateAccount function
+// This hook was removed because it was sending welcome email at wrong time
+// (when admin approves, not when user activates their account)
 
 // Audit plugin for tracking changes
 partnerSchema.plugin(auditPlugin, {

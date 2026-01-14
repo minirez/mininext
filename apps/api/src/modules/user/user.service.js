@@ -6,7 +6,8 @@ import Session from '../session/session.model.js'
 import { NotFoundError, ForbiddenError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { generate2FASecret, generateQRCode, verify2FAToken } from '#helpers/twoFactor.js'
-import { send2FASetupEmail, sendActivationEmail } from '#helpers/mail.js'
+import { send2FASetupEmail, sendActivationEmail, sendWelcomeEmail } from '#helpers/mail.js'
+import config from '#config'
 import logger from '#core/logger.js'
 
 // ============================================
@@ -333,6 +334,42 @@ export const activateAccount = asyncHandler(async (req, res) => {
   user.clearActivationToken()
   user.inviteAcceptedAt = new Date()
   await user.save()
+
+  // Send welcome email after successful activation
+  try {
+    let loginUrl = config.adminUrl || 'https://admin.booking-engine.com'
+    let accountName = ''
+
+    // Get account-specific info for login URL
+    if (user.accountType === 'partner') {
+      const partner = await Partner.findById(user.accountId)
+      if (partner) {
+        accountName = partner.companyName
+        if (partner.branding?.siteDomain) {
+          loginUrl = `https://${partner.branding.siteDomain}/login`
+        }
+      }
+    } else if (user.accountType === 'agency') {
+      const agency = await Agency.findById(user.accountId)
+      if (agency) {
+        accountName = agency.name
+      }
+    }
+
+    await sendWelcomeEmail({
+      to: user.email,
+      name: user.name,
+      email: user.email,
+      password: '(Şifrenizi zaten belirlediniz)',
+      accountType: user.accountType === 'partner' ? 'Partner' : user.accountType === 'agency' ? 'Acente' : 'Platform',
+      accountName,
+      loginUrl
+    })
+    logger.info(`Welcome email sent to activated user: ${user.email}`)
+  } catch (error) {
+    logger.error(`Failed to send welcome email to ${user.email}:`, error.message)
+    // Don't fail activation if email fails
+  }
 
   // Remove sensitive fields
   const userObj = user.toObject()
