@@ -1,9 +1,14 @@
 import Partner from '#modules/partner/partner.model.js'
 import SubscriptionInvoice from '#modules/subscriptionInvoice/subscriptionInvoice.model.js'
 import { asyncHandler } from '#helpers'
-import { NotFoundError, ForbiddenError } from '#core/errors.js'
-import { SUBSCRIPTION_PLANS } from '#constants/subscriptionPlans.js'
+import { NotFoundError, ForbiddenError, BadRequestError } from '#core/errors.js'
+import { SUBSCRIPTION_PLANS, PLAN_TYPES } from '#constants/subscriptionPlans.js'
+import { createInvoice } from '#modules/subscriptionInvoice/subscriptionInvoice.service.js'
 import PDFDocument from 'pdfkit'
+import axios from 'axios'
+
+// Payment service URL
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:7043'
 
 // Get my subscription info (for partner users)
 export const getMySubscription = asyncHandler(async (req, res) => {
@@ -253,4 +258,186 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   doc.text('This invoice was generated electronically.', 50, 792, { align: 'center' })
 
   doc.end()
+})
+
+// Initiate subscription purchase with payment
+export const initiatePurchase = asyncHandler(async (req, res) => {
+  // Only partner users can access this
+  if (req.user.accountType !== 'partner') {
+    throw new ForbiddenError('PARTNER_ONLY')
+  }
+
+  const partnerId = req.user.accountId
+  const { plan, card } = req.body
+
+  // Validate plan
+  if (!PLAN_TYPES.includes(plan)) {
+    throw new BadRequestError('INVALID_PLAN')
+  }
+
+  // Get plan price
+  const planInfo = SUBSCRIPTION_PLANS[plan]
+  const amount = planInfo.price.yearly
+  const currency = planInfo.price.currency.toLowerCase()
+
+  // Get partner
+  const partner = await Partner.findById(partnerId)
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  // Create subscription period
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  endDate.setFullYear(endDate.getFullYear() + 1)
+
+  // Create pending purchase
+  const purchase = {
+    plan,
+    period: { startDate, endDate },
+    price: { amount, currency },
+    status: 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  partner.subscription.purchases.push(purchase)
+  await partner.save()
+
+  const purchaseId = partner.subscription.purchases.slice(-1)[0]._id
+
+  // Call payment service
+  try {
+    const paymentResponse = await axios.post(
+      `${PAYMENT_SERVICE_URL}/api/pay`,
+      {
+        amount,
+        currency,
+        installment: 1,
+        card: {
+          holder: card.holder,
+          number: card.number,
+          expiry: card.expiry,
+          cvv: card.cvv
+        },
+        customer: {
+          name: partner.companyName,
+          email: partner.email,
+          ip: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1'
+        },
+        externalId: `subscription-${partnerId}-${purchaseId}`,
+        callbackUrl: `${process.env.API_BASE_URL || 'http://localhost:4000'}/api/my/subscription/payment-callback`
+      },
+      {
+        headers: {
+          'Authorization': req.headers.authorization,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    if (!paymentResponse.data.success) {
+      // Payment init failed, remove pending purchase
+      partner.subscription.purchases.pull(purchaseId)
+      await partner.save()
+      throw new BadRequestError(paymentResponse.data.error || 'PAYMENT_INIT_FAILED')
+    }
+
+    // Store transaction ID in purchase
+    const purchaseDoc = partner.subscription.purchases.id(purchaseId)
+    purchaseDoc.payment = {
+      transactionId: paymentResponse.data.transactionId
+    }
+    await partner.save()
+
+    res.json({
+      success: true,
+      data: {
+        formUrl: paymentResponse.data.formUrl,
+        transactionId: paymentResponse.data.transactionId,
+        purchaseId
+      }
+    })
+  } catch (error) {
+    // Remove pending purchase on error
+    partner.subscription.purchases.pull(purchaseId)
+    await partner.save()
+
+    if (error.response?.data?.error) {
+      throw new BadRequestError(error.response.data.error)
+    }
+    throw error
+  }
+})
+
+// Handle payment callback from payment service
+export const paymentCallback = asyncHandler(async (req, res) => {
+  const { transactionId, success, message, externalId } = req.body
+
+  // Find partner with this transaction
+  let partner = await Partner.findOne({
+    'subscription.purchases.payment.transactionId': transactionId
+  })
+
+  // Fallback: try to find by externalId if transactionId not found
+  if (!partner && externalId) {
+    const [, partnerIdStr] = externalId.split('-')
+    if (partnerIdStr) {
+      partner = await Partner.findById(partnerIdStr)
+    }
+  }
+
+  if (!partner) {
+    throw new NotFoundError('PURCHASE_NOT_FOUND')
+  }
+
+  // Find the purchase with this transaction
+  const purchase = partner.subscription.purchases.find(
+    p => p.payment?.transactionId === transactionId || p.status === 'pending'
+  )
+
+  if (!purchase) {
+    throw new NotFoundError('PURCHASE_NOT_FOUND')
+  }
+
+  if (success) {
+    // Mark as paid
+    purchase.status = 'active'
+    purchase.payment = purchase.payment || {}
+    purchase.payment.date = new Date()
+    purchase.payment.method = 'credit_card'
+    purchase.payment.reference = transactionId
+
+    // Activate subscription
+    partner.subscription.status = 'active'
+    partner.subscription.plan = purchase.plan
+    partner.subscription.startDate = purchase.period.startDate
+    partner.subscription.endDate = purchase.period.endDate
+
+    // Enable PMS if plan includes it
+    const planInfo = SUBSCRIPTION_PLANS[purchase.plan]
+    if (planInfo.features.pms.enabled) {
+      partner.pmsIntegration = partner.pmsIntegration || {}
+      partner.pmsIntegration.enabled = true
+    }
+
+    await partner.save()
+
+    // Create invoice
+    try {
+      await createInvoice(partner, purchase)
+    } catch (invoiceError) {
+      console.error('Failed to create invoice:', invoiceError)
+      // Don't fail the callback if invoice creation fails
+    }
+
+    res.json({ success: true, message: 'Payment successful, subscription activated' })
+  } else {
+    // Payment failed
+    purchase.status = 'cancelled'
+    purchase.cancellationReason = message || 'Payment failed'
+    await partner.save()
+
+    res.json({ success: true, message: 'Payment failure recorded' })
+  }
 })

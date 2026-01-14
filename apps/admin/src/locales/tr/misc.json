@@ -22,7 +22,68 @@
     "bookings": "Rezervasyonlar",
     "mySubscription": "Aboneliğim",
     "issues": "Talepler",
-    "emailLogs": "E-posta Logları"
+    "emailLogs": "E-posta Logları",
+    "payment": "Ödeme Sistemi"
+  },
+  "payment": {
+    "title": "Ödeme Sistemi",
+    "description": "Virtual POS ve ödeme yönetimi",
+    "tabs": {
+      "test": "Test",
+      "transactions": "İşlemler",
+      "pos": "POS",
+      "commissions": "Komisyonlar",
+      "bins": "BIN Listesi",
+      "companies": "Firmalar",
+      "docs": "API Docs"
+    },
+    "commissions": {
+      "title": "Partner Komisyon Oranları",
+      "description": "Platform POS'larını kullanan partnerler için ek komisyon oranlarını yönetin",
+      "noCommissions": "Henüz komisyon tanımı yok",
+      "addCommission": "Komisyon Ekle",
+      "editCommission": "Komisyon Düzenle",
+      "deleteConfirm": "Bu komisyon kaydını silmek istediğinize emin misiniz?",
+      "deleted": "Komisyon kaydı silindi",
+      "saved": "Komisyon kaydı kaydedildi",
+      "partner": "Partner",
+      "selectPartner": "Partner Seçin",
+      "currency": "Para Birimi",
+      "pos": "POS Terminal",
+      "allPlatformPos": "Tüm Platform POS'ları",
+      "defaultRate": "Varsayılan Oran (%)",
+      "defaultRateHelp": "Belirli bir kural eşleşmezse kullanılacak komisyon oranı",
+      "minCommission": "Minimum Komisyon",
+      "maxCommission": "Maksimum Komisyon",
+      "rates": "Özel Oranlar",
+      "addRate": "Oran Ekle",
+      "cardType": "Kart Tipi",
+      "cardFamily": "Kart Ailesi",
+      "installment": "Taksit",
+      "rate": "Oran (%)",
+      "fixedAmount": "Sabit Tutar",
+      "notes": "Notlar",
+      "status": "Durum",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "cardTypes": {
+        "all": "Tümü",
+        "credit": "Kredi Kartı",
+        "debit": "Banka Kartı",
+        "prepaid": "Ön Ödemeli"
+      },
+      "cardFamilies": {
+        "all": "Tümü",
+        "visa": "Visa",
+        "mastercard": "Mastercard",
+        "amex": "American Express",
+        "troy": "Troy"
+      },
+      "installments": {
+        "single": "Tek Çekim",
+        "installment": "{count} Taksit"
+      }
+    }
   },
   "dashboard": {
     "title": "Ana Sayfa",
@@ -1045,6 +1106,25 @@
     "needHelp": "Yardıma mı ihtiyacınız var?",
     "contactSupport": "Aboneliğinizle ilgili sorularınız için destek ekibimize ulaşın.",
     "contactUs": "Bize Ulaşın",
-    "features": "Paket Özellikleri"
+    "features": "Paket Özellikleri",
+    "upgrade": "Planı Yükselt",
+    "renew": "Yenile",
+    "purchasePlan": "Plan Satın Al",
+    "selectPlan": "Plan Seçin",
+    "year": "yıl",
+    "cardInfo": "Kart Bilgileri",
+    "cardHolder": "Kart Üzerindeki İsim",
+    "cardHolderPlaceholder": "AD SOYAD",
+    "cardNumber": "Kart Numarası",
+    "cardNumberPlaceholder": "1234 5678 9012 3456",
+    "expiry": "Son Kullanma Tarihi",
+    "cvv": "CVV",
+    "payNow": "Ödeme Yap",
+    "processing": "İşleniyor...",
+    "paymentFailed": "Ödeme başarısız. Lütfen tekrar deneyin.",
+    "paymentSuccess": "Ödeme Başarılı!",
+    "subscriptionActivated": "Aboneliğiniz başarıyla aktifleştirildi.",
+    "securePayment": "Güvenli Ödeme",
+    "securePaymentInfo": "Ödemeniz 3D Secure ile korunmaktadır."
   }
 }

@@ -201,7 +201,6 @@ const initializeBooking = async () => {
 
   if (bookingNumber) {
     // Loading existing draft from URL
-    console.log('📂 Loading draft from URL:', bookingNumber)
     await executeInit(
       () => bookingStore.loadDraft(bookingNumber),
       {
@@ -247,7 +246,6 @@ const handleContinueExisting = () => {
   // Restore from localStorage if available
   const phase1Data = pendingPhase1Data.value
   if (phase1Data) {
-    console.log('📦 Restoring Phase 1 data from localStorage')
     if (phase1Data.search) {
       bookingStore.search = { ...bookingStore.search, ...phase1Data.search }
     }
@@ -280,8 +278,6 @@ const handleStartFresh = () => {
   pendingPhase1Data.value = null
   existingDraftNumber.value = null
   hasLocalStorageData.value = false
-
-  console.log('🆕 Starting fresh booking')
 }
 
 // Watch for route changes (e.g., navigating between drafts)

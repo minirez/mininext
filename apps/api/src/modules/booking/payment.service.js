@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { asyncHandler } from '#helpers'
+import { NotFoundError, BadRequestError } from '#core/errors.js'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
 
@@ -18,10 +19,7 @@ export const getPayments = asyncHandler(async (req, res) => {
   }).select('bookingNumber pricing.grandTotal pricing.currency payment')
 
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'BOOKING_NOT_FOUND'
-    })
+    throw new NotFoundError('BOOKING_NOT_FOUND')
   }
 
   const payments = await Payment.findByBooking(bookingId)
@@ -67,20 +65,14 @@ export const addPayment = asyncHandler(async (req, res) => {
   })
 
   if (!booking) {
-    return res.status(404).json({
-      success: false,
-      message: 'BOOKING_NOT_FOUND'
-    })
+    throw new NotFoundError('BOOKING_NOT_FOUND')
   }
 
   const { type, amount, currency, notes, bankTransfer, cardDetails } = req.body
 
   // Validate amount
   if (!amount || amount <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'INVALID_AMOUNT'
-    })
+    throw new BadRequestError('INVALID_AMOUNT')
   }
 
   // Create payment
@@ -143,18 +135,12 @@ export const updatePayment = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   // Only pending payments can be updated
   if (payment.status !== 'pending') {
-    return res.status(400).json({
-      success: false,
-      message: 'PAYMENT_NOT_EDITABLE'
-    })
+    throw new BadRequestError('PAYMENT_NOT_EDITABLE')
   }
 
   const allowedFields = ['amount', 'notes', 'bankTransfer', 'cardDetails']
@@ -194,17 +180,11 @@ export const confirmPayment = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   if (payment.status !== 'pending') {
-    return res.status(400).json({
-      success: false,
-      message: 'PAYMENT_NOT_PENDING'
-    })
+    throw new BadRequestError('PAYMENT_NOT_PENDING')
   }
 
   await payment.confirm(req.user._id)
@@ -231,10 +211,7 @@ export const cancelPayment = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   await payment.cancel()
@@ -262,41 +239,25 @@ export const refundPayment = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   if (!amount || amount <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'INVALID_REFUND_AMOUNT'
-    })
+    throw new BadRequestError('INVALID_REFUND_AMOUNT')
   }
 
   if (!reason) {
-    return res.status(400).json({
-      success: false,
-      message: 'REFUND_REASON_REQUIRED'
-    })
+    throw new BadRequestError('REFUND_REASON_REQUIRED')
   }
 
-  try {
-    await payment.processRefund(amount, reason, req.user._id)
-    await updateBookingPayment(bookingId)
+  await payment.processRefund(amount, reason, req.user._id)
+  await updateBookingPayment(bookingId)
 
-    res.json({
-      success: true,
-      data: payment,
-      message: 'PAYMENT_REFUNDED'
-    })
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    })
-  }
+  res.json({
+    success: true,
+    data: payment,
+    message: 'PAYMENT_REFUNDED'
+  })
 })
 
 /**
@@ -314,17 +275,11 @@ export const uploadReceipt = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: 'NO_FILE_UPLOADED'
-    })
+    throw new BadRequestError('NO_FILE_UPLOADED')
   }
 
   // Store file path
@@ -352,17 +307,11 @@ export const getReceipt = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   if (!payment.bankTransfer?.receiptUrl) {
-    return res.status(404).json({
-      success: false,
-      message: 'RECEIPT_NOT_FOUND'
-    })
+    throw new NotFoundError('RECEIPT_NOT_FOUND')
   }
 
   // Get file path
@@ -371,10 +320,7 @@ export const getReceipt = asyncHandler(async (req, res) => {
 
   // Check if file exists
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({
-      success: false,
-      message: 'FILE_NOT_FOUND'
-    })
+    throw new NotFoundError('FILE_NOT_FOUND')
   }
 
   // Get file extension and set content type
@@ -409,17 +355,11 @@ export const deletePayment = asyncHandler(async (req, res) => {
   })
 
   if (!payment) {
-    return res.status(404).json({
-      success: false,
-      message: 'PAYMENT_NOT_FOUND'
-    })
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
   }
 
   if (payment.status !== 'pending') {
-    return res.status(400).json({
-      success: false,
-      message: 'ONLY_PENDING_PAYMENTS_CAN_BE_DELETED'
-    })
+    throw new BadRequestError('ONLY_PENDING_PAYMENTS_CAN_BE_DELETED')
   }
 
   await payment.deleteOne()

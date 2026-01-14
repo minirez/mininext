@@ -40,8 +40,11 @@ const ROUTE_CONFIG = {
   'platform-settings': 'platform-settings',
   'audit': 'audit-logs',
 
-  // Skip sub-modules - loaded by parent
-  'notification-log': false,
+  // Notification logs
+  'notification-log': 'notification-logs',
+
+  // Subscription invoices
+  'subscriptionInvoice': 'subscription-invoices',
 }
 
 /**

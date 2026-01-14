@@ -453,7 +453,6 @@ const handleTryCreateBooking = async () => {
 
   // Check if this is a Paximum booking
   if (bookingStore.hasPaximumItems()) {
-    console.log('[Paximum] Creating Paximum booking...')
     result = await bookingStore.createPaximumBooking()
   } else {
     // Local booking - complete draft (this also checks allotment)
@@ -475,18 +474,16 @@ const handleSearch = async () => {
 
 // Paximum search handler
 const handlePaximumSearch = () => {
-  // Search is handled in SearchPanel, just log for now
-  console.log('Paximum search completed')
+  // Search is handled in SearchPanel
 }
 
 // Paximum hotel selected handler
 const handlePaximumHotelSelected = hotel => {
-  console.log('Paximum hotel selected:', hotel.name)
+  void hotel
 }
 
 // Paximum add to cart handler
 const handlePaximumAddToCart = offer => {
-  console.log('Paximum offer added to cart:', offer)
   bookingStore.addPaximumToCart(offer)
 }
 
@@ -497,9 +494,7 @@ const handleSelectHotel = async hotelId => {
 
 // Add room to cart
 const handleAddToCart = (roomType, mealPlan, option) => {
-  console.log('🛒 BookingLayout handleAddToCart:', { roomType, mealPlan, option })
   bookingStore.addToCart(roomType, mealPlan, option)
-  console.log('🛒 Cart after add:', bookingStore.cart)
 }
 
 // Remove from cart
@@ -511,7 +506,6 @@ const handleRemoveFromCart = index => {
 const handleProceedToCheckout = async () => {
   // For Paximum bookings, skip draft creation and go directly to Phase 2
   if (bookingStore.hasPaximumItems()) {
-    console.log('[Paximum] Skipping draft, going to Phase 2')
     bookingStore.goToCheckout()
     return
   }

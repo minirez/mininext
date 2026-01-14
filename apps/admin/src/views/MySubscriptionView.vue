@@ -46,7 +46,7 @@
               </div>
             </div>
 
-            <!-- Status Badge -->
+            <!-- Status Badge & Actions -->
             <div class="flex items-center gap-3">
               <span
                 class="px-4 py-2 rounded-full text-sm font-medium"
@@ -54,6 +54,13 @@
               >
                 {{ $t(`mySubscription.status.${subscription.status}`) }}
               </span>
+              <button
+                @click="showPaymentModal = true"
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <span class="material-icons text-sm">upgrade</span>
+                {{ subscription.status === 'active' ? $t('mySubscription.upgrade') : $t('mySubscription.renew') }}
+              </button>
             </div>
           </div>
         </div>
@@ -381,11 +388,238 @@
         {{ $t('mySubscription.loadError') }}
       </h2>
     </div>
+
+    <!-- Payment Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showPaymentModal"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <!-- Backdrop -->
+        <div
+          class="absolute inset-0 bg-black/50"
+          @click="showPaymentModal = false"
+        ></div>
+
+        <!-- Modal Content -->
+        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ $t('mySubscription.purchasePlan') }}
+            </h3>
+            <button
+              @click="showPaymentModal = false"
+              class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+            >
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-6">
+            <!-- Plan Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+                {{ $t('mySubscription.selectPlan') }}
+              </label>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                  v-for="(plan, key) in availablePlans"
+                  :key="key"
+                  @click="selectedPlan = key"
+                  class="p-4 border-2 rounded-xl cursor-pointer transition-all"
+                  :class="selectedPlan === key
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'"
+                >
+                  <div class="flex items-center gap-3 mb-2">
+                    <div
+                      class="w-10 h-10 rounded-lg flex items-center justify-center"
+                      :class="planColors[key]?.bg"
+                    >
+                      <span class="material-icons" :class="planColors[key]?.text">
+                        {{ planColors[key]?.icon }}
+                      </span>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 dark:text-white">
+                      {{ plan.name }}
+                    </h4>
+                  </div>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${{ plan.price.yearly }}
+                    <span class="text-sm font-normal text-gray-500 dark:text-slate-400">/{{ $t('mySubscription.year') }}</span>
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                    {{ plan.description }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Form -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+                {{ $t('mySubscription.cardInfo') }}
+              </label>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm text-gray-600 dark:text-slate-400 mb-1">
+                    {{ $t('mySubscription.cardHolder') }}
+                  </label>
+                  <input
+                    v-model="card.holder"
+                    type="text"
+                    :placeholder="$t('mySubscription.cardHolderPlaceholder')"
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-600 dark:text-slate-400 mb-1">
+                    {{ $t('mySubscription.cardNumber') }}
+                  </label>
+                  <input
+                    v-model="card.number"
+                    type="text"
+                    maxlength="19"
+                    :placeholder="$t('mySubscription.cardNumberPlaceholder')"
+                    @input="formatCardNumber"
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                  />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm text-gray-600 dark:text-slate-400 mb-1">
+                      {{ $t('mySubscription.expiry') }}
+                    </label>
+                    <input
+                      v-model="card.expiry"
+                      type="text"
+                      maxlength="5"
+                      placeholder="MM/YY"
+                      @input="formatExpiry"
+                      class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm text-gray-600 dark:text-slate-400 mb-1">
+                      {{ $t('mySubscription.cvv') }}
+                    </label>
+                    <input
+                      v-model="card.cvv"
+                      type="password"
+                      maxlength="4"
+                      placeholder="***"
+                      class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            <div
+              v-if="paymentError"
+              class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+            >
+              <div class="flex items-center gap-2 text-red-700 dark:text-red-400">
+                <span class="material-icons text-sm">error</span>
+                {{ paymentError }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+            <button
+              @click="showPaymentModal = false"
+              class="px-4 py-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              {{ $t('common.cancel') }}
+            </button>
+            <button
+              @click="processPurchase"
+              :disabled="processing || !isCardValid"
+              class="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <span v-if="processing" class="material-icons animate-spin text-sm">refresh</span>
+              <span class="material-icons text-sm" v-else>lock</span>
+              {{ processing ? $t('mySubscription.processing') : $t('mySubscription.payNow') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 3D Secure Modal -->
+    <Teleport to="body">
+      <div
+        v-if="show3DModal"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50"></div>
+
+        <!-- Modal Content -->
+        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg mx-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span class="material-icons text-green-500">verified_user</span>
+              {{ $t('mySubscription.securePayment') }}
+            </h3>
+          </div>
+
+          <!-- 3D Secure iframe -->
+          <div class="p-4">
+            <iframe
+              :src="formUrl"
+              class="w-full h-96 border border-gray-200 dark:border-slate-700 rounded-lg"
+              frameborder="0"
+            ></iframe>
+          </div>
+
+          <!-- Info -->
+          <div class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+            <p class="text-sm text-gray-500 dark:text-slate-400 text-center">
+              {{ $t('mySubscription.securePaymentInfo') }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Success Message -->
+    <Teleport to="body">
+      <div
+        v-if="showSuccessMessage"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div class="absolute inset-0 bg-black/50" @click="showSuccessMessage = false"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+            <span class="material-icons text-4xl text-green-500">check_circle</span>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            {{ $t('mySubscription.paymentSuccess') }}
+          </h3>
+          <p class="text-gray-500 dark:text-slate-400 mb-6">
+            {{ $t('mySubscription.subscriptionActivated') }}
+          </p>
+          <button
+            @click="showSuccessMessage = false; loadData()"
+            class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          >
+            {{ $t('common.ok') }}
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import partnerService from '@/services/partnerService'
@@ -397,6 +631,40 @@ const authStore = useAuthStore()
 const loading = ref(true)
 const subscription = ref(null)
 const invoices = ref([])
+
+// Payment modal state
+const showPaymentModal = ref(false)
+const show3DModal = ref(false)
+const showSuccessMessage = ref(false)
+const selectedPlan = ref('professional')
+const processing = ref(false)
+const paymentError = ref('')
+const formUrl = ref('')
+const card = ref({
+  holder: '',
+  number: '',
+  expiry: '',
+  cvv: ''
+})
+
+// Available plans
+const availablePlans = {
+  business: {
+    name: 'Business',
+    description: 'Orta ölçekli işletmeler için',
+    price: { yearly: 118.9 }
+  },
+  professional: {
+    name: 'Professional',
+    description: 'PMS entegrasyonu dahil',
+    price: { yearly: 178.8 }
+  },
+  enterprise: {
+    name: 'Enterprise',
+    description: 'Sınırsız PMS',
+    price: { yearly: 298.8 }
+  }
+}
 
 const planColors = {
   business: {
@@ -513,7 +781,87 @@ const downloadInvoice = async (invoiceId, invoiceNumber) => {
   }
 }
 
+// Card validation
+const isCardValid = computed(() => {
+  return (
+    card.value.holder.length >= 3 &&
+    card.value.number.replace(/\s/g, '').length >= 15 &&
+    /^\d{2}\/\d{2}$/.test(card.value.expiry) &&
+    card.value.cvv.length >= 3
+  )
+})
+
+// Format card number with spaces
+const formatCardNumber = () => {
+  let value = card.value.number.replace(/\s/g, '').replace(/\D/g, '')
+  value = value.substring(0, 16)
+  card.value.number = value.replace(/(.{4})/g, '$1 ').trim()
+}
+
+// Format expiry date
+const formatExpiry = () => {
+  let value = card.value.expiry.replace(/\D/g, '')
+  if (value.length >= 2) {
+    value = value.substring(0, 2) + '/' + value.substring(2, 4)
+  }
+  card.value.expiry = value
+}
+
+// Process purchase
+const processPurchase = async () => {
+  processing.value = true
+  paymentError.value = ''
+
+  try {
+    const response = await partnerService.initiatePurchase({
+      plan: selectedPlan.value,
+      card: {
+        holder: card.value.holder,
+        number: card.value.number.replace(/\s/g, ''),
+        expiry: card.value.expiry,
+        cvv: card.value.cvv
+      }
+    })
+
+    if (response.success && response.data?.formUrl) {
+      showPaymentModal.value = false
+      formUrl.value = response.data.formUrl
+      show3DModal.value = true
+    } else {
+      paymentError.value = response.error || t('mySubscription.paymentFailed')
+    }
+  } catch (error) {
+    console.error('Payment error:', error)
+    paymentError.value = error.response?.data?.error || t('mySubscription.paymentFailed')
+  } finally {
+    processing.value = false
+  }
+}
+
+// Handle payment result from iframe postMessage
+const handlePaymentMessage = (event) => {
+  // Accept messages from payment service
+  if (event.data?.type === 'payment_result') {
+    show3DModal.value = false
+
+    if (event.data.data?.success) {
+      showSuccessMessage.value = true
+      // Reset card form
+      card.value = { holder: '', number: '', expiry: '', cvv: '' }
+    } else {
+      paymentError.value = event.data.data?.message || t('mySubscription.paymentFailed')
+      showPaymentModal.value = true
+    }
+  }
+}
+
 onMounted(() => {
   loadData()
+  // Listen for payment result messages
+  window.addEventListener('message', handlePaymentMessage)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('message', handlePaymentMessage)
 })
 </script>

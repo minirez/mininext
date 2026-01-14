@@ -248,7 +248,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -263,13 +263,6 @@ const props = defineProps({
 defineEmits(['adjust-price'])
 
 const { locale, t } = useI18n()
-
-// Debug: Log previewData on mount
-onMounted(() => {
-  console.log('AmendmentReview mounted with previewData:', props.previewData)
-  console.log('Preview pricing:', props.previewData?.preview?.pricing)
-  console.log('Price difference:', props.previewData?.priceDifference)
-})
 
 // Computed
 const newGrandTotal = computed(() => {

@@ -80,7 +80,8 @@
       "message": "Mesaj (İsteğe bağlı)",
       "messagePlaceholder": "Hatırlatma ile birlikte göndermek istediğiniz mesaj...",
       "send": "Gönder",
-      "sent": "{count} kişiye hatırlatma gönderildi"
+      "sent": "{count} kişiye hatırlatma gönderildi",
+      "cannotNudgeSelf": "Kendinize hatırlatma gönderemezsiniz"
     },
 
     "comments": {

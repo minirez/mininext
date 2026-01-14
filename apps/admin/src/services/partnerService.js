@@ -188,6 +188,41 @@ const getMySubscription = async () => {
   }
 }
 
+// Get my invoices (for partner users)
+const getMyInvoices = async (params = {}) => {
+  try {
+    const response = await apiClient.get('/my/invoices', { params })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Get my invoices failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Download my invoice PDF (for partner users)
+const downloadMyInvoicePdf = async invoiceId => {
+  try {
+    const response = await apiClient.get(`/my/invoices/${invoiceId}/pdf`, {
+      responseType: 'blob'
+    })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Download invoice PDF failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Initiate subscription purchase with payment (for partner users)
+const initiatePurchase = async data => {
+  try {
+    const response = await apiClient.post('/my/subscription/purchase', data)
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Initiate purchase failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   getPartners,
   getPartner,
@@ -206,5 +241,8 @@ export default {
   updatePurchase,
   cancelPurchase,
   markPurchaseAsPaid,
-  getMySubscription
+  getMySubscription,
+  getMyInvoices,
+  downloadMyInvoicePdf,
+  initiatePurchase
 }

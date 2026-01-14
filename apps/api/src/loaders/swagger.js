@@ -12,6 +12,17 @@ import config from '../config/index.js'
  * @param {import('express').Application} app - Express application
  */
 export const setupSwagger = app => {
+  // Disable Swagger in production unless explicitly enabled
+  if (!config.isDev && !process.env.ENABLE_SWAGGER_IN_PRODUCTION) {
+    app.use('/api/docs', (req, res) => {
+      res.status(404).json({
+        success: false,
+        message: 'API documentation is not available in production'
+      })
+    })
+    return
+  }
+
   // Swagger UI options
   const swaggerUiOptions = {
     explorer: true,

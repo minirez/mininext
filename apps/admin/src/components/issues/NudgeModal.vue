@@ -245,8 +245,11 @@ const handleSend = async () => {
     emit('sent', result.data)
     emit('update:modelValue', false)
   } catch (error) {
-    if (error.response?.data?.error === 'NO_RECIPIENTS') {
+    const errorCode = error.response?.data?.error
+    if (errorCode === 'NO_RECIPIENTS') {
       toast.error(t('issues.nudge.noRecipients'))
+    } else if (errorCode === 'CANNOT_NUDGE_SELF') {
+      toast.error(t('issues.nudge.cannotNudgeSelf'))
     } else {
       toast.error(t('common.error'))
     }

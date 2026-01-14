@@ -80,7 +80,8 @@
       "message": "Message (Optional)",
       "messagePlaceholder": "Message to send with the reminder...",
       "send": "Send",
-      "sent": "Reminder sent to {count} people"
+      "sent": "Reminder sent to {count} people",
+      "cannotNudgeSelf": "You cannot send a reminder to yourself"
     },
 
     "comments": {

@@ -375,17 +375,6 @@ const loadBookingData = async () => {
     // Initialize form with current values
     const b = apiData.booking
 
-    // Debug: Log room data before initialization
-    console.log(
-      'Raw rooms data:',
-      b.rooms?.map(r => ({
-        roomType: r.roomType,
-        roomTypeId: r.roomType?._id,
-        mealPlan: r.mealPlan,
-        mealPlanId: r.mealPlan?._id
-      }))
-    )
-
     formData.value = {
       checkIn: b.checkIn,
       checkOut: b.checkOut,
@@ -403,10 +392,6 @@ const loadBookingData = async () => {
       specialRequests: b.specialRequests || '',
       reason: ''
     }
-
-    // Debug: Log initialized form rooms
-    console.log('FormData rooms initialized:', formData.value.rooms)
-    console.log('Booking loaded:', booking.value)
   } catch (error) {
     console.error('Error loading booking:', error)
 
@@ -433,13 +418,6 @@ const loadBookingData = async () => {
 const checkAvailability = async () => {
   checkingAvailability.value = true
   try {
-    // Debug: Log what we're sending
-    console.log('Checking availability with:', {
-      checkIn: formData.value.checkIn,
-      checkOut: formData.value.checkOut,
-      rooms: formData.value.rooms
-    })
-
     const response = await previewAmendment(props.bookingId, {
       checkIn: formData.value.checkIn,
       checkOut: formData.value.checkOut,
@@ -449,13 +427,6 @@ const checkAvailability = async () => {
       invoiceDetails: formData.value.invoiceDetails,
       specialRequests: formData.value.specialRequests
     })
-
-    // Debug: Log the full response
-    console.log('Preview amendment response:', response.data)
-    console.log('Debug info:', response.data._debug)
-    console.log('Availability issues:', response.data.availability?.issues)
-    console.log('New pricing:', response.data.preview?.pricing)
-    console.log('Price difference:', response.data.priceDifference)
 
     previewData.value = response.data
 

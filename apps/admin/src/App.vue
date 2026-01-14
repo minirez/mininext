@@ -38,12 +38,10 @@ const initNotifications = async () => {
   }
 
   const userId = authStore.user._id
-  console.log('[App] Authenticating socket for notifications:', { userId, userType: 'User' })
   authenticate(userId, 'User')
 
   // Listen for new notifications
   on('notification:new', data => {
-    console.log('[App] Received notification:new event:', data)
     notificationStore.handleNewNotification(data.notification)
   })
 

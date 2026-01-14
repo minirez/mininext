@@ -10,6 +10,13 @@ router.use(protect)
 // Get my subscription info (for partner users)
 router.get('/subscription', myService.getMySubscription)
 
+// Initiate subscription purchase with payment (for partner users)
+router.post('/subscription/purchase', myService.initiatePurchase)
+
+// Payment callback (called by payment service - needs to be accessible)
+// Note: This is called internally by payment service with forwarded auth
+router.post('/subscription/payment-callback', myService.paymentCallback)
+
 // Get my invoices (for partner users)
 router.get('/invoices', myService.getMyInvoices)
 

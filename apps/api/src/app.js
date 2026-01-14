@@ -7,6 +7,7 @@ import config from './config/index.js'
 import { i18nMiddleware } from './helpers/i18n.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { auditMiddleware } from './middleware/auditMiddleware.js'
+import { csrfProtection } from './middleware/csrf.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -85,6 +86,9 @@ app.use(i18nMiddleware)
 
 // Audit middleware (for tracking HTTP requests)
 app.use(auditMiddleware)
+
+// CSRF Protection (for state-changing requests)
+app.use(csrfProtection)
 
 // Health check
 app.get('/health', (req, res) => {

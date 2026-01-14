@@ -163,7 +163,8 @@ const currentModuleIcon = computed(() => {
     '/developers': 'code',
     '/pms-integration': 'link',
     '/my-subscription': 'card_membership',
-    '/issues': 'bug_report'
+    '/issues': 'bug_report',
+    '/payment': 'payments'
   }
 
   // Find matching route
@@ -256,10 +257,23 @@ const mainSection = computed(() => {
       icon: 'bug_report',
       label: t('nav.issues')
     })
+    items.push({
+      name: 'payment',
+      to: '/payment',
+      icon: 'payments',
+      label: t('nav.payment')
+    })
   }
 
   // Partner menu items (visible when in partner view, filtered by permissions)
   if (isPartnerView) {
+    // Payment - tüm partnerlar için
+    items.push({
+      name: 'payment',
+      to: '/payment',
+      icon: 'payments',
+      label: t('nav.payment')
+    })
     if (hasPermission('agencies')) {
       items.push({ name: 'agencies', to: '/agencies', icon: 'groups', label: t('nav.agencies') })
     }

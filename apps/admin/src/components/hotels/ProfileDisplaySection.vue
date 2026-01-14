@@ -19,17 +19,20 @@
       </span>
     </div>
 
-    <!-- Content - v-html is safe here as content comes from trusted API source -->
+    <!-- Content - sanitized for XSS protection -->
     <div
       v-if="content"
       class="text-gray-700 dark:text-slate-300 prose dark:prose-invert max-w-none"
-      v-html="content /* eslint-disable-line vue/no-v-html */"
+      v-html="sanitizedContent"
     ></div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { sanitizeHtml } from '@/utils/sanitize'
+
+const props = defineProps({
   title: {
     type: String,
     required: true
@@ -46,5 +49,11 @@ defineProps({
     type: Array,
     default: () => []
   }
+})
+
+// Sanitize content for XSS protection
+const sanitizedContent = computed(() => {
+  if (!props.content) return ''
+  return sanitizeHtml(props.content)
 })
 </script>
