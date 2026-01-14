@@ -741,17 +741,7 @@ export const nudgeIssue = asyncHandler(async (req, res) => {
     targetUsers = await User.find({ _id: { $in: recipients } }).select('name email preferredLanguage')
   }
 
-  // Check if there are any recipients before filtering
-  const totalRecipientsBefore = targetUsers.length
-
-  // Remove the sender from recipients (can't nudge yourself)
-  targetUsers = targetUsers.filter(u => u._id.toString() !== req.user._id.toString())
-
   if (targetUsers.length === 0) {
-    // If there were recipients but all were filtered out, it means user tried to nudge themselves
-    if (totalRecipientsBefore > 0) {
-      throw new ValidationError('CANNOT_NUDGE_SELF')
-    }
     throw new ValidationError('NO_RECIPIENTS')
   }
 
