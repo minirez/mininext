@@ -300,9 +300,6 @@
                   />
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">tag</span>
                 </div>
-                <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                  {{ $t('partners.codeDescription') }}
-                </p>
               </div>
 
               <div>
