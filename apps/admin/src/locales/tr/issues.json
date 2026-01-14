@@ -48,6 +48,11 @@
       "other": "Diğer"
     },
 
+    "filters": {
+      "showResolved": "Çözülenleri Göster",
+      "hideResolved": "Çözülenleri Gizle"
+    },
+
     "actions": {
       "create": "Talep Oluştur",
       "edit": "Düzenle",

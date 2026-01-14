@@ -48,6 +48,11 @@
       "other": "Other"
     },
 
+    "filters": {
+      "showResolved": "Show Resolved",
+      "hideResolved": "Hide Resolved"
+    },
+
     "actions": {
       "create": "Create Issue",
       "edit": "Edit",

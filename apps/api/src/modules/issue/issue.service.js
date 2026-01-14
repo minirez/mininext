@@ -47,6 +47,7 @@ export const getIssues = asyncHandler(async (req, res) => {
     search,
     startDate,
     endDate,
+    hideResolved,
     sortBy = 'createdAt',
     sortOrder = 'desc',
     page = 1,
@@ -57,6 +58,11 @@ export const getIssues = asyncHandler(async (req, res) => {
 
   // Filters
   if (status) query.status = status
+
+  // Hide resolved/closed issues if requested
+  if (hideResolved === 'true' && !status) {
+    query.status = { $nin: ['resolved', 'closed'] }
+  }
   if (priority) query.priority = priority
   if (category) query.category = category
   if (assignee) query.assignee = assignee
