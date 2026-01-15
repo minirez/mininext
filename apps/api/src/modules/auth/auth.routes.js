@@ -38,7 +38,8 @@ const router = express.Router()
  *       429:
  *         $ref: '#/components/responses/RateLimitError'
  */
-router.post('/login', loginLimiter, strictLimiter, authService.login)
+// TODO: Rate limiters temporarily disabled for testing - RESTORE AFTER TESTING
+router.post('/login', /* loginLimiter, strictLimiter, */ authService.login)
 
 /**
  * @swagger

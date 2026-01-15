@@ -386,7 +386,7 @@
     <!-- Pagination -->
     <div
       v-if="paginated && total > 0"
-      class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-slate-700"
+      class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-4 pt-4 border-t border-gray-200 dark:border-slate-700"
     >
       <!-- Info + View Toggle (for mobile when header is hidden) -->
       <div class="flex items-center gap-3">

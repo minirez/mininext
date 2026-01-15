@@ -98,6 +98,8 @@
     "refresh": "Yenile",
     "tableView": "Tablo Görünümü",
     "cardView": "Kart Görünümü",
+    "list": "Liste",
+    "calendar": "Takvim",
     "confirmDelete": "Silmek istediğinize emin misiniz?",
     "records": "kayıt",
     "items": "öğe",

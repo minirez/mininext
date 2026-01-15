@@ -98,6 +98,8 @@
     "refresh": "Refresh",
     "tableView": "Table View",
     "cardView": "Card View",
+    "list": "List",
+    "calendar": "Calendar",
     "confirmDelete": "Are you sure you want to delete?",
     "records": "records",
     "items": "items",
