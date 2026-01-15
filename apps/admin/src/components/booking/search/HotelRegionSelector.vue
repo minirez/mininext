@@ -525,6 +525,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import bookingService from '@/services/bookingService'
+import { usePartnerStore } from '@/stores/partner'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   modelValue: {
@@ -544,6 +546,29 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'hotel-selected'])
 
 const { locale } = useI18n()
+const partnerStore = usePartnerStore()
+const authStore = useAuthStore()
+
+// Get current partner ID for partner-specific storage
+const getCurrentPartnerId = () => {
+  // Platform admin viewing as partner
+  if (partnerStore.selectedPartner?._id) {
+    return partnerStore.selectedPartner._id
+  }
+  // Normal partner user
+  if (authStore.user?.partner?._id) {
+    return authStore.user.partner._id
+  }
+  if (authStore.user?.partner) {
+    return authStore.user.partner
+  }
+  return 'default'
+}
+
+// Get storage key for recent searches (partner-specific)
+const getRecentSearchesKey = () => {
+  return `booking_recent_searches_${getCurrentPartnerId()}`
+}
 
 // Refs
 const containerRef = ref(null)
@@ -642,15 +667,33 @@ const updateDropdownPosition = () => {
   if (inputRef.value) {
     const rect = inputRef.value.getBoundingClientRect()
     const popupHeight = 400
+    const margin = 8
 
-    let top = rect.bottom + 8
-    if (top + popupHeight > window.innerHeight) {
-      top = rect.top - popupHeight - 8
+    // Default: open below the input
+    let top = rect.bottom + margin
+
+    // Check if there's enough space below
+    const spaceBelow = window.innerHeight - rect.bottom - margin
+    const spaceAbove = rect.top - margin
+
+    if (spaceBelow < popupHeight && spaceAbove > spaceBelow) {
+      // Open above if more space there
+      top = Math.max(margin, rect.top - popupHeight - margin)
+    }
+
+    // Ensure top is never negative or too close to viewport edge
+    top = Math.max(margin, Math.min(top, window.innerHeight - popupHeight - margin))
+
+    // Calculate left position and ensure it stays within viewport
+    let left = rect.left
+    const maxWidth = Math.max(rect.width, 400)
+    if (left + maxWidth > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - maxWidth - margin)
     }
 
     dropdownPosition.value = {
       top,
-      left: rect.left,
+      left,
       width: rect.width
     }
   }
@@ -791,7 +834,7 @@ const clearSelection = () => {
   emit('update:modelValue', { hotels: [], regions: [], provinces: [] })
 }
 
-// Add to recent searches
+// Add to recent searches (partner-specific)
 const addToRecent = item => {
   const existing = recentSearches.value.findIndex(r => r.id === item.id && r.type === item.type)
   if (existing > -1) {
@@ -800,23 +843,26 @@ const addToRecent = item => {
   recentSearches.value.unshift(item)
   recentSearches.value = recentSearches.value.slice(0, 10)
 
-  // Save to localStorage
+  // Save to localStorage with partner-specific key
   try {
-    localStorage.setItem('booking_recent_searches', JSON.stringify(recentSearches.value))
+    localStorage.setItem(getRecentSearchesKey(), JSON.stringify(recentSearches.value))
   } catch (e) {
     console.warn('Failed to save recent searches:', e)
   }
 }
 
-// Load recent searches from localStorage
+// Load recent searches from localStorage (partner-specific)
 const loadRecentSearches = () => {
   try {
-    const saved = localStorage.getItem('booking_recent_searches')
+    const saved = localStorage.getItem(getRecentSearchesKey())
     if (saved) {
       recentSearches.value = JSON.parse(saved)
+    } else {
+      recentSearches.value = []
     }
   } catch (e) {
     console.warn('Failed to load recent searches:', e)
+    recentSearches.value = []
   }
 }
 
@@ -887,6 +933,44 @@ watch(searchMode, () => {
   highlightedIndex.value = -1
 })
 
+// Watch for partner changes (platform admin switching partners)
+watch(
+  () => partnerStore.selectedPartner?._id,
+  () => {
+    // Reload recent searches and initial data when partner changes
+    loadRecentSearches()
+    loadInitialData()
+  }
+)
+
+// Handle scroll - update position or close dropdown
+const handleScroll = () => {
+  if (showDropdown.value) {
+    updateDropdownPosition()
+  }
+}
+
+// Handle resize
+const handleResize = () => {
+  if (showDropdown.value) {
+    updateDropdownPosition()
+  }
+}
+
+// Watch dropdown visibility to add/remove scroll listeners
+watch(showDropdown, isOpen => {
+  if (isOpen) {
+    // Add scroll listeners to window and any scrollable parent
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleResize)
+    // Update position immediately when opening
+    updateDropdownPosition()
+  } else {
+    window.removeEventListener('scroll', handleScroll, true)
+    window.removeEventListener('resize', handleResize)
+  }
+})
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   loadRecentSearches()
@@ -895,6 +979,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll, true)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 

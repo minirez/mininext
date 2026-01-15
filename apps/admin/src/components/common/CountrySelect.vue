@@ -136,10 +136,48 @@ const dropdownStyle = computed(() => ({
 const updateDropdownPosition = () => {
   if (!triggerRef.value) return
   const rect = triggerRef.value.getBoundingClientRect()
+  const dropdownHeight = 280 // max-h-60 + search input
+  const margin = 4
+
+  // Default: open below
+  let top = rect.bottom + margin
+
+  // Check if there's enough space below
+  const spaceBelow = window.innerHeight - rect.bottom - margin
+  const spaceAbove = rect.top - margin
+
+  if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+    // Open above if more space there
+    top = Math.max(margin, rect.top - dropdownHeight - margin)
+  }
+
+  // Ensure top is never negative
+  top = Math.max(margin, Math.min(top, window.innerHeight - dropdownHeight - margin))
+
+  // Calculate left and ensure it stays within viewport
+  let left = rect.left
+  if (left + rect.width > window.innerWidth - margin) {
+    left = Math.max(margin, window.innerWidth - rect.width - margin)
+  }
+
   dropdownPosition.value = {
-    top: rect.bottom + 4,
-    left: rect.left,
+    top,
+    left,
     width: rect.width
+  }
+}
+
+// Handle scroll - update position
+const handleScroll = () => {
+  if (showDropdown.value) {
+    updateDropdownPosition()
+  }
+}
+
+// Handle resize
+const handleResize = () => {
+  if (showDropdown.value) {
+    updateDropdownPosition()
   }
 }
 
@@ -149,6 +187,13 @@ watch(showDropdown, val => {
     nextTick(() => {
       updateDropdownPosition()
     })
+    // Add scroll/resize listeners
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleResize)
+  } else {
+    // Remove listeners when closed
+    window.removeEventListener('scroll', handleScroll, true)
+    window.removeEventListener('resize', handleResize)
   }
 })
 
@@ -223,5 +268,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll, true)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
