@@ -102,6 +102,7 @@
     "calendar": "Calendar",
     "confirmDelete": "Are you sure you want to delete?",
     "records": "records",
+    "recent": "Recent",
     "items": "items",
     "perPage": "per page",
     "activeFilters": "Active Filters",

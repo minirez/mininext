@@ -102,56 +102,6 @@
           class="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-600 overflow-y-auto"
           :style="dropdownStyle"
         >
-          <!-- Recent Searches Section -->
-          <div
-            v-if="!searchQuery && recentItems.length > 0"
-            class="border-b border-gray-200 dark:border-slate-700"
-          >
-            <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50">
-              <span
-                class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide"
-              >
-                {{ $t('booking.recentSearches') }}
-              </span>
-            </div>
-            <div class="max-h-32 sm:max-h-48 overflow-y-auto">
-              <button
-                v-for="(item, index) in recentItems"
-                :key="`recent-${item.id}`"
-                type="button"
-                class="w-full px-3 py-2.5 text-left flex items-center gap-3 transition-colors"
-                :class="
-                  highlightedIndex === index
-                    ? 'bg-purple-50 dark:bg-purple-900/20'
-                    : 'hover:bg-gray-50 dark:hover:bg-slate-700'
-                "
-                @click="selectItem(item)"
-                @mouseenter="highlightedIndex = index"
-              >
-                <span
-                  class="material-icons text-lg"
-                  :class="item.type === 'hotel' ? 'text-purple-500' : 'text-blue-500'"
-                >
-                  {{ item.type === 'hotel' ? 'hotel' : 'location_on' }}
-                </span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {{ item.name }}
-                  </p>
-                  <p
-                    v-if="item.subtitle"
-                    class="text-xs text-gray-500 dark:text-slate-400 truncate"
-                  >
-                    {{ item.subtitle }}
-                  </p>
-                </div>
-                <span v-if="item.stars" class="text-xs text-yellow-500">
-                  {{ '★'.repeat(item.stars) }}
-                </span>
-              </button>
-            </div>
-          </div>
-
           <!-- Search Results Section -->
           <div v-if="searchQuery">
             <!-- Loading State -->
@@ -173,7 +123,7 @@
             </div>
 
             <!-- Results List -->
-            <div v-else class="max-h-48 sm:max-h-80 overflow-y-auto">
+            <div v-else>
               <!-- Hotels Group -->
               <template v-if="searchMode === 'hotel' && groupedResults.hotels.length > 0">
                 <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0">
@@ -347,173 +297,176 @@
             </div>
           </div>
 
-          <!-- All Hotels Quick Access (when no search, hotel mode) -->
-          <div v-if="!searchQuery && searchMode === 'hotel' && allHotels.length > 0">
-            <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50">
+          <!-- All Hotels (when no search, hotel mode) -->
+          <div v-if="!searchQuery && searchMode === 'hotel' && sortedHotels.length > 0">
+            <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0 z-10">
               <span
                 class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide"
               >
-                {{ $t('booking.allHotels') }} ({{ allHotels.length }})
+                {{ $t('booking.hotels') }} ({{ sortedHotels.length }})
               </span>
             </div>
-            <div class="max-h-40 sm:max-h-64 overflow-y-auto">
-              <button
-                v-for="(hotel, index) in allHotels"
-                :key="`all-${hotel._id}`"
-                type="button"
-                class="w-full px-3 py-2.5 text-left flex items-center gap-3 transition-colors"
-                :class="
-                  highlightedIndex === recentItems.length + index
-                    ? 'bg-purple-50 dark:bg-purple-900/20'
-                    : 'hover:bg-gray-50 dark:hover:bg-slate-700'
-                "
-                @click="
-                  selectItem({
-                    id: hotel._id,
-                    type: 'hotel',
-                    name: hotel.name,
-                    stars: hotel.stars,
-                    subtitle: hotel.city,
-                    data: hotel
-                  })
-                "
-                @mouseenter="highlightedIndex = recentItems.length + index"
+            <button
+              v-for="(hotel, index) in sortedHotels"
+              :key="`all-${hotel._id}`"
+              type="button"
+              class="w-full px-3 py-2 text-left flex items-center gap-3 transition-colors"
+              :class="[
+                highlightedIndex === index
+                  ? 'bg-purple-50 dark:bg-purple-900/20'
+                  : 'hover:bg-gray-50 dark:hover:bg-slate-700',
+                hotel.isRecent ? 'border-l-2 border-purple-400' : ''
+              ]"
+              @click="
+                selectItem({
+                  id: hotel._id,
+                  type: 'hotel',
+                  name: hotel.name,
+                  stars: hotel.stars,
+                  subtitle: hotel.city,
+                  data: hotel
+                })
+              "
+              @mouseenter="highlightedIndex = index"
+            >
+              <div
+                class="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
               >
-                <div
-                  class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
+                <img
+                  v-if="getHotelImageUrl(hotel)"
+                  :src="getHotelImageUrl(hotel)"
+                  :alt="hotel.name"
+                  class="w-full h-full object-cover"
+                />
+                <span
+                  v-else
+                  class="material-icons text-lg text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
+                  >hotel</span
                 >
-                  <img
-                    v-if="getHotelImageUrl(hotel)"
-                    :src="getHotelImageUrl(hotel)"
-                    :alt="hotel.name"
-                    class="w-full h-full object-cover"
-                  />
-                  <span
-                    v-else
-                    class="material-icons text-lg sm:text-xl text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
-                    >hotel</span
-                  >
-                </div>
-                <div class="flex-1 min-w-0">
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
                   <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {{ hotel.name }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ hotel.city }}</p>
-                </div>
-                <div class="flex flex-col items-end gap-1">
-                  <span v-if="hotel.stars" class="text-xs text-yellow-500">{{
-                    '★'.repeat(hotel.stars)
-                  }}</span>
                   <span
-                    v-if="isItemSelected({ id: hotel._id, type: 'hotel' })"
-                    class="material-icons text-green-500 text-lg"
-                    >check_circle</span
+                    v-if="hotel.isRecent"
+                    class="px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 rounded"
                   >
+                    {{ $t('common.recent') }}
+                  </span>
                 </div>
-              </button>
-            </div>
+                <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ hotel.city }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span v-if="hotel.stars" class="text-xs text-yellow-500">{{
+                  '★'.repeat(hotel.stars)
+                }}</span>
+                <span
+                  v-if="isItemSelected({ id: hotel._id, type: 'hotel' })"
+                  class="material-icons text-green-500 text-base"
+                  >check_circle</span
+                >
+              </div>
+            </button>
           </div>
 
-          <!-- All Regions Quick Access (when no search, region mode) -->
+          <!-- All Regions (when no search, region mode) -->
           <div v-if="!searchQuery && searchMode === 'region'">
             <!-- Provinces -->
-            <div v-if="allProvinces.length > 0">
-              <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50">
+            <template v-if="allProvinces.length > 0">
+              <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0 z-10">
                 <span
                   class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide"
                 >
                   {{ $t('booking.provinces') }} ({{ allProvinces.length }})
                 </span>
               </div>
-              <div class="max-h-32 sm:max-h-40 overflow-y-auto">
-                <button
-                  v-for="(province, index) in allProvinces"
-                  :key="`all-province-${province._id}`"
-                  type="button"
-                  class="w-full px-3 py-2.5 text-left flex items-center gap-3 transition-colors"
-                  :class="
-                    highlightedIndex === recentItems.length + index
-                      ? 'bg-blue-50 dark:bg-blue-900/20'
-                      : 'hover:bg-gray-50 dark:hover:bg-slate-700'
-                  "
-                  @click="
-                    selectItem({
-                      id: province._id,
-                      type: 'province',
-                      name: getLocalizedName(province.name),
-                      subtitle: `${province.hotelCount} ${$t('booking.hotels').toLowerCase()}`,
-                      data: province
-                    })
-                  "
-                  @mouseenter="highlightedIndex = recentItems.length + index"
+              <button
+                v-for="(province, index) in allProvinces"
+                :key="`all-province-${province._id}`"
+                type="button"
+                class="w-full px-3 py-2 text-left flex items-center gap-3 transition-colors"
+                :class="
+                  highlightedIndex === index
+                    ? 'bg-blue-50 dark:bg-blue-900/20'
+                    : 'hover:bg-gray-50 dark:hover:bg-slate-700'
+                "
+                @click="
+                  selectItem({
+                    id: province._id,
+                    type: 'province',
+                    name: getLocalizedName(province.name),
+                    subtitle: `${province.hotelCount} ${$t('booking.hotels').toLowerCase()}`,
+                    data: province
+                  })
+                "
+                @mouseenter="highlightedIndex = index"
+              >
+                <span class="material-icons text-lg text-blue-500">location_city</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {{ getLocalizedName(province.name) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ province.hotelCount }} {{ $t('booking.hotels').toLowerCase() }}
+                  </p>
+                </div>
+                <span
+                  v-if="isItemSelected({ id: province._id, type: 'province' })"
+                  class="material-icons text-green-500 text-base"
+                  >check_circle</span
                 >
-                  <span class="material-icons text-lg text-blue-500">location_city</span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {{ getLocalizedName(province.name) }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-slate-400">
-                      {{ province.hotelCount }} {{ $t('booking.hotels').toLowerCase() }}
-                    </p>
-                  </div>
-                  <span
-                    v-if="isItemSelected({ id: province._id, type: 'province' })"
-                    class="material-icons text-green-500 text-lg"
-                    >check_circle</span
-                  >
-                </button>
-              </div>
-            </div>
+              </button>
+            </template>
 
             <!-- Tourism Regions -->
-            <div v-if="allRegions.length > 0">
-              <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50">
+            <template v-if="allRegions.length > 0">
+              <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0 z-10">
                 <span
                   class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide"
                 >
                   {{ $t('booking.tourismRegions') }} ({{ allRegions.length }})
                 </span>
               </div>
-              <div class="max-h-32 sm:max-h-40 overflow-y-auto">
-                <button
-                  v-for="(region, index) in allRegions"
-                  :key="`all-region-${region._id}`"
-                  type="button"
-                  class="w-full px-3 py-2.5 text-left flex items-center gap-3 transition-colors"
-                  :class="
-                    highlightedIndex === recentItems.length + allProvinces.length + index
-                      ? 'bg-blue-50 dark:bg-blue-900/20'
-                      : 'hover:bg-gray-50 dark:hover:bg-slate-700'
-                  "
-                  @click="
-                    selectItem({
-                      id: region._id,
-                      type: 'region',
-                      name: getLocalizedName(region.name),
-                      subtitle: `${region.hotelCount} ${$t('booking.hotels').toLowerCase()}`,
-                      data: region
-                    })
-                  "
-                  @mouseenter="highlightedIndex = recentItems.length + allProvinces.length + index"
+              <button
+                v-for="(region, index) in allRegions"
+                :key="`all-region-${region._id}`"
+                type="button"
+                class="w-full px-3 py-2 text-left flex items-center gap-3 transition-colors"
+                :class="
+                  highlightedIndex === allProvinces.length + index
+                    ? 'bg-blue-50 dark:bg-blue-900/20'
+                    : 'hover:bg-gray-50 dark:hover:bg-slate-700'
+                "
+                @click="
+                  selectItem({
+                    id: region._id,
+                    type: 'region',
+                    name: getLocalizedName(region.name),
+                    subtitle: `${region.hotelCount} ${$t('booking.hotels').toLowerCase()}`,
+                    data: region
+                  })
+                "
+                @mouseenter="highlightedIndex = allProvinces.length + index"
+              >
+                <span class="material-icons text-lg text-green-500">beach_access</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {{ getLocalizedName(region.name) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ region.provinceName }} • {{ region.hotelCount }}
+                    {{ $t('booking.hotels').toLowerCase() }}
+                  </p>
+                </div>
+                <span
+                  v-if="isItemSelected({ id: region._id, type: 'region' })"
+                  class="material-icons text-green-500 text-base"
+                  >check_circle</span
                 >
-                  <span class="material-icons text-lg text-green-500">beach_access</span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {{ getLocalizedName(region.name) }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-slate-400">
-                      {{ region.provinceName }} • {{ region.hotelCount }}
-                      {{ $t('booking.hotels').toLowerCase() }}
-                    </p>
-                  </div>
-                  <span
-                    v-if="isItemSelected({ id: region._id, type: 'region' })"
-                    class="material-icons text-green-500 text-lg"
-                    >check_circle</span
-                  >
-                </button>
-              </div>
-            </div>
+              </button>
+            </template>
           </div>
         </div>
       </transition>
@@ -632,9 +585,34 @@ const selectedItems = computed(() => {
   return items
 })
 
-// Recent items (from localStorage)
-const recentItems = computed(() => {
-  return recentSearches.value.slice(0, 2)
+// Recent hotel IDs (from localStorage)
+const recentHotelIds = computed(() => {
+  return recentSearches.value
+    .filter(item => item.type === 'hotel')
+    .slice(0, 2)
+    .map(item => item.id)
+})
+
+// Sorted hotels - recent ones first, then rest
+const sortedHotels = computed(() => {
+  const recentIds = recentHotelIds.value
+  if (recentIds.length === 0) return allHotels.value
+
+  const recent = []
+  const rest = []
+
+  allHotels.value.forEach(hotel => {
+    if (recentIds.includes(hotel._id)) {
+      recent.push({ ...hotel, isRecent: true })
+    } else {
+      rest.push(hotel)
+    }
+  })
+
+  // Sort recent by their order in recentIds
+  recent.sort((a, b) => recentIds.indexOf(a._id) - recentIds.indexOf(b._id))
+
+  return [...recent, ...rest]
 })
 
 // Grouped results for display
