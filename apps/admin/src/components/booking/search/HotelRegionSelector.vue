@@ -114,7 +114,7 @@
                 {{ $t('booking.recentSearches') }}
               </span>
             </div>
-            <div class="max-h-48 overflow-y-auto">
+            <div class="max-h-32 sm:max-h-48 overflow-y-auto">
               <button
                 v-for="(item, index) in recentItems"
                 :key="`recent-${item.id}`"
@@ -173,7 +173,7 @@
             </div>
 
             <!-- Results List -->
-            <div v-else class="max-h-80 overflow-y-auto">
+            <div v-else class="max-h-48 sm:max-h-80 overflow-y-auto">
               <!-- Hotels Group -->
               <template v-if="searchMode === 'hotel' && groupedResults.hotels.length > 0">
                 <div class="px-3 py-2 bg-gray-50 dark:bg-slate-700/50 sticky top-0">
@@ -207,17 +207,17 @@
                 >
                   <!-- Hotel Image -->
                   <div
-                    class="w-12 h-12 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
+                    class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
                   >
                     <img
-                      v-if="hotel.images && hotel.images[0]"
-                      :src="hotel.images[0].url"
+                      v-if="getHotelImageUrl(hotel)"
+                      :src="getHotelImageUrl(hotel)"
                       :alt="hotel.name"
                       class="w-full h-full object-cover"
                     />
                     <span
                       v-else
-                      class="material-icons text-2xl text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
+                      class="material-icons text-xl sm:text-2xl text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
                       >hotel</span
                     >
                   </div>
@@ -356,7 +356,7 @@
                 {{ $t('booking.allHotels') }} ({{ allHotels.length }})
               </span>
             </div>
-            <div class="max-h-64 overflow-y-auto">
+            <div class="max-h-40 sm:max-h-64 overflow-y-auto">
               <button
                 v-for="(hotel, index) in allHotels"
                 :key="`all-${hotel._id}`"
@@ -380,17 +380,17 @@
                 @mouseenter="highlightedIndex = recentItems.length + index"
               >
                 <div
-                  class="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
+                  class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden flex-shrink-0"
                 >
                   <img
-                    v-if="hotel.images && hotel.images[0]"
-                    :src="hotel.images[0].url"
+                    v-if="getHotelImageUrl(hotel)"
+                    :src="getHotelImageUrl(hotel)"
                     :alt="hotel.name"
                     class="w-full h-full object-cover"
                   />
                   <span
                     v-else
-                    class="material-icons text-xl text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
+                    class="material-icons text-lg sm:text-xl text-gray-400 dark:text-slate-500 flex items-center justify-center h-full"
                     >hotel</span
                   >
                 </div>
@@ -425,7 +425,7 @@
                   {{ $t('booking.provinces') }} ({{ allProvinces.length }})
                 </span>
               </div>
-              <div class="max-h-40 overflow-y-auto">
+              <div class="max-h-32 sm:max-h-40 overflow-y-auto">
                 <button
                   v-for="(province, index) in allProvinces"
                   :key="`all-province-${province._id}`"
@@ -474,7 +474,7 @@
                   {{ $t('booking.tourismRegions') }} ({{ allRegions.length }})
                 </span>
               </div>
-              <div class="max-h-40 overflow-y-auto">
+              <div class="max-h-32 sm:max-h-40 overflow-y-auto">
                 <button
                   v-for="(region, index) in allRegions"
                   :key="`all-region-${region._id}`"
@@ -527,6 +527,7 @@ import { useI18n } from 'vue-i18n'
 import bookingService from '@/services/bookingService'
 import { usePartnerStore } from '@/stores/partner'
 import { useAuthStore } from '@/stores/auth'
+import { getHotelImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   modelValue: {
@@ -666,7 +667,8 @@ const dropdownStyle = computed(() => ({
 const updateDropdownPosition = () => {
   if (inputRef.value) {
     const rect = inputRef.value.getBoundingClientRect()
-    const popupHeight = 400
+    // Use smaller popup height on small screens
+    const popupHeight = window.innerHeight < 700 ? 280 : 400
     const margin = 8
 
     // Default: open below the input
