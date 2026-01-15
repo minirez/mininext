@@ -48,6 +48,7 @@ export const getIssues = asyncHandler(async (req, res) => {
     startDate,
     endDate,
     hideResolved,
+    showDeleted,
     sortBy = 'createdAt',
     sortOrder = 'desc',
     page = 1,
@@ -55,6 +56,13 @@ export const getIssues = asyncHandler(async (req, res) => {
   } = req.query
 
   const query = {}
+
+  // Soft delete filter - show only deleted or only non-deleted
+  if (showDeleted === 'true') {
+    query.isDeleted = true
+  } else {
+    query.isDeleted = { $ne: true }
+  }
 
   // Filters
   if (status) query.status = status
@@ -91,6 +99,7 @@ export const getIssues = asyncHandler(async (req, res) => {
     Issue.find(query)
       .populate('reporter', 'name email avatar')
       .populate('assignee', 'name email avatar')
+      .populate('comments.author', 'name email avatar')
       .select('-activity')
       .sort(sort)
       .skip((page - 1) * limit)
@@ -99,12 +108,21 @@ export const getIssues = asyncHandler(async (req, res) => {
     Issue.countDocuments(query)
   ])
 
-  // Add counts for each issue
-  const issuesWithCounts = issues.map(issue => ({
-    ...issue,
-    commentCount: issue.comments?.length || 0,
-    attachmentCount: issue.attachments?.length || 0
-  }))
+  // Add counts and last comment for each issue
+  const issuesWithCounts = issues.map(issue => {
+    const comments = issue.comments || []
+    const lastComment = comments.length > 0 ? comments[comments.length - 1] : null
+
+    return {
+      ...issue,
+      commentCount: comments.length,
+      attachmentCount: issue.attachments?.length || 0,
+      lastComment: lastComment ? {
+        user: lastComment.author,
+        createdAt: lastComment.createdAt
+      } : null
+    }
+  })
 
   res.json({
     success: true,
@@ -674,7 +692,7 @@ export const getStats = asyncHandler(async (req, res) => {
   })
 })
 
-// Delete Issue
+// Soft Delete Issue (Reporter or Admin can delete)
 export const deleteIssue = asyncHandler(async (req, res) => {
   const issue = await Issue.findById(req.params.id)
 
@@ -682,7 +700,34 @@ export const deleteIssue = asyncHandler(async (req, res) => {
     throw new NotFoundError('ISSUE_NOT_FOUND')
   }
 
-  // Only admin can delete
+  // Only reporter or admin can soft delete
+  const isReporter = issue.reporter.toString() === req.user._id.toString()
+  const isAdmin = req.user.role === 'admin'
+
+  if (!isReporter && !isAdmin) {
+    throw new ForbiddenError('NOT_AUTHORIZED')
+  }
+
+  // Soft delete
+  issue.isDeleted = true
+  issue.deletedAt = new Date()
+  issue.deletedBy = req.user._id
+  issue.addActivity('deleted', req.user._id)
+
+  await issue.save()
+
+  res.json({ success: true, message: 'Issue deleted' })
+})
+
+// Hard Delete Issue (Admin only)
+export const hardDeleteIssue = asyncHandler(async (req, res) => {
+  const issue = await Issue.findById(req.params.id)
+
+  if (!issue) {
+    throw new NotFoundError('ISSUE_NOT_FOUND')
+  }
+
+  // Only admin can hard delete
   if (req.user.role !== 'admin') {
     throw new ForbiddenError('ADMIN_ONLY')
   }
@@ -696,7 +741,7 @@ export const deleteIssue = asyncHandler(async (req, res) => {
 
   await issue.deleteOne()
 
-  res.json({ success: true, message: 'Issue deleted' })
+  res.json({ success: true, message: 'Issue permanently deleted' })
 })
 
 // Get Platform Users (for assignee selection)

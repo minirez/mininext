@@ -17,6 +17,7 @@
       "category": "Category",
       "assignee": "Assignee",
       "reporter": "Reporter",
+      "lastComment": "Last Comment",
       "labels": "Labels",
       "dueDate": "Due Date",
       "createdAt": "Created",
@@ -29,7 +30,8 @@
       "in_progress": "In Progress",
       "resolved": "Resolved",
       "closed": "Closed",
-      "reopened": "Reopened"
+      "reopened": "Reopened",
+      "deleted": "Deleted"
     },
 
     "priority": {
@@ -50,7 +52,8 @@
 
     "filters": {
       "showResolved": "Show Resolved",
-      "hideResolved": "Hide Resolved"
+      "hideResolved": "Hide Resolved",
+      "showDeleted": "Show Deleted"
     },
 
     "actions": {
@@ -140,6 +143,7 @@
       "created": "Issue created",
       "updated": "Issue updated",
       "deleted": "Issue deleted",
+      "deleteConfirm": "Are you sure you want to delete this issue? This action can be undone.",
       "statusChanged": "Status changed",
       "assigned": "Issue assigned",
       "commentAdded": "Comment added",

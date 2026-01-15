@@ -41,7 +41,7 @@ const activitySchema = new mongoose.Schema({
       'comment_edited', 'comment_deleted', 'attachment_added', 'attachment_removed',
       'due_date_set', 'due_date_removed', 'watcher_added', 'watcher_removed',
       'related_added', 'related_removed', 'reopened', 'resolved', 'closed',
-      'nudge_sent'
+      'nudge_sent', 'deleted', 'restored'
     ],
     required: true
   },
@@ -156,6 +156,17 @@ const issueSchema = new mongoose.Schema({
     os: String,
     url: String,
     userAgent: String
+  },
+
+  // Soft Delete
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: Date,
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true
@@ -167,6 +178,7 @@ issueSchema.index({ priority: 1 })
 issueSchema.index({ reporter: 1 })
 issueSchema.index({ assignee: 1 })
 issueSchema.index({ createdAt: -1 })
+issueSchema.index({ isDeleted: 1 })
 issueSchema.index({ title: 'text', description: 'text' })
 
 // Issue numarası oluştur

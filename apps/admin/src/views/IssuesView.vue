@@ -117,6 +117,21 @@
               {{ showResolved ? $t('issues.filters.hideResolved') : $t('issues.filters.showResolved') }}
             </button>
 
+            <!-- Show Deleted Toggle -->
+            <button
+              type="button"
+              class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors whitespace-nowrap"
+              :class="showDeleted
+                ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600'
+                : 'border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'"
+              @click="toggleShowDeleted"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {{ $t('issues.filters.showDeleted') }}
+            </button>
+
             <!-- New Issue Button -->
             <button class="btn-primary flex items-center whitespace-nowrap" @click="openCreateModal">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,22 +237,31 @@
             <span v-else class="text-sm text-gray-400 dark:text-slate-500">-</span>
           </template>
 
-          <!-- Meta -->
-          <template #cell-meta="{ row }">
-            <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-slate-400">
-              <span class="flex items-center gap-1" :title="$t('issues.comments.title')">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                {{ row.commentCount || 0 }}
-              </span>
-              <span class="flex items-center gap-1" :title="$t('issues.attachments')">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
-                {{ row.attachmentCount || 0 }}
-              </span>
+          <!-- Last Comment -->
+          <template #cell-lastComment="{ row }">
+            <div v-if="row.lastComment?.user" class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded-full bg-blue-200 dark:bg-blue-900/50 flex items-center justify-center text-xs font-medium text-blue-700 dark:text-blue-300"
+              >
+                {{ row.lastComment.user?.name?.charAt(0)?.toUpperCase() || '?' }}
+              </div>
+              <span class="text-sm text-gray-600 dark:text-slate-300">{{ row.lastComment.user?.name }}</span>
             </div>
+            <span v-else class="text-sm text-gray-400 dark:text-slate-500">-</span>
+          </template>
+
+          <!-- Attachments -->
+          <template #cell-attachments="{ row }">
+            <span
+              v-if="row.attachmentCount > 0"
+              class="flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400"
+              :title="$t('issues.attachments')"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+              {{ row.attachmentCount }}
+            </span>
           </template>
 
           <!-- Date -->
@@ -260,6 +284,24 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </router-link>
+              <!-- Delete button (only for reporter) -->
+              <button
+                v-if="canDeleteIssue(row) && !row.isDeleted"
+                class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                :title="$t('common.delete')"
+                @click="confirmDeleteIssue(row)"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+              <!-- Deleted badge -->
+              <span
+                v-if="row.isDeleted"
+                class="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded"
+              >
+                {{ $t('issues.status.deleted') }}
+              </span>
             </div>
           </template>
         </DataTable>
@@ -272,6 +314,15 @@
       :platform-users="platformUsers"
       @created="handleIssueCreated"
     />
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showDeleteConfirm"
+      :title="$t('issues.actions.delete')"
+      :message="$t('issues.messages.deleteConfirm')"
+      variant="danger"
+      @confirm="handleDeleteIssue"
+    />
   </div>
 </template>
 
@@ -281,7 +332,9 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { usePermissions } from '@/composables/usePermissions'
+import { useAuthStore } from '@/stores/auth'
 import DataTable from '@/components/ui/data/DataTable.vue'
+import { ConfirmDialog } from '@/components/ui'
 import IssueCreateModal from '@/components/issues/IssueCreateModal.vue'
 import issueService from '@/services/issueService'
 
@@ -298,6 +351,7 @@ const { t } = useI18n()
 const router = useRouter()
 const toast = useToast()
 const { executeWithPermission } = usePermissions()
+const authStore = useAuthStore()
 
 // State
 const loading = ref(false)
@@ -317,6 +371,9 @@ const pagination = ref({
 const platformUsers = ref([])
 const showCreateModal = ref(false)
 const showResolved = ref(false)
+const showDeleted = ref(false)
+const showDeleteConfirm = ref(false)
+const selectedIssue = ref(null)
 
 // Filters
 const filters = reactive({
@@ -330,6 +387,43 @@ const filters = reactive({
 const toggleShowResolved = () => {
   showResolved.value = !showResolved.value
   loadIssues(1)
+}
+
+// Toggle show deleted
+const toggleShowDeleted = () => {
+  showDeleted.value = !showDeleted.value
+  loadIssues(1)
+}
+
+// Check if current user can delete issue (reporter or admin)
+const canDeleteIssue = (issue) => {
+  const currentUserId = authStore.user?._id
+  const isReporter = issue.reporter?._id === currentUserId
+  const isAdmin = authStore.user?.role === 'admin'
+  return isReporter || isAdmin
+}
+
+// Confirm delete issue
+const confirmDeleteIssue = (issue) => {
+  selectedIssue.value = issue
+  showDeleteConfirm.value = true
+}
+
+// Handle delete issue
+const handleDeleteIssue = async () => {
+  if (!selectedIssue.value) return
+
+  try {
+    await issueService.deleteIssue(selectedIssue.value._id)
+    toast.success(t('issues.messages.deleted'))
+    loadIssues()
+    loadStats()
+  } catch (error) {
+    toast.error(t('common.error'))
+    console.error('Failed to delete issue:', error)
+  } finally {
+    selectedIssue.value = null
+  }
 }
 
 // Open create modal with permission check
@@ -352,7 +446,8 @@ const columns = computed(() => [
   { key: 'category', label: t('issues.fields.category'), sortable: true },
   { key: 'reporter', label: t('issues.fields.reporter') },
   { key: 'assignee', label: t('issues.fields.assignee') },
-  { key: 'meta', label: '' },
+  { key: 'lastComment', label: t('issues.fields.lastComment') },
+  { key: 'attachments', label: '', width: '60px' },
   { key: 'createdAt', label: t('issues.fields.createdAt'), sortable: true }
 ])
 
@@ -369,6 +464,11 @@ const loadIssues = async (page = 1) => {
     // Hide resolved issues by default
     if (!showResolved.value) {
       params.hideResolved = true
+    }
+
+    // Show deleted issues
+    if (showDeleted.value) {
+      params.showDeleted = true
     }
 
     // Remove empty filters

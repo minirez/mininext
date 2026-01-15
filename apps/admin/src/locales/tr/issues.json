@@ -17,6 +17,7 @@
       "category": "Kategori",
       "assignee": "Atanan",
       "reporter": "Oluşturan",
+      "lastComment": "Son Mesaj",
       "labels": "Etiketler",
       "dueDate": "Son Tarih",
       "createdAt": "Oluşturulma",
@@ -29,7 +30,8 @@
       "in_progress": "Devam Ediyor",
       "resolved": "Çözüldü",
       "closed": "Kapatıldı",
-      "reopened": "Yeniden Açıldı"
+      "reopened": "Yeniden Açıldı",
+      "deleted": "Silindi"
     },
 
     "priority": {
@@ -50,7 +52,8 @@
 
     "filters": {
       "showResolved": "Çözülenleri Göster",
-      "hideResolved": "Çözülenleri Gizle"
+      "hideResolved": "Çözülenleri Gizle",
+      "showDeleted": "Silinenleri Göster"
     },
 
     "actions": {
@@ -140,6 +143,7 @@
       "created": "Talep oluşturuldu",
       "updated": "Talep güncellendi",
       "deleted": "Talep silindi",
+      "deleteConfirm": "Bu talebi silmek istediğinize emin misiniz? Bu işlem geri alınabilir.",
       "statusChanged": "Durum değiştirildi",
       "assigned": "Talep atandı",
       "commentAdded": "Yorum eklendi",
