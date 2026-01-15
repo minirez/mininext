@@ -99,7 +99,7 @@
         <div
           v-if="showDropdown"
           ref="dropdownRef"
-          class="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-600 overflow-hidden"
+          class="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-600 overflow-y-auto"
           :style="dropdownStyle"
         >
           <!-- Recent Searches Section -->
@@ -582,7 +582,7 @@ const searchQuery = ref('')
 const showDropdown = ref(false)
 const isLoading = ref(false)
 const highlightedIndex = ref(-1)
-const dropdownPosition = ref({ top: 0, left: 0, width: 0 })
+const dropdownPosition = ref({ top: 0, left: 0, width: 0, maxHeight: 400 })
 
 // Data
 const allHotels = ref([])
@@ -660,31 +660,43 @@ const dropdownStyle = computed(() => ({
   top: `${dropdownPosition.value.top}px`,
   left: `${dropdownPosition.value.left}px`,
   width: `${Math.max(dropdownPosition.value.width, 400)}px`,
-  maxWidth: '500px'
+  maxWidth: '500px',
+  maxHeight: `${dropdownPosition.value.maxHeight}px`
 }))
 
 // Update dropdown position
 const updateDropdownPosition = () => {
   if (inputRef.value) {
     const rect = inputRef.value.getBoundingClientRect()
-    // Use smaller popup height on small screens
-    const popupHeight = window.innerHeight < 700 ? 280 : 400
     const margin = 8
+    const minHeight = 150 // Minimum dropdown height
 
-    // Default: open below the input
-    let top = rect.bottom + margin
+    // Calculate available space
+    const spaceBelow = window.innerHeight - rect.bottom - margin * 2
+    const spaceAbove = rect.top - margin * 2
 
-    // Check if there's enough space below
-    const spaceBelow = window.innerHeight - rect.bottom - margin
-    const spaceAbove = rect.top - margin
+    // Determine whether to open above or below
+    const openAbove = spaceBelow < minHeight && spaceAbove > spaceBelow
 
-    if (spaceBelow < popupHeight && spaceAbove > spaceBelow) {
-      // Open above if more space there
-      top = Math.max(margin, rect.top - popupHeight - margin)
+    // Calculate available height based on direction
+    const availableHeight = openAbove ? spaceAbove : spaceBelow
+
+    // Ideal max height (smaller on small screens)
+    const idealMaxHeight = window.innerHeight < 700 ? 280 : 400
+
+    // Use the smaller of available space or ideal height
+    const maxHeight = Math.max(minHeight, Math.min(availableHeight, idealMaxHeight))
+
+    // Calculate top position
+    let top
+    if (openAbove) {
+      top = rect.top - maxHeight - margin
+    } else {
+      top = rect.bottom + margin
     }
 
-    // Ensure top is never negative or too close to viewport edge
-    top = Math.max(margin, Math.min(top, window.innerHeight - popupHeight - margin))
+    // Ensure top is never negative
+    top = Math.max(margin, top)
 
     // Calculate left position and ensure it stays within viewport
     let left = rect.left
@@ -696,7 +708,8 @@ const updateDropdownPosition = () => {
     dropdownPosition.value = {
       top,
       left,
-      width: rect.width
+      width: rect.width,
+      maxHeight
     }
   }
 }
