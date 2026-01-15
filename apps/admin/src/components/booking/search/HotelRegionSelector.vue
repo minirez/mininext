@@ -634,7 +634,7 @@ const selectedItems = computed(() => {
 
 // Recent items (from localStorage)
 const recentItems = computed(() => {
-  return recentSearches.value.slice(0, 10)
+  return recentSearches.value.slice(0, 2)
 })
 
 // Grouped results for display
