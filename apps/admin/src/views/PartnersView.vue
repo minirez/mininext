@@ -1431,6 +1431,7 @@ const loadSubscriptionData = async partnerId => {
       endDate: nextYear,
       amount: subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price?.yearly || null,
       currency: 'USD',
+      isPaid: true,
       paymentDate: today,
       paymentMethod: 'bank_transfer',
       paymentReference: '',
