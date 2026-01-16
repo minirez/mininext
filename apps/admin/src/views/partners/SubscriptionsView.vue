@@ -223,7 +223,7 @@
     </div>
 
     <!-- Mark as Paid Modal -->
-    <Modal :show="showMarkPaidModal" :title="$t('partnerSubscriptions.markAsPaid')" size="md" @close="showMarkPaidModal = false">
+    <Modal v-model="showMarkPaidModal" :title="$t('partnerSubscriptions.markAsPaid')" size="md">
       <div v-if="selectedItem" class="space-y-4">
         <div class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
           <div class="font-medium text-gray-900 dark:text-white">{{ selectedItem.partner.companyName }}</div>
@@ -266,7 +266,7 @@
     </Modal>
 
     <!-- Edit Modal -->
-    <Modal :show="showEditModal" :title="$t('partnerSubscriptions.editPackage')" size="lg" @close="showEditModal = false">
+    <Modal v-model="showEditModal" :title="$t('partnerSubscriptions.editPackage')" size="lg">
       <div v-if="selectedItem" class="space-y-4">
         <div class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
           <div class="font-medium text-gray-900 dark:text-white">{{ selectedItem.partner.companyName }}</div>
