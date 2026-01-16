@@ -378,6 +378,7 @@ import FormField from '@/components/common/FormField.vue'
 import StarSelector from '@/components/common/StarSelector.vue'
 import TagInput from '@/components/common/TagInput.vue'
 import hotelService from '@/services/hotelService'
+import { getFileUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   hotel: {
@@ -591,15 +592,10 @@ const normalizeSlug = () => {
   }
 }
 
-// Get logo URL
+// Get logo URL using centralized helper
 const getLogoUrl = logo => {
   if (!logo) return ''
-  if (logo.startsWith('http')) return logo
-  // Logo already contains the full path like /uploads/hotels/partnerId/hotelId/filename
-  // VITE_API_BASE_URL is like https://api.minires.com/api, we need just the base
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
-  const baseUrl = apiBaseUrl.replace('/api', '')
-  return `${baseUrl}${logo}`
+  return getFileUrl(logo) || ''
 }
 
 // Trigger file input

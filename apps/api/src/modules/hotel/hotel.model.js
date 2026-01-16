@@ -220,6 +220,8 @@ const hotelSchema = new mongoose.Schema(
           'parking',
           'freeParking',
           'valetParking',
+          'airConditioning',
+          'heating',
           // Facilities
           'pool',
           'indoorPool',
