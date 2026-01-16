@@ -147,6 +147,7 @@
       "statusChanged": "Durum değiştirildi",
       "assigned": "Talep atandı",
       "commentAdded": "Yorum eklendi",
+      "commentUpdated": "Yorum güncellendi",
       "commentDeleted": "Yorum silindi",
       "fileUploaded": "Dosya yüklendi",
       "fileDeleted": "Dosya silindi",

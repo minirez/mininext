@@ -144,7 +144,7 @@
                     <span class="text-xs text-gray-500 dark:text-slate-400">{{ formatDateTime(comment.createdAt) }}</span>
                     <span v-if="comment.isEdited" class="text-xs text-gray-400 dark:text-slate-500">({{ $t('issues.comments.edited') }})</span>
                   </div>
-                  <div v-if="canEditComment(comment)" class="flex items-center gap-1">
+                  <div v-if="canEditComment(comment) && editingCommentId !== comment._id" class="flex items-center gap-1">
                     <button
                       class="p-1 text-gray-400 hover:text-blue-500"
                       @click="startEditComment(comment)"
@@ -163,7 +163,31 @@
                     </button>
                   </div>
                 </div>
-                <div class="text-gray-700 dark:text-slate-300 whitespace-pre-wrap" v-html="renderCommentWithMentions(comment.content)" />
+                <!-- Edit Mode -->
+                <div v-if="editingCommentId === comment._id" class="space-y-2">
+                  <textarea
+                    v-model="editingCommentContent"
+                    class="form-input w-full min-h-[80px]"
+                    rows="3"
+                  />
+                  <div class="flex justify-end gap-2">
+                    <button
+                      class="btn-secondary text-sm"
+                      @click="cancelEditComment"
+                    >
+                      {{ $t('common.cancel') }}
+                    </button>
+                    <button
+                      class="btn-primary text-sm"
+                      :disabled="!editingCommentContent.trim()"
+                      @click="saveEditComment(comment._id)"
+                    >
+                      {{ $t('common.save') }}
+                    </button>
+                  </div>
+                </div>
+                <!-- Display Mode -->
+                <div v-else class="text-gray-700 dark:text-slate-300 whitespace-pre-wrap" v-html="renderCommentWithMentions(comment.content)" />
               </div>
             </div>
 
@@ -456,6 +480,10 @@ const lightboxImage = ref(null)
 const mentionInputRef = ref(null)
 const showNudgeModal = ref(false)
 
+// Edit comment state
+const editingCommentId = ref(null)
+const editingCommentContent = ref('')
+
 // Current user
 const currentUser = computed(() => authStore.user)
 
@@ -622,8 +650,30 @@ const canEditComment = (comment) => {
 
 // Start edit comment
 const startEditComment = (comment) => {
-  // TODO: Implement inline editing
-  void comment
+  editingCommentId.value = comment._id
+  editingCommentContent.value = comment.content
+}
+
+// Cancel edit comment
+const cancelEditComment = () => {
+  editingCommentId.value = null
+  editingCommentContent.value = ''
+}
+
+// Save edit comment
+const saveEditComment = async (commentId) => {
+  if (!editingCommentContent.value.trim()) return
+
+  try {
+    await issueService.updateComment(issue.value._id, commentId, editingCommentContent.value)
+    await loadIssue()
+    editingCommentId.value = null
+    editingCommentContent.value = ''
+    toast.success(t('issues.messages.commentUpdated'))
+  } catch (error) {
+    toast.error(t('common.error'))
+    console.error('Failed to update comment:', error)
+  }
 }
 
 // Confirm delete comment

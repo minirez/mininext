@@ -326,6 +326,14 @@
           <span v-else class="text-gray-400 dark:text-slate-500 italic text-sm">-</span>
         </template>
 
+        <!-- Created At Cell -->
+        <template #cell-createdAt="{ row }">
+          <span v-if="row.createdAt" class="text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
+            {{ formatShortDate(row.createdAt) }}
+          </span>
+          <span v-else class="text-gray-400 dark:text-slate-500 italic text-sm">-</span>
+        </template>
+
         <!-- Price Cell -->
         <template #cell-pricing="{ row }">
           <div v-if="row.pricing?.grandTotal">
@@ -612,6 +620,7 @@ const columns = computed(() => [
   { key: 'hotelName', label: t('booking.hotel'), sortable: true },
   { key: 'leadGuest', label: t('booking.guest'), sortable: false },
   { key: 'checkIn', label: t('booking.dates'), sortable: true },
+  { key: 'createdAt', label: t('booking.createdAt'), sortable: true },
   { key: 'pricing', label: t('booking.totalPrice'), sortable: true },
   { key: 'payment', label: t('payment.paidAmount'), sortable: false }
 ])

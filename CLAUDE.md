@@ -366,4 +366,20 @@ WebFetch URL: https://app.minires.com/api/debug/issues?status=open&key=dab1e4a01
 
 ---
 
+## 🖥️ SUNUCU ERİŞİMİ
+
+Production sunucusuna SSH erişimi:
+
+```bash
+ssh root@194.146.50.11
+# Şifre: Mk21093LoPsal
+```
+
+**Önemli Dizinler:**
+- API: `/var/www/booking-engine/apps/api`
+- Admin: `/var/www/booking-engine/apps/admin`
+- Logs: `pm2 logs`
+
+---
+
 **Son Güncelleme:** 2026-01-16 (v2)

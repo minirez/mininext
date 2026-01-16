@@ -23,6 +23,18 @@ import {
   createPaximumActions
 } from './booking/index.js'
 
+// Helper: Get default date range (today + 2 nights)
+const getDefaultDateRange = () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const checkOut = new Date(today)
+  checkOut.setDate(checkOut.getDate() + 2)
+  return {
+    start: today.toISOString().split('T')[0],
+    end: checkOut.toISOString().split('T')[0]
+  }
+}
+
 export const useBookingStore = defineStore('booking', () => {
   // ==================== STATE ====================
 
@@ -36,10 +48,7 @@ export const useBookingStore = defineStore('booking', () => {
   const search = ref({
     tourismRegionIds: [], // Selected tourism regions
     hotelIds: [], // Directly selected hotels
-    dateRange: {
-      start: null,
-      end: null
-    },
+    dateRange: getDefaultDateRange(), // Default: today + 2 nights
     adults: 2,
     children: [], // Array of child ages
     countryCode: 'TR',
@@ -382,7 +391,7 @@ export const useBookingStore = defineStore('booking', () => {
     search.value = {
       tourismRegionIds: [],
       hotelIds: [],
-      dateRange: { start: null, end: null },
+      dateRange: getDefaultDateRange(), // Default: today + 2 nights
       adults: 2,
       children: [],
       countryCode: 'TR',

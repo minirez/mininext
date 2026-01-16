@@ -216,7 +216,7 @@ const uploadImages = async files => {
     try {
       const response = await hotelService.uploadImage(props.hotel._id, file)
       if (response.success) {
-        emit('image-uploaded', response.data)
+        emit('image-uploaded', response.data.image)
         successCount++
       }
     } catch (error) {

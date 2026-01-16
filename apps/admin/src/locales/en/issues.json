@@ -147,6 +147,7 @@
       "statusChanged": "Status changed",
       "assigned": "Issue assigned",
       "commentAdded": "Comment added",
+      "commentUpdated": "Comment updated",
       "commentDeleted": "Comment deleted",
       "fileUploaded": "File uploaded",
       "fileDeleted": "File deleted",
