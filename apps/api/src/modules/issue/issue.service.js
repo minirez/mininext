@@ -70,7 +70,7 @@ export const getIssues = asyncHandler(async (req, res) => {
   if (status) query.status = status
 
   // Hide resolved/closed issues if requested
-  if (hideResolved === 'true' && !status) {
+  if ((hideResolved === 'true' || hideResolved === true) && !status) {
     query.status = { $nin: ['resolved', 'closed'] }
   }
   if (priority) query.priority = priority
