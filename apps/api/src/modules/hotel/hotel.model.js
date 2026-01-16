@@ -235,12 +235,18 @@ const hotelSchema = new mongoose.Schema(
           'bar',
           'roomService',
           'breakfast',
+          'minibar',
           // Services
           'reception24h',
           'concierge',
           'laundry',
           'dryCleaning',
           'airportShuttle',
+          'carRental',
+          'tourDesk',
+          'currencyExchange',
+          'atm',
+          'luggageStorage',
           // Business
           'businessCenter',
           'meetingRooms',
@@ -270,6 +276,7 @@ const hotelSchema = new mongoose.Schema(
           'tennis',
           'golf',
           'diving',
+          'waterSports',
           'surfing',
           'skiing'
         ]
