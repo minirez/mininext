@@ -952,6 +952,7 @@
       "paymentNotes": "Note",
       "isPaid": "Payment Made",
       "isPaidHint": "If unchecked, package will be created with 'Awaiting Payment' status",
+      "pendingNote": "Package will be created with 'Awaiting Payment' status. Use 'Mark as Paid' button when payment is confirmed.",
       "awaitingPayment": "Awaiting Payment",
       "markAsPaid": "Mark as Paid",
       "markAsPaidInfo": "You are about to mark this package as paid. An invoice will be automatically generated.",

@@ -1251,7 +1251,7 @@ export const addPurchase = asyncHandler(async (req, res) => {
     }
   })
 
-  // Create purchase object
+  // Create purchase object - always starts as 'pending', requires manual approval
   const purchase = {
     plan,
     period: {
@@ -1262,62 +1262,21 @@ export const addPurchase = asyncHandler(async (req, res) => {
       amount,
       currency: currency || 'USD'
     },
-    status: isPaid ? 'active' : 'pending',
+    status: 'pending', // Always pending - must be approved via "Mark as Paid"
     createdAt: new Date(),
     createdBy: req.user._id
   }
 
-  // Add payment info only if paid
-  if (isPaid) {
-    purchase.payment = {
-      date: new Date(paymentDate),
-      method: paymentMethod || 'bank_transfer',
-      reference: paymentReference,
-      notes: paymentNotes
-    }
-  }
-
   // Add purchase to array
   partner.subscription.purchases.push(purchase)
-
-  // Update general subscription status only if paid
-  if (isPaid) {
-    partner.subscription.status = 'active'
-
-    // Update PMS integration based on plan
-    const planConfig = SUBSCRIPTION_PLANS[plan]
-    if (planConfig?.pmsEnabled) {
-      if (!partner.pmsIntegration) {
-        partner.pmsIntegration = {}
-      }
-      partner.pmsIntegration.enabled = true
-    }
-  }
 
   await partner.save()
 
   // Get the added purchase with its generated _id
   const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
 
-  // Create invoice for the purchase only if paid
-  let invoice = null
-  if (isPaid) {
-    try {
-      invoice = await createInvoice(partner._id, addedPurchase, req.user._id)
-
-      // Update purchase with invoice reference
-      addedPurchase.invoice = invoice._id
-      await partner.save()
-
-      logger.info(`Invoice ${invoice.invoiceNumber} created for partner ${partner._id}`)
-    } catch (invoiceError) {
-      logger.error(`Failed to create invoice for partner ${partner._id}: ${invoiceError.message}`)
-      // Don't fail the purchase if invoice creation fails
-    }
-  }
-
   logger.info(
-    `Purchase added for partner ${partner._id}: ${plan} - ${amount} ${currency || 'USD'} (${isPaid ? 'paid' : 'pending'})`
+    `Purchase added for partner ${partner._id}: ${plan} - ${amount} ${currency || 'USD'} (pending - awaiting payment approval)`
   )
 
   res.json({
@@ -1330,14 +1289,7 @@ export const addPurchase = asyncHandler(async (req, res) => {
         planName: SUBSCRIPTION_PLANS[addedPurchase.plan]?.name || addedPurchase.plan,
         period: addedPurchase.period,
         price: addedPurchase.price,
-        payment: addedPurchase.payment,
-        status: addedPurchase.status,
-        invoice: invoice
-          ? {
-              _id: invoice._id,
-              invoiceNumber: invoice.invoiceNumber
-            }
-          : null
+        status: addedPurchase.status
       },
       subscription: partner.getSubscriptionStatus()
     }

@@ -952,6 +952,7 @@
       "paymentNotes": "Not",
       "isPaid": "Ödeme Yapıldı",
       "isPaidHint": "İşaretli değilse paket 'Ödeme Bekliyor' durumunda oluşturulur",
+      "pendingNote": "Paket 'Ödeme Bekliyor' durumunda oluşturulacak. Ödeme onaylandığında 'Ödendi Olarak İşaretle' butonunu kullanın.",
       "awaitingPayment": "Ödeme Bekliyor",
       "markAsPaid": "Ödendi Olarak İşaretle",
       "markAsPaidInfo": "Bu paketi ödenmiş olarak işaretleyeceksiniz. Fatura otomatik oluşturulacaktır.",

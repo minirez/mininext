@@ -680,47 +680,17 @@
               </div>
             </div>
 
-            <!-- Payment Status Toggle -->
-            <div class="mt-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-              <label class="flex items-center gap-3 cursor-pointer">
-                <input
-                  v-model="purchaseForm.isPaid"
-                  type="checkbox"
-                  class="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                />
-                <div>
-                  <span class="font-medium text-gray-900 dark:text-white">{{ $t('partners.subscription.isPaid') }}</span>
-                  <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('partners.subscription.isPaidHint') }}</p>
-                </div>
-              </label>
-            </div>
-
-            <!-- Payment Details (only when isPaid is true) -->
-            <div v-if="purchaseForm.isPaid" class="grid grid-cols-4 gap-3 mt-3">
-              <div>
-                <label class="form-label">{{ $t('partners.subscription.paymentDate') }} *</label>
-                <input v-model="purchaseForm.paymentDate" type="date" class="form-input" required />
-              </div>
-              <div>
-                <label class="form-label">{{ $t('partners.subscription.method') }}</label>
-                <select v-model="purchaseForm.paymentMethod" class="form-input">
-                  <option value="bank_transfer">{{ $t('partners.subscription.methods.bankTransfer') }}</option>
-                  <option value="credit_card">{{ $t('partners.subscription.methods.creditCard') }}</option>
-                  <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
-                  <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label">{{ $t('partners.subscription.reference') }}</label>
-                <input v-model="purchaseForm.paymentReference" type="text" class="form-input" :placeholder="$t('partners.subscription.referencePlaceholder')" />
-              </div>
-              <div>
-                <label class="form-label">{{ $t('partners.subscription.paymentNotes') }}</label>
-                <input v-model="purchaseForm.paymentNotes" type="text" class="form-input" />
+            <!-- Info: Package starts as pending -->
+            <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm font-medium">{{ $t('partners.subscription.pendingNote') }}</span>
               </div>
             </div>
 
-            <button class="btn-primary mt-4" :disabled="addingPurchase || !purchaseForm.amount || (purchaseForm.isPaid && !purchaseForm.paymentDate)" @click="handleAddPurchase">
+            <button class="btn-primary mt-4" :disabled="addingPurchase || !purchaseForm.amount" @click="handleAddPurchase">
               <span v-if="addingPurchase">{{ $t('common.loading') }}</span>
               <span v-else>{{ $t('partners.subscription.addPurchase') }}</span>
             </button>
@@ -1146,12 +1116,7 @@ const purchaseForm = ref({
   startDate: new Date().toISOString().split('T')[0],
   endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
   amount: null,
-  currency: 'USD',
-  isPaid: true,
-  paymentDate: new Date().toISOString().split('T')[0],
-  paymentMethod: 'bank_transfer',
-  paymentReference: '',
-  paymentNotes: ''
+  currency: 'USD'
 })
 
 const addingPurchase = ref(false)
@@ -1443,12 +1408,7 @@ const loadSubscriptionData = async partnerId => {
       startDate: today,
       endDate: nextYear,
       amount: subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price?.yearly || null,
-      currency: 'USD',
-      isPaid: true,
-      paymentDate: today,
-      paymentMethod: 'bank_transfer',
-      paymentReference: '',
-      paymentNotes: ''
+      currency: 'USD'
     }
 
     // Load partner invoices
@@ -1515,12 +1475,7 @@ const handleAddPurchase = async () => {
       startDate: purchaseForm.value.startDate,
       endDate: purchaseForm.value.endDate,
       amount: purchaseForm.value.amount,
-      currency: purchaseForm.value.currency,
-      isPaid: purchaseForm.value.isPaid,
-      paymentDate: purchaseForm.value.isPaid ? purchaseForm.value.paymentDate : null,
-      paymentMethod: purchaseForm.value.paymentMethod,
-      paymentReference: purchaseForm.value.paymentReference,
-      paymentNotes: purchaseForm.value.paymentNotes
+      currency: purchaseForm.value.currency
     })
 
     // Update subscription status
@@ -1534,12 +1489,7 @@ const handleAddPurchase = async () => {
       startDate: today,
       endDate: nextYear,
       amount: null,
-      currency: 'USD',
-      isPaid: true,
-      paymentDate: today,
-      paymentMethod: 'bank_transfer',
-      paymentReference: '',
-      paymentNotes: ''
+      currency: 'USD'
     }
 
     // Reload invoices
@@ -1561,11 +1511,18 @@ const handleAddPurchase = async () => {
 
 // Open edit purchase modal
 const openEditPurchaseModal = (purchase) => {
+  // Helper to safely format date
+  const formatDateForInput = (date) => {
+    if (!date) return ''
+    const d = new Date(date)
+    return d.toISOString().split('T')[0]
+  }
+
   editPurchaseForm.value = {
     _id: purchase._id,
     plan: purchase.plan,
-    startDate: purchase.period?.startDate?.split('T')[0] || '',
-    endDate: purchase.period?.endDate?.split('T')[0] || '',
+    startDate: formatDateForInput(purchase.period?.startDate),
+    endDate: formatDateForInput(purchase.period?.endDate),
     amount: purchase.price?.amount,
     currency: purchase.price?.currency || 'USD',
     paymentMethod: purchase.payment?.method || 'bank_transfer',
