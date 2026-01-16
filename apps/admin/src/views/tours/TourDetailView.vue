@@ -909,16 +909,22 @@ const applyAIData = (data) => {
 
   // Inclusions
   if (data.inclusions?.length) {
-    form.value.inclusions = data.inclusions.map(item => ({
-      text: typeof item === 'object' ? item : { tr: item, en: '' }
-    }))
+    form.value.inclusions = data.inclusions.map(item => {
+      if (typeof item === 'object' && item.tr !== undefined) {
+        return item
+      }
+      return { tr: String(item), en: '' }
+    })
   }
 
   // Exclusions
   if (data.exclusions?.length) {
-    form.value.exclusions = data.exclusions.map(item => ({
-      text: typeof item === 'object' ? item : { tr: item, en: '' }
-    }))
+    form.value.exclusions = data.exclusions.map(item => {
+      if (typeof item === 'object' && item.tr !== undefined) {
+        return item
+      }
+      return { tr: String(item), en: '' }
+    })
   }
 }
 
