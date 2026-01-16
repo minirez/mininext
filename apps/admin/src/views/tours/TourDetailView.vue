@@ -783,15 +783,54 @@ const goToDepartures = () => {
   router.push(`/tours/${route.params.id}/departures`)
 }
 
+// Transform form data to match API schema
+const transformFormData = (data) => {
+  const transformed = { ...data }
+
+  // Transform accommodations: mealPlan -> mealPlanCode
+  if (transformed.accommodations?.length) {
+    transformed.accommodations = transformed.accommodations.map(acc => ({
+      ...acc,
+      mealPlanCode: acc.mealPlan || acc.mealPlanCode,
+      mealPlan: undefined // Remove ObjectId field
+    }))
+  }
+
+  // Transform itinerary meals: { breakfast: true } -> ['breakfast']
+  if (transformed.itinerary?.length) {
+    transformed.itinerary = transformed.itinerary.map(day => {
+      let mealsArray = []
+      if (day.meals) {
+        if (Array.isArray(day.meals)) {
+          mealsArray = day.meals
+        } else if (typeof day.meals === 'object') {
+          // Convert object to array
+          if (day.meals.breakfast) mealsArray.push('breakfast')
+          if (day.meals.lunch) mealsArray.push('lunch')
+          if (day.meals.dinner) mealsArray.push('dinner')
+          if (day.meals.snack) mealsArray.push('snack')
+        }
+      }
+      return {
+        ...day,
+        meals: mealsArray
+      }
+    })
+  }
+
+  return transformed
+}
+
 // Save
 const saveTour = async () => {
   isSaving.value = true
   try {
+    const payload = transformFormData(form.value)
     if (isNew.value) {
-      const newTour = await tourStore.createTour(form.value)
+      const newTour = await tourStore.createTour(payload)
       router.replace(`/tours/${newTour._id}`)
     } else {
-      await tourStore.updateTour(route.params.id, form.value)
+      await tourStore.updateTour(route.params.id, payload)
     }
   } catch (error) {
     console.error('Save error:', error)
