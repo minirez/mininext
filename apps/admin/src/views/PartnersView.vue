@@ -617,7 +617,7 @@
             </h4>
 
             <!-- Plan Selection -->
-            <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <label
                 v-for="plan in subscriptionPlans"
                 :key="plan.id"
@@ -637,10 +637,15 @@
                     ${{ plan.price?.yearly }}/{{ $t('common.year') }}
                   </span>
                   <div class="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                    <span v-if="plan.features?.pms?.enabled">
-                      PMS: {{ plan.features.pms.maxHotels === -1 ? $t('partners.subscription.unlimited') : plan.features.pms.maxHotels }} {{ $t('partners.subscription.hotels') }}
-                    </span>
-                    <span v-else>{{ $t('partners.subscription.pmsDisabled') }}</span>
+                    <template v-if="plan.features?.webDesign?.enabled">
+                      <span>{{ plan.features.webDesign.maxSites }} site, SSL</span>
+                    </template>
+                    <template v-else-if="plan.features?.pms?.enabled">
+                      <span>PMS: {{ plan.features.pms.maxHotels === -1 ? $t('partners.subscription.unlimited') : plan.features.pms.maxHotels }} {{ $t('partners.subscription.hotels') }}</span>
+                    </template>
+                    <template v-else>
+                      <span>{{ $t('partners.subscription.pmsDisabled') }}</span>
+                    </template>
                   </div>
                 </div>
                 <span v-if="purchaseForm.plan === plan.id" class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-purple-600 rounded-full">
@@ -1378,6 +1383,13 @@ const loadSubscriptionPlans = async () => {
   } catch {
     // Plans loading failed silently - use fallback
     subscriptionPlans.value = [
+      {
+        id: 'webdesign',
+        name: 'Web Design',
+        description: t('partners.subscription.planDescriptions.webdesign'),
+        price: { yearly: 29 },
+        features: { pms: { enabled: false, maxHotels: 0 }, webDesign: { enabled: true, maxSites: 1, ssl: true, customDomain: true } }
+      },
       {
         id: 'business',
         name: 'Business',
