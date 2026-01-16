@@ -1301,7 +1301,7 @@ async function toggleDefault(pos, currency) {
                 <!-- Bank & Card Family Logos Display (only for bank POS) -->
                 <div v-if="selectedBank && !selectedBank.isAggregator" class="mt-4 p-4 bg-gray-50 rounded-xl flex items-center gap-6">
                   <div class="flex items-center gap-3">
-                    <img :src="getBankLogo(selectedBank.code)" :alt="selectedBank.name" class="w-12 h-12 rounded-lg">
+                    <img :src="getBankLogo(selectedBank.code)" :alt="selectedBank.name" class="h-10 w-auto max-w-24 object-contain">
                     <div>
                       <p class="font-medium text-gray-800">{{ selectedBank.name }}</p>
                       <p class="text-xs text-gray-500">Banka</p>
@@ -1319,7 +1319,7 @@ async function toggleDefault(pos, currency) {
 
                 <!-- Aggregator Info Display -->
                 <div v-if="selectedBank && selectedBank.isAggregator" class="mt-4 p-4 bg-purple-50 rounded-xl flex items-center gap-4">
-                  <img :src="getBankLogo(selectedBank.code)" :alt="selectedBank.name" class="w-12 h-12 rounded-lg">
+                  <img :src="getBankLogo(selectedBank.code)" :alt="selectedBank.name" class="h-10 w-auto max-w-24 object-contain">
                   <div>
                     <p class="font-medium text-gray-800">{{ selectedBank.name }}</p>
                     <p class="text-xs text-purple-600">Odeme Entegratoru - Tum kart ailelerini destekler</p>
