@@ -1266,13 +1266,9 @@ export const addPurchase = asyncHandler(async (req, res) => {
     paymentNotes
   } = req.body
 
-  // Validate required fields (paymentDate only required if isPaid)
+  // Validate required fields
   if (!plan || !startDate || !endDate || !amount) {
     throw new BadRequestError('MISSING_REQUIRED_FIELDS')
-  }
-
-  if (isPaid && !paymentDate) {
-    throw new BadRequestError('PAYMENT_DATE_REQUIRED')
   }
 
   // Validate plan
