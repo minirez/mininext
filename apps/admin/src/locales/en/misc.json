@@ -1231,6 +1231,7 @@
     "cancelError": "Failed to cancel package",
     "paymentStatus": "Payment Status",
     "paymentCompleted": "Completed",
-    "paymentPending": "Awaiting Payment"
+    "paymentPending": "Awaiting Payment",
+    "statusLabel": "Status"
   }
 }

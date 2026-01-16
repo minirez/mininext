@@ -115,7 +115,7 @@
               {{ $t('partnerSubscriptions.paymentStatus') }}
             </th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
-              {{ $t('partnerSubscriptions.status') }}
+              {{ $t('partnerSubscriptions.statusLabel') }}
             </th>
             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
               {{ $t('common.actions') }}
