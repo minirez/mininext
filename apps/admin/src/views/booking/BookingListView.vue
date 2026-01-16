@@ -328,9 +328,10 @@
 
         <!-- Created At Cell -->
         <template #cell-createdAt="{ row }">
-          <span v-if="row.createdAt" class="text-sm text-gray-600 dark:text-slate-400 whitespace-nowrap">
-            {{ formatShortDate(row.createdAt) }}
-          </span>
+          <div v-if="row.createdAt" class="text-sm whitespace-nowrap">
+            <p class="text-gray-900 dark:text-white">{{ formatShortDate(row.createdAt) }}</p>
+            <p class="text-gray-500 dark:text-slate-400 text-xs">{{ formatTime(row.createdAt) }}</p>
+          </div>
           <span v-else class="text-gray-400 dark:text-slate-500 italic text-sm">-</span>
         </template>
 
@@ -617,10 +618,10 @@ const navItems = computed(() => [
 // DataTable columns (rooms and market moved to hotel cell)
 const columns = computed(() => [
   { key: 'bookingNumber', label: t('booking.bookingNumber'), sortable: true },
+  { key: 'createdAt', label: t('booking.createdAt'), sortable: true },
   { key: 'hotelName', label: t('booking.hotel'), sortable: true },
   { key: 'leadGuest', label: t('booking.guest'), sortable: false },
   { key: 'checkIn', label: t('booking.dates'), sortable: true },
-  { key: 'createdAt', label: t('booking.createdAt'), sortable: true },
   { key: 'pricing', label: t('booking.totalPrice'), sortable: true },
   { key: 'payment', label: t('payment.paidAmount'), sortable: false }
 ])
@@ -1022,6 +1023,16 @@ const formatShortDate = date => {
     day: 'numeric',
     month: 'short',
     year: '2-digit'
+  })
+}
+
+// Format time (e.g., "14:30")
+const formatTime = date => {
+  if (!date) return '-'
+  const d = new Date(date)
+  return d.toLocaleTimeString(locale.value === 'tr' ? 'tr-TR' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 
