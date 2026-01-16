@@ -61,16 +61,64 @@
         </div>
       </div>
 
-      <!-- Assignee & Due Date -->
+      <!-- Assignees & Due Date -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="form-label">{{ $t('issues.fields.assignee') }}</label>
-          <select v-model="form.assignee" class="form-input">
-            <option value="">{{ $t('issues.placeholders.selectAssignee') }}</option>
-            <option v-for="user in platformUsers" :key="user._id" :value="user._id">
-              {{ user.name }} ({{ user.email }})
-            </option>
-          </select>
+          <label class="form-label">{{ $t('issues.fields.assignees') }}</label>
+          <!-- Multi-select dropdown -->
+          <div class="relative" ref="assigneeDropdownRef">
+            <button
+              type="button"
+              class="form-input w-full text-left flex items-center justify-between"
+              @click="showAssigneeDropdown = !showAssigneeDropdown"
+            >
+              <span v-if="form.assignees.length === 0" class="text-gray-400">
+                {{ $t('issues.placeholders.selectAssignees') }}
+              </span>
+              <span v-else class="truncate">
+                {{ form.assignees.length }} {{ $t('issues.assigneesSelected') }}
+              </span>
+              <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <!-- Dropdown menu -->
+            <div
+              v-if="showAssigneeDropdown"
+              class="absolute z-20 mt-1 w-full bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-auto"
+            >
+              <label
+                v-for="user in platformUsers"
+                :key="user._id"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.assignees.includes(user._id)"
+                  class="rounded text-purple-600 focus:ring-purple-500"
+                  @change="toggleAssignee(user._id)"
+                />
+                <span class="text-sm text-gray-700 dark:text-slate-300">{{ user.name }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Selected assignees chips -->
+          <div v-if="form.assignees.length > 0" class="flex flex-wrap gap-1 mt-2">
+            <span
+              v-for="userId in form.assignees"
+              :key="userId"
+              class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs"
+            >
+              {{ getUserName(userId) }}
+              <button type="button" class="hover:text-purple-900" @click="toggleAssignee(userId)">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          </div>
         </div>
 
         <div>
@@ -216,13 +264,15 @@ const toast = useToast()
 const submitting = ref(false)
 const files = ref([])
 const newLabel = ref('')
+const showAssigneeDropdown = ref(false)
+const assigneeDropdownRef = ref(null)
 
 const form = reactive({
   title: '',
   description: '',
   priority: 'medium',
   category: 'other',
-  assignee: '',
+  assignees: [],
   dueDate: '',
   labels: [],
   mentions: []
@@ -257,13 +307,15 @@ const handlePaste = (e) => {
   }
 }
 
-// Lifecycle - paste event listener
+// Lifecycle - paste event listener and click outside
 onMounted(() => {
   document.addEventListener('paste', handlePaste)
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   document.removeEventListener('paste', handlePaste)
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // Reset form when modal opens
@@ -273,12 +325,13 @@ watch(() => props.modelValue, (val) => {
     form.description = ''
     form.priority = 'medium'
     form.category = 'other'
-    form.assignee = ''
+    form.assignees = []
     form.dueDate = ''
     form.labels = []
     form.mentions = []
     files.value = []
     newLabel.value = ''
+    showAssigneeDropdown.value = false
   }
 })
 
@@ -293,6 +346,29 @@ const addLabel = () => {
 // Remove label
 const removeLabel = (index) => {
   form.labels.splice(index, 1)
+}
+
+// Toggle assignee in multi-select
+const toggleAssignee = (userId) => {
+  const index = form.assignees.indexOf(userId)
+  if (index > -1) {
+    form.assignees.splice(index, 1)
+  } else {
+    form.assignees.push(userId)
+  }
+}
+
+// Get user name by ID
+const getUserName = (userId) => {
+  const user = props.platformUsers.find(u => u._id === userId)
+  return user?.name || userId
+}
+
+// Close dropdown on click outside
+const handleClickOutside = (e) => {
+  if (assigneeDropdownRef.value && !assigneeDropdownRef.value.contains(e.target)) {
+    showAssigneeDropdown.value = false
+  }
 }
 
 // Handle file select
@@ -326,8 +402,8 @@ const handleSubmit = async () => {
       labels: form.labels
     }
 
-    if (form.assignee) {
-      issueData.assignees = [form.assignee] // Send as array for multi-assignee support
+    if (form.assignees.length > 0) {
+      issueData.assignees = form.assignees
     }
     if (form.dueDate) {
       issueData.dueDate = form.dueDate
