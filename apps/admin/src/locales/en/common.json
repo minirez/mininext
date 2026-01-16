@@ -16,6 +16,7 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "tryAgain": "Try Again",
+    "saveFirst": "Save the tour first to manage departures",
     "copy": "Copy",
     "copied": "Copied to clipboard",
     "copyError": "Failed to copy",
