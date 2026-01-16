@@ -49,6 +49,7 @@ jobs:
           VITE_API_BASE_URL: https://api.minires.com/api
           VITE_SOCKET_URL: https://api.minires.com
           VITE_IMAGES_URL: https://images.minires.com
+          VITE_PAYMENT_API_URL: https://api.minires.com/payment-api
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -112,7 +113,37 @@ jobs:
             FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
             EOF
 
+            # Create/Update .env file for Payment Service
+            cat > apps/payment-service/.env << EOF
+            # Payment Service Configuration
+            PORT=7043
+            SERVICE_NAME=payment-service
+            NODE_ENV=production
+
+            # MongoDB - separate database for payment
+            MONGODB_URI=mongodb://localhost:27017/payment
+
+            # Security - Same JWT secret as main API
+            JWT_SECRET=${JWT_SECRET}
+
+            # CORS - Production domains
+            CORS_ORIGIN=https://pms.minires.com,https://app.minires.com,https://api.minires.com
+
+            # Callback URL for 3D Secure redirects
+            CALLBACK_BASE_URL=https://api.minires.com/payment-api
+
+            # Frontend URL for result redirects
+            FRONTEND_URL=https://app.minires.com
+
+            # Server Public IP (for bank POS configuration)
+            SERVER_PUBLIC_IP=94.130.195.4
+            EOF
+
             pnpm install --frozen-lockfile
-            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com VITE_IMAGES_URL=https://images.minires.com pnpm turbo run build --filter=booking-engine-admin
-            pm2 restart booking-engine-api || pm2 start ecosystem.config.js
+            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com VITE_IMAGES_URL=https://images.minires.com VITE_PAYMENT_API_URL=https://api.minires.com/payment-api pnpm turbo run build --filter=booking-engine-admin
+
+            # Restart all services with PM2
+            pm2 restart all || pm2 start ecosystem.config.js
+            pm2 save
+
             echo "Deploy completed at $(date)"
