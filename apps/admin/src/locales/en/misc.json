@@ -1228,6 +1228,9 @@
     "updateError": "Failed to update package",
     "cancelConfirm": "Are you sure you want to cancel this package?",
     "cancelSuccess": "Package cancelled",
-    "cancelError": "Failed to cancel package"
+    "cancelError": "Failed to cancel package",
+    "paymentStatus": "Payment Status",
+    "paymentCompleted": "Completed",
+    "paymentPending": "Awaiting Payment"
   }
 }

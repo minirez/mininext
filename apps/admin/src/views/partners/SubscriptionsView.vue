@@ -112,6 +112,9 @@
               {{ $t('partnerSubscriptions.amount') }}
             </th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
+              {{ $t('partnerSubscriptions.paymentStatus') }}
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
               {{ $t('partnerSubscriptions.status') }}
             </th>
             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
@@ -157,6 +160,14 @@
               <div class="font-medium text-gray-900 dark:text-white">
                 {{ formatCurrency(item.purchase.price?.amount, item.purchase.price?.currency) }}
               </div>
+            </td>
+            <td class="px-4 py-3">
+              <span
+                class="badge"
+                :class="item.purchase.payment?.date ? 'badge-success' : 'badge-warning'"
+              >
+                {{ item.purchase.payment?.date ? $t('partnerSubscriptions.paymentCompleted') : $t('partnerSubscriptions.paymentPending') }}
+              </span>
             </td>
             <td class="px-4 py-3">
               <span

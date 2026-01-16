@@ -1201,6 +1201,9 @@
     "updateError": "Paket güncellenirken hata oluştu",
     "cancelConfirm": "Bu paketi iptal etmek istediğinize emin misiniz?",
     "cancelSuccess": "Paket iptal edildi",
-    "cancelError": "Paket iptal edilirken hata oluştu"
+    "cancelError": "Paket iptal edilirken hata oluştu",
+    "paymentStatus": "Ödeme Durumu",
+    "paymentCompleted": "Tamamlandı",
+    "paymentPending": "Ödeme Bekliyor"
   }
 }
