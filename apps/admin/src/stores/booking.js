@@ -307,6 +307,12 @@ export const useBookingStore = defineStore('booking', () => {
   // ==================== BOOKING CREATION ====================
 
   async function createBooking() {
+    // Guard against multiple submissions
+    if (loading.value.booking) {
+      console.warn('Booking creation already in progress')
+      return null
+    }
+
     if (!canCreateBooking.value) {
       error.value = 'Lütfen tüm bilgileri doldurun'
       return null

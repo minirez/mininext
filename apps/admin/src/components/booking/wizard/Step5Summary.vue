@@ -430,6 +430,9 @@ const formatGuestName = guest => {
 
 // Handle confirm
 const handleConfirm = async () => {
+  // Guard against multiple submissions
+  if (isSubmitting.value) return
+
   if (!termsAccepted.value) {
     toast.error(t('booking.pleaseAcceptTerms'))
     return
