@@ -747,11 +747,12 @@
                   <div>
                     <div class="flex items-center gap-2">
                       <span class="badge" :class="{
+                        'badge-secondary': purchase.plan === 'webdesign',
                         'badge-info': purchase.plan === 'business',
                         'badge-primary': purchase.plan === 'professional',
                         'badge-success': purchase.plan === 'enterprise'
                       }">
-                        {{ $t(`partners.subscription.plans.${purchase.plan}`) }}
+                        {{ $t(`partners.subscription.plans.${purchase.plan}`) || purchase.plan }}
                       </span>
                       <span class="badge" :class="{
                         'badge-warning': purchase.status === 'pending',
