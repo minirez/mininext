@@ -79,21 +79,21 @@
 
           <div class="flex items-center gap-3">
             <!-- Filters -->
-            <select v-model="filters.status" class="form-input text-sm" @change="loadIssues">
+            <select v-model="filters.status" class="form-input text-sm" @change="loadIssues(1)">
               <option value="">{{ $t('issues.fields.status') }}</option>
               <option v-for="status in statusOptions" :key="status" :value="status">
                 {{ $t(`issues.status.${status}`) }}
               </option>
             </select>
 
-            <select v-model="filters.priority" class="form-input text-sm" @change="loadIssues">
+            <select v-model="filters.priority" class="form-input text-sm" @change="loadIssues(1)">
               <option value="">{{ $t('issues.fields.priority') }}</option>
               <option v-for="priority in priorityOptions" :key="priority" :value="priority">
                 {{ $t(`issues.priority.${priority}`) }}
               </option>
             </select>
 
-            <select v-model="filters.category" class="form-input text-sm" @change="loadIssues">
+            <select v-model="filters.category" class="form-input text-sm" @change="loadIssues(1)">
               <option value="">{{ $t('issues.fields.category') }}</option>
               <option v-for="category in categoryOptions" :key="category" :value="category">
                 {{ $t(`issues.category.${category}`) }}
