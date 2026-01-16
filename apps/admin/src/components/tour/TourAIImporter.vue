@@ -265,7 +265,7 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/ui/Modal.vue'
 import * as tourService from '@/services/tourService'
 
-const props = defineProps({
+defineProps({
   modelValue: {
     type: Boolean,
     default: false
