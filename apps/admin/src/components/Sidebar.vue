@@ -221,7 +221,6 @@ const mainSection = computed(() => {
   // Admin-only menu items (visible only when in admin view)
   if (isAdminView) {
     items.push({ name: 'partners', to: '/partners', icon: 'business', label: t('nav.partners') })
-    items.push({ name: 'partner-subscriptions', to: '/partners/subscriptions', icon: 'card_membership', label: t('nav.partnerSubscriptions') })
     items.push({ name: 'users', to: '/users', icon: 'people', label: t('nav.users') })
     items.push({
       name: 'region-management',

@@ -2,7 +2,14 @@
   <div>
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
       <div class="p-4 border-b border-gray-200 dark:border-slate-700">
-        <div class="flex justify-end">
+        <div class="flex justify-between items-center">
+          <router-link
+            to="/partners/subscriptions"
+            class="btn-secondary flex items-center gap-2"
+          >
+            <span class="material-icons text-lg">card_membership</span>
+            {{ $t('partners.subscriptionManagement') }}
+          </router-link>
           <button class="btn-primary flex items-center" @click="openCreateModal">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -926,10 +933,9 @@
 
     <!-- Edit Purchase Modal -->
     <Modal
-      :show="showEditPurchaseModal"
+      v-model="showEditPurchaseModal"
       :title="$t('partners.subscription.editPurchase')"
       size="lg"
-      @close="showEditPurchaseModal = false"
     >
       <div class="space-y-4">
         <!-- Plan Selection -->
@@ -1006,10 +1012,9 @@
 
     <!-- Mark as Paid Modal -->
     <Modal
-      :show="showMarkPaidModal"
+      v-model="showMarkPaidModal"
       :title="$t('partners.subscription.markAsPaid')"
       size="md"
-      @close="showMarkPaidModal = false"
     >
       <div class="space-y-4">
         <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">

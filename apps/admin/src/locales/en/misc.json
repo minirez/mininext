@@ -826,6 +826,7 @@
   "partners": {
     "title": "Partners",
     "description": "Manage partner accounts",
+    "subscriptionManagement": "Subscription Management",
     "addPartner": "Add Partner",
     "editPartner": "Edit Partner",
     "deletePartner": "Delete Partner",

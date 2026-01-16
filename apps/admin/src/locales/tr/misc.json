@@ -826,6 +826,7 @@
   "partners": {
     "title": "Partnerler",
     "description": "Partner hesaplarını yönetin",
+    "subscriptionManagement": "Paket Yönetimi",
     "addPartner": "Partner Ekle",
     "editPartner": "Partner Düzenle",
     "deletePartner": "Partner Sil",
