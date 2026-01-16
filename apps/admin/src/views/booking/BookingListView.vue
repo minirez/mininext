@@ -618,7 +618,7 @@ const navItems = computed(() => [
 // DataTable columns (rooms and market moved to hotel cell)
 const columns = computed(() => [
   { key: 'bookingNumber', label: t('booking.bookingNumber'), sortable: true },
-  { key: 'createdAt', label: t('booking.createdAt'), sortable: true },
+  { key: 'createdAt', label: 'RezDate', sortable: true },
   { key: 'hotelName', label: t('booking.hotel'), sortable: true },
   { key: 'leadGuest', label: t('booking.guest'), sortable: false },
   { key: 'checkIn', label: t('booking.dates'), sortable: true },
