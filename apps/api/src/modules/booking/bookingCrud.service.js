@@ -36,7 +36,8 @@ export const listBookings = asyncHandler(async (req, res) => {
     search,
     page = 1,
     limit = 20,
-    sort = '-createdAt'
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
   } = req.query
 
   // Build query
@@ -74,12 +75,17 @@ export const listBookings = asyncHandler(async (req, res) => {
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)))
   const skip = (pageNum - 1) * limitNum
 
-  // Sort
-  let sortOption = { createdAt: -1 }
-  if (sort === 'checkIn') sortOption = { checkIn: 1 }
-  if (sort === '-checkIn') sortOption = { checkIn: -1 }
-  if (sort === 'createdAt') sortOption = { createdAt: 1 }
-  if (sort === 'grandTotal') sortOption = { 'pricing.grandTotal': -1 }
+  // Sort - map frontend keys to database fields
+  const sortFieldMap = {
+    bookingNumber: 'bookingNumber',
+    createdAt: 'createdAt',
+    hotelName: 'hotelName',
+    checkIn: 'checkIn',
+    pricing: 'pricing.grandTotal'
+  }
+  const sortField = sortFieldMap[sortBy] || 'createdAt'
+  const sortDirection = sortOrder === 'asc' ? 1 : -1
+  const sortOption = { [sortField]: sortDirection }
 
   const [bookings, total] = await Promise.all([
     Booking.find(query)

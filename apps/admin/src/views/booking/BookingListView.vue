@@ -126,6 +126,8 @@
         :total="totalItems"
         :page="currentPage"
         :per-page="perPage"
+        :sort-key="sortKey"
+        :sort-order="sortOrder"
         :show-header="false"
         :responsive="false"
         :default-view-mode="viewMode"
@@ -133,6 +135,7 @@
         :empty-icon="'event_busy'"
         :empty-text="filters.status ? $t('booking.noBookingsForStatus') : $t('booking.noBookingsDescription')"
         @page-change="handlePageChange"
+        @sort="handleSort"
       >
         <!-- Empty State Action -->
         <template #empty-action>
@@ -654,6 +657,10 @@ const selectedBookingForView = ref(null)
 const viewMode = ref('table')
 const dataTableRef = ref(null)
 
+// Sorting state
+const sortKey = ref('createdAt')
+const sortOrder = ref('desc')
+
 // Watch viewMode and update DataTable
 watch(viewMode, newMode => {
   if (dataTableRef.value) {
@@ -767,8 +774,8 @@ const fetchBookings = async () => {
   const params = {
     page: currentPage.value,
     limit: perPage,
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
+    sortBy: sortKey.value,
+    sortOrder: sortOrder.value
   }
 
   if (filters.value.search) {
@@ -873,6 +880,23 @@ const handlePageChange = ({ page }) => {
   currentPage.value = page
   fetchBookings()
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Handle DataTable sort change
+const handleSort = ({ key, order }) => {
+  // Map frontend keys to backend field names
+  const sortFieldMap = {
+    bookingNumber: 'bookingNumber',
+    createdAt: 'createdAt',
+    hotelName: 'hotel.name',
+    checkIn: 'checkIn',
+    pricing: 'pricing.grandTotal'
+  }
+
+  sortKey.value = key
+  sortOrder.value = order
+  currentPage.value = 1 // Reset to first page on sort change
+  fetchBookings()
 }
 
 // Toggle action menu
