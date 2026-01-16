@@ -304,10 +304,10 @@ function resetForm() {
 
 function getBrandIcon(brand) {
   const icons = {
-    visa: '/logos/cards/visa.svg',
-    mastercard: '/logos/cards/mastercard.svg',
-    troy: '/logos/cards/troy.svg',
-    amex: '/logos/cards/amex.svg'
+    visa: '/logos/associations/visa.png',
+    mastercard: '/logos/associations/mastercard.png',
+    troy: '/logos/associations/troy.png',
+    amex: '/logos/associations/amex.png'
   };
   return icons[brand] || null;
 }

@@ -91,9 +91,7 @@ function generateRatesFromPeriod(period) {
 
 // Bank info helpers
 function getBankLogo(bankCode) {
-  const pngLogos = ['ingbank']
-  const ext = pngLogos.includes(bankCode) ? 'png' : 'svg'
-  return `/logos/banks/${bankCode}.${ext}`
+  return `/logos/banks/${bankCode}.png`
 }
 
 // Get bank rate for display

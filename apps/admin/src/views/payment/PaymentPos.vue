@@ -7,17 +7,15 @@ import { getServerInfo } from '@/services/virtualPosService';
 
 // Logo path helpers - public klasöründen doğrudan erişim
 function getBankLogo(bankCode) {
-  // PNG olanlar
-  const pngLogos = ['ingbank'];
-  const ext = pngLogos.includes(bankCode) ? 'png' : 'svg';
-  return `/logos/banks/${bankCode}.${ext}`;
+  return `/logos/banks/${bankCode}.png`;
 }
 
 function getCardLogo(cardCode) {
-  // PNG olanlar
-  const pngLogos = ['bonus', 'paraf', 'cardfinans', 'maximum', 'bankkart', 'axess', 'wings', 'world'];
-  const ext = pngLogos.includes(cardCode) ? 'png' : 'svg';
-  return `/logos/cards/${cardCode}.${ext}`;
+  return `/logos/cards/${cardCode}.png`;
+}
+
+function getAssociationLogo(code) {
+  return `/logos/associations/${code}.png`;
 }
 
 const store = usePaymentStore();
