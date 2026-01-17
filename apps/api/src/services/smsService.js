@@ -102,13 +102,6 @@ class SMSService {
   async send({ phone, message, language = 'TR' }) {
     const settings = await this.getSettings()
 
-    // DEBUG: Log settings (mask password)
-    logger.info('SMS Settings loaded:', {
-      hasSettings: !!settings,
-      usercode: settings?.usercode ? `${settings.usercode.substring(0, 3)}***` : null,
-      msgheader: settings?.msgheader
-    })
-
     if (!settings) {
       if (config.isDev) {
         logger.warn('NetGSM not configured, logging SMS to console:')
@@ -142,15 +135,6 @@ class SMSService {
         <no>${formattedPhone}</no>
     </body>
 </mainbody>`
-
-      // DEBUG: Log XML body (mask password)
-      logger.info('SMS XML Request:', {
-        url: this.apiUrl,
-        usercode: settings.usercode,
-        password: settings.password ? `${settings.password.substring(0, 3)}***` : null,
-        msgheader: settings.msgheader,
-        phone: formattedPhone
-      })
 
       const response = await axios.post(this.apiUrl, xmlBody, {
         headers: { 'Content-Type': 'text/xml' },
