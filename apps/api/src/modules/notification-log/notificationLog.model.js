@@ -12,6 +12,7 @@ const notificationLogSchema = new mongoose.Schema(
         'booking_modified',
         'payment_reminder',
         'payment_received',
+        'payment_link',
         'checkin_reminder',
         'welcome',
         'password_reset',
@@ -50,7 +51,7 @@ const notificationLogSchema = new mongoose.Schema(
     relatedTo: {
       model: {
         type: String,
-        enum: ['Booking', 'User', 'Partner', 'Agency', null]
+        enum: ['Booking', 'User', 'Partner', 'Agency', 'PaymentLink', null]
       },
       id: {
         type: mongoose.Schema.Types.ObjectId
