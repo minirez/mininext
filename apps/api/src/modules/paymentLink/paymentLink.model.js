@@ -321,14 +321,20 @@ paymentLinkSchema.statics.findActiveByPartner = function (partnerId) {
   }).sort({ createdAt: -1 })
 }
 
-paymentLinkSchema.statics.getStats = async function (partnerId = null) {
+paymentLinkSchema.statics.getStats = async function (partnerId = null, platformOnly = false) {
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  // Build match filter - if partnerId provided, filter by it; otherwise show all (platform view)
-  const matchFilter = partnerId
-    ? { partner: new mongoose.Types.ObjectId(partnerId) }
-    : {}
+  // Build match filter
+  let matchFilter = {}
+  if (partnerId) {
+    // Specific partner
+    matchFilter = { partner: new mongoose.Types.ObjectId(partnerId) }
+  } else if (platformOnly) {
+    // Platform-level only (no partner)
+    matchFilter = { $or: [{ partner: null }, { partner: { $exists: false } }] }
+  }
+  // If neither, show all (but this case shouldn't happen with strict separation)
 
   const [stats] = await this.aggregate([
     { $match: matchFilter },

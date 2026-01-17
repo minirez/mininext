@@ -26,12 +26,22 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
   // Build filter
   const filter = {}
 
-  // Partner isolation
+  // Partner isolation - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
+    // Partner users: ONLY see their own partner's links
     filter.partner = req.user.accountId
-  } else if (req.partnerId) {
-    // Platform admin viewing as partner
-    filter.partner = req.partnerId
+  } else {
+    // Platform admin
+    if (req.partnerId) {
+      // Partner selected: show ONLY that partner's links
+      filter.partner = req.partnerId
+    } else {
+      // No partner selected: show ONLY platform-level links (partner is null or doesn't exist)
+      filter.$or = [
+        { partner: null },
+        { partner: { $exists: false } }
+      ]
+    }
   }
 
   // Status filter
@@ -110,14 +120,24 @@ export const getPaymentLink = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
-  // Check ownership
+  // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
-    if (paymentLink.partner._id.toString() !== req.user.accountId.toString()) {
+    // Partner user: must match their partner
+    if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.user.accountId.toString()) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
-  } else if (req.partnerId) {
-    if (paymentLink.partner._id.toString() !== req.partnerId.toString()) {
-      throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  } else {
+    // Platform admin
+    if (req.partnerId) {
+      // Partner selected: must match that partner
+      if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.partnerId.toString()) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
+    } else {
+      // No partner selected: must be platform-level (no partner)
+      if (paymentLink.partner) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
     }
   }
 
@@ -247,14 +267,21 @@ export const updatePaymentLink = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
-  // Check ownership
+  // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
     if (!paymentLink.partner || paymentLink.partner.toString() !== req.user.accountId.toString()) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
-  } else if (req.partnerId) {
-    if (!paymentLink.partner || paymentLink.partner.toString() !== req.partnerId.toString()) {
-      throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  } else {
+    if (req.partnerId) {
+      if (!paymentLink.partner || paymentLink.partner.toString() !== req.partnerId.toString()) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
+    } else {
+      // Platform admin without partner: only platform-level links
+      if (paymentLink.partner) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
     }
   }
 
@@ -339,14 +366,20 @@ export const cancelPaymentLink = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
-  // Check ownership
+  // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
     if (!paymentLink.partner || paymentLink.partner.toString() !== req.user.accountId.toString()) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
-  } else if (req.partnerId) {
-    if (!paymentLink.partner || paymentLink.partner.toString() !== req.partnerId.toString()) {
-      throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  } else {
+    if (req.partnerId) {
+      if (!paymentLink.partner || paymentLink.partner.toString() !== req.partnerId.toString()) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
+    } else {
+      if (paymentLink.partner) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
     }
   }
 
@@ -380,14 +413,20 @@ export const resendNotification = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
-  // Check ownership
+  // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
     if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.user.accountId.toString()) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
-  } else if (req.partnerId) {
-    if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.partnerId.toString()) {
-      throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  } else {
+    if (req.partnerId) {
+      if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.partnerId.toString()) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
+    } else {
+      if (paymentLink.partner) {
+        throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+      }
     }
   }
 
@@ -424,6 +463,7 @@ export const resendNotification = asyncHandler(async (req, res) => {
  */
 export const getPaymentLinkStats = asyncHandler(async (req, res) => {
   let partnerId = null
+  let platformOnly = false
 
   if (req.user.accountType === 'partner') {
     // Partner user - always filter by their partner
@@ -431,10 +471,12 @@ export const getPaymentLinkStats = asyncHandler(async (req, res) => {
   } else if (req.partnerId) {
     // Platform admin with selected partner
     partnerId = req.partnerId
+  } else {
+    // Platform admin without partner - show only platform-level stats
+    platformOnly = true
   }
-  // If no partnerId, platform admin sees all stats (partnerId = null)
 
-  const stats = await PaymentLink.getStats(partnerId)
+  const stats = await PaymentLink.getStats(partnerId, platformOnly)
 
   res.json({
     success: true,
