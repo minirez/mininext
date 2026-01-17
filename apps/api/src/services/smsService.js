@@ -102,6 +102,13 @@ class SMSService {
   async send({ phone, message, language = 'TR' }) {
     const settings = await this.getSettings()
 
+    // DEBUG: Log settings (mask password)
+    logger.info('SMS Settings loaded:', {
+      hasSettings: !!settings,
+      usercode: settings?.usercode ? `${settings.usercode.substring(0, 3)}***` : null,
+      msgheader: settings?.msgheader
+    })
+
     if (!settings) {
       if (config.isDev) {
         logger.warn('NetGSM not configured, logging SMS to console:')
