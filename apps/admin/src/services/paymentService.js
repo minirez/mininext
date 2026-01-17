@@ -95,6 +95,45 @@ export const uploadReceipt = async (bookingId, paymentId, file) => {
   return response.data
 }
 
+// ============================================================================
+// CREDIT CARD PAYMENT API
+// ============================================================================
+
+/**
+ * Query BIN for installment options
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @param {string} bin - First 6-8 digits of card number
+ * @returns {Promise} - BIN info and installment options
+ */
+export const queryCardBin = async (bookingId, paymentId, bin) => {
+  const response = await apiClient.post(`/bookings/${bookingId}/payments/${paymentId}/card/query-bin`, { bin })
+  return response.data
+}
+
+/**
+ * Process credit card payment
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @param {object} data - Card payment data { card, installment, posId?, customer? }
+ * @returns {Promise} - Payment result (may require 3D redirect)
+ */
+export const processCardPayment = async (bookingId, paymentId, data) => {
+  const response = await apiClient.post(`/bookings/${bookingId}/payments/${paymentId}/card/process`, data)
+  return response.data
+}
+
+/**
+ * Get card payment status
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @returns {Promise} - Payment status
+ */
+export const getCardPaymentStatus = async (bookingId, paymentId) => {
+  const response = await apiClient.get(`/bookings/${bookingId}/payments/${paymentId}/card/status`)
+  return response.data
+}
+
 export default {
   getPayments,
   addPayment,
@@ -102,5 +141,9 @@ export default {
   confirmPayment,
   cancelPayment,
   refundPayment,
-  uploadReceipt
+  uploadReceipt,
+  // Card payment methods
+  queryCardBin,
+  processCardPayment,
+  getCardPaymentStatus
 }

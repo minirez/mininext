@@ -6,6 +6,7 @@
 import { Transaction, VirtualPos } from '../models/index.js';
 import { getProvider, isProviderSupported } from '../providers/index.js';
 import { getBinInfo, isDomesticCard } from './BinService.js';
+import config from '../config/index.js';
 
 /**
  * Query BIN and get installment options
@@ -27,16 +28,18 @@ export async function queryBin(partnerId, bin, amount, currency) {
   // Generate installment options
   const installments = generateInstallmentOptions(pos, amount, currency, binInfo);
 
-  // Return flattened response for frontend compatibility
+  // Return response with card object for frontend compatibility
   return {
     success: true,
-    // BIN info flattened for frontend
-    bank: binInfo.bank || 'Unknown',
-    bankCode: binInfo.bankCode || '',
-    cardType: binInfo.type || 'credit',
-    cardFamily: binInfo.family || '',
-    brand: binInfo.brand || 'unknown',
-    country: binInfo.country || 'tr',
+    // Card info as object for frontend
+    card: {
+      bank: binInfo.bank || 'Unknown',
+      bankCode: binInfo.bankCode || '',
+      type: binInfo.type || 'credit',
+      family: binInfo.family || '',
+      brand: binInfo.brand || 'Unknown',
+      country: binInfo.country || 'tr'
+    },
     // POS info
     pos: {
       id: pos._id,
@@ -232,7 +235,7 @@ export async function createPayment(data) {
       success: true,
       transactionId: transaction._id,
       // formUrl for 3D Secure iframe/redirect
-      formUrl: `${process.env.CALLBACK_BASE_URL}/payment/${transaction._id}/form`
+      formUrl: `${config.callbackBaseUrl}/payment/${transaction._id}/form`
     };
   } catch (error) {
     transaction.status = 'failed';
@@ -276,6 +279,50 @@ export async function processCallback(transactionId, postData) {
 
   const provider = getProvider(transaction, transaction.pos);
   return provider.processCallback(postData);
+}
+
+/**
+ * Get full transaction details for payment link completion
+ */
+export async function getTransactionDetails(transactionId) {
+  const transaction = await Transaction.findById(transactionId).populate('pos');
+
+  if (!transaction) {
+    return null;
+  }
+
+  return {
+    transactionId: transaction._id,
+    authCode: transaction.result?.authCode,
+    refNumber: transaction.result?.refNumber,
+    provisionNumber: transaction.result?.provisionNumber,
+
+    // Kart bilgileri
+    maskedCard: transaction.card?.masked,
+    lastFour: transaction.card?.masked?.slice(-4),
+    brand: transaction.bin?.brand,
+    cardType: transaction.bin?.type,
+    cardFamily: transaction.bin?.family,
+
+    // Banka bilgileri
+    cardBank: transaction.bin?.bank,
+    cardCountry: transaction.bin?.country,
+
+    // POS bilgileri
+    posId: transaction.pos?._id,
+    posName: transaction.pos?.name,
+    posBank: transaction.pos?.bankCode,
+
+    // Taksit
+    installment: transaction.installment,
+
+    // Komisyon bilgileri
+    commission: transaction.commission || {},
+
+    // Durum
+    success: transaction.status === 'success',
+    status: transaction.status
+  };
 }
 
 /**
@@ -666,6 +713,7 @@ export default {
   createPayment,
   getPaymentForm,
   processCallback,
+  getTransactionDetails,
   getTransactionStatus,
   refundPayment,
   cancelPayment,

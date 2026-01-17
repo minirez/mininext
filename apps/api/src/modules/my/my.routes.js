@@ -10,6 +10,9 @@ router.use(protect)
 // Get my subscription info (for partner users)
 router.get('/subscription', myService.getMySubscription)
 
+// Query BIN for subscription payment (for partner users)
+router.post('/subscription/query-bin', myService.querySubscriptionBin)
+
 // Initiate subscription purchase with payment (for partner users)
 router.post('/subscription/purchase', myService.initiatePurchase)
 

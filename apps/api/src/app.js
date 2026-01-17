@@ -38,32 +38,26 @@ const corsOptions = {
       return callback(null, true)
     }
 
-    // Development: Allow localhost origins only
-    if (config.isDev) {
-      try {
-        const url = new URL(origin)
-        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
-          return callback(null, true)
-        }
-      } catch (_e) {
-        // Invalid URL, reject
-      }
-    }
-
-    // Check against static allowed origins from env
+    // Check against static allowed origins from env (CORS_ORIGIN)
     const allowedOrigins = config.cors.origin || []
     if (allowedOrigins.includes(origin)) {
       return callback(null, true)
     }
 
-    // Extract hostname from origin for dynamic partner domain validation
+    // Extract hostname from origin for additional checks
     try {
       const url = new URL(origin)
       const hostname = url.hostname
 
-      // Allow localhost in development
-      if (config.isDev && (hostname === 'localhost' || hostname === '127.0.0.1')) {
-        return callback(null, true)
+      // Development: Allow localhost and local dev domains
+      if (config.isDev) {
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+          return callback(null, true)
+        }
+        // Allow *.mini.com for local development
+        if (hostname.endsWith('.mini.com') || hostname === 'mini.com') {
+          return callback(null, true)
+        }
       }
 
       // Production: Only allow configured origins
@@ -116,6 +110,18 @@ setupSwagger(app)
 // Auto-load module routes
 import { loadRoutes } from './loaders/routes.js'
 await loadRoutes(app)
+
+// Payment webhook routes (must be loaded separately - not part of booking module)
+import paymentWebhookRoutes from './modules/booking/paymentWebhook.routes.js'
+app.use('/api/payments', paymentWebhookRoutes)
+
+// Payment link public routes (no auth required)
+import paymentLinkPublicRoutes from './modules/paymentLink/paymentLinkPublic.routes.js'
+app.use('/api/pay', paymentLinkPublicRoutes)
+
+// Short URL redirect (for link.mini.com / link.minires.com)
+import shortUrlRoutes from './modules/shortUrl/shortUrl.routes.js'
+app.use('/l', shortUrlRoutes)
 
 // 404 handler
 app.use(notFoundHandler)

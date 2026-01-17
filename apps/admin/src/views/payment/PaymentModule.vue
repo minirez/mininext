@@ -18,6 +18,7 @@ const tabs = computed(() => {
   const list = [
     { id: 'test', label: t('paymentSystem.tabs.test'), icon: 'credit_card', path: '/payment/test' },
     { id: 'transactions', label: t('paymentSystem.tabs.transactions'), icon: 'receipt_long', path: '/payment/transactions' },
+    { id: 'links', label: t('paymentSystem.tabs.links'), icon: 'link', path: '/payment/links' },
     { id: 'pos', label: t('paymentSystem.tabs.pos'), icon: 'point_of_sale', path: '/payment/pos' }
   ]
 

@@ -467,6 +467,58 @@
                 </p>
               </div>
             </div>
+
+            <!-- Payment Card (hidden in print) -->
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 print:hidden"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-900 dark:text-white flex items-center">
+                  <span class="material-icons text-purple-500 mr-2">payments</span>
+                  {{ $t('payment.title') }}
+                </h3>
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full"
+                  :class="getPaymentStatusClass(booking.payment?.status)"
+                >
+                  {{ $t(`payment.status.${booking.payment?.status || 'pending'}`) }}
+                </span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-slate-400">{{ $t('payment.total') }}</span>
+                  <span class="font-medium text-gray-900 dark:text-white">
+                    {{ formatPrice(booking.pricing?.grandTotal, booking.pricing?.currency) }}
+                  </span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-slate-400">{{ $t('payment.paid') }}</span>
+                  <span class="font-medium text-green-600 dark:text-green-400">
+                    {{ formatPrice(booking.payment?.paidAmount || 0, booking.pricing?.currency) }}
+                  </span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-slate-400">{{ $t('payment.remaining') }}</span>
+                  <span
+                    class="font-medium"
+                    :class="(booking.pricing?.grandTotal - (booking.payment?.paidAmount || 0)) > 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-slate-300'"
+                  >
+                    {{ formatPrice((booking.pricing?.grandTotal || 0) - (booking.payment?.paidAmount || 0), booking.pricing?.currency) }}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                class="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                @click="showPaymentModal = true"
+              >
+                <span class="material-icons text-sm">add</span>
+                {{ $t('payment.addNew') }}
+              </button>
+            </div>
           </div>
         </div>
       </template>
@@ -528,6 +580,14 @@
         @close="showAmendmentModal = false"
         @updated="handleAmendmentComplete"
       />
+
+      <!-- Payment Modal -->
+      <PaymentModal
+        v-model="showPaymentModal"
+        :booking="booking"
+        @close="showPaymentModal = false"
+        @updated="fetchBooking"
+      />
     </div>
   </div>
 </template>
@@ -544,6 +604,7 @@ import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import BookingAmendmentModal from '@/components/booking/amendment/BookingAmendmentModal.vue'
 import AmendmentHistoryTimeline from '@/components/booking/amendment/AmendmentHistoryTimeline.vue'
+import PaymentModal from '@/components/booking/payment/PaymentModal.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -583,6 +644,9 @@ const cancelReason = ref('')
 // Amendment state
 const showAmendmentModal = ref(false)
 const amendmentHistory = ref([])
+
+// Payment state
+const showPaymentModal = ref(false)
 
 // Can cancel
 const canCancel = computed(() => {
@@ -784,6 +848,17 @@ const fetchAmendmentHistory = async () => {
       }
     }
   )
+}
+
+// Get payment status class
+const getPaymentStatusClass = status => {
+  const classes = {
+    pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
+    partial: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+    refunded: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+  }
+  return classes[status] || classes.pending
 }
 
 // Get source display text

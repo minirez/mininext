@@ -538,14 +538,35 @@
                   <label class="block text-sm text-gray-600 dark:text-slate-400 mb-1">
                     {{ $t('mySubscription.cardNumber') }}
                   </label>
-                  <input
-                    v-model="card.number"
-                    type="text"
-                    maxlength="19"
-                    :placeholder="$t('mySubscription.cardNumberPlaceholder')"
-                    @input="formatCardNumber"
-                    class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
-                  />
+                  <div class="relative">
+                    <input
+                      v-model="card.number"
+                      type="text"
+                      maxlength="19"
+                      :placeholder="$t('mySubscription.cardNumberPlaceholder')"
+                      @input="handleCardNumberInput"
+                      class="w-full px-4 py-3 pr-24 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
+                    />
+                    <!-- Card Brand & Bank Info -->
+                    <div v-if="binInfo" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <span v-if="binInfo.cardFamily" class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-slate-300">
+                        {{ binInfo.cardFamily }}
+                      </span>
+                      <img
+                        v-if="binInfo.brand"
+                        :src="getCardBrandLogo(binInfo.brand)"
+                        :alt="binInfo.brand"
+                        class="h-6 w-auto"
+                      />
+                    </div>
+                    <div v-else-if="binLoading" class="absolute right-3 top-1/2 -translate-y-1/2">
+                      <span class="material-icons animate-spin text-gray-400 text-sm">refresh</span>
+                    </div>
+                  </div>
+                  <!-- Bank Name -->
+                  <p v-if="binInfo?.bankName" class="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                    {{ binInfo.bankName }}
+                  </p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
@@ -574,6 +595,36 @@
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Installment Selection -->
+            <div v-if="installmentOptions.length > 1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+                {{ $t('mySubscription.installment') }}
+              </label>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <button
+                  v-for="option in installmentOptions"
+                  :key="option.count"
+                  type="button"
+                  @click="selectedInstallment = option.count"
+                  class="p-3 border-2 rounded-lg text-center transition-all"
+                  :class="selectedInstallment === option.count
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'"
+                >
+                  <div class="font-semibold text-gray-900 dark:text-white">
+                    {{ option.count === 1 ? $t('mySubscription.singlePayment') : `${option.count} ${$t('mySubscription.installments')}` }}
+                  </div>
+                  <div class="text-sm text-gray-500 dark:text-slate-400">
+                    {{ formatCurrency(option.amount, 'USD') }}
+                    <span v-if="option.count > 1">x {{ option.count }}</span>
+                  </div>
+                  <div v-if="option.totalAmount > selectedPlanPrice" class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    +{{ formatCurrency(option.totalAmount - selectedPlanPrice, 'USD') }}
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -706,6 +757,13 @@ const card = ref({
   expiry: '',
   cvv: ''
 })
+
+// BIN query state
+const binInfo = ref(null)
+const binLoading = ref(false)
+const selectedInstallment = ref(1)
+const installmentOptions = ref([{ count: 1, amount: 0, totalAmount: 0 }])
+let binQueryTimeout = null
 
 // Available plans
 const availablePlans = {
@@ -862,12 +920,70 @@ const isCardValid = computed(() => {
   )
 })
 
-// Format card number with spaces
-const formatCardNumber = () => {
+// Format card number with spaces and query BIN
+const handleCardNumberInput = () => {
   let value = card.value.number.replace(/\s/g, '').replace(/\D/g, '')
   value = value.substring(0, 16)
   card.value.number = value.replace(/(.{4})/g, '$1 ').trim()
+
+  // Query BIN when we have 6 digits
+  const cleanNumber = value
+  if (cleanNumber.length >= 6) {
+    // Debounce BIN query
+    if (binQueryTimeout) clearTimeout(binQueryTimeout)
+    binQueryTimeout = setTimeout(() => {
+      queryBin(cleanNumber.substring(0, 6))
+    }, 300)
+  } else {
+    binInfo.value = null
+    installmentOptions.value = [{ count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }]
+    selectedInstallment.value = 1
+  }
 }
+
+// Query BIN for installment options
+const queryBin = async (bin) => {
+  binLoading.value = true
+  try {
+    const response = await partnerService.querySubscriptionBin(bin, selectedPlan.value)
+    if (response.success && response.data) {
+      binInfo.value = response.data
+
+      // Build installment options
+      if (response.data.installments?.length) {
+        installmentOptions.value = response.data.installments.map(inst => ({
+          count: inst.count,
+          amount: inst.amount,
+          totalAmount: inst.totalAmount
+        }))
+      } else {
+        installmentOptions.value = [{ count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }]
+      }
+      selectedInstallment.value = 1
+    }
+  } catch (error) {
+    console.error('BIN query failed:', error)
+    binInfo.value = null
+  } finally {
+    binLoading.value = false
+  }
+}
+
+// Get card brand logo
+const getCardBrandLogo = (brand) => {
+  const logos = {
+    visa: 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/flags/4x3/visa.svg',
+    mastercard: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
+    amex: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/American_Express_logo_%282018%29.svg',
+    troy: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Troy_logo.svg'
+  }
+  return logos[brand?.toLowerCase()] || null
+}
+
+// Selected plan price
+const selectedPlanPrice = computed(() => {
+  return availablePlans[selectedPlan.value]?.price?.yearly || 0
+})
 
 // Format expiry date
 const formatExpiry = () => {
@@ -886,6 +1002,7 @@ const processPurchase = async () => {
   try {
     const response = await partnerService.initiatePurchase({
       plan: selectedPlan.value,
+      installment: selectedInstallment.value,
       card: {
         holder: card.value.holder,
         number: card.value.number.replace(/\s/g, ''),

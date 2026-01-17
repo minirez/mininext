@@ -17,7 +17,7 @@
     "#utils/*": "./src/utils/*"
   },
   "scripts": {
-    "dev": "NODE_ENV=development node --watch src/index.js",
+    "dev": "NODE_ENV=development nodemon src/index.js",
     "start": "NODE_ENV=production node src/index.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
@@ -54,6 +54,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "multer": "^2.0.2",
+    "nanoid": "^5.1.6",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",
     "soap": "^1.6.1",

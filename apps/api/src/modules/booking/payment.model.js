@@ -53,11 +53,26 @@ const paymentSchema = new mongoose.Schema(
     cardDetails: {
       lastFour: { type: String },
       brand: { type: String }, // visa, mastercard, amex
+      cardFamily: { type: String }, // bonus, world, maximum, etc.
+      bankName: { type: String }, // Issuing bank name
+      installment: { type: Number, default: 1 }, // Number of installments
       paymentLink: { type: String },
       linkSentAt: { type: Date },
       linkExpiresAt: { type: Date },
-      gatewayRef: { type: String }, // iyzico/stripe transaction id
-      gatewayResponse: { type: mongoose.Schema.Types.Mixed }
+      // Gateway/POS integration
+      gatewayTransactionId: { type: String, index: true }, // Payment Service transaction ID
+      gatewayPosId: { type: String }, // Virtual POS used
+      gatewayPosName: { type: String }, // POS display name
+      gatewayStatus: {
+        type: String,
+        enum: ['pending', 'processing', 'requires_3d', 'completed', 'failed', 'cancelled', 'refunded'],
+        default: 'pending'
+      },
+      gatewayResponse: { type: mongoose.Schema.Types.Mixed }, // Raw response from gateway
+      // 3D Secure
+      requires3D: { type: Boolean, default: false },
+      formUrl: { type: String }, // 3D Secure form URL
+      processedAt: { type: Date } // When payment was processed
     },
 
     // Bank Transfer Details
@@ -100,6 +115,7 @@ paymentSchema.index({ partner: 1, status: 1 })
 paymentSchema.index({ partner: 1, type: 1 })
 paymentSchema.index({ partner: 1, createdAt: -1 })
 paymentSchema.index({ 'bankTransfer.reference': 1 })
+paymentSchema.index({ 'cardDetails.gatewayTransactionId': 1 })
 
 // Virtuals
 paymentSchema.virtual('isPending').get(function () {
@@ -159,6 +175,28 @@ paymentSchema.statics.getPendingBankTransfers = function (partnerId) {
     .sort({ createdAt: -1 })
 }
 
+/**
+ * Find payment by gateway transaction ID
+ */
+paymentSchema.statics.findByGatewayTransaction = function (transactionId) {
+  return this.findOne({ 'cardDetails.gatewayTransactionId': transactionId })
+    .populate('booking', 'bookingNumber confirmationNumber')
+}
+
+/**
+ * Get pending card payments (awaiting 3D callback)
+ */
+paymentSchema.statics.getPendingCardPayments = function (partnerId) {
+  return this.find({
+    ...(partnerId && { partner: partnerId }),
+    type: 'credit_card',
+    status: 'pending',
+    'cardDetails.gatewayStatus': { $in: ['pending', 'processing', 'requires_3d'] }
+  })
+    .populate('booking', 'bookingNumber hotelName checkIn')
+    .sort({ createdAt: -1 })
+}
+
 // Methods
 paymentSchema.methods.confirm = async function (userId) {
   if (this.status !== 'pending') {
@@ -203,6 +241,71 @@ paymentSchema.methods.processRefund = async function (amount, reason, userId) {
     refundedAt: new Date(),
     refundedBy: userId
   }
+
+  await this.save()
+  return this
+}
+
+/**
+ * Initialize card payment with gateway transaction
+ */
+paymentSchema.methods.initCardPayment = async function (transactionData) {
+  if (this.type !== 'credit_card') {
+    throw new Error('NOT_CARD_PAYMENT')
+  }
+
+  this.cardDetails = {
+    ...this.cardDetails,
+    gatewayTransactionId: transactionData.transactionId,
+    gatewayPosId: transactionData.posId,
+    gatewayPosName: transactionData.posName,
+    gatewayStatus: transactionData.requires3D ? 'requires_3d' : 'processing',
+    requires3D: transactionData.requires3D || false,
+    formUrl: transactionData.formUrl,
+    lastFour: transactionData.lastFour,
+    brand: transactionData.brand,
+    cardFamily: transactionData.cardFamily,
+    bankName: transactionData.bankName,
+    installment: transactionData.installment || 1
+  }
+
+  await this.save()
+  return this
+}
+
+/**
+ * Complete card payment after successful processing
+ */
+paymentSchema.methods.completeCardPayment = async function (responseData) {
+  if (this.type !== 'credit_card') {
+    throw new Error('NOT_CARD_PAYMENT')
+  }
+
+  this.status = 'completed'
+  this.completedAt = new Date()
+  this.cardDetails.gatewayStatus = 'completed'
+  this.cardDetails.gatewayResponse = responseData
+  this.cardDetails.processedAt = new Date()
+
+  await this.save()
+  return this
+}
+
+/**
+ * Mark card payment as failed
+ */
+paymentSchema.methods.failCardPayment = async function (errorMessage, responseData) {
+  if (this.type !== 'credit_card') {
+    throw new Error('NOT_CARD_PAYMENT')
+  }
+
+  this.status = 'failed'
+  this.cardDetails.gatewayStatus = 'failed'
+  this.cardDetails.gatewayResponse = {
+    error: errorMessage,
+    ...responseData
+  }
+  this.cardDetails.processedAt = new Date()
 
   await this.save()
   return this

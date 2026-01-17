@@ -245,6 +245,10 @@ class SMSService {
 
     verificationCode: data => {
       return `Dogrulama kodunuz: ${data.code}\nBu kod 5 dakika icinde gecersiz olacaktir.`
+    },
+
+    paymentLink: data => {
+      return `${data.companyName}: ${data.amount} ${data.currency} tutarinda odeme linkiniz: ${data.paymentUrl}`
     }
   }
 

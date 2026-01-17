@@ -4,6 +4,7 @@ import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
+import paymentGateway from '#services/paymentGateway.js'
 
 /**
  * Get all payments for a booking
@@ -407,3 +408,231 @@ async function updateBookingPayment(bookingId) {
 
   await booking.save()
 }
+
+// ============================================================================
+// CREDIT CARD PAYMENT METHODS
+// ============================================================================
+
+/**
+ * Query card BIN for installment options
+ */
+export const queryCardBin = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const { bin } = req.body
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Validate BIN
+  if (!bin || bin.length < 6) {
+    throw new BadRequestError('INVALID_BIN')
+  }
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    type: 'credit_card',
+    ...(partnerId && { partner: partnerId })
+  })
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  // Only pending payments can be processed
+  if (payment.status !== 'pending') {
+    throw new BadRequestError('PAYMENT_NOT_PENDING')
+  }
+
+  // Query BIN from payment gateway
+  const token = req.headers.authorization?.split(' ')[1]
+  const result = await paymentGateway.queryBin(
+    bin,
+    payment.amount,
+    payment.currency.toLowerCase(),
+    partnerId?.toString(),
+    token
+  )
+
+  res.json({
+    success: true,
+    data: result
+  })
+})
+
+/**
+ * Process credit card payment
+ */
+export const processCardPayment = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const { posId, installment, card, customer } = req.body
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Validate card
+  if (!card || !card.holder || !card.number || !card.expiry || !card.cvv) {
+    throw new BadRequestError('INVALID_CARD_DETAILS')
+  }
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    type: 'credit_card',
+    ...(partnerId && { partner: partnerId })
+  }).populate('booking', 'bookingNumber confirmationNumber leadGuest')
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  // Only pending payments can be processed
+  if (payment.status !== 'pending') {
+    throw new BadRequestError('PAYMENT_ALREADY_PROCESSED')
+  }
+
+  // Already has a transaction ID - check status instead
+  if (payment.cardDetails?.gatewayTransactionId) {
+    throw new BadRequestError('PAYMENT_ALREADY_INITIATED')
+  }
+
+  // Prepare customer info
+  const customerInfo = customer || {}
+  if (payment.booking?.leadGuest) {
+    customerInfo.name = customerInfo.name || `${payment.booking.leadGuest.firstName} ${payment.booking.leadGuest.lastName}`
+    customerInfo.email = customerInfo.email || payment.booking.leadGuest.email
+    customerInfo.phone = customerInfo.phone || payment.booking.leadGuest.phone
+  }
+  customerInfo.ip = req.ip || req.connection?.remoteAddress
+
+  // Process payment through gateway
+  const token = req.headers.authorization?.split(' ')[1]
+  const result = await paymentGateway.processPayment({
+    posId,
+    amount: payment.amount,
+    currency: payment.currency.toLowerCase(),
+    installment: installment || 1,
+    card: {
+      holder: card.holder,
+      number: card.number.replace(/\s/g, ''),
+      expiry: card.expiry,
+      cvv: card.cvv
+    },
+    customer: customerInfo,
+    externalId: payment._id.toString(),
+    partnerId: partnerId?.toString()
+  }, token)
+
+  if (!result.success) {
+    throw new BadRequestError(result.error || 'PAYMENT_FAILED')
+  }
+
+  // Get BIN info for card details
+  const binInfo = await paymentGateway.queryBin(
+    card.number.slice(0, 8),
+    payment.amount,
+    payment.currency.toLowerCase(),
+    partnerId?.toString(),
+    token
+  ).catch(() => null)
+
+  // Update payment with transaction info
+  await payment.initCardPayment({
+    transactionId: result.transactionId,
+    posId: result.posId,
+    posName: result.posName,
+    requires3D: result.requires3D,
+    formUrl: result.requires3D ? paymentGateway.getPaymentFormUrl(result.transactionId) : null,
+    lastFour: card.number.slice(-4),
+    brand: binInfo?.card?.brand || null,
+    cardFamily: binInfo?.card?.cardFamily || null,
+    bankName: binInfo?.card?.bankName || null,
+    installment: installment || 1
+  })
+
+  res.json({
+    success: true,
+    data: {
+      transactionId: result.transactionId,
+      requires3D: result.requires3D,
+      formUrl: result.requires3D ? paymentGateway.getPaymentFormUrl(result.transactionId) : null,
+      status: result.requires3D ? 'requires_3d' : 'processing'
+    }
+  })
+})
+
+/**
+ * Get card payment status
+ */
+export const getCardPaymentStatus = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    type: 'credit_card',
+    ...(partnerId && { partner: partnerId })
+  })
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  // If no transaction ID, return local status
+  if (!payment.cardDetails?.gatewayTransactionId) {
+    return res.json({
+      success: true,
+      data: {
+        status: payment.status,
+        gatewayStatus: payment.cardDetails?.gatewayStatus || 'pending'
+      }
+    })
+  }
+
+  // Query gateway for latest status
+  const token = req.headers.authorization?.split(' ')[1]
+  try {
+    const gatewayResult = await paymentGateway.getTransactionStatus(
+      payment.cardDetails.gatewayTransactionId,
+      token
+    )
+
+    // Update local status if changed
+    if (gatewayResult.transaction) {
+      const txStatus = gatewayResult.transaction.status
+
+      if (txStatus === 'completed' && payment.status !== 'completed') {
+        await payment.completeCardPayment(gatewayResult.transaction)
+        await updateBookingPayment(bookingId)
+      } else if (txStatus === 'failed' && payment.status !== 'failed') {
+        await payment.failCardPayment(
+          gatewayResult.transaction.error || 'Payment failed',
+          gatewayResult.transaction
+        )
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        status: payment.status,
+        gatewayStatus: gatewayResult.transaction?.status || payment.cardDetails.gatewayStatus,
+        cardDetails: {
+          lastFour: payment.cardDetails.lastFour,
+          brand: payment.cardDetails.brand,
+          installment: payment.cardDetails.installment
+        }
+      }
+    })
+  } catch (error) {
+    // Return local status on gateway error
+    res.json({
+      success: true,
+      data: {
+        status: payment.status,
+        gatewayStatus: payment.cardDetails.gatewayStatus,
+        gatewayError: error.message
+      }
+    })
+  }
+})

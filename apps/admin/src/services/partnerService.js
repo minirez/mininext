@@ -222,6 +222,17 @@ const downloadMyInvoicePdf = async invoiceId => {
   }
 }
 
+// Query BIN for subscription payment (for partner users)
+const querySubscriptionBin = async (bin, plan) => {
+  try {
+    const response = await apiClient.post('/my/subscription/query-bin', { bin, plan })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Query BIN failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 // Initiate subscription purchase with payment (for partner users)
 const initiatePurchase = async data => {
   try {
@@ -255,5 +266,6 @@ export default {
   getMySubscription,
   getMyInvoices,
   downloadMyInvoicePdf,
+  querySubscriptionBin,
   initiatePurchase
 }

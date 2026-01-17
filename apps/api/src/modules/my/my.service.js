@@ -260,6 +260,61 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   doc.end()
 })
 
+// Query BIN for subscription payment
+export const querySubscriptionBin = asyncHandler(async (req, res) => {
+  // Only partner users can access this
+  if (req.user.accountType !== 'partner') {
+    throw new ForbiddenError('PARTNER_ONLY')
+  }
+
+  const { bin, plan } = req.body
+
+  if (!bin || bin.length < 6) {
+    throw new BadRequestError('INVALID_BIN')
+  }
+
+  // Validate plan
+  if (!PLAN_TYPES.includes(plan)) {
+    throw new BadRequestError('INVALID_PLAN')
+  }
+
+  // Get plan price
+  const planInfo = SUBSCRIPTION_PLANS[plan]
+  const amount = planInfo.price.yearly
+  const currency = planInfo.price.currency.toLowerCase()
+
+  try {
+    const response = await axios.post(
+      `${PAYMENT_SERVICE_URL}/api/bin`,
+      {
+        bin: bin.substring(0, 6),
+        amount,
+        currency
+      },
+      {
+        headers: {
+          'Authorization': req.headers.authorization,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    if (response.data.success) {
+      res.json({
+        success: true,
+        data: response.data.data
+      })
+    } else {
+      throw new BadRequestError(response.data.error || 'BIN_QUERY_FAILED')
+    }
+  } catch (error) {
+    if (error.response?.data?.error) {
+      throw new BadRequestError(error.response.data.error)
+    }
+    throw error
+  }
+})
+
 // Initiate subscription purchase with payment
 export const initiatePurchase = asyncHandler(async (req, res) => {
   // Only partner users can access this
@@ -268,11 +323,17 @@ export const initiatePurchase = asyncHandler(async (req, res) => {
   }
 
   const partnerId = req.user.accountId
-  const { plan, card } = req.body
+  const { plan, card, installment = 1 } = req.body
 
   // Validate plan
   if (!PLAN_TYPES.includes(plan)) {
     throw new BadRequestError('INVALID_PLAN')
+  }
+
+  // Validate installment
+  const installmentCount = parseInt(installment) || 1
+  if (installmentCount < 1 || installmentCount > 12) {
+    throw new BadRequestError('INVALID_INSTALLMENT')
   }
 
   // Get plan price
@@ -313,7 +374,7 @@ export const initiatePurchase = asyncHandler(async (req, res) => {
       {
         amount,
         currency,
-        installment: 1,
+        installment: installmentCount,
         card: {
           holder: card.holder,
           number: card.number,

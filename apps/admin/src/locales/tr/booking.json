@@ -702,9 +702,33 @@
     "creditCard": {
       "info": "Kredi kartı ödemesi için ödeme linki gönderilecek.",
       "infoDetail": "Link müşteriye iletildikten sonra ödeme tamamlandığında durum otomatik güncellenecektir.",
+      "processOnline": "Kredi kartı ile online ödeme işlenecektir",
+      "3dSecureRequired": "3D Secure doğrulaması gerekebilir",
       "sendLink": "Ödeme Linki Gönder",
       "resendLink": "Linki Tekrar Gönder",
       "linkSent": "Link Gönderildi"
+    },
+    "card": {
+      "title": "Kredi Kartı ile Ödeme",
+      "cardNumber": "Kart Numarası",
+      "cardNumberPlaceholder": "1234 5678 9012 3456",
+      "cardHolder": "Kart Sahibi",
+      "cardHolderPlaceholder": "AD SOYAD",
+      "expiry": "Son Kullanma",
+      "cvv": "CVV",
+      "installment": "Taksit Seçenekleri",
+      "singlePayment": "Tek Çekim",
+      "installments": "Taksit",
+      "month": "ay",
+      "total": "Toplam",
+      "pay": "Ödeme Yap",
+      "processing": "İşleniyor...",
+      "securePayment": "256-bit SSL ile güvenli ödeme",
+      "3dSecure": "3D Secure Doğrulama",
+      "3dSecureInfo": "Bankanız doğrulama sayfasını yükleyecektir. Lütfen bekleyin.",
+      "cancel3D": "İptal Et ve Geri Dön",
+      "success": "Ödeme başarıyla tamamlandı",
+      "failed": "Ödeme başarısız oldu"
     },
     "payAtCheckin": {
       "info": "Ödeme check-in sırasında alınacak olarak işaretlenecektir."

@@ -167,16 +167,16 @@
         </div>
       </div>
 
-      <!-- Credit Card Info -->
+      <!-- Credit Card Payment - Opens Card Modal -->
       <div v-if="form.type === 'credit_card'" class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
         <div class="flex items-start gap-3">
-          <span class="material-icons text-blue-500">info</span>
-          <div>
+          <span class="material-icons text-blue-500">credit_card</span>
+          <div class="flex-1">
             <p class="text-sm text-blue-700 dark:text-blue-300">
-              {{ $t('payment.creditCard.info') }}
+              {{ $t('payment.creditCard.processOnline') }}
             </p>
             <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-              {{ $t('payment.creditCard.infoDetail') }}
+              {{ $t('payment.creditCard.3dSecureRequired') }}
             </p>
           </div>
         </div>
@@ -225,6 +225,21 @@
         </button>
       </div>
     </template>
+
+    <!-- Credit Card Payment Modal -->
+    <PaymentCardModal
+      v-if="showCardModal"
+      v-model="showCardModal"
+      :booking-id="booking._id"
+      :payment-id="cardPaymentId"
+      :amount="form.amount"
+      :currency="currency"
+      :customer-name="booking.leadGuest?.firstName + ' ' + booking.leadGuest?.lastName"
+      :customer-email="booking.leadGuest?.email"
+      :customer-phone="booking.leadGuest?.phone"
+      @success="handleCardPaymentSuccess"
+      @close="handleCardModalClose"
+    />
   </Modal>
 </template>
 
@@ -233,6 +248,7 @@ import { ref, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
+import PaymentCardModal from './PaymentCardModal.vue'
 import paymentService from '@/services/paymentService'
 
 const props = defineProps({
@@ -253,6 +269,8 @@ const show = ref(true)
 const saving = ref(false)
 const receiptFile = ref(null)
 const receiptInput = ref(null)
+const showCardModal = ref(false)
+const cardPaymentId = ref(null)
 
 const paymentTypes = [
   { value: 'credit_card', icon: 'credit_card' },
@@ -339,6 +357,14 @@ const handleSubmit = async () => {
     const response = await paymentService.addPayment(props.booking._id, data)
 
     if (response.success) {
+      // For credit card payments, open the card modal
+      if (form.type === 'credit_card') {
+        cardPaymentId.value = response.data._id
+        showCardModal.value = true
+        saving.value = false
+        return // Don't close the form yet
+      }
+
       // Upload receipt if exists
       if (receiptFile.value && form.type === 'bank_transfer') {
         try {
@@ -363,5 +389,18 @@ const handleSubmit = async () => {
   } finally {
     saving.value = false
   }
+}
+
+// Handle card payment success
+const handleCardPaymentSuccess = () => {
+  showCardModal.value = false
+  toast.success(t('payment.card.success'))
+  emit('saved')
+}
+
+// Handle card modal close
+const handleCardModalClose = () => {
+  showCardModal.value = false
+  // Keep the form open so user can try again or change payment type
 }
 </script>

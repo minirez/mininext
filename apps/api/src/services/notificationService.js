@@ -59,6 +59,12 @@ class NotificationService {
     '2fa_setup': {
       channels: ['email'],
       emailTemplate: '2fa-setup'
+    },
+    payment_link: {
+      channels: ['email', 'sms'],
+      emailTemplate: 'payment-link',
+      smsTemplate: 'paymentLink',
+      pushTitle: 'Ödeme Linki'
     }
   }
 

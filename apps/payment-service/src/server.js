@@ -17,6 +17,7 @@ import cors from 'cors';
 import https from 'https';
 import fs from 'fs';
 import { connectDB } from './config/database.js';
+import config from './config/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,30 +34,64 @@ import paymentRoutes, { publicPaymentRoutes } from './routes/payment.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
 import binRoutes from './routes/bin.routes.js';
 import partnerCommissionRoutes from './routes/partnerCommission.routes.js';
+import paymentLinkRoutes from './routes/paymentLink.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 7043;
 const SERVICE_NAME = process.env.SERVICE_NAME || 'payment-service';
 
 // CORS configuration - parse comma-separated origins
-const allowedOrigins = process.env.CORS_ORIGIN
+let allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
   : ['*'];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
+// In development, always allow localhost origins
+if (process.env.NODE_ENV !== 'production') {
+  const devOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:4000'
+  ];
+  allowedOrigins = [...new Set([...allowedOrigins, ...devOrigins])];
+}
 
-    // Check if origin is allowed
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      return callback(null, origin);
+// Custom CORS middleware that allows all origins for public payment routes
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  // Public routes - allow all origins (bank 3D callbacks, payment links)
+  const isPublicRoute = req.path.startsWith('/payment') || req.path.startsWith('/pay-link');
+
+  if (isPublicRoute) {
+    // Allow any origin for public payment routes
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Origin, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
     }
+    return next();
+  }
 
-    callback(new Error('CORS not allowed'));
-  },
-  credentials: true
-}));
+  // For other routes, use standard CORS
+  cors({
+    origin: (reqOrigin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!reqOrigin) return callback(null, true);
+
+      // Check if origin is allowed
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(reqOrigin)) {
+        return callback(null, reqOrigin);
+      }
+
+      callback(new Error('CORS not allowed'));
+    },
+    credentials: true
+  })(req, res, next);
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -129,7 +164,7 @@ app.get('/info', async (req, res) => {
     service: SERVICE_NAME,
     version: '1.0.0',
     serverIp: serverIp || 'unknown',
-    callbackBaseUrl: process.env.CALLBACK_BASE_URL || `http://${serverIp}:${PORT}`,
+    callbackBaseUrl: config.callbackBaseUrl,
     port: PORT
   });
 });
@@ -138,29 +173,23 @@ app.get('/info', async (req, res) => {
 // PUBLIC ROUTES (no auth - called by browser/bank for 3D callbacks)
 // ============================================================================
 
-// Explicit CORS + iframe headers for payment routes (bank callbacks)
+// Allow iframe embedding for payment routes (bank 3D Secure forms)
 app.use('/payment', (req, res, next) => {
-  // Get origin from request or allow all
-  const origin = req.headers.origin || '*';
-
-  // CORS headers - use specific origin when credentials are needed
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Origin, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  // Allow iframe embedding from anywhere
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', "frame-ancestors *");
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
   next();
 });
 
 app.use('/payment', publicPaymentRoutes);
+
+// Payment Link routes (public customer-facing pages)
+app.use('/pay-link', (req, res, next) => {
+  // Allow iframe embedding and CORS for payment link pages
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  next();
+});
+app.use('/pay-link', paymentLinkRoutes);
 
 // ============================================================================
 // API ROUTES (protected by JWT or API Key)

@@ -289,4 +289,114 @@ router.get('/:paymentId/receipt', paymentService.getReceipt)
  */
 router.delete('/:paymentId', paymentService.deletePayment)
 
+// ============================================================================
+// CREDIT CARD PAYMENT ROUTES
+// ============================================================================
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/query-bin:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Query BIN for installment options
+ *     description: Query card BIN to get available installment options and card info
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - name: paymentId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [bin]
+ *             properties:
+ *               bin:
+ *                 type: string
+ *                 description: First 6-8 digits of card number
+ *     responses:
+ *       200:
+ *         description: BIN info and installment options
+ */
+router.post('/:paymentId/card/query-bin', paymentService.queryCardBin)
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/process:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Process credit card payment
+ *     description: Process payment with credit card (may require 3D Secure)
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - name: paymentId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [card]
+ *             properties:
+ *               posId:
+ *                 type: string
+ *                 description: Optional specific POS to use
+ *               installment:
+ *                 type: number
+ *                 default: 1
+ *               card:
+ *                 type: object
+ *                 properties:
+ *                   holder:
+ *                     type: string
+ *                   number:
+ *                     type: string
+ *                   expiry:
+ *                     type: string
+ *                     description: MM/YY format
+ *                   cvv:
+ *                     type: string
+ *               customer:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Payment initiated (may require 3D redirect)
+ */
+router.post('/:paymentId/card/process', paymentService.processCardPayment)
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/status:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Get card payment status
+ *     description: Check the status of a card payment
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - name: paymentId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payment status
+ */
+router.get('/:paymentId/card/status', paymentService.getCardPaymentStatus)
+
 export default router

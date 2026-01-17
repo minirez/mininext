@@ -27,12 +27,12 @@ const config = {
     refreshExpire: process.env.JWT_REFRESH_EXPIRE || '7d'
   },
 
-  // CORS - Allow all origins in development, use env in production
+  // CORS - Use CORS_ORIGIN env variable in all environments
   cors: {
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000']
-        : true // Allow all origins in development
+    origin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || [
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ]
   },
 
   // Frontend/Admin URL - Used for password reset links, activation emails etc.

@@ -644,9 +644,33 @@
     "creditCard": {
       "info": "A payment link will be sent for credit card payment.",
       "infoDetail": "Once the link is sent to the customer, the status will be updated automatically when payment is complete.",
+      "processOnline": "Credit card payment will be processed online",
+      "3dSecureRequired": "3D Secure verification may be required",
       "sendLink": "Send Payment Link",
       "resendLink": "Resend Link",
       "linkSent": "Link Sent"
+    },
+    "card": {
+      "title": "Credit Card Payment",
+      "cardNumber": "Card Number",
+      "cardNumberPlaceholder": "1234 5678 9012 3456",
+      "cardHolder": "Card Holder",
+      "cardHolderPlaceholder": "FULL NAME",
+      "expiry": "Expiry Date",
+      "cvv": "CVV",
+      "installment": "Installment Options",
+      "singlePayment": "Single Payment",
+      "installments": "Installments",
+      "month": "mo",
+      "total": "Total",
+      "pay": "Pay",
+      "processing": "Processing...",
+      "securePayment": "Secure payment with 256-bit SSL",
+      "3dSecure": "3D Secure Verification",
+      "3dSecureInfo": "Your bank will load the verification page. Please wait.",
+      "cancel3D": "Cancel and Go Back",
+      "success": "Payment completed successfully",
+      "failed": "Payment failed"
     },
     "payAtCheckin": {
       "info": "Payment will be marked as to be collected at check-in."

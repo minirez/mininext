@@ -78,6 +78,16 @@ export const TEMPLATE_VARIABLES = {
     'ACCOUNT_NAME',
     'USER_ROLE',
     'ACTIVATION_URL'
+  ],
+  'payment-link': [
+    'CUSTOMER_NAME',
+    'DESCRIPTION',
+    'AMOUNT',
+    'CURRENCY',
+    'PAYMENT_URL',
+    'EXPIRY_DATE',
+    'COMPANY_NAME',
+    'COMPANY_LOGO'
   ]
 }
 
@@ -195,7 +205,21 @@ export const TEMPLATE_LABELS = {
     ACTIVATION_ACTIVATE_BUTTON: 'Hesabı Aktifleştir',
     ACTIVATION_ALTERNATIVE_TEXT: 'Buton çalışmıyorsa aşağıdaki linki kullanın:',
     ACTIVATION_EXPIRY_WARNING: 'Bu link 7 gün içinde geçerliliğini yitirecektir.',
-    ACTIVATION_SECURITY_NOTE: 'Bu linki kimseyle paylaşmayın.'
+    ACTIVATION_SECURITY_NOTE: 'Bu linki kimseyle paylaşmayın.',
+
+    // Payment Link
+    PAYMENT_LINK_TITLE: 'Ödeme Linki',
+    PAYMENT_LINK_SUBTITLE: 'Size bir ödeme talebi gönderildi',
+    PAYMENT_LINK_PREVIEW: 'Ödeme yapmanız için size bir link gönderildi.',
+    PAYMENT_LINK_GREETING: 'Merhaba',
+    PAYMENT_LINK_MESSAGE: 'Aşağıdaki ödeme talebini gerçekleştirmek için butona tıklayın.',
+    PAYMENT_DETAILS_LABEL: 'Ödeme Detayları',
+    DESCRIPTION_LABEL: 'Açıklama',
+    AMOUNT_LABEL: 'Tutar',
+    EXPIRY_WARNING_LABEL: 'Bu link şu tarihe kadar geçerlidir',
+    PAY_NOW_BUTTON: 'Şimdi Öde',
+    SECURITY_NOTE_LABEL: 'Güvenlik Notu',
+    SECURITY_NOTE: 'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.'
   },
   en: {
     // Common - Layout
@@ -306,7 +330,21 @@ export const TEMPLATE_LABELS = {
     ACTIVATION_ACTIVATE_BUTTON: 'Activate Account',
     ACTIVATION_ALTERNATIVE_TEXT: "If the button doesn't work, use the link below:",
     ACTIVATION_EXPIRY_WARNING: 'This link will expire in 7 days.',
-    ACTIVATION_SECURITY_NOTE: 'Do not share this link with anyone.'
+    ACTIVATION_SECURITY_NOTE: 'Do not share this link with anyone.',
+
+    // Payment Link
+    PAYMENT_LINK_TITLE: 'Payment Link',
+    PAYMENT_LINK_SUBTITLE: 'A payment request has been sent to you',
+    PAYMENT_LINK_PREVIEW: 'You have received a payment link.',
+    PAYMENT_LINK_GREETING: 'Hello',
+    PAYMENT_LINK_MESSAGE: 'Click the button below to complete the following payment request.',
+    PAYMENT_DETAILS_LABEL: 'Payment Details',
+    DESCRIPTION_LABEL: 'Description',
+    AMOUNT_LABEL: 'Amount',
+    EXPIRY_WARNING_LABEL: 'This link is valid until',
+    PAY_NOW_BUTTON: 'Pay Now',
+    SECURITY_NOTE_LABEL: 'Security Note',
+    SECURITY_NOTE: 'This payment is secured with 3D Secure. Your card details are transmitted encrypted.'
   }
 }
 

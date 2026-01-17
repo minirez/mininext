@@ -292,7 +292,8 @@ const availableModules = computed(() => [
   { value: 'hotels', label: t('users.modules.hotels'), icon: 'hotel' },
   { value: 'agencies', label: t('users.modules.agencies'), icon: 'groups' },
   { value: 'pms', label: t('users.modules.pms'), icon: 'apartment' },
-  { value: 'settings', label: t('users.modules.settings'), icon: 'settings' }
+  { value: 'settings', label: t('users.modules.settings'), icon: 'settings' },
+  { value: 'payment-link', label: t('users.modules.paymentLink'), icon: 'link' }
 ])
 
 // Check if module is selected

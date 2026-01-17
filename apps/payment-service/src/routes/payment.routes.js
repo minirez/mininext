@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import PaymentService from '../services/PaymentService.js';
 import { VirtualPos } from '../models/index.js';
+import config from '../config/index.js';
 
 const router = Router();
 
@@ -318,13 +319,40 @@ publicPaymentRoutes.post('/:id/callback', async (req, res) => {
   try {
     const result = await PaymentService.processCallback(req.params.id, req.body);
 
+    // If this was a payment link transaction, notify main API
+    if (result.success) {
+      try {
+        const txDetails = await PaymentService.getTransactionDetails(req.params.id);
+
+        // Check if this is a payment link transaction (externalId starts with PL-)
+        if (txDetails && txDetails.transactionId) {
+          const { Transaction } = await import('../models/index.js');
+          const transaction = await Transaction.findById(req.params.id);
+
+          if (transaction?.externalId?.startsWith('PL-')) {
+            const token = transaction.externalId.replace('PL-', '');
+            const mainApiUrl = process.env.MAIN_API_URL || 'http://localhost:4000/api';
+
+            console.log('[Payment Callback] Payment link detected, notifying main API:', token);
+
+            const axios = (await import('axios')).default;
+            await axios.post(`${mainApiUrl}/pay/${token}/complete`, txDetails);
+
+            console.log('[Payment Callback] Main API notified successfully');
+          }
+        }
+      } catch (notifyError) {
+        console.error('[Payment Callback] Failed to notify main API:', notifyError.message);
+      }
+    }
+
     // Return HTML result page
     const statusClass = result.success ? 'success' : 'error';
     const statusText = result.success ? 'Payment Successful' : 'Payment Failed';
     const message = result.message || '';
 
-    // Get frontend URL from env or default
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Get frontend URL from config
+    const frontendUrl = config.frontendUrl;
 
     res.send(`
 <!DOCTYPE html>

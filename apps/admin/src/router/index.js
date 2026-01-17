@@ -478,6 +478,12 @@ const router = createRouter({
               meta: { tab: 'transactions' }
             },
             {
+              path: 'links',
+              name: 'payment-links',
+              component: () => import('../views/payment/PaymentLinkListView.vue'),
+              meta: { tab: 'links' }
+            },
+            {
               path: 'pos',
               name: 'payment-pos',
               component: () => import('../views/payment/PaymentPos.vue'),

@@ -7,6 +7,7 @@ import axios from 'axios';
 import https from 'https';
 import xml2js from 'xml2js';
 import { getBankUrls } from '../constants/bankUrls.js';
+import config from '../config/index.js';
 
 export const CURRENCY_CODES = {
   try: 949,
@@ -52,8 +53,7 @@ export default class BaseProvider {
    * Get callback URL for 3D Secure
    */
   getCallbackUrl() {
-    const baseUrl = process.env.CALLBACK_BASE_URL || 'http://localhost:7043';
-    return `${baseUrl}/payment/${this.transaction._id}/callback`;
+    return `${config.callbackBaseUrl}/payment/${this.transaction._id}/callback`;
   }
 
   /**

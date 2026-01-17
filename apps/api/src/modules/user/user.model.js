@@ -281,6 +281,7 @@ userSchema.methods.getEffectivePermissions = function () {
     'booking',
     'reports',
     'settings',
+    'payment-link',
     'users',
     'agencies',
     'hotels',
