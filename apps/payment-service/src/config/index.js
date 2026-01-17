@@ -4,8 +4,14 @@
  */
 
 const PORT = process.env.PORT || 7043;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const isDevelopment = NODE_ENV !== 'production';
+
+/**
+ * Check if running in development mode
+ * Must be a function to read env AFTER dotenv loads
+ */
+function isDev() {
+  return process.env.NODE_ENV !== 'production';
+}
 
 /**
  * Get the callback base URL for 3D Secure forms
@@ -13,16 +19,12 @@ const isDevelopment = NODE_ENV !== 'production';
  * In production: uses CALLBACK_BASE_URL env variable
  */
 function getCallbackBaseUrl() {
-  // If explicitly set, use that (for production or custom setups)
-  if (process.env.CALLBACK_BASE_URL) {
-    // But in development, prefer localhost even if CALLBACK_BASE_URL is set
-    if (isDevelopment) {
-      return `http://localhost:${PORT}`;
-    }
-    return process.env.CALLBACK_BASE_URL;
+  // In production, use CALLBACK_BASE_URL or default to payment.minires.com
+  if (!isDev()) {
+    return process.env.CALLBACK_BASE_URL || 'https://payment.minires.com';
   }
 
-  // Default to localhost for development
+  // In development, always use localhost
   return `http://localhost:${PORT}`;
 }
 
@@ -32,11 +34,9 @@ function getCallbackBaseUrl() {
  * In production: uses FRONTEND_URL env variable
  */
 function getFrontendUrl() {
-  if (process.env.FRONTEND_URL) {
-    if (isDevelopment) {
-      return 'http://localhost:5173';
-    }
-    return process.env.FRONTEND_URL;
+  // In production, use FRONTEND_URL or default
+  if (!isDev()) {
+    return process.env.FRONTEND_URL || 'https://app.minires.com';
   }
 
   return 'http://localhost:5173';
@@ -44,9 +44,15 @@ function getFrontendUrl() {
 
 const config = {
   port: PORT,
-  nodeEnv: NODE_ENV,
-  isDevelopment,
-  isProduction: NODE_ENV === 'production',
+  get nodeEnv() {
+    return process.env.NODE_ENV || 'development';
+  },
+  get isDevelopment() {
+    return isDev();
+  },
+  get isProduction() {
+    return process.env.NODE_ENV === 'production';
+  },
 
   // MongoDB
   mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/payment',
