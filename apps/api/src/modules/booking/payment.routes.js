@@ -399,4 +399,48 @@ router.post('/:paymentId/card/process', paymentService.processCardPayment)
  */
 router.get('/:paymentId/card/status', paymentService.getCardPaymentStatus)
 
+// ============================================================================
+// PRE-AUTHORIZATION ROUTES
+// ============================================================================
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/pre-authorize:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Pre-authorize card payment
+ *     description: Hold amount on card without capturing (for deposits)
+ */
+router.post('/:paymentId/card/pre-authorize', paymentService.preAuthorizeCard)
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/capture:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Capture pre-authorized payment
+ *     description: Capture a previously pre-authorized amount
+ */
+router.post('/:paymentId/card/capture', paymentService.capturePreAuth)
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/{paymentId}/card/release:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Release pre-authorized payment
+ *     description: Void/release a pre-authorized amount
+ */
+router.post('/:paymentId/card/release', paymentService.releasePreAuth)
+
+/**
+ * @swagger
+ * /api/booking/{id}/payments/pre-authorized:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Get pre-authorized payments
+ *     description: Get all pre-authorized payments for a booking
+ */
+router.get('/pre-authorized', paymentService.getPreAuthorizedPayments)
+
 export default router

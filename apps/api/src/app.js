@@ -115,6 +115,10 @@ await loadRoutes(app)
 import paymentWebhookRoutes from './modules/booking/paymentWebhook.routes.js'
 app.use('/api/payments', paymentWebhookRoutes)
 
+// Payment analytics routes
+import paymentAnalyticsRoutes from './modules/booking/paymentAnalytics.routes.js'
+app.use('/api/payments/analytics', paymentAnalyticsRoutes)
+
 // Payment link public routes (no auth required)
 import paymentLinkPublicRoutes from './modules/paymentLink/paymentLinkPublic.routes.js'
 app.use('/api/pay', paymentLinkPublicRoutes)

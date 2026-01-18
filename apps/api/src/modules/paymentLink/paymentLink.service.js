@@ -3,13 +3,10 @@ import Partner from '../partner/partner.model.js'
 import Booking from '../booking/booking.model.js'
 import ShortUrl from '../shortUrl/shortUrl.model.js'
 import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, getEffectivePartnerId } from '#helpers'
 import logger from '#core/logger.js'
 import notificationService from '#services/notificationService.js'
-import axios from 'axios'
-
-// Payment Service URL
-const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:4001'
+import paymentGateway from '#services/paymentGateway.js'
 
 /**
  * Get payment links list with filtering and pagination
@@ -720,31 +717,16 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
  */
 export const getDefaultRates = asyncHandler(async (req, res) => {
   const { currency = 'TRY' } = req.query
-  let partnerId = null
-
-  // Partner isolation
-  if (req.user.accountType === 'partner') {
-    partnerId = req.user.accountId
-  } else if (req.partnerId) {
-    partnerId = req.partnerId
-  }
+  const partnerId = getEffectivePartnerId(req)
 
   try {
-    // Call payment-service to get commission rates
-    const response = await axios.get(`${PAYMENT_SERVICE_URL}/api/commission/default-rates`, {
-      params: {
-        partnerId,
-        currency: currency.toLowerCase()
-      },
-      headers: {
-        'x-api-key': process.env.PAYMENT_SERVICE_API_KEY || 'internal-api-key'
-      }
-    })
+    // Call payment-service to get commission rates via gateway
+    const response = await paymentGateway.getDefaultRates(partnerId, currency)
 
-    if (response.data.success) {
+    if (response.success) {
       res.json({
         success: true,
-        data: response.data.data
+        data: response.data
       })
     } else {
       res.json({

@@ -251,7 +251,48 @@ export const refundPayment = asyncHandler(async (req, res) => {
     throw new BadRequestError('REFUND_REASON_REQUIRED')
   }
 
-  await payment.processRefund(amount, reason, req.user._id)
+  // For credit card payments, process refund through gateway
+  if (payment.type === 'credit_card' && payment.cardDetails?.gatewayTransactionId) {
+    const token = req.headers.authorization?.split(' ')[1]
+
+    try {
+      const refundResult = await paymentGateway.refundTransaction(
+        payment.cardDetails.gatewayTransactionId,
+        token
+      )
+
+      if (!refundResult.success) {
+        throw new BadRequestError(refundResult.error || 'GATEWAY_REFUND_FAILED')
+      }
+
+      // Store gateway refund reference
+      await payment.processRefund(amount, reason, req.user._id, refundResult.refundId)
+    } catch (error) {
+      // If it's a same-day transaction, try cancel instead
+      if (error.message?.includes('REFUND_NOT_ALLOWED') || error.message?.includes('same_day')) {
+        try {
+          const cancelResult = await paymentGateway.cancelTransaction(
+            payment.cardDetails.gatewayTransactionId,
+            token
+          )
+
+          if (!cancelResult.success) {
+            throw new BadRequestError(cancelResult.error || 'GATEWAY_CANCEL_FAILED')
+          }
+
+          await payment.processRefund(amount, reason, req.user._id, cancelResult.cancelId)
+        } catch (cancelError) {
+          throw new BadRequestError(`İade işlemi başarısız: ${cancelError.message}`)
+        }
+      } else {
+        throw new BadRequestError(`İade işlemi başarısız: ${error.message}`)
+      }
+    }
+  } else {
+    // Non-card payments: just update local status
+    await payment.processRefund(amount, reason, req.user._id)
+  }
+
   await updateBookingPayment(bookingId)
 
   res.json({
@@ -635,4 +676,227 @@ export const getCardPaymentStatus = asyncHandler(async (req, res) => {
       }
     })
   }
+})
+
+// ============================================================================
+// PRE-AUTHORIZATION METHODS
+// ============================================================================
+
+/**
+ * Pre-authorize card payment (hold amount without capturing)
+ */
+export const preAuthorizeCard = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const { posId, installment, card, customer } = req.body
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Validate card
+  if (!card || !card.holder || !card.number || !card.expiry || !card.cvv) {
+    throw new BadRequestError('INVALID_CARD_DETAILS')
+  }
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    type: 'credit_card',
+    ...(partnerId && { partner: partnerId })
+  }).populate('booking', 'bookingNumber confirmationNumber leadGuest')
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  // Only pending payments can be pre-authorized
+  if (payment.status !== 'pending') {
+    throw new BadRequestError('PAYMENT_NOT_PENDING')
+  }
+
+  // Prepare customer info
+  const customerInfo = customer || {}
+  if (payment.booking?.leadGuest) {
+    customerInfo.name = customerInfo.name || `${payment.booking.leadGuest.firstName} ${payment.booking.leadGuest.lastName}`
+    customerInfo.email = customerInfo.email || payment.booking.leadGuest.email
+    customerInfo.phone = customerInfo.phone || payment.booking.leadGuest.phone
+  }
+  customerInfo.ip = req.ip || req.connection?.remoteAddress
+
+  // Pre-authorize through gateway
+  const token = req.headers.authorization?.split(' ')[1]
+  const result = await paymentGateway.preAuthorize({
+    posId,
+    amount: payment.amount,
+    currency: payment.currency.toLowerCase(),
+    installment: installment || 1,
+    card: {
+      holder: card.holder,
+      number: card.number.replace(/\s/g, ''),
+      expiry: card.expiry,
+      cvv: card.cvv
+    },
+    customer: customerInfo,
+    externalId: payment._id.toString(),
+    partnerId: partnerId?.toString()
+  }, token)
+
+  if (!result.success) {
+    throw new BadRequestError(result.error || 'PRE_AUTH_FAILED')
+  }
+
+  // Get BIN info for card details
+  const binInfo = await paymentGateway.queryBin(
+    card.number.slice(0, 8),
+    payment.amount,
+    payment.currency.toLowerCase(),
+    partnerId?.toString(),
+    token
+  ).catch(() => null)
+
+  // Update payment with pre-auth info
+  await payment.initPreAuth({
+    transactionId: result.transactionId,
+    posId: result.posId,
+    posName: result.posName,
+    requires3D: result.requires3D,
+    formUrl: result.requires3D ? paymentGateway.getPaymentFormUrl(result.transactionId) : null,
+    lastFour: card.number.slice(-4),
+    brand: binInfo?.card?.brand || null,
+    cardFamily: binInfo?.card?.cardFamily || null,
+    bankName: binInfo?.card?.bankName || null,
+    installment: installment || 1
+  })
+
+  res.json({
+    success: true,
+    data: {
+      transactionId: result.transactionId,
+      requires3D: result.requires3D,
+      formUrl: result.requires3D ? paymentGateway.getPaymentFormUrl(result.transactionId) : null,
+      status: 'pre_authorized',
+      expiresAt: payment.preAuth.expiresAt
+    }
+  })
+})
+
+/**
+ * Capture pre-authorized payment
+ */
+export const capturePreAuth = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    status: 'pre_authorized',
+    ...(partnerId && { partner: partnerId })
+  })
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  if (!payment.preAuth?.isPreAuth) {
+    throw new BadRequestError('PAYMENT_NOT_PRE_AUTHORIZED')
+  }
+
+  // Check if pre-auth is expired
+  if (payment.isPreAuthExpired()) {
+    throw new BadRequestError('PRE_AUTH_EXPIRED')
+  }
+
+  // Capture through gateway
+  const token = req.headers.authorization?.split(' ')[1]
+  const result = await paymentGateway.capturePreAuth(
+    payment.cardDetails.gatewayTransactionId,
+    token
+  )
+
+  if (!result.success) {
+    throw new BadRequestError(result.error || 'CAPTURE_FAILED')
+  }
+
+  // Update payment status
+  await payment.capturePreAuth(result)
+  await updateBookingPayment(bookingId)
+
+  res.json({
+    success: true,
+    data: payment,
+    message: 'PAYMENT_CAPTURED'
+  })
+})
+
+/**
+ * Release (void) pre-authorized payment
+ */
+export const releasePreAuth = asyncHandler(async (req, res) => {
+  const { id: bookingId, paymentId } = req.params
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  // Find payment
+  const payment = await Payment.findOne({
+    _id: paymentId,
+    booking: bookingId,
+    status: 'pre_authorized',
+    ...(partnerId && { partner: partnerId })
+  })
+
+  if (!payment) {
+    throw new NotFoundError('PAYMENT_NOT_FOUND')
+  }
+
+  if (!payment.preAuth?.isPreAuth) {
+    throw new BadRequestError('PAYMENT_NOT_PRE_AUTHORIZED')
+  }
+
+  // Release through gateway (cancel)
+  const token = req.headers.authorization?.split(' ')[1]
+  const result = await paymentGateway.cancelTransaction(
+    payment.cardDetails.gatewayTransactionId,
+    token
+  )
+
+  if (!result.success) {
+    throw new BadRequestError(result.error || 'RELEASE_FAILED')
+  }
+
+  // Update payment status
+  await payment.releasePreAuth(result)
+
+  res.json({
+    success: true,
+    data: payment,
+    message: 'PRE_AUTH_RELEASED'
+  })
+})
+
+/**
+ * Get pre-authorized payments for a booking
+ */
+export const getPreAuthorizedPayments = asyncHandler(async (req, res) => {
+  const { id: bookingId } = req.params
+  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+
+  const payments = await Payment.find({
+    booking: bookingId,
+    status: 'pre_authorized',
+    'preAuth.isPreAuth': true,
+    ...(partnerId && { partner: partnerId })
+  }).sort({ createdAt: -1 })
+
+  // Add expiry info
+  const paymentsWithExpiry = payments.map(p => ({
+    ...p.toObject(),
+    isExpired: p.isPreAuthExpired(),
+    daysUntilExpiry: p.preAuth?.expiresAt
+      ? Math.ceil((new Date(p.preAuth.expiresAt) - new Date()) / (1000 * 60 * 60 * 24))
+      : null
+  }))
+
+  res.json({
+    success: true,
+    data: paymentsWithExpiry
+  })
 })

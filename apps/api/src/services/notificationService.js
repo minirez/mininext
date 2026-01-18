@@ -65,6 +65,21 @@ class NotificationService {
       emailTemplate: 'payment-link',
       smsTemplate: 'paymentLink',
       pushTitle: 'Ödeme Linki'
+    },
+    payment_completed: {
+      channels: ['email'],
+      emailTemplate: 'payment-completed',
+      pushTitle: 'Ödeme Alındı'
+    },
+    payment_failed: {
+      channels: ['email'],
+      emailTemplate: 'payment-failed',
+      pushTitle: 'Ödeme Başarısız'
+    },
+    payment_refunded: {
+      channels: ['email'],
+      emailTemplate: 'payment-refunded',
+      pushTitle: 'İade Tamamlandı'
     }
   }
 

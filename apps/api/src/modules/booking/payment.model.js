@@ -41,9 +41,19 @@ const paymentSchema = new mongoose.Schema(
     // Status
     status: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'refunded', 'cancelled'],
+      enum: ['pending', 'pre_authorized', 'completed', 'failed', 'refunded', 'cancelled', 'released'],
       default: 'pending',
       index: true
+    },
+
+    // Pre-authorization Info
+    preAuth: {
+      isPreAuth: { type: Boolean, default: false },
+      authorizedAt: { type: Date },
+      capturedAt: { type: Date },
+      releasedAt: { type: Date },
+      expiresAt: { type: Date }, // Pre-auths typically expire in 7-30 days
+      captureDeadline: { type: Date }
     },
 
     // Dates
@@ -100,6 +110,17 @@ const paymentSchema = new mongoose.Schema(
       refundedAt: { type: Date },
       refundedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       gatewayRef: { type: String }
+    },
+
+    // Commission Info (for credit card payments)
+    commission: {
+      bankRate: { type: Number },        // Bank commission rate %
+      bankAmount: { type: Number },      // Bank commission amount
+      platformRate: { type: Number },    // Platform margin rate %
+      platformAmount: { type: Number },  // Platform margin amount
+      totalRate: { type: Number },       // Total commission rate %
+      totalAmount: { type: Number },     // Total commission amount
+      netAmount: { type: Number }        // Net amount after commission
     }
   },
   {
@@ -225,7 +246,7 @@ paymentSchema.methods.cancel = async function () {
   return this
 }
 
-paymentSchema.methods.processRefund = async function (amount, reason, userId) {
+paymentSchema.methods.processRefund = async function (amount, reason, userId, gatewayRef = null) {
   if (this.status !== 'completed') {
     throw new Error('PAYMENT_NOT_COMPLETED')
   }
@@ -239,7 +260,13 @@ paymentSchema.methods.processRefund = async function (amount, reason, userId) {
     amount,
     reason,
     refundedAt: new Date(),
-    refundedBy: userId
+    refundedBy: userId,
+    gatewayRef
+  }
+
+  // Update card details status if credit card payment
+  if (this.type === 'credit_card' && this.cardDetails) {
+    this.cardDetails.gatewayStatus = 'refunded'
   }
 
   await this.save()
@@ -287,6 +314,27 @@ paymentSchema.methods.completeCardPayment = async function (responseData) {
   this.cardDetails.gatewayResponse = responseData
   this.cardDetails.processedAt = new Date()
 
+  // Save commission info if provided
+  if (responseData?.commission) {
+    this.commission = {
+      bankRate: responseData.commission.bankRate,
+      bankAmount: responseData.commission.bankAmount,
+      platformRate: responseData.commission.platformRate,
+      platformAmount: responseData.commission.platformAmount,
+      totalRate: responseData.commission.totalRate,
+      totalAmount: responseData.commission.totalAmount,
+      netAmount: responseData.commission.netAmount
+    }
+  }
+
+  // Update card details from response if available
+  if (responseData?.cardDetails) {
+    this.cardDetails.lastFour = responseData.cardDetails.lastFour || this.cardDetails.lastFour
+    this.cardDetails.brand = responseData.cardDetails.brand || this.cardDetails.brand
+    this.cardDetails.cardFamily = responseData.cardDetails.cardFamily || this.cardDetails.cardFamily
+    this.cardDetails.bankName = responseData.cardDetails.bankName || this.cardDetails.bankName
+  }
+
   await this.save()
   return this
 }
@@ -309,6 +357,126 @@ paymentSchema.methods.failCardPayment = async function (errorMessage, responseDa
 
   await this.save()
   return this
+}
+
+// ============================================================================
+// PRE-AUTHORIZATION METHODS
+// ============================================================================
+
+/**
+ * Initialize pre-authorization
+ */
+paymentSchema.methods.initPreAuth = async function (transactionData) {
+  if (this.type !== 'credit_card') {
+    throw new Error('NOT_CARD_PAYMENT')
+  }
+
+  this.status = 'pre_authorized'
+  this.preAuth = {
+    isPreAuth: true,
+    authorizedAt: new Date(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days default
+    captureDeadline: transactionData.captureDeadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  }
+
+  this.cardDetails = {
+    ...this.cardDetails,
+    gatewayTransactionId: transactionData.transactionId,
+    gatewayPosId: transactionData.posId,
+    gatewayPosName: transactionData.posName,
+    gatewayStatus: 'pre_authorized',
+    requires3D: transactionData.requires3D || false,
+    formUrl: transactionData.formUrl,
+    lastFour: transactionData.lastFour,
+    brand: transactionData.brand,
+    cardFamily: transactionData.cardFamily,
+    bankName: transactionData.bankName,
+    installment: transactionData.installment || 1
+  }
+
+  await this.save()
+  return this
+}
+
+/**
+ * Capture pre-authorized payment
+ */
+paymentSchema.methods.capturePreAuth = async function (responseData) {
+  if (!this.preAuth?.isPreAuth) {
+    throw new Error('NOT_PRE_AUTHORIZED')
+  }
+
+  if (this.status !== 'pre_authorized') {
+    throw new Error('INVALID_STATUS_FOR_CAPTURE')
+  }
+
+  this.status = 'completed'
+  this.completedAt = new Date()
+  this.preAuth.capturedAt = new Date()
+  this.cardDetails.gatewayStatus = 'completed'
+  this.cardDetails.gatewayResponse = responseData
+  this.cardDetails.processedAt = new Date()
+
+  // Save commission if provided
+  if (responseData?.commission) {
+    this.commission = {
+      bankRate: responseData.commission.bankRate,
+      bankAmount: responseData.commission.bankAmount,
+      platformRate: responseData.commission.platformRate,
+      platformAmount: responseData.commission.platformAmount,
+      totalRate: responseData.commission.totalRate,
+      totalAmount: responseData.commission.totalAmount,
+      netAmount: responseData.commission.netAmount
+    }
+  }
+
+  await this.save()
+  return this
+}
+
+/**
+ * Release pre-authorized payment (void)
+ */
+paymentSchema.methods.releasePreAuth = async function (responseData) {
+  if (!this.preAuth?.isPreAuth) {
+    throw new Error('NOT_PRE_AUTHORIZED')
+  }
+
+  if (this.status !== 'pre_authorized') {
+    throw new Error('INVALID_STATUS_FOR_RELEASE')
+  }
+
+  this.status = 'released'
+  this.preAuth.releasedAt = new Date()
+  this.cardDetails.gatewayStatus = 'released'
+  this.cardDetails.gatewayResponse = responseData
+
+  await this.save()
+  return this
+}
+
+/**
+ * Check if pre-auth is expired
+ */
+paymentSchema.methods.isPreAuthExpired = function () {
+  if (!this.preAuth?.isPreAuth) return false
+  if (!this.preAuth.expiresAt) return false
+  return new Date() > this.preAuth.expiresAt
+}
+
+/**
+ * Get pre-authorized payments that are about to expire
+ */
+paymentSchema.statics.getExpiringPreAuths = function (daysUntilExpiry = 1) {
+  const expiryThreshold = new Date(Date.now() + daysUntilExpiry * 24 * 60 * 60 * 1000)
+
+  return this.find({
+    status: 'pre_authorized',
+    'preAuth.isPreAuth': true,
+    'preAuth.expiresAt': { $lte: expiryThreshold }
+  })
+    .populate('booking', 'bookingNumber hotelName checkIn')
+    .sort({ 'preAuth.expiresAt': 1 })
 }
 
 export default mongoose.model('Payment', paymentSchema)

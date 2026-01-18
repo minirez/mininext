@@ -134,6 +134,108 @@ export const getCardPaymentStatus = async (bookingId, paymentId) => {
   return response.data
 }
 
+// ============================================================================
+// PRE-AUTHORIZATION API
+// ============================================================================
+
+/**
+ * Pre-authorize card payment (hold amount)
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @param {object} data - Card and payment data
+ * @returns {Promise} - Pre-auth result
+ */
+export const preAuthorizeCard = async (bookingId, paymentId, data) => {
+  const response = await apiClient.post(`/bookings/${bookingId}/payments/${paymentId}/card/pre-authorize`, data)
+  return response.data
+}
+
+/**
+ * Capture pre-authorized payment
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @returns {Promise} - Capture result
+ */
+export const capturePreAuth = async (bookingId, paymentId) => {
+  const response = await apiClient.post(`/bookings/${bookingId}/payments/${paymentId}/card/capture`)
+  return response.data
+}
+
+/**
+ * Release pre-authorized payment
+ * @param {string} bookingId - Booking ID
+ * @param {string} paymentId - Payment ID
+ * @returns {Promise} - Release result
+ */
+export const releasePreAuth = async (bookingId, paymentId) => {
+  const response = await apiClient.post(`/bookings/${bookingId}/payments/${paymentId}/card/release`)
+  return response.data
+}
+
+/**
+ * Get pre-authorized payments for a booking
+ * @param {string} bookingId - Booking ID
+ * @returns {Promise} - Pre-authorized payments list
+ */
+export const getPreAuthorizedPayments = async bookingId => {
+  const response = await apiClient.get(`/bookings/${bookingId}/payments/pre-authorized`)
+  return response.data
+}
+
+// ============================================================================
+// ANALYTICS API
+// ============================================================================
+
+/**
+ * Get revenue summary
+ * @param {object} params - Query params { startDate, endDate, currency, groupBy }
+ * @returns {Promise} - Revenue data
+ */
+export const getRevenueSummary = async (params = {}) => {
+  const response = await apiClient.get('/payments/analytics/revenue', { params })
+  return response.data
+}
+
+/**
+ * Get payment methods breakdown
+ * @param {object} params - Query params { startDate, endDate }
+ * @returns {Promise} - Methods distribution
+ */
+export const getPaymentMethods = async (params = {}) => {
+  const response = await apiClient.get('/payments/analytics/methods', { params })
+  return response.data
+}
+
+/**
+ * Get commission report
+ * @param {object} params - Query params { startDate, endDate, groupBy }
+ * @returns {Promise} - Commission data
+ */
+export const getCommissionReport = async (params = {}) => {
+  const response = await apiClient.get('/payments/analytics/commission', { params })
+  return response.data
+}
+
+/**
+ * Get installment distribution
+ * @param {object} params - Query params { startDate, endDate }
+ * @returns {Promise} - Installment data
+ */
+export const getInstallmentDistribution = async (params = {}) => {
+  const response = await apiClient.get('/payments/analytics/installments', { params })
+  return response.data
+}
+
+/**
+ * Get payment status overview
+ * @param {object} params - Query params { startDate, endDate }
+ * @returns {Promise} - Status data
+ */
+export const getStatusOverview = async (params = {}) => {
+  const response = await apiClient.get('/payments/analytics/status', { params })
+  return response.data
+}
+
 export default {
   getPayments,
   addPayment,
@@ -145,5 +247,16 @@ export default {
   // Card payment methods
   queryCardBin,
   processCardPayment,
-  getCardPaymentStatus
+  getCardPaymentStatus,
+  // Pre-authorization methods
+  preAuthorizeCard,
+  capturePreAuth,
+  releasePreAuth,
+  getPreAuthorizedPayments,
+  // Analytics methods
+  getRevenueSummary,
+  getPaymentMethods,
+  getCommissionReport,
+  getInstallmentDistribution,
+  getStatusOverview
 }

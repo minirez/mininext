@@ -9,7 +9,9 @@ export * from './inputValidation.js'
 export * from './encryption.js'
 export * from './i18n.js'
 export * from './twoFactor.js'
+export * from './partnerIsolation.js'
 
 // Named exports for modules with default exports
 export { default as phoneFormatter } from './phoneFormatter.js'
 export { default as inputValidation } from './inputValidation.js'
+export { default as partnerIsolation } from './partnerIsolation.js'

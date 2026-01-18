@@ -11,15 +11,44 @@ const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1
 // API Key for internal service authentication
 const API_KEY = process.env.PAYMENT_API_KEY || 'internal-service-key'
 
+// Request configuration
+const DEFAULT_TIMEOUT = 30000 // 30 seconds
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+
 /**
- * Make request to Payment Service
+ * Sleep for specified milliseconds
+ * @param {number} ms - Milliseconds to sleep
+ */
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+/**
+ * Check if error is retryable
+ * @param {Error} error - The error to check
+ * @returns {boolean}
+ */
+function isRetryableError(error) {
+  // Network errors, timeouts, 5xx errors are retryable
+  if (error.name === 'AbortError') return true
+  if (error.message?.includes('ECONNREFUSED')) return true
+  if (error.message?.includes('ETIMEDOUT')) return true
+  if (error.message?.includes('ENOTFOUND')) return true
+  if (error.status >= 500) return true
+  return false
+}
+
+/**
+ * Make request to Payment Service with timeout and retry
  * @param {string} method - HTTP method
  * @param {string} endpoint - API endpoint
  * @param {Object} data - Request body
  * @param {string} token - Optional JWT token for user context
+ * @param {Object} options - Additional options
+ * @param {number} options.timeout - Request timeout in ms
+ * @param {number} options.retries - Number of retries
  * @returns {Promise<Object>}
  */
-async function makeRequest(method, endpoint, data = null, token = null) {
+async function makeRequest(method, endpoint, data = null, token = null, { timeout = DEFAULT_TIMEOUT, retries = MAX_RETRIES } = {}) {
   const url = `${PAYMENT_SERVICE_URL}/api${endpoint}`
 
   const headers = {
@@ -32,37 +61,86 @@ async function makeRequest(method, endpoint, data = null, token = null) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const options = {
+  const fetchOptions = {
     method,
     headers
   }
 
   if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
-    options.body = JSON.stringify(data)
+    fetchOptions.body = JSON.stringify(data)
   }
 
-  try {
-    logger.debug(`[PaymentGateway] ${method} ${url}`, { data })
+  let lastError
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    // Create abort controller for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    const response = await fetch(url, options)
-    const result = await response.json()
+    try {
+      logger.debug(`[PaymentGateway] ${method} ${url} (attempt ${attempt}/${retries})`, { data })
 
-    if (!response.ok) {
-      logger.error(`[PaymentGateway] Error response:`, {
-        status: response.status,
-        result
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal
       })
-      throw new Error(result.error || result.message || 'Payment service error')
-    }
 
-    return result
-  } catch (error) {
-    logger.error(`[PaymentGateway] Request failed:`, {
-      endpoint,
-      error: error.message
-    })
-    throw error
+      clearTimeout(timeoutId)
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        const error = new Error(result.error || result.message || 'Payment service error')
+        error.status = response.status
+        error.response = result
+
+        // Don't retry 4xx errors (client errors)
+        if (response.status >= 400 && response.status < 500) {
+          logger.error(`[PaymentGateway] Client error (no retry):`, {
+            status: response.status,
+            result
+          })
+          throw error
+        }
+
+        throw error
+      }
+
+      return result
+    } catch (error) {
+      clearTimeout(timeoutId)
+      lastError = error
+
+      // Handle timeout
+      if (error.name === 'AbortError') {
+        logger.warn(`[PaymentGateway] Request timeout (attempt ${attempt}/${retries}):`, {
+          endpoint,
+          timeout
+        })
+      } else {
+        logger.warn(`[PaymentGateway] Request failed (attempt ${attempt}/${retries}):`, {
+          endpoint,
+          error: error.message
+        })
+      }
+
+      // Check if we should retry
+      if (attempt < retries && isRetryableError(error)) {
+        const delay = RETRY_DELAY * attempt // Exponential backoff
+        logger.info(`[PaymentGateway] Retrying in ${delay}ms...`)
+        await sleep(delay)
+        continue
+      }
+
+      // No more retries
+      break
+    }
   }
+
+  logger.error(`[PaymentGateway] All retries exhausted:`, {
+    endpoint,
+    error: lastError?.message
+  })
+  throw lastError
 }
 
 /**
@@ -172,6 +250,23 @@ export async function getPosCapabilities(posId, token = null) {
   return makeRequest('GET', `/capabilities/${posId}`, null, token)
 }
 
+/**
+ * Get default installment commission rates
+ * @param {string} partnerId - Optional partner ID
+ * @param {string} currency - Currency code (try, usd, eur)
+ * @returns {Promise<Object>} - { defaultRates, breakdown }
+ */
+export async function getDefaultRates(partnerId = null, currency = 'try') {
+  const params = new URLSearchParams()
+  if (partnerId) params.append('partnerId', partnerId)
+  if (currency) params.append('currency', currency.toLowerCase())
+
+  const queryString = params.toString()
+  const endpoint = `/commission/default-rates${queryString ? `?${queryString}` : ''}`
+
+  return makeRequest('GET', endpoint, null, null)
+}
+
 // Default export for convenience
 export default {
   queryBin,
@@ -182,5 +277,6 @@ export default {
   getPaymentFormUrl,
   preAuthorize,
   capturePreAuth,
-  getPosCapabilities
+  getPosCapabilities,
+  getDefaultRates
 }

@@ -5,12 +5,75 @@
 
 import express from 'express'
 import { asyncHandler } from '#helpers'
-import { NotFoundError } from '#core/errors.js'
+// Error handling provided by asyncHandler
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
 import logger from '#core/logger.js'
+import notificationService from '#services/notificationService.js'
 
 const router = express.Router()
+
+/**
+ * Send payment notification to customer
+ */
+async function sendPaymentNotification(payment, booking, eventType) {
+  if (!booking?.leadGuest?.email) {
+    logger.warn('[PaymentWebhook] No email for notification:', { bookingId: booking?._id })
+    return
+  }
+
+  try {
+    const notificationTypes = {
+      completed: 'payment_completed',
+      failed: 'payment_failed',
+      refunded: 'payment_refunded'
+    }
+
+    const notificationType = notificationTypes[eventType]
+    if (!notificationType) return
+
+    // Format amount
+    const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[payment.currency] || payment.currency
+    const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.amount)
+
+    await notificationService.send({
+      type: notificationType,
+      recipient: {
+        email: booking.leadGuest.email,
+        name: `${booking.leadGuest.firstName} ${booking.leadGuest.lastName}`,
+        phone: booking.leadGuest.phone
+      },
+      data: {
+        subject: eventType === 'completed' ? 'Ödemeniz Alındı' :
+                 eventType === 'failed' ? 'Ödeme Başarısız' :
+                 'İade İşleminiz Tamamlandı',
+        CUSTOMER_NAME: `${booking.leadGuest.firstName} ${booking.leadGuest.lastName}`,
+        BOOKING_NUMBER: booking.bookingNumber,
+        AMOUNT: `${currencySymbol}${formattedAmount}`,
+        CURRENCY: payment.currency,
+        PAYMENT_TYPE: payment.type,
+        PAYMENT_DATE: new Date().toLocaleDateString('tr-TR'),
+        HOTEL_NAME: booking.hotelName,
+        CHECK_IN: new Date(booking.checkIn).toLocaleDateString('tr-TR'),
+        CHECK_OUT: new Date(booking.checkOut).toLocaleDateString('tr-TR'),
+        // Refund specific
+        REFUND_AMOUNT: payment.refund?.amount ? `${currencySymbol}${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.refund.amount)}` : null,
+        REFUND_REASON: payment.refund?.reason
+      },
+      channels: ['email'],
+      partnerId: booking.partner,
+      relatedTo: { model: 'Payment', id: payment._id }
+    })
+
+    logger.info('[PaymentWebhook] Notification sent:', {
+      type: notificationType,
+      paymentId: payment._id,
+      email: booking.leadGuest.email
+    })
+  } catch (error) {
+    logger.error('[PaymentWebhook] Failed to send notification:', error.message)
+  }
+}
 
 /**
  * Update booking payment status and amounts
@@ -89,6 +152,9 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     })
   }
 
+  // Fetch booking for notifications
+  const booking = await Booking.findById(payment.booking)
+
   // Process event
   switch (event) {
     case 'payment.completed':
@@ -96,6 +162,11 @@ router.post('/webhook', asyncHandler(async (req, res) => {
         await payment.completeCardPayment(data || {})
         await updateBookingPayment(payment.booking)
         logger.info('[PaymentWebhook] Payment completed:', { paymentId: payment._id })
+
+        // Send notification
+        if (booking) {
+          await sendPaymentNotification(payment, booking, 'completed')
+        }
       }
       break
 
@@ -103,6 +174,11 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       if (!['failed', 'completed'].includes(payment.status)) {
         await payment.failCardPayment(data?.error || 'Payment failed', data || {})
         logger.info('[PaymentWebhook] Payment failed:', { paymentId: payment._id })
+
+        // Send notification
+        if (booking) {
+          await sendPaymentNotification(payment, booking, 'failed')
+        }
       }
       break
 
@@ -120,6 +196,11 @@ router.post('/webhook', asyncHandler(async (req, res) => {
         await payment.save()
         await updateBookingPayment(payment.booking)
         logger.info('[PaymentWebhook] Payment refunded:', { paymentId: payment._id })
+
+        // Send notification
+        if (booking) {
+          await sendPaymentNotification(payment, booking, 'refunded')
+        }
       }
       break
 
