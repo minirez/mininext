@@ -256,18 +256,31 @@ paymentSchema.methods.processRefund = async function (amount, reason, userId, ga
     throw new Error('REFUND_EXCEEDS_PAYMENT')
   }
 
-  this.status = 'refunded'
+  // Calculate total refunded amount (including previous partial refunds)
+  const previousRefund = this.refund?.amount || 0
+  const totalRefund = previousRefund + amount
+
+  if (totalRefund > this.amount) {
+    throw new Error('TOTAL_REFUND_EXCEEDS_PAYMENT')
+  }
+
+  // Update refund info
   this.refund = {
-    amount,
+    amount: totalRefund, // Store cumulative refund amount
     reason,
     refundedAt: new Date(),
     refundedBy: userId,
     gatewayRef
   }
 
-  // Update card details status if credit card payment
-  if (this.type === 'credit_card' && this.cardDetails) {
-    this.cardDetails.gatewayStatus = 'refunded'
+  // Only change status to 'refunded' if FULL refund
+  // Partial refund: keep status as 'completed' but record refund info
+  if (totalRefund >= this.amount) {
+    this.status = 'refunded'
+    // Update card details status if credit card payment
+    if (this.type === 'credit_card' && this.cardDetails) {
+      this.cardDetails.gatewayStatus = 'refunded'
+    }
   }
 
   await this.save()

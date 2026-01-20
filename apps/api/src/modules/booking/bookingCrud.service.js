@@ -818,6 +818,12 @@ export const deleteBooking = asyncHandler(async (req, res) => {
     }
   }
 
+  // CASCADE DELETE: Delete related payments and payment links to prevent orphan data
+  const deletedPayments = await Payment.deleteMany({ booking: id })
+  const deletedPaymentLinks = await PaymentLink.deleteMany({ booking: id })
+
+  logger.info(`Cascade delete: ${deletedPayments.deletedCount} payments, ${deletedPaymentLinks.deletedCount} payment links`)
+
   // Hard delete the booking
   await Booking.findByIdAndDelete(id)
 
@@ -1160,6 +1166,21 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   // Create payment link (expires in 30 days)
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
+  // Create Payment record first (so we can link it to PaymentLink)
+  const payment = new Payment({
+    partner: partnerId,
+    booking: booking._id,
+    type: 'credit_card',
+    amount: finalTotal,
+    currency: market.currency,
+    status: 'pending',
+    cardDetails: {
+      linkExpiresAt: expiresAt
+    },
+    createdBy: req.user._id
+  })
+  await payment.save()
+
   const paymentLink = await PaymentLink.create({
     partner: partnerId,
     customer: {
@@ -1176,6 +1197,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
       rates: {}
     },
     booking: booking._id,
+    linkedPayment: payment._id,
     expiresAt,
     createdBy: req.user._id
   })
@@ -1184,6 +1206,15 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   booking.payment.paymentLinkId = paymentLink._id
   booking.payment.paymentLinkToken = paymentLink.token
   await booking.save()
+
+  // Update Payment with paymentLink reference
+  payment.cardDetails.paymentLink = paymentLink._id
+  payment.cardDetails.linkSentAt = new Date()
+  await payment.save()
+
+  // Update booking payment summary (adds payment to booking.payment.payments array)
+  const { updateBookingPayment } = await import('./payment.service.js')
+  await updateBookingPayment(booking._id)
 
   // Send notification
   if (sendEmail || sendSms) {

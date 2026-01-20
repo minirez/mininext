@@ -214,7 +214,8 @@ paymentLinkSchema.pre('save', async function (next) {
 
 // Virtuals
 paymentLinkSchema.virtual('isExpired').get(function () {
-  return this.expiresAt < new Date() && this.status === 'pending'
+  // Check both 'pending' and 'viewed' statuses - a viewed link can also expire
+  return this.expiresAt < new Date() && ['pending', 'viewed'].includes(this.status)
 })
 
 paymentLinkSchema.virtual('paymentUrl').get(function () {

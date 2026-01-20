@@ -3,7 +3,7 @@ import Partner from '../partner/partner.model.js'
 import Booking from '../booking/booking.model.js'
 import Payment from '../booking/payment.model.js'
 import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
-import { asyncHandler, getEffectivePartnerId } from '#helpers'
+import { asyncHandler, getEffectivePartnerId, escapeRegex } from '#helpers'
 import logger from '#core/logger.js'
 import paymentGateway from '#services/paymentGateway.js'
 // Import centralized notification function
@@ -73,15 +73,16 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
     conditions.push({ createdAt: dateFilter })
   }
 
-  // Search filter
+  // Search filter - SECURITY: escape regex special characters to prevent injection
   if (search) {
+    const escapedSearch = escapeRegex(search)
     conditions.push({
       $or: [
-        { linkNumber: { $regex: search, $options: 'i' } },
-        { 'customer.name': { $regex: search, $options: 'i' } },
-        { 'customer.email': { $regex: search, $options: 'i' } },
-        { 'customer.phone': { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { linkNumber: { $regex: escapedSearch, $options: 'i' } },
+        { 'customer.name': { $regex: escapedSearch, $options: 'i' } },
+        { 'customer.email': { $regex: escapedSearch, $options: 'i' } },
+        { 'customer.phone': { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } }
       ]
     })
   }
@@ -97,8 +98,10 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
     filter: JSON.stringify(filter)
   })
 
-  // Pagination
-  const skip = (page - 1) * limit
+  // Pagination - validate and sanitize
+  const pageNum = Math.max(1, parseInt(page) || 1)
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)) // Max 100 per page
+  const skip = (pageNum - 1) * limitNum
   const total = await PaymentLink.countDocuments(filter)
 
   // Sort
@@ -111,17 +114,17 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
     .populate('cancelledBy', 'name email')
     .sort(sort)
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limitNum)
 
   res.json({
     success: true,
     data: {
       items: paymentLinks,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limitNum)
       }
     }
   })
@@ -220,10 +223,34 @@ export const createPaymentLink = asyncHandler(async (req, res) => {
     }
   }
 
+  // VALIDATION: Amount must be a positive number
+  const amount = parseFloat(req.body.amount)
+  if (!amount || isNaN(amount) || amount <= 0) {
+    throw new BadRequestError('INVALID_AMOUNT')
+  }
+  if (amount > 1000000) { // Max 1 million - reasonable limit
+    throw new BadRequestError('AMOUNT_TOO_LARGE')
+  }
+
   // Calculate expiry date (default 30 days)
-  const expiresAt = req.body.expiresAt
-    ? new Date(req.body.expiresAt)
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  let expiresAt
+  if (req.body.expiresAt) {
+    expiresAt = new Date(req.body.expiresAt)
+    // VALIDATION: Expiry date must be valid and in the future
+    if (isNaN(expiresAt.getTime())) {
+      throw new BadRequestError('INVALID_EXPIRY_DATE')
+    }
+    if (expiresAt <= new Date()) {
+      throw new BadRequestError('EXPIRY_DATE_MUST_BE_FUTURE')
+    }
+    // Max 1 year expiry
+    const maxExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    if (expiresAt > maxExpiry) {
+      throw new BadRequestError('EXPIRY_DATE_TOO_FAR')
+    }
+  } else {
+    expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  }
 
   // Clean rates object - ensure numeric values with string keys
   const cleanedRates = {}
@@ -247,7 +274,7 @@ export const createPaymentLink = asyncHandler(async (req, res) => {
       phone: req.body.customer.phone
     },
     description: req.body.description,
-    amount: req.body.amount,
+    amount: amount, // Use validated amount
     currency: req.body.currency || 'TRY',
     installment: {
       enabled: req.body.installment?.enabled || false,
@@ -368,7 +395,25 @@ export const updatePaymentLink = asyncHandler(async (req, res) => {
           maxCount: paymentLink.installment.maxCount
         })
       } else if (field === 'expiresAt') {
-        paymentLink.expiresAt = new Date(req.body.expiresAt)
+        const newExpiry = new Date(req.body.expiresAt)
+        // VALIDATION: Expiry date must be valid and in the future
+        if (isNaN(newExpiry.getTime())) {
+          throw new BadRequestError('INVALID_EXPIRY_DATE')
+        }
+        if (newExpiry <= new Date()) {
+          throw new BadRequestError('EXPIRY_DATE_MUST_BE_FUTURE')
+        }
+        paymentLink.expiresAt = newExpiry
+      } else if (field === 'amount') {
+        const newAmount = parseFloat(req.body.amount)
+        // VALIDATION: Amount must be positive
+        if (!newAmount || isNaN(newAmount) || newAmount <= 0) {
+          throw new BadRequestError('INVALID_AMOUNT')
+        }
+        if (newAmount > 1000000) {
+          throw new BadRequestError('AMOUNT_TOO_LARGE')
+        }
+        paymentLink.amount = newAmount
       } else {
         paymentLink[field] = req.body[field]
       }
@@ -422,6 +467,36 @@ export const cancelPaymentLink = asyncHandler(async (req, res) => {
   }
 
   await paymentLink.cancel(req.user._id, req.body.reason)
+
+  // CONSISTENCY: If there's a linked payment that's still pending, cancel it too
+  if (paymentLink.linkedPayment) {
+    const linkedPayment = await Payment.findOneAndUpdate(
+      {
+        _id: paymentLink.linkedPayment,
+        status: 'pending' // Only cancel if still pending
+      },
+      {
+        $set: {
+          status: 'cancelled',
+          'cardDetails.gatewayStatus': 'cancelled'
+        }
+      },
+      { new: true }
+    )
+
+    if (linkedPayment) {
+      logger.info('[CancelPaymentLink] Linked payment also cancelled:', {
+        paymentLinkId: paymentLink._id,
+        paymentId: linkedPayment._id
+      })
+
+      // Update booking payment summary
+      if (linkedPayment.booking) {
+        const { updateBookingPayment } = await import('../booking/payment.service.js')
+        await updateBookingPayment(linkedPayment.booking)
+      }
+    }
+  }
 
   res.json({
     success: true,
@@ -526,8 +601,8 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
-  // Check if expired
-  if (paymentLink.expiresAt < new Date() && paymentLink.status === 'pending') {
+  // Check if expired - both 'pending' and 'viewed' links can expire
+  if (paymentLink.expiresAt < new Date() && ['pending', 'viewed'].includes(paymentLink.status)) {
     paymentLink.status = 'expired'
     await paymentLink.save()
   }
@@ -631,12 +706,30 @@ export const getDefaultRates = asyncHandler(async (req, res) => {
 
 /**
  * Complete payment link (called by payment service after successful payment)
+ * SECURITY: This endpoint should only be called by the payment service
  */
 export const completePaymentLink = asyncHandler(async (req, res) => {
   const { token } = req.params
   const transactionData = req.body
 
-  logger.info('completePaymentLink called:', { token, transactionData })
+  // ============================================================================
+  // SECURITY: Validate API key - only payment service can call this endpoint
+  // ============================================================================
+  const apiKey = req.headers['x-api-key']
+  const validApiKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+
+  if (apiKey !== validApiKey) {
+    logger.error('[completePaymentLink] Invalid or missing API key')
+    return res.status(401).json({ success: false, error: 'Unauthorized' })
+  }
+
+  // Validate required transaction data
+  if (!transactionData?.transactionId) {
+    logger.error('[completePaymentLink] Missing transactionId')
+    return res.status(400).json({ success: false, error: 'Missing transactionId' })
+  }
+
+  logger.info('completePaymentLink called:', { token, transactionId: transactionData.transactionId })
 
   const paymentLink = await PaymentLink.findByToken(token)
 
@@ -686,64 +779,126 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
 
   logger.info(`Payment link ${paymentLink.linkNumber} marked as paid`)
 
-  // If linked to a booking (standalone link), update booking payment status
+  // If linked to a booking (standalone link without linkedPayment), create Payment record
   if (paymentLink.booking && !paymentLink.linkedPayment) {
     try {
       const booking = await Booking.findById(paymentLink.booking)
       if (booking) {
-        // Add payment record to booking
-        booking.payments = booking.payments || []
-        booking.payments.push({
+        // Create a new Payment record for this payment link completion
+        const payment = new Payment({
+          partner: paymentLink.partner,
+          booking: paymentLink.booking,
+          type: 'credit_card',
           amount: paymentLink.amount,
           currency: paymentLink.currency,
-          method: 'credit_card',
           status: 'completed',
-          transactionId: transactionData.transactionId,
-          paidAt: new Date(),
-          source: 'payment_link',
-          paymentLinkId: paymentLink._id
+          completedAt: new Date(),
+          cardDetails: {
+            gatewayStatus: 'completed',
+            gatewayTransactionId: transactionData.transactionId,
+            paymentLinkId: paymentLink._id,
+            lastFour: transactionData.lastFour,
+            brand: transactionData.brand,
+            cardFamily: transactionData.cardFamily,
+            bankName: transactionData.cardBank,
+            installment: transactionData.installment || 1,
+            processedAt: new Date(),
+            gatewayResponse: {
+              authCode: transactionData.authCode,
+              refNumber: transactionData.refNumber,
+              provisionNumber: transactionData.provisionNumber,
+              maskedCard: transactionData.maskedCard
+            }
+          },
+          // Commission data from payment gateway
+          ...(transactionData.commission && {
+            commission: {
+              bankRate: transactionData.commission.bankRate,
+              bankAmount: transactionData.commission.bankAmount,
+              platformRate: transactionData.commission.platformRate,
+              platformAmount: transactionData.commission.platformAmount,
+              totalRate: transactionData.commission.totalRate,
+              totalAmount: transactionData.commission.totalAmount,
+              netAmount: transactionData.commission.netAmount
+            }
+          }),
+          notes: `Payment link ile ödendi: ${paymentLink.linkNumber}`
         })
-        await booking.save()
-        logger.info(`Booking ${booking.bookingNumber} payment updated via payment link`)
+        await payment.save()
+
+        // Update booking payment summary using atomic function
+        const { updateBookingPayment } = await import('../booking/payment.service.js')
+        await updateBookingPayment(paymentLink.booking)
+
+        logger.info(`Booking ${booking.bookingNumber} payment created via standalone payment link`)
       }
     } catch (bookingError) {
-      logger.error('Failed to update booking payment:', bookingError.message)
+      logger.error('Failed to create payment for standalone link:', bookingError.message)
     }
   }
 
-  // If linked to an existing Payment record, update it
+  // If linked to an existing Payment record, update it ATOMICALLY
   if (paymentLink.linkedPayment) {
     try {
-      const payment = await Payment.findById(paymentLink.linkedPayment)
-      if (payment && payment.status === 'pending') {
-        // Complete the payment with transaction data
-        await payment.completeCardPayment({
-          authCode: transactionData.authCode,
-          refNumber: transactionData.refNumber,
-          provisionNumber: transactionData.provisionNumber,
-          maskedCard: transactionData.maskedCard,
-          lastFour: transactionData.lastFour,
-          brand: transactionData.brand,
-          cardType: transactionData.cardType,
-          cardFamily: transactionData.cardFamily,
-          cardBank: transactionData.cardBank,
-          installment: transactionData.installment,
-          amount: paymentLink.amount
-        })
+      // ATOMIC: Only update if status is still pending - prevents race condition
+      const payment = await Payment.findOneAndUpdate(
+        {
+          _id: paymentLink.linkedPayment,
+          status: 'pending' // Only update if still pending
+        },
+        {
+          $set: {
+            status: 'completed',
+            completedAt: new Date(),
+            'cardDetails.gatewayStatus': 'completed',
+            'cardDetails.gatewayTransactionId': transactionData.transactionId,
+            'cardDetails.paymentLinkId': paymentLink._id,
+            'cardDetails.gatewayResponse': {
+              authCode: transactionData.authCode,
+              refNumber: transactionData.refNumber,
+              provisionNumber: transactionData.provisionNumber,
+              maskedCard: transactionData.maskedCard,
+              lastFour: transactionData.lastFour,
+              brand: transactionData.brand,
+              cardType: transactionData.cardType,
+              cardFamily: transactionData.cardFamily,
+              cardBank: transactionData.cardBank,
+              installment: transactionData.installment,
+              amount: paymentLink.amount
+            },
+            'cardDetails.processedAt': new Date(),
+            'cardDetails.lastFour': transactionData.lastFour,
+            'cardDetails.brand': transactionData.brand,
+            'cardDetails.cardFamily': transactionData.cardFamily,
+            'cardDetails.bankName': transactionData.cardBank,
+            'cardDetails.installment': transactionData.installment || 1,
+            // Commission data from payment gateway
+            ...(transactionData.commission && {
+              commission: {
+                bankRate: transactionData.commission.bankRate,
+                bankAmount: transactionData.commission.bankAmount,
+                platformRate: transactionData.commission.platformRate,
+                platformAmount: transactionData.commission.platformAmount,
+                totalRate: transactionData.commission.totalRate,
+                totalAmount: transactionData.commission.totalAmount,
+                netAmount: transactionData.commission.netAmount
+              }
+            })
+          }
+        },
+        { new: true }
+      )
 
-        // Store payment link reference
-        payment.cardDetails = payment.cardDetails || {}
-        payment.cardDetails.paymentLinkId = paymentLink._id
-        payment.cardDetails.gatewayTransactionId = transactionData.transactionId
-        await payment.save()
-
+      if (payment) {
         // Update booking payment summary
         if (payment.booking) {
           const { updateBookingPayment } = await import('../booking/payment.service.js')
           await updateBookingPayment(payment.booking)
         }
-
         logger.info(`Linked Payment ${payment._id} completed via payment link ${paymentLink.linkNumber}`)
+      } else {
+        // Payment was already processed by another webhook
+        logger.info(`Linked Payment ${paymentLink.linkedPayment} already processed, skipping`)
       }
     } catch (paymentError) {
       logger.error('Failed to update linked payment:', paymentError.message)

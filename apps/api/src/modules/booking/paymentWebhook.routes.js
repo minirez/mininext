@@ -45,18 +45,28 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     status
   })
 
+  // ============================================================================
+  // SECURITY: Validate API key
+  // ============================================================================
+  const apiKey = req.headers['x-api-key']
+  const validApiKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+
+  if (apiKey !== validApiKey) {
+    logger.error('[PaymentWebhook] Invalid API key')
+    return res.status(401).json({ success: false, error: 'Invalid API key' })
+  }
+
   // Find payment by external ID (our payment _id) or transaction ID
-  let payment = null
+  let paymentId = null
 
   if (externalId) {
-    payment = await Payment.findById(externalId)
+    paymentId = externalId
+  } else if (transactionId) {
+    const paymentByTx = await Payment.findByGatewayTransaction(transactionId)
+    paymentId = paymentByTx?._id
   }
 
-  if (!payment && transactionId) {
-    payment = await Payment.findByGatewayTransaction(transactionId)
-  }
-
-  if (!payment) {
+  if (!paymentId) {
     logger.warn('[PaymentWebhook] Payment not found:', { transactionId, externalId })
     // Return 200 to prevent retries - payment might have been deleted
     return res.json({
@@ -65,70 +75,164 @@ router.post('/webhook', asyncHandler(async (req, res) => {
     })
   }
 
-  // Fetch booking for notifications
-  const booking = await Booking.findById(payment.booking)
+  // ============================================================================
+  // ATOMIC: Process events with findOneAndUpdate to prevent race conditions
+  // ============================================================================
+  let payment = null
+  let bookingId = null
 
-  // Process event
   switch (event) {
-    case 'payment.completed':
-      if (payment.status !== 'completed') {
-        await payment.completeCardPayment(data || {})
-        await updateBookingPayment(payment.booking)
-        logger.info('[PaymentWebhook] Payment completed:', { paymentId: payment._id })
+    case 'payment.completed': {
+      // ATOMIC: Only update if still pending
+      const updateData = {
+        status: 'completed',
+        completedAt: new Date(),
+        'cardDetails.gatewayStatus': 'completed',
+        'cardDetails.gatewayResponse': data || {},
+        'cardDetails.processedAt': new Date(),
+        ...(data?.lastFour && { 'cardDetails.lastFour': data.lastFour }),
+        ...(data?.brand && { 'cardDetails.brand': data.brand }),
+        ...(data?.installment && { 'cardDetails.installment': data.installment })
+      }
 
-        // Send notification
-        if (booking) {
-          await sendPaymentNotification(payment, booking, 'completed')
+      payment = await Payment.findOneAndUpdate(
+        { _id: paymentId, status: 'pending' },
+        { $set: updateData },
+        { new: true }
+      )
+
+      if (payment) {
+        bookingId = payment.booking
+        await updateBookingPayment(bookingId)
+        logger.info('[PaymentWebhook] Payment completed atomically:', { paymentId: payment._id })
+      } else {
+        const existing = await Payment.findById(paymentId)
+        if (!existing) {
+          return res.json({ success: false, message: 'Payment not found' })
         }
+        logger.info('[PaymentWebhook] Payment already processed:', { paymentId, status: existing.status })
+        return res.json({ success: true, message: 'Already processed' })
       }
       break
+    }
 
-    case 'payment.failed':
-      if (!['failed', 'completed'].includes(payment.status)) {
-        await payment.failCardPayment(data?.error || 'Payment failed', data || {})
-        logger.info('[PaymentWebhook] Payment failed:', { paymentId: payment._id })
+    case 'payment.failed': {
+      // ATOMIC: Only update if still pending
+      const updateData = {
+        status: 'failed',
+        'cardDetails.gatewayStatus': 'failed',
+        'cardDetails.gatewayResponse': { error: data?.error || 'Payment failed', ...data },
+        'cardDetails.processedAt': new Date()
+      }
 
-        // Send notification
-        if (booking) {
-          await sendPaymentNotification(payment, booking, 'failed')
+      payment = await Payment.findOneAndUpdate(
+        { _id: paymentId, status: 'pending' },
+        { $set: updateData },
+        { new: true }
+      )
+
+      if (payment) {
+        bookingId = payment.booking
+        logger.info('[PaymentWebhook] Payment failed atomically:', { paymentId: payment._id })
+      } else {
+        const existing = await Payment.findById(paymentId)
+        if (!existing) {
+          return res.json({ success: false, message: 'Payment not found' })
         }
+        logger.info('[PaymentWebhook] Payment already processed:', { paymentId, status: existing.status })
+        return res.json({ success: true, message: 'Already processed' })
       }
       break
+    }
 
-    case 'payment.refunded':
-      if (payment.status === 'completed') {
-        payment.status = 'refunded'
-        payment.cardDetails.gatewayStatus = 'refunded'
-        payment.cardDetails.gatewayResponse = data
-        payment.refund = {
-          amount: data?.amount || payment.amount,
+    case 'payment.refunded': {
+      // ATOMIC: Only update if currently completed
+      const updateData = {
+        status: 'refunded',
+        'cardDetails.gatewayStatus': 'refunded',
+        'cardDetails.gatewayResponse': data || {},
+        refund: {
+          amount: data?.amount,
           reason: data?.reason || 'Refunded via gateway',
           refundedAt: new Date(),
           gatewayRef: data?.refundTransactionId
         }
-        await payment.save()
-        await updateBookingPayment(payment.booking)
-        logger.info('[PaymentWebhook] Payment refunded:', { paymentId: payment._id })
+      }
 
-        // Send notification
-        if (booking) {
-          await sendPaymentNotification(payment, booking, 'refunded')
-        }
+      // First get the payment to know the amount for full refund
+      const existingPayment = await Payment.findById(paymentId)
+      if (!existingPayment) {
+        return res.json({ success: false, message: 'Payment not found' })
+      }
+
+      // If no amount specified, use full payment amount
+      if (!updateData.refund.amount) {
+        updateData.refund.amount = existingPayment.amount
+      }
+
+      payment = await Payment.findOneAndUpdate(
+        { _id: paymentId, status: 'completed' },
+        { $set: updateData },
+        { new: true }
+      )
+
+      if (payment) {
+        bookingId = payment.booking
+        await updateBookingPayment(bookingId)
+        logger.info('[PaymentWebhook] Payment refunded atomically:', { paymentId: payment._id })
+      } else {
+        logger.info('[PaymentWebhook] Payment not in completed state:', { paymentId, status: existingPayment.status })
+        return res.json({ success: true, message: 'Payment not in completed state' })
       }
       break
+    }
 
-    case 'payment.cancelled':
-      if (payment.status === 'pending') {
-        payment.status = 'cancelled'
-        payment.cardDetails.gatewayStatus = 'cancelled'
-        payment.cardDetails.gatewayResponse = data
-        await payment.save()
-        logger.info('[PaymentWebhook] Payment cancelled:', { paymentId: payment._id })
+    case 'payment.cancelled': {
+      // ATOMIC: Only update if still pending
+      const updateData = {
+        status: 'cancelled',
+        'cardDetails.gatewayStatus': 'cancelled',
+        'cardDetails.gatewayResponse': data || {}
+      }
+
+      payment = await Payment.findOneAndUpdate(
+        { _id: paymentId, status: 'pending' },
+        { $set: updateData },
+        { new: true }
+      )
+
+      if (payment) {
+        logger.info('[PaymentWebhook] Payment cancelled atomically:', { paymentId: payment._id })
+      } else {
+        const existing = await Payment.findById(paymentId)
+        logger.info('[PaymentWebhook] Payment not in pending state:', { paymentId, status: existing?.status })
+        return res.json({ success: true, message: 'Payment not in pending state' })
       }
       break
+    }
 
     default:
       logger.warn('[PaymentWebhook] Unknown event:', { event })
+      return res.json({ success: true, message: 'Unknown event' })
+  }
+
+  // ============================================================================
+  // Send notification (non-blocking)
+  // ============================================================================
+  if (payment && bookingId && ['payment.completed', 'payment.failed', 'payment.refunded'].includes(event)) {
+    try {
+      const booking = await Booking.findById(bookingId)
+      if (booking) {
+        const eventMap = {
+          'payment.completed': 'completed',
+          'payment.failed': 'failed',
+          'payment.refunded': 'refunded'
+        }
+        await sendPaymentNotification(payment, booking, eventMap[event])
+      }
+    } catch (notifyError) {
+      logger.error('[PaymentWebhook] Failed to send notification:', notifyError.message)
+    }
   }
 
   res.json({

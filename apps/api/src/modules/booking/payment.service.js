@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import mongoose from 'mongoose'
 import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import Payment from './payment.model.js'
@@ -8,16 +9,46 @@ import paymentGateway from '#services/paymentGateway.js'
 import logger from '#core/logger.js'
 
 /**
+ * SECURITY: Get partner ID with strict validation
+ * For booking/payment operations, partner is ALWAYS required
+ * Platform admins must select a partner before accessing booking data
+ */
+function getRequiredPartnerId(req, source = 'query') {
+  // Partner users: always use their own partner
+  if (req.user?.accountType === 'partner') {
+    return req.user.accountId
+  }
+
+  // Platform admin: check multiple sources
+  const partnerId = req.partnerId || req.body?.partnerId || req.query?.partnerId
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_SELECTION_REQUIRED')
+  }
+
+  return partnerId
+}
+
+/**
+ * Build secure partner filter for booking/payment queries
+ * NEVER allows access without partner context
+ */
+function buildSecurePartnerFilter(req) {
+  const partnerId = getRequiredPartnerId(req)
+  return { partner: partnerId }
+}
+
+/**
  * Get all payments for a booking
  */
 export const getPayments = asyncHandler(async (req, res) => {
   const { id: bookingId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Verify booking exists and belongs to partner
   const booking = await Booking.findOne({
     _id: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   }).select('bookingNumber pricing.grandTotal pricing.currency payment')
 
   if (!booking) {
@@ -55,15 +86,12 @@ export const getPayments = asyncHandler(async (req, res) => {
  */
 export const addPayment = asyncHandler(async (req, res) => {
   const { id: bookingId } = req.params
-  const partnerId =
-    req.user.role === 'platform_admin'
-      ? req.body.partnerId || req.query.partnerId
-      : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Verify booking exists
   const booking = await Booking.findOne({
     _id: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!booking) {
@@ -113,6 +141,16 @@ export const addPayment = asyncHandler(async (req, res) => {
   // Update booking payment reference and recalculate paidAmount
   await updateBookingPayment(bookingId)
 
+  // Send notification for auto-completed payments (cash, agency_credit)
+  if (['cash', 'agency_credit'].includes(type) && payment.status === 'completed') {
+    try {
+      const { sendPaymentNotification } = await import('./payment-notifications.service.js')
+      await sendPaymentNotification(payment, booking, 'completed')
+    } catch (notifyError) {
+      logger.error('[addPayment] Failed to send notification:', notifyError.message)
+    }
+  }
+
   // Populate and return
   await payment.populate('createdBy', 'firstName lastName email')
 
@@ -128,12 +166,12 @@ export const addPayment = asyncHandler(async (req, res) => {
  */
 export const updatePayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -145,6 +183,17 @@ export const updatePayment = asyncHandler(async (req, res) => {
     throw new BadRequestError('PAYMENT_NOT_EDITABLE')
   }
 
+  // VALIDATION: If amount is being updated, validate it
+  if (req.body.amount !== undefined) {
+    const newAmount = parseFloat(req.body.amount)
+    if (!newAmount || isNaN(newAmount) || newAmount <= 0) {
+      throw new BadRequestError('INVALID_AMOUNT')
+    }
+    if (newAmount > 1000000) {
+      throw new BadRequestError('AMOUNT_TOO_LARGE')
+    }
+  }
+
   const allowedFields = ['amount', 'notes', 'bankTransfer', 'cardDetails']
   allowedFields.forEach(field => {
     if (req.body[field] !== undefined) {
@@ -152,6 +201,8 @@ export const updatePayment = asyncHandler(async (req, res) => {
         payment.bankTransfer = { ...payment.bankTransfer, ...req.body.bankTransfer }
       } else if (field === 'cardDetails') {
         payment.cardDetails = { ...payment.cardDetails, ...req.body.cardDetails }
+      } else if (field === 'amount') {
+        payment.amount = parseFloat(req.body.amount) // Use parsed value
       } else {
         payment[field] = req.body[field]
       }
@@ -173,12 +224,12 @@ export const updatePayment = asyncHandler(async (req, res) => {
  */
 export const confirmPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -204,12 +255,12 @@ export const confirmPayment = asyncHandler(async (req, res) => {
  */
 export const cancelPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -232,12 +283,12 @@ export const cancelPayment = asyncHandler(async (req, res) => {
 export const refundPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
   const { amount, reason } = req.body
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -246,6 +297,24 @@ export const refundPayment = asyncHandler(async (req, res) => {
 
   if (!amount || amount <= 0) {
     throw new BadRequestError('INVALID_REFUND_AMOUNT')
+  }
+
+  // SECURITY: Validate refund amount doesn't exceed payment amount
+  if (amount > payment.amount) {
+    throw new BadRequestError('REFUND_EXCEEDS_PAYMENT_AMOUNT')
+  }
+
+  // Check for partial refunds - if already refunded, check remaining amount
+  if (payment.refund?.amount) {
+    const totalRefunded = payment.refund.amount + amount
+    if (totalRefunded > payment.amount) {
+      throw new BadRequestError('TOTAL_REFUND_EXCEEDS_PAYMENT_AMOUNT')
+    }
+  }
+
+  // Payment must be completed to refund
+  if (payment.status !== 'completed') {
+    throw new BadRequestError('PAYMENT_NOT_COMPLETED')
   }
 
   if (!reason) {
@@ -308,13 +377,13 @@ export const refundPayment = asyncHandler(async (req, res) => {
  */
 export const uploadReceipt = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
     type: 'bank_transfer',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -341,12 +410,12 @@ export const uploadReceipt = asyncHandler(async (req, res) => {
  */
 export const getReceipt = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -357,9 +426,23 @@ export const getReceipt = asyncHandler(async (req, res) => {
     throw new NotFoundError('RECEIPT_NOT_FOUND')
   }
 
-  // Get file path
+  // SECURITY: Validate and sanitize file path to prevent directory traversal
   const filename = path.basename(payment.bankTransfer.receiptUrl)
-  const filePath = path.join(process.cwd(), 'uploads', 'payments', filename)
+
+  // Validate filename - only allow alphanumeric, dash, underscore, dot
+  if (!/^[\w\-\.]+$/.test(filename)) {
+    throw new BadRequestError('INVALID_FILE_NAME')
+  }
+
+  // Build and validate file path
+  const uploadsDir = path.resolve(process.cwd(), 'uploads', 'payments')
+  const filePath = path.resolve(uploadsDir, filename)
+
+  // SECURITY: Ensure resolved path is within uploads directory (prevent traversal)
+  if (!filePath.startsWith(uploadsDir)) {
+    logger.warn('[getReceipt] Directory traversal attempt:', { filename, filePath, uploadsDir })
+    throw new BadRequestError('INVALID_FILE_PATH')
+  }
 
   // Check if file exists
   if (!fs.existsSync(filePath)) {
@@ -389,12 +472,12 @@ export const getReceipt = asyncHandler(async (req, res) => {
  */
 export const deletePayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -417,39 +500,65 @@ export const deletePayment = asyncHandler(async (req, res) => {
 /**
  * Helper: Update booking payment status and amounts
  * Exported for use by paymentLink.service.js
+ *
+ * ATOMIC VERSION: Uses aggregation for accurate calculation
+ * and findOneAndUpdate for atomic booking update
  */
 export async function updateBookingPayment(bookingId) {
-  const payments = await Payment.find({ booking: bookingId })
+  // Step 1: Calculate payment summary using aggregation (accurate, no race)
+  const [summary] = await Payment.aggregate([
+    { $match: { booking: new mongoose.Types.ObjectId(bookingId) } },
+    {
+      $group: {
+        _id: null,
+        paidAmount: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'completed'] }, '$amount', 0]
+          }
+        },
+        hasRefund: {
+          $max: {
+            $cond: [{ $eq: ['$status', 'refunded'] }, true, false]
+          }
+        },
+        paymentIds: { $push: '$_id' }
+      }
+    }
+  ])
 
-  const paidAmount = payments
-    .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + p.amount, 0)
+  const paidAmount = summary?.paidAmount || 0
+  const hasRefund = summary?.hasRefund || false
+  const paymentIds = summary?.paymentIds || []
 
-  const booking = await Booking.findById(bookingId)
+  // Step 2: Get booking grandTotal for status calculation
+  const booking = await Booking.findById(bookingId).select('pricing.grandTotal').lean()
   if (!booking) return
 
   const grandTotal = booking.pricing?.grandTotal || 0
 
-  // Determine payment status
+  // Step 3: Determine payment status
   let status = 'pending'
-  if (paidAmount >= grandTotal) {
+  if (paidAmount >= grandTotal && grandTotal > 0) {
     status = 'paid'
   } else if (paidAmount > 0) {
     status = 'partial'
   }
-
-  // Check if any payment was refunded
-  const hasRefund = payments.some(p => p.status === 'refunded')
   if (hasRefund && paidAmount === 0) {
     status = 'refunded'
   }
 
-  // Update booking
-  booking.payment.paidAmount = paidAmount
-  booking.payment.status = status
-  booking.payment.payments = payments.map(p => p._id)
-
-  await booking.save()
+  // Step 4: ATOMIC update booking with calculated values
+  await Booking.findByIdAndUpdate(
+    bookingId,
+    {
+      $set: {
+        'payment.paidAmount': paidAmount,
+        'payment.status': status,
+        'payment.payments': paymentIds
+      }
+    },
+    { new: true }
+  )
 }
 
 // ============================================================================
@@ -462,9 +571,10 @@ export async function updateBookingPayment(bookingId) {
  */
 export const queryBinByPartner = asyncHandler(async (req, res) => {
   const { bin, amount, currency = 'TRY' } = req.body
-  const partnerId = req.user.role === 'platform_admin'
-    ? req.body.partnerId || req.query.partnerId
-    : req.user.partner
+  // FIXED: Use accountType instead of role for platform admin check
+  const partnerId = req.user.accountType === 'platform'
+    ? req.body.partnerId || req.query.partnerId || req.partnerId
+    : req.user.accountId // Partner user uses their own accountId
 
   // Validate BIN
   if (!bin || bin.length < 6) {
@@ -498,7 +608,7 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
 export const queryCardBin = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
   const { bin } = req.body
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Validate BIN
   if (!bin || bin.length < 6) {
@@ -510,7 +620,7 @@ export const queryCardBin = asyncHandler(async (req, res) => {
     _id: paymentId,
     booking: bookingId,
     type: 'credit_card',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -544,7 +654,7 @@ export const queryCardBin = asyncHandler(async (req, res) => {
 export const processCardPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
   const { posId, installment, card, customer } = req.body
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Validate card
   if (!card || !card.holder || !card.number || !card.expiry || !card.cvv) {
@@ -556,7 +666,7 @@ export const processCardPayment = asyncHandler(async (req, res) => {
     _id: paymentId,
     booking: bookingId,
     type: 'credit_card',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   }).populate('booking', 'bookingNumber confirmationNumber leadGuest')
 
   if (!payment) {
@@ -663,14 +773,14 @@ export const processCardPayment = asyncHandler(async (req, res) => {
  */
 export const getCardPaymentStatus = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Find payment
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
     type: 'credit_card',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -746,7 +856,7 @@ export const getCardPaymentStatus = asyncHandler(async (req, res) => {
 export const preAuthorizeCard = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
   const { posId, installment, card, customer } = req.body
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Validate card
   if (!card || !card.holder || !card.number || !card.expiry || !card.cvv) {
@@ -758,7 +868,7 @@ export const preAuthorizeCard = asyncHandler(async (req, res) => {
     _id: paymentId,
     booking: bookingId,
     type: 'credit_card',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   }).populate('booking', 'bookingNumber confirmationNumber leadGuest')
 
   if (!payment) {
@@ -841,14 +951,14 @@ export const preAuthorizeCard = asyncHandler(async (req, res) => {
  */
 export const capturePreAuth = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Find payment
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
     status: 'pre_authorized',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -891,14 +1001,14 @@ export const capturePreAuth = asyncHandler(async (req, res) => {
  */
 export const releasePreAuth = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   // Find payment
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
     status: 'pre_authorized',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   })
 
   if (!payment) {
@@ -935,13 +1045,13 @@ export const releasePreAuth = asyncHandler(async (req, res) => {
  */
 export const getPreAuthorizedPayments = asyncHandler(async (req, res) => {
   const { id: bookingId } = req.params
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const partnerId = getRequiredPartnerId(req)
 
   const payments = await Payment.find({
     booking: bookingId,
     status: 'pre_authorized',
     'preAuth.isPreAuth': true,
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   }).sort({ createdAt: -1 })
 
   // Add expiry info
@@ -984,7 +1094,8 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
     cardBank,
     installment,
     amount,
-    error
+    error,
+    commission // Commission data from payment gateway
   } = req.body
 
   logger.info('[Payment Webhook] Received:', { transactionId, externalId, success })
@@ -1010,71 +1121,96 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
     return res.json({ success: true, message: 'Payment link handled separately' })
   }
 
-  // Find payment by ID (externalId = payment._id)
-  const payment = await Payment.findById(externalId)
+  // ATOMIC: Find and lock payment in single operation to prevent race conditions
+  // Only process if status is 'pending' - this prevents double-processing
+  const newStatus = success ? 'completed' : 'failed'
+  const updateData = success
+    ? {
+        status: 'completed',
+        completedAt: new Date(),
+        'cardDetails.gatewayStatus': 'completed',
+        'cardDetails.gatewayResponse': {
+          authCode,
+          refNumber,
+          provisionNumber,
+          maskedCard,
+          lastFour: lastFour || maskedCard?.slice(-4),
+          brand,
+          cardType,
+          cardFamily,
+          cardBank,
+          installment,
+          amount
+        },
+        'cardDetails.processedAt': new Date(),
+        'cardDetails.lastFour': lastFour || maskedCard?.slice(-4),
+        'cardDetails.brand': brand,
+        'cardDetails.cardFamily': cardFamily,
+        'cardDetails.bankName': cardBank,
+        'cardDetails.installment': installment || 1,
+        // Commission data from payment gateway
+        ...(commission && {
+          commission: {
+            bankRate: commission.bankRate,
+            bankAmount: commission.bankAmount,
+            platformRate: commission.platformRate,
+            platformAmount: commission.platformAmount,
+            totalRate: commission.totalRate,
+            totalAmount: commission.totalAmount,
+            netAmount: commission.netAmount
+          }
+        })
+      }
+    : {
+        status: 'failed',
+        'cardDetails.gatewayStatus': 'failed',
+        'cardDetails.gatewayResponse': { error: error || 'Payment failed', transactionId },
+        'cardDetails.processedAt': new Date()
+      }
 
+  const payment = await Payment.findOneAndUpdate(
+    {
+      _id: externalId,
+      status: 'pending' // Only update if still pending - ATOMIC GUARD
+    },
+    { $set: updateData },
+    { new: true }
+  )
+
+  // If no payment found or already processed
   if (!payment) {
-    logger.error('[Payment Webhook] Payment not found:', externalId)
-    return res.status(404).json({ success: false, error: 'Payment not found' })
-  }
-
-  logger.info('[Payment Webhook] Found payment:', { paymentId: payment._id, status: payment.status })
-
-  // Already processed?
-  if (payment.status === 'completed' || payment.status === 'failed') {
-    logger.info('[Payment Webhook] Payment already processed, status:', payment.status)
+    // Check if payment exists but was already processed
+    const existingPayment = await Payment.findById(externalId)
+    if (!existingPayment) {
+      logger.error('[Payment Webhook] Payment not found:', externalId)
+      return res.status(404).json({ success: false, error: 'Payment not found' })
+    }
+    // Already processed by another webhook call
+    logger.info('[Payment Webhook] Payment already processed, status:', existingPayment.status)
     return res.json({ success: true, message: 'Already processed' })
   }
+
+  logger.info('[Payment Webhook] Payment updated atomically:', { paymentId: payment._id, status: payment.status })
 
   // Fetch booking for notifications
   const booking = await Booking.findById(payment.booking)
 
-  // Update payment based on result
+  // Update booking payment summary
   if (success) {
-    logger.info('[Payment Webhook] Completing payment...')
-    await payment.completeCardPayment({
-      authCode,
-      refNumber,
-      provisionNumber,
-      maskedCard,
-      lastFour: lastFour || maskedCard?.slice(-4),
-      brand,
-      cardType,
-      cardFamily,
-      cardBank,
-      installment,
-      amount
-    })
-
-    // Update booking payment summary
     await updateBookingPayment(payment.booking)
-
-    // Send payment notification
-    if (booking) {
-      try {
-        const { sendPaymentNotification } = await import('./payment-notifications.service.js')
-        await sendPaymentNotification(payment, booking, 'completed')
-      } catch (notifyError) {
-        logger.error('[Payment Webhook] Failed to send notification:', notifyError.message)
-      }
-    }
-
     logger.info('[Payment Webhook] Payment completed successfully')
   } else {
-    logger.info('[Payment Webhook] Failing payment...')
-    await payment.failCardPayment(error || 'Payment failed', { transactionId })
-
-    // Send failure notification
-    if (booking) {
-      try {
-        const { sendPaymentNotification } = await import('./payment-notifications.service.js')
-        await sendPaymentNotification(payment, booking, 'failed')
-      } catch (notifyError) {
-        logger.error('[Payment Webhook] Failed to send notification:', notifyError.message)
-      }
-    }
-
     logger.info('[Payment Webhook] Payment marked as failed')
+  }
+
+  // Send notification (non-blocking)
+  if (booking) {
+    try {
+      const { sendPaymentNotification } = await import('./payment-notifications.service.js')
+      await sendPaymentNotification(payment, booking, success ? 'completed' : 'failed')
+    } catch (notifyError) {
+      logger.error('[Payment Webhook] Failed to send notification:', notifyError.message)
+    }
   }
 
   res.json({
@@ -1095,15 +1231,20 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
  */
 export const createPaymentLinkForPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const { sendEmail = false, sendSms = false, expiresInDays = 7 } = req.body
-  const partnerId = req.user.role === 'platform_admin' ? req.query.partnerId : req.user.partner
+  const { sendEmail = false, sendSms = false } = req.body
+  const partnerId = getRequiredPartnerId(req)
+
+  // VALIDATION: expiresInDays must be a positive integer (1-365)
+  let expiresInDays = parseInt(req.body.expiresInDays) || 7
+  if (expiresInDays < 1) expiresInDays = 1
+  if (expiresInDays > 365) expiresInDays = 365
 
   // Find the payment
   const payment = await Payment.findOne({
     _id: paymentId,
     booking: bookingId,
     type: 'credit_card',
-    ...(partnerId && { partner: partnerId })
+    partner: partnerId // SECURE: Always filter by partner
   }).populate('booking', 'bookingNumber leadGuest contact partner')
 
   if (!payment) {
