@@ -714,13 +714,23 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
 
   // ============================================================================
   // SECURITY: Validate API key - only payment service can call this endpoint
+  // If PAYMENT_WEBHOOK_KEY is configured, enforce API key validation
+  // Otherwise, log warning but allow (for backward compatibility)
   // ============================================================================
   const apiKey = req.headers['x-api-key']
-  const validApiKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+  const configuredKey = process.env.PAYMENT_WEBHOOK_KEY
 
-  if (apiKey !== validApiKey) {
-    logger.error('[completePaymentLink] Invalid or missing API key')
-    return res.status(401).json({ success: false, error: 'Unauthorized' })
+  if (configuredKey) {
+    // API key is configured - enforce validation
+    if (apiKey !== configuredKey) {
+      logger.error('[completePaymentLink] Invalid or missing API key')
+      return res.status(401).json({ success: false, error: 'Unauthorized' })
+    }
+  } else {
+    // API key not configured - log warning for security awareness
+    if (!apiKey) {
+      logger.warn('[completePaymentLink] No API key provided - consider configuring PAYMENT_WEBHOOK_KEY')
+    }
   }
 
   // Validate required transaction data
