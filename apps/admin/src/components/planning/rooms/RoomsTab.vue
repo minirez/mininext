@@ -100,8 +100,8 @@
               <span>{{ roomType.code }}</span>
               <span class="flex items-center gap-1">
                 <span class="material-icons text-sm">person</span>
-                {{ roomType.occupancy?.maxAdults || 2 }} +
-                {{ roomType.occupancy?.maxChildren || 2 }}
+                {{ roomType.occupancy?.maxAdults ?? 2 }} +
+                {{ roomType.occupancy?.maxChildren ?? 0 }}
               </span>
               <span
                 class="px-2 py-0.5 rounded text-xs"
