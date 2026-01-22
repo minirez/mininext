@@ -497,12 +497,12 @@ watch(
     if (newVal) {
       formData.value = {
         occupancy: {
-          maxAdults: newVal.occupancy?.maxAdults || 2,
-          minAdults: newVal.occupancy?.minAdults || 1,
-          maxChildren: newVal.occupancy?.maxChildren || 2,
-          maxInfants: newVal.occupancy?.maxInfants || 1,
-          totalMaxGuests: newVal.occupancy?.totalMaxGuests || 4,
-          baseOccupancy: newVal.occupancy?.baseOccupancy || 2
+          maxAdults: newVal.occupancy?.maxAdults ?? 2,
+          minAdults: newVal.occupancy?.minAdults ?? 1,
+          maxChildren: newVal.occupancy?.maxChildren ?? 0,
+          maxInfants: newVal.occupancy?.maxInfants ?? 0,
+          totalMaxGuests: newVal.occupancy?.totalMaxGuests ?? 4,
+          baseOccupancy: newVal.occupancy?.baseOccupancy ?? 2
         },
         pricingType: newVal.pricingType || 'unit',
         useMultipliers: newVal.useMultipliers || false,
