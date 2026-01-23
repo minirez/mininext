@@ -175,7 +175,9 @@ const activeTab = computed(() => {
 // Refresh trigger for cross-tab data updates
 const refreshTrigger = ref(0)
 
-const handleRefresh = () => {
+const handleRefresh = async () => {
+  // Refresh hotel data from API
+  await hotelStore.refreshHotel()
   // Increment trigger to force child components to refresh their data
   refreshTrigger.value++
 }

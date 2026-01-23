@@ -6,6 +6,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import hotelService from '@/services/hotelService'
 
 const STORAGE_KEY_PREFIX = 'selected_hotel_'
 
@@ -66,6 +67,20 @@ export const useHotelStore = defineStore('hotel', () => {
     }
   }
 
+  // Refresh hotel data from API
+  const refreshHotel = async () => {
+    if (!selectedHotel.value?._id) return
+
+    try {
+      const response = await hotelService.getHotel(selectedHotel.value._id)
+      if (response.success && response.data) {
+        setHotel(response.data)
+      }
+    } catch (error) {
+      console.error('Failed to refresh hotel:', error)
+    }
+  }
+
   return {
     // State
     selectedHotel,
@@ -78,6 +93,7 @@ export const useHotelStore = defineStore('hotel', () => {
     setHotel,
     setPartner,
     clearHotel,
-    loadHotelForPartner
+    loadHotelForPartner,
+    refreshHotel
   }
 })
