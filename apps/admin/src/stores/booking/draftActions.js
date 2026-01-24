@@ -230,24 +230,40 @@ export function createDraftActions(state, getters, helpers) {
 
         // Restore guests
         if (draft.leadGuest) {
-          guests.value.leadGuest = { ...guests.value.leadGuest, ...draft.leadGuest }
+          guests.value.leadGuest = {
+            ...guests.value.leadGuest,
+            ...draft.leadGuest,
+            // Keep default title if draft has empty title
+            title: draft.leadGuest.title || guests.value.leadGuest.title || 'mr'
+          }
         }
         if (draft.rooms) {
           guests.value.roomGuests = draft.rooms.map((room, index) => {
-            // If room has guests data, use it
+            // If room has guests data, use it but apply default titles if empty
             if (room.guests && room.guests.length > 0) {
-              return room.guests
+              let adultIndex = 0
+              return room.guests.map(guest => {
+                if (guest.type === 'adult') {
+                  const defaultTitle = adultIndex === 0 ? 'mr' : adultIndex === 1 ? 'mrs' : ''
+                  adultIndex++
+                  return {
+                    ...guest,
+                    title: guest.title || defaultTitle
+                  }
+                }
+                return guest
+              })
             }
             // Otherwise, initialize guests based on cart
             const cartRoom = cart.value[index]
             if (!cartRoom) return []
 
             const roomGuests = []
-            // Add adults
+            // Add adults - Default titles: 1st adult = mr, 2nd adult = mrs
             for (let i = 0; i < (cartRoom.adults || 2); i++) {
               roomGuests.push({
                 type: 'adult',
-                title: '',
+                title: i === 0 ? 'mr' : i === 1 ? 'mrs' : '',
                 firstName: '',
                 lastName: '',
                 nationality: 'TR',

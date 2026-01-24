@@ -13,8 +13,8 @@
             {{ roomTypeName }}
           </div>
           <div class="text-xs text-gray-500 dark:text-slate-400">
-            {{ roomType?.occupancy?.maxAdults || 2 }}+{{
-              roomType?.occupancy?.maxChildren || 2
+            {{ roomType?.occupancy?.maxAdults ?? 2 }}+{{
+              roomType?.occupancy?.maxChildren ?? 0
             }}
           </div>
         </div>

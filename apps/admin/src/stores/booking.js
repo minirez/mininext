@@ -79,7 +79,7 @@ export const useBookingStore = defineStore('booking', () => {
   // Guest information
   const guests = ref({
     leadGuest: {
-      title: '',
+      title: 'mr',
       firstName: '',
       lastName: '',
       email: '',
@@ -489,7 +489,7 @@ export const useBookingStore = defineStore('booking', () => {
 
     guests.value = {
       leadGuest: {
-        title: '',
+        title: 'mr',
         firstName: '',
         lastName: '',
         email: '',

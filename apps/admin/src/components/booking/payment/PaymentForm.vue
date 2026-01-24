@@ -499,36 +499,34 @@ const handleCardModalClose = () => {
 // Handle payment link submit
 const handlePaymentLinkSubmit = async () => {
   try {
-    // Create payment link for existing booking
-    const customerName = `${props.booking.leadGuest?.firstName || ''} ${props.booking.leadGuest?.lastName || ''}`.trim() || 'Misafir'
-    const customerEmail = props.booking.leadGuest?.email || props.booking.contact?.email
-    const customerPhone = props.booking.leadGuest?.phone || props.booking.contact?.phone
-
-    const hotelName = typeof props.booking.hotel?.name === 'object'
-      ? (props.booking.hotel.name.tr || props.booking.hotel.name.en || '')
-      : (props.booking.hotel?.name || '')
-
-    const linkData = {
-      customer: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone
-      },
-      description: `${hotelName} - ${props.booking.bookingNumber || props.booking.confirmationNumber}`,
+    // Step 1: Create Payment record first (so it appears in payments list)
+    const paymentData = {
+      type: 'credit_card',
       amount: form.amount,
       currency: props.currency,
-      booking: props.booking._id,
-      installment: {
-        enabled: true,
-        maxCount: 6
-      },
-      sendEmail: sendPaymentLinkEmail.value,
-      sendSms: sendPaymentLinkSms.value
+      notes: form.notes || 'Ödeme linki gönderildi'
     }
 
-    const response = await paymentLinkService.createPaymentLink(linkData)
+    const paymentResponse = await paymentService.addPayment(props.booking._id, paymentData)
 
-    if (response.success) {
+    if (!paymentResponse.success) {
+      throw new Error(paymentResponse.message || 'Payment creation failed')
+    }
+
+    const paymentId = paymentResponse.data._id
+
+    // Step 2: Create payment link for this payment
+    const linkResponse = await paymentService.createPaymentLinkForPayment(
+      props.booking._id,
+      paymentId,
+      {
+        sendEmail: sendPaymentLinkEmail.value,
+        sendSms: sendPaymentLinkSms.value,
+        expiresInDays: 7
+      }
+    )
+
+    if (linkResponse.success) {
       toast.success(t('booking.creditCardOptions.paymentLinkSentDescription'))
       emit('saved')
     }

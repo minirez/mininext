@@ -183,9 +183,9 @@ const emit = defineEmits(['go-back', 'proceed'])
 // Initialization flag
 const isInitialized = ref(false)
 
-// Lead guest
+// Lead guest - varsayılan title: 'mr'
 const leadGuest = ref({
-  title: '',
+  title: 'mr',
   firstName: '',
   lastName: '',
   nationality: '',
@@ -201,62 +201,71 @@ const leadGuestErrors = ref({})
 const roomGuestErrors = ref([])
 const hasValidationErrors = ref(false)
 
-// Room guests data
+// Room guests data - { adults: [], children: [] } formatında
 const roomGuests = ref([])
 
-// Create empty guest object
-const createEmptyAdult = () => ({
-  title: '',
-  firstName: '',
-  lastName: '',
-  nationality: ''
-})
+// Varsayılan title'lar: 1. yetişkin = mr, 2. yetişkin = mrs
+const getDefaultTitle = index => {
+  if (index === 0) return 'mr'
+  if (index === 1) return 'mrs'
+  return ''
+}
 
-const createEmptyChild = () => ({
-  title: '',
-  firstName: '',
-  lastName: '',
-  nationality: '',
-  birthDate: ''
-})
-
-// Ensure roomGuests structure matches cart
-const ensureRoomGuestsStructure = () => {
+// Cart'a göre roomGuests yapısını oluştur/güncelle
+const buildRoomGuestsFromCart = () => {
   const cart = bookingStore.cart
-  const newRoomGuests = []
-  const newRoomErrors = []
+  const result = []
+  const errors = []
 
   cart.forEach((room, roomIndex) => {
-    const existingRoom = roomGuests.value[roomIndex]
     const adultsCount = room.adults || 0
     const childrenCount = room.children?.length || 0
+    const existingRoom = roomGuests.value[roomIndex]
 
-    // Build adults array
+    // Adults
     const adults = []
     for (let i = 0; i < adultsCount; i++) {
-      adults.push(existingRoom?.adults?.[i] || createEmptyAdult())
+      const existing = existingRoom?.adults?.[i]
+      adults.push({
+        title: existing?.title || getDefaultTitle(i),
+        firstName: existing?.firstName || '',
+        lastName: existing?.lastName || '',
+        nationality: existing?.nationality || ''
+      })
     }
 
-    // Build children array
+    // Children
     const children = []
     for (let i = 0; i < childrenCount; i++) {
-      children.push(existingRoom?.children?.[i] || createEmptyChild())
+      const existing = existingRoom?.children?.[i]
+      children.push({
+        title: existing?.title || '',
+        firstName: existing?.firstName || '',
+        lastName: existing?.lastName || '',
+        nationality: existing?.nationality || '',
+        birthDate: existing?.birthDate || ''
+      })
     }
 
-    newRoomGuests.push({ adults, children })
-    newRoomErrors.push({
+    result.push({ adults, children })
+    errors.push({
       adults: adults.map(() => ({})),
       children: children.map(() => ({}))
     })
   })
 
-  roomGuests.value = newRoomGuests
-  roomGuestErrors.value = newRoomErrors
+  roomGuests.value = result
+  roomGuestErrors.value = errors
 }
 
-// Safe getters for template
+// Template için getter - her zaman doğru title ile döndür
 const getAdultsForRoom = roomIndex => {
-  return roomGuests.value[roomIndex]?.adults || []
+  const adults = roomGuests.value[roomIndex]?.adults || []
+  // Title boşsa varsayılanı uygula
+  return adults.map((adult, i) => ({
+    ...adult,
+    title: adult.title || getDefaultTitle(i)
+  }))
 }
 
 const getChildrenForRoom = roomIndex => {
@@ -278,36 +287,36 @@ const updateChildGuest = (roomIndex, childIndex, value) => {
 
 // Initialize on mount
 onMounted(async () => {
-  // Load lead guest from store
-  if (bookingStore.guests.leadGuest?.firstName) {
-    leadGuest.value = { ...bookingStore.guests.leadGuest }
+  // Lead guest - store'dan yükle, title yoksa varsayılan kullan
+  const stored = bookingStore.guests.leadGuest
+  if (stored) {
+    leadGuest.value = {
+      title: stored.title || 'mr',
+      firstName: stored.firstName || '',
+      lastName: stored.lastName || '',
+      nationality: stored.nationality || '',
+      email: stored.email || '',
+      phone: stored.phone || ''
+    }
   }
 
-  // Load room guests from store or create fresh
-  if (
-    bookingStore.guests.roomGuests?.length > 0 &&
-    bookingStore.guests.roomGuests.length === bookingStore.cart.length
-  ) {
-    roomGuests.value = JSON.parse(JSON.stringify(bookingStore.guests.roomGuests))
-  }
-
-  // Ensure structure matches cart
-  ensureRoomGuestsStructure()
+  // Room guests - cart'a göre oluştur
+  buildRoomGuestsFromCart()
 
   await nextTick()
   isInitialized.value = true
 })
 
-// Watch for cart changes
+// Cart değişince room guests'i yeniden oluştur
 watch(
   () => bookingStore.cart,
   () => {
-    ensureRoomGuestsStructure()
+    buildRoomGuestsFromCart()
   },
   { deep: true }
 )
 
-// Watch lead guest and sync to store
+// Lead guest değişince store'a sync et
 watch(
   leadGuest,
   value => {
@@ -316,7 +325,7 @@ watch(
   { deep: true }
 )
 
-// Watch room guests and sync to store
+// Room guests değişince store'a sync et
 watch(
   roomGuests,
   value => {

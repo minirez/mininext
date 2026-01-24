@@ -163,10 +163,10 @@ function initializeRoomTemplates(roomTemplates) {
     size: room.size || null,
     bedConfiguration: room.bedConfiguration || [],
     occupancy: {
-      maxAdults: room.occupancy?.maxAdults || 2,
-      maxChildren: room.occupancy?.maxChildren || 2,
-      maxInfants: room.occupancy?.maxInfants || 1,
-      totalMaxGuests: room.occupancy?.totalMaxGuests || 4
+      maxAdults: room.occupancy?.maxAdults ?? 2,
+      maxChildren: room.occupancy?.maxChildren ?? 0,
+      maxInfants: room.occupancy?.maxInfants ?? 0,
+      totalMaxGuests: room.occupancy?.totalMaxGuests ?? 4
     }
   }))
 }

@@ -8,6 +8,7 @@ import { asyncHandler } from '#helpers'
 import Hotel from '../hotel/hotel.model.js'
 import Market from '../planning/market.model.js'
 import Booking from './booking.model.js'
+import Payment from './payment.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError, ForbiddenError } from '#core/errors.js'
 import logger from '#core/logger.js'
@@ -22,6 +23,7 @@ import {
 } from '@booking-engine/validation/schemas'
 import { getPartnerId, getSourceInfo } from '#services/helpers.js'
 import { sanitizeRoomGuests } from './helpers.js'
+import { updateBookingPayment } from './payment.service.js'
 
 // ==================== DRAFT BOOKING MANAGEMENT ====================
 
@@ -575,6 +577,58 @@ export const completeDraft = asyncHandler(async (req, res) => {
   }
 
   await draft.save()
+
+  // Create Payment record based on payment method
+  // This ensures the payment appears in pending payments list
+  const paymentMethod = draft.payment?.method
+  if (paymentMethod && draft.pricing?.grandTotal > 0) {
+    try {
+      // Map booking payment method to Payment model type
+      const paymentTypeMap = {
+        pay_at_checkin: 'pay_at_checkin',
+        cash: 'cash',
+        bank_transfer: 'bank_transfer',
+        credit_card: 'credit_card',
+        agency_credit: 'agency_credit'
+      }
+
+      const paymentType = paymentTypeMap[paymentMethod]
+      if (paymentType) {
+        const payment = new Payment({
+          partner: partnerId,
+          booking: draft._id,
+          type: paymentType,
+          amount: draft.pricing.grandTotal,
+          currency: draft.pricing.currency || 'TRY',
+          notes: paymentMethod === 'cash' ? 'Girişte ödenecek' : '',
+          createdBy: req.user?._id
+        })
+
+        await payment.save()
+
+        // For cash payments, override the auto-complete from pre-save hook
+        // "Girişte Nakit Ödeme" means payment will be collected at check-in, so it should be pending
+        if (paymentType === 'cash') {
+          payment.status = 'pending'
+          payment.completedAt = undefined
+          await payment.save()
+        }
+
+        // Update booking payment status and reference
+        await updateBookingPayment(draft._id)
+
+        logger.info('Payment record created for booking:', {
+          bookingNumber: draft.bookingNumber,
+          paymentType,
+          amount: draft.pricing.grandTotal,
+          paymentStatus: payment.status
+        })
+      }
+    } catch (paymentError) {
+      // Log error but don't fail the booking completion
+      logger.error('Failed to create payment record:', paymentError)
+    }
+  }
 
   res.json({
     success: true,

@@ -117,10 +117,10 @@
               <span class="material-icons text-sm mr-1">link</span>
               {{ $t('payment.sendLink.button') }}
             </button>
-            <!-- Confirm Button (for pending bank transfers and pay at check-in) -->
+            <!-- Confirm Button (for pending bank transfers, pay at check-in, and cash payments) -->
             <button
               v-if="
-                (payment.type === 'bank_transfer' || payment.type === 'pay_at_checkin') &&
+                (payment.type === 'bank_transfer' || payment.type === 'pay_at_checkin' || payment.type === 'cash') &&
                 payment.status === 'pending'
               "
               class="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"

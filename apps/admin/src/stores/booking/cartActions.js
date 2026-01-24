@@ -101,6 +101,7 @@ export function createCartActions(state) {
 
   /**
    * Initialize guests for a room
+   * Default titles: 1st adult = mr (Bay), 2nd adult = mrs (Bayan)
    */
   function initializeRoomGuests(roomIndex) {
     const room = cart.value[roomIndex]
@@ -112,7 +113,7 @@ export function createCartActions(state) {
     for (let i = 0; i < room.adults; i++) {
       roomGuests.push({
         type: 'adult',
-        title: '',
+        title: i === 0 ? 'mr' : i === 1 ? 'mrs' : '',
         firstName: '',
         lastName: '',
         nationality: 'TR',

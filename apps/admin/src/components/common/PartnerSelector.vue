@@ -18,8 +18,17 @@
       </svg>
       <div class="text-left">
         <div class="text-xs text-gray-500 dark:text-slate-400">{{ $t('nav.selectPartner') }}</div>
-        <div class="text-sm font-medium">
-          {{ partnerStore.selectedPartner?.companyName || 'Platform' }}
+        <div class="text-sm font-medium flex items-center gap-1.5">
+          <span>{{ partnerStore.selectedPartner?.companyName || 'Platform' }}</span>
+          <span
+            v-if="partnerStore.selectedPartner"
+            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+            :class="partnerStore.selectedPartner.partnerType === 'hotel'
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+          >
+            {{ $t(`partners.types.${partnerStore.selectedPartner.partnerType || 'agency'}`) }}
+          </span>
         </div>
       </div>
       <svg
@@ -142,7 +151,17 @@
               @click="selectPartner(partner)"
             >
               <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{{ partner.companyName }}</div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-medium truncate">{{ partner.companyName }}</span>
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0"
+                    :class="partner.partnerType === 'hotel'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+                  >
+                    {{ $t(`partners.types.${partner.partnerType || 'agency'}`) }}
+                  </span>
+                </div>
                 <div
                   v-if="partner.branding?.siteDomain"
                   class="text-xs text-emerald-600 dark:text-emerald-400 truncate font-medium"

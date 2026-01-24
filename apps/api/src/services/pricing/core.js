@@ -65,9 +65,9 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
   children = validChildren
 
   // Capacity validation
-  const maxAdults = roomType?.occupancy?.maxAdults || 30
-  const maxChildren = roomType?.occupancy?.maxChildren || 20
-  const totalMaxGuests = roomType?.occupancy?.totalMaxGuests || 50
+  const maxAdults = roomType?.occupancy?.maxAdults ?? 30
+  const maxChildren = roomType?.occupancy?.maxChildren ?? 0
+  const totalMaxGuests = roomType?.occupancy?.totalMaxGuests ?? 50
 
   // Check adult capacity
   if (adults > maxAdults) {

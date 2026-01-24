@@ -126,10 +126,20 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     }
 
     // Check capacity
-    const maxAdults = roomType.occupancy?.maxAdults || 2
-    const maxChildren = roomType.occupancy?.maxChildren || 2
-    const maxTotal = roomType.occupancy?.totalMaxGuests || 4
+    const maxAdults = roomType.occupancy?.maxAdults ?? 2
+    const maxChildren = roomType.occupancy?.maxChildren ?? 0
+    const maxTotal = roomType.occupancy?.totalMaxGuests ?? 4
     const totalPax = adults + children.length
+
+    // Check if room accepts children
+    if (children.length > maxChildren) {
+      roomResult.capacityExceeded = true
+      roomResult.capacityMessage = maxChildren === 0
+        ? 'Bu oda çocuk kabul etmemektedir'
+        : `Max ${maxChildren} çocuk kabul edilmektedir`
+      results.push(roomResult)
+      continue
+    }
 
     if (adults > maxAdults || totalPax > maxTotal) {
       roomResult.capacityExceeded = true

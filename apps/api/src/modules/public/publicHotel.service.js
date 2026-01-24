@@ -172,10 +172,10 @@ export const getRoomTypes = asyncHandler(async (req, res) => {
       images: rt.images,
       amenities: rt.amenities,
       occupancy: {
-        baseOccupancy: rt.occupancy?.baseOccupancy || 2,
-        maxAdults: rt.occupancy?.maxAdults || 2,
-        maxChildren: rt.occupancy?.maxChildren || 2,
-        totalMaxGuests: rt.occupancy?.totalMaxGuests || 4
+        baseOccupancy: rt.occupancy?.baseOccupancy ?? 2,
+        maxAdults: rt.occupancy?.maxAdults ?? 2,
+        maxChildren: rt.occupancy?.maxChildren ?? 0,
+        totalMaxGuests: rt.occupancy?.totalMaxGuests ?? 4
       }
     }))
   })

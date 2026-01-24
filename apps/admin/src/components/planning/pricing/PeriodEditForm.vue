@@ -77,8 +77,8 @@
                 {{ getRoomTypeName(currentRoomType) }}
               </div>
               <div class="text-xs text-gray-500 dark:text-slate-400">
-                {{ currentRoomType.occupancy?.maxAdults || 2 }}+{{
-                  currentRoomType.occupancy?.maxChildren || 2
+                {{ currentRoomType.occupancy?.maxAdults ?? 2 }}+{{
+                  currentRoomType.occupancy?.maxChildren ?? 0
                 }}
               </div>
             </div>

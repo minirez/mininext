@@ -205,14 +205,14 @@ export const importContractPricing = asyncHandler(async (req, res) => {
         const cap = contractRoom.capacity
         const existingOccupancy = existingRoom.occupancy || {}
 
-        const newMaxAdults = cap.maxAdults || existingOccupancy.maxAdults || 2
+        const newMaxAdults = cap.maxAdults ?? existingOccupancy.maxAdults ?? 2
         const newBaseOccupancy =
-          cap.standardOccupancy || cap.maxAdults || existingOccupancy.baseOccupancy || 2
+          cap.standardOccupancy ?? cap.maxAdults ?? existingOccupancy.baseOccupancy ?? 2
         const newMaxChildren =
-          cap.maxChildren !== undefined ? cap.maxChildren : existingOccupancy.maxChildren || 2
+          cap.maxChildren !== undefined ? cap.maxChildren : (existingOccupancy.maxChildren ?? 0)
         const newMaxInfants =
-          cap.maxInfants !== undefined ? cap.maxInfants : existingOccupancy.maxInfants || 1
-        const newTotalMaxGuests = cap.maxOccupancy || existingOccupancy.totalMaxGuests || 4
+          cap.maxInfants !== undefined ? cap.maxInfants : (existingOccupancy.maxInfants ?? 0)
+        const newTotalMaxGuests = cap.maxOccupancy ?? existingOccupancy.totalMaxGuests ?? 4
 
         const needsUpdate =
           newMaxAdults !== existingOccupancy.maxAdults ||
@@ -246,11 +246,11 @@ export const importContractPricing = asyncHandler(async (req, res) => {
         name: { tr: contractRoom.contractName, en: contractRoom.contractName },
         description: { tr: '', en: '' },
         occupancy: {
-          maxAdults: cap.maxAdults || 2,
-          baseOccupancy: cap.standardOccupancy || cap.maxAdults || 2,
-          maxChildren: cap.maxChildren || 2,
-          maxInfants: cap.maxInfants || 1,
-          totalMaxGuests: cap.maxOccupancy || 4
+          maxAdults: cap.maxAdults ?? 2,
+          baseOccupancy: cap.standardOccupancy ?? cap.maxAdults ?? 2,
+          maxChildren: cap.maxChildren ?? 0,
+          maxInfants: cap.maxInfants ?? 0,
+          totalMaxGuests: cap.maxOccupancy ?? 4
         },
         status: 'active',
         displayOrder: roomTypes.length
