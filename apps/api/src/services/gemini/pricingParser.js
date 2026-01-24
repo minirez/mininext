@@ -116,7 +116,15 @@ JSON formati (SADECE JSON döndür):
   "summary": {"tr": "...", "en": "..."}
 }
 
-ACTION: stop_sale, open_sale, single_stop, open_single, set_price, update_price, set_supplement, update_allotment, update_min_stay, update_max_stay, close_to_arrival, close_to_departure
+ACTION: stop_sale, open_sale, single_stop, open_single, set_price, update_price, update_single_supplement, update_extra_adult, update_extra_child, update_child_order_pricing, update_allotment, update_min_stay, update_max_stay, close_to_arrival, close_to_departure
+
+EK YETISKIN/COCUK FIYATI (COK ÖNEMLI!):
+- "ek yetiskin", "ekstra yetiskin", "extra adult" -> update_extra_adult
+- "ek cocuk", "ekstra cocuk", "extra child" -> update_extra_child veya update_child_order_pricing
+- "tek kisi farki", "single supplement" -> update_single_supplement
+- Bu action'lar icin value: fiyat (sayi), valueType: "fixed" (varsayilan) veya "percentage"
+- "1. cocuk", "birinci cocuk", "ilk cocuk" -> update_child_order_pricing, childIndex: 1
+- "2. cocuk", "ikinci cocuk" -> update_child_order_pricing, childIndex: 2
 
 CTA/CTD KURALLARI (COK ÖNEMLI!):
 - close_to_arrival (CTA) ve close_to_departure (CTD) icin value: true veya false OLMALI
@@ -170,7 +178,14 @@ NOT: "sezon" dedigi icin Sezonlar listesinden tarih aldik!
 
 ÖRNEK 3 - "secili günlere stop cek" (SECILI HÜCRELER: 2026-06-15 - 2026-06-20, Odalar: STD, DBL, Pansiyonlar: AI):
 NOT: "secili" dedigi icin SECILI HÜCRELERIN tarih araligini ve filtrelerini kullandik!
-{"success":true,"actions":[{"action":"stop_sale","filters":{"roomTypes":["STD","DBL"],"mealPlans":["AI"],"daysOfWeek":"all"},"value":true}],"dateRange":{"startDate":"2026-06-15","endDate":"2026-06-20"},"summary":{"tr":"Secili 6 hücreye stop sale uygulanacak","en":"Stop sale will be applied to 6 selected cells"}}`
+{"success":true,"actions":[{"action":"stop_sale","filters":{"roomTypes":["STD","DBL"],"mealPlans":["AI"],"daysOfWeek":"all"},"value":true}],"dateRange":{"startDate":"2026-06-15","endDate":"2026-06-20"},"summary":{"tr":"Secili 6 hücreye stop sale uygulanacak","en":"Stop sale will be applied to 6 selected cells"}}
+
+ÖRNEK 4 - "DFV odasina 5-10 mayis arasi ek yetiskin 200 euro, ek cocuk 100 euro":
+NOT: Birden fazla islem oldugu icin actions dizisine hepsini ekledik!
+{"success":true,"actions":[{"action":"update_extra_adult","filters":{"roomTypes":["DFV"],"mealPlans":"all","daysOfWeek":"all"},"value":200,"valueType":"fixed"},{"action":"update_child_order_pricing","filters":{"roomTypes":["DFV"],"mealPlans":"all","daysOfWeek":"all"},"value":100,"valueType":"fixed","childIndex":1}],"dateRange":{"startDate":"2026-05-05","endDate":"2026-05-10"},"summary":{"tr":"DFV odasina 5-10 Mayis arasi ek yetiskin 200€, 1. cocuk 100€ olarak ayarlanacak","en":"DFV room will have extra adult 200€, 1st child 100€ for May 5-10"}}
+
+ÖRNEK 5 - "tüm odalara tek kisi farki 50 euro":
+{"success":true,"actions":[{"action":"update_single_supplement","filters":{"roomTypes":"all","mealPlans":"all","daysOfWeek":"all"},"value":50,"valueType":"fixed"}],"dateRange":{"startDate":"...","endDate":"..."},"summary":{"tr":"Tüm odalara tek kisi farki 50€ olarak girilecek","en":"Single supplement will be set to 50€ for all rooms"}}`
 
   try {
     const responseText = await generateContent(prompt, {

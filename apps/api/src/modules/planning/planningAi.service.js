@@ -558,6 +558,68 @@ export const executeAIPricingCommand = asyncHandler(async (req, res) => {
         }
         break
 
+      case 'update_child_order_pricing': {
+        // Update childOrderPricing array for specific child index
+        // childOrderPricing is an array where index 0 = 1st child, index 1 = 2nd child, etc.
+        if (useDirectIds) {
+          const rates = await Rate.find({ _id: { $in: rateIds }, hotel: hotelId, partner: partnerId })
+            .select('_id childOrderPricing')
+            .lean()
+          if (rates.length > 0) {
+            const idx = (childIndex || 1) - 1
+            const bulkOps = rates.map(rate => {
+              const childOrderPricing = [...(rate.childOrderPricing || [])]
+              // Ensure array is long enough
+              while (childOrderPricing.length <= idx) {
+                childOrderPricing.push(0)
+              }
+              childOrderPricing[idx] = value
+              return {
+                updateOne: {
+                  filter: { _id: rate._id },
+                  update: { $set: { childOrderPricing, source: 'ai', aiCommand: action } }
+                }
+              }
+            })
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
+          }
+        } else {
+          rateFilter.date = buildDateFilter(
+            dateRange.startDate,
+            dateRange.endDate,
+            filters?.daysOfWeek
+          )
+          const rates = await Rate.find(rateFilter).select('_id date childOrderPricing').lean()
+          const filteredRates = rates.filter(rate => matchesDayOfWeek(rate.date, filters?.daysOfWeek))
+          if (filteredRates.length > 0) {
+            const idx = (childIndex || 1) - 1
+            const bulkOps = filteredRates.map(rate => {
+              const childOrderPricing = [...(rate.childOrderPricing || [])]
+              // Ensure array is long enough
+              while (childOrderPricing.length <= idx) {
+                childOrderPricing.push(0)
+              }
+              childOrderPricing[idx] = value
+              return {
+                updateOne: {
+                  filter: { _id: rate._id },
+                  update: { $set: { childOrderPricing, source: 'ai', aiCommand: action } }
+                }
+              }
+            })
+            const bulkResult = await Rate.bulkWrite(bulkOps)
+            updateResult = { modifiedCount: bulkResult.modifiedCount }
+          } else {
+            updateResult = { modifiedCount: 0 }
+          }
+        }
+        logger.info(`update_child_order_pricing: updated ${updateResult?.modifiedCount || 0} rates for child index ${childIndex || 1}`)
+        break
+      }
+
       case 'update_child_free': {
         // Use bulkWrite for efficient batch update
         const rates = await Rate.find(rateFilter).select('_id date childPricing').lean()
