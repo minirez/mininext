@@ -593,15 +593,16 @@ const toggleAmenity = key => {
   }
 }
 
-// Track if form has been initialized to prevent re-initialization
-const isFormInitialized = ref(false)
+// Track which roomType ID has been initialized to detect changes
+const initializedRoomTypeId = ref(null)
 
 // Watch for roomType prop changes (only reference changes, not deep)
 watch(
   () => props.roomType,
   newVal => {
-    // Only initialize once for new room types, or when roomType reference changes for existing
-    if (newVal && !isFormInitialized.value) {
+    // Initialize when roomType changes (different ID or new room)
+    const currentId = newVal?._id || null
+    if (newVal && initializedRoomTypeId.value !== currentId) {
       formData.value = {
         code: newVal.code || '',
         name: { ...createMultiLangObject(), ...newVal.name },
@@ -619,9 +620,11 @@ watch(
         if (existingDef) {
           selectedCodeDef.value = existingDef
         }
+      } else {
+        selectedCodeDef.value = null
       }
 
-      isFormInitialized.value = true
+      initializedRoomTypeId.value = currentId
     }
   },
   { immediate: true }
