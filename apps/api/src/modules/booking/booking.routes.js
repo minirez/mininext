@@ -1005,6 +1005,111 @@ router.post('/:id/amendment/apply', bookingService.applyAmendment)
  */
 router.get('/:id/amendments', bookingService.getAmendmentHistory)
 
+// ==================== EMAIL ====================
+
+/**
+ * @swagger
+ * /api/booking/{id}/email-preview/{type}:
+ *   get:
+ *     tags: [Bookings]
+ *     summary: Preview booking email
+ *     description: Get email HTML preview for a booking
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *       - name: type
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [confirmation, payment_reminder, hotel_notification, checkin_reminder]
+ *       - name: language
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [tr, en]
+ *           default: tr
+ *     responses:
+ *       200:
+ *         description: Email preview HTML
+ */
+router.get('/:id/email-preview/:type', bookingService.previewBookingEmail)
+
+/**
+ * @swagger
+ * /api/booking/{id}/send-email:
+ *   post:
+ *     tags: [Bookings]
+ *     summary: Send booking email
+ *     description: Send email to guest or hotel
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [type]
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [confirmation, payment_reminder, hotel_notification, checkin_reminder]
+ *               recipient:
+ *                 type: string
+ *                 enum: [guest, hotel]
+ *               customEmail:
+ *                 type: string
+ *                 format: email
+ *               language:
+ *                 type: string
+ *                 enum: [tr, en]
+ *               sendCopy:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Email sent successfully
+ */
+router.post('/:id/send-email', bookingService.sendBookingEmail)
+
+/**
+ * @swagger
+ * /api/booking/{id}/guest-info:
+ *   patch:
+ *     tags: [Bookings]
+ *     summary: Update guest info (inline edit)
+ *     description: Update lead guest, contact, or room guest information
+ *     parameters:
+ *       - $ref: '#/components/parameters/IdParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               leadGuest:
+ *                 type: object
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *               contact:
+ *                 type: object
+ *                 properties:
+ *                   email:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *               guestLanguage:
+ *                 type: string
+ *                 enum: [tr, en, ru, de, fr]
+ *     responses:
+ *       200:
+ *         description: Guest info updated
+ */
+router.patch('/:id/guest-info', bookingService.updateGuestInfo)
+
 // ==================== PAYMENTS ====================
 // Mount payment routes under /api/bookings/:id/payments
 router.use('/:id/payments', paymentRoutes)

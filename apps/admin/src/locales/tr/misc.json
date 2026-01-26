@@ -368,12 +368,51 @@
     "tabs": {
       "settings": "Site Ayarları",
       "pages": "Sayfaları Yönet",
-      "notifications": "Bildirimler"
+      "notifications": "Bildirimler",
+      "company": "Şirket Profili"
     },
     "pages": {
       "title": "Sayfa Yönetimi",
       "comingSoon": "Yakında..."
     }
+  },
+  "companyProfile": {
+    "title": "Şirket Profili",
+    "description": "Şirket bilgilerinizi düzenleyin",
+    "tabs": {
+      "company": "Şirket Bilgileri",
+      "tax": "Vergi Bilgileri",
+      "address": "Adres",
+      "branding": "Logo & Favicon"
+    },
+    "fields": {
+      "companyName": "Şirket Adı",
+      "tradeName": "Ticari Unvan",
+      "phone": "Telefon",
+      "taxOffice": "Vergi Dairesi",
+      "taxNumber": "Vergi Numarası",
+      "street": "Adres",
+      "city": "Şehir",
+      "country": "Ülke",
+      "postalCode": "Posta Kodu",
+      "logo": "Logo",
+      "favicon": "Favicon"
+    },
+    "actions": {
+      "uploadLogo": "Logo Yükle",
+      "uploadFavicon": "Favicon Yükle",
+      "deleteLogo": "Logoyu Sil",
+      "deleteFavicon": "Favicon'u Sil"
+    },
+    "messages": {
+      "saved": "Şirket bilgileri kaydedildi",
+      "logoUploaded": "Logo yüklendi",
+      "logoDeleted": "Logo silindi",
+      "faviconUploaded": "Favicon yüklendi",
+      "faviconDeleted": "Favicon silindi",
+      "fetchError": "Şirket bilgileri yüklenemedi"
+    },
+    "taxInfoNote": "Vergi bilgileri fatura ve resmi belgelerinizde kullanılacaktır."
   },
   "notifications": {
     "title": "Bildirimler",
@@ -1106,6 +1145,7 @@
       "suspended": "Askıya Alındı"
     },
     "purchaseStatus": {
+      "pending": "Ödeme Bekliyor",
       "active": "Aktif",
       "expired": "Süresi Doldu",
       "cancelled": "İptal Edildi",
@@ -1137,6 +1177,8 @@
       "cash": "Nakit",
       "other": "Diğer"
     },
+    "payNow": "Şimdi Öde",
+    "awaitingPayment": "Ödeme Bekleniyor",
     "needHelp": "Yardıma mı ihtiyacınız var?",
     "contactSupport": "Aboneliğinizle ilgili sorularınız için destek ekibimize ulaşın.",
     "contactUs": "Bize Ulaşın",

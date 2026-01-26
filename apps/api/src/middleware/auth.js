@@ -129,6 +129,14 @@ export const requirePlatformAdmin = (req, res, next) => {
 // Alias for requirePlatformAdmin (for semantic clarity)
 export const requirePlatformUser = requirePlatformAdmin
 
+// Require partner user (accountType: 'partner')
+export const requirePartner = (req, res, next) => {
+  if (req.user.accountType !== 'partner') {
+    throw new UnauthorizedError('FORBIDDEN')
+  }
+  next()
+}
+
 // Require partner user or platform admin
 export const requirePartnerOrAdmin = (req, res, next) => {
   const isPlatformAdmin = req.user.accountType === 'platform'

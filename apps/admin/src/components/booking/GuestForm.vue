@@ -164,7 +164,7 @@
       <!-- Email (Lead Guest Only) -->
       <div v-if="isLeadGuest">
         <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-          {{ $t('booking.email') }} <span class="text-red-500">*</span>
+          {{ $t('common.email') }} <span class="text-red-500">*</span>
         </label>
         <input
           type="email"

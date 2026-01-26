@@ -60,3 +60,10 @@ export {
   applyAmendment,
   getAmendmentHistory
 } from './amendments.service.js'
+
+// Email
+export {
+  previewBookingEmail,
+  sendBookingEmail,
+  updateGuestInfo
+} from './email.service.js'

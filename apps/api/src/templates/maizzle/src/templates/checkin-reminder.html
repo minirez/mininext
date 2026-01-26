@@ -3,129 +3,120 @@ title: "Check-in Hatırlatması"
 previewText: "Yarın check-in! Rezervasyon detaylarınız"
 ---
 
-<x-main>
-  <!-- Calendar Icon -->
-  <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" class="pb-4">
-        <div class="inline-block rounded-full bg-primary-100 p-4">
-          <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" alt="Check-in" width="48" height="48" style="display: block;">
-        </div>
-      </td>
-    </tr>
-  </table>
+<!DOCTYPE html>
+<html lang="%% LANG %%">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>%% TITLE %%</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<div style="display:none;max-height:0;overflow:hidden;">%% PREVIEW_TEXT %%</div>
 
-  <!-- Heading -->
-  <h1 class="m-0 mb-2 text-center text-2xl font-bold text-slate-800">
-    %% TITLE %%
-  </h1>
-  <p class="m-0 mb-6 text-center text-slate-600">
-    %% SUBTITLE %%
-  </p>
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 20px;" role="none">
+<tr><td align="center">
 
-  <!-- Countdown -->
-  <table class="w-full rounded-lg bg-primary-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-6 text-center">
-        <p class="m-0 text-sm text-primary-600">%% COUNTDOWN_LABEL %%</p>
-        <p class="m-0 text-4xl font-bold text-primary-700">%% DAYS_LEFT %%</p>
-        <p class="m-0 text-sm text-primary-600">%% DAYS_TEXT %%</p>
-      </td>
-    </tr>
-  </table>
+<!-- Logo -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin-bottom:24px;" role="none">
+<tr><td align="center">
+<a href="%% SITE_URL %%" style="text-decoration:none;">
+<img src="%% LOGO_URL %%" alt="%% COMPANY_NAME %%" width="180" style="max-width:180px;height:auto;border:0;">
+</a>
+</td></tr>
+</table>
 
-  <!-- Booking Details Card -->
-  <table class="mt-6 w-full rounded-lg bg-slate-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-6">
-        <h3 class="m-0 mb-4 text-lg font-bold text-slate-800">%% HOTEL_NAME %%</h3>
-        <p class="m-0 mb-4 text-sm text-slate-600">%% HOTEL_ADDRESS %%</p>
+<!-- Main Card -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);" role="none">
 
-        <table class="w-full text-sm" cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="py-2 text-slate-500" style="width: 40%;">%% BOOKING_NUMBER_LABEL %%</td>
-            <td class="py-2 font-semibold text-primary-600">%% BOOKING_NUMBER %%</td>
-          </tr>
-          <tr>
-            <td class="py-2 text-slate-500">%% CHECKIN_LABEL %%</td>
-            <td class="py-2 font-semibold text-slate-800">%% CHECKIN_DATE %% (%% CHECKIN_TIME %%)</td>
-          </tr>
-          <tr>
-            <td class="py-2 text-slate-500">%% CHECKOUT_LABEL %%</td>
-            <td class="py-2 font-semibold text-slate-800">%% CHECKOUT_DATE %% (%% CHECKOUT_TIME %%)</td>
-          </tr>
-          <tr>
-            <td class="py-2 text-slate-500">%% ROOM_LABEL %%</td>
-            <td class="py-2 font-semibold text-slate-800">%% ROOM_TYPE %%</td>
-          </tr>
-          <tr>
-            <td class="py-2 text-slate-500">%% GUESTS_LABEL %%</td>
-            <td class="py-2 font-semibold text-slate-800">%% GUESTS %%</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Header -->
+<tr><td style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);padding:32px 40px;border-radius:16px 16px 0 0;text-align:center;">
+<div style="width:64px;height:64px;background-color:rgba(255,255,255,0.2);border-radius:50%;margin:0 auto 16px;line-height:64px;text-align:center;">
+<img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" alt="Check-in" width="36" height="36" style="display:inline-block;vertical-align:middle;">
+</div>
+<h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">%% GREETING_TITLE %%</h1>
+<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:15px;">%% GREETING_TEXT %%</p>
+</td></tr>
 
-  <!-- Important Info -->
-  <table class="mt-6 w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td>
-        <h3 class="m-0 mb-3 text-base font-bold text-slate-800">%% IMPORTANT_INFO_TITLE %%</h3>
-        <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
-          <tr if="%% PARKING_INFO %%">
-            <td class="pb-2 text-sm text-slate-600">🚗 %% PARKING_INFO %%</td>
-          </tr>
-          <tr if="%% WIFI_INFO %%">
-            <td class="pb-2 text-sm text-slate-600">📶 %% WIFI_INFO %%</td>
-          </tr>
-          <tr if="%% BREAKFAST_INFO %%">
-            <td class="pb-2 text-sm text-slate-600">🍳 %% BREAKFAST_INFO %%</td>
-          </tr>
-          <tr if="%% SPECIAL_REQUESTS %%">
-            <td class="pb-2 text-sm text-slate-600">📝 %% SPECIAL_REQUESTS %%</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Content -->
+<tr><td style="padding:32px 40px;">
 
-  <!-- Map Button -->
-  <table class="mt-8 w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center">
-        <table cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="rounded-lg bg-primary-600" style="mso-padding-alt: 12px 32px;">
-              <a href="%% MAP_URL %%" class="block px-8 py-3 text-base font-semibold text-white no-underline" style="mso-text-raise: 3px;">
-                📍 %% DIRECTIONS_BUTTON %%
-              </a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Countdown -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:24px;text-align:center;">
+<p style="margin:0;font-size:14px;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;">%% COUNTDOWN_LABEL %%</p>
+<p style="margin:8px 0;font-size:48px;font-weight:700;color:#1d4ed8;">%% DAYS_LEFT %%</p>
+<p style="margin:0;font-size:14px;color:#3b82f6;">%% DAYS_TEXT %%</p>
+</td></tr>
+</table>
 
-  <!-- Hotel Contact -->
-  <table class="mt-6 w-full rounded-lg bg-slate-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-4">
-        <table class="w-full text-sm" cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="text-slate-600">%% HOTEL_CONTACT_LABEL %%</td>
-            <td align="right">
-              <a href="tel:%% HOTEL_PHONE %%" class="text-primary-600 font-semibold">%% HOTEL_PHONE %%</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Booking Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:24px;">
+<h3 style="margin:0 0 12px;font-size:18px;font-weight:700;color:#1e293b;">%% HOTEL_NAME %%</h3>
+<p style="margin:0 0 16px;font-size:14px;color:#64748b;">%% HOTEL_ADDRESS %%</p>
 
-  <!-- Help -->
-  <p class="mt-8 text-center text-sm text-slate-500">
-    %% HELP_TEXT %%<br>
-    <a href="mailto:%% SUPPORT_EMAIL %%" class="text-primary-600">%% SUPPORT_EMAIL %%</a>
-  </p>
-</x-main>
+<table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;" role="none">
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;width:40%;">%% BOOKING_NUMBER_LABEL %%</td>
+<td style="padding:10px 0;color:#2563eb;font-weight:600;border-bottom:1px solid #e2e8f0;">%% BOOKING_NUMBER %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% CHECKIN_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% CHECKIN_DATE %% (%% CHECKIN_TIME %%)</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% CHECKOUT_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% CHECKOUT_DATE %% (%% CHECKOUT_TIME %%)</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% ROOM_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% ROOM_TYPE %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;">%% GUESTS_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;">%% GUESTS %%</td>
+</tr>
+</table>
+</td></tr>
+</table>
+
+<!-- Map Button -->
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr><td align="center" style="padding:8px 0;">
+<a href="%% MAP_URL %%" style="display:inline-block;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:10px;font-size:15px;font-weight:600;box-shadow:0 4px 14px rgba(59,130,246,0.3);">%% DIRECTIONS_BUTTON %%</a>
+</td></tr>
+</table>
+
+<!-- Hotel Contact -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-top:24px;" role="none">
+<tr><td style="padding:16px 20px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr>
+<td style="font-size:14px;color:#64748b;">%% HOTEL_CONTACT_LABEL %%</td>
+<td align="right">
+<a href="tel:%% HOTEL_PHONE %%" style="color:#2563eb;font-size:14px;font-weight:600;text-decoration:none;">%% HOTEL_PHONE %%</a>
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="padding:24px 40px;background-color:#f8fafc;border-radius:0 0 16px 16px;border-top:1px solid #e2e8f0;">
+<p style="margin:0 0 8px;text-align:center;color:#64748b;font-size:13px;">%% HELP_TEXT %%</p>
+<p style="margin:0 0 12px;text-align:center;">
+<a href="mailto:%% SUPPORT_EMAIL %%" style="color:#2563eb;font-size:13px;text-decoration:none;">%% SUPPORT_EMAIL %%</a>
+</p>
+<p style="margin:0;text-align:center;color:#94a3b8;font-size:12px;">%% FOOTER_TEXT %%</p>
+<p style="margin:12px 0 0;text-align:center;color:#94a3b8;font-size:12px;">%% COMPANY_NAME %% · %% COMPANY_ADDRESS %%</p>
+</td></tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>

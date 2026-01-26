@@ -198,6 +198,12 @@ const router = createRouter({
               path: 'notifications',
               name: 'site-notifications',
               component: SiteNotificationsView
+            },
+            {
+              path: 'company',
+              name: 'site-company-profile',
+              component: () => import('../views/CompanyProfileView.vue'),
+              meta: { tab: 'company' }
             }
           ]
         },
@@ -452,12 +458,12 @@ const router = createRouter({
             titleKey: 'issues.title'
           }
         },
-        // Virtual POS / Payment Management (Platform admin only)
+        // Virtual POS / Payment Management (Platform admin & Partner admin)
         {
           path: 'payment',
           component: () => import('../views/payment/PaymentModule.vue'),
           meta: {
-            requiresPlatformAdmin: true,
+            requiresPartnerOrAdmin: true,
             titleKey: 'payment.title'
           },
           children: [

@@ -247,6 +247,46 @@ const getAmendmentHistory = async id => {
 
 export { getBookingForAmendment, previewAmendment, applyBookingAmendment, getAmendmentHistory }
 
+// ==================== EMAIL FUNCTIONS ====================
+
+/**
+ * Get email preview HTML
+ * @param {string} id - Booking ID
+ * @param {string} type - Email type (confirmation, payment_reminder, hotel_notification, checkin_reminder)
+ * @param {Object} options - { language }
+ * @returns {Promise} - { html, subject, recipient, type }
+ */
+const previewBookingEmail = async (id, type, options = {}) => {
+  const params = new URLSearchParams()
+  if (options.language) params.append('language', options.language)
+  const response = await apiClient.get(`/bookings/${id}/email-preview/${type}?${params}`)
+  return response.data
+}
+
+/**
+ * Send booking email
+ * @param {string} id - Booking ID
+ * @param {Object} data - { type, recipient, customEmail, language, sendCopy }
+ * @returns {Promise} - { messageId, recipient, type }
+ */
+const sendBookingEmail = async (id, data) => {
+  const response = await apiClient.post(`/bookings/${id}/send-email`, data)
+  return response.data
+}
+
+/**
+ * Update guest info (inline edit)
+ * @param {string} id - Booking ID
+ * @param {Object} updates - { leadGuest, contact, guestLanguage, rooms }
+ * @returns {Promise} - { changes, booking }
+ */
+const updateGuestInfo = async (id, updates) => {
+  const response = await apiClient.patch(`/bookings/${id}/guest-info`, updates)
+  return response.data
+}
+
+export { previewBookingEmail, sendBookingEmail, updateGuestInfo }
+
 export default {
   getPartnerHotels,
   getPartnerHotelsWithRegions,
@@ -274,5 +314,9 @@ export default {
   getBookingForAmendment,
   previewAmendment,
   applyBookingAmendment,
-  getAmendmentHistory
+  getAmendmentHistory,
+  // Email functions
+  previewBookingEmail,
+  sendBookingEmail,
+  updateGuestInfo
 }

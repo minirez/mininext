@@ -3,135 +3,122 @@ title: "Ödeme Hatırlatması"
 previewText: "Rezervasyonunuz için ödeme bekleniyor"
 ---
 
-<x-main>
-  <!-- Clock Icon -->
-  <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center" class="pb-4">
-        <div class="inline-block rounded-full bg-warning-100 p-4">
-          <img src="https://cdn-icons-png.flaticon.com/512/2088/2088617.png" alt="Payment Reminder" width="48" height="48" style="display: block;">
-        </div>
-      </td>
-    </tr>
-  </table>
+<!DOCTYPE html>
+<html lang="%% LANG %%">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>%% TITLE %%</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<div style="display:none;max-height:0;overflow:hidden;">%% PREVIEW_TEXT %%</div>
 
-  <!-- Heading -->
-  <h1 class="m-0 mb-2 text-center text-2xl font-bold text-slate-800">
-    %% TITLE %%
-  </h1>
-  <p class="m-0 mb-6 text-center text-slate-600">
-    %% SUBTITLE %%
-  </p>
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 20px;" role="none">
+<tr><td align="center">
 
-  <!-- Urgency Alert -->
-  <table class="w-full rounded-lg bg-warning-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-4 text-center">
-        <p class="m-0 text-warning-700 font-semibold">
-          ⏰ %% URGENCY_MESSAGE %%
-        </p>
-      </td>
-    </tr>
-  </table>
+<!-- Logo -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin-bottom:24px;" role="none">
+<tr><td align="center">
+<a href="%% SITE_URL %%" style="text-decoration:none;">
+<img src="%% LOGO_URL %%" alt="%% COMPANY_NAME %%" width="180" style="max-width:180px;height:auto;border:0;">
+</a>
+</td></tr>
+</table>
 
-  <!-- Booking Summary -->
-  <table class="mt-6 w-full rounded-lg bg-slate-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-6">
-        <!-- Booking Number -->
-        <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td>
-              <p class="m-0 text-sm text-slate-500">%% BOOKING_NUMBER_LABEL %%</p>
-              <p class="m-0 text-lg font-bold text-primary-600">%% BOOKING_NUMBER %%</p>
-            </td>
-          </tr>
-        </table>
+<!-- Main Card -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);" role="none">
 
-        <div class="my-4 bg-slate-200" style="height: 1px;">&nbsp;</div>
+<!-- Warning Header -->
+<tr><td style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);padding:32px 40px;border-radius:16px 16px 0 0;text-align:center;">
+<div style="width:64px;height:64px;background-color:rgba(255,255,255,0.2);border-radius:50%;margin:0 auto 16px;line-height:64px;text-align:center;">
+<img src="https://cdn-icons-png.flaticon.com/512/2088/2088617.png" alt="Payment" width="36" height="36" style="display:inline-block;vertical-align:middle;">
+</div>
+<h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">%% GREETING_TITLE %%</h1>
+<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:15px;">%% GREETING_TEXT %%</p>
+</td></tr>
 
-        <!-- Hotel & Dates -->
-        <h3 class="m-0 mb-2 text-base font-bold text-slate-800">%% HOTEL_NAME %%</h3>
-        <p class="m-0 mb-4 text-sm text-slate-600">%% CHECKIN_DATE %% - %% CHECKOUT_DATE %%</p>
+<!-- Content -->
+<tr><td style="padding:32px 40px;">
 
-        <!-- Payment Details -->
-        <table class="w-full text-sm" cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="py-2 text-slate-600">%% TOTAL_AMOUNT_LABEL %%</td>
-            <td class="py-2 font-semibold text-slate-800" align="right">%% TOTAL_AMOUNT %%</td>
-          </tr>
-          <tr>
-            <td class="py-2 text-slate-600">%% PAID_AMOUNT_LABEL %%</td>
-            <td class="py-2 font-semibold text-success-600" align="right">%% PAID_AMOUNT %%</td>
-          </tr>
-          <tr>
-            <td colspan="2">
-              <div class="my-2 bg-slate-200" style="height: 1px;">&nbsp;</div>
-            </td>
-          </tr>
-          <tr>
-            <td class="py-2 text-lg font-bold text-slate-800">%% REMAINING_LABEL %%</td>
-            <td class="py-2 text-xl font-bold text-danger-600" align="right">%% REMAINING_AMOUNT %%</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Urgency Alert -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef3c7;border-radius:12px;border-left:4px solid #f59e0b;margin-bottom:24px;" role="none">
+<tr><td style="padding:16px 20px;">
+<p style="margin:0;color:#92400e;font-size:14px;font-weight:600;text-align:center;">
+⏰ %% URGENCY_MESSAGE %%
+</p>
+</td></tr>
+</table>
 
-  <!-- Payment Deadline -->
-  <table class="mt-6 w-full rounded-lg bg-danger-50" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="p-4">
-        <table class="w-full" cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="text-sm text-danger-700">%% DEADLINE_LABEL %%</td>
-            <td class="text-lg font-bold text-danger-700" align="right">%% PAYMENT_DEADLINE %%</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<!-- Booking Summary -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:20px;">
+<p style="margin:0;font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">%% BOOKING_NUMBER_LABEL %%</p>
+<p style="margin:4px 0 16px;font-size:18px;font-weight:700;color:#2563eb;">%% BOOKING_NUMBER %%</p>
 
-  <!-- Pay Now Button -->
-  <table class="mt-8 w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td align="center">
-        <table cellpadding="0" cellspacing="0" role="presentation">
-          <tr>
-            <td class="rounded-lg bg-success-600" style="mso-padding-alt: 14px 40px;">
-              <a href="%% PAYMENT_URL %%" class="block px-10 py-4 text-base font-bold text-white no-underline" style="mso-text-raise: 3px;">
-                %% PAY_NOW_BUTTON %%
-              </a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<div style="height:1px;background-color:#e2e8f0;margin-bottom:16px;"></div>
 
-  <!-- Payment Methods -->
-  <table class="mt-6 w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="text-center">
-        <p class="m-0 text-sm text-slate-500">%% PAYMENT_METHODS_TEXT %%</p>
-      </td>
-    </tr>
-  </table>
+<h3 style="margin:0 0 8px;font-size:16px;font-weight:700;color:#1e293b;">%% HOTEL_NAME %%</h3>
+<p style="margin:0;font-size:14px;color:#64748b;">%% CHECKIN_DATE %% - %% CHECKOUT_DATE %%</p>
+</td></tr>
+</table>
 
-  <!-- Cancellation Warning -->
-  <table class="mt-6 w-full" cellpadding="0" cellspacing="0" role="presentation">
-    <tr>
-      <td class="text-center">
-        <p class="m-0 text-xs text-slate-400">
-          %% CANCELLATION_WARNING %%
-        </p>
-      </td>
-    </tr>
-  </table>
+<!-- Payment Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:24px;" role="none">
+<tr>
+<td style="padding:12px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% TOTAL_AMOUNT_LABEL %%</td>
+<td align="right" style="padding:12px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% TOTAL_AMOUNT %%</td>
+</tr>
+<tr>
+<td style="padding:12px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% PAID_AMOUNT_LABEL %%</td>
+<td align="right" style="padding:12px 0;color:#16a34a;font-weight:600;border-bottom:1px solid #e2e8f0;">%% PAID_AMOUNT %%</td>
+</tr>
+<tr>
+<td style="padding:16px 0;font-size:16px;font-weight:700;color:#1e293b;">%% REMAINING_LABEL %%</td>
+<td align="right" style="padding:16px 0;font-size:22px;font-weight:700;color:#dc2626;">%% REMAINING_AMOUNT %%</td>
+</tr>
+</table>
 
-  <!-- Help -->
-  <p class="mt-8 text-center text-sm text-slate-500">
-    %% HELP_TEXT %%<br>
-    <a href="mailto:%% SUPPORT_EMAIL %%" class="text-primary-600">%% SUPPORT_EMAIL %%</a>
-  </p>
-</x-main>
+<!-- Payment Deadline -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-radius:12px;border-left:4px solid #dc2626;margin-bottom:24px;" role="none">
+<tr><td style="padding:16px 20px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr>
+<td style="font-size:14px;color:#991b1b;">%% DEADLINE_LABEL %%</td>
+<td align="right" style="font-size:16px;font-weight:700;color:#dc2626;">%% PAYMENT_DEADLINE %%</td>
+</tr>
+</table>
+</td></tr>
+</table>
+
+<!-- Pay Now Button -->
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr><td align="center" style="padding:8px 0;">
+<a href="%% PAYMENT_URL %%" style="display:inline-block;background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);color:#ffffff;text-decoration:none;padding:16px 48px;border-radius:10px;font-size:16px;font-weight:700;box-shadow:0 4px 14px rgba(22,163,74,0.3);">%% PAY_NOW_BUTTON %%</a>
+</td></tr>
+</table>
+
+<!-- Payment Methods Info -->
+<p style="margin:16px 0 0;text-align:center;color:#64748b;font-size:13px;">%% PAYMENT_METHODS_TEXT %%</p>
+
+<!-- Cancellation Warning -->
+<p style="margin:16px 0 0;text-align:center;color:#94a3b8;font-size:12px;">%% CANCELLATION_WARNING %%</p>
+
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="padding:24px 40px;background-color:#f8fafc;border-radius:0 0 16px 16px;border-top:1px solid #e2e8f0;">
+<p style="margin:0 0 8px;text-align:center;color:#64748b;font-size:13px;">%% HELP_TEXT %%</p>
+<p style="margin:0 0 12px;text-align:center;">
+<a href="mailto:%% SUPPORT_EMAIL %%" style="color:#2563eb;font-size:13px;text-decoration:none;">%% SUPPORT_EMAIL %%</a>
+</p>
+<p style="margin:0;text-align:center;color:#94a3b8;font-size:12px;">%% FOOTER_TEXT %%</p>
+<p style="margin:12px 0 0;text-align:center;color:#94a3b8;font-size:12px;">%% COMPANY_NAME %% · %% COMPANY_ADDRESS %%</p>
+</td></tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>

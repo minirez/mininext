@@ -39,7 +39,7 @@ const activeTab = computed(() => route.meta?.tab || 'test')
 <template>
   <div class="h-full flex flex-col">
     <!-- Tabs -->
-    <div class="border-b border-gray-200 bg-white px-6">
+    <div class="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-6">
       <nav class="flex space-x-6">
         <router-link
           v-for="tab in tabs"
@@ -48,8 +48,8 @@ const activeTab = computed(() => route.meta?.tab || 'test')
           :class="[
             'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
             activeTab === tab.id
-              ? 'border-primary-500 text-primary-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:border-gray-300 dark:hover:border-slate-500'
           ]"
         >
           <span class="material-icons text-lg">{{ tab.icon }}</span>
@@ -59,7 +59,7 @@ const activeTab = computed(() => route.meta?.tab || 'test')
     </div>
 
     <!-- Tab Content -->
-    <div class="flex-1 overflow-auto p-6 bg-gray-50">
+    <div class="flex-1 overflow-auto p-6 bg-gray-50 dark:bg-slate-900">
       <router-view />
     </div>
   </div>

@@ -36,6 +36,12 @@ const navItems = computed(() => [
     to: '/site-management/notifications',
     icon: 'notifications',
     label: t('siteManagement.tabs.notifications')
+  },
+  {
+    name: 'company',
+    to: '/site-management/company',
+    icon: 'business',
+    label: t('siteManagement.tabs.company')
   }
 ])
 </script>

@@ -356,57 +356,57 @@ async function cancelTransaction() {
 
 <template>
   <div>
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Transactions</h2>
+    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6">Transactions</h2>
 
     <!-- Stats -->
     <div v-if="store.stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow">
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-            <span class="material-icons text-blue-600">receipt_long</span>
+          <div class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+            <span class="material-icons text-blue-600 dark:text-blue-400">receipt_long</span>
           </div>
           <div>
-            <div class="text-sm text-gray-500">Today's Transactions</div>
-            <div class="text-2xl font-bold text-gray-800">
+            <div class="text-sm text-gray-500 dark:text-slate-400">Today's Transactions</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">
               {{ store.stats.today?.reduce((a, b) => a + b.count, 0) || 0 }}
             </div>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow">
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-            <span class="material-icons text-green-600">check_circle</span>
+          <div class="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <span class="material-icons text-green-600 dark:text-green-400">check_circle</span>
           </div>
           <div>
-            <div class="text-sm text-gray-500">Successful</div>
-            <div class="text-2xl font-bold text-green-600">
+            <div class="text-sm text-gray-500 dark:text-slate-400">Successful</div>
+            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
               {{ store.stats.today?.find(s => s._id === 'success')?.count || 0 }}
             </div>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow">
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
-            <span class="material-icons text-red-600">cancel</span>
+          <div class="w-12 h-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <span class="material-icons text-red-600 dark:text-red-400">cancel</span>
           </div>
           <div>
-            <div class="text-sm text-gray-500">Failed</div>
-            <div class="text-2xl font-bold text-red-600">
+            <div class="text-sm text-gray-500 dark:text-slate-400">Failed</div>
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">
               {{ store.stats.today?.find(s => s._id === 'failed')?.count || 0 }}
             </div>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow">
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
-            <span class="material-icons text-purple-600">currency_exchange</span>
+          <div class="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <span class="material-icons text-purple-600 dark:text-purple-400">currency_exchange</span>
           </div>
           <div>
-            <div class="text-sm text-gray-500">Currencies</div>
-            <div class="text-2xl font-bold text-gray-800">
+            <div class="text-sm text-gray-500 dark:text-slate-400">Currencies</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">
               {{ store.stats.byCurrency?.length || 0 }}
             </div>
           </div>
@@ -415,20 +415,20 @@ async function cancelTransaction() {
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-sm border p-5 mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 p-5 mb-6">
       <div class="flex flex-wrap gap-4 items-end">
         <!-- Order ID Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Order ID</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Order ID</label>
           <input v-model="filters.orderId" type="text" placeholder="ORS_ABC123..."
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-44" />
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-44" />
         </div>
 
         <!-- POS Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">POS</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">POS</label>
           <select v-model="filters.pos"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white w-48">
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-slate-700 dark:text-white w-48">
             <option value="">Tümü</option>
             <option v-for="pos in filterPosList" :key="pos._id" :value="pos._id">
               {{ pos.name }}{{ !pos.isActive ? ' (Pasif)' : '' }}
@@ -438,33 +438,33 @@ async function cancelTransaction() {
 
         <!-- Amount Range -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Min Tutar</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min Tutar</label>
           <input v-model="filters.minAmount" type="number" placeholder="0" min="0" step="0.01"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-28" />
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-28" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Max Tutar</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Max Tutar</label>
           <input v-model="filters.maxAmount" type="number" placeholder="0" min="0" step="0.01"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-28" />
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-28" />
         </div>
 
         <!-- Date Range -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Başlangıç</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Başlangıç</label>
           <input v-model="filters.startDate" type="date"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Bitiş</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Bitiş</label>
           <input v-model="filters.endDate" type="date"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
         </div>
 
         <!-- Status -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Durum</label>
           <select v-model="filters.status"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white">
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-slate-700 dark:text-white">
             <option value="">Tümü</option>
             <option value="pending">Bekliyor</option>
             <option value="processing">İşleniyor</option>
@@ -477,9 +477,9 @@ async function cancelTransaction() {
 
         <!-- Currency -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Para Birimi</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Para Birimi</label>
           <select v-model="filters.currency"
-            class="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white">
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-slate-700 dark:text-white">
             <option value="">Tümü</option>
             <option value="try">TRY</option>
             <option value="usd">USD</option>
@@ -496,7 +496,7 @@ async function cancelTransaction() {
 
         <!-- Clear Button -->
         <button @click="clearFilters"
-          class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors flex items-center gap-2">
+          class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 font-medium transition-colors flex items-center gap-2">
           <span class="material-icons text-sm">clear</span>
           Temizle
         </button>
@@ -504,37 +504,37 @@ async function cancelTransaction() {
     </div>
 
     <!-- Transaction List -->
-    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border dark:border-slate-700 overflow-hidden">
       <table class="w-full">
-        <thead class="bg-gray-50 border-b">
+        <thead class="bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-700">
           <tr>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order ID</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Card</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Currency</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Bank</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stage</th>
-            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Date</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Order ID</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Card</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Amount</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Currency</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Bank</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Stage</th>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Status</th>
             <th class="px-4 py-4"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
           <tr v-for="tx in store.transactions" :key="tx._id"
-              class="hover:bg-gray-50 transition-colors cursor-pointer"
+              class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
               @click="showTransactionDetail(tx)">
-            <td class="px-4 py-4 text-sm text-gray-600">
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-slate-300">
               <div class="flex items-center gap-2">
-                <span class="material-icons text-gray-400 text-sm">schedule</span>
+                <span class="material-icons text-gray-400 dark:text-slate-500 text-sm">schedule</span>
                 {{ formatDate(tx.createdAt) }}
               </div>
             </td>
             <td class="px-4 py-4">
-              <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono text-gray-700">
+              <code class="text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded font-mono text-gray-700 dark:text-slate-300">
                 {{ getOrderId(tx) }}
               </code>
             </td>
-            <td class="px-4 py-4 text-sm font-mono text-gray-700 relative group">
+            <td class="px-4 py-4 text-sm font-mono text-gray-700 dark:text-slate-300 relative group">
               <div class="cursor-pointer">
                 {{ maskCardNumber(tx.card?.maskedNumber) }}
               </div>
@@ -578,15 +578,15 @@ async function cancelTransaction() {
               </div>
             </td>
             <td class="px-4 py-4">
-              <div class="font-semibold text-gray-800">{{ formatAmount(tx.amount, tx.currency) }}</div>
-              <div v-if="tx.installment > 1" class="text-xs text-gray-500">
+              <div class="font-semibold text-gray-800 dark:text-white">{{ formatAmount(tx.amount, tx.currency) }}</div>
+              <div v-if="tx.installment > 1" class="text-xs text-gray-500 dark:text-slate-400">
                 {{ tx.installment }} taksit
               </div>
             </td>
-            <td class="px-4 py-4 text-sm text-gray-600 font-medium">
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-slate-300 font-medium">
               {{ tx.currency?.toUpperCase() || '-' }}
             </td>
-            <td class="px-4 py-4 text-sm text-gray-600">
+            <td class="px-4 py-4 text-sm text-gray-600 dark:text-slate-300">
               {{ tx.pos?.bank?.name || tx.pos?.name || '-' }}
             </td>
             <td class="px-4 py-4">
@@ -597,9 +597,9 @@ async function cancelTransaction() {
                   'text-amber-500': getCurrentStage(tx).stage === '3d_callback',
                   'text-green-500': getCurrentStage(tx).stage === 'provision',
                   'text-red-500': getCurrentStage(tx).stage === 'error',
-                  'text-gray-400': getCurrentStage(tx).stage === 'pending'
+                  'text-gray-400 dark:text-slate-500': getCurrentStage(tx).stage === 'pending'
                 }">{{ getCurrentStage(tx).icon }}</span>
-                <span class="text-sm text-gray-600">{{ getCurrentStage(tx).text }}</span>
+                <span class="text-sm text-gray-600 dark:text-slate-300">{{ getCurrentStage(tx).text }}</span>
               </div>
             </td>
             <td class="px-4 py-4">
@@ -620,8 +620,8 @@ async function cancelTransaction() {
           <tr v-if="store.transactions.length === 0">
             <td colspan="9" class="px-4 py-16 text-center">
               <div class="flex flex-col items-center gap-3">
-                <span class="material-icons text-5xl text-gray-300">receipt_long</span>
-                <span class="text-gray-500">No transactions found</span>
+                <span class="material-icons text-5xl text-gray-300 dark:text-slate-600">receipt_long</span>
+                <span class="text-gray-500 dark:text-slate-400">No transactions found</span>
               </div>
             </td>
           </tr>
@@ -629,8 +629,8 @@ async function cancelTransaction() {
       </table>
 
       <!-- Pagination -->
-      <div v-if="pagination.pages > 1" class="px-4 py-4 border-t bg-gray-50 flex items-center justify-between">
-        <div class="text-sm text-gray-600">
+      <div v-if="pagination.pages > 1" class="px-4 py-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex items-center justify-between">
+        <div class="text-sm text-gray-600 dark:text-slate-400">
           Showing <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span> to
           <span class="font-medium">{{ Math.min(pagination.page * pagination.limit, pagination.total) }}</span> of
           <span class="font-medium">{{ pagination.total }}</span> results
@@ -644,7 +644,7 @@ async function cancelTransaction() {
               'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors',
               pagination.page === p
                 ? 'bg-primary-600 text-white shadow-sm'
-                : 'bg-white border hover:bg-gray-100 text-gray-700'
+                : 'bg-white dark:bg-slate-700 border dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300'
             ]"
           >
             {{ p }}
@@ -657,30 +657,30 @@ async function cancelTransaction() {
     <div v-if="selectedTransaction"
          class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
          @click.self="selectedTransaction = null">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col">
         <!-- Modal Header -->
-        <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center shrink-0">
+        <div class="px-6 py-4 border-b dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex justify-between items-center shrink-0">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="{
-              'bg-green-100': selectedTransaction.status === 'success',
-              'bg-red-100': selectedTransaction.status === 'failed',
-              'bg-blue-100': selectedTransaction.status === 'processing',
-              'bg-yellow-100': selectedTransaction.status === 'pending',
-              'bg-gray-100': selectedTransaction.status === 'cancelled',
-              'bg-purple-100': selectedTransaction.status === 'refunded'
+              'bg-green-100 dark:bg-green-900/30': selectedTransaction.status === 'success',
+              'bg-red-100 dark:bg-red-900/30': selectedTransaction.status === 'failed',
+              'bg-blue-100 dark:bg-blue-900/30': selectedTransaction.status === 'processing',
+              'bg-yellow-100 dark:bg-yellow-900/30': selectedTransaction.status === 'pending',
+              'bg-gray-100 dark:bg-slate-700': selectedTransaction.status === 'cancelled',
+              'bg-purple-100 dark:bg-purple-900/30': selectedTransaction.status === 'refunded'
             }">
               <span class="material-icons" :class="{
-                'text-green-600': selectedTransaction.status === 'success',
-                'text-red-600': selectedTransaction.status === 'failed',
-                'text-blue-600': selectedTransaction.status === 'processing',
-                'text-yellow-600': selectedTransaction.status === 'pending',
-                'text-gray-600': selectedTransaction.status === 'cancelled',
-                'text-purple-600': selectedTransaction.status === 'refunded'
+                'text-green-600 dark:text-green-400': selectedTransaction.status === 'success',
+                'text-red-600 dark:text-red-400': selectedTransaction.status === 'failed',
+                'text-blue-600 dark:text-blue-400': selectedTransaction.status === 'processing',
+                'text-yellow-600 dark:text-yellow-400': selectedTransaction.status === 'pending',
+                'text-gray-600 dark:text-slate-400': selectedTransaction.status === 'cancelled',
+                'text-purple-600 dark:text-purple-400': selectedTransaction.status === 'refunded'
               }">{{ getStatusIcon(selectedTransaction.status) }}</span>
             </div>
             <div>
-              <h3 class="text-xl font-bold text-gray-800">Transaction Details</h3>
-              <p class="text-sm text-gray-500 font-mono">{{ selectedTransaction._id }}</p>
+              <h3 class="text-xl font-bold text-gray-800 dark:text-white">Transaction Details</h3>
+              <p class="text-sm text-gray-500 dark:text-slate-400 font-mono">{{ selectedTransaction._id }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -700,8 +700,8 @@ async function cancelTransaction() {
               İade Et
             </button>
             <button @click="selectedTransaction = null"
-                    class="w-10 h-10 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors">
-              <span class="material-icons text-gray-500">close</span>
+                    class="w-10 h-10 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+              <span class="material-icons text-gray-500 dark:text-slate-400">close</span>
             </button>
           </div>
         </div>
@@ -709,11 +709,11 @@ async function cancelTransaction() {
         <!-- Action Message -->
         <div v-if="actionMessage.show"
              class="mx-6 mt-4 p-4 rounded-lg flex items-center gap-3"
-             :class="actionMessage.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
-          <span class="material-icons" :class="actionMessage.success ? 'text-green-600' : 'text-red-600'">
+             :class="actionMessage.success ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'">
+          <span class="material-icons" :class="actionMessage.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
             {{ actionMessage.success ? 'check_circle' : 'error' }}
           </span>
-          <span :class="actionMessage.success ? 'text-green-800' : 'text-red-800'">
+          <span :class="actionMessage.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
             {{ actionMessage.text }}
           </span>
         </div>
@@ -723,19 +723,19 @@ async function cancelTransaction() {
           <!-- Progress Steps -->
           <div class="mb-8">
             <div class="flex items-center justify-between relative">
-              <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 -z-10"></div>
+              <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 dark:bg-slate-700 -z-10"></div>
               <div v-for="(step, idx) in progressSteps" :key="step.key"
                    class="flex flex-col items-center">
                 <div :class="[
                   'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
                   getStepStatus(selectedTransaction, step.key) === 'completed'
                     ? 'bg-green-500 border-green-500 text-white'
-                    : 'bg-white border-gray-300 text-gray-400'
+                    : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500'
                 ]">
                   <span class="material-icons text-sm">{{ step.icon }}</span>
                 </div>
                 <span class="text-xs font-medium mt-2" :class="
-                  getStepStatus(selectedTransaction, step.key) === 'completed' ? 'text-green-600' : 'text-gray-400'
+                  getStepStatus(selectedTransaction, step.key) === 'completed' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-slate-500'
                 ">{{ step.label }}</span>
               </div>
             </div>
@@ -743,20 +743,20 @@ async function cancelTransaction() {
 
           <!-- Transaction Info Grid -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</label>
-              <div class="font-mono text-sm mt-1 font-medium">{{ getOrderId(selectedTransaction) }}</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Order ID</label>
+              <div class="font-mono text-sm mt-1 font-medium dark:text-white">{{ getOrderId(selectedTransaction) }}</div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</label>
-              <div class="text-lg font-bold mt-1">{{ formatAmount(selectedTransaction.amount, selectedTransaction.currency) }}</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</label>
+              <div class="text-lg font-bold mt-1 dark:text-white">{{ formatAmount(selectedTransaction.amount, selectedTransaction.currency) }}</div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Installment</label>
-              <div class="font-semibold mt-1">{{ selectedTransaction.installment || 1 }} Taksit</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Installment</label>
+              <div class="font-semibold mt-1 dark:text-white">{{ selectedTransaction.installment || 1 }} Taksit</div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</label>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</label>
               <div class="mt-1">
                 <span :class="['inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-medium border', getStatusBadge(selectedTransaction.status)]">
                   <span class="material-icons text-xs">{{ getStatusIcon(selectedTransaction.status) }}</span>
@@ -764,43 +764,43 @@ async function cancelTransaction() {
                 </span>
               </div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Card</label>
-              <div class="font-mono mt-1">{{ maskCardNumber(selectedTransaction.card?.maskedNumber) }}</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Card</label>
+              <div class="font-mono mt-1 dark:text-white">{{ maskCardNumber(selectedTransaction.card?.maskedNumber) }}</div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">POS</label>
-              <div class="font-medium mt-1">{{ selectedTransaction.pos?.name || '-' }}</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">POS</label>
+              <div class="font-medium mt-1 dark:text-white">{{ selectedTransaction.pos?.name || '-' }}</div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Created</label>
-              <div class="text-sm mt-1">{{ formatDate(selectedTransaction.createdAt) }}</div>
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Created</label>
+              <div class="text-sm mt-1 dark:text-white">{{ formatDate(selectedTransaction.createdAt) }}</div>
             </div>
-            <div v-if="selectedTransaction.completedAt" class="bg-gray-50 rounded-xl p-4">
-              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</label>
-              <div class="text-sm mt-1">{{ formatDate(selectedTransaction.completedAt) }}</div>
+            <div v-if="selectedTransaction.completedAt" class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+              <label class="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Completed</label>
+              <div class="text-sm mt-1 dark:text-white">{{ formatDate(selectedTransaction.completedAt) }}</div>
             </div>
           </div>
 
           <!-- Result -->
           <div v-if="selectedTransaction.result"
                class="mb-8 rounded-xl p-5 border-2"
-               :class="selectedTransaction.result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'">
+               :class="selectedTransaction.result.success ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'">
             <div class="flex items-start gap-3">
               <div :class="[
                 'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                selectedTransaction.result.success ? 'bg-green-200' : 'bg-red-200'
+                selectedTransaction.result.success ? 'bg-green-200 dark:bg-green-800' : 'bg-red-200 dark:bg-red-800'
               ]">
-                <span class="material-icons" :class="selectedTransaction.result.success ? 'text-green-600' : 'text-red-600'">
+                <span class="material-icons" :class="selectedTransaction.result.success ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'">
                   {{ selectedTransaction.result.success ? 'check_circle' : 'error' }}
                 </span>
               </div>
               <div class="flex-1">
-                <h4 class="font-semibold" :class="selectedTransaction.result.success ? 'text-green-800' : 'text-red-800'">
+                <h4 class="font-semibold" :class="selectedTransaction.result.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
                   {{ selectedTransaction.result.success ? 'Payment Successful' : 'Payment Failed' }}
                 </h4>
-                <p class="mt-1" :class="selectedTransaction.result.success ? 'text-green-700' : 'text-red-700'">
-                  <span v-if="selectedTransaction.result.code" class="font-mono bg-white/50 px-1.5 py-0.5 rounded mr-2">[{{ selectedTransaction.result.code }}]</span>
+                <p class="mt-1" :class="selectedTransaction.result.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'">
+                  <span v-if="selectedTransaction.result.code" class="font-mono bg-white/50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded mr-2">[{{ selectedTransaction.result.code }}]</span>
                   {{ selectedTransaction.result.message }}
                 </p>
                 <div v-if="selectedTransaction.result.authCode || selectedTransaction.result.refNumber"
@@ -820,21 +820,21 @@ async function cancelTransaction() {
 
           <!-- Logs with Tabs -->
           <div v-if="selectedTransaction.logs?.length" class="mt-6">
-            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span class="material-icons text-gray-400">article</span>
+            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <span class="material-icons text-gray-400 dark:text-slate-500">article</span>
               Transaction Logs
             </h4>
 
             <!-- Log Tabs -->
-            <div class="border-b mb-4">
+            <div class="border-b dark:border-slate-700 mb-4">
               <div class="flex gap-1">
                 <button v-for="(log, idx) in selectedTransaction.logs" :key="idx"
                         @click="activeLogTab = idx"
                         :class="[
                           'px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all flex items-center gap-2 border-b-2 -mb-px',
                           activeLogTab === idx
-                            ? 'bg-white border-primary-500 text-primary-600'
-                            : 'text-gray-500 hover:text-gray-700 border-transparent hover:bg-gray-50'
+                            ? 'bg-white dark:bg-slate-800 border-primary-500 text-primary-600 dark:text-primary-400'
+                            : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white border-transparent hover:bg-gray-50 dark:hover:bg-slate-700'
                         ]">
                   <span :class="['w-6 h-6 rounded flex items-center justify-center text-xs', getLogTypeBadge(log.type)]">
                     <span class="material-icons text-xs">{{ getLogTypeIcon(log.type) }}</span>
@@ -913,35 +913,35 @@ async function cancelTransaction() {
 
           <!-- Child Transactions (Refunds/Cancels) -->
           <div v-if="selectedTransaction.childTransactions?.length" class="mt-8">
-            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <span class="material-icons text-gray-400">account_tree</span>
+            <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <span class="material-icons text-gray-400 dark:text-slate-500">account_tree</span>
               İlişkili İşlemler
             </h4>
 
             <div class="space-y-4">
               <div v-for="child in selectedTransaction.childTransactions" :key="child._id"
-                   class="border rounded-xl overflow-hidden">
+                   class="border dark:border-slate-700 rounded-xl overflow-hidden">
                 <!-- Child Header -->
-                <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-b">
+                <div class="bg-gray-50 dark:bg-slate-700 px-4 py-3 flex items-center justify-between border-b dark:border-slate-600">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="{
-                      'bg-orange-100': child.type === 'refund',
-                      'bg-gray-200': child.type === 'cancel'
+                      'bg-orange-100 dark:bg-orange-900/30': child.type === 'refund',
+                      'bg-gray-200 dark:bg-slate-600': child.type === 'cancel'
                     }">
                       <span class="material-icons text-sm" :class="{
-                        'text-orange-600': child.type === 'refund',
-                        'text-gray-600': child.type === 'cancel'
+                        'text-orange-600 dark:text-orange-400': child.type === 'refund',
+                        'text-gray-600 dark:text-slate-300': child.type === 'cancel'
                       }">{{ child.type === 'refund' ? 'undo' : 'block' }}</span>
                     </div>
                     <div>
-                      <div class="font-semibold text-gray-800">
+                      <div class="font-semibold text-gray-800 dark:text-white">
                         {{ child.type === 'refund' ? 'İade' : 'İptal' }}
                       </div>
-                      <div class="text-xs text-gray-500">{{ formatDate(child.createdAt) }}</div>
+                      <div class="text-xs text-gray-500 dark:text-slate-400">{{ formatDate(child.createdAt) }}</div>
                     </div>
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="font-semibold">{{ formatAmount(child.amount, selectedTransaction.currency) }}</span>
+                    <span class="font-semibold dark:text-white">{{ formatAmount(child.amount, selectedTransaction.currency) }}</span>
                     <span :class="['px-2.5 py-1 text-xs rounded-full font-medium border', getStatusBadge(child.status)]">
                       {{ child.status }}
                     </span>
@@ -949,27 +949,27 @@ async function cancelTransaction() {
                 </div>
 
                 <!-- Child Result -->
-                <div v-if="child.result" class="px-4 py-3" :class="child.result.success ? 'bg-green-50' : 'bg-red-50'">
+                <div v-if="child.result" class="px-4 py-3" :class="child.result.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'">
                   <div class="flex items-center gap-2">
-                    <span class="material-icons text-sm" :class="child.result.success ? 'text-green-600' : 'text-red-600'">
+                    <span class="material-icons text-sm" :class="child.result.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                       {{ child.result.success ? 'check_circle' : 'error' }}
                     </span>
-                    <span :class="child.result.success ? 'text-green-800' : 'text-red-800'">
-                      <span v-if="child.result.code" class="font-mono text-xs bg-white/50 px-1.5 py-0.5 rounded mr-2">[{{ child.result.code }}]</span>
+                    <span :class="child.result.success ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
+                      <span v-if="child.result.code" class="font-mono text-xs bg-white/50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded mr-2">[{{ child.result.code }}]</span>
                       {{ child.result.message }}
                     </span>
                   </div>
                 </div>
 
                 <!-- Child Logs -->
-                <div v-if="child.logs?.length" class="border-t">
+                <div v-if="child.logs?.length" class="border-t dark:border-slate-700">
                   <details class="group">
-                    <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <span class="material-icons text-sm text-gray-400">article</span>
+                    <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center justify-between">
+                      <span class="text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-2">
+                        <span class="material-icons text-sm text-gray-400 dark:text-slate-500">article</span>
                         {{ child.logs.length }} Log Kaydı
                       </span>
-                      <span class="material-icons text-gray-400 group-open:rotate-180 transition-transform">expand_more</span>
+                      <span class="material-icons text-gray-400 dark:text-slate-500 group-open:rotate-180 transition-transform">expand_more</span>
                     </summary>
                     <div class="bg-gray-900 p-4 text-sm">
                       <div v-for="(log, idx) in child.logs" :key="idx" class="mb-4 last:mb-0">
@@ -999,7 +999,7 @@ async function cancelTransaction() {
 
           <div v-else-if="loadingDetail" class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
-            <p class="mt-3 text-gray-500">Loading transaction details...</p>
+            <p class="mt-3 text-gray-500 dark:text-slate-400">Loading transaction details...</p>
           </div>
         </div>
       </div>

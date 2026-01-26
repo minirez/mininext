@@ -169,8 +169,8 @@ onMounted(async () => {
   <div>
     <!-- Header -->
     <div class="mb-6">
-      <h2 class="text-2xl font-semibold text-gray-800">Platform Komisyonları</h2>
-      <p class="text-sm text-gray-500 mt-1">Her POS için platform kar marjlarını belirleyin</p>
+      <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Platform Komisyonları</h2>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Her POS için platform kar marjlarını belirleyin</p>
     </div>
 
     <!-- Loading -->
@@ -180,16 +180,16 @@ onMounted(async () => {
 
     <!-- No POS -->
     <div v-else-if="platformPosList.length === 0"
-      class="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-      <span class="material-icons text-6xl text-gray-300">credit_card_off</span>
-      <h3 class="mt-4 text-lg font-medium text-gray-600">POS Tanımlı Değil</h3>
-      <p class="text-gray-500 mt-2">Önce POS sekmesinden en az bir POS terminali ekleyin</p>
+      class="text-center py-16 bg-gray-50 dark:bg-slate-800 rounded-2xl border-2 border-dashed border-gray-200 dark:border-slate-600">
+      <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">credit_card_off</span>
+      <h3 class="mt-4 text-lg font-medium text-gray-600 dark:text-slate-300">POS Tanımlı Değil</h3>
+      <p class="text-gray-500 dark:text-slate-400 mt-2">Önce POS sekmesinden en az bir POS terminali ekleyin</p>
     </div>
 
     <!-- Content with Tabs -->
-    <div v-else class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
       <!-- POS Tabs -->
-      <div class="border-b border-gray-200 bg-gray-50">
+      <div class="border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
         <nav class="flex overflow-x-auto px-4 gap-1 -mb-px">
           <button
             v-for="pos in platformPosList"
@@ -198,8 +198,8 @@ onMounted(async () => {
             :class="[
               'flex items-center gap-3 px-4 py-3 border-b-2 transition-all whitespace-nowrap',
               activeTab === pos._id
-                ? 'border-primary-500 bg-white text-primary-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                ? 'border-primary-500 bg-white dark:bg-slate-800 text-primary-700 dark:text-primary-400'
+                : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700'
             ]"
           >
             <img :src="getBankLogo(pos.bankCode)"
@@ -214,23 +214,23 @@ onMounted(async () => {
       <div v-if="activePos" class="p-6">
         <!-- Success/Error Messages -->
         <div v-if="successMessage"
-          class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
+          class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2 text-green-700 dark:text-green-400">
           <span class="material-icons text-lg">check_circle</span>
           {{ successMessage }}
         </div>
         <div v-if="errorMessage"
-          class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+          class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-700 dark:text-red-400">
           <span class="material-icons text-lg">error</span>
           {{ errorMessage }}
         </div>
 
         <!-- No Commission Period Warning -->
         <div v-if="!activePeriod"
-          class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
-          <span class="material-icons text-yellow-600">warning</span>
+          class="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl flex items-start gap-3">
+          <span class="material-icons text-yellow-600 dark:text-yellow-400">warning</span>
           <div>
-            <p class="font-medium text-yellow-800">Komisyon Dönemi Bulunamadı</p>
-            <p class="text-sm text-yellow-700 mt-1">
+            <p class="font-medium text-yellow-800 dark:text-yellow-300">Komisyon Dönemi Bulunamadı</p>
+            <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
               Bu POS için henüz komisyon dönemi tanımlanmamış.
               POS ayarlarından komisyon dönemi ekleyin.
             </p>
@@ -238,95 +238,95 @@ onMounted(async () => {
         </div>
 
         <!-- Commission Table -->
-        <div class="overflow-hidden rounded-xl border border-gray-200">
+        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700">
           <table class="w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-gray-50 dark:bg-slate-900">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider w-1/4">
                   Taksit
                 </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider w-1/4">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="material-icons text-sm text-blue-600">account_balance</span>
+                    <span class="material-icons text-sm text-blue-600 dark:text-blue-400">account_balance</span>
                     Banka Oranı
                   </div>
                 </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider w-1/4">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="material-icons text-sm text-primary-600">trending_up</span>
+                    <span class="material-icons text-sm text-primary-600 dark:text-primary-400">trending_up</span>
                     Platform Marjı
                   </div>
                 </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wider w-1/4">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="material-icons text-sm text-green-600">functions</span>
+                    <span class="material-icons text-sm text-green-600 dark:text-green-400">functions</span>
                     Toplam
                   </div>
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
               <!-- Yurtdışı Kartlar -->
-              <tr class="bg-blue-50/50">
+              <tr class="bg-blue-50/50 dark:bg-blue-900/20">
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <span class="material-icons text-blue-600 text-lg">credit_card</span>
-                    <span class="font-medium text-gray-800">Yurtdışı Kartlar</span>
+                    <span class="material-icons text-blue-600 dark:text-blue-400 text-lg">credit_card</span>
+                    <span class="font-medium text-gray-800 dark:text-white">Yurtdışı Kartlar</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="text-gray-600 font-mono">
+                  <span class="text-gray-600 dark:text-slate-300 font-mono">
                     %{{ (activePeriod?.foreignCardRate || 0).toFixed(2) }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="text-gray-400">+</span>
+                    <span class="text-gray-400 dark:text-slate-500">+</span>
                     <input
                       v-model.number="formData.foreignCardMargin"
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      class="w-20 px-2 py-1.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
-                    <span class="text-gray-500">%</span>
+                    <span class="text-gray-500 dark:text-slate-400">%</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="font-semibold text-green-700 font-mono">
+                  <span class="font-semibold text-green-700 dark:text-green-400 font-mono">
                     %{{ getForeignCardTotal() }}
                   </span>
                 </td>
               </tr>
 
               <!-- Yabancı Bankalar -->
-              <tr class="bg-orange-50/50">
+              <tr class="bg-orange-50/50 dark:bg-orange-900/20">
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <span class="material-icons text-orange-600 text-lg">account_balance</span>
-                    <span class="font-medium text-gray-800">Yabancı Bankalar</span>
+                    <span class="material-icons text-orange-600 dark:text-orange-400 text-lg">account_balance</span>
+                    <span class="font-medium text-gray-800 dark:text-white">Yabancı Bankalar</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="text-gray-600 font-mono">
+                  <span class="text-gray-600 dark:text-slate-300 font-mono">
                     %{{ (activePeriod?.foreignBankRate || 0).toFixed(2) }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="text-gray-400">+</span>
+                    <span class="text-gray-400 dark:text-slate-500">+</span>
                     <input
                       v-model.number="formData.foreignBankMargin"
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      class="w-20 px-2 py-1.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
-                    <span class="text-gray-500">%</span>
+                    <span class="text-gray-500 dark:text-slate-400">%</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="font-semibold text-green-700 font-mono">
+                  <span class="font-semibold text-green-700 dark:text-green-400 font-mono">
                     %{{ getForeignBankTotal() }}
                   </span>
                 </td>
@@ -334,8 +334,8 @@ onMounted(async () => {
 
               <!-- Separator -->
               <tr>
-                <td colspan="4" class="px-4 py-2 bg-gray-100">
-                  <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Taksit Oranları</span>
+                <td colspan="4" class="px-4 py-2 bg-gray-100 dark:bg-slate-700">
+                  <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Taksit Oranları</span>
                 </td>
               </tr>
 
@@ -343,33 +343,33 @@ onMounted(async () => {
               <tr
                 v-for="(rate, index) in formData.rates"
                 :key="rate.count"
-                :class="rate.count === 1 ? 'bg-green-50/50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30')"
+                :class="rate.count === 1 ? 'bg-green-50/50 dark:bg-green-900/20' : (index % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-gray-50/30 dark:bg-slate-800/50')"
               >
                 <td class="px-4 py-3">
-                  <span class="font-medium text-gray-800">
+                  <span class="font-medium text-gray-800 dark:text-white">
                     {{ rate.count === 1 ? 'Peşin' : rate.count + ' Taksit' }}
                   </span>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="text-gray-600 font-mono">
+                  <span class="text-gray-600 dark:text-slate-300 font-mono">
                     %{{ getBankRate(rate.count).toFixed(2) }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-1">
-                    <span class="text-gray-400">+</span>
+                    <span class="text-gray-400 dark:text-slate-500">+</span>
                     <input
                       v-model.number="rate.platformMargin"
                       type="number"
                       step="0.01"
                       min="0"
-                      class="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      class="w-20 px-2 py-1.5 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg text-center font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
-                    <span class="text-gray-500">%</span>
+                    <span class="text-gray-500 dark:text-slate-400">%</span>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="font-semibold text-green-700 font-mono">
+                  <span class="font-semibold text-green-700 dark:text-green-400 font-mono">
                     %{{ getTotal(rate.count) }}
                   </span>
                 </td>
@@ -379,7 +379,7 @@ onMounted(async () => {
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end mt-6 pt-6 border-t border-gray-100">
+        <div class="flex justify-end mt-6 pt-6 border-t border-gray-100 dark:border-slate-700">
           <button
             @click="handleSave"
             :disabled="saving"

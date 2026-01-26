@@ -127,7 +127,7 @@
             </span>
           </div>
           <div>
-            <span class="text-gray-500 dark:text-slate-400">{{ $t('booking.email') }}:</span>
+            <span class="text-gray-500 dark:text-slate-400">{{ $t('common.email') }}:</span>
             <span class="ml-2 text-gray-900 dark:text-white">
               {{ bookingStore.guests.leadGuest?.email }}
             </span>

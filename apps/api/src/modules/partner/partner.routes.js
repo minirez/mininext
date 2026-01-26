@@ -1,12 +1,22 @@
 import express from 'express'
 import * as partnerService from './partner.service.js'
-import { protect, requireAdmin } from '#middleware/auth.js'
+import { protect, requireAdmin, requirePartner } from '#middleware/auth.js'
 import { partnerContext } from '#middleware/partnerContext.js'
 import upload from '#helpers/upload.js'
 
 const router = express.Router()
 
-// All routes require authentication and admin role
+// ==================== Partner Self-Profile Routes (require partner role) ====================
+// These routes are for partners to manage their own profile
+router.get('/my/profile', protect, requirePartner, partnerService.getMyProfile)
+router.put('/my/profile', protect, requirePartner, partnerService.updateMyProfile)
+router.post('/my/profile/logo', protect, requirePartner, upload.single('logo'), partnerService.uploadMyLogo)
+router.delete('/my/profile/logo', protect, requirePartner, partnerService.deleteMyLogo)
+router.post('/my/profile/favicon', protect, requirePartner, upload.single('favicon'), partnerService.uploadMyFavicon)
+router.delete('/my/profile/favicon', protect, requirePartner, partnerService.deleteMyFavicon)
+
+// ==================== Admin Routes (require admin role) ====================
+// All routes below require authentication and admin role
 router.use(protect)
 router.use(requireAdmin)
 router.use(partnerContext)

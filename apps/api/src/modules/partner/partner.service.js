@@ -1083,6 +1083,209 @@ export const getPmsStatus = asyncHandler(async (req, res) => {
   })
 })
 
+// ==================== Partner Self-Profile ====================
+
+// Get my profile (for partner users)
+export const getMyProfile = asyncHandler(async (req, res) => {
+  // Get partner ID from authenticated user
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+    .select('companyName tradeName email phone taxOffice taxNumber address branding')
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  res.json({
+    success: true,
+    data: partner
+  })
+})
+
+// Update my profile (for partner users - limited fields)
+export const updateMyProfile = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  // Only allow updating specific fields (not email, branding domains, etc.)
+  const allowedFields = [
+    'companyName',
+    'tradeName',
+    'phone',
+    'taxOffice',
+    'taxNumber',
+    'address'
+  ]
+
+  allowedFields.forEach(field => {
+    if (req.body[field] !== undefined) {
+      partner[field] = req.body[field]
+    }
+  })
+
+  await partner.save()
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('PROFILE_UPDATED') : 'Profile updated successfully',
+    data: partner
+  })
+})
+
+// Upload my logo (for partner users)
+export const uploadMyLogo = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  if (!req.file) {
+    throw new BadRequestError('NO_FILE_UPLOADED')
+  }
+
+  // Initialize branding if not exists
+  if (!partner.branding) {
+    partner.branding = {}
+  }
+
+  // Set logo path
+  partner.branding.logo = `/uploads/partners/${req.file.filename}`
+
+  await partner.save()
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('LOGO_UPLOADED') : 'Logo uploaded successfully',
+    data: {
+      logo: partner.branding.logo
+    }
+  })
+})
+
+// Delete my logo (for partner users)
+export const deleteMyLogo = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  // Delete file if exists
+  if (partner.branding?.logo) {
+    const uploadsDir = path.join(__dirname, '../../../uploads')
+    const filePath = path.join(uploadsDir, partner.branding.logo.replace('/uploads/', ''))
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    partner.branding.logo = null
+    await partner.save()
+  }
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('LOGO_DELETED') : 'Logo deleted successfully'
+  })
+})
+
+// Upload my favicon (for partner users)
+export const uploadMyFavicon = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  if (!req.file) {
+    throw new BadRequestError('NO_FILE_UPLOADED')
+  }
+
+  // Initialize branding if not exists
+  if (!partner.branding) {
+    partner.branding = {}
+  }
+
+  // Set favicon path
+  partner.branding.favicon = `/uploads/partners/${req.file.filename}`
+
+  await partner.save()
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('FAVICON_UPLOADED') : 'Favicon uploaded successfully',
+    data: {
+      favicon: partner.branding.favicon
+    }
+  })
+})
+
+// Delete my favicon (for partner users)
+export const deleteMyFavicon = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const partner = await Partner.findById(partnerId)
+
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  // Delete file if exists
+  if (partner.branding?.favicon) {
+    const uploadsDir = path.join(__dirname, '../../../uploads')
+    const filePath = path.join(uploadsDir, partner.branding.favicon.replace('/uploads/', ''))
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    partner.branding.favicon = null
+    await partner.save()
+  }
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('FAVICON_DELETED') : 'Favicon deleted successfully'
+  })
+})
+
 // ==================== Subscription Management ====================
 
 /**

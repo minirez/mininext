@@ -270,7 +270,7 @@
                 </div>
                 <div class="flex">
                   <span class="text-gray-500 dark:text-slate-400 min-w-[80px]"
-                    >{{ $t('booking.email') }}:</span
+                    >{{ $t('common.email') }}:</span
                   >
                   <span class="font-medium text-gray-900 dark:text-white">{{
                     booking.leadGuest?.email || '-'

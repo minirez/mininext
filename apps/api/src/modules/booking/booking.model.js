@@ -593,6 +593,13 @@ const bookingSchema = new mongoose.Schema(
     // Special requests (general)
     specialRequests: { type: String, trim: true },
 
+    // Guest preferred language (for emails)
+    guestLanguage: {
+      type: String,
+      enum: SUPPORTED_LANGUAGES,
+      default: 'tr'
+    },
+
     // Timestamps
     confirmedAt: { type: Date },
     completedAt: { type: Date },
