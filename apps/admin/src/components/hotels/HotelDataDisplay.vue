@@ -96,10 +96,10 @@
             <div class="mt-1 flex flex-wrap gap-1">
               <span
                 v-for="tag in hotel.tags || []"
-                :key="tag._id || tag.id || tag"
+                :key="tag"
                 class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs"
               >
-                {{ getLocalizedText(tag.name) || tag.slug || tag }}
+                {{ tag }}
               </span>
               <span v-if="!hotel.tags?.length" class="text-gray-400">-</span>
             </div>

@@ -504,18 +504,12 @@ const hotelSchema = new mongoose.Schema(
               'hairdresser',
               'carRental',
               'airportShuttle',
-              'tourDesk',
               'disabledAccess',
               'wheelchairAccessible',
               'smokingArea',
               'nonSmoking',
-              'petFriendly',
               'garden',
-              'terrace',
-              // Business facilities
-              'businessCenter',
-              'meetingRooms',
-              'conferenceHall'
+              'terrace'
             ]
           }
         ]
@@ -541,7 +535,6 @@ const hotelSchema = new mongoose.Schema(
               'roomService',
               'roomService24h',
               'minibar',
-              'breakfast',
               'dietMenu',
               'veganOptions',
               'halalFood',
@@ -589,7 +582,6 @@ const hotelSchema = new mongoose.Schema(
               'surfing',
               'sailing',
               'fishing',
-              'skiing',
               'animation',
               'liveMusic',
               'disco',

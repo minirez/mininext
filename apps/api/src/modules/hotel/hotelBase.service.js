@@ -13,7 +13,6 @@ import {
   downloadRoomTemplateImages
 } from '#helpers/imageDownloader.js'
 import logger from '#core/logger.js'
-import { generateAmenitiesFromProfile } from './amenityMapping.js'
 
 /**
  * Get all base hotels (SuperAdmin only)
@@ -212,18 +211,8 @@ export const createBaseHotel = asyncHandler(async (req, res) => {
     }
   }
 
-  // Auto-generate amenities from profile if profile is provided
-  let amenities = hotelData.amenities
-  if (hotelData.profile) {
-    const generatedAmenities = generateAmenitiesFromProfile(hotelData.profile)
-    if (generatedAmenities.length > 0) {
-      amenities = generatedAmenities
-    }
-  }
-
   const hotel = await Hotel.create({
     ...hotelData,
-    amenities,
     roomTemplates: processedRoomTemplates,
     hotelType: 'base',
     status: 'active', // Base hotels are active by default for partner selection
@@ -367,15 +356,6 @@ export const updateBaseHotel = asyncHandler(async (req, res) => {
     // Keep existing images
   } else if (req.body.images !== undefined) {
     hotel.images = req.body.images
-  }
-
-  // Auto-generate amenities from profile features
-  if (hotel.profile) {
-    const generatedAmenities = generateAmenitiesFromProfile(hotel.profile)
-    if (generatedAmenities.length > 0) {
-      hotel.amenities = generatedAmenities
-      logger.info(`Auto-generated amenities for base hotel ${hotel._id}: ${generatedAmenities.join(', ')}`)
-    }
   }
 
   hotel.updatedBy = req.user._id

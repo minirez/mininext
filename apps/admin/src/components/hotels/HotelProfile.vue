@@ -504,17 +504,7 @@ const facilitiesFeatures = computed(() => [
   { value: 'hairdresser', label: t('hotels.profile.features.hairdresser') },
   { value: 'carRental', label: t('hotels.profile.features.carRental') },
   { value: 'airportShuttle', label: t('hotels.profile.features.airportShuttle') },
-  { value: 'tourDesk', label: t('hotels.profile.features.tourDesk') },
-  { value: 'disabledAccess', label: t('hotels.profile.features.disabledAccess') },
-  { value: 'wheelchairAccessible', label: t('hotels.profile.features.wheelchairAccessible') },
-  { value: 'smokingArea', label: t('hotels.profile.features.smokingArea') },
-  { value: 'nonSmoking', label: t('hotels.profile.features.nonSmoking') },
-  { value: 'petFriendly', label: t('hotels.profile.features.petFriendly') },
-  { value: 'garden', label: t('hotels.profile.features.garden') },
-  { value: 'terrace', label: t('hotels.profile.features.terrace') },
-  { value: 'businessCenter', label: t('hotels.profile.features.businessCenter') },
-  { value: 'meetingRooms', label: t('hotels.profile.features.meetingRooms') },
-  { value: 'conferenceHall', label: t('hotels.profile.features.conferenceHall') }
+  { value: 'disabledAccess', label: t('hotels.profile.features.disabledAccess') }
 ])
 
 const diningFeatures = computed(() => [
@@ -531,11 +521,8 @@ const diningFeatures = computed(() => [
   { value: 'roomService', label: t('hotels.profile.features.roomService') },
   { value: 'roomService24h', label: t('hotels.profile.features.roomService24h') },
   { value: 'minibar', label: t('hotels.profile.features.minibar') },
-  { value: 'breakfast', label: t('hotels.profile.features.breakfast') },
   { value: 'dietMenu', label: t('hotels.profile.features.dietMenu') },
-  { value: 'veganOptions', label: t('hotels.profile.features.veganOptions') },
-  { value: 'halalFood', label: t('hotels.profile.features.halalFood') },
-  { value: 'kosherFood', label: t('hotels.profile.features.kosherFood') }
+  { value: 'veganOptions', label: t('hotels.profile.features.veganOptions') }
 ])
 
 const sportsFeatures = computed(() => [
@@ -558,17 +545,11 @@ const sportsFeatures = computed(() => [
   { value: 'snorkeling', label: t('hotels.profile.features.snorkeling') },
   { value: 'jetski', label: t('hotels.profile.features.jetski') },
   { value: 'parasailing', label: t('hotels.profile.features.parasailing') },
-  { value: 'canoeing', label: t('hotels.profile.features.canoeing') },
-  { value: 'surfing', label: t('hotels.profile.features.surfing') },
-  { value: 'sailing', label: t('hotels.profile.features.sailing') },
-  { value: 'fishing', label: t('hotels.profile.features.fishing') },
-  { value: 'skiing', label: t('hotels.profile.features.skiing') },
   { value: 'animation', label: t('hotels.profile.features.animation') },
   { value: 'liveMusic', label: t('hotels.profile.features.liveMusic') },
   { value: 'disco', label: t('hotels.profile.features.disco') },
   { value: 'cinema', label: t('hotels.profile.features.cinema') },
-  { value: 'gameRoom', label: t('hotels.profile.features.gameRoom') },
-  { value: 'casino', label: t('hotels.profile.features.casino') }
+  { value: 'gameRoom', label: t('hotels.profile.features.gameRoom') }
 ])
 
 const spaFeatures = computed(() => [
@@ -645,13 +626,12 @@ const removeDistance = index => {
   form.location.distances.splice(index, 1)
 }
 
-// Watch for hotel profile changes and populate form
-// Only watch the profile property to avoid resetting when other hotel properties change (e.g., location)
+// Watch for hotel changes and populate form
 watch(
-  () => props.hotel?.profile,
-  newProfile => {
-    if (newProfile) {
-      const profile = newProfile
+  () => props.hotel,
+  newHotel => {
+    if (newHotel?.profile) {
+      const profile = newHotel.profile
 
       // Overview
       if (profile.overview) {

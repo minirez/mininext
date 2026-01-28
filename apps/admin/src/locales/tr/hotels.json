@@ -704,24 +704,7 @@
         "privateDining": "Özel Yemek",
         "couplesSpa": "Çift Spa",
         "sunsetCruise": "Gün Batımı Turu",
-        "specialTurndown": "Özel Turndown Servisi",
-        "tourDesk": "Tur Danışma",
-        "wheelchairAccessible": "Tekerlekli Sandalye Erişimi",
-        "smokingArea": "Sigara İçme Alanı",
-        "nonSmoking": "Sigara İçilmeyen",
-        "petFriendly": "Evcil Hayvan Kabul",
-        "businessCenter": "İş Merkezi",
-        "meetingRooms": "Toplantı Odaları",
-        "conferenceHall": "Konferans Salonu",
-        "breakfast": "Kahvaltı",
-        "halalFood": "Helal Yemek",
-        "kosherFood": "Koşer Yemek",
-        "canoeing": "Kano",
-        "surfing": "Sörf",
-        "sailing": "Yelken",
-        "fishing": "Balıkçılık",
-        "skiing": "Kayak",
-        "casino": "Kumarhane"
+        "specialTurndown": "Özel Turndown Servisi"
       }
     },
     "types": {

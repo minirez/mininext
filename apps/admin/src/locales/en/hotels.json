@@ -704,24 +704,7 @@
         "privateDining": "Private Dining",
         "couplesSpa": "Couples Spa",
         "sunsetCruise": "Sunset Cruise",
-        "specialTurndown": "Special Turndown Service",
-        "tourDesk": "Tour Desk",
-        "wheelchairAccessible": "Wheelchair Accessible",
-        "smokingArea": "Smoking Area",
-        "nonSmoking": "Non-Smoking",
-        "petFriendly": "Pet Friendly",
-        "businessCenter": "Business Center",
-        "meetingRooms": "Meeting Rooms",
-        "conferenceHall": "Conference Hall",
-        "breakfast": "Breakfast",
-        "halalFood": "Halal Food",
-        "kosherFood": "Kosher Food",
-        "canoeing": "Canoeing",
-        "surfing": "Surfing",
-        "sailing": "Sailing",
-        "fishing": "Fishing",
-        "skiing": "Skiing",
-        "casino": "Casino"
+        "specialTurndown": "Special Turndown Service"
       }
     },
     "types": {
