@@ -232,6 +232,7 @@
       v-model="showCampaignForm"
       :title="editingCampaign ? $t('planning.campaigns.edit') : $t('planning.campaigns.add')"
       size="xl"
+      :close-on-overlay="false"
     >
       <CampaignForm
         :hotel="hotel"
