@@ -10,6 +10,7 @@ import RoomType from '../planning/roomType.model.js'
 import MealPlan from '../planning/mealPlan.model.js'
 import Market from '../planning/market.model.js'
 import pricingService from '#services/pricingService.js'
+import { getEffectiveChildAgeGroups } from '#services/pricing/multipliers.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import { getPartnerId } from '#services/helpers.js'
 
@@ -172,12 +173,40 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
       const currency = market.currency
       const priceErrors = []
 
+      // Get effective child age groups to determine infant age range
+      const childAgeGroups = getEffectiveChildAgeGroups(hotel, market)
+      const infantGroup = childAgeGroups.find(g => g.code === 'infant')
+      const maxInfantAge = infantGroup?.maxAge ?? 2
+
+      // Classify children by age (infant vs child)
+      let infantCount = 0
+      let childCount = 0
+      for (const childAge of children) {
+        if (childAge <= maxInfantAge) {
+          infantCount++
+        } else {
+          childCount++
+        }
+      }
+
       // Find cheapest available option
       for (const roomType of roomTypes) {
         // Check capacity
         const maxAdults = roomType.occupancy?.maxAdults || 2
+        const maxChildren = roomType.occupancy?.maxChildren ?? 0
+        const maxInfants = roomType.occupancy?.maxInfants ?? 1
         const maxTotal = roomType.occupancy?.totalMaxGuests || 4
-        const totalPax = adults + children.length
+        const totalPax = adults + childCount // Infants don't count towards total
+
+        // Skip if infant capacity exceeded
+        if (infantCount > maxInfants) {
+          continue
+        }
+
+        // Skip if child capacity exceeded
+        if (childCount > maxChildren) {
+          continue
+        }
 
         if (adults > maxAdults || totalPax > maxTotal) {
           continue
@@ -385,14 +414,41 @@ export const searchAvailability = asyncHandler(async (req, res) => {
       unavailableOptions: []
     }
 
+    // Get effective child age groups to determine infant age range
+    const childAgeGroups = getEffectiveChildAgeGroups(hotel, market)
+    const infantGroup = childAgeGroups.find(g => g.code === 'infant')
+    const maxInfantAge = infantGroup?.maxAge ?? 2
+
+    // Classify children by age (infant vs child)
+    let infantCount = 0
+    let childCount = 0
+    for (const childAge of children) {
+      if (childAge <= maxInfantAge) {
+        infantCount++
+      } else {
+        childCount++
+      }
+    }
+
     // Check capacity
     const maxAdults = roomType.occupancy?.maxAdults ?? 2
     const maxChildren = roomType.occupancy?.maxChildren ?? 0
+    const maxInfants = roomType.occupancy?.maxInfants ?? 1
     const maxTotal = roomType.occupancy?.totalMaxGuests ?? 4
-    const totalPax = adults + children.length
+    const totalPax = adults + childCount // Infants typically don't count towards total
+
+    // Check infant capacity
+    if (infantCount > maxInfants) {
+      roomResult.capacityExceeded = true
+      roomResult.capacityMessage = maxInfants === 0
+        ? 'Bu oda bebek kabul etmemektedir'
+        : `Max ${maxInfants} bebek kabul edilmektedir`
+      results.push(roomResult)
+      continue
+    }
 
     // Check if room accepts children
-    if (children.length > maxChildren) {
+    if (childCount > maxChildren) {
       roomResult.capacityExceeded = true
       roomResult.capacityMessage = maxChildren === 0
         ? 'Bu oda çocuk kabul etmemektedir'
@@ -403,7 +459,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
 
     if (adults > maxAdults || totalPax > maxTotal) {
       roomResult.capacityExceeded = true
-      roomResult.capacityMessage = `Max ${maxAdults} adults, ${maxTotal} total guests`
+      roomResult.capacityMessage = `Max ${maxAdults} yetişkin, ${maxTotal} toplam misafir`
       results.push(roomResult)
       continue
     }
