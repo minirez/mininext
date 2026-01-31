@@ -735,6 +735,7 @@
       "nights": "gece",
       "basePrice": "Temel Oda Fiyatı",
       "basePriceHint": "Standart {occupancy} kişi için gecelik oda fiyatı",
+      "multiplierOBP": "Çarpanlı OBP",
       "extraPersonPricing": "Ekstra Kişi Ücretleri",
       "perNight": "Gecelik",
       "days": "gün",

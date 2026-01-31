@@ -735,6 +735,7 @@
       "nights": "nights",
       "basePrice": "Base Room Price",
       "basePriceHint": "Nightly room price for standard {occupancy} guests",
+      "multiplierOBP": "Multiplier OBP",
       "extraPersonPricing": "Extra Person Charges",
       "perNight": "Per Night",
       "days": "days",

@@ -432,10 +432,21 @@ export function useBulkEditLogic(props, emit) {
           }
 
           if (pricingType === 'per_person') {
-            for (const [pax, price] of Object.entries(priceData?.occupancyPricing || {})) {
-              if (isValueSet(price)) {
-                change.occupancyPricing[pax] = Number(price)
+            // Check if this room uses multipliers (multiplier-based OBP)
+            const usesMultipliers = roomType?.useMultipliers === true
+            if (usesMultipliers) {
+              // Multiplier OBP uses pricePerNight as base price
+              if (isValueSet(priceData?.pricePerNight)) {
+                change.pricePerNight = Number(priceData.pricePerNight)
                 hasValues = true
+              }
+            } else {
+              // Standard OBP uses occupancyPricing
+              for (const [pax, price] of Object.entries(priceData?.occupancyPricing || {})) {
+                if (isValueSet(price)) {
+                  change.occupancyPricing[pax] = Number(price)
+                  hasValues = true
+                }
               }
             }
           } else {
