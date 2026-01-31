@@ -728,6 +728,16 @@ export function useRateFormLogic(props, emit) {
     toast.success(t('planning.pricing.copiedToRooms'))
   }
 
+  // Update room prices for a specific room (handles reactive object properly)
+  const updateRoomPricesForRoom = (roomId, newPrices) => {
+    roomPrices[roomId] = newPrices
+  }
+
+  // Update room restrictions for a specific room (handles reactive object properly)
+  const updateRoomRestrictionsForRoom = (roomId, newRestrictions) => {
+    roomRestrictions[roomId] = newRestrictions
+  }
+
   const nextStep = () => {
     if (canProceed.value && currentStep.value < steps.length - 1) {
       currentStep.value++
@@ -1062,6 +1072,8 @@ export function useRateFormLogic(props, emit) {
     // Methods - actions
     initializeRoomData,
     updateSelectedRoomTab,
+    updateRoomPricesForRoom,
+    updateRoomRestrictionsForRoom,
     copyFirstPriceToAllMealPlans,
     copyCurrentRoomToAll,
     nextStep,
