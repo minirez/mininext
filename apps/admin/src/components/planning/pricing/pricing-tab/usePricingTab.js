@@ -475,7 +475,9 @@ export function usePricingTab(props) {
   const handlePeriodEditSaved = () => {
     showPeriodEditModal.value = false
     editingPeriod.value = null
+    // Refresh both period list and calendar rates
     fetchPriceList()
+    fetchRates()
   }
 
   const handleAIExecuted = () => {

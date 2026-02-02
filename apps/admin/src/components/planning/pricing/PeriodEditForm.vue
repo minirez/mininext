@@ -535,7 +535,8 @@ const props = defineProps({
   mealPlans: { type: Array, default: () => [] },
   market: { type: Object, default: null },
   existingRates: { type: Array, default: () => [] },
-  childAgeGroups: { type: Array, default: () => [] }
+  childAgeGroups: { type: Array, default: () => [] },
+  selectedRoomType: { type: String, default: '' }
 })
 
 const emit = defineEmits(['saved', 'cancel'])
@@ -736,9 +737,14 @@ const initializeRoomData = () => {
     })
   })
 
-  // Set first room as selected
+  // Set the selected room tab based on passed prop or default to first room
   if (props.roomTypes.length > 0 && !selectedRoomTab.value) {
-    selectedRoomTab.value = props.roomTypes[0]._id
+    // If a specific room type was selected in the filter, use it
+    if (props.selectedRoomType && props.roomTypes.find(rt => rt._id === props.selectedRoomType)) {
+      selectedRoomTab.value = props.selectedRoomType
+    } else {
+      selectedRoomTab.value = props.roomTypes[0]._id
+    }
   }
 }
 
@@ -786,44 +792,53 @@ const handleSave = async () => {
   try {
     const promises = []
 
-    // For each room type that has prices
-    props.roomTypes.forEach(rt => {
-      const data = roomData[rt._id]
-      if (!data) return
+    // Only save for the currently selected room tab
+    const rt = props.roomTypes.find(r => r._id === selectedRoomTab.value)
+    if (!rt) {
+      toast.error(t('planning.pricing.selectRoomType'))
+      saving.value = false
+      return
+    }
 
-      // For each meal plan
-      props.mealPlans.forEach(mp => {
-        const priceData = data.prices[mp._id]
-        if (!priceData || priceData.pricePerNight <= 0) return
+    const data = roomData[rt._id]
+    if (!data) {
+      toast.error(t('planning.pricing.noDataForRoom'))
+      saving.value = false
+      return
+    }
 
-        const rateData = {
-          roomType: rt._id,
-          mealPlan: mp._id,
-          market: props.market._id,
-          startDate: props.period.startDate,
-          endDate: props.period.endDate,
-          pricePerNight: priceData.pricePerNight,
-          singleSupplement: priceData.singleSupplement || 0,
-          extraAdult: priceData.extraAdult || 0,
-          childOrderPricing: priceData.childOrderPricing || [],
-          extraInfant: priceData.extraInfant || 0,
-          currency: currency.value,
-          allotment: data.allotment ?? 10,
-          minStay: data.minStay || 1,
-          releaseDays: data.releaseDays || 0
+    // For each meal plan
+    props.mealPlans.forEach(mp => {
+      const priceData = data.prices[mp._id]
+      if (!priceData || priceData.pricePerNight <= 0) return
+
+      const rateData = {
+        roomType: rt._id,
+        mealPlan: mp._id,
+        market: props.market._id,
+        startDate: props.period.startDate,
+        endDate: props.period.endDate,
+        pricePerNight: priceData.pricePerNight,
+        singleSupplement: priceData.singleSupplement || 0,
+        extraAdult: priceData.extraAdult || 0,
+        childOrderPricing: priceData.childOrderPricing || [],
+        extraInfant: priceData.extraInfant || 0,
+        currency: currency.value,
+        allotment: data.allotment ?? 10,
+        minStay: data.minStay || 1,
+        releaseDays: data.releaseDays || 0
+      }
+
+      // Add multiplier override if room uses OBP with multipliers
+      const usesMultipliers = rt.pricingType === 'per_person' && rt.useMultipliers === true
+      if (usesMultipliers) {
+        rateData.useMultiplierOverride = data.useMultiplierOverride || false
+        if (data.useMultiplierOverride && data.multiplierOverride) {
+          rateData.multiplierOverride = data.multiplierOverride
         }
+      }
 
-        // Add multiplier override if room uses OBP with multipliers
-        const usesMultipliers = rt.pricingType === 'per_person' && rt.useMultipliers === true
-        if (usesMultipliers) {
-          rateData.useMultiplierOverride = data.useMultiplierOverride || false
-          if (data.useMultiplierOverride && data.multiplierOverride) {
-            rateData.multiplierOverride = data.multiplierOverride
-          }
-        }
-
-        promises.push(planningService.createRate(props.hotelId, rateData))
-      })
+      promises.push(planningService.createRate(props.hotelId, rateData))
     })
 
     if (promises.length === 0) {

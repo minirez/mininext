@@ -230,7 +230,11 @@ campaignSchema.pre('save', function (next) {
 campaignSchema.virtual('isCurrentlyActive').get(function () {
   if (this.status !== 'active') return false
   const now = new Date()
-  return now >= this.bookingWindow.startDate && now <= this.bookingWindow.endDate
+  // Normalize to start of day for end date comparison
+  // This ensures campaigns are active throughout the entire end date
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
+  return now >= this.bookingWindow.startDate && todayStart <= this.bookingWindow.endDate
 })
 
 // Statics
@@ -240,11 +244,14 @@ campaignSchema.statics.findByHotel = function (hotelId) {
 
 campaignSchema.statics.findActiveByHotel = function (hotelId) {
   const now = new Date()
+  // Normalize to start of day for end date comparison
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
   return this.find({
     hotel: hotelId,
     status: 'active',
     'bookingWindow.startDate': { $lte: now },
-    'bookingWindow.endDate': { $gte: now }
+    'bookingWindow.endDate': { $gte: todayStart }
   }).sort({ priority: -1, displayOrder: 1 })
 }
 
@@ -260,11 +267,16 @@ campaignSchema.statics.findApplicable = async function (hotelId, params) {
     nights
   } = params
 
+  // Normalize booking date to start of day for comparison
+  // This ensures that a booking made any time during the end date is still valid
+  const bookingDateStart = new Date(bookingDate)
+  bookingDateStart.setHours(0, 0, 0, 0)
+
   const query = {
     hotel: hotelId,
     status: 'active',
     'bookingWindow.startDate': { $lte: bookingDate },
-    'bookingWindow.endDate': { $gte: bookingDate },
+    'bookingWindow.endDate': { $gte: bookingDateStart },
     'stayWindow.startDate': { $lte: checkOutDate },
     'stayWindow.endDate': { $gte: checkInDate }
   }

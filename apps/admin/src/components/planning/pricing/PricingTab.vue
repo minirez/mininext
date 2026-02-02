@@ -200,6 +200,7 @@
         :meal-plans="filteredMealPlans"
         :market="selectedMarket"
         :child-age-groups="hotel.childAgeGroups || []"
+        :selected-room-type="filters.roomType"
         @saved="handlePeriodEditSaved"
         @cancel="showPeriodEditModal = false"
       />

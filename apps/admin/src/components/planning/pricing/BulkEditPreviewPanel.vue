@@ -123,6 +123,14 @@
                   </div>
                 </template>
                 <template v-else>
+                  <!-- Multiplier OBP - base price -->
+                  <div v-if="change.pricePerNight !== null" class="flex items-center gap-2 mb-1">
+                    <span class="material-icons text-sm text-purple-500">calculate</span>
+                    {{ $t('planning.pricing.basePrice') }}:
+                    <strong>{{ change.pricePerNight }} {{ currency }}</strong>
+                    <span class="text-xs text-gray-400">({{ $t('planning.pricing.multiplierOBP') }})</span>
+                  </div>
+                  <!-- Standard OBP - occupancy pricing -->
                   <div
                     v-for="(price, pax) in change.occupancyPricing"
                     :key="pax"

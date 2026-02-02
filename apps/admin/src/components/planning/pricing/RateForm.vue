@@ -41,9 +41,11 @@
     <RateFormStepPricing
       v-show="currentStep === 1"
       v-model:selected-room-tab="selectedRoomTab"
-      v-model:room-prices="roomPrices"
-      v-model:room-restrictions="roomRestrictions"
+      :room-prices="roomPrices"
+      :room-restrictions="roomRestrictions"
       v-model:allow-edit-calculated="allowEditCalculated"
+      @update:room-prices="handleRoomPricesUpdate"
+      @update:room-restrictions="handleRoomRestrictionsUpdate"
       :date-range="dateRange"
       :currency="currency"
       :filtered-room-types="filteredRoomTypes"
@@ -188,6 +190,8 @@ const {
 
   // Methods - actions
   initializeRoomData,
+  updateRoomPricesForRoom,
+  updateRoomRestrictionsForRoom,
   copyFirstPriceToAllMealPlans,
   copyCurrentRoomToAll,
   nextStep,
@@ -195,6 +199,21 @@ const {
   fetchLastRateAndSetDates,
   setupWatchers
 } = useRateFormLogic(props, emit)
+
+// Handle room prices update from child component (reactive object update)
+const handleRoomPricesUpdate = (newPrices) => {
+  // newPrices contains all rooms, update only the changed ones
+  for (const roomId of Object.keys(newPrices)) {
+    updateRoomPricesForRoom(roomId, newPrices[roomId])
+  }
+}
+
+// Handle room restrictions update from child component (reactive object update)
+const handleRoomRestrictionsUpdate = (newRestrictions) => {
+  for (const roomId of Object.keys(newRestrictions)) {
+    updateRoomRestrictionsForRoom(roomId, newRestrictions[roomId])
+  }
+}
 
 // Setup watchers
 setupWatchers()
