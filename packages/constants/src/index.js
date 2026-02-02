@@ -101,3 +101,28 @@ export {
   getHousekeepingStatusLabel,
   getStayStatusLabel
 } from './status.js'
+
+// Storefront
+export {
+  SECTION_TYPES,
+  SECTION_TYPE_VALUES,
+  SECTION_CATEGORIES,
+  SECTION_CATEGORY_VALUES,
+  SECTION_CONFIG,
+  UI_SECTION_ALIASES,
+  CANONICAL_TO_UI_ALIAS,
+  toCanonicalSectionType,
+  toUiSectionType,
+  isValidSectionType,
+  getSectionConfig,
+  getSectionCategory,
+  getSectionMaxCount,
+  isHeroSection,
+  isFooterSection,
+  validateSectionConfig,
+  SECTION_LABEL_KEYS,
+  getSectionLabelKey,
+  PUBLIC_STOREFRONT_FIELDS,
+  ADMIN_ONLY_FIELDS,
+  STOREFRONT_DRAFT_ALLOWED_FIELDS
+} from './storefront.js'

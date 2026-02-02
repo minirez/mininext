@@ -23,6 +23,7 @@
     "copyError": "Failed to copy",
     "delete": "Delete",
     "edit": "Edit",
+    "rename": "Rename",
     "add": "Add",
     "search": "Search",
     "filter": "Filter",

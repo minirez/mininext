@@ -20,7 +20,7 @@ const AgenciesView = () => import('../views/AgenciesView.vue')
 const AgencyUsersView = () => import('../views/AgencyUsersView.vue')
 const SiteManagementView = () => import('../views/SiteManagementView.vue')
 const SiteSettingsView = () => import('../views/SiteSettingsView.vue')
-const SitePagesView = () => import('../views/SitePagesView.vue')
+const SiteWebsiteView = () => import('../views/SiteWebsiteView.vue')
 const _SiteEmailSetupView = () => import('../views/SiteEmailSetupView.vue')
 const SiteNotificationsView = () => import('../views/SiteNotificationsView.vue')
 const ProfileView = () => import('../views/ProfileView.vue')
@@ -194,7 +194,7 @@ const router = createRouter({
             {
               path: 'pages',
               name: 'site-pages',
-              component: SitePagesView
+              component: SiteWebsiteView
             },
             {
               path: 'notifications',

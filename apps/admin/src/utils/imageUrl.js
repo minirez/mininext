@@ -10,11 +10,19 @@ const IMAGES_BASE_URL = import.meta.env.VITE_IMAGES_URL || 'https://images.minir
 
 /**
  * Get full image URL from a relative path
- * @param {string} url - Relative image path (e.g., /hotels/123/image.png) or full URL
+ * @param {string|Object} url - Relative image path (e.g., /hotels/123/image.png), full URL, or a photo object with { link }
  * @returns {string} Full image URL
  */
 export const getImageUrl = url => {
   if (!url) return ''
+
+  // Support storefront photo objects: { id, width, height, link }
+  // and other object shapes that might include { url }.
+  if (typeof url === 'object') {
+    url = url?.link || url?.url || ''
+  }
+
+  if (typeof url !== 'string') return ''
 
   // If already a full URL, return as-is
   if (url.startsWith('http://') || url.startsWith('https://')) {

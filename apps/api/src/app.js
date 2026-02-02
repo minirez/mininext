@@ -58,6 +58,10 @@ const corsOptions = {
         if (hostname.endsWith('.mini.com') || hostname === 'mini.com') {
           return callback(null, true)
         }
+        // Allow *.minirezervasyon.com for local storefront development
+        if (hostname.endsWith('.minirezervasyon.com') || hostname === 'minirezervasyon.com') {
+          return callback(null, true)
+        }
       }
 
       // Production: Only allow configured origins
@@ -122,6 +126,10 @@ app.use('/api/payments/analytics', paymentAnalyticsRoutes)
 // Payment link public routes (no auth required)
 import paymentLinkPublicRoutes from './modules/paymentLink/paymentLinkPublic.routes.js'
 app.use('/api/pay', paymentLinkPublicRoutes)
+
+// Public storefront routes (no auth required - resolves partner from domain)
+import publicStorefrontRoutes from './modules/public/publicStorefront.routes.js'
+app.use('/api/public/storefront', publicStorefrontRoutes)
 
 // Short URL redirect (for link.mini.com / link.minires.com)
 import shortUrlRoutes from './modules/shortUrl/shortUrl.routes.js'

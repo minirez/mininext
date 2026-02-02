@@ -9,7 +9,7 @@
  */
 
 import { readdirSync, existsSync } from 'fs'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import path from 'path'
 import logger from '#core/logger.js'
 
@@ -48,6 +48,9 @@ const ROUTE_CONFIG = {
 
   // Payment links
   'paymentLink': 'payment-links',
+
+  // Storefront (B2C website configuration)
+  'storefront': 'storefronts',
 
   // Debug endpoint (Claude Code access)
   'debug': 'debug',
@@ -119,8 +122,9 @@ export async function loadRoutes(app) {
     }
 
     try {
-      // Dynamic import
-      const routeModule = await import(routeFile)
+      // Dynamic import - convert file path to file URL for Windows compatibility
+      const routeFileUrl = pathToFileURL(routeFile).href
+      const routeModule = await import(routeFileUrl)
       const routes = routeModule.default
 
       if (routes && typeof routes === 'function') {
