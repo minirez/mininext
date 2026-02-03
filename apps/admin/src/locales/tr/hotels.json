@@ -778,6 +778,7 @@
     "hierarchicalLocation": "Hiyerarşik Lokasyon",
     "hierarchicalLocationHelp": "Ülke, şehir ve turizm bölgesi seçerek otelin konumunu belirleyin",
     "cities": "Şehirler",
+    "districts": "İlçeler",
     "regions": "Turizm Bölgeleri",
     "tourismRegions": "Turizm Bölgeleri",
     "noCities": "Bu ülke için henüz şehir tanımlanmamış",
@@ -811,6 +812,11 @@
     "mapView": "Harita",
     "clickToSetCoordinates": "Şehir konumu için haritaya tıklayın",
     "cityCoordinates": "Şehir Koordinatları",
-    "useCurrentView": "Mevcut harita görünümünü kullan"
+    "useCurrentView": "Mevcut harita görünümünü kullan",
+    "createNew": "Yeni Lokasyon Oluştur",
+    "name": "Ad",
+    "type": "Lokasyon Tipi",
+    "countryCode": "Ülke Kodu",
+    "created": "Lokasyon başarıyla oluşturuldu"
   }
 }

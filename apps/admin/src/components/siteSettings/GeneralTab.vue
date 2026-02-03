@@ -4,9 +4,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Logo -->
       <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
           {{ $t('siteSettings.general.logo') }}
         </h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
+          {{ $t('siteSettings.general.logoHint') }}
+        </p>
 
         <div class="flex flex-col items-center">
           <div
@@ -49,9 +52,12 @@
 
       <!-- Favicon -->
       <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
           {{ $t('siteSettings.general.favicon') }}
         </h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
+          {{ $t('siteSettings.general.faviconHint') }}
+        </p>
 
         <div class="flex flex-col items-center">
           <div
@@ -74,7 +80,7 @@
               {{ $t('common.upload') }}
               <input
                 type="file"
-                accept="image/*,.ico"
+                accept="image/png"
                 class="hidden"
                 :disabled="uploading"
                 @change="handleFaviconUpload"
@@ -380,7 +386,6 @@ const getLanguageName = code => {
   return availableLanguages.find(l => l.code === code)?.name || code
 }
 
-
 const getLanguageFlag = code => {
   return availableLanguages.find(l => l.code === code)?.flag || ''
 }
@@ -517,7 +522,9 @@ const handleTranslate = async () => {
       toast.success(translate('siteSettings.general.translationSuccess'))
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || translate('siteSettings.general.translationFailed'))
+    toast.error(
+      error.response?.data?.message || translate('siteSettings.general.translationFailed')
+    )
   } finally {
     translating.value = false
   }

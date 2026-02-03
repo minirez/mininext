@@ -22,7 +22,7 @@
         <div
           v-if="isOpen"
           :style="dropdownStyle"
-          class="fixed w-72 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden"
+          class="fixed w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 z-[9999] overflow-hidden"
         >
           <!-- Header -->
           <div
@@ -33,8 +33,41 @@
             </h3>
           </div>
 
+          <!-- Dark/Light Mode Toggle -->
+          <div class="px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ $t('common.appearance') }}
+              </span>
+              <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
+                <button
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+                  :class="
+                    !uiStore.darkMode
+                      ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  "
+                  @click="uiStore.setDarkMode(false)"
+                >
+                  <span class="material-icons text-base">light_mode</span>
+                </button>
+                <button
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all"
+                  :class="
+                    uiStore.darkMode
+                      ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  "
+                  @click="uiStore.setDarkMode(true)"
+                >
+                  <span class="material-icons text-base">dark_mode</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Theme Grid -->
-          <div class="max-h-[400px] overflow-y-auto p-3">
+          <div class="max-h-[350px] overflow-y-auto p-3">
             <div class="grid grid-cols-2 gap-2">
               <button
                 v-for="theme in themeOptions"
@@ -76,8 +109,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore, ADMIN_THEME_IDS } from '@/stores/theme'
+import { useUIStore } from '@/stores/ui'
 
 const themeStore = useThemeStore()
+const uiStore = useUIStore()
 const { t } = useI18n()
 const containerRef = ref(null)
 

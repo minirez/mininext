@@ -4,7 +4,7 @@
   >
     <!-- Top Bar: Language & Theme -->
     <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
-      <LanguageSelector class="!text-white hover:!bg-white/10" />
+      <LanguageSelector variant="auth" />
       <button
         class="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
         :title="isDark ? 'Light Mode' : 'Dark Mode'"
@@ -19,21 +19,9 @@
       <!-- Logo -->
       <div class="text-center mb-8">
         <div
-          class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4"
+          class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
         >
-          <svg
-            class="w-12 h-12 text-purple-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
+          <img :src="siteSettingsStore.faviconUrl" alt="Logo" class="w-20 h-20 object-contain" />
         </div>
         <h1 class="text-3xl font-bold text-white">Booking Engine</h1>
         <p class="text-purple-200 mt-2">Admin Panel</p>
@@ -67,14 +55,23 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
+import { useSiteSettingsStore } from '@/stores/siteSettings'
 
 const uiStore = useUIStore()
+const siteSettingsStore = useSiteSettingsStore()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
+
+// Fetch site settings for favicon (if not already loaded)
+onMounted(() => {
+  if (!siteSettingsStore.loaded && !siteSettingsStore.loading) {
+    siteSettingsStore.fetchSettings()
+  }
+})
 </script>
 
 <style scoped>

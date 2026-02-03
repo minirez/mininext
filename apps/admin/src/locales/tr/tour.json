@@ -1,31 +1,35 @@
 {
   "tour": {
-    "title": "Turlar",
-    "tours": "Turlar",
-    "description": "Tur paketleri ve hareketler",
+    "title": "Turlar & Aktiviteler",
+    "tours": "Turlar & Aktiviteler",
+    "description": "Tur ve aktivite paketleri ve hareketler",
     "newTour": "Yeni Tur",
-    "editTour": "Tur Duzenle",
-    "tourDetails": "Tur Detaylari",
+    "editTour": "Tur Düzenle",
+    "tourDetails": "Tur Detayları",
     "tourList": "Tur Listesi",
     "search": "Tur ara...",
-    "noTours": "Henuz tur bulunmuyor",
-    "noToursDescription": "Yeni bir tur olusturmak icin baslayabilirsiniz.",
-    "createFirstTour": "Ilk Turu Olustur",
+    "noTours": "Henüz tur bulunmuyor",
+    "noToursDescription": "Yeni bir tur oluşturmak için başlayabilirsiniz.",
+    "createFirstTour": "İlk Turu Oluştur",
     "duplicate": "Kopyala",
-    "duplicated": "Tur kopyalandi",
-    "generateCode": "Otomatik Kod Olustur",
-    "durationMismatch": "Genellikle gun = gece + 1 olmalidir",
+    "duplicated": "Tur kopyalandı",
+    "generateCode": "Otomatik Kod Oluştur",
+    "durationMismatch": "Genellikle gün = gece + 1 olmalıdır",
     "deleteTour": "Turu Sil",
-    "deleteConfirm": "Bu turu silmek istediginize emin misiniz?",
+    "deleteConfirm": "Bu turu silmek istediğinize emin misiniz?",
     "deleted": "Tur silindi",
 
     "tabs": {
       "basic": "Temel Bilgiler",
+      "schedule": "Takvim",
+      "route": "Rota & Program",
+      "content": "İçerik",
+      "gallery": "Galeri",
       "itinerary": "Program",
-      "transportation": "Ulasim",
+      "transportation": "Ulaşım",
       "accommodation": "Konaklama",
       "accommodations": "Konaklama",
-      "pricing": "Fiyatlandirma",
+      "pricing": "Fiyatlandırma",
       "extras": "Ekstralar",
       "media": "Medya",
       "settings": "Ayarlar",
@@ -34,75 +38,255 @@
 
     "aiImport": {
       "button": "AI ile Aktar",
-      "title": "AI ile Tur Iceri Aktarma",
-      "description": "Tur bilgilerini metin olarak yapistirun, AI gerekli alanlari otomatik olarak dolduracaktir.",
+      "title": "AI ile Tur İçeri Aktarma",
+      "description": "Tur bilgilerini metin olarak yapıştırın, AI gerekli alanları otomatik olarak dolduracaktır.",
       "contentLabel": "Tur Bilgileri",
-      "placeholder": "Tur paketinin bilgilerini buraya yapistirun...\n\nOrnek:\n- Tur adi ve kodu\n- Gidilecek ulke ve sehir\n- Kac gece kac gun\n- Ulasim bilgileri\n- Otel bilgileri\n- Gunluk program\n- Dahil olan ve olmayan hizmetler\n- Iptal kosullari",
-      "hint": "En az 50 karakter iceren detayli bilgi girin",
-      "processing": "AI Isleniyor...",
+      "placeholder": "Tur paketinin bilgilerini buraya yapıştırın...\n\nÖrnek:\n- Tur adı ve kodu\n- Gidilecek ülke ve şehir\n- Kaç gece kaç gün\n- Ulaşım bilgileri\n- Otel bilgileri\n- Günlük program\n- Dahil olan ve olmayan hizmetler\n- İptal koşulları",
+      "hint": "En az 50 karakter içeren detaylı bilgi girin",
+      "processing": "AI İşleniyor...",
       "processingDescription": "Tur bilgileri analiz ediliyor ve gerekli alanlar dolduruluyor.",
-      "success": "Veriler basariyla cikarildi",
-      "error": "Veri cikarilamadi",
-      "extract": "Verileri Cikar",
+      "success": "Veriler başarıyla çıkarıldı",
+      "error": "Veri çıkarılamadı",
+      "extract": "Verileri Çıkar",
       "apply": "Uygula",
-      "extractionSuccess": "Tur verileri basariyla cikarildi",
-      "extractionError": "Veri cikarma hatasi",
-      "confidenceScores": "Guven Skorlari",
-      "noAccommodations": "Konaklama bilgisi bulunamadi",
-      "noItinerary": "Gunluk program bulunamadi",
-      "noInclusions": "Dahil olan hizmet bulunamadi",
-      "noExclusions": "Dahil olmayan hizmet bulunamadi"
+      "extractionSuccess": "Tur verileri başarıyla çıkarıldı",
+      "extractionError": "Veri çıkarma hatası",
+      "confidenceScores": "Güven Skorları",
+      "noAccommodations": "Konaklama bilgisi bulunamadı",
+      "noItinerary": "Günlük program bulunamadı",
+      "noInclusions": "Dahil olan hizmet bulunamadı",
+      "noExclusions": "Dahil olmayan hizmet bulunamadı"
     },
 
     "meals": {
-      "breakfast": "Kahvalti",
-      "lunch": "Ogle Yemegi",
-      "dinner": "Aksam Yemegi",
-      "snack": "Ara Ogun"
+      "breakfast": "Kahvaltı",
+      "lunch": "Öğle Yemeği",
+      "dinner": "Akşam Yemeği",
+      "snack": "Ara Öğün"
     },
 
     "nights": "Gece",
-    "days": "Gun",
+    "days": "Gün",
 
     "fields": {
       "code": "Tur Kodu",
-      "name": "Tur Adi",
-      "description": "Aciklama",
-      "shortDescription": "Kisa Aciklama",
+      "name": "Tur Adı",
+      "description": "Açıklama",
+      "shortDescription": "Kısa Açıklama",
       "tourType": "Tur Tipi",
       "destination": "Destinasyon",
-      "country": "Ulke",
-      "city": "Sehir",
-      "region": "Bolge",
-      "duration": "Sure",
+      "country": "Ülke",
+      "city": "Şehir",
+      "region": "Bölge",
+      "duration": "Süre",
       "nights": "Gece",
-      "days": "Gun",
+      "days": "Gün",
       "status": "Durum",
-      "featured": "One Cikan",
-      "displayOrder": "Siralama",
+      "featured": "Öne Çıkan",
+      "displayOrder": "Sıralama",
       "mealPlan": "Pansiyon Tipi",
       "roomType": "Oda Tipi",
       "inclusions": "Dahil Olanlar",
-      "exclusions": "Dahil Olmayanlar"
+      "exclusions": "Dahil Olmayanlar",
+      "tags": "Etiketler",
+      "tagsPlaceholder": "Etiket ekle ve Enter'a bas",
+      "noTags": "Henüz etiket eklenmedi"
+    },
+
+    "route": {
+      "title": "Rota & Program",
+      "subtitle": "Turunuzun güzergahını ve destinasyonlarını belirleyin",
+      "stop": "Durak",
+      "addStop": "Durak Ekle",
+      "addFirstStop": "İlk Durağı Ekle",
+      "empty": "Henüz rota durağı eklenmedi",
+      "location": "Lokasyon",
+      "locationPlaceholder": "Şehir / ilçe / bölge ara...",
+      "stayUnit": "Konaklama Birimi",
+      "stayValue": "Süre",
+      "timeStart": "Başlangıç",
+      "timeEnd": "Bitiş",
+      "units": {
+        "hours": "Saat",
+        "days": "Gün"
+      },
+      "stopTitle": "Durak Başlığı",
+      "stopDescription": "Durak Açıklaması",
+      "stopPhoto": "Durak Fotoğrafı",
+      "saveTourToUpload": "Fotoğraf yüklemek için önce turu kaydedin.",
+      "map": "Harita",
+      "addDestination": "Destinasyon Ekle",
+      "addFirstDestination": "İlk Destinasyonu Ekle",
+      "newDestination": "Yeni Destinasyon",
+      "destination": "Destinasyon",
+      "searchDestination": "Şehir, ilçe veya bölge ara...",
+      "duration": "Süre",
+      "unit": "Birim",
+      "arrivalTime": "Varış",
+      "departureTime": "Kalkış",
+      "additionalDetails": "Ek Detaylar",
+      "destinationTitle": "Özel Başlık",
+      "destinationDescription": "Açıklama",
+      "photo": "Fotoğraf",
+      "emptyTitle": "Tur Rotanızı Oluşturun",
+      "emptyDescription": "Tur güzergahınızdaki destinasyonları ve ilgi noktalarını ekleyin. Her destinasyona süre, açıklama ve fotoğraf ekleyebilirsiniz."
+    },
+
+    "schedule": {
+      "title": "Takvim Oluşturucu",
+      "saveTourFirst": "Hareket oluşturmak için önce turu kaydedin.",
+      "scheduleType": "Tur tipi:",
+      "recurring": "Tekrarlayan",
+      "recurringDesc": "Belirli günlerde veya aralıklarda düzenli olarak yapılır",
+      "onetime": "Tek Seferlik",
+      "onetimeDesc": "Tek hareket tarihi",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "fromDate": "Şu tarihten",
+      "toDate": "Şu tarihe",
+      "preset": "Hazır",
+      "repeatPattern": "Tekrar deseni",
+      "everyNDays": "Her N günde bir",
+      "selectWeekdays": "Haftanın günleri",
+      "customDates": "Özel tarihler",
+      "selectedDates": "Seçilen Tarihler",
+      "selectedDepartures": "Seçilen Hareketler",
+      "selectedDeparture": "Seçilen Hareket",
+      "departures": "hareket",
+      "noSelectedDates": "Hareket tarihlerini seçmek için takvime tıklayın",
+      "selectOnetimeDate": "Hareket tarihinizi seçmek için bir tarihe tıklayın",
+      "clickToSelectRange": "Her tık tam tarih aralığını seçer",
+      "multiDayHint": "Bu {days} günlük bir tur. Tam hareket aralığını seçmek için bir tarihe tıklayın.",
+      "onetimeMultiDayHint": "Bu {days} günlük bir tur. Hareket tarihinizi seçin.",
+      "quickAdd": "Hızlı seç",
+      "durationDays": "Süre (gün)",
+      "timeStart": "Kalkış saati",
+      "timeEnd": "Dönüş saati",
+      "departureSettings": "Hareket Ayarları",
+      "preview": "Önizleme",
+      "dates": "tarih",
+      "noPreview": "Tarihleri önizlemek için yukarıda takvimi yapılandırın.",
+      "create": "Hareketleri oluştur",
+      "addDateRange": "Hızlı tarih aralığı ekle",
+      "selectRangeToAdd": "Takvimde tarih aralığı seçin, ardından ekleyin",
+      "newDates": "Yeni",
+      "existingDates": "Zaten mevcut",
+      "quickSelectRange": "Hızlı aralık ekle",
+      "selectAllWeekday": "Tümü seç",
+      "presets": {
+        "everyDay": "Her gün",
+        "everyNDays": "Her N günde bir",
+        "weekdays": "Belirli günler",
+        "weekend": "Hafta sonu (Cmt+Paz)",
+        "customDates": "Özel tarihler"
+      }
+    },
+
+    "content": {
+      "shortDescription": "Kısa açıklama",
+      "description": "Açıklama",
+      "importantInfo": "Önemli bilgiler",
+      "included": "Dahil olanlar",
+      "excluded": "Dahil olmayanlar",
+      "noIncluded": "Henüz dahil olan eklenmedi",
+      "noExcluded": "Henüz dahil olmayan eklenmedi"
+    },
+
+    "gallery": {
+      "title": "Galeri",
+      "upload": "Yükle",
+      "empty": "Henüz galeri resmi yok",
+      "saveTourToUpload": "Resim yüklemek için önce turu kaydedin.",
+      "main": "Ana",
+      "setMain": "Ana yap",
+      "caption": "Açıklama",
+      "hint": "İpucu: Sırala, ana görseli seç ve açıklama ekle. Kaydetmeyi unutma.",
+      "saveHint": "Açıklama/sıralama değişiklikleri Kaydet ile kaydolur."
+    },
+
+    "extras": {
+      "manageHint": "Ekstralar global yönetilir ve rezervasyonlarda kullanılır."
+    },
+
+    "toasts": {
+      "created": "Tur oluşturuldu",
+      "updated": "Tur güncellendi",
+      "deleted": "Tur silindi",
+      "duplicated": "Tur kopyalandı",
+      "departureCreated": "Hareket oluşturuldu",
+      "departuresBulkCreated": "{count} hareket oluşturuldu",
+      "departureUpdated": "Hareket güncellendi",
+      "departureDeleted": "Hareket silindi",
+      "extraCreated": "Ekstra oluşturuldu",
+      "extraUpdated": "Ekstra güncellendi",
+      "extraDeleted": "Ekstra silindi",
+      "bookingCreated": "Rezervasyon oluşturuldu",
+      "bookingUpdated": "Rezervasyon güncellendi",
+      "bookingStatusUpdated": "Rezervasyon durumu güncellendi",
+      "bookingCancelled": "Rezervasyon iptal edildi",
+      "paymentAdded": "Ödeme eklendi",
+      "visaUpdated": "Vize durumu güncellendi",
+      "noteAdded": "Not eklendi"
+    },
+
+    "errors": {
+      "loadTours": "Turlar yüklenemedi",
+      "loadTour": "Tur detayı yüklenemedi",
+      "createTour": "Tur oluşturulamadı",
+      "updateTour": "Tur güncellenemedi",
+      "deleteTour": "Tur silinemedi",
+      "duplicateTour": "Tur kopyalanamadı",
+      "loadDepartures": "Hareketler yüklenemedi",
+      "loadDeparture": "Hareket detayı yüklenemedi",
+      "createDeparture": "Hareket oluşturulamadı",
+      "bulkCreateDepartures": "Hareketler oluşturulamadı",
+      "updateDeparture": "Hareket güncellenemedi",
+      "deleteDeparture": "Hareket silinemedi",
+      "searchDepartures": "Hareket araması başarısız",
+      "loadExtras": "Ekstralar yüklenemedi",
+      "loadExtra": "Ekstra detayı yüklenemedi",
+      "createExtra": "Ekstra oluşturulamadı",
+      "updateExtra": "Ekstra güncellenemedi",
+      "deleteExtra": "Ekstra silinemedi",
+      "loadBookings": "Rezervasyonlar yüklenemedi",
+      "loadBooking": "Rezervasyon detayı yüklenemedi",
+      "calculatePrice": "Fiyat hesaplanamadı",
+      "createBooking": "Rezervasyon oluşturulamadı",
+      "updateBooking": "Rezervasyon güncellenemedi",
+      "updateBookingStatus": "Durum güncellenemedi",
+      "cancelBooking": "Rezervasyon iptal edilemedi",
+      "addPayment": "Ödeme eklenemedi",
+      "updateVisa": "Vize durumu güncellenemedi",
+      "addNote": "Not eklenemedi"
     },
 
     "tourTypes": {
       "package": "Paket Tur",
-      "day_trip": "Gunubirlik",
-      "multi_day": "Cok Gunlu",
+      "day_trip": "Günübirlik",
+      "multi_day": "Çok Günlü",
       "cruise": "Gemi Turu",
-      "cultural": "Kultur Turu",
+      "cultural": "Kültür Turu",
       "adventure": "Macera Turu",
       "religious": "Dini Tur",
-      "nature": "Doga Turu",
-      "city_break": "Sehir Turu"
+      "nature": "Doğa Turu",
+      "city_break": "Şehir Turu",
+      "international": "Uluslararası",
+      "activity": "Aktivite",
+      "workshop": "Atölye",
+      "transfer": "Transfer",
+      "city": "Şehir",
+      "museum": "Müze",
+      "yacht": "Yat",
+      "boat": "Tekne",
+      "ferry": "Feribot",
+      "other": "Diğer"
     },
 
     "transportTypes": {
-      "flight": "Ucak",
-      "bus": "Otobus",
+      "flight": "Uçak",
+      "bus": "Otobüs",
       "ferry": "Feribot",
-      "car": "Arac",
+      "car": "Araç",
       "train": "Tren",
       "combined": "Kombinasyon"
     },
@@ -118,57 +302,57 @@
 
     "mealPlans": {
       "room_only": "Sadece Oda",
-      "bed_breakfast": "Oda + Kahvalti",
-      "half_board": "Yarim Pansiyon",
+      "bed_breakfast": "Oda + Kahvaltı",
+      "half_board": "Yarım Pansiyon",
       "full_board": "Tam Pansiyon",
-      "all_inclusive": "Hersey Dahil",
-      "ultra_all_inclusive": "Ultra Hersey Dahil"
+      "all_inclusive": "Herşey Dahil",
+      "ultra_all_inclusive": "Ultra Herşey Dahil"
     },
 
     "statuses": {
       "draft": "Taslak",
       "active": "Aktif",
       "inactive": "Pasif",
-      "archived": "Arsivlendi"
+      "archived": "Arşivlendi"
     },
 
     "itinerary": {
-      "title": "Gunluk Program",
-      "addDay": "Gun Ekle",
-      "addFirstDay": "Ilk Gunu Ekle",
-      "day": "Gun",
-      "dayTitle": "Gun Basligi",
-      "dayDescription": "Gun Aciklamasi",
-      "description": "Aciklama",
-      "descriptionPlaceholder": "Gunun program detaylarini yazin...",
+      "title": "Günlük Program",
+      "addDay": "Gün Ekle",
+      "addFirstDay": "İlk Günü Ekle",
+      "day": "Gün",
+      "dayTitle": "Gün Başlığı",
+      "dayDescription": "Gün Açıklaması",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Günün program detaylarını yazın...",
       "meals": "Yemekler",
       "activities": "Aktiviteler",
-      "activityName": "Aktivite adi",
-      "noActivities": "Henuz aktivite eklenmedi",
-      "breakfast": "Kahvalti",
-      "lunch": "Ogle Yemegi",
-      "dinner": "Aksam Yemegi",
+      "activityName": "Aktivite adı",
+      "noActivities": "Henüz aktivite eklenmedi",
+      "breakfast": "Kahvaltı",
+      "lunch": "Öğle Yemeği",
+      "dinner": "Akşam Yemeği",
       "overnight": "Geceleme",
       "accommodation": "Konaklama",
       "accommodationPlaceholder": "Otel veya konaklama yeri...",
-      "empty": "Henuz gunluk program eklenmedi",
-      "quickAdd": "Hizli Ekle",
-      "addDays": "Gun Ekle",
-      "dragToReorder": "Siralama icin surukle"
+      "empty": "Henüz günlük program eklenmedi",
+      "quickAdd": "Hızlı Ekle",
+      "addDays": "Gün Ekle",
+      "dragToReorder": "Sıralama için sürükle"
     },
 
     "transportation": {
-      "title": "Ulasim Bilgileri",
-      "add": "Ulasim Ekle",
-      "type": "Ulasim Tipi",
-      "direction": "Yon",
-      "outbound": "Gidis",
-      "return": "Donus",
-      "internal": "Ic Hat",
-      "carrier": "Tasiyici",
-      "class": "Sinif",
+      "title": "Ulaşım Bilgileri",
+      "add": "Ulaşım Ekle",
+      "type": "Ulaşım Tipi",
+      "direction": "Yön",
+      "outbound": "Gidiş",
+      "return": "Dönüş",
+      "internal": "İç Hat",
+      "carrier": "Taşıyıcı",
+      "class": "Sınıf",
       "included": "Dahil",
-      "notIncluded": "Dahil Degil",
+      "notIncluded": "Dahil Değil",
       "details": "Detaylar"
     },
 
@@ -176,15 +360,15 @@
       "title": "Konaklama",
       "add": "Konaklama Ekle",
       "hotel": "Otel",
-      "selectHotel": "Otel Sec",
-      "manualEntry": "Manuel Giris",
-      "hotelName": "Otel Adi",
-      "nights": "Gece Sayisi",
+      "selectHotel": "Otel Seç",
+      "manualEntry": "Manuel Giriş",
+      "hotelName": "Otel Adı",
+      "nights": "Gece Sayısı",
       "mealPlan": "Pansiyon",
-      "starRating": "Yildiz",
+      "starRating": "Yıldız",
       "roomType": "Oda Tipi",
-      "checkIn": "Giris",
-      "checkOut": "Cikis"
+      "checkIn": "Giriş",
+      "checkOut": "Çıkış"
     },
 
     "inclusions": {
@@ -200,29 +384,43 @@
     },
 
     "images": {
-      "title": "Gorseller",
-      "add": "Gorsel Ekle",
-      "mainImage": "Ana Gorsel",
-      "setAsMain": "Ana Gorsel Yap",
-      "caption": "Aciklama",
+      "title": "Görseller",
+      "add": "Görsel Ekle",
+      "mainImage": "Ana Görsel",
+      "setAsMain": "Ana Görsel Yap",
+      "caption": "Açıklama",
       "delete": "Sil"
     },
 
     "cancellation": {
-      "title": "Iptal Politikasi",
-      "freeCancellation": "Ucretsiz Iptal",
-      "daysBeforeDeparture": "Hareket oncesi gun",
-      "rules": "Iptal Kurallari",
+      "title": "İptal Politikası",
+      "freeCancellation": "Ücretsiz İptal",
+      "daysBeforeDeparture": "Hareket öncesi gün",
+      "rules": "İptal Kuralları",
       "addRule": "Kural Ekle",
-      "fromDay": "Gun'den",
-      "toDay": "Gun'e",
+      "fromDay": "Günden",
+      "toDay": "Güne",
       "percentage": "Kesinti %"
     },
 
     "visibility": {
-      "title": "Gorunurluk",
-      "b2c": "B2C (Son Tuketici)",
+      "title": "Görünürlük",
+      "b2c": "B2C (Son Tüketici)",
       "b2b": "B2B (Acenteler)"
+    },
+
+    "basePricing": {
+      "title": "Fiyatlandırma",
+      "description": "Tur listelerinde gösterilen temel fiyat",
+      "startingPrice": "Başlangıç Fiyatı",
+      "detailedPricing": "Detaylı",
+      "accommodationHint": "Oda doluluk oranına göre kişi başı fiyatlar",
+      "single": "Tek Kişilik",
+      "double": "İki Kişilik",
+      "triple": "Üç Kişilik",
+      "childWithBed": "Çocuk (yataklı)",
+      "childWithoutBed": "Çocuk (yataksız)",
+      "infant": "Bebek"
     }
   },
 
@@ -230,120 +428,120 @@
     "title": "Hareket Tarihleri",
     "departures": "Hareketler",
     "newDeparture": "Yeni Hareket",
-    "editDeparture": "Hareket Duzenle",
+    "editDeparture": "Hareket Düzenle",
     "calendar": "Hareket Takvimi",
-    "upcoming": "Yaklasan Hareketler",
+    "upcoming": "Yaklaşan Hareketler",
     "search": "Hareket ara...",
-    "noDepartures": "Henuz hareket tarihi yok",
-    "createFirst": "Ilk Hareketi Olustur",
-    "bulkCreate": "Toplu Olustur",
-    "bulkCreateDescription": "Belirli bir tarih araliginda toplu hareket olustur",
+    "noDepartures": "Henüz hareket tarihi yok",
+    "createFirst": "İlk Hareketi Oluştur",
+    "bulkCreate": "Toplu Oluştur",
+    "bulkCreateDescription": "Belirli bir tarih aralığında toplu hareket oluştur",
 
     "fields": {
       "departureDate": "Hareket Tarihi",
-      "returnDate": "Donus Tarihi",
+      "returnDate": "Dönüş Tarihi",
       "tour": "Tur",
       "capacity": "Kapasite",
       "totalCapacity": "Toplam Kapasite",
-      "available": "Musait",
+      "available": "Müsait",
       "reserved": "Rezerve",
-      "sold": "Satilan",
+      "sold": "Satılan",
       "blocked": "Bloke",
       "status": "Durum",
       "price": "Fiyat",
       "guide": "Rehber",
       "guaranteedDeparture": "Garantili Hareket",
-      "minParticipants": "Min. Katilimci",
-      "enableB2B": "B2B Fiyatlandirma Etkinlestir"
+      "minParticipants": "Min. Katılımcı",
+      "enableB2B": "B2B Fiyatlandırma Etkinleştir"
     },
 
     "sections": {
       "capacity": "Kapasite",
-      "pricing": "Fiyatlandirma",
-      "b2bPricing": "B2B Fiyatlandirma",
-      "pickupPoints": "Transfer Noktalari",
+      "pricing": "Fiyatlandırma",
+      "b2bPricing": "B2B Fiyatlandırma",
+      "pickupPoints": "Transfer Noktaları",
       "labels": "Etiketler"
     },
 
     "statuses": {
-      "scheduled": "Planlanmis",
-      "confirmed": "Kesinlesmis",
-      "cancelled": "Iptal",
-      "completed": "Tamamlandi",
-      "sold_out": "Tukendi"
+      "scheduled": "Planlanmış",
+      "confirmed": "Kesinleşmiş",
+      "cancelled": "İptal",
+      "completed": "Tamamlandı",
+      "sold_out": "Tükendi"
     },
 
     "pickupPoint": {
-      "name": "Nokta Adi",
+      "name": "Nokta Adı",
       "address": "Adres",
-      "additionalPrice": "Ek Ucret"
+      "additionalPrice": "Ek Ücret"
     },
 
-    "noPickupPoints": "Henuz transfer noktasi eklenmedi",
+    "noPickupPoints": "Henüz transfer noktası eklenmedi",
 
     "capacity": {
-      "title": "Kapasite Yonetimi",
+      "title": "Kapasite Yönetimi",
       "total": "Toplam Kapasite",
-      "available": "Musait",
+      "available": "Müsait",
       "reserved": "Rezerve",
-      "sold": "Satilan",
+      "sold": "Satılan",
       "blocked": "Bloke",
-      "lastSeats": "Son {count} Kisi"
+      "lastSeats": "Son {count} Kişi"
     },
 
     "pricing": {
-      "title": "Fiyatlandirma",
-      "adult": "Yetiskin",
-      "child": "Cocuk",
+      "title": "Fiyatlandırma",
+      "adult": "Yetişkin",
+      "child": "Çocuk",
       "infant": "Bebek",
-      "single": "Tek Kisilik",
-      "double": "Cift Kisilik",
-      "triple": "Uc Kisilik",
-      "withBed": "Yatakli",
-      "withoutBed": "Yataksiz",
-      "minAge": "Min Yas",
-      "maxAge": "Max Yas",
+      "single": "Tek Kişilik",
+      "double": "Çift Kişilik",
+      "triple": "Üç Kişilik",
+      "withBed": "Yataklı",
+      "withoutBed": "Yataksız",
+      "minAge": "Min Yaş",
+      "maxAge": "Max Yaş",
       "price": "Fiyat",
-      "singleSupplement": "Tek Kisi Farki",
-      "b2bPricing": "B2B Fiyatlandirma",
+      "singleSupplement": "Tek Kişi Farkı",
+      "b2bPricing": "B2B Fiyatlandırma",
       "netPrice": "Net Fiyat",
       "commission": "Komisyon",
       "commissionMode": "Komisyon Modu",
-      "commissionRate": "Komisyon Orani",
-      "percentage": "Yuzde",
+      "commissionRate": "Komisyon Oranı",
+      "percentage": "Yüzde",
       "netMode": "Net Fiyat Modu",
-      "agencyMargin": "Acente Marji"
+      "agencyMargin": "Acente Marjı"
     },
 
     "pickup": {
-      "title": "Transfer Noktalari",
+      "title": "Transfer Noktaları",
       "add": "Nokta Ekle",
       "code": "Kod",
-      "name": "Adi",
+      "name": "Adı",
       "address": "Adres",
       "time": "Saat",
-      "additionalPrice": "Ek Ucret",
+      "additionalPrice": "Ek Ücret",
       "coordinates": "Koordinatlar"
     },
 
     "flight": {
-      "title": "Ucus Bilgileri",
-      "add": "Ucus Ekle",
-      "direction": "Yon",
-      "outbound": "Gidis",
-      "return": "Donus",
+      "title": "Uçuş Bilgileri",
+      "add": "Uçuş Ekle",
+      "direction": "Yön",
+      "outbound": "Gidiş",
+      "return": "Dönüş",
       "carrier": "Havayolu",
-      "flightNumber": "Ucus No",
-      "departure": "Kalkis",
-      "arrival": "Varis",
-      "departureTime": "Kalkis Saati",
-      "arrivalTime": "Varis Saati"
+      "flightNumber": "Uçuş No",
+      "departure": "Kalkış",
+      "arrival": "Varış",
+      "departureTime": "Kalkış Saati",
+      "arrivalTime": "Varış Saati"
     },
 
     "guide": {
       "title": "Rehber Bilgisi",
-      "select": "Rehber Sec",
-      "name": "Rehber Adi",
+      "select": "Rehber Seç",
+      "name": "Rehber Adı",
       "phone": "Telefon",
       "notes": "Notlar"
     },
@@ -352,20 +550,20 @@
       "guaranteed": "Garantili Hareket",
       "last_seats": "Son Yerler",
       "lastSeats": "Son Yerler",
-      "popular": "Populer",
+      "popular": "Popüler",
       "early_bird": "Erken Rezervasyon",
       "earlyBird": "Erken Rezervasyon",
-      "sold_out": "Tukendi",
-      "soldOut": "Tukendi",
+      "sold_out": "Tükendi",
+      "soldOut": "Tükendi",
       "new": "Yeni"
     },
 
     "departureStatuses": {
-      "scheduled": "Planlanmis",
-      "confirmed": "Kesinlesmis",
-      "cancelled": "Iptal",
-      "completed": "Tamamlandi",
-      "sold_out": "Tukendi"
+      "scheduled": "Planlanmış",
+      "confirmed": "Kesinleşmiş",
+      "cancelled": "İptal",
+      "completed": "Tamamlandı",
+      "sold_out": "Tükendi"
     }
   },
 
@@ -373,20 +571,20 @@
     "title": "Ekstralar",
     "extras": "Opsiyonel Ekstralar",
     "newExtra": "Yeni Ekstra",
-    "editExtra": "Ekstra Duzenle",
+    "editExtra": "Ekstra Düzenle",
     "search": "Ekstra ara...",
-    "noExtras": "Henuz ekstra yok",
-    "createFirst": "Ilk Ekstrayi Olustur",
+    "noExtras": "Henüz ekstra yok",
+    "createFirst": "İlk Ekstrayı Oluştur",
 
     "fields": {
       "code": "Kod",
-      "name": "Adi",
-      "description": "Aciklama",
+      "name": "Adı",
+      "description": "Açıklama",
       "category": "Kategori",
       "priceType": "Fiyat Tipi",
       "price": "Fiyat",
       "currency": "Para Birimi",
-      "duration": "Sure",
+      "duration": "Süre",
       "status": "Durum"
     },
 
@@ -398,26 +596,26 @@
       "visa": "Vize Hizmeti",
       "insurance": "Sigorta",
       "equipment": "Ekipman",
-      "other": "Diger"
+      "other": "Diğer"
     },
 
     "priceTypes": {
-      "per_person": "Kisi Basi",
-      "per_group": "Grup Basi",
-      "per_unit": "Adet Basi",
-      "per_night": "Gece Basi"
+      "per_person": "Kişi Başı",
+      "per_group": "Grup Başı",
+      "per_unit": "Adet Başı",
+      "per_night": "Gece Başı"
     },
 
     "applicableTours": {
       "title": "Uygulanabilir Turlar",
-      "all": "Tum Turlara Uygula",
+      "all": "Tüm Turlara Uygula",
       "specific": "Belirli Turlar",
-      "selectTours": "Turlari Sec"
+      "selectTours": "Turları Seç"
     }
   },
 
   "tourExtra": {
-    "noExtras": "Ekstra bulunamadi",
+    "noExtras": "Ekstra bulunamadı",
     "categories": {
       "activity": "Aktivite",
       "meal": "Yemek",
@@ -427,23 +625,23 @@
       "insurance": "Sigorta"
     },
     "priceTypes": {
-      "per_person": "Kisi Basi",
-      "per_group": "Grup Basi",
-      "per_unit": "Adet Basi"
+      "per_person": "Kişi Başı",
+      "per_group": "Grup Başı",
+      "per_unit": "Adet Başı"
     },
     "totalExtras": "Toplam Ekstralar",
-    "selectPassengers": "Yolculari secin"
+    "selectPassengers": "Yolcuları seçin"
   },
 
   "tourBooking": {
-    "title": "Tur Rezervasyonlari",
+    "title": "Tur Rezervasyonları",
     "bookings": "Rezervasyonlar",
     "newBooking": "Yeni Rezervasyon",
-    "editBooking": "Rezervasyon Duzenle",
-    "bookingDetails": "Rezervasyon Detaylari",
+    "editBooking": "Rezervasyon Düzenle",
+    "bookingDetails": "Rezervasyon Detayları",
     "search": "Rezervasyon no, misafir ara...",
-    "noBookings": "Henuz rezervasyon yok",
-    "createFirst": "Ilk Rezervasyonu Olustur",
+    "noBookings": "Henüz rezervasyon yok",
+    "createFirst": "İlk Rezervasyonu Oluştur",
 
     "fields": {
       "bookingNumber": "Rezervasyon No",
@@ -452,18 +650,18 @@
       "status": "Durum",
       "passengers": "Yolcular",
       "totalPrice": "Toplam",
-      "paidAmount": "Odenen",
+      "paidAmount": "Ödenen",
       "dueAmount": "Kalan",
-      "salesChannel": "Satis Kanali",
-      "createdAt": "Olusturma"
+      "salesChannel": "Satış Kanalı",
+      "createdAt": "Oluşturma"
     },
 
     "bookingStatuses": {
       "draft": "Taslak",
       "pending": "Beklemede",
-      "confirmed": "Onaylandi",
-      "cancelled": "Iptal Edildi",
-      "completed": "Tamamlandi",
+      "confirmed": "Onaylandı",
+      "cancelled": "İptal Edildi",
+      "completed": "Tamamlandı",
       "no_show": "Gelmedi"
     },
 
@@ -477,8 +675,8 @@
       "add": "Yolcu Ekle",
       "lead": "Ana Yolcu",
       "type": "Tip",
-      "adult": "Yetiskin",
-      "child": "Cocuk",
+      "adult": "Yetişkin",
+      "child": "Çocuk",
       "infant": "Bebek",
       "name": "Ad Soyad",
       "firstName": "Ad",
@@ -486,96 +684,96 @@
       "nationality": "Uyruk",
       "tcNumber": "TC Kimlik No",
       "passportNumber": "Pasaport No",
-      "passportExpiry": "Pasaport Gecerliligi",
-      "dateOfBirth": "Dogum Tarihi",
+      "passportExpiry": "Pasaport Geçerliliği",
+      "dateOfBirth": "Doğum Tarihi",
       "gender": "Cinsiyet",
       "male": "Erkek",
-      "female": "Kadin",
+      "female": "Kadın",
       "roomAssignment": "Oda No",
       "seatAssignment": "Koltuk No"
     },
 
     "contact": {
-      "title": "Iletisim",
+      "title": "İletişim",
       "email": "E-posta",
       "phone": "Telefon"
     },
 
     "pickup": {
-      "title": "Transfer Noktasi",
-      "select": "Transfer Noktasi Sec",
-      "time": "Alinma Saati"
+      "title": "Transfer Noktası",
+      "select": "Transfer Noktası Seç",
+      "time": "Alınma Saati"
     },
 
     "extras": {
-      "title": "Secilen Ekstralar",
+      "title": "Seçilen Ekstralar",
       "add": "Ekstra Ekle",
       "quantity": "Adet",
       "unitPrice": "Birim Fiyat",
       "totalPrice": "Toplam",
-      "selectPassengers": "Yolculari Sec"
+      "selectPassengers": "Yolcuları Seç"
     },
 
     "rooms": {
-      "title": "Oda Dagilimi",
+      "title": "Oda Dağılımı",
       "roomNumber": "Oda No",
       "roomType": "Oda Tipi",
       "passengers": "Yolcular"
     },
 
     "room": {
-      "title": "Oda Dagilimi",
+      "title": "Oda Dağılımı",
       "addRoom": "Oda Ekle",
       "room": "Oda",
       "rooms": "Oda",
-      "assigned": "atandi",
-      "unassigned": "atanmadi",
-      "unassignedPassengers": "Atanmamis Yolcular",
-      "dropPassengers": "Yolculari buraya surukleyin",
-      "overCapacity": "Kapasite asildi",
+      "assigned": "atandı",
+      "unassigned": "atanmadı",
+      "unassignedPassengers": "Atanmamış Yolcular",
+      "dropPassengers": "Yolcuları buraya sürükleyin",
+      "overCapacity": "Kapasite aşıldı",
       "autoAssign": "Otomatik Ata",
-      "single": "Tek Kisilik",
-      "double": "Cift Kisilik",
-      "triple": "Uc Kisilik",
-      "quad": "Dort Kisilik"
+      "single": "Tek Kişilik",
+      "double": "Çift Kişilik",
+      "triple": "Üç Kişilik",
+      "quad": "Dört Kişilik"
     },
 
     "pickupPoint": {
-      "title": "Transfer Noktasi",
-      "noPoints": "Transfer noktasi bulunmuyor",
-      "custom": "Ozel Transfer Noktasi",
+      "title": "Transfer Noktası",
+      "noPoints": "Transfer noktası bulunmuyor",
+      "custom": "Özel Transfer Noktası",
       "customDescription": "Kendi adresinizi girin",
-      "addressPlaceholder": "Adres yazin...",
+      "addressPlaceholder": "Adres yazın...",
       "notesPlaceholder": "Ek notlar...",
-      "selected": "Secilen"
+      "selected": "Seçilen"
     },
 
     "pricing": {
-      "title": "Fiyat Ozeti",
-      "adults": "Yetiskinler",
-      "children": "Cocuklar",
+      "title": "Fiyat Özeti",
+      "adults": "Yetişkinler",
+      "children": "Çocuklar",
       "infants": "Bebekler",
       "extras": "Ekstralar",
-      "singleSupplement": "Tek Kisi Farki",
+      "singleSupplement": "Tek Kişi Farkı",
       "subtotal": "Ara Toplam",
-      "discount": "Indirim",
+      "discount": "İndirim",
       "grandTotal": "Genel Toplam",
       "netPrice": "Net Fiyat",
       "commission": "Komisyon"
     },
 
     "payment": {
-      "title": "Odeme Bilgileri",
-      "status": "Odeme Durumu",
-      "method": "Odeme Yontemi",
-      "paidAmount": "Odenen",
+      "title": "Ödeme Bilgileri",
+      "status": "Ödeme Durumu",
+      "method": "Ödeme Yöntemi",
+      "paidAmount": "Ödenen",
       "dueAmount": "Kalan",
-      "addPayment": "Odeme Ekle",
+      "addPayment": "Ödeme Ekle",
       "paymentStatuses": {
         "pending": "Bekliyor",
-        "partial": "Kismi",
-        "paid": "Odendi",
-        "refunded": "Iade Edildi"
+        "partial": "Kısmi",
+        "paid": "Ödendi",
+        "refunded": "İade Edildi"
       }
     },
 
@@ -584,16 +782,16 @@
       "status": "Vize Durumu",
       "appointmentDate": "Randevu Tarihi",
       "documents": "Evraklar",
-      "uploadDocument": "Evrak Yukle",
-      "updateStatus": "Durum Guncelle",
+      "uploadDocument": "Evrak Yükle",
+      "updateStatus": "Durum Güncelle",
       "notes": "Notlar",
       "visaStatuses": {
-        "not_required": "Gerekli Degil",
+        "not_required": "Gerekli Değil",
         "pending_documents": "Evrak Bekleniyor",
-        "documents_received": "Evraklar Alindi",
-        "submitted": "Basvuruldu",
-        "appointment_scheduled": "Randevu Alindi",
-        "approved": "Onaylandi",
+        "documents_received": "Evraklar Alındı",
+        "submitted": "Başvuruldu",
+        "appointment_scheduled": "Randevu Alındı",
+        "approved": "Onaylandı",
         "rejected": "Reddedildi"
       }
     },
@@ -601,59 +799,59 @@
     "notes": {
       "title": "Notlar",
       "add": "Not Ekle",
-      "placeholder": "Not yazin...",
-      "specialRequests": "Ozel Istekler"
+      "placeholder": "Not yazın...",
+      "specialRequests": "Özel İstekler"
     },
 
     "actions": {
       "confirm": "Onayla",
-      "cancel": "Iptal Et",
-      "print": "Yazdir",
+      "cancel": "İptal Et",
+      "print": "Yazdır",
       "export": "Excel",
-      "sendConfirmation": "Onay Gonder"
+      "sendConfirmation": "Onay Gönder"
     },
 
     "cancelReason": {
-      "title": "Iptal Nedeni",
-      "placeholder": "Iptal nedenini yazin..."
+      "title": "İptal Nedeni",
+      "placeholder": "İptal nedenini yazın..."
     }
   },
 
   "group": {
-    "title": "Grup Yonetimi",
+    "title": "Grup Yönetimi",
     "passengerList": "Yolcu Listesi",
-    "roomMatrix": "Oda Dagilimi",
-    "seatMap": "Koltuk Duzenlemesi",
+    "roomMatrix": "Oda Dağılımı",
+    "seatMap": "Koltuk Düzenlemesi",
     "guideAssignment": "Rehber Atama",
-    "export": "Disa Aktar",
+    "export": "Dışa Aktar",
     "exportExcel": "Excel",
     "exportPdf": "PDF",
     "manifest": "Manifest",
     "totalPassengers": "Toplam Yolcu",
-    "adults": "Yetiskin",
-    "children": "Cocuk",
+    "adults": "Yetişkin",
+    "children": "Çocuk",
     "infants": "Bebek"
   },
 
   "wizard": {
     "title": "Yeni Tur Rezervasyonu",
     "step1": "Tur Ara",
-    "step2": "Hareket Sec",
+    "step2": "Hareket Seç",
     "step3": "Yolcu Bilgileri",
-    "step4": "Odeme",
+    "step4": "Ödeme",
     "searchTours": "Tur Ara",
-    "selectDeparture": "Hareket Tarihi Sec",
+    "selectDeparture": "Hareket Tarihi Seç",
     "enterPassengers": "Yolcu Bilgileri",
-    "confirmAndPay": "Onayla ve Ode",
+    "confirmAndPay": "Onayla ve Öde",
     "destination": "Destinasyon",
-    "dateRange": "Tarih Araligi",
-    "passengers": "Yolcu Sayisi",
-    "searchResults": "Arama Sonuclari",
-    "noResults": "Sonuc bulunamadi",
-    "selectTour": "Tur Sec",
-    "availableDepartures": "Musait Hareketler",
-    "noDepartures": "Musait hareket yok",
-    "pricePerPerson": "Kisi Basi",
+    "dateRange": "Tarih Aralığı",
+    "passengers": "Yolcu Sayısı",
+    "searchResults": "Arama Sonuçları",
+    "noResults": "Sonuç bulunamadı",
+    "selectTour": "Tur Seç",
+    "availableDepartures": "Müsait Hareketler",
+    "noDepartures": "Müsait hareket yok",
+    "pricePerPerson": "Kişi Başı",
     "totalPrice": "Toplam Fiyat",
     "complete": "Rezervasyonu Tamamla"
   },
@@ -661,7 +859,7 @@
   "stats": {
     "totalTours": "Toplam Tur",
     "activeTours": "Aktif Turlar",
-    "upcomingDepartures": "Yaklasan Hareketler",
+    "upcomingDepartures": "Yaklaşan Hareketler",
     "totalBookings": "Toplam Rezervasyon",
     "confirmedBookings": "Onaylanan",
     "pendingBookings": "Bekleyen",
@@ -670,37 +868,37 @@
   },
 
   "filters": {
-    "allTypes": "Tum Tipler",
-    "allStatuses": "Tum Durumlar",
-    "allDestinations": "Tum Destinasyonlar",
-    "dateRange": "Tarih Araligi",
-    "priceRange": "Fiyat Araligi"
+    "allTypes": "Tüm Tipler",
+    "allStatuses": "Tüm Durumlar",
+    "allDestinations": "Tüm Destinasyonlar",
+    "dateRange": "Tarih Aralığı",
+    "priceRange": "Fiyat Aralığı"
   },
 
   "messages": {
-    "tourCreated": "Tur basariyla olusturuldu",
-    "tourUpdated": "Tur guncellendi",
+    "tourCreated": "Tur başarıyla oluşturuldu",
+    "tourUpdated": "Tur güncellendi",
     "tourDeleted": "Tur silindi",
     "departureCreated": "Hareket tarihi eklendi",
-    "departureUpdated": "Hareket guncellendi",
+    "departureUpdated": "Hareket güncellendi",
     "departureDeleted": "Hareket silindi",
-    "extraCreated": "Ekstra olusturuldu",
-    "extraUpdated": "Ekstra guncellendi",
+    "extraCreated": "Ekstra oluşturuldu",
+    "extraUpdated": "Ekstra güncellendi",
     "extraDeleted": "Ekstra silindi",
-    "bookingCreated": "Rezervasyon olusturuldu",
-    "bookingUpdated": "Rezervasyon guncellendi",
-    "bookingConfirmed": "Rezervasyon onaylandi",
+    "bookingCreated": "Rezervasyon oluşturuldu",
+    "bookingUpdated": "Rezervasyon güncellendi",
+    "bookingConfirmed": "Rezervasyon onaylandı",
     "bookingCancelled": "Rezervasyon iptal edildi",
-    "paymentAdded": "Odeme eklendi",
-    "visaStatusUpdated": "Vize durumu guncellendi"
+    "paymentAdded": "Ödeme eklendi",
+    "visaStatusUpdated": "Vize durumu güncellendi"
   },
 
   "errors": {
-    "loadFailed": "Veriler yuklenemedi",
-    "saveFailed": "Kayit basarisiz",
-    "deleteFailed": "Silme basarisiz",
-    "noAvailability": "Musaitlik yok",
-    "capacityExceeded": "Kapasite asildi",
-    "invalidDates": "Gecersiz tarihler"
+    "loadFailed": "Veriler yüklenemedi",
+    "saveFailed": "Kayıt başarısız",
+    "deleteFailed": "Silme başarısız",
+    "noAvailability": "Müsaitlik yok",
+    "capacityExceeded": "Kapasite aşıldı",
+    "invalidDates": "Geçersiz tarihler"
   }
 }

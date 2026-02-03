@@ -25,7 +25,7 @@
     "issues": "Talepler",
     "emailLogs": "E-posta Logları",
     "payment": "Ödeme Sistemi",
-    "tours": "Turlar"
+    "tours": "Turlar & Aktiviteler"
   },
   "paymentSystem": {
     "title": "Ödeme Sistemi",
@@ -277,6 +277,8 @@
       "favicon": "Favicon",
       "faviconUrl": "Favicon URL",
       "faviconDescription": "Tarayıcı sekmesinde görüntülenecek ikon. Önerilen boyut: 32x32 piksel",
+      "faviconHint": "Önerilen: 96x96 PNG formatı. Admin paneli sidebar'da ve giriş sayfasında kullanılır.",
+      "logoHint": "Önerilen: 220x80 piksel. Tema şablonlarında ve B2C site header'ında kullanılır.",
       "uploadFavicon": "Favicon Yükle",
       "changeFavicon": "Favicon Değiştir",
       "activeLanguages": "Aktif Diller",

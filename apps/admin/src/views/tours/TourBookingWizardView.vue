@@ -19,7 +19,9 @@
     </div>
 
     <!-- Step Progress -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4"
+    >
       <div class="flex items-center justify-between">
         <div
           v-for="(step, index) in steps"
@@ -31,7 +33,8 @@
             class="flex items-center justify-center w-10 h-10 rounded-full transition-colors"
             :class="{
               'bg-purple-600 text-white': currentStep > index,
-              'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 ring-2 ring-purple-600': currentStep === index,
+              'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 ring-2 ring-purple-600':
+                currentStep === index,
               'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-gray-500': currentStep < index
             }"
           >
@@ -64,7 +67,10 @@
       <!-- Main Content -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Step 1: Search Tours -->
-        <div v-if="currentStep === 0" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          v-if="currentStep === 0"
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('wizard.searchTours') }}
           </h3>
@@ -98,7 +104,9 @@
               </label>
               <div class="flex items-center space-x-4">
                 <div class="flex items-center">
-                  <label class="text-sm text-gray-500 mr-2">{{ $t('tourBooking.passenger.adult') }}</label>
+                  <label class="text-sm text-gray-500 mr-2">{{
+                    $t('tourBooking.passenger.adult')
+                  }}</label>
                   <input
                     type="number"
                     v-model.number="searchForm.adults"
@@ -108,7 +116,9 @@
                   />
                 </div>
                 <div class="flex items-center">
-                  <label class="text-sm text-gray-500 mr-2">{{ $t('tourBooking.passenger.child') }}</label>
+                  <label class="text-sm text-gray-500 mr-2">{{
+                    $t('tourBooking.passenger.child')
+                  }}</label>
                   <input
                     type="number"
                     v-model.number="searchForm.children"
@@ -138,16 +148,20 @@
               @click="selectTour(tour)"
               class="border rounded-lg p-4 cursor-pointer transition-all"
               :class="{
-                'border-purple-500 bg-purple-50 dark:bg-purple-900/20': selectedTour?._id === tour._id,
-                'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-600': selectedTour?._id !== tour._id
+                'border-purple-500 bg-purple-50 dark:bg-purple-900/20':
+                  selectedTour?._id === tour._id,
+                'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-600':
+                  selectedTour?._id !== tour._id
               }"
             >
               <div class="flex items-start gap-4">
-                <div class="w-24 h-16 bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
+                <div
+                  class="w-24 h-16 bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0"
+                >
                   <img
-                    v-if="tour.images?.[0]?.url"
-                    :src="tour.images[0].url"
-                    :alt="tour.name"
+                    v-if="getTourImage(tour)"
+                    :src="getTourImage(tour)"
+                    :alt="getLocalizedName(tour.name)"
                     class="w-full h-full object-cover"
                   />
                   <div v-else class="w-full h-full flex items-center justify-center">
@@ -157,23 +171,26 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between">
                     <div>
-                      <h5 class="font-medium text-gray-900 dark:text-white">{{ tour.name }}</h5>
+                      <h5 class="font-medium text-gray-900 dark:text-white">
+                        {{ getLocalizedName(tour.name) }}
+                      </h5>
                       <p class="text-sm text-gray-500">{{ tour.code }}</p>
                     </div>
                     <div class="text-right">
-                      <p class="text-sm text-gray-500">{{ tour.duration?.nights }} {{ $t('tour.fields.nights') }}</p>
                       <p class="font-medium text-purple-600 dark:text-purple-400">
-                        {{ $t('wizard.pricePerPerson') }}: {{ formatCurrency(getLowestPrice(tour), 'TRY') }}
+                        {{ $t('wizard.pricePerPerson') }}:
+                        {{ formatCurrency(getLowestPrice(tour), 'TRY') }}
                       </p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 mt-2">
-                    <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded">
-                      {{ $t(`tour.tourTypes.${tour.tourType}`) }}
+                    <span
+                      v-if="tour.primaryLocation?.name"
+                      class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded"
+                    >
+                      {{ tour.primaryLocation.name }}
                     </span>
-                    <span v-for="transport in tour.transportation?.slice(0, 2)" :key="transport.type" class="text-gray-400">
-                      <span class="material-icons text-sm">{{ getTransportIcon(transport.type) }}</span>
-                    </span>
+                    <span v-else class="text-xs text-gray-400">-</span>
                   </div>
                 </div>
               </div>
@@ -186,7 +203,10 @@
         </div>
 
         <!-- Step 2: Select Departure -->
-        <div v-if="currentStep === 1" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          v-if="currentStep === 1"
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('wizard.selectDeparture') }}
           </h3>
@@ -198,16 +218,20 @@
               @click="selectDeparture(departure)"
               class="border rounded-lg p-4 cursor-pointer transition-all"
               :class="{
-                'border-purple-500 bg-purple-50 dark:bg-purple-900/20': selectedDeparture?._id === departure._id,
-                'border-gray-200 dark:border-slate-600 hover:border-purple-300': selectedDeparture?._id !== departure._id,
-                'opacity-50 pointer-events-none': departure.capacity?.available < getTotalPassengers()
+                'border-purple-500 bg-purple-50 dark:bg-purple-900/20':
+                  selectedDeparture?._id === departure._id,
+                'border-gray-200 dark:border-slate-600 hover:border-purple-300':
+                  selectedDeparture?._id !== departure._id,
+                'opacity-50 pointer-events-none':
+                  departure.capacity?.available < getTotalPassengers()
               }"
             >
               <div class="flex items-center justify-between">
                 <div>
                   <div class="flex items-center gap-3">
                     <p class="font-medium text-gray-900 dark:text-white">
-                      {{ formatDate(departure.departureDate) }} - {{ formatDate(departure.returnDate) }}
+                      {{ formatDate(departure.departureDate) }} -
+                      {{ formatDate(departure.returnDate) }}
                     </p>
                     <span
                       v-if="departure.guaranteedDeparture"
@@ -219,16 +243,24 @@
                       v-if="departure.capacity?.available <= 5 && departure.capacity?.available > 0"
                       class="px-2 py-0.5 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 rounded"
                     >
-                      {{ $t('departure.capacity.lastSeats', { count: departure.capacity.available }) }}
+                      {{
+                        $t('departure.capacity.lastSeats', { count: departure.capacity.available })
+                      }}
                     </span>
                   </div>
                   <p class="text-sm text-gray-500 mt-1">
-                    {{ $t('departure.capacity.available') }}: {{ departure.capacity?.available || 0 }} / {{ departure.capacity?.total || 0 }}
+                    {{ $t('departure.capacity.available') }}:
+                    {{ departure.capacity?.available || 0 }} / {{ departure.capacity?.total || 0 }}
                   </p>
                 </div>
                 <div class="text-right">
                   <p class="text-lg font-semibold text-purple-600 dark:text-purple-400">
-                    {{ formatCurrency(departure.pricing?.adult?.double || 0, departure.currency || 'TRY') }}
+                    {{
+                      formatCurrency(
+                        departure.pricing?.adult?.double || 0,
+                        departure.currency || 'TRY'
+                      )
+                    }}
                   </p>
                   <p class="text-sm text-gray-500">{{ $t('wizard.pricePerPerson') }}</p>
                 </div>
@@ -244,7 +276,9 @@
         <!-- Step 3: Passengers & Extras -->
         <div v-if="currentStep === 2" class="space-y-6">
           <!-- Passenger Information -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ $t('tourBooking.passenger.title') }}
@@ -284,7 +318,9 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.type') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.type')
+                    }}</label>
                     <select
                       v-model="passenger.type"
                       class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm"
@@ -295,7 +331,9 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.firstName') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.firstName')
+                    }}</label>
                     <input
                       type="text"
                       v-model="passenger.firstName"
@@ -304,7 +342,9 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.lastName') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.lastName')
+                    }}</label>
                     <input
                       type="text"
                       v-model="passenger.lastName"
@@ -313,7 +353,9 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.tcNumber') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.tcNumber')
+                    }}</label>
                     <input
                       type="text"
                       v-model="passenger.tcNumber"
@@ -322,7 +364,9 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.dateOfBirth') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.dateOfBirth')
+                    }}</label>
                     <input
                       type="date"
                       v-model="passenger.dateOfBirth"
@@ -330,7 +374,9 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">{{ $t('tourBooking.passenger.gender') }}</label>
+                    <label class="block text-xs text-gray-500 mb-1">{{
+                      $t('tourBooking.passenger.gender')
+                    }}</label>
                     <select
                       v-model="passenger.gender"
                       class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm"
@@ -345,7 +391,9 @@
           </div>
 
           <!-- Contact Information -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {{ $t('tourBooking.contact.title') }}
             </h3>
@@ -376,7 +424,10 @@
           </div>
 
           <!-- Optional Extras -->
-          <div v-if="availableExtras.length > 0" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            v-if="availableExtras.length > 0"
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {{ $t('tourBooking.extras.title') }}
             </h3>
@@ -395,19 +446,25 @@
                     class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                   />
                   <label :for="`extra-${extra._id}`" class="ml-3">
-                    <p class="font-medium text-gray-900 dark:text-white">{{ getLocalizedName(extra.name) }}</p>
-                    <p class="text-sm text-gray-500">{{ $t(`extra.priceTypes.${extra.priceType}`) }}</p>
+                    <p class="font-medium text-gray-900 dark:text-white">
+                      {{ getLocalizedName(extra.name) }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      {{ $t(`extra.priceTypes.${extra.priceType}`) }}
+                    </p>
                   </label>
                 </div>
                 <span class="font-medium text-purple-600 dark:text-purple-400">
-                  {{ formatCurrency(extra.defaultPrice, extra.currency || 'TRY') }}
+                  {{ formatCurrency(extra.price?.value || 0, extra.price?.currency || 'TRY') }}
                 </span>
               </div>
             </div>
           </div>
 
           <!-- Special Requests -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {{ $t('tourBooking.notes.specialRequests') }}
             </h3>
@@ -423,7 +480,9 @@
         <!-- Step 4: Confirm & Pay -->
         <div v-if="currentStep === 3" class="space-y-6">
           <!-- Booking Summary -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {{ $t('tourBooking.bookingDetails') }}
             </h3>
@@ -433,14 +492,19 @@
               <h4 class="font-medium text-gray-900 dark:text-white">{{ selectedTour?.name }}</h4>
               <p class="text-sm text-gray-500">{{ selectedTour?.code }}</p>
               <div class="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>{{ formatDate(selectedDeparture?.departureDate) }} - {{ formatDate(selectedDeparture?.returnDate) }}</span>
+                <span
+                  >{{ formatDate(selectedDeparture?.departureDate) }} -
+                  {{ formatDate(selectedDeparture?.returnDate) }}</span
+                >
                 <span>{{ selectedTour?.duration?.nights }} {{ $t('tour.fields.nights') }}</span>
               </div>
             </div>
 
             <!-- Passengers -->
             <div class="border-b border-gray-200 dark:border-slate-700 pb-4 mb-4">
-              <h4 class="font-medium text-gray-900 dark:text-white mb-2">{{ $t('tourBooking.fields.passengers') }}</h4>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-2">
+                {{ $t('tourBooking.fields.passengers') }}
+              </h4>
               <div class="space-y-1">
                 <div
                   v-for="(passenger, index) in bookingForm.passengers"
@@ -449,7 +513,9 @@
                 >
                   <span class="text-gray-600 dark:text-gray-400">
                     {{ passenger.firstName }} {{ passenger.lastName }}
-                    <span class="text-gray-400">({{ $t(`tourBooking.passenger.${passenger.type}`) }})</span>
+                    <span class="text-gray-400"
+                      >({{ $t(`tourBooking.passenger.${passenger.type}`) }})</span
+                    >
                   </span>
                 </div>
               </div>
@@ -457,14 +523,22 @@
 
             <!-- Contact -->
             <div>
-              <h4 class="font-medium text-gray-900 dark:text-white mb-2">{{ $t('tourBooking.contact.title') }}</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ bookingForm.contact.email }}</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{{ bookingForm.contact.phone }}</p>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-2">
+                {{ $t('tourBooking.contact.title') }}
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ bookingForm.contact.email }}
+              </p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ bookingForm.contact.phone }}
+              </p>
             </div>
           </div>
 
           <!-- Payment Method -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
               {{ $t('tourBooking.payment.method') }}
             </h3>
@@ -474,8 +548,10 @@
                 :key="method.value"
                 class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
                 :class="{
-                  'border-purple-500 bg-purple-50 dark:bg-purple-900/20': bookingForm.paymentMethod === method.value,
-                  'border-gray-200 dark:border-slate-600 hover:border-purple-300': bookingForm.paymentMethod !== method.value
+                  'border-purple-500 bg-purple-50 dark:bg-purple-900/20':
+                    bookingForm.paymentMethod === method.value,
+                  'border-gray-200 dark:border-slate-600 hover:border-purple-300':
+                    bookingForm.paymentMethod !== method.value
                 }"
               >
                 <input
@@ -491,7 +567,9 @@
           </div>
 
           <!-- Terms -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+          >
             <div class="flex items-start">
               <input
                 type="checkbox"
@@ -509,7 +587,9 @@
 
       <!-- Price Summary Sidebar -->
       <div class="lg:col-span-1">
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6 sticky top-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6 sticky top-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.pricing.title') }}
           </h3>
@@ -524,31 +604,52 @@
             <!-- Passengers Pricing -->
             <div class="space-y-2 text-sm">
               <div v-if="adultCount > 0" class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.adults') }} x {{ adultCount }}</span>
-                <span class="text-gray-900 dark:text-white">{{ formatCurrency(adultTotal, 'TRY') }}</span>
+                <span class="text-gray-600 dark:text-gray-400"
+                  >{{ $t('tourBooking.pricing.adults') }} x {{ adultCount }}</span
+                >
+                <span class="text-gray-900 dark:text-white">{{
+                  formatCurrency(adultTotal, 'TRY')
+                }}</span>
               </div>
               <div v-if="childCount > 0" class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.children') }} x {{ childCount }}</span>
-                <span class="text-gray-900 dark:text-white">{{ formatCurrency(childTotal, 'TRY') }}</span>
+                <span class="text-gray-600 dark:text-gray-400"
+                  >{{ $t('tourBooking.pricing.children') }} x {{ childCount }}</span
+                >
+                <span class="text-gray-900 dark:text-white">{{
+                  formatCurrency(childTotal, 'TRY')
+                }}</span>
               </div>
               <div v-if="infantCount > 0" class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.infants') }} x {{ infantCount }}</span>
-                <span class="text-gray-900 dark:text-white">{{ formatCurrency(infantTotal, 'TRY') }}</span>
+                <span class="text-gray-600 dark:text-gray-400"
+                  >{{ $t('tourBooking.pricing.infants') }} x {{ infantCount }}</span
+                >
+                <span class="text-gray-900 dark:text-white">{{
+                  formatCurrency(infantTotal, 'TRY')
+                }}</span>
               </div>
             </div>
 
             <!-- Extras -->
-            <div v-if="extrasTotal > 0" class="pt-3 border-t border-gray-200 dark:border-slate-700 space-y-2 text-sm">
+            <div
+              v-if="extrasTotal > 0"
+              class="pt-3 border-t border-gray-200 dark:border-slate-700 space-y-2 text-sm"
+            >
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.extras') }}</span>
-                <span class="text-gray-900 dark:text-white">{{ formatCurrency(extrasTotal, 'TRY') }}</span>
+                <span class="text-gray-600 dark:text-gray-400">{{
+                  $t('tourBooking.pricing.extras')
+                }}</span>
+                <span class="text-gray-900 dark:text-white">{{
+                  formatCurrency(extrasTotal, 'TRY')
+                }}</span>
               </div>
             </div>
 
             <!-- Total -->
             <div class="pt-3 border-t border-gray-200 dark:border-slate-700">
               <div class="flex justify-between">
-                <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $t('tourBooking.pricing.grandTotal') }}</span>
+                <span class="text-lg font-medium text-gray-900 dark:text-white">{{
+                  $t('tourBooking.pricing.grandTotal')
+                }}</span>
                 <span class="text-lg font-bold text-purple-600 dark:text-purple-400">
                   {{ formatCurrency(grandTotal, 'TRY') }}
                 </span>
@@ -602,6 +703,7 @@ import { useI18n } from 'vue-i18n'
 import { useTourStore } from '@/stores/tour'
 import { formatCurrency } from '@booking-engine/utils'
 import { BaseButton } from '@/components/ui'
+import { getFileUrl } from '@/utils/imageUrl'
 
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -647,13 +749,23 @@ const steps = computed(() => [
 
 const paymentMethods = computed(() => [
   { value: 'credit_card', label: t('agencies.paymentMethods.creditCard'), icon: 'credit_card' },
-  { value: 'bank_transfer', label: t('agencies.paymentMethods.bankTransfer'), icon: 'account_balance' }
+  {
+    value: 'bank_transfer',
+    label: t('agencies.paymentMethods.bankTransfer'),
+    icon: 'account_balance'
+  }
 ])
 
 // Passenger counts
-const adultCount = computed(() => bookingForm.value.passengers.filter(p => p.type === 'adult').length)
-const childCount = computed(() => bookingForm.value.passengers.filter(p => p.type === 'child').length)
-const infantCount = computed(() => bookingForm.value.passengers.filter(p => p.type === 'infant').length)
+const adultCount = computed(
+  () => bookingForm.value.passengers.filter(p => p.type === 'adult').length
+)
+const childCount = computed(
+  () => bookingForm.value.passengers.filter(p => p.type === 'child').length
+)
+const infantCount = computed(
+  () => bookingForm.value.passengers.filter(p => p.type === 'infant').length
+)
 
 // Pricing calculations
 const adultTotal = computed(() => {
@@ -676,9 +788,9 @@ const extrasTotal = computed(() => {
     const extra = availableExtras.value.find(e => e._id === extraId)
     if (extra) {
       if (extra.priceType === 'per_person') {
-        return sum + (extra.defaultPrice * bookingForm.value.passengers.length)
+        return sum + (extra.price?.value || 0) * bookingForm.value.passengers.length
       }
-      return sum + extra.defaultPrice
+      return sum + (extra.price?.value || 0)
     }
     return sum
   }, 0)
@@ -695,9 +807,11 @@ const canProceed = computed(() => {
     case 1:
       return selectedDeparture.value !== null
     case 2:
-      return bookingForm.value.passengers.every(p => p.firstName && p.lastName) &&
+      return (
+        bookingForm.value.passengers.every(p => p.firstName && p.lastName) &&
         bookingForm.value.contact.email &&
         bookingForm.value.contact.phone
+      )
     default:
       return true
   }
@@ -745,25 +859,19 @@ function getTotalPassengers() {
 }
 
 function getLowestPrice(tour) {
-  // Find the lowest departure price for this tour
-  return tour.departures?.[0]?.pricing?.adult?.double || 0
-}
-
-function getTransportIcon(type) {
-  const icons = {
-    flight: 'flight',
-    bus: 'directions_bus',
-    ferry: 'directions_boat',
-    car: 'directions_car',
-    train: 'train'
-  }
-  return icons[type] || 'commute'
+  // Price hint is derived on backend search endpoint; fallback to 0 here.
+  return tour.priceFrom || 0
 }
 
 function getLocalizedName(obj) {
   if (!obj) return ''
   if (typeof obj === 'string') return obj
   return obj[locale.value] || obj.tr || obj.en || ''
+}
+
+function getTourImage(tour) {
+  const main = tour?.mainImage || tour?.gallery?.find(i => i.isMain)?.url || tour?.gallery?.[0]?.url
+  return main ? getFileUrl(main) : ''
 }
 
 function formatDate(date) {
@@ -781,7 +889,7 @@ async function searchTours() {
   try {
     // Search tours with filters
     await tourStore.fetchTours({
-      destination: searchForm.value.destination,
+      search: searchForm.value.destination,
       status: 'active'
     })
     searchResults.value = tourStore.tours
@@ -799,11 +907,12 @@ async function loadTourDepartures() {
   if (!selectedTour.value) return
 
   // Fetch departures for selected tour
-  await tourStore.fetchDepartures({ tour: selectedTour.value._id })
-  tourDepartures.value = tourStore.departures.filter(d =>
-    d.status !== 'cancelled' &&
-    d.status !== 'completed' &&
-    new Date(d.departureDate) >= new Date()
+  await tourStore.fetchDepartures(selectedTour.value._id)
+  tourDepartures.value = (tourStore.departures || []).filter(
+    d =>
+      d.status !== 'cancelled' &&
+      d.status !== 'completed' &&
+      new Date(d.departureDate) >= new Date()
   )
 }
 
@@ -815,10 +924,7 @@ async function loadExtras() {
   if (!selectedTour.value) return
 
   await tourStore.fetchExtras()
-  availableExtras.value = tourStore.extras.filter(e =>
-    e.status === 'active' &&
-    (!e.applicableTours?.length || e.applicableTours.some(t => t._id === selectedTour.value._id || t === selectedTour.value._id))
-  )
+  availableExtras.value = tourStore.extras.filter(e => e.isActive !== false)
 }
 
 function nextStep() {
@@ -866,10 +972,11 @@ async function completeBooking() {
           code: extra.code,
           name: extra.name,
           quantity: extra.priceType === 'per_person' ? bookingForm.value.passengers.length : 1,
-          unitPrice: extra.defaultPrice,
-          totalPrice: extra.priceType === 'per_person'
-            ? extra.defaultPrice * bookingForm.value.passengers.length
-            : extra.defaultPrice
+          unitPrice: extra.price?.value || 0,
+          totalPrice:
+            extra.priceType === 'per_person'
+              ? (extra.price?.value || 0) * bookingForm.value.passengers.length
+              : extra.price?.value || 0
         }
       }),
       pricing: {

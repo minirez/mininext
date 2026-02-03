@@ -557,7 +557,7 @@ export const deleteDistrict = asyncHandler(async (req, res) => {
 
 /**
  * Search locations (for autocomplete)
- * Searches across cities, districts, and regions
+ * Searches across cities, districts, and regions using regex for partial matching
  */
 export const searchLocations = asyncHandler(async (req, res) => {
   const { q, country, type = 'all' } = req.query
@@ -572,22 +572,32 @@ export const searchLocations = asyncHandler(async (req, res) => {
     regions: []
   }
 
+  // Escape special regex characters and create case-insensitive pattern
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(escaped, 'i')
+
   if (type === 'all' || type === 'cities') {
-    results.cities = await City.search(q, country)
+    const cityQuery = { name: regex, isActive: true }
+    if (country) cityQuery.countryCode = country.toUpperCase()
+    results.cities = await City.find(cityQuery)
+      .sort({ name: 1 })
+      .collation({ locale: 'tr', strength: 1 })
+      .limit(20)
   }
 
   if (type === 'all' || type === 'districts') {
-    results.districts = await District.search(q)
+    results.districts = await District.find({ name: regex, isActive: true })
+      .populate('city', 'name countryCode')
+      .sort({ name: 1 })
+      .collation({ locale: 'tr', strength: 1 })
+      .limit(20)
   }
 
   if (type === 'all' || type === 'regions') {
-    const regionQuery = {
-      $text: { $search: q },
-      isActive: true
-    }
-    results.regions = await TourismRegion.find(regionQuery, { score: { $meta: 'textScore' } })
-      .populate('city')
-      .sort({ score: { $meta: 'textScore' } })
+    results.regions = await TourismRegion.find({ name: regex, isActive: true })
+      .populate('city', 'name countryCode')
+      .sort({ name: 1 })
+      .collation({ locale: 'tr', strength: 1 })
       .limit(20)
   }
 

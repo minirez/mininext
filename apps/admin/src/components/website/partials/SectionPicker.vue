@@ -42,8 +42,10 @@
         @dblclick="$emit('add', section)"
       >
         <div
-          class="w-12 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0"
+          class="w-12 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0 preview-thumbnail"
           @click.stop="$emit('preview', section.id)"
+          @mouseenter="showPreview($event, section.id)"
+          @mouseleave="hidePreview"
         >
           <img
             v-if="getPreview(section.id)"
@@ -80,17 +82,65 @@
         Click + to add • Double-click • Drag to reorder
       </p>
     </div>
+
+    <!-- Floating preview popup (teleported to body) -->
+    <Teleport to="body">
+      <div v-show="hoveredPreview" class="preview-popup" :style="previewStyle">
+        <img
+          v-if="hoveredPreview"
+          :src="hoveredPreview"
+          alt="Section preview"
+          class="w-full h-full object-cover object-top"
+        />
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toCanonicalSectionType } from '@booking-engine/constants'
 
 const { t } = useI18n()
 const props = defineProps({ sections: Array, active: Array, category: String })
 defineEmits(['update:category', 'add', 'preview'])
+
+// Hover preview state
+const hoveredPreview = ref(null)
+const previewStyle = ref({})
+
+const showPreview = (event, sectionId) => {
+  const preview = getPreview(sectionId)
+  if (!preview) return
+
+  const rect = event.currentTarget.getBoundingClientRect()
+  const popupWidth = 320
+  const popupHeight = 200
+
+  // Position to the right of the thumbnail
+  let left = rect.right + 12
+  let top = rect.top + rect.height / 2 - popupHeight / 2
+
+  // Keep within viewport
+  if (left + popupWidth > window.innerWidth - 20) {
+    left = rect.left - popupWidth - 12
+  }
+  if (top < 20) top = 20
+  if (top + popupHeight > window.innerHeight - 20) {
+    top = window.innerHeight - popupHeight - 20
+  }
+
+  previewStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`
+  }
+  hoveredPreview.value = preview
+}
+
+const hidePreview = () => {
+  hoveredPreview.value = null
+}
 
 const categories = computed(() => [
   { id: 'all', name: 'All' },
@@ -139,3 +189,39 @@ const previews = {
 }
 const getPreview = id => previews[id] || previews[toCanonicalSectionType(id)] || null
 </script>
+
+<style>
+/* Not scoped so it applies to teleported element */
+.preview-popup {
+  position: fixed;
+  width: 320px;
+  height: 200px;
+  background: white;
+  border-radius: 12px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+  animation: preview-fade-in 0.2s ease-out;
+}
+
+@keyframes preview-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dark .preview-popup {
+  background: #1e293b;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+</style>

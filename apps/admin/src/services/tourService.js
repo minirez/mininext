@@ -64,6 +64,50 @@ export async function duplicateTour(id) {
 }
 
 // =====================
+// MEDIA UPLOADS (NEW)
+// =====================
+
+/**
+ * Upload a gallery image for a tour (multipart: file)
+ */
+export async function uploadTourGalleryImage(tourId, file) {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post(`${BASE_URL}/${tourId}/gallery`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return data
+}
+
+/**
+ * Delete a gallery image by imageId
+ */
+export async function deleteTourGalleryImage(tourId, imageId) {
+  const { data } = await api.delete(`${BASE_URL}/${tourId}/gallery/${imageId}`)
+  return data
+}
+
+/**
+ * Upload a route stop photo (multipart: file)
+ */
+export async function uploadRouteStopPhoto(tourId, stopId, file) {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post(`${BASE_URL}/${tourId}/route-stops/${stopId}/photo`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return data
+}
+
+/**
+ * Delete a route stop photo
+ */
+export async function deleteRouteStopPhoto(tourId, stopId) {
+  const { data } = await api.delete(`${BASE_URL}/${tourId}/route-stops/${stopId}/photo`)
+  return data
+}
+
+// =====================
 // DEPARTURE OPERATIONS
 // =====================
 
@@ -263,7 +307,10 @@ export async function addBookingPayment(id, payload) {
  * Update visa status for a passenger
  */
 export async function updateVisaStatus(bookingId, passengerIndex, payload) {
-  const { data } = await api.post(`${BASE_URL}/bookings/${bookingId}/visa/${passengerIndex}`, payload)
+  const { data } = await api.post(
+    `${BASE_URL}/bookings/${bookingId}/visa/${passengerIndex}`,
+    payload
+  )
   return data
 }
 
@@ -296,15 +343,21 @@ export async function aiExtractTour(content) {
  */
 export function getTourTypes() {
   return [
-    { value: 'package', label: 'tour.tourTypes.package' },
-    { value: 'day_trip', label: 'tour.tourTypes.day_trip' },
-    { value: 'multi_day', label: 'tour.tourTypes.multi_day' },
     { value: 'cruise', label: 'tour.tourTypes.cruise' },
     { value: 'cultural', label: 'tour.tourTypes.cultural' },
+    { value: 'international', label: 'tour.tourTypes.international' },
+    { value: 'activity', label: 'tour.tourTypes.activity' },
+    { value: 'workshop', label: 'tour.tourTypes.workshop' },
+    { value: 'transfer', label: 'tour.tourTypes.transfer' },
+    { value: 'nature', label: 'tour.tourTypes.nature' },
+    { value: 'city', label: 'tour.tourTypes.city' },
+    { value: 'museum', label: 'tour.tourTypes.museum' },
     { value: 'adventure', label: 'tour.tourTypes.adventure' },
     { value: 'religious', label: 'tour.tourTypes.religious' },
-    { value: 'nature', label: 'tour.tourTypes.nature' },
-    { value: 'city_break', label: 'tour.tourTypes.city_break' }
+    { value: 'yacht', label: 'tour.tourTypes.yacht' },
+    { value: 'boat', label: 'tour.tourTypes.boat' },
+    { value: 'ferry', label: 'tour.tourTypes.ferry' },
+    { value: 'other', label: 'tour.tourTypes.other' }
   ]
 }
 
@@ -403,6 +456,11 @@ export default {
   updateTour,
   deleteTour,
   duplicateTour,
+  // Media
+  uploadTourGalleryImage,
+  deleteTourGalleryImage,
+  uploadRouteStopPhoto,
+  deleteRouteStopPhoto,
   // AI
   aiExtractTour,
   // Departures

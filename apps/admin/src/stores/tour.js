@@ -2,9 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as tourService from '@/services/tourService'
 import { useToast } from 'vue-toastification'
+import i18n from '@/plugins/i18n'
 
 export const useTourStore = defineStore('tour', () => {
   const toast = useToast()
+  const t = i18n.global.t
 
   // =====================
   // STATE - Tours
@@ -82,7 +84,7 @@ export const useTourStore = defineStore('tour', () => {
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Turlar yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadTours'))
       throw err
     } finally {
       loading.value = false
@@ -98,7 +100,7 @@ export const useTourStore = defineStore('tour', () => {
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Tur detayı yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadTour'))
       throw err
     } finally {
       loading.value = false
@@ -121,11 +123,11 @@ export const useTourStore = defineStore('tour', () => {
     try {
       const response = await tourService.createTour(payload)
       tours.value.unshift(response.data)
-      toast.success(response.message || 'Tur oluşturuldu')
+      toast.success(response.message || t('tour.toasts.created'))
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Tur oluşturulamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.createTour'))
       throw err
     } finally {
       loading.value = false
@@ -144,11 +146,11 @@ export const useTourStore = defineStore('tour', () => {
       if (currentTour.value?._id === id) {
         currentTour.value = response.data
       }
-      toast.success(response.message || 'Tur güncellendi')
+      toast.success(response.message || t('tour.toasts.updated'))
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Tur güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateTour'))
       throw err
     } finally {
       loading.value = false
@@ -161,10 +163,10 @@ export const useTourStore = defineStore('tour', () => {
     try {
       await tourService.deleteTour(id)
       tours.value = tours.value.filter(t => t._id !== id)
-      toast.success('Tur silindi')
+      toast.success(t('tour.toasts.deleted'))
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Tur silinemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.deleteTour'))
       throw err
     } finally {
       loading.value = false
@@ -176,10 +178,10 @@ export const useTourStore = defineStore('tour', () => {
     try {
       const response = await tourService.duplicateTour(id)
       tours.value.unshift(response.data)
-      toast.success('Tur kopyalandı')
+      toast.success(t('tour.toasts.duplicated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Tur kopyalanamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.duplicateTour'))
       throw err
     } finally {
       loading.value = false
@@ -198,7 +200,7 @@ export const useTourStore = defineStore('tour', () => {
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Hareketler yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadDepartures'))
       throw err
     } finally {
       loading.value = false
@@ -212,7 +214,7 @@ export const useTourStore = defineStore('tour', () => {
       currentDeparture.value = response.data
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hareket detayı yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadDeparture'))
       throw err
     } finally {
       loading.value = false
@@ -224,10 +226,10 @@ export const useTourStore = defineStore('tour', () => {
     try {
       const response = await tourService.createDeparture(tourId, payload)
       departures.value.unshift(response.data)
-      toast.success('Hareket tarihi eklendi')
+      toast.success(t('tour.toasts.departureCreated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hareket tarihi eklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.createDeparture'))
       throw err
     } finally {
       loading.value = false
@@ -241,10 +243,10 @@ export const useTourStore = defineStore('tour', () => {
       if (response.data?.created) {
         departures.value.unshift(...response.data.created)
       }
-      toast.success(`${response.data?.count || 0} hareket tarihi oluşturuldu`)
+      toast.success(t('tour.toasts.departuresBulkCreated', { count: response.data?.count || 0 }))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hareketler oluşturulamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.bulkCreateDepartures'))
       throw err
     } finally {
       loading.value = false
@@ -259,10 +261,10 @@ export const useTourStore = defineStore('tour', () => {
       if (index !== -1) {
         departures.value[index] = response.data
       }
-      toast.success('Hareket güncellendi')
+      toast.success(t('tour.toasts.departureUpdated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hareket güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateDeparture'))
       throw err
     } finally {
       loading.value = false
@@ -274,9 +276,9 @@ export const useTourStore = defineStore('tour', () => {
     try {
       await tourService.deleteDeparture(id)
       departures.value = departures.value.filter(d => d._id !== id)
-      toast.success('Hareket silindi')
+      toast.success(t('tour.toasts.departureDeleted'))
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Hareket silinemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.deleteDeparture'))
       throw err
     } finally {
       loading.value = false
@@ -289,7 +291,7 @@ export const useTourStore = defineStore('tour', () => {
       const response = await tourService.searchDepartures(params)
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Arama yapılamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.searchDepartures'))
       throw err
     } finally {
       loading.value = false
@@ -308,7 +310,7 @@ export const useTourStore = defineStore('tour', () => {
       return response.data
     } catch (err) {
       error.value = err.message
-      toast.error(err.response?.data?.message || 'Hareketler yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadDepartures'))
       throw err
     } finally {
       loading.value = false
@@ -344,7 +346,7 @@ export const useTourStore = defineStore('tour', () => {
       extras.value = response.data?.items || response.data || []
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ekstralar yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadExtras'))
       throw err
     } finally {
       loading.value = false
@@ -358,7 +360,7 @@ export const useTourStore = defineStore('tour', () => {
       currentExtra.value = response.data
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ekstra detayı yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadExtra'))
       throw err
     } finally {
       loading.value = false
@@ -370,10 +372,10 @@ export const useTourStore = defineStore('tour', () => {
     try {
       const response = await tourService.createExtra(payload)
       extras.value.unshift(response.data)
-      toast.success('Ekstra oluşturuldu')
+      toast.success(t('tour.toasts.extraCreated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ekstra oluşturulamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.createExtra'))
       throw err
     } finally {
       loading.value = false
@@ -388,10 +390,10 @@ export const useTourStore = defineStore('tour', () => {
       if (index !== -1) {
         extras.value[index] = response.data
       }
-      toast.success('Ekstra güncellendi')
+      toast.success(t('tour.toasts.extraUpdated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ekstra güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateExtra'))
       throw err
     } finally {
       loading.value = false
@@ -403,9 +405,9 @@ export const useTourStore = defineStore('tour', () => {
     try {
       await tourService.deleteExtra(id)
       extras.value = extras.value.filter(e => e._id !== id)
-      toast.success('Ekstra silindi')
+      toast.success(t('tour.toasts.extraDeleted'))
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ekstra silinemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.deleteExtra'))
       throw err
     } finally {
       loading.value = false
@@ -425,7 +427,7 @@ export const useTourStore = defineStore('tour', () => {
       }
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rezervasyonlar yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadBookings'))
       throw err
     } finally {
       loading.value = false
@@ -439,7 +441,7 @@ export const useTourStore = defineStore('tour', () => {
       currentBooking.value = response.data
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rezervasyon detayı yüklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.loadBooking'))
       throw err
     } finally {
       loading.value = false
@@ -461,7 +463,7 @@ export const useTourStore = defineStore('tour', () => {
       const response = await tourService.calculatePrice(payload)
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Fiyat hesaplanamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.calculatePrice'))
       throw err
     }
   }
@@ -471,10 +473,10 @@ export const useTourStore = defineStore('tour', () => {
     try {
       const response = await tourService.createBooking(payload)
       bookings.value.unshift(response.data)
-      toast.success('Rezervasyon oluşturuldu')
+      toast.success(t('tour.toasts.bookingCreated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rezervasyon oluşturulamadı')
+      toast.error(err.response?.data?.message || t('tour.errors.createBooking'))
       throw err
     } finally {
       loading.value = false
@@ -492,10 +494,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === id) {
         currentBooking.value = response.data
       }
-      toast.success('Rezervasyon güncellendi')
+      toast.success(t('tour.toasts.bookingUpdated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rezervasyon güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateBooking'))
       throw err
     } finally {
       loading.value = false
@@ -513,10 +515,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === id) {
         currentBooking.value = response.data
       }
-      toast.success('Rezervasyon durumu güncellendi')
+      toast.success(t('tour.toasts.bookingStatusUpdated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Durum güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateBookingStatus'))
       throw err
     } finally {
       loading.value = false
@@ -534,10 +536,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === id) {
         currentBooking.value = response.data
       }
-      toast.success('Rezervasyon iptal edildi')
+      toast.success(t('tour.toasts.bookingCancelled'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rezervasyon iptal edilemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.cancelBooking'))
       throw err
     } finally {
       loading.value = false
@@ -551,10 +553,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === bookingId) {
         currentBooking.value = response.data
       }
-      toast.success('Ödeme eklendi')
+      toast.success(t('tour.toasts.paymentAdded'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Ödeme eklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.addPayment'))
       throw err
     } finally {
       loading.value = false
@@ -568,10 +570,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === bookingId) {
         currentBooking.value = response.data
       }
-      toast.success('Vize durumu güncellendi')
+      toast.success(t('tour.toasts.visaUpdated'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Vize durumu güncellenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.updateVisa'))
       throw err
     } finally {
       loading.value = false
@@ -585,10 +587,10 @@ export const useTourStore = defineStore('tour', () => {
       if (currentBooking.value?._id === bookingId) {
         currentBooking.value = response.data
       }
-      toast.success('Not eklendi')
+      toast.success(t('tour.toasts.noteAdded'))
       return response.data
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Not eklenemedi')
+      toast.error(err.response?.data?.message || t('tour.errors.addNote'))
       throw err
     } finally {
       loading.value = false

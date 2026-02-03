@@ -25,7 +25,7 @@
     "issues": "Issues",
     "emailLogs": "Email Logs",
     "payment": "Payment System",
-    "tours": "Tours"
+    "tours": "Tours & Activities"
   },
   "paymentSystem": {
     "title": "Payment System",
@@ -277,6 +277,8 @@
       "favicon": "Favicon",
       "faviconUrl": "Favicon URL",
       "faviconDescription": "Icon to be displayed in browser tab. Recommended size: 32x32 pixels",
+      "faviconHint": "Recommended: 96x96 PNG format. Used in admin panel sidebar and login page.",
+      "logoHint": "Recommended: 220x80 pixels. Used in theme templates and B2C website header.",
       "uploadFavicon": "Upload Favicon",
       "changeFavicon": "Change Favicon",
       "activeLanguages": "Active Languages",

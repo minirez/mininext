@@ -17,8 +17,12 @@
     <div class="w-full max-w-2xl mx-auto">
       <!-- Success State -->
       <div v-if="success" class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
-        <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span class="material-icons text-green-600 dark:text-green-400 text-4xl">check_circle</span>
+        <div
+          class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
+        >
+          <span class="material-icons text-green-600 dark:text-green-400 text-4xl"
+            >check_circle</span
+          >
         </div>
         <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">
           {{ $t('auth.registrationSubmitted') }}
@@ -63,7 +67,10 @@
         <!-- Form Content -->
         <div class="p-8">
           <!-- Error Alert -->
-          <div v-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+          <div
+            v-if="error"
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6"
+          >
             <div class="flex items-center gap-3">
               <span class="material-icons text-red-600 dark:text-red-400">error</span>
               <span class="text-red-700 dark:text-red-300">{{ error }}</span>
@@ -73,7 +80,9 @@
           <form class="space-y-6" @submit.prevent="handleRegister" novalidate>
             <!-- Company Information Section -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <h3
+                class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
+              >
                 <span class="material-icons text-purple-600">domain</span>
                 {{ $t('auth.companyInfo') }}
               </h3>
@@ -85,7 +94,9 @@
                     v-model="form.companyName"
                     type="text"
                     class="form-input"
-                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.companyName }"
+                    :class="{
+                      'border-red-500 focus:border-red-500 focus:ring-red-500': errors.companyName
+                    }"
                     :placeholder="$t('auth.companyNamePlaceholder')"
                     :disabled="loading"
                     @input="clearError('companyName')"
@@ -132,7 +143,9 @@
 
             <!-- Contact Person Section -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <h3
+                class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
+              >
                 <span class="material-icons text-purple-600">person</span>
                 {{ $t('auth.contactPerson') }}
               </h3>
@@ -144,7 +157,9 @@
                     v-model="form.name"
                     type="text"
                     class="form-input"
-                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.name }"
+                    :class="{
+                      'border-red-500 focus:border-red-500 focus:ring-red-500': errors.name
+                    }"
                     :placeholder="$t('auth.fullNamePlaceholder')"
                     :disabled="loading"
                     @input="clearError('name')"
@@ -156,13 +171,18 @@
                 <div>
                   <label for="email" class="form-label">{{ $t('auth.email') }} *</label>
                   <div class="relative">
-                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">email</span>
+                    <span
+                      class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      >email</span
+                    >
                     <input
                       id="email"
                       v-model="form.email"
                       type="email"
                       class="form-input pl-10"
-                      :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.email }"
+                      :class="{
+                        'border-red-500 focus:border-red-500 focus:ring-red-500': errors.email
+                      }"
                       placeholder="ornek@sirket.com"
                       :disabled="loading"
                       @input="clearError('email')"
@@ -175,13 +195,18 @@
                 <div>
                   <label for="phone" class="form-label">{{ $t('auth.phone') }} *</label>
                   <div class="relative">
-                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">phone</span>
+                    <span
+                      class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      >phone</span
+                    >
                     <input
                       id="phone"
                       v-model="form.phone"
                       type="tel"
                       class="form-input pl-10"
-                      :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.phone }"
+                      :class="{
+                        'border-red-500 focus:border-red-500 focus:ring-red-500': errors.phone
+                      }"
                       placeholder="+90 555 123 45 67"
                       :disabled="loading"
                       @input="clearError('phone')"
@@ -196,7 +221,9 @@
 
             <!-- Address Section -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              <h3
+                class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
+              >
                 <span class="material-icons text-purple-600">location_on</span>
                 {{ $t('auth.address') }}
               </h3>
@@ -232,9 +259,11 @@
             <!-- Terms & Privacy -->
             <div
               class="rounded-xl p-4 transition-colors"
-              :class="errors.acceptTerms
-                ? 'bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700'
-                : 'bg-gray-50 dark:bg-slate-700/50'"
+              :class="
+                errors.acceptTerms
+                  ? 'bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700'
+                  : 'bg-gray-50 dark:bg-slate-700/50'
+              "
             >
               <label class="flex items-start gap-3 cursor-pointer">
                 <input
@@ -243,11 +272,22 @@
                   class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                   @change="clearError('acceptTerms')"
                 />
-                <span class="text-sm" :class="errors.acceptTerms ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-slate-400'">
+                <span
+                  class="text-sm"
+                  :class="
+                    errors.acceptTerms
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-slate-400'
+                  "
+                >
                   {{ $t('auth.termsPrefix') }}
-                  <a href="#" class="text-purple-600 hover:underline">{{ $t('auth.termsOfService') }}</a>
+                  <a href="#" class="text-purple-600 hover:underline">{{
+                    $t('auth.termsOfService')
+                  }}</a>
                   {{ $t('auth.and') }}
-                  <a href="#" class="text-purple-600 hover:underline">{{ $t('auth.privacyPolicy') }}</a>
+                  <a href="#" class="text-purple-600 hover:underline">{{
+                    $t('auth.privacyPolicy')
+                  }}</a>
                   {{ $t('auth.termsSuffix') }}
                 </span>
               </label>
@@ -257,9 +297,13 @@
             </div>
 
             <!-- Info Box -->
-            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+            <div
+              class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4"
+            >
               <div class="flex items-start gap-3">
-                <span class="material-icons text-amber-600 dark:text-amber-400 mt-0.5">lightbulb</span>
+                <span class="material-icons text-amber-600 dark:text-amber-400 mt-0.5"
+                  >lightbulb</span
+                >
                 <p class="text-sm text-amber-700 dark:text-amber-300">
                   {{ $t('auth.noPasswordNote') }}
                 </p>
@@ -267,11 +311,7 @@
             </div>
 
             <!-- Submit Button -->
-            <button
-              type="submit"
-              class="w-full btn-primary py-3 text-lg"
-              :disabled="loading"
-            >
+            <button type="submit" class="w-full btn-primary py-3 text-lg" :disabled="loading">
               <span v-if="loading" class="flex items-center justify-center">
                 <span class="material-icons animate-spin mr-2">sync</span>
                 {{ $t('auth.submitting') }}
@@ -344,7 +384,7 @@ const errors = reactive({
   acceptTerms: ''
 })
 
-const clearError = (field) => {
+const clearError = field => {
   errors[field] = ''
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- Navigation -->
-    <ModuleNavigation :items="navItems" color="teal" />
+    <ModuleNavigation :items="navItems" color="primary" />
 
     <div class="flex-1 overflow-y-auto py-6">
       <!-- Stats Cards -->
@@ -10,7 +10,7 @@
           v-for="stat in statCards"
           :key="stat.key"
           class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 cursor-pointer transition-all hover:shadow-md"
-          :class="{ 'ring-2 ring-teal-500': filters.status === stat.filterValue }"
+          :class="{ 'ring-2 ring-primary-500': filters.status === stat.filterValue }"
           @click="setStatusFilter(stat.filterValue)"
         >
           <div class="flex items-center">
@@ -29,12 +29,16 @@
       </div>
 
       <!-- Filters & Actions Bar -->
-      <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-6">
+      <div
+        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-6"
+      >
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <!-- Search -->
           <div class="flex-1">
             <div class="relative">
-              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >search</span
+              >
               <input
                 v-model="filters.search"
                 type="text"
@@ -44,14 +48,6 @@
               />
             </div>
           </div>
-
-          <!-- Tour Type Filter -->
-          <select v-model="filters.tourType" class="form-input w-auto" @change="applyFilters">
-            <option value="">{{ $t('filters.allTypes') }}</option>
-            <option v-for="type in tourTypes" :key="type.value" :value="type.value">
-              {{ $t(type.label) }}
-            </option>
-          </select>
 
           <!-- Status Filter -->
           <select v-model="filters.status" class="form-input w-auto" @change="applyFilters">
@@ -65,14 +61,22 @@
           <div class="flex border border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden">
             <button
               class="p-2"
-              :class="viewMode === 'table' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100'"
+              :class="
+                viewMode === 'table'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100'
+              "
               @click="viewMode = 'table'"
             >
               <span class="material-icons text-xl">table_rows</span>
             </button>
             <button
               class="p-2"
-              :class="viewMode === 'cards' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100'"
+              :class="
+                viewMode === 'cards'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100'
+              "
               @click="viewMode = 'cards'"
             >
               <span class="material-icons text-xl">grid_view</span>
@@ -81,16 +85,16 @@
 
           <!-- AI Import Button -->
           <button
-            class="btn-outline border-teal-500 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30"
+            class="btn-outline border-primary-500 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 inline-flex items-center"
             @click="showAIImporter = true"
           >
-            <span class="material-icons mr-2">auto_awesome</span>
+            <span class="material-icons text-lg mr-1.5">auto_awesome</span>
             {{ $t('tour.aiImport.button') }}
           </button>
 
           <!-- New Tour Button -->
-          <button class="btn-primary bg-teal-600 hover:bg-teal-700" @click="createTour">
-            <span class="material-icons mr-2">add</span>
+          <button class="btn-primary inline-flex items-center" @click="createTour">
+            <span class="material-icons text-lg mr-1.5">add</span>
             {{ $t('tour.newTour') }}
           </button>
         </div>
@@ -114,8 +118,12 @@
       >
         <!-- Empty State Action -->
         <template #empty-action>
-          <button type="button" class="mt-4 btn-primary bg-teal-600 hover:bg-teal-700" @click="createTour">
-            <span class="material-icons mr-2">add</span>
+          <button
+            type="button"
+            class="mt-4 btn-primary inline-flex items-center"
+            @click="createTour"
+          >
+            <span class="material-icons text-lg mr-1.5">add</span>
             {{ $t('tour.createFirstTour') }}
           </button>
         </template>
@@ -123,19 +131,25 @@
         <!-- Tour Code & Name Cell -->
         <template #cell-code="{ row }">
           <div class="flex items-center">
-            <div class="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 dark:bg-slate-700 flex-shrink-0">
+            <div
+              class="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 dark:bg-slate-700 flex-shrink-0"
+            >
               <img
                 v-if="row.mainImage"
-                :src="row.mainImage"
+                :src="getFileUrl(row.mainImage)"
                 :alt="getLocalizedName(row.name)"
                 class="w-full h-full object-cover"
               />
-              <span v-else class="material-icons text-2xl text-gray-400 flex items-center justify-center w-full h-full">tour</span>
+              <span
+                v-else
+                class="material-icons text-2xl text-gray-400 flex items-center justify-center w-full h-full"
+                >tour</span
+              >
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <button
-                  class="font-semibold text-gray-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                  class="font-semibold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                   @click.stop="editTour(row)"
                 >
                   {{ row.code }}
@@ -144,51 +158,38 @@
                   v-if="row.isFeatured"
                   class="material-icons text-amber-500 text-sm"
                   title="Featured"
-                >star</span>
+                  >star</span
+                >
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-300 line-clamp-1 max-w-[250px]">
                 {{ getLocalizedName(row.name) }}
               </p>
               <div class="flex items-center gap-2 mt-1">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
-                  {{ $t(`tour.tourTypes.${row.tourType}`) }}
+                <span
+                  v-if="row.primaryLocation?.name"
+                  class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                >
+                  {{ row.primaryLocation.name }}
                 </span>
-                <span class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ row.duration?.nights }}N / {{ row.duration?.days }}D
-                </span>
+                <span v-else class="text-xs text-gray-500 dark:text-slate-400">-</span>
               </div>
             </div>
           </div>
         </template>
 
-        <!-- Destination Cell -->
-        <template #cell-destination="{ row }">
-          <div v-if="row.destination">
-            <p class="font-medium text-gray-900 dark:text-white">
-              {{ row.destination.city || row.destination.country }}
-            </p>
-            <p v-if="row.destination.region" class="text-xs text-gray-500 dark:text-slate-400">
-              {{ row.destination.region }}
-            </p>
-          </div>
-          <span v-else class="text-gray-400">-</span>
-        </template>
-
-        <!-- Transportation Cell -->
-        <template #cell-transportation="{ row }">
-          <div v-if="row.transportation?.length" class="flex items-center gap-1">
+        <!-- Tags Cell -->
+        <template #cell-tags="{ row }">
+          <div v-if="row.tags?.length" class="flex flex-wrap gap-1">
             <span
-              v-for="(transport, idx) in row.transportation.slice(0, 3)"
-              :key="idx"
-              class="material-icons text-lg"
-              :class="getTransportIcon(transport.type).class"
-              :title="$t(`tour.transportTypes.${transport.type}`)"
+              v-for="tag in row.tags.slice(0, 4)"
+              :key="tag"
+              class="px-2 py-0.5 rounded-full text-[10px] bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200"
             >
-              {{ getTransportIcon(transport.type).icon }}
+              {{ tag }}
             </span>
-            <span v-if="row.transportation.length > 3" class="text-xs text-gray-500">
-              +{{ row.transportation.length - 3 }}
-            </span>
+            <span v-if="row.tags.length > 4" class="text-xs text-gray-500"
+              >+{{ row.tags.length - 4 }}</span
+            >
           </div>
           <span v-else class="text-gray-400">-</span>
         </template>
@@ -197,7 +198,9 @@
         <template #cell-departures="{ row }">
           <div class="text-center">
             <p class="font-semibold text-gray-900 dark:text-white">{{ row.departureCount || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('departure.departures') }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('departure.departures') }}
+            </p>
           </div>
         </template>
 
@@ -207,7 +210,10 @@
             class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
             :class="getStatusClass(row.status)"
           >
-            <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="getStatusDotClass(row.status)"></span>
+            <span
+              class="w-1.5 h-1.5 rounded-full mr-1.5"
+              :class="getStatusDotClass(row.status)"
+            ></span>
             {{ $t(`tour.statuses.${row.status}`) }}
           </span>
         </template>
@@ -216,7 +222,7 @@
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1">
             <button
-              class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-teal-600"
+              class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 hover:text-primary-600"
               :title="$t('common.edit')"
               @click.stop="editTour(row)"
             >
@@ -251,10 +257,7 @@
     />
 
     <!-- AI Import Modal -->
-    <TourAIImporter
-      v-model="showAIImporter"
-      @apply="handleAIImportApply"
-    />
+    <TourAIImporter v-model="showAIImporter" @apply="handleAIImportApply" />
   </div>
 </template>
 
@@ -263,11 +266,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTourStore } from '@/stores/tour'
-import { getTourTypes } from '@/services/tourService'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import { DataTable, ConfirmDialog } from '@/components/ui'
 import TourAIImporter from '@/components/tour/TourAIImporter.vue'
 import debounce from 'lodash/debounce'
+import { getFileUrl } from '@/utils/imageUrl'
 
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -285,12 +288,8 @@ const showAIImporter = ref(false)
 // Filters
 const filters = ref({
   search: '',
-  tourType: '',
   status: ''
 })
-
-// Tour Types
-const tourTypes = getTourTypes()
 
 // Navigation Items
 const navItems = computed(() => [
@@ -323,8 +322,8 @@ const statCards = computed(() => [
     label: t('stats.totalTours'),
     value: tourStore.tourStats?.total || tours.value.length,
     icon: 'tour',
-    bgClass: 'bg-teal-100 dark:bg-teal-900/50',
-    iconClass: 'text-teal-600 dark:text-teal-400',
+    bgClass: 'bg-primary-100 dark:bg-primary-900/50',
+    iconClass: 'text-primary-600 dark:text-primary-400',
     filterValue: ''
   },
   {
@@ -365,15 +364,9 @@ const columns = computed(() => [
     width: '320px'
   },
   {
-    key: 'destination',
-    label: t('tour.fields.destination'),
-    sortable: true,
-    width: '150px'
-  },
-  {
-    key: 'transportation',
-    label: t('tour.transportation.title'),
-    width: '120px'
+    key: 'tags',
+    label: t('tour.fields.tags'),
+    width: '220px'
   },
   {
     key: 'departures',
@@ -396,24 +389,12 @@ const columns = computed(() => [
 ])
 
 // Methods
-const getLocalizedName = (name) => {
+const getLocalizedName = name => {
   if (!name) return ''
   return name[locale.value] || name.tr || name.en || Object.values(name)[0] || ''
 }
 
-const getTransportIcon = (type) => {
-  const icons = {
-    flight: { icon: 'flight', class: 'text-blue-500' },
-    bus: { icon: 'directions_bus', class: 'text-orange-500' },
-    ferry: { icon: 'directions_boat', class: 'text-cyan-500' },
-    car: { icon: 'directions_car', class: 'text-purple-500' },
-    train: { icon: 'train', class: 'text-green-500' },
-    combined: { icon: 'multiple_stop', class: 'text-gray-500' }
-  }
-  return icons[type] || { icon: 'help', class: 'text-gray-400' }
-}
-
-const getStatusClass = (status) => {
+const getStatusClass = status => {
   const classes = {
     active: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
     inactive: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -423,7 +404,7 @@ const getStatusClass = (status) => {
   return classes[status] || classes.draft
 }
 
-const getStatusDotClass = (status) => {
+const getStatusDotClass = status => {
   const classes = {
     active: 'bg-green-500',
     inactive: 'bg-gray-500',
@@ -433,7 +414,7 @@ const getStatusDotClass = (status) => {
   return classes[status] || classes.draft
 }
 
-const setStatusFilter = (value) => {
+const setStatusFilter = value => {
   if (value === null) return
   filters.value.status = value
   applyFilters()
@@ -454,13 +435,12 @@ const loadTours = async () => {
   }
 
   if (filters.value.search) params.search = filters.value.search
-  if (filters.value.tourType) params.tourType = filters.value.tourType
   if (filters.value.status) params.status = filters.value.status
 
   await tourStore.fetchTours(params)
 }
 
-const handlePageChange = (page) => {
+const handlePageChange = page => {
   tourStore.pagination.page = page
   loadTours()
 }
@@ -469,17 +449,17 @@ const createTour = () => {
   router.push('/tours/new')
 }
 
-const handleAIImportApply = (data) => {
+const handleAIImportApply = data => {
   // Store data in session storage and navigate to new tour page
   sessionStorage.setItem('aiTourData', JSON.stringify(data))
   router.push('/tours/new?ai=true')
 }
 
-const editTour = (tour) => {
+const editTour = tour => {
   router.push(`/tours/${tour._id}`)
 }
 
-const duplicateTour = async (tour) => {
+const duplicateTour = async tour => {
   try {
     const newTour = await tourStore.duplicateTour(tour._id)
     router.push(`/tours/${newTour._id}`)
@@ -488,7 +468,7 @@ const duplicateTour = async (tour) => {
   }
 }
 
-const confirmDelete = (tour) => {
+const confirmDelete = tour => {
   tourToDelete.value = tour
   showDeleteDialog.value = true
 }

@@ -97,6 +97,19 @@
               </p>
             </div>
           </div>
+
+          <!-- Pricing -->
+          <div v-if="extractedData.basePricing?.startingPrice" class="pt-4 border-t border-gray-200 dark:border-slate-700">
+            <div class="flex items-center gap-3">
+              <span class="material-icons text-green-500 text-xl">payments</span>
+              <div>
+                <label class="text-xs text-gray-500 dark:text-slate-500 block">{{ $t('tour.basePricing.startingPrice') }}</label>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                  {{ formatPrice(extractedData.basePricing?.startingPrice, extractedData.basePricing?.currency) }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Accommodations -->
@@ -291,6 +304,18 @@ const previewTabs = computed(() => [
   { key: 'itinerary', label: t('tour.tabs.itinerary') },
   { key: 'details', label: t('tour.tabs.details') }
 ])
+
+// Format price with currency
+const formatPrice = (value, currency = 'TRY') => {
+  if (!value && value !== 0) return '-'
+  const num = Number(value)
+  if (isNaN(num)) return '-'
+  
+  const symbols = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' }
+  const symbol = symbols[currency] || currency
+  
+  return `${num.toLocaleString('tr-TR')} ${symbol}`
+}
 
 // Methods
 const handleClose = () => {

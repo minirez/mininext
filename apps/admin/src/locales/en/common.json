@@ -1,5 +1,6 @@
 {
   "common": {
+    "currency": "Currency",
     "name": "Name",
     "title": "Title",
     "firstName": "First Name",
@@ -63,6 +64,7 @@
     "of": "of",
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
+    "appearance": "Appearance",
     "filled": "Filled",
     "activate": "Activate",
     "deactivate": "Deactivate",

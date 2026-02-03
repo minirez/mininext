@@ -21,6 +21,7 @@ export const extractTourData = async (content, retryCount = 0) => {
 3. Her alan için confidence (güven) skoru ekle (0-100 arası)
 4. Çoklu dil alanlarında Türkçe (tr) ve İngilizce (en) için değer ver
 5. Enum değerleri için sadece belirtilen seçenekleri kullan
+6. Fiyatları currency ve basePricing içinde döndür
 
 TUR VERİ ŞEMASI:
 
@@ -38,7 +39,7 @@ TUR VERİ ŞEMASI:
     "tr": "Detaylı açıklama",
     "en": "Detailed description"
   },
-  "tourType": "package|day_trip|multi_day|cruise|cultural|adventure|religious|nature|city_break",
+  "tourType": "cruise|cultural|international|activity|workshop|transfer|nature|city|museum|adventure|religious|yacht|boat|ferry|other",
   "destination": {
     "country": "Ülke adı",
     "city": "Şehir adı",
@@ -52,8 +53,24 @@ TUR VERİ ŞEMASI:
     }
   ],
   "duration": {
-    "nights": 7,
-    "days": 8
+    "nights": 2,
+    "days": 3
+  },
+  "basePricing": {
+    "currency": "TRY|EUR|USD|GBP",
+    "startingPrice": 23990,
+    "adult": {
+      "single": 27990,
+      "double": 23990,
+      "triple": 23990
+    },
+    "child": {
+      "withBed": 20990,
+      "withoutBed": 17990
+    },
+    "infant": {
+      "price": 3500
+    }
   },
   "transportation": [
     {
@@ -61,18 +78,34 @@ TUR VERİ ŞEMASI:
       "carrier": "THY, Pegasus vb.",
       "class": "economy|business|first|standard|comfort",
       "details": { "tr": "Ulaşım detayları", "en": "Transportation details" },
-      "isIncluded": true
+      "isIncluded": true,
+      "flightInfo": {
+        "outbound": {
+          "flightNo": "PC1913",
+          "departure": "ERCAN",
+          "arrival": "İSTANBUL (SAW)",
+          "date": "20 MART 2026",
+          "time": "07:20"
+        },
+        "return": {
+          "flightNo": "PC1926",
+          "departure": "İSTANBUL (SAW)",
+          "arrival": "ECN",
+          "date": "22 MART 2026",
+          "time": "20:30"
+        }
+      }
     }
   ],
   "accommodations": [
     {
       "hotelName": "Otel adı",
       "hotelAddress": "Otel adresi",
-      "nights": 3,
-      "mealPlanCode": "AI|FB|HB|BB|RO",
-      "mealPlanName": { "tr": "Her Şey Dahil", "en": "All Inclusive" },
+      "nights": 2,
+      "mealPlanCode": "HB|FB|BB|RO|AI",
+      "mealPlanName": { "tr": "Yarım Pansiyon", "en": "Half Board" },
       "roomType": "Standart Oda",
-      "starRating": 5,
+      "starRating": 4,
       "isMainHotel": true,
       "order": 0
     }
@@ -81,66 +114,46 @@ TUR VERİ ŞEMASI:
     { "tr": "Uçak bileti", "en": "Flight ticket" },
     { "tr": "Otel konaklaması", "en": "Hotel accommodation" },
     { "tr": "Transfer hizmetleri", "en": "Transfer services" },
-    { "tr": "Rehberlik hizmetleri", "en": "Guide services" }
+    { "tr": "Profesyonel rehberlik hizmeti", "en": "Professional guide service" }
   ],
   "exclusions": [
-    { "tr": "Kişisel harcamalar", "en": "Personal expenses" },
-    { "tr": "Ekstra turlar", "en": "Optional tours" }
+    { "tr": "Öğle yemekleri", "en": "Lunches" },
+    { "tr": "Müze ve ören yeri girişleri", "en": "Museum and site entrances" },
+    { "tr": "Kişisel harcamalar", "en": "Personal expenses" }
   ],
   "itinerary": [
     {
       "day": 1,
       "title": { "tr": "Varış Günü", "en": "Arrival Day" },
-      "description": { "tr": "Detaylı program", "en": "Detailed program" },
-      "meals": ["breakfast", "dinner"],
+      "description": { "tr": "Detaylı günlük program açıklaması", "en": "Detailed daily program description" },
+      "meals": ["dinner"],
       "activities": [
-        { "tr": "Havalimanı karşılama", "en": "Airport transfer" }
+        { "tr": "Havalimanı karşılama", "en": "Airport pickup" },
+        { "tr": "Selimiye Camii ziyareti", "en": "Selimiye Mosque visit" }
       ],
-      "accommodation": "5* Otel",
-      "highlights": [
-        { "tr": "Önemli nokta", "en": "Highlight" }
-      ]
+      "accommodation": "Edirne Oteli",
+      "overnight": { "tr": "Edirne", "en": "Edirne" }
     }
   ],
   "highlights": [
-    { "tr": "Turun öne çıkan özellikleri", "en": "Tour highlights" }
+    { "tr": "Selimiye Camii", "en": "Selimiye Mosque" },
+    { "tr": "II. Bayezid Külliyesi", "en": "Bayezid II Complex" }
   ],
-  "cancellationPolicy": {
-    "freeCancellation": {
-      "enabled": true,
-      "daysBeforeDeparture": 14
-    },
-    "rules": [
-      { "daysBeforeDeparture": 14, "refundPercent": 100 },
-      { "daysBeforeDeparture": 7, "refundPercent": 50 },
-      { "daysBeforeDeparture": 3, "refundPercent": 0 }
-    ],
-    "nonRefundable": false,
-    "notes": { "tr": "İptal koşulları", "en": "Cancellation terms" }
-  },
   "participants": {
     "min": 10,
     "max": 40
   },
   "ageRequirements": {
-    "minAge": 0,
     "childMinAge": 2,
-    "childMaxAge": 12,
+    "childMaxAge": 11,
     "infantMaxAge": 2
-  },
-  "difficulty": "easy|moderate|challenging|difficult",
-  "importantNotes": [
-    { "tr": "Önemli not", "en": "Important note" }
-  ],
-  "termsAndConditions": {
-    "tr": "Genel şartlar ve koşullar",
-    "en": "Terms and conditions"
   },
   "confidence": {
     "name": 95,
     "description": 80,
     "destination": 90,
     "duration": 100,
+    "basePricing": 85,
     "transportation": 85,
     "accommodations": 80,
     "itinerary": 75,
@@ -149,23 +162,42 @@ TUR VERİ ŞEMASI:
   }
 }
 
+FİYATLANDIRMA TALİMATLARI:
+- startingPrice: En düşük kişi başı fiyatı (genellikle "İki kişilik odada kişi başı" fiyatı)
+- Detaylı fiyat tablosu varsa (tek kişilik, iki kişilik, çocuk vb.) adult, child, infant objelerini doldur
+- "İki kişilik odada kişi başı" = adult.double
+- "Tek kişilik oda" = adult.single
+- "İlave yatak" = adult.triple
+- "6-11 yaş çocuk" = child.withBed
+- "2-5 yaş çocuk" = child.withoutBed
+- "0-2 yaş bebek" = infant.price
+- Peşin/Nakit fiyatları tercih et (varsa)
+- Para birimi TRY, EUR, USD, GBP olabilir
+
 GÜNLÜK PROGRAM TALİMATLARI:
 - Her gün için ayrı bir itinerary objesi oluştur
 - Gün numarasını (day) doğru sırayla ver
+- Günlük açıklamayı (description) metinden detaylı şekilde al
 - Yemekleri (meals): breakfast, lunch, dinner, snack olarak belirt
-- Aktiviteleri ve öne çıkan noktaları detaylı yaz
+- Aktiviteleri ziyaret edilen yerlerden çıkar
 - Konaklama bilgisini her gün için ekle
+- overnight: O gece kalınan şehir
 
 KONAKLAMA TALİMATLARI:
 - Birden fazla otel varsa her birini ayrı ekle
 - Ana oteli isMainHotel: true olarak işaretle
-- Gece sayısını ve pansiyon tipini belirt
-- Yıldız sayısını belirt
+- Gece sayısını ve pansiyon tipini belirt (HB = Yarım Pansiyon, FB = Tam Pansiyon)
+- Yıldız sayısını belirt (bilinmiyorsa 4 varsay)
 
 ULAŞIM TALİMATLARI:
 - Ana ulaşım tipini belirt (uçak, otobüs, gemi vb.)
-- Birden fazla ulaşım aracı varsa hepsini ekle
-- Taşıyıcı firmaları belirt (THY, Pegasus vb.)
+- Uçuş bilgilerini flightInfo'ya ekle (varsa)
+- Taşıyıcı firmaları belirt (Pegasus, THY vb.)
+
+DAHİL/HARİÇ HİZMETLER:
+- "Ücrete Dahil Olan Hizmetler" bölümünü inclusions'a aktar
+- "Ücrete Dahil Olmayan Hizmetler" bölümünü exclusions'a aktar
+- Her bir maddeyi ayrı obje olarak { tr, en } formatında ver
 
 İÇERİK:
 """

@@ -1,89 +1,74 @@
-// Tour Module Routes
 import express from 'express'
-import * as tourService from './tour.service.js'
-import { protect, requirePartnerOrAdmin } from '#middleware/auth.js'
+import * as service from './tour.service.js'
+import { protect, requireAdmin } from '#middleware/auth.js'
 import { partnerContext } from '#middleware/partnerContext.js'
+import { tourGalleryUpload, tourStopPhotoUpload } from '#helpers/tourUpload.js'
 
 const router = express.Router()
 
-// All routes require authentication and partner context
+// All tour module endpoints are protected and partner-scoped
 router.use(protect)
+router.use(requireAdmin)
 router.use(partnerContext)
-router.use(requirePartnerOrAdmin)
 
-// =====================
-// TOUR ROUTES - List & Stats (before :id routes)
-// =====================
-router.get('/', tourService.getList)
-router.get('/stats', tourService.getStats)
+// ==================== AI ====================
+router.post('/ai/extract', service.aiExtractTourData)
 
-// AI Extraction
-router.post('/ai/extract', tourService.aiExtractTour)
+// ==================== TOURS ====================
+router.get('/', service.getTours)
+router.get('/stats', service.getTourStats)
+router.get('/search', service.searchTours)
 
-// =====================
-// DEPARTURE ROUTES (MUST be before /:id to avoid matching)
-// =====================
+router.post('/', service.createTour)
 
-// Search & List (no params)
-router.get('/departures/search', tourService.searchDepartures)
-router.get('/departures/upcoming', tourService.getUpcomingDepartures)
+// ==================== MEDIA (NEW) ====================
+router.post('/:id/gallery', tourGalleryUpload.single('file'), service.uploadGalleryImage)
+router.delete('/:id/gallery/:imageId', service.deleteGalleryImage)
+router.post(
+  '/:id/route-stops/:stopId/photo',
+  tourStopPhotoUpload.single('file'),
+  service.uploadRouteStopPhoto
+)
+router.delete('/:id/route-stops/:stopId/photo', service.deleteRouteStopPhoto)
 
-// Single departure operations
-router.get('/departures/:id', tourService.getDepartureById)
-router.get('/departures/:id/availability', tourService.checkAvailability)
-router.put('/departures/:id', tourService.updateDeparture)
-router.delete('/departures/:id', tourService.removeDeparture)
+// ==================== DEPARTURES ====================
+// Global (no tourId)
+router.get('/departures/search', service.searchDepartures)
+router.get('/departures/upcoming', service.getUpcomingDepartures)
+router.get('/departures/:id', service.getDeparture)
+router.put('/departures/:id', service.updateDeparture)
+router.delete('/departures/:id', service.deleteDeparture)
+router.get('/departures/:id/availability', service.getDepartureAvailability)
 
-// =====================
-// EXTRA ROUTES (MUST be before /:id to avoid matching)
-// =====================
-router.get('/extras', tourService.getExtras)
-router.get('/extras/:id', tourService.getExtraById)
-router.post('/extras', tourService.createExtra)
-router.put('/extras/:id', tourService.updateExtra)
-router.delete('/extras/:id', tourService.removeExtra)
+// Per-tour
+router.get('/:tourId/departures', service.getTourDepartures)
+router.post('/:tourId/departures', service.createTourDeparture)
+router.post('/:tourId/departures/bulk', service.bulkCreateDepartures)
 
-// =====================
-// BOOKING ROUTES (MUST be before /:id to avoid matching)
-// =====================
+// ==================== EXTRAS ====================
+router.get('/extras', service.getExtras)
+router.post('/extras', service.createExtra)
+router.get('/extras/:id', service.getExtra)
+router.put('/extras/:id', service.updateExtra)
+router.delete('/extras/:id', service.deleteExtra)
 
-// List & Search
-router.get('/bookings', tourService.getBookings)
-router.get('/bookings/upcoming', tourService.getUpcomingBookings)
+// ==================== BOOKINGS ====================
+router.get('/bookings', service.getBookings)
+router.get('/bookings/upcoming', service.getUpcomingBookings)
+router.post('/bookings/calculate-price', service.calculateBookingPrice)
+router.post('/bookings', service.createBooking)
+router.get('/bookings/:id', service.getBooking)
+router.put('/bookings/:id', service.updateBooking)
+router.patch('/bookings/:id/status', service.updateBookingStatus)
+router.post('/bookings/:id/cancel', service.cancelBooking)
+router.post('/bookings/:id/payments', service.addBookingPayment)
+router.post('/bookings/:id/visa/:passengerIndex', service.updateBookingPassengerVisa)
+router.post('/bookings/:id/notes', service.addBookingNote)
 
-// Price calculation
-router.post('/bookings/calculate-price', tourService.calculatePrice)
-
-// CRUD
-router.get('/bookings/:id', tourService.getBookingById)
-router.post('/bookings', tourService.createBooking)
-router.put('/bookings/:id', tourService.updateBooking)
-
-// Status management
-router.patch('/bookings/:id/status', tourService.updateBookingStatus)
-router.post('/bookings/:id/cancel', tourService.cancelBooking)
-
-// Payments
-router.post('/bookings/:id/payments', tourService.addBookingPayment)
-
-// Visa
-router.post('/bookings/:id/visa/:passengerIndex', tourService.updateVisaStatus)
-
-// Notes
-router.post('/bookings/:id/notes', tourService.addBookingNote)
-
-// =====================
-// TOUR CRUD (with :id params - MUST be after all static routes)
-// =====================
-router.get('/:id', tourService.getById)
-router.post('/', tourService.create)
-router.put('/:id', tourService.update)
-router.delete('/:id', tourService.remove)
-router.post('/:id/duplicate', tourService.duplicate)
-
-// Tour departures (with :tourId param)
-router.get('/:tourId/departures', tourService.getDepartures)
-router.post('/:tourId/departures', tourService.createDeparture)
-router.post('/:tourId/departures/bulk', tourService.bulkCreateDepartures)
+// ==================== TOURS (ID ROUTES LAST) ====================
+router.get('/:id', service.getTour)
+router.put('/:id', service.updateTour)
+router.delete('/:id', service.deleteTour)
+router.post('/:id/duplicate', service.duplicateTour)
 
 export default router

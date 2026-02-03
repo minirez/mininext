@@ -1,5 +1,6 @@
 {
   "common": {
+    "currency": "Para Birimi",
     "name": "İsim",
     "title": "Ünvan",
     "firstName": "Ad",
@@ -63,6 +64,7 @@
     "of": "/",
     "darkMode": "Karanlık Mod",
     "lightMode": "Aydınlık Mod",
+    "appearance": "Görünüm",
     "filled": "Dolu",
     "activate": "Aktifleştir",
     "deactivate": "Pasifleştir",

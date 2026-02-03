@@ -1,658 +1,925 @@
+import mongoose from 'mongoose'
+import { nanoid } from 'nanoid'
+import { asyncHandler, escapeRegex } from '#helpers'
+import { BadRequestError, ConflictError, NotFoundError } from '#core/errors.js'
 import Tour from './tour.model.js'
 import TourDeparture from './tourDeparture.model.js'
 import TourExtra from './tourExtra.model.js'
 import TourBooking from './tourBooking.model.js'
-import { asyncHandler } from '#helpers'
-import { NotFoundError, BadRequestError, ValidationError } from '#core/errors.js'
-import { getPartnerId as getPartnerIdFromContext } from '#services/helpers.js'
+import {
+  getTourGalleryFileUrl,
+  getTourStopPhotoUrl,
+  deleteTourGalleryFile,
+  deleteTourStopPhotoFile
+} from '#helpers/tourUpload.js'
+import { slugify } from '@booking-engine/utils/string'
 
-/**
- * Get partner ID with fallbacks
- * Tries: user context -> JWT token -> account
- */
-const getPartnerId = (req) => {
-  // First try standard context helper
-  let partnerId = getPartnerIdFromContext(req)
+const parseIntSafe = (v, fallback) => {
+  const n = parseInt(v, 10)
+  return Number.isFinite(n) ? n : fallback
+}
 
-  // Fallback: Get from JWT token if user doesn't have it
-  if (!partnerId && req.token?.accountType === 'partner' && req.token?.accountId) {
-    partnerId = req.token.accountId
-  }
-
-  // Fallback: Get from user's populated account
-  if (!partnerId && req.account?._id) {
-    partnerId = req.account._id
-  }
-
+const requirePartnerId = req => {
+  const partnerId = req.partnerId
+  if (!partnerId) throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
   return partnerId
 }
 
-/**
- * Require partner ID - throws if not found
- */
-const requirePartnerId = (req) => {
-  const partnerId = getPartnerId(req)
-  if (!partnerId) {
-    throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
+async function generateUniqueSlug({ partnerId, baseSlug, excludeId = null }) {
+  if (!baseSlug) return null
+  let slug = baseSlug
+  let counter = 1
+
+  // Ensure uniqueness per partner by suffixing -2, -3, ...
+  while (true) {
+    const exists = await Tour.findOne({
+      partner: partnerId,
+      slug,
+      ...(excludeId ? { _id: { $ne: excludeId } } : {})
+    })
+      .select('_id')
+      .lean()
+
+    if (!exists) return slug
+    counter += 1
+    slug = `${baseSlug}-${counter}`
   }
-  return partnerId
 }
 
-// =====================
-// TOUR CRUD
-// =====================
+function buildTourSearchMatch({ partnerId, q, tag, locationId, channel }) {
+  const match = { partner: new mongoose.Types.ObjectId(partnerId) }
 
-/**
- * Get all tours for partner
- */
-export const getList = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { status, tourType, search, featured, page = 1, limit = 20 } = req.query
+  if (channel === 'b2c') match['visibility.b2c'] = true
+  if (channel === 'b2b') match['visibility.b2b'] = true
 
-  const filter = { partner: partnerId }
+  if (tag) {
+    match.tags = tag
+  }
 
-  if (status) filter.status = status
-  if (tourType) filter.tourType = tourType
-  if (featured === 'true') filter.featured = true
-
-  if (search) {
-    filter.$or = [
-      { 'name.tr': { $regex: search, $options: 'i' } },
-      { 'name.en': { $regex: search, $options: 'i' } },
-      { code: { $regex: search, $options: 'i' } }
+  if (locationId) {
+    match.$or = [
+      { 'primaryLocation.refId': new mongoose.Types.ObjectId(locationId) },
+      { 'routePlan.stops.locationRef.refId': new mongoose.Types.ObjectId(locationId) }
     ]
   }
 
-  const skip = (page - 1) * limit
-  const [items, total] = await Promise.all([
-    Tour.find(filter)
-      .populate('tags', 'name slug color')
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit)),
-    Tour.countDocuments(filter)
+  if (q) {
+    const escaped = escapeRegex(q)
+    match.$or = [
+      ...(match.$or || []),
+      { code: { $regex: escaped, $options: 'i' } },
+      { 'name.tr': { $regex: escaped, $options: 'i' } },
+      { 'name.en': { $regex: escaped, $options: 'i' } },
+      { tags: { $regex: escaped, $options: 'i' } },
+      { 'routePlan.stops.locationSnapshot.name': { $regex: escaped, $options: 'i' } }
+    ]
+  }
+
+  return match
+}
+
+function normalizeTourPayload(body = {}) {
+  const payload = { ...body }
+
+  // Ensure shapes exist
+  if (!payload.visibility) payload.visibility = { b2c: true, b2b: true }
+  if (!payload.content) payload.content = {}
+  if (!payload.routePlan) payload.routePlan = { mode: 'sequence', stops: [] }
+  if (!Array.isArray(payload.routePlan?.stops)) payload.routePlan.stops = []
+  if (!Array.isArray(payload.tags)) payload.tags = []
+  if (!Array.isArray(payload.gallery)) payload.gallery = []
+
+  // Uppercase code
+  if (payload.code) payload.code = String(payload.code).trim().toUpperCase()
+
+  // Keep route stops sequence consistent
+  payload.routePlan.stops = payload.routePlan.stops.map((s, idx) => ({
+    ...s,
+    sequence: s.sequence ?? idx + 1
+  }))
+
+  return payload
+}
+
+function getMainGalleryImage(tour) {
+  const gallery = tour?.gallery || []
+  const main = gallery.find(i => i?.isMain) || gallery[0]
+  return main?.url || null
+}
+
+// ==================== TOURS ====================
+
+export const getTours = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { page = 1, limit = 20, search, status, tag, visibilityChannel, locationId } = req.query
+
+  const pageNum = Math.max(1, parseIntSafe(page, 1))
+  const limitNum = Math.min(100, Math.max(1, parseIntSafe(limit, 20)))
+  const skip = (pageNum - 1) * limitNum
+
+  const filter = { partner: partnerId }
+  if (status) filter.status = status
+  if (tag) filter.tags = tag
+  if (visibilityChannel === 'b2c') filter['visibility.b2c'] = true
+  if (visibilityChannel === 'b2b') filter['visibility.b2b'] = true
+  if (locationId) {
+    filter.$or = [
+      { 'primaryLocation.refId': locationId },
+      { 'routePlan.stops.locationRef.refId': locationId }
+    ]
+  }
+
+  if (search) {
+    const escaped = escapeRegex(search)
+    filter.$or = [
+      ...(filter.$or || []),
+      { code: { $regex: escaped, $options: 'i' } },
+      { 'name.tr': { $regex: escaped, $options: 'i' } },
+      { 'name.en': { $regex: escaped, $options: 'i' } },
+      { tags: { $regex: escaped, $options: 'i' } },
+      { 'routePlan.stops.locationSnapshot.name': { $regex: escaped, $options: 'i' } }
+    ]
+  }
+
+  const [total, items] = await Promise.all([
+    Tour.countDocuments(filter),
+    Tour.find(filter).sort({ displayOrder: 1, createdAt: -1 }).skip(skip).limit(limitNum).lean()
   ])
+
+  // Decorate list items with simple computed fields admin expects
+  const tourIds = items.map(t => t._id)
+  const departureCounts = await TourDeparture.aggregate([
+    { $match: { partner: new mongoose.Types.ObjectId(partnerId), tour: { $in: tourIds } } },
+    { $group: { _id: '$tour', count: { $sum: 1 } } }
+  ])
+  const depCountMap = new Map(departureCounts.map(d => [String(d._id), d.count]))
+
+  const decorated = items.map(t => ({
+    ...t,
+    departureCount: depCountMap.get(String(t._id)) || 0,
+    mainImage: getMainGalleryImage(t)
+  }))
 
   res.json({
     success: true,
     data: {
-      items,
+      items: decorated,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limitNum)
       }
     }
   })
 })
 
-/**
- * Get single tour by ID
- */
-export const getById = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
+export const getTourStats = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
 
-  const item = await Tour.findOne({ _id: id, partner: partnerId })
-    .populate('tags', 'name slug color')
-    .populate('accommodations.hotel', 'name stars address')
-    .populate('accommodations.mealPlan', 'code name')
+  const [total, active] = await Promise.all([
+    Tour.countDocuments({ partner: partnerId }),
+    Tour.countDocuments({ partner: partnerId, status: 'active' })
+  ])
 
-  if (!item) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
-  }
+  const upcomingDepartures = await TourDeparture.countDocuments({
+    partner: partnerId,
+    status: { $nin: ['cancelled', 'completed'] },
+    departureDate: { $gte: new Date() }
+  })
 
   res.json({
     success: true,
-    data: item
+    data: { total, active, upcomingDepartures }
   })
 })
 
 /**
- * Create new tour
+ * GET /api/tour/search
+ * Used by dropdown/autocomplete (B2C/B2B) and internal wizard
  */
-export const create = asyncHandler(async (req, res) => {
+export const searchTours = asyncHandler(async (req, res) => {
   const partnerId = requirePartnerId(req)
-  const { user } = req
-  const { code, name, ...rest } = req.body
+  const { q = '', channel = '', date, locationId, tag, limit = 20 } = req.query
+  const limitNum = Math.min(50, Math.max(1, parseIntSafe(limit, 20)))
 
-  if (!code) throw new BadRequestError('CODE_REQUIRED')
-  if (!name?.tr) throw new BadRequestError('NAME_REQUIRED')
-
-  // Check code uniqueness
-  const existing = await Tour.findOne({ partner: partnerId, code: code.toUpperCase() })
-  if (existing) {
-    throw new ValidationError('CODE_ALREADY_EXISTS')
-  }
-
-  const item = new Tour({
-    partner: partnerId,
-    code: code.toUpperCase(),
-    name,
-    ...rest,
-    createdBy: user._id
+  const match = buildTourSearchMatch({
+    partnerId,
+    q: String(q || '').trim(),
+    tag: tag ? String(tag).trim() : null,
+    locationId: locationId ? String(locationId).trim() : null,
+    channel: channel ? String(channel).trim() : null
   })
 
-  await item.save()
+  const dateFilter = date ? new Date(String(date)) : null
+
+  const pipeline = [
+    { $match: match },
+    {
+      $lookup: {
+        from: 'tourdepartures',
+        let: { tourId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$tour', '$$tourId'] },
+              partner: new mongoose.Types.ObjectId(partnerId),
+              status: { $nin: ['cancelled', 'completed'] },
+              ...(dateFilter ? { departureDate: { $gte: dateFilter } } : {})
+            }
+          },
+          { $sort: { departureDate: 1 } }
+        ],
+        as: 'deps'
+      }
+    },
+    {
+      $addFields: {
+        nextDepartureDate: { $arrayElemAt: ['$deps.departureDate', 0] },
+        // Derive priceFrom from cheapest upcoming departure (adult.double)
+        priceFrom: {
+          $min: {
+            $map: {
+              input: '$deps',
+              as: 'd',
+              in: '$$d.pricing.adult.double'
+            }
+          }
+        },
+        currency: { $arrayElemAt: ['$deps.currency', 0] }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        code: 1,
+        name: 1,
+        slug: 1,
+        primaryLocation: 1,
+        stopNames: '$routePlan.stops.locationSnapshot.name',
+        nextDepartureDate: 1,
+        priceFrom: 1,
+        currency: 1
+      }
+    },
+    { $limit: limitNum }
+  ]
+
+  const items = await Tour.aggregate(pipeline)
+
+  res.json({
+    success: true,
+    data: items
+  })
+})
+
+export const getTour = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tour = await Tour.findOne({ _id: req.params.id, partner: partnerId }).lean()
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  res.json({ success: true, data: tour })
+})
+
+export const createTour = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const payload = normalizeTourPayload(req.body)
+
+  if (!payload.code) throw new BadRequestError('REQUIRED_CODE')
+  if (!payload.name?.tr) throw new BadRequestError('REQUIRED_TOUR_NAME_TR')
+
+  const baseSlug = slugify(payload.name.tr || payload.name.en || payload.code)
+  payload.slug = await generateUniqueSlug({ partnerId, baseSlug })
+
+  const tour = await Tour.create({
+    ...payload,
+    partner: partnerId
+  })
 
   res.status(201).json({
     success: true,
-    data: item,
-    message: 'TOUR_CREATED'
+    message: req.t ? req.t('TOUR_CREATED') : 'Tour created',
+    data: tour
   })
 })
 
-/**
- * Update tour
- */
-export const update = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const updates = req.body
+export const updateTour = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tour = await Tour.findOne({ _id: req.params.id, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
 
-  const item = await Tour.findOne({ _id: id, partner: partnerId })
+  const payload = normalizeTourPayload(req.body)
 
-  if (!item) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
+  // If name changed, ensure slug uniqueness
+  if (payload.name?.tr && payload.name?.tr !== tour.name?.tr) {
+    const baseSlug = slugify(payload.name.tr || payload.name.en || payload.code || tour.code)
+    payload.slug = await generateUniqueSlug({ partnerId, baseSlug, excludeId: tour._id })
   }
 
-  // Check code uniqueness if being updated
-  if (updates.code && updates.code.toUpperCase() !== item.code) {
-    const existing = await Tour.findOne({
-      partner: partnerId,
-      code: updates.code.toUpperCase(),
-      _id: { $ne: id }
-    })
-    if (existing) {
-      throw new ValidationError('CODE_ALREADY_EXISTS')
-    }
-  }
+  Object.keys(payload).forEach(k => {
+    tour[k] = payload[k]
+  })
 
-  Object.assign(item, updates, { updatedBy: user._id })
-  await item.save()
+  await tour.save()
 
   res.json({
     success: true,
-    data: item,
-    message: 'TOUR_UPDATED'
+    message: req.t ? req.t('TOUR_UPDATED') : 'Tour updated',
+    data: tour
   })
 })
 
-/**
- * Delete tour (soft delete - set status to archived)
- */
-export const remove = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
+export const deleteTour = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
 
-  const item = await Tour.findOne({ _id: id, partner: partnerId })
+  const tour = await Tour.findOne({ _id: req.params.id, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
 
-  if (!item) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
+  const hasDepartures = await TourDeparture.exists({ partner: partnerId, tour: tour._id })
+  if (hasDepartures) {
+    throw new ConflictError('TOUR_HAS_DEPARTURES')
   }
 
-  // Check if there are active bookings
-  const activeBookings = await TourBooking.countDocuments({
-    tour: id,
-    status: { $in: ['pending', 'confirmed'] }
-  })
-
-  if (activeBookings > 0) {
-    throw new ValidationError('TOUR_HAS_ACTIVE_BOOKINGS')
+  const hasBookings = await TourBooking.exists({ partner: partnerId, tour: tour._id })
+  if (hasBookings) {
+    throw new ConflictError('TOUR_HAS_BOOKINGS')
   }
 
-  // Soft delete
-  item.status = 'archived'
-  await item.save()
+  await tour.deleteOne()
 
   res.json({
     success: true,
-    message: 'TOUR_DELETED'
+    message: req.t ? req.t('TOUR_DELETED') : 'Tour deleted'
   })
 })
 
-/**
- * Duplicate tour
- */
-export const duplicate = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const { code, name } = req.body
+export const duplicateTour = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const source = await Tour.findOne({ _id: req.params.id, partner: partnerId }).lean()
+  if (!source) throw new NotFoundError('TOUR_NOT_FOUND')
 
-  const source = await Tour.findOne({ _id: id, partner: partnerId })
-  if (!source) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
-  }
+  const newCode = `${source.code}-COPY-${nanoid(4).toUpperCase()}`
+  const baseSlug = slugify(`${source.slug || source.name?.tr || source.code}-copy`)
+  const uniqueSlug = await generateUniqueSlug({ partnerId, baseSlug })
 
-  // Check new code uniqueness
-  const newCode = code || `${source.code}-COPY`
-  const existing = await Tour.findOne({ partner: partnerId, code: newCode.toUpperCase() })
-  if (existing) {
-    throw new ValidationError('CODE_ALREADY_EXISTS')
-  }
-
-  const newTour = new Tour({
-    ...source.toObject(),
+  const duplicated = await Tour.create({
+    ...source,
     _id: undefined,
-    code: newCode.toUpperCase(),
-    name: name || {
-      tr: `${source.name.tr} (Kopya)`,
-      en: source.name.en ? `${source.name.en} (Copy)` : ''
-    },
-    slug: undefined,
+    code: newCode,
+    slug: uniqueSlug,
     status: 'draft',
-    featured: false,
-    createdBy: user._id,
+    isFeatured: false,
+    gallery: (source.gallery || []).map(img => ({
+      ...img,
+      _id: undefined,
+      isMain: false
+    })),
+    partner: partnerId,
     createdAt: undefined,
     updatedAt: undefined
   })
 
-  await newTour.save()
-
   res.status(201).json({
     success: true,
-    data: newTour,
-    message: 'TOUR_DUPLICATED'
+    message: req.t ? req.t('TOUR_DUPLICATED') : 'Tour duplicated',
+    data: duplicated
   })
 })
 
-// =====================
-// TOUR DEPARTURE CRUD
-// =====================
+// ==================== MEDIA ====================
 
-/**
- * Get departures for a tour
- */
-export const getDepartures = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
+export const uploadGalleryImage = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tourId = req.params.id
+
+  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
+  if (!req.file) throw new BadRequestError('NO_FILE_UPLOADED')
+
+  const url = getTourGalleryFileUrl(partnerId, tourId, req.file.filename)
+  const image = {
+    url,
+    filename: req.file.filename,
+    uploadedAt: new Date(),
+    caption: { tr: '', en: '' },
+    order: (tour.gallery?.length || 0) + 1,
+    isMain: (tour.gallery?.length || 0) === 0
+  }
+
+  tour.gallery.push(image)
+  await tour.save()
+
+  res.json({
+    success: true,
+    data: { tour, image: tour.gallery[tour.gallery.length - 1] }
+  })
+})
+
+export const deleteGalleryImage = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tourId = req.params.id
+  const imageId = req.params.imageId
+
+  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  const idx = (tour.gallery || []).findIndex(img => String(img._id) === String(imageId))
+  if (idx === -1) throw new NotFoundError('IMAGE_NOT_FOUND')
+
+  const [removed] = tour.gallery.splice(idx, 1)
+  if (removed?.filename) {
+    deleteTourGalleryFile(partnerId, tourId, removed.filename)
+  }
+
+  // Ensure a main image exists
+  if (removed?.isMain && tour.gallery.length > 0) {
+    tour.gallery[0].isMain = true
+  }
+
+  await tour.save()
+
+  res.json({ success: true, data: tour })
+})
+
+export const uploadRouteStopPhoto = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tourId = req.params.id
+  const stopId = req.params.stopId
+
+  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
+  if (!req.file) throw new BadRequestError('NO_FILE_UPLOADED')
+
+  const stop = tour.routePlan?.stops?.id(stopId)
+  if (!stop) throw new NotFoundError('ROUTE_STOP_NOT_FOUND')
+
+  // Delete previous file if present
+  if (stop.photo?.filename) {
+    deleteTourStopPhotoFile(partnerId, tourId, stopId, stop.photo.filename)
+  }
+
+  stop.photo = {
+    url: getTourStopPhotoUrl(partnerId, tourId, stopId, req.file.filename),
+    filename: req.file.filename,
+    uploadedAt: new Date(),
+    alt: { tr: '', en: '' }
+  }
+
+  await tour.save()
+
+  res.json({ success: true, data: stop })
+})
+
+export const deleteRouteStopPhoto = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const tourId = req.params.id
+  const stopId = req.params.stopId
+
+  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
+  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  const stop = tour.routePlan?.stops?.id(stopId)
+  if (!stop) throw new NotFoundError('ROUTE_STOP_NOT_FOUND')
+
+  if (stop.photo?.filename) {
+    deleteTourStopPhotoFile(partnerId, tourId, stopId, stop.photo.filename)
+  }
+  stop.photo = undefined
+
+  await tour.save()
+
+  res.json({ success: true, data: stop })
+})
+
+// ==================== DEPARTURES ====================
+
+export const getTourDepartures = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
   const { tourId } = req.params
-  const { status, fromDate, toDate, page = 1, limit = 50 } = req.query
+  const { fromDate, toDate, status } = req.query
 
   const filter = { partner: partnerId, tour: tourId }
-
   if (status) filter.status = status
-  if (fromDate) filter.departureDate = { $gte: new Date(fromDate) }
-  if (toDate) {
-    filter.departureDate = filter.departureDate || {}
-    filter.departureDate.$lte = new Date(toDate)
+  if (fromDate || toDate) {
+    filter.departureDate = {}
+    if (fromDate) filter.departureDate.$gte = new Date(String(fromDate))
+    if (toDate) filter.departureDate.$lte = new Date(String(toDate))
   }
 
-  const skip = (page - 1) * limit
-  const [items, total] = await Promise.all([
-    TourDeparture.find(filter)
-      .sort({ departureDate: 1 })
-      .skip(skip)
-      .limit(parseInt(limit)),
-    TourDeparture.countDocuments(filter)
-  ])
+  const departures = await TourDeparture.find(filter).sort({ departureDate: 1 }).lean()
 
-  res.json({
-    success: true,
-    data: {
-      items,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    }
-  })
+  res.json({ success: true, data: departures })
 })
 
-/**
- * Get single departure
- */
-export const getDepartureById = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  const item = await TourDeparture.findOne({ _id: id, partner: partnerId })
-    .populate('tour', 'name code tourType duration')
-    .populate('guide.user', 'firstName lastName email phone')
-
-  if (!item) {
-    throw new NotFoundError('DEPARTURE_NOT_FOUND')
-  }
-
-  res.json({
-    success: true,
-    data: item
-  })
-})
-
-/**
- * Create departure
- */
-export const createDeparture = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
+export const createTourDeparture = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
   const { tourId } = req.params
-  const data = req.body
 
-  // Verify tour exists
-  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
-  if (!tour) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
+  const tourExists = await Tour.exists({ _id: tourId, partner: partnerId })
+  if (!tourExists) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  const body = req.body || {}
+  if (!body.departureDate || !body.returnDate) {
+    throw new BadRequestError('REQUIRED_DATES')
   }
 
-  if (!data.departureDate || !data.returnDate) {
-    throw new BadRequestError('DATES_REQUIRED')
+  const capacityTotal = Number(body.capacity?.total ?? body.capacityTotal ?? 0)
+  if (!Number.isFinite(capacityTotal) || capacityTotal <= 0) {
+    throw new BadRequestError('INVALID_CAPACITY_TOTAL')
   }
 
-  if (!data.capacity?.total) {
-    throw new BadRequestError('CAPACITY_REQUIRED')
-  }
-
-  const item = new TourDeparture({
+  const departure = await TourDeparture.create({
     partner: partnerId,
     tour: tourId,
-    ...data,
+    status: body.status || 'scheduled',
+    departureDate: new Date(body.departureDate),
+    returnDate: new Date(body.returnDate),
+    time: body.time,
+    currency: body.currency || 'TRY',
+    pricing: body.pricing || {},
+    guaranteedDeparture: Boolean(body.guaranteedDeparture),
+    labels: body.labels || [],
     capacity: {
-      ...data.capacity,
-      available: data.capacity.total
-    },
-    createdBy: user._id
+      total: capacityTotal,
+      reserved: Number(body.capacity?.reserved || 0),
+      sold: Number(body.capacity?.sold || 0),
+      available: Number(body.capacity?.available || 0) // will be normalized by model hook
+    }
   })
 
-  await item.save()
-
-  res.status(201).json({
-    success: true,
-    data: item,
-    message: 'DEPARTURE_CREATED'
-  })
+  res.status(201).json({ success: true, data: departure })
 })
 
-/**
- * Update departure
- */
-export const updateDeparture = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const updates = req.body
-
-  const item = await TourDeparture.findOne({ _id: id, partner: partnerId })
-
-  if (!item) {
-    throw new NotFoundError('DEPARTURE_NOT_FOUND')
-  }
-
-  Object.assign(item, updates, { updatedBy: user._id })
-  await item.save()
-
-  res.json({
-    success: true,
-    data: item,
-    message: 'DEPARTURE_UPDATED'
-  })
-})
-
-/**
- * Delete departure
- */
-export const removeDeparture = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  const item = await TourDeparture.findOne({ _id: id, partner: partnerId })
-
-  if (!item) {
-    throw new NotFoundError('DEPARTURE_NOT_FOUND')
-  }
-
-  // Check if there are bookings
-  const bookings = await TourBooking.countDocuments({
-    departure: id,
-    status: { $nin: ['cancelled', 'expired'] }
-  })
-
-  if (bookings > 0) {
-    throw new ValidationError('DEPARTURE_HAS_BOOKINGS')
-  }
-
-  await item.deleteOne()
-
-  res.json({
-    success: true,
-    message: 'DEPARTURE_DELETED'
-  })
-})
-
-/**
- * Bulk create departures
- */
 export const bulkCreateDepartures = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
+  const partnerId = requirePartnerId(req)
   const { tourId } = req.params
-  const { departures } = req.body
 
-  // Verify tour exists
-  const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
-  if (!tour) {
-    throw new NotFoundError('TOUR_NOT_FOUND')
+  const tourExists = await Tour.exists({ _id: tourId, partner: partnerId })
+  if (!tourExists) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  const { departures = [] } = req.body || {}
+  if (!Array.isArray(departures) || departures.length === 0) {
+    throw new BadRequestError('REQUIRED_DEPARTURES')
   }
 
-  if (!departures?.length) {
-    throw new BadRequestError('DEPARTURES_REQUIRED')
-  }
-
-  const items = await TourDeparture.insertMany(
-    departures.map(dep => ({
+  const docs = departures.map(d => {
+    const capacityTotal = Number(d.capacity?.total ?? d.capacityTotal ?? 0)
+    return {
       partner: partnerId,
       tour: tourId,
-      ...dep,
+      status: d.status || 'scheduled',
+      departureDate: new Date(d.departureDate),
+      returnDate: new Date(d.returnDate),
+      time: d.time,
+      currency: d.currency || 'TRY',
+      pricing: d.pricing || {},
+      guaranteedDeparture: Boolean(d.guaranteedDeparture),
+      labels: d.labels || [],
       capacity: {
-        ...dep.capacity,
-        available: dep.capacity?.total || 0
-      },
-      createdBy: user._id
-    }))
+        total: capacityTotal,
+        reserved: Number(d.capacity?.reserved || 0),
+        sold: Number(d.capacity?.sold || 0),
+        available: Number(d.capacity?.available || 0)
+      }
+    }
+  })
+
+  // Filter invalid entries quickly
+  const validDocs = docs.filter(d => d.departureDate && d.returnDate && d.capacity.total > 0)
+
+  // Prevent duplicates (same date) by skipping existing ones
+  const depDates = validDocs.map(d => d.departureDate)
+  const existing = await TourDeparture.find({
+    partner: partnerId,
+    tour: tourId,
+    departureDate: { $in: depDates }
+  })
+    .select('departureDate')
+    .lean()
+  const existingSet = new Set(
+    existing.map(e => new Date(e.departureDate).toISOString().slice(0, 10))
   )
+
+  const toInsert = validDocs.filter(d => {
+    const key = new Date(d.departureDate).toISOString().slice(0, 10)
+    return !existingSet.has(key)
+  })
+
+  const created = toInsert.length ? await TourDeparture.insertMany(toInsert) : []
 
   res.status(201).json({
     success: true,
-    data: items,
-    message: 'DEPARTURES_CREATED',
-    count: items.length
-  })
-})
-
-// =====================
-// TOUR EXTRA CRUD
-// =====================
-
-/**
- * Get all extras
- */
-export const getExtras = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { category, status, tourId, page = 1, limit = 50 } = req.query
-
-  const filter = { partner: partnerId }
-
-  if (status) filter.status = status
-  if (category) filter.category = category
-  if (tourId) {
-    filter.$or = [
-      { applyToAllTours: true },
-      { applicableTours: tourId }
-    ]
-  }
-
-  const skip = (page - 1) * limit
-  const [items, total] = await Promise.all([
-    TourExtra.find(filter)
-      .sort({ category: 1, displayOrder: 1 })
-      .skip(skip)
-      .limit(parseInt(limit)),
-    TourExtra.countDocuments(filter)
-  ])
-
-  res.json({
-    success: true,
     data: {
-      items,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      count: created.length,
+      created
     }
   })
 })
 
-/**
- * Get single extra
- */
-export const getExtraById = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  const item = await TourExtra.findOne({ _id: id, partner: partnerId })
-    .populate('applicableTours', 'name code')
-
-  if (!item) {
-    throw new NotFoundError('EXTRA_NOT_FOUND')
-  }
-
-  res.json({
-    success: true,
-    data: item
-  })
-})
-
-/**
- * Create extra
- */
-export const createExtra = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { code, name, category, ...rest } = req.body
-
-  if (!code) throw new BadRequestError('CODE_REQUIRED')
-  if (!name?.tr) throw new BadRequestError('NAME_REQUIRED')
-  if (!category) throw new BadRequestError('CATEGORY_REQUIRED')
-
-  // Check code uniqueness
-  const existing = await TourExtra.findOne({ partner: partnerId, code: code.toUpperCase() })
-  if (existing) {
-    throw new ValidationError('CODE_ALREADY_EXISTS')
-  }
-
-  const item = new TourExtra({
-    partner: partnerId,
-    code: code.toUpperCase(),
-    name,
-    category,
-    ...rest,
-    createdBy: user._id
-  })
-
-  await item.save()
-
-  res.status(201).json({
-    success: true,
-    data: item,
-    message: 'EXTRA_CREATED'
-  })
-})
-
-/**
- * Update extra
- */
-export const updateExtra = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const updates = req.body
-
-  const item = await TourExtra.findOne({ _id: id, partner: partnerId })
-
-  if (!item) {
-    throw new NotFoundError('EXTRA_NOT_FOUND')
-  }
-
-  Object.assign(item, updates, { updatedBy: user._id })
-  await item.save()
-
-  res.json({
-    success: true,
-    data: item,
-    message: 'EXTRA_UPDATED'
-  })
-})
-
-/**
- * Delete extra
- */
-export const removeExtra = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  const item = await TourExtra.findOne({ _id: id, partner: partnerId })
-
-  if (!item) {
-    throw new NotFoundError('EXTRA_NOT_FOUND')
-  }
-
-  await item.deleteOne()
-
-  res.json({
-    success: true,
-    message: 'EXTRA_DELETED'
-  })
-})
-
-// =====================
-// TOUR BOOKING CRUD
-// =====================
-
-/**
- * Get all bookings
- */
-export const getBookings = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { status, tourId, departureId, salesChannel, search, fromDate, toDate, page = 1, limit = 20 } = req.query
+export const searchDepartures = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { tour, status, fromDate, toDate, limit = 500 } = req.query
 
   const filter = { partner: partnerId }
-
+  if (tour) filter.tour = tour
   if (status) filter.status = status
-  if (tourId) filter.tour = tourId
-  if (departureId) filter.departure = departureId
-  if (salesChannel) filter.salesChannel = salesChannel
+  if (fromDate || toDate) {
+    filter.departureDate = {}
+    if (fromDate) filter.departureDate.$gte = new Date(String(fromDate))
+    if (toDate) filter.departureDate.$lte = new Date(String(toDate))
+  }
 
+  const limitNum = Math.min(2000, Math.max(1, parseIntSafe(limit, 500)))
+
+  const departures = await TourDeparture.find(filter)
+    .sort({ departureDate: 1 })
+    .limit(limitNum)
+    .populate('tour', 'code name')
+    .lean()
+
+  res.json({ success: true, data: departures })
+})
+
+export const getUpcomingDepartures = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { days = 60, limit = 100 } = req.query
+
+  const now = new Date()
+  const end = new Date(now)
+  end.setDate(end.getDate() + Math.max(1, parseIntSafe(days, 60)))
+
+  const items = await TourDeparture.find({
+    partner: partnerId,
+    status: { $nin: ['cancelled', 'completed'] },
+    departureDate: { $gte: now, $lte: end }
+  })
+    .sort({ departureDate: 1 })
+    .limit(Math.min(500, Math.max(1, parseIntSafe(limit, 100))))
+    .populate('tour', 'code name')
+    .lean()
+
+  res.json({ success: true, data: items })
+})
+
+export const getDeparture = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const dep = await TourDeparture.findOne({ _id: req.params.id, partner: partnerId })
+    .populate('tour', 'code name')
+    .lean()
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+  res.json({ success: true, data: dep })
+})
+
+export const updateDeparture = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const dep = await TourDeparture.findOne({ _id: req.params.id, partner: partnerId })
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  const body = req.body || {}
+  if (body.departureDate) dep.departureDate = new Date(body.departureDate)
+  if (body.returnDate) dep.returnDate = new Date(body.returnDate)
+  if (body.time !== undefined) dep.time = body.time
+  if (body.status) dep.status = body.status
+  if (body.currency) dep.currency = body.currency
+  if (body.pricing) dep.pricing = body.pricing
+  if (body.guaranteedDeparture !== undefined)
+    dep.guaranteedDeparture = Boolean(body.guaranteedDeparture)
+  if (body.labels) dep.labels = body.labels
+
+  if (body.capacity?.total != null) dep.capacity.total = Number(body.capacity.total)
+  if (body.capacity?.reserved != null) dep.capacity.reserved = Number(body.capacity.reserved)
+  if (body.capacity?.sold != null) dep.capacity.sold = Number(body.capacity.sold)
+
+  await dep.save()
+
+  res.json({ success: true, data: dep })
+})
+
+export const deleteDeparture = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const dep = await TourDeparture.findOne({ _id: req.params.id, partner: partnerId })
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  const hasBookings = await TourBooking.exists({
+    partner: partnerId,
+    departure: dep._id,
+    status: { $nin: ['cancelled'] }
+  })
+  if (hasBookings) {
+    throw new ConflictError('DEPARTURE_HAS_BOOKINGS')
+  }
+
+  await dep.deleteOne()
+  res.json({ success: true })
+})
+
+export const getDepartureAvailability = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const dep = await TourDeparture.findOne({ _id: req.params.id, partner: partnerId }).lean()
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  res.json({
+    success: true,
+    data: {
+      departureId: dep._id,
+      capacity: dep.capacity,
+      status: dep.status,
+      isBookable:
+        !['cancelled', 'completed'].includes(dep.status) && (dep.capacity?.available || 0) > 0
+    }
+  })
+})
+
+// ==================== EXTRAS ====================
+
+export const getExtras = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { isActive, category, search } = req.query
+
+  const filter = { partner: partnerId }
+  if (isActive != null) filter.isActive = String(isActive) === 'true'
+  if (category) filter.category = category
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { bookingNumber: { $regex: search, $options: 'i' } },
-      { 'contact.email': { $regex: search, $options: 'i' } },
-      { 'contact.phone': { $regex: search, $options: 'i' } },
-      { 'passengers.firstName': { $regex: search, $options: 'i' } },
-      { 'passengers.lastName': { $regex: search, $options: 'i' } }
+      { code: { $regex: escaped, $options: 'i' } },
+      { 'name.tr': { $regex: escaped, $options: 'i' } },
+      { 'name.en': { $regex: escaped, $options: 'i' } }
     ]
   }
 
-  if (fromDate) filter.createdAt = { $gte: new Date(fromDate) }
-  if (toDate) {
-    filter.createdAt = filter.createdAt || {}
-    filter.createdAt.$lte = new Date(toDate)
+  const items = await TourExtra.find(filter).sort({ createdAt: -1 }).lean()
+  const decorated = items.map(e => ({
+    ...e,
+    // Backwards-compatible fields for admin UI
+    status: e.isActive ? 'active' : 'inactive',
+    defaultPrice: e.price?.value ?? 0,
+    currency: e.price?.currency || 'TRY',
+    applicableTours: [] // kept for legacy UI
+  }))
+  res.json({ success: true, data: decorated })
+})
+
+export const getExtra = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const item = await TourExtra.findOne({ _id: req.params.id, partner: partnerId }).lean()
+  if (!item) throw new NotFoundError('EXTRA_NOT_FOUND')
+  res.json({
+    success: true,
+    data: {
+      ...item,
+      status: item.isActive ? 'active' : 'inactive',
+      defaultPrice: item.price?.value ?? 0,
+      currency: item.price?.currency || 'TRY',
+      applicableTours: []
+    }
+  })
+})
+
+export const createExtra = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const body = req.body || {}
+  if (!body.code) throw new BadRequestError('REQUIRED_CODE')
+  if (!body.name?.tr) throw new BadRequestError('REQUIRED_NAME_TR')
+  const legacyPriceValue = body.defaultPrice != null ? Number(body.defaultPrice) : null
+  const legacyCurrency = body.currency ? String(body.currency) : null
+
+  const price =
+    body.price?.value != null && body.price?.currency
+      ? body.price
+      : legacyPriceValue != null && legacyCurrency
+        ? { value: legacyPriceValue, currency: legacyCurrency }
+        : null
+
+  if (!price?.value || !price?.currency) throw new BadRequestError('REQUIRED_PRICE')
+
+  const extra = await TourExtra.create({
+    ...body,
+    partner: partnerId,
+    isActive:
+      body.isActive != null
+        ? Boolean(body.isActive)
+        : body.status
+          ? body.status === 'active'
+          : true,
+    price
+  })
+  const decorated = {
+    ...(extra.toObject ? extra.toObject() : extra),
+    status: extra.isActive ? 'active' : 'inactive',
+    defaultPrice: extra.price?.value ?? 0,
+    currency: extra.price?.currency || 'TRY',
+    applicableTours: []
+  }
+  res.status(201).json({ success: true, data: decorated })
+})
+
+export const updateExtra = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const extra = await TourExtra.findOne({ _id: req.params.id, partner: partnerId })
+  if (!extra) throw new NotFoundError('EXTRA_NOT_FOUND')
+
+  const body = req.body || {}
+
+  // Legacy compatibility: defaultPrice/currency/status -> price/isActive
+  if (body.defaultPrice != null || body.currency) {
+    const nextValue =
+      body.defaultPrice != null ? Number(body.defaultPrice) : Number(extra.price?.value || 0)
+    const nextCurrency = body.currency ? String(body.currency) : extra.price?.currency || 'TRY'
+    extra.price = { value: nextValue, currency: nextCurrency }
+  } else if (body.price) {
+    extra.price = body.price
   }
 
-  const skip = (page - 1) * limit
-  const [items, total] = await Promise.all([
+  if (body.status) extra.isActive = body.status === 'active'
+  if (body.isActive != null) extra.isActive = Boolean(body.isActive)
+
+  Object.keys(body).forEach(k => {
+    if (['defaultPrice', 'currency', 'status', 'isActive', 'price'].includes(k)) return
+    extra[k] = body[k]
+  })
+
+  await extra.save()
+  const decorated = {
+    ...(extra.toObject ? extra.toObject() : extra),
+    status: extra.isActive ? 'active' : 'inactive',
+    defaultPrice: extra.price?.value ?? 0,
+    currency: extra.price?.currency || 'TRY',
+    applicableTours: []
+  }
+  res.json({ success: true, data: decorated })
+})
+
+export const deleteExtra = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const extra = await TourExtra.findOne({ _id: req.params.id, partner: partnerId })
+  if (!extra) throw new NotFoundError('EXTRA_NOT_FOUND')
+
+  await extra.deleteOne()
+  res.json({ success: true })
+})
+
+// ==================== BOOKINGS ====================
+
+async function applyDepartureSeatDelta({
+  partnerId,
+  departureId,
+  deltaReserved = 0,
+  deltaSold = 0
+}) {
+  const dep = await TourDeparture.findOne({ _id: departureId, partner: partnerId })
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  const total = Number(dep.capacity?.total || 0)
+  const reserved = Math.max(0, Number(dep.capacity?.reserved || 0) + deltaReserved)
+  const sold = Math.max(0, Number(dep.capacity?.sold || 0) + deltaSold)
+  const available = total - reserved - sold
+
+  if (available < 0) {
+    throw new ConflictError('DEPARTURE_CAPACITY_EXCEEDED')
+  }
+
+  dep.capacity.reserved = reserved
+  dep.capacity.sold = sold
+  dep.capacity.available = available
+
+  // Auto sold_out
+  if (dep.capacity.available === 0 && !['cancelled', 'completed'].includes(dep.status)) {
+    dep.status = 'sold_out'
+  }
+  if (dep.capacity.available > 0 && dep.status === 'sold_out') {
+    dep.status = 'scheduled'
+  }
+
+  await dep.save()
+  return dep
+}
+
+export const getBookings = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { page = 1, limit = 20, status, fromDate, toDate } = req.query
+
+  const pageNum = Math.max(1, parseIntSafe(page, 1))
+  const limitNum = Math.min(100, Math.max(1, parseIntSafe(limit, 20)))
+  const skip = (pageNum - 1) * limitNum
+
+  const filter = { partner: partnerId }
+  if (status) filter.status = status
+  if (fromDate || toDate) {
+    filter.createdAt = {}
+    if (fromDate) filter.createdAt.$gte = new Date(String(fromDate))
+    if (toDate) filter.createdAt.$lte = new Date(String(toDate))
+  }
+
+  const [total, items] = await Promise.all([
+    TourBooking.countDocuments(filter),
     TourBooking.find(filter)
-      .populate('tour', 'name code tourType')
-      .populate('departure', 'departureDate returnDate code')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit)),
-    TourBooking.countDocuments(filter)
+      .limit(limitNum)
+      .populate('tour', 'code name')
+      .populate('departure', 'departureDate returnDate status')
+      .lean()
   ])
 
   res.json({
@@ -660,561 +927,313 @@ export const getBookings = asyncHandler(async (req, res) => {
     data: {
       items,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limitNum)
       }
     }
   })
 })
 
-/**
- * Get single booking
- */
-export const getBookingById = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
+export const getUpcomingBookings = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const now = new Date()
 
-  const item = await TourBooking.findOne({
-    $or: [
-      { _id: id, partner: partnerId },
-      { bookingNumber: id.toUpperCase(), partner: partnerId }
-    ]
-  })
-    .populate('tour', 'name code tourType duration destination images itinerary inclusions exclusions cancellationPolicy')
-    .populate('departure', 'departureDate returnDate code pricing pickupPoints flightDetails guide')
-    .populate('extras.extra', 'name description images')
-    .populate('source.agencyId', 'name code')
-
-  if (!item) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  res.json({
-    success: true,
-    data: item
-  })
-})
-
-/**
- * Create booking
- */
-export const createBooking = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const data = req.body
-
-  if (!data.tour) throw new BadRequestError('TOUR_REQUIRED')
-  if (!data.departure) throw new BadRequestError('DEPARTURE_REQUIRED')
-  if (!data.contact?.email) throw new BadRequestError('EMAIL_REQUIRED')
-  if (!data.contact?.phone) throw new BadRequestError('PHONE_REQUIRED')
-
-  // Verify tour and departure
-  const [tour, departure] = await Promise.all([
-    Tour.findOne({ _id: data.tour, partner: partnerId }),
-    TourDeparture.findOne({ _id: data.departure, partner: partnerId })
-  ])
-
-  if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
-  if (!departure) throw new NotFoundError('DEPARTURE_NOT_FOUND')
-
-  // Check availability
-  const passengerCount = data.passengers?.length || 1
-  if (departure.availableSeats < passengerCount) {
-    throw new ValidationError('INSUFFICIENT_CAPACITY')
-  }
-
-  // Create booking
-  const booking = new TourBooking({
-    partner: partnerId,
-    tour: data.tour,
-    departure: data.departure,
-    ...data,
-    tourSnapshot: {
-      code: tour.code,
-      name: tour.name,
-      tourType: tour.tourType,
-      duration: tour.duration,
-      destination: tour.destination,
-      mainImage: tour.mainImage
-    },
-    departureSnapshot: {
-      departureDate: departure.departureDate,
-      returnDate: departure.returnDate,
-      code: departure.code
-    },
-    source: {
-      ...data.source,
-      type: data.salesChannel || 'b2c'
-    },
-    createdBy: user._id
-  })
-
-  await booking.save()
-
-  // Reserve seats
-  await departure.reserveSeats(passengerCount)
-
-  res.status(201).json({
-    success: true,
-    data: booking,
-    message: 'BOOKING_CREATED'
-  })
-})
-
-/**
- * Update booking
- */
-export const updateBooking = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const updates = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  // Don't allow updates to cancelled/completed bookings
-  if (['cancelled', 'completed', 'expired'].includes(booking.status)) {
-    throw new ValidationError('BOOKING_CANNOT_BE_UPDATED')
-  }
-
-  Object.assign(booking, updates, { updatedBy: user._id })
-  await booking.save()
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'BOOKING_UPDATED'
-  })
-})
-
-/**
- * Update booking status
- */
-export const updateBookingStatus = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const { status, reason } = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  const oldStatus = booking.status
-
-  if (status === 'confirmed') {
-    await booking.confirm(user._id)
-
-    // Confirm reservation
-    const departure = await TourDeparture.findById(booking.departure)
-    if (departure) {
-      const passengerCount = booking.passengers.length
-      await departure.confirmReservation(passengerCount)
-    }
-  } else if (status === 'cancelled') {
-    await booking.cancel(reason, user._id)
-
-    // Release seats
-    const departure = await TourDeparture.findById(booking.departure)
-    if (departure) {
-      const passengerCount = booking.passengers.length
-      if (oldStatus === 'pending') {
-        await departure.releaseReservation(passengerCount)
-      } else if (oldStatus === 'confirmed') {
-        await departure.cancelBooking(passengerCount)
-      }
-    }
-  } else {
-    booking.status = status
-    booking.addChangeLog('status_changed', 'status', oldStatus, status, `Durum değiştirildi: ${oldStatus} → ${status}`, user._id)
-    await booking.save()
-  }
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'BOOKING_STATUS_UPDATED'
-  })
-})
-
-/**
- * Cancel booking
- */
-export const cancelBooking = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const { reason } = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  const oldStatus = booking.status
-  await booking.cancel(reason || 'User requested cancellation', user._id)
-
-  // Release/cancel seats
-  const departure = await TourDeparture.findById(booking.departure)
-  if (departure) {
-    const passengerCount = booking.passengers.length
-    if (oldStatus === 'pending') {
-      await departure.releaseReservation(passengerCount)
-    } else if (oldStatus === 'confirmed') {
-      await departure.cancelBooking(passengerCount)
-    }
-  }
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'BOOKING_CANCELLED'
-  })
-})
-
-/**
- * Add payment to booking
- */
-export const addBookingPayment = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const paymentData = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  await booking.addPayment(paymentData, user._id)
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'PAYMENT_ADDED'
-  })
-})
-
-/**
- * Update visa status
- */
-export const updateVisaStatus = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id, passengerIndex } = req.params
-  const statusData = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  await booking.updateVisaStatus(parseInt(passengerIndex), statusData, user._id)
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'VISA_STATUS_UPDATED'
-  })
-})
-
-/**
- * Add note to booking
- */
-export const addBookingNote = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { user } = req
-  const { id } = req.params
-  const { content, isInternal = true } = req.body
-
-  const booking = await TourBooking.findOne({ _id: id, partner: partnerId })
-
-  if (!booking) {
-    throw new NotFoundError('BOOKING_NOT_FOUND')
-  }
-
-  await booking.addNote(content, isInternal, user._id)
-
-  res.json({
-    success: true,
-    data: booking,
-    message: 'NOTE_ADDED'
-  })
-})
-
-// =====================
-// SEARCH & AVAILABILITY
-// =====================
-
-/**
- * Search available departures
- */
-export const searchDepartures = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const {
-    destination,
-    tourType,
-    fromDate,
-    toDate,
-    minSeats = 1,
-    priceMin,
-    priceMax,
-    limit = 50
-  } = req.query
-
-  const results = await TourDeparture.search(partnerId, {
-    destination,
-    tourType,
-    fromDate: fromDate ? new Date(fromDate) : new Date(),
-    toDate: toDate ? new Date(toDate) : undefined,
-    minSeats: parseInt(minSeats),
-    priceMin: priceMin ? parseFloat(priceMin) : undefined,
-    priceMax: priceMax ? parseFloat(priceMax) : undefined,
-    limit: parseInt(limit)
-  })
-
-  res.json({
-    success: true,
-    data: results
-  })
-})
-
-/**
- * Check departure availability
- */
-export const checkAvailability = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-  const { passengers = 1 } = req.query
-
-  const departure = await TourDeparture.findOne({ _id: id, partner: partnerId })
-    .populate('tour', 'name code')
-
-  if (!departure) {
-    throw new NotFoundError('DEPARTURE_NOT_FOUND')
-  }
-
-  const isAvailable = departure.availableSeats >= parseInt(passengers)
-
-  res.json({
-    success: true,
-    data: {
-      isAvailable,
-      availableSeats: departure.availableSeats,
-      totalCapacity: departure.capacity.total,
-      status: departure.status,
-      labels: departure.labels,
-      pricing: departure.pricing,
-      tour: departure.tour
-    }
-  })
-})
-
-/**
- * Calculate booking price
- */
-export const calculatePrice = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { departureId, adults = 0, children = 0, infants = 0, roomType = 'double', extras = [], isB2B = false } = req.body
-
-  const departure = await TourDeparture.findOne({ _id: departureId, partner: partnerId })
-
-  if (!departure) {
-    throw new NotFoundError('DEPARTURE_NOT_FOUND')
-  }
-
-  // Calculate base price
-  const basePrice = departure.calculatePrice(
-    { adults: parseInt(adults), children: parseInt(children), infants: parseInt(infants), roomType },
-    { isB2B, withBed: true }
-  )
-
-  // Calculate extras
-  let extrasTotal = 0
-  if (extras.length > 0) {
-    const extraDocs = await TourExtra.find({
-      partner: partnerId,
-      code: { $in: extras.map(e => e.code) }
+  const items = await TourBooking.find({ partner: partnerId, status: { $nin: ['cancelled'] } })
+    .populate({
+      path: 'departure',
+      match: { departureDate: { $gte: now } },
+      select: 'departureDate returnDate status tour'
     })
+    .populate('tour', 'code name')
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .lean()
 
-    for (const extra of extras) {
-      const extraDoc = extraDocs.find(e => e.code === extra.code)
-      if (extraDoc) {
-        const price = extraDoc.getPriceForDate(departure.departureDate, isB2B)
-        const quantity = extra.quantity || 1
-        const passengerCount = extra.passengers?.length || (parseInt(adults) + parseInt(children))
+  const filtered = items.filter(b => b.departure)
+  res.json({ success: true, data: filtered })
+})
 
-        if (extraDoc.priceType === 'per_person') {
-          extrasTotal += price * passengerCount * quantity
-        } else {
-          extrasTotal += price * quantity
-        }
-      }
-    }
-  }
+export const calculateBookingPrice = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { departure, passengers = [], extras = [] } = req.body || {}
+  if (!departure) throw new BadRequestError('REQUIRED_DEPARTURE')
+
+  const dep = await TourDeparture.findOne({ _id: departure, partner: partnerId }).lean()
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  const passengerList = Array.isArray(passengers) ? passengers : []
+  const adultCount = passengerList.filter(p => (p?.type || 'adult') === 'adult').length
+  const childCount = passengerList.filter(p => p?.type === 'child').length
+  const infantCount = passengerList.filter(p => p?.type === 'infant').length
+
+  const adultsTotal = adultCount * Number(dep.pricing?.adult?.double || 0)
+  const childrenTotal = childCount * Number(dep.pricing?.child?.withBed || 0)
+  const infantsTotal = infantCount * Number(dep.pricing?.infant?.price || 0)
+
+  const extrasTotal = (Array.isArray(extras) ? extras : []).reduce((sum, e) => {
+    const t = Number(e?.totalPrice || 0)
+    return sum + (Number.isFinite(t) ? t : 0)
+  }, 0)
+
+  const grandTotal = adultsTotal + childrenTotal + infantsTotal + extrasTotal
 
   res.json({
     success: true,
     data: {
-      breakdown: {
-        adults: { count: parseInt(adults), unitPrice: departure.pricing.adult?.[roomType] || 0 },
-        children: { count: parseInt(children), unitPrice: departure.pricing.child?.withBed || 0 },
-        infants: { count: parseInt(infants), unitPrice: departure.pricing.infant?.price || 0 }
-      },
-      baseTotal: basePrice.subtotal,
-      extrasTotal,
-      taxes: basePrice.taxes,
-      fees: basePrice.fees,
-      grandTotal: basePrice.total + extrasTotal,
-      currency: departure.pricing.currency
+      currency: dep.currency || 'TRY',
+      adults: adultsTotal,
+      children: childrenTotal,
+      infants: infantsTotal,
+      extras: extrasTotal,
+      grandTotal
     }
   })
 })
 
-// =====================
+export const createBooking = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const body = req.body || {}
+
+  if (!body.tour) throw new BadRequestError('REQUIRED_TOUR')
+  if (!body.departure) throw new BadRequestError('REQUIRED_DEPARTURE')
+
+  const tourExists = await Tour.exists({ _id: body.tour, partner: partnerId })
+  if (!tourExists) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  const dep = await TourDeparture.findOne({
+    _id: body.departure,
+    partner: partnerId,
+    tour: body.tour
+  })
+  if (!dep) throw new NotFoundError('DEPARTURE_NOT_FOUND')
+
+  if (['cancelled', 'completed'].includes(dep.status)) {
+    throw new ConflictError('DEPARTURE_NOT_BOOKABLE')
+  }
+
+  const booking = await TourBooking.create({
+    partner: partnerId,
+    tour: body.tour,
+    departure: body.departure,
+    bookingNo:
+      body.bookingNo ||
+      `TRB-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${nanoid(6).toUpperCase()}`,
+    passengers: body.passengers || [],
+    contact: body.contact || {},
+    extras: body.extras || [],
+    pricing: body.pricing || {},
+    payment: body.payment || {},
+    specialRequests: body.specialRequests || '',
+    salesChannel: body.salesChannel || 'admin',
+    status: body.status || 'pending'
+  })
+
+  // Reserve seats for pending/confirmed bookings
+  if (['pending', 'confirmed'].includes(booking.status)) {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaReserved: booking.status === 'pending' ? booking.seatCount : 0,
+      deltaSold: booking.status === 'confirmed' ? booking.seatCount : 0
+    })
+  }
+
+  res.status(201).json({ success: true, data: booking })
+})
+
+export const getBooking = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+    .populate('tour', 'code name')
+    .populate('departure', 'departureDate returnDate status capacity currency pricing')
+    .lean()
+
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+  res.json({ success: true, data: booking })
+})
+
+export const updateBooking = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+
+  // Prevent changing departure/tour via generic update
+  const body = { ...(req.body || {}) }
+  delete body.partner
+  delete body.tour
+  delete body.departure
+  delete body.seatCount
+
+  Object.keys(body).forEach(k => {
+    booking[k] = body[k]
+  })
+
+  await booking.save()
+  res.json({ success: true, data: booking })
+})
+
+export const updateBookingStatus = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { status } = req.body || {}
+  if (!status) throw new BadRequestError('REQUIRED_STATUS')
+
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+
+  const prev = booking.status
+  if (prev === status) {
+    return res.json({ success: true, data: booking })
+  }
+
+  // Capacity transitions
+  // pending -> confirmed: reserved->sold
+  // confirmed -> cancelled: sold release
+  // pending -> cancelled: reserved release
+  if (prev === 'pending' && status === 'confirmed') {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaReserved: -booking.seatCount,
+      deltaSold: booking.seatCount
+    })
+  } else if (prev === 'confirmed' && status === 'cancelled') {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaSold: -booking.seatCount
+    })
+    booking.cancelledAt = new Date()
+  } else if (prev === 'pending' && status === 'cancelled') {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaReserved: -booking.seatCount
+    })
+    booking.cancelledAt = new Date()
+  }
+
+  booking.status = status
+  await booking.save()
+
+  res.json({ success: true, data: booking })
+})
+
+export const cancelBooking = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+  if (booking.status === 'cancelled') return res.json({ success: true, data: booking })
+
+  const { reason = '' } = req.body || {}
+
+  if (booking.status === 'confirmed') {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaSold: -booking.seatCount
+    })
+  } else if (booking.status === 'pending') {
+    await applyDepartureSeatDelta({
+      partnerId,
+      departureId: booking.departure,
+      deltaReserved: -booking.seatCount
+    })
+  }
+
+  booking.status = 'cancelled'
+  booking.cancelledAt = new Date()
+  booking.cancellationReason = reason
+  await booking.save()
+
+  res.json({ success: true, data: booking })
+})
+
+export const addBookingPayment = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+
+  const { amount, currency, method, reference, note } = req.body || {}
+  const amt = Number(amount || 0)
+  if (!Number.isFinite(amt) || amt <= 0) throw new BadRequestError('INVALID_PAYMENT_AMOUNT')
+
+  if (!booking.payment) booking.payment = { transactions: [] }
+  if (!Array.isArray(booking.payment.transactions)) booking.payment.transactions = []
+
+  booking.payment.transactions.push({
+    amount: amt,
+    currency: currency || booking.pricing?.currency || 'TRY',
+    method: method || booking.payment.method || '',
+    reference: reference || '',
+    paidAt: new Date(),
+    note: note || ''
+  })
+
+  booking.payment.paidAmount = Number(booking.payment.paidAmount || 0) + amt
+  booking.payment.dueAmount = Math.max(0, Number(booking.payment.dueAmount || 0) - amt)
+  booking.payment.status =
+    booking.payment.dueAmount === 0 ? 'paid' : booking.payment.status || 'partial'
+
+  await booking.save()
+  res.status(201).json({ success: true, data: booking })
+})
+
+export const updateBookingPassengerVisa = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+
+  const idx = parseIntSafe(req.params.passengerIndex, -1)
+  if (idx < 0 || idx >= (booking.passengers || []).length) {
+    throw new BadRequestError('INVALID_PASSENGER_INDEX')
+  }
+
+  const { status, notes } = req.body || {}
+  if (!status) throw new BadRequestError('REQUIRED_VISA_STATUS')
+
+  booking.passengers[idx].visa = {
+    status,
+    notes: notes || booking.passengers[idx]?.visa?.notes || '',
+    updatedAt: new Date()
+  }
+
+  await booking.save()
+  res.json({ success: true, data: booking })
+})
+
+export const addBookingNote = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const booking = await TourBooking.findOne({ _id: req.params.id, partner: partnerId })
+  if (!booking) throw new NotFoundError('BOOKING_NOT_FOUND')
+
+  const { message } = req.body || {}
+  if (!message) throw new BadRequestError('REQUIRED_NOTE_MESSAGE')
+
+  booking.notes.push({
+    message,
+    createdBy: req.user?._id,
+    createdAt: new Date()
+  })
+
+  await booking.save()
+  res.status(201).json({ success: true, data: booking })
+})
+
+// ======================
 // AI EXTRACTION
-// =====================
+// ======================
 
-/**
- * Extract tour data from text using AI
- */
-export const aiExtractTour = asyncHandler(async (req, res) => {
-  const { content } = req.body
+export const aiExtractTourData = asyncHandler(async (req, res) => {
+  const { content } = req.body || {}
 
-  if (!content || content.trim().length < 50) {
-    throw new BadRequestError('CONTENT_TOO_SHORT')
+  if (!content || typeof content !== 'string' || content.trim().length < 50) {
+    throw new BadRequestError('Content must be at least 50 characters')
   }
 
   const { extractTourData } = await import('#services/gemini/tourExtraction.js')
+  const result = await extractTourData(content.trim())
 
-  const result = await extractTourData(content)
-
-  if (!result.success) {
-    throw new BadRequestError(result.error || 'AI_EXTRACTION_FAILED')
-  }
-
-  res.json({
-    success: true,
-    data: result.data
-  })
+  res.json(result)
 })
-
-// =====================
-// STATS & REPORTS
-// =====================
-
-/**
- * Get tour statistics
- */
-export const getStats = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { fromDate, toDate } = req.query
-
-  const filters = {}
-  if (fromDate) filters.fromDate = new Date(fromDate)
-  if (toDate) filters.toDate = new Date(toDate)
-
-  const [tourStats, bookingStats, departureStats] = await Promise.all([
-    Tour.aggregate([
-      { $match: { partner: partnerId } },
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]),
-    TourBooking.getStats(partnerId, filters),
-    TourDeparture.aggregate([
-      { $match: { partner: partnerId, departureDate: { $gte: new Date() } } },
-      { $group: { _id: '$status', count: { $sum: 1 }, totalCapacity: { $sum: '$capacity.total' }, soldSeats: { $sum: '$capacity.sold' } } }
-    ])
-  ])
-
-  res.json({
-    success: true,
-    data: {
-      tours: tourStats,
-      bookings: bookingStats,
-      departures: departureStats
-    }
-  })
-})
-
-/**
- * Get upcoming departures
- */
-export const getUpcomingDepartures = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { days = 30 } = req.query
-
-  const departures = await TourDeparture.findUpcoming(partnerId, parseInt(days))
-
-  res.json({
-    success: true,
-    data: departures
-  })
-})
-
-/**
- * Get upcoming bookings
- */
-export const getUpcomingBookings = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { days = 30 } = req.query
-
-  const bookings = await TourBooking.findUpcoming(partnerId, parseInt(days))
-
-  res.json({
-    success: true,
-    data: bookings
-  })
-})
-
-export default {
-  // Tours
-  getList,
-  getById,
-  create,
-  update,
-  remove,
-  duplicate,
-  aiExtractTour,
-  // Departures
-  getDepartures,
-  getDepartureById,
-  createDeparture,
-  updateDeparture,
-  removeDeparture,
-  bulkCreateDepartures,
-  // Extras
-  getExtras,
-  getExtraById,
-  createExtra,
-  updateExtra,
-  removeExtra,
-  // Bookings
-  getBookings,
-  getBookingById,
-  createBooking,
-  updateBooking,
-  updateBookingStatus,
-  cancelBooking,
-  addBookingPayment,
-  updateVisaStatus,
-  addBookingNote,
-  // Search & Availability
-  searchDepartures,
-  checkAvailability,
-  calculatePrice,
-  // Stats
-  getStats,
-  getUpcomingDepartures,
-  getUpcomingBookings
-}

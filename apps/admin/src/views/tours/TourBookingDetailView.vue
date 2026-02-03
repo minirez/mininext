@@ -17,7 +17,7 @@
             <StatusBadge v-if="booking" :status="booking.status" :statusMap="bookingStatusMap" />
           </div>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {{ booking?.tour?.name || '' }}
+            {{ getLocalizedName(booking?.tour?.name) || '' }}
           </p>
         </div>
       </div>
@@ -53,16 +53,20 @@
       <!-- Main Content -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Tour & Departure Info -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.fields.tour') }}
           </h3>
           <div class="flex items-start gap-4">
-            <div class="w-24 h-16 bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
+            <div
+              class="w-24 h-16 bg-gray-200 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0"
+            >
               <img
-                v-if="booking.tour?.images?.[0]?.url"
-                :src="booking.tour.images[0].url"
-                :alt="booking.tour.name"
+                v-if="getTourImage(booking.tour)"
+                :src="getTourImage(booking.tour)"
+                :alt="getLocalizedName(booking.tour?.name)"
                 class="w-full h-full object-cover"
               />
               <div v-else class="w-full h-full flex items-center justify-center">
@@ -70,16 +74,19 @@
               </div>
             </div>
             <div class="flex-1">
-              <h4 class="font-medium text-gray-900 dark:text-white">{{ booking.tour?.name }}</h4>
+              <h4 class="font-medium text-gray-900 dark:text-white">
+                {{ getLocalizedName(booking.tour?.name) }}
+              </h4>
               <p class="text-sm text-gray-500">{{ booking.tour?.code }}</p>
               <div class="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
                 <span class="flex items-center">
                   <span class="material-icons text-sm mr-1">calendar_today</span>
-                  {{ formatDate(booking.departure?.departureDate) }} - {{ formatDate(booking.departure?.returnDate) }}
+                  {{ formatDate(booking.departure?.departureDate) }} -
+                  {{ formatDate(booking.departure?.returnDate) }}
                 </span>
-                <span class="flex items-center">
-                  <span class="material-icons text-sm mr-1">nights_stay</span>
-                  {{ booking.tour?.duration?.nights }} {{ $t('tour.fields.nights') }}
+                <span v-if="booking.tour?.primaryLocation?.name" class="flex items-center">
+                  <span class="material-icons text-sm mr-1">place</span>
+                  {{ booking.tour.primaryLocation.name }}
                 </span>
               </div>
             </div>
@@ -87,7 +94,9 @@
         </div>
 
         <!-- Passengers -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">
               {{ $t('tourBooking.passenger.title') }} ({{ booking.passengers?.length || 0 }})
@@ -102,19 +111,29 @@
             <table class="w-full">
               <thead class="bg-gray-50 dark:bg-slate-700/50">
                 <tr>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                  >
                     {{ $t('tourBooking.passenger.name') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                  >
                     {{ $t('tourBooking.passenger.type') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                  >
                     {{ $t('tourBooking.passenger.tcNumber') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                  >
                     {{ $t('tourBooking.passenger.dateOfBirth') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                  >
                     {{ $t('tourBooking.visa.status') }}
                   </th>
                 </tr>
@@ -156,7 +175,9 @@
         </div>
 
         <!-- Contact Information -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.contact.title') }}
           </h3>
@@ -177,7 +198,10 @@
         </div>
 
         <!-- Extras -->
-        <div v-if="booking.extras?.length > 0" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          v-if="booking.extras?.length > 0"
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.extras.title') }}
           </h3>
@@ -188,7 +212,9 @@
               class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700 last:border-0"
             >
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ getLocalizedName(extra.name) }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">
+                  {{ getLocalizedName(extra.name) }}
+                </p>
                 <p class="text-sm text-gray-500">x {{ extra.quantity }}</p>
               </div>
               <p class="font-medium text-gray-900 dark:text-white">
@@ -199,7 +225,10 @@
         </div>
 
         <!-- Special Requests -->
-        <div v-if="booking.specialRequests" class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          v-if="booking.specialRequests"
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.notes.specialRequests') }}
           </h3>
@@ -207,7 +236,9 @@
         </div>
 
         <!-- Payment History -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">
               {{ $t('tourBooking.payment.title') }}
@@ -226,13 +257,24 @@
             >
               <div>
                 <p class="font-medium text-gray-900 dark:text-white">
-                  {{ formatCurrency(payment.amount, payment.currency || booking.pricing?.currency || 'TRY') }}
+                  {{
+                    formatCurrency(
+                      payment.amount,
+                      payment.currency || booking.pricing?.currency || 'TRY'
+                    )
+                  }}
                 </p>
-                <p class="text-sm text-gray-500">{{ formatDate(payment.date) }} - {{ $t(`agencies.paymentMethods.${payment.method}`) }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ formatDate(payment.date) }} -
+                  {{ $t(`agencies.paymentMethods.${payment.method}`) }}
+                </p>
               </div>
               <StatusBadge :status="payment.status" :statusMap="paymentStatusMap" />
             </div>
-            <div v-if="!booking.payments?.length" class="text-center py-4 text-gray-500 dark:text-gray-400">
+            <div
+              v-if="!booking.payments?.length"
+              class="text-center py-4 text-gray-500 dark:text-gray-400"
+            >
               Henüz ödeme kaydı yok
             </div>
           </div>
@@ -242,32 +284,53 @@
       <!-- Sidebar -->
       <div class="lg:col-span-1 space-y-6">
         <!-- Price Summary -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.pricing.title') }}
           </h3>
 
           <div class="space-y-3 text-sm">
             <div v-if="booking.pricing?.adults" class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.adults') }}</span>
-              <span class="text-gray-900 dark:text-white">{{ formatCurrency(booking.pricing.adults, booking.pricing.currency) }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.pricing.adults')
+              }}</span>
+              <span class="text-gray-900 dark:text-white">{{
+                formatCurrency(booking.pricing.adults, booking.pricing.currency)
+              }}</span>
             </div>
             <div v-if="booking.pricing?.children" class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.children') }}</span>
-              <span class="text-gray-900 dark:text-white">{{ formatCurrency(booking.pricing.children, booking.pricing.currency) }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.pricing.children')
+              }}</span>
+              <span class="text-gray-900 dark:text-white">{{
+                formatCurrency(booking.pricing.children, booking.pricing.currency)
+              }}</span>
             </div>
             <div v-if="booking.pricing?.extras" class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.pricing.extras') }}</span>
-              <span class="text-gray-900 dark:text-white">{{ formatCurrency(booking.pricing.extras, booking.pricing.currency) }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.pricing.extras')
+              }}</span>
+              <span class="text-gray-900 dark:text-white">{{
+                formatCurrency(booking.pricing.extras, booking.pricing.currency)
+              }}</span>
             </div>
             <div v-if="booking.pricing?.discount" class="flex justify-between text-green-600">
               <span>{{ $t('tourBooking.pricing.discount') }}</span>
               <span>-{{ formatCurrency(booking.pricing.discount, booking.pricing.currency) }}</span>
             </div>
             <div class="pt-3 border-t border-gray-200 dark:border-slate-700 flex justify-between">
-              <span class="font-medium text-gray-900 dark:text-white">{{ $t('tourBooking.pricing.grandTotal') }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{
+                $t('tourBooking.pricing.grandTotal')
+              }}</span>
               <span class="font-bold text-purple-600 dark:text-purple-400">
-                {{ formatCurrency(booking.pricing?.grandTotal || 0, booking.pricing?.currency || 'TRY') }}
+                {{
+                  formatCurrency(
+                    booking.pricing?.grandTotal || 0,
+                    booking.pricing?.currency || 'TRY'
+                  )
+                }}
               </span>
             </div>
           </div>
@@ -275,34 +338,56 @@
           <!-- Payment Status -->
           <div class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
             <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.payment.paidAmount') }}</span>
-              <span class="text-green-600">{{ formatCurrency(booking.payment?.paidAmount || 0, booking.pricing?.currency || 'TRY') }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.payment.paidAmount')
+              }}</span>
+              <span class="text-green-600">{{
+                formatCurrency(booking.payment?.paidAmount || 0, booking.pricing?.currency || 'TRY')
+              }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.payment.dueAmount') }}</span>
-              <span class="text-red-600 font-medium">{{ formatCurrency(booking.payment?.dueAmount || 0, booking.pricing?.currency || 'TRY') }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.payment.dueAmount')
+              }}</span>
+              <span class="text-red-600 font-medium">{{
+                formatCurrency(booking.payment?.dueAmount || 0, booking.pricing?.currency || 'TRY')
+              }}</span>
             </div>
           </div>
         </div>
 
         <!-- Booking Info -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('tourBooking.bookingDetails') }}
           </h3>
 
           <div class="space-y-3 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.fields.bookingNumber') }}</span>
-              <span class="font-mono text-gray-900 dark:text-white">{{ booking.bookingNumber }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.fields.bookingNumber')
+              }}</span>
+              <span class="font-mono text-gray-900 dark:text-white">{{
+                booking.bookingNumber
+              }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.fields.salesChannel') }}</span>
-              <span class="text-gray-900 dark:text-white">{{ $t(`tourBooking.salesChannels.${booking.salesChannel}`) }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.fields.salesChannel')
+              }}</span>
+              <span class="text-gray-900 dark:text-white">{{
+                $t(`tourBooking.salesChannels.${booking.salesChannel}`)
+              }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{{ $t('tourBooking.fields.createdAt') }}</span>
-              <span class="text-gray-900 dark:text-white">{{ formatDateTime(booking.createdAt) }}</span>
+              <span class="text-gray-600 dark:text-gray-400">{{
+                $t('tourBooking.fields.createdAt')
+              }}</span>
+              <span class="text-gray-900 dark:text-white">{{
+                formatDateTime(booking.createdAt)
+              }}</span>
             </div>
             <div v-if="booking.source?.agencyName" class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">{{ $t('agencies.agency') }}</span>
@@ -312,13 +397,19 @@
         </div>
 
         <!-- Actions -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6"
+        >
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ $t('common.actions') }}
           </h3>
 
           <div class="space-y-2">
-            <BaseButton variant="secondary" class="w-full justify-start" @click="sendConfirmationEmail">
+            <BaseButton
+              variant="secondary"
+              class="w-full justify-start"
+              @click="sendConfirmationEmail"
+            >
               <span class="material-icons mr-2">email</span>
               {{ $t('tourBooking.actions.sendConfirmation') }}
             </BaseButton>
@@ -420,6 +511,7 @@ import { useI18n } from 'vue-i18n'
 import { useTourStore } from '@/stores/tour'
 import { formatCurrency } from '@booking-engine/utils'
 import { BaseButton, StatusBadge, Modal, Spinner } from '@/components/ui'
+import { getFileUrl } from '@/utils/imageUrl'
 
 const route = useRoute()
 const router = useRouter()
@@ -456,8 +548,14 @@ const bookingStatusMap = {
 
 const visaStatusMap = {
   not_required: { label: t('tourBooking.visa.visaStatuses.not_required'), color: 'gray' },
-  pending_documents: { label: t('tourBooking.visa.visaStatuses.pending_documents'), color: 'yellow' },
-  documents_received: { label: t('tourBooking.visa.visaStatuses.documents_received'), color: 'blue' },
+  pending_documents: {
+    label: t('tourBooking.visa.visaStatuses.pending_documents'),
+    color: 'yellow'
+  },
+  documents_received: {
+    label: t('tourBooking.visa.visaStatuses.documents_received'),
+    color: 'blue'
+  },
   submitted: { label: t('tourBooking.visa.visaStatuses.submitted'), color: 'purple' },
   approved: { label: t('tourBooking.visa.visaStatuses.approved'), color: 'green' },
   rejected: { label: t('tourBooking.visa.visaStatuses.rejected'), color: 'red' }
@@ -495,6 +593,11 @@ function getLocalizedName(obj) {
   if (!obj) return ''
   if (typeof obj === 'string') return obj
   return obj[locale.value] || obj.tr || obj.en || ''
+}
+
+function getTourImage(tour) {
+  const main = tour?.mainImage || tour?.gallery?.find(i => i.isMain)?.url || tour?.gallery?.[0]?.url
+  return main ? getFileUrl(main) : ''
 }
 
 function getPassengerVisaStatus(passenger) {

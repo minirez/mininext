@@ -1,8 +1,8 @@
 {
   "tour": {
-    "title": "Tours",
-    "tours": "Tours",
-    "description": "Tour packages and departures",
+    "title": "Tours & Activities",
+    "tours": "Tours & Activities",
+    "description": "Tour and activity packages and departures",
     "newTour": "New Tour",
     "editTour": "Edit Tour",
     "tourDetails": "Tour Details",
@@ -21,6 +21,10 @@
 
     "tabs": {
       "basic": "Basic Info",
+      "schedule": "Schedule",
+      "route": "Route & Itinerary",
+      "content": "Content",
+      "gallery": "Gallery",
       "itinerary": "Itinerary",
       "transportation": "Transportation",
       "accommodation": "Accommodation",
@@ -83,7 +87,177 @@
       "mealPlan": "Meal Plan",
       "roomType": "Room Type",
       "inclusions": "Inclusions",
-      "exclusions": "Exclusions"
+      "exclusions": "Exclusions",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add a tag and press Enter",
+      "noTags": "No tags added yet"
+    },
+
+    "route": {
+      "title": "Route & Itinerary",
+      "subtitle": "Define the destinations and journey of your tour",
+      "stop": "Stop",
+      "addStop": "Add Stop",
+      "addFirstStop": "Add First Stop",
+      "empty": "No route stops added yet",
+      "location": "Location",
+      "locationPlaceholder": "Search city / district / region...",
+      "stayUnit": "Stay Unit",
+      "stayValue": "Stay Value",
+      "timeStart": "Start",
+      "timeEnd": "End",
+      "units": {
+        "hours": "Hours",
+        "days": "Days"
+      },
+      "stopTitle": "Stop Title",
+      "stopDescription": "Stop Description",
+      "stopPhoto": "Stop Photo",
+      "saveTourToUpload": "Save the tour first to upload photos.",
+      "map": "Map",
+      "addDestination": "Add Destination",
+      "addFirstDestination": "Add First Destination",
+      "newDestination": "New Destination",
+      "destination": "Destination",
+      "searchDestination": "Search city, district or region...",
+      "duration": "Duration",
+      "unit": "Unit",
+      "arrivalTime": "Arrival",
+      "departureTime": "Departure",
+      "additionalDetails": "Additional Details",
+      "destinationTitle": "Custom Title",
+      "destinationDescription": "Description",
+      "photo": "Photo",
+      "emptyTitle": "Build Your Tour Route",
+      "emptyDescription": "Add the destinations and points of interest along your tour route. Each destination can include duration, descriptions, and photos."
+    },
+
+    "schedule": {
+      "title": "Schedule Builder",
+      "saveTourFirst": "Save the tour first to generate departures.",
+      "scheduleType": "Tour type:",
+      "recurring": "Recurring",
+      "recurringDesc": "Runs regularly on specific days or intervals",
+      "onetime": "One-time",
+      "onetimeDesc": "Single departure date",
+      "from": "From",
+      "to": "To",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "preset": "Preset",
+      "repeatPattern": "Repeat pattern",
+      "everyNDays": "Every N days",
+      "selectWeekdays": "Weekdays",
+      "customDates": "Custom dates",
+      "selectedDates": "Selected Dates",
+      "selectedDepartures": "Selected Departures",
+      "selectedDeparture": "Selected Departure",
+      "departures": "departures",
+      "noSelectedDates": "Click on calendar dates to select departure dates",
+      "selectOnetimeDate": "Click on a date to select your departure",
+      "clickToSelectRange": "Each click selects a full date range",
+      "multiDayHint": "This is a {days}-day tour. Click a date to select the full departure range.",
+      "onetimeMultiDayHint": "This is a {days}-day tour. Select your departure date.",
+      "quickAdd": "Quick select",
+      "durationDays": "Duration (days)",
+      "timeStart": "Departure time",
+      "timeEnd": "Return time",
+      "departureSettings": "Departure Settings",
+      "preview": "Preview",
+      "dates": "dates",
+      "noPreview": "Configure your schedule above to preview dates.",
+      "create": "Create departures",
+      "addDateRange": "Quick add date range",
+      "selectRangeToAdd": "Select a date range on the calendar, then click to add",
+      "newDates": "New",
+      "existingDates": "Already exists",
+      "quickSelectRange": "Quick add range",
+      "selectAllWeekday": "Select all",
+      "presets": {
+        "everyDay": "Every day",
+        "everyNDays": "Every N days",
+        "weekdays": "Specific weekdays",
+        "weekend": "Weekend (Sat+Sun)",
+        "customDates": "Custom dates"
+      }
+    },
+
+    "content": {
+      "shortDescription": "Short description",
+      "description": "Description",
+      "importantInfo": "Important info",
+      "included": "Included",
+      "excluded": "Excluded",
+      "noIncluded": "No included items yet",
+      "noExcluded": "No excluded items yet"
+    },
+
+    "gallery": {
+      "title": "Gallery",
+      "upload": "Upload",
+      "empty": "No gallery images yet",
+      "saveTourToUpload": "Save the tour first to upload images.",
+      "main": "Main",
+      "setMain": "Set as main",
+      "caption": "Caption",
+      "hint": "Tip: Reorder, set main image, and edit captions. Don't forget to save.",
+      "saveHint": "Changes in captions/order are saved when you click Save."
+    },
+
+    "extras": {
+      "manageHint": "Extras are managed globally and can be used in bookings."
+    },
+
+    "toasts": {
+      "created": "Tour created",
+      "updated": "Tour updated",
+      "deleted": "Tour deleted",
+      "duplicated": "Tour duplicated",
+      "departureCreated": "Departure created",
+      "departuresBulkCreated": "{count} departures created",
+      "departureUpdated": "Departure updated",
+      "departureDeleted": "Departure deleted",
+      "extraCreated": "Extra created",
+      "extraUpdated": "Extra updated",
+      "extraDeleted": "Extra deleted",
+      "bookingCreated": "Booking created",
+      "bookingUpdated": "Booking updated",
+      "bookingStatusUpdated": "Booking status updated",
+      "bookingCancelled": "Booking cancelled",
+      "paymentAdded": "Payment added",
+      "visaUpdated": "Visa status updated",
+      "noteAdded": "Note added"
+    },
+
+    "errors": {
+      "loadTours": "Failed to load tours",
+      "loadTour": "Failed to load tour details",
+      "createTour": "Failed to create tour",
+      "updateTour": "Failed to update tour",
+      "deleteTour": "Failed to delete tour",
+      "duplicateTour": "Failed to duplicate tour",
+      "loadDepartures": "Failed to load departures",
+      "loadDeparture": "Failed to load departure",
+      "createDeparture": "Failed to create departure",
+      "bulkCreateDepartures": "Failed to create departures",
+      "updateDeparture": "Failed to update departure",
+      "deleteDeparture": "Failed to delete departure",
+      "searchDepartures": "Departure search failed",
+      "loadExtras": "Failed to load extras",
+      "loadExtra": "Failed to load extra",
+      "createExtra": "Failed to create extra",
+      "updateExtra": "Failed to update extra",
+      "deleteExtra": "Failed to delete extra",
+      "loadBookings": "Failed to load bookings",
+      "loadBooking": "Failed to load booking",
+      "calculatePrice": "Failed to calculate price",
+      "createBooking": "Failed to create booking",
+      "updateBooking": "Failed to update booking",
+      "updateBookingStatus": "Failed to update booking status",
+      "cancelBooking": "Failed to cancel booking",
+      "addPayment": "Failed to add payment",
+      "updateVisa": "Failed to update visa status",
+      "addNote": "Failed to add note"
     },
 
     "tourTypes": {
@@ -95,7 +269,17 @@
       "adventure": "Adventure Tour",
       "religious": "Religious Tour",
       "nature": "Nature Tour",
-      "city_break": "City Break"
+      "city_break": "City Break",
+      "international": "International",
+      "activity": "Activity",
+      "workshop": "Workshop",
+      "transfer": "Transfer",
+      "city": "City",
+      "museum": "Museum",
+      "yacht": "Yacht",
+      "boat": "Boat",
+      "ferry": "Ferry",
+      "other": "Other"
     },
 
     "transportTypes": {
@@ -223,6 +407,20 @@
       "title": "Visibility",
       "b2c": "B2C (End Consumer)",
       "b2b": "B2B (Agencies)"
+    },
+
+    "basePricing": {
+      "title": "Pricing",
+      "description": "Base price shown on tour listings",
+      "startingPrice": "Starting From",
+      "detailedPricing": "Detailed",
+      "accommodationHint": "Per person prices based on room occupancy",
+      "single": "Single Room",
+      "double": "Double Room",
+      "triple": "Triple Room",
+      "childWithBed": "Child (with bed)",
+      "childWithoutBed": "Child (no bed)",
+      "infant": "Infant"
     }
   },
 

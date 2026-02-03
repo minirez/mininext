@@ -1,7 +1,9 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4">
+    <div
+      class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4"
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center">
           <button
@@ -15,24 +17,17 @@
               {{ isNew ? $t('tour.newTour') : $t('tour.editTour') }}
             </h1>
             <p v-if="!isNew && form.code" class="text-sm text-gray-500 dark:text-slate-400">
-              {{ form.code }} - {{ getLocalizedName(form.name) }}
+              {{ form.code }} - {{ getLocalized(form.name) }}
             </p>
           </div>
         </div>
+
         <div class="flex items-center gap-3">
-          <button
-            v-if="!isNew"
-            class="btn-outline"
-            @click="duplicateTour"
-          >
+          <button v-if="!isNew" class="btn-outline" @click="duplicateTour">
             <span class="material-icons mr-2">content_copy</span>
             {{ $t('tour.duplicate') }}
           </button>
-          <button
-            class="btn-primary bg-teal-600 hover:bg-teal-700"
-            :disabled="isSaving"
-            @click="saveTour"
-          >
+          <button class="btn-primary" :disabled="isSaving" @click="saveTour">
             <span v-if="isSaving" class="material-icons animate-spin mr-2">refresh</span>
             <span v-else class="material-icons mr-2">save</span>
             {{ $t('common.save') }}
@@ -48,9 +43,11 @@
           v-for="tab in tabs"
           :key="tab.key"
           class="px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-          :class="activeTab === tab.key
-            ? 'border-teal-500 text-teal-600 dark:text-teal-400'
-            : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'"
+          :class="
+            activeTab === tab.key
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+          "
           @click="activeTab = tab.key"
         >
           <span class="material-icons text-lg align-middle mr-2">{{ tab.icon }}</span>
@@ -62,17 +59,18 @@
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-6">
       <div v-if="isLoading" class="flex items-center justify-center h-64">
-        <span class="material-icons animate-spin text-4xl text-teal-500">refresh</span>
+        <span class="material-icons animate-spin text-4xl text-primary-500">refresh</span>
       </div>
 
       <template v-else>
-        <!-- Basic Info Tab -->
+        <!-- Basic -->
         <div v-show="activeTab === 'basic'" class="max-w-4xl space-y-6">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
             <h3 class="text-lg font-medium mb-4">{{ $t('tour.tabs.basic') }}</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Tour Code -->
               <div>
                 <label class="form-label">{{ $t('tour.fields.code') }} *</label>
                 <div class="flex gap-2">
@@ -81,7 +79,7 @@
                     type="text"
                     class="form-input uppercase flex-1"
                     :placeholder="$t('tour.fields.code')"
-                    maxlength="20"
+                    maxlength="30"
                   />
                   <button
                     v-if="isNew"
@@ -95,17 +93,25 @@
                 </div>
               </div>
 
-              <!-- Tour Type -->
               <div>
-                <label class="form-label">{{ $t('tour.fields.tourType') }} *</label>
-                <select v-model="form.tourType" class="form-input">
-                  <option v-for="type in tourTypes" :key="type.value" :value="type.value">
-                    {{ $t(type.label) }}
+                <label class="form-label">{{ $t('tour.fields.status') }}</label>
+                <select v-model="form.status" class="form-input">
+                  <option value="draft">{{ $t('tour.statuses.draft') }}</option>
+                  <option value="active">{{ $t('tour.statuses.active') }}</option>
+                  <option value="inactive">{{ $t('tour.statuses.inactive') }}</option>
+                  <option value="archived">{{ $t('tour.statuses.archived') }}</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label">{{ $t('tour.fields.tourType') }}</label>
+                <select v-model="form.type" class="form-input">
+                  <option v-for="opt in tourTypes" :key="opt.value" :value="opt.value">
+                    {{ $t(opt.label) }}
                   </option>
                 </select>
               </div>
 
-              <!-- Tour Name (Multi-lang) -->
               <div class="md:col-span-2">
                 <label class="form-label">{{ $t('tour.fields.name') }} *</label>
                 <MultiLangInput
@@ -115,105 +121,12 @@
                 />
               </div>
 
-              <!-- Short Description (Multi-lang) -->
-              <div class="md:col-span-2">
-                <label class="form-label">{{ $t('tour.fields.shortDescription') }}</label>
-                <MultiLangInput
-                  v-model="form.shortDescription"
-                  :languages="B2C_LANGUAGES"
-                  type="textarea"
-                  :rows="2"
-                />
-              </div>
-
-              <!-- Description (Multi-lang) -->
-              <div class="md:col-span-2">
-                <label class="form-label">{{ $t('tour.fields.description') }}</label>
-                <MultiLangInput
-                  v-model="form.description"
-                  :languages="B2C_LANGUAGES"
-                  type="textarea"
-                  :rows="4"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Destination -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-medium mb-4">{{ $t('tour.fields.destination') }}</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="form-label">{{ $t('tour.fields.country') }}</label>
-                <input v-model="form.destination.country" type="text" class="form-input" />
-              </div>
-              <div>
-                <label class="form-label">{{ $t('tour.fields.city') }}</label>
-                <input v-model="form.destination.city" type="text" class="form-input" />
-              </div>
-              <div>
-                <label class="form-label">{{ $t('tour.fields.region') }}</label>
-                <input v-model="form.destination.region" type="text" class="form-input" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Duration -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-medium mb-4">{{ $t('tour.fields.duration') }}</h3>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label class="form-label">{{ $t('tour.fields.nights') }}</label>
-                <input
-                  v-model.number="form.duration.nights"
-                  type="number"
-                  min="0"
-                  class="form-input"
-                  @input="onNightsChange"
-                />
-              </div>
-              <div>
-                <label class="form-label">{{ $t('tour.fields.days') }}</label>
-                <input
-                  v-model.number="form.duration.days"
-                  type="number"
-                  min="1"
-                  class="form-input"
-                  :class="{ 'ring-2 ring-amber-400': form.duration.days !== form.duration.nights + 1 }"
-                />
-                <p v-if="form.duration.days !== form.duration.nights + 1" class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  {{ $t('tour.durationMismatch') || 'Genellikle gün = gece + 1 olmalıdır' }}
-                </p>
-              </div>
-              <div class="md:col-span-2 flex items-end pb-2">
-                <span class="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-lg">
-                  <span class="material-icons text-sm align-middle mr-1">info</span>
-                  {{ form.duration.nights }} {{ $t('tour.fields.nights') }}, {{ form.duration.days }} {{ $t('tour.fields.days') }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Status & Visibility -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-medium mb-4">{{ $t('tour.tabs.settings') }}</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="form-label">{{ $t('tour.fields.status') }}</label>
-                <select v-model="form.status" class="form-input">
-                  <option value="draft">{{ $t('tour.statuses.draft') }}</option>
-                  <option value="active">{{ $t('tour.statuses.active') }}</option>
-                  <option value="inactive">{{ $t('tour.statuses.inactive') }}</option>
-                </select>
-              </div>
               <div>
                 <label class="form-label">{{ $t('tour.fields.displayOrder') }}</label>
                 <input v-model.number="form.displayOrder" type="number" class="form-input" />
               </div>
-              <div class="flex items-center pt-6 gap-6">
+
+              <div class="flex items-center gap-6 pt-6">
                 <label class="flex items-center cursor-pointer">
                   <input v-model="form.isFeatured" type="checkbox" class="form-checkbox mr-2" />
                   <span>{{ $t('tour.fields.featured') }}</span>
@@ -235,341 +148,383 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Itinerary Tab -->
-        <div v-show="activeTab === 'itinerary'" class="max-w-4xl">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('tour.itinerary.title') }}</h3>
-              <button class="btn-outline btn-sm" @click="addItineraryDay">
-                <span class="material-icons mr-1">add</span>
-                {{ $t('tour.itinerary.addDay') }}
-              </button>
+          <!-- Base Pricing Card -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span
+                  class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center"
+                >
+                  <span class="material-icons text-green-600 dark:text-green-400">payments</span>
+                </span>
+                <div>
+                  <h3 class="text-lg font-medium">{{ $t('tour.basePricing.title') }}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ $t('tour.basePricing.description') }}
+                  </p>
+                </div>
+              </div>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{
+                  $t('tour.basePricing.detailedPricing')
+                }}</span>
+                <input v-model="showDetailedPricing" type="checkbox" class="form-checkbox" />
+              </label>
             </div>
 
-            <div v-if="form.itinerary.length === 0" class="text-center py-12 text-gray-500">
-              <span class="material-icons text-4xl mb-2">route</span>
-              <p>{{ $t('tour.itinerary.title') }}</p>
-              <button class="btn-primary mt-4" @click="addItineraryDay">
-                {{ $t('tour.itinerary.addDay') }}
-              </button>
-            </div>
-
-            <div v-else class="space-y-4">
-              <div
-                v-for="(day, index) in form.itinerary"
-                :key="index"
-                class="border border-gray-200 dark:border-slate-700 rounded-lg p-4"
-              >
-                <div class="flex items-center justify-between mb-3">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
-                    {{ $t('tour.itinerary.day') }} {{ day.day }}
-                  </span>
-                  <button
-                    class="text-red-500 hover:text-red-700"
-                    @click="removeItineraryDay(index)"
+            <!-- Currency Selection - Compact Cards -->
+            <div class="mb-4">
+              <label class="form-label mb-2">{{ $t('common.currency') }}</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button
+                  v-for="curr in CURRENCIES"
+                  :key="curr.code"
+                  type="button"
+                  class="relative py-2 px-3 rounded-lg border-2 transition-all text-center"
+                  :class="
+                    form.basePricing.currency === curr.code
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                      : 'border-gray-200 dark:border-slate-600 hover:border-primary-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                  "
+                  @click="form.basePricing.currency = curr.code"
+                >
+                  <div
+                    v-if="form.basePricing.currency === curr.code"
+                    class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center"
                   >
-                    <span class="material-icons">delete</span>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="md:col-span-2">
-                    <label class="form-label">{{ $t('tour.itinerary.dayTitle') }}</label>
-                    <MultiLangInput v-model="day.title" :languages="B2C_LANGUAGES" />
+                    <span class="material-icons text-white text-xs">check</span>
                   </div>
-                  <div class="md:col-span-2">
-                    <label class="form-label">{{ $t('tour.itinerary.dayDescription') }}</label>
-                    <MultiLangInput v-model="day.description" :languages="B2C_LANGUAGES" type="textarea" :rows="3" />
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.itinerary.meals') }}</label>
-                    <div class="flex gap-4">
-                      <label class="flex items-center">
-                        <input v-model="day.meals.breakfast" type="checkbox" class="form-checkbox mr-2" />
-                        {{ $t('tour.itinerary.breakfast') }}
-                      </label>
-                      <label class="flex items-center">
-                        <input v-model="day.meals.lunch" type="checkbox" class="form-checkbox mr-2" />
-                        {{ $t('tour.itinerary.lunch') }}
-                      </label>
-                      <label class="flex items-center">
-                        <input v-model="day.meals.dinner" type="checkbox" class="form-checkbox mr-2" />
-                        {{ $t('tour.itinerary.dinner') }}
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.itinerary.overnight') }}</label>
-                    <input v-model="day.overnight" type="text" class="form-input" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Transportation Tab -->
-        <div v-show="activeTab === 'transportation'" class="max-w-4xl">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('tour.transportation.title') }}</h3>
-              <button class="btn-outline btn-sm" @click="addTransportation">
-                <span class="material-icons mr-1">add</span>
-                {{ $t('tour.transportation.add') }}
-              </button>
-            </div>
-
-            <div v-if="form.transportation.length === 0" class="text-center py-12 text-gray-500">
-              <span class="material-icons text-4xl mb-2">commute</span>
-              <p>{{ $t('tour.transportation.title') }}</p>
-              <button class="btn-primary mt-4" @click="addTransportation">
-                {{ $t('tour.transportation.add') }}
-              </button>
-            </div>
-
-            <div v-else class="space-y-4">
-              <div
-                v-for="(transport, index) in form.transportation"
-                :key="index"
-                class="border border-gray-200 dark:border-slate-700 rounded-lg p-4"
-              >
-                <div class="flex items-center justify-between mb-3">
-                  <span class="material-icons text-2xl" :class="getTransportIcon(transport.type).class">
-                    {{ getTransportIcon(transport.type).icon }}
+                  <span
+                    class="text-lg font-bold"
+                    :class="
+                      form.basePricing.currency === curr.code
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-gray-400 dark:text-slate-500'
+                    "
+                  >
+                    {{ curr.symbol }}
                   </span>
-                  <button class="text-red-500 hover:text-red-700" @click="removeTransportation(index)">
-                    <span class="material-icons">delete</span>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <label class="form-label">{{ $t('tour.transportation.type') }}</label>
-                    <select v-model="transport.type" class="form-input">
-                      <option v-for="type in transportTypes" :key="type.value" :value="type.value">
-                        {{ $t(type.label) }}
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.transportation.direction') }}</label>
-                    <select v-model="transport.direction" class="form-input">
-                      <option value="outbound">{{ $t('tour.transportation.outbound') }}</option>
-                      <option value="return">{{ $t('tour.transportation.return') }}</option>
-                      <option value="internal">{{ $t('tour.transportation.internal') }}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.transportation.carrier') }}</label>
-                    <input v-model="transport.carrier" type="text" class="form-input" />
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.transportation.class') }}</label>
-                    <select v-model="transport.class" class="form-input">
-                      <option value="economy">{{ $t('tour.transportClass.economy') }}</option>
-                      <option value="business">{{ $t('tour.transportClass.business') }}</option>
-                      <option value="standard">{{ $t('tour.transportClass.standard') }}</option>
-                      <option value="vip">{{ $t('tour.transportClass.vip') }}</option>
-                    </select>
-                  </div>
-                  <div class="md:col-span-4 flex items-center">
-                    <label class="flex items-center cursor-pointer">
-                      <input v-model="transport.isIncluded" type="checkbox" class="form-checkbox mr-2" />
-                      {{ $t('tour.transportation.included') }}
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Accommodations Tab -->
-        <div v-show="activeTab === 'accommodations'" class="max-w-4xl">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('tour.accommodation.title') }}</h3>
-              <button class="btn-outline btn-sm" @click="addAccommodation">
-                <span class="material-icons mr-1">add</span>
-                {{ $t('tour.accommodation.add') }}
-              </button>
-            </div>
-
-            <div v-if="form.accommodations.length === 0" class="text-center py-12 text-gray-500">
-              <span class="material-icons text-4xl mb-2">hotel</span>
-              <p>{{ $t('tour.accommodation.title') }}</p>
-              <button class="btn-primary mt-4" @click="addAccommodation">
-                {{ $t('tour.accommodation.add') }}
-              </button>
-            </div>
-
-            <div v-else class="space-y-4">
-              <div
-                v-for="(acc, index) in form.accommodations"
-                :key="index"
-                class="border border-gray-200 dark:border-slate-700 rounded-lg p-4"
-              >
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-sm font-medium text-gray-500">
-                    {{ $t('tour.accommodation.title') }} {{ index + 1 }}
+                  <span
+                    class="text-xs font-medium ml-1"
+                    :class="
+                      form.basePricing.currency === curr.code
+                        ? 'text-primary-700 dark:text-primary-300'
+                        : 'text-gray-600 dark:text-slate-400'
+                    "
+                  >
+                    {{ curr.code }}
                   </span>
-                  <button class="text-red-500 hover:text-red-700" @click="removeAccommodation(index)">
-                    <span class="material-icons">delete</span>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div class="md:col-span-2">
-                    <label class="form-label">{{ $t('tour.accommodation.hotelName') }}</label>
-                    <input v-model="acc.hotelName" type="text" class="form-input" />
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.accommodation.starRating') }}</label>
-                    <select v-model.number="acc.starRating" class="form-input">
-                      <option :value="3">3 Star</option>
-                      <option :value="4">4 Star</option>
-                      <option :value="5">5 Star</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.accommodation.nights') }}</label>
-                    <input v-model.number="acc.nights" type="number" min="1" class="form-input" />
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.accommodation.mealPlan') }}</label>
-                    <select v-model="acc.mealPlan" class="form-input">
-                      <option v-for="plan in mealPlans" :key="plan.value" :value="plan.value">
-                        {{ $t(plan.label) }}
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="form-label">{{ $t('tour.accommodation.roomType') }}</label>
-                    <input v-model="acc.roomType" type="text" class="form-input" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Inclusions/Exclusions Tab -->
-        <div v-show="activeTab === 'extras'" class="max-w-4xl space-y-6">
-          <!-- Inclusions -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('tour.inclusions.title') }}</h3>
-              <button class="btn-outline btn-sm" @click="addInclusion">
-                <span class="material-icons mr-1">add</span>
-                {{ $t('tour.inclusions.add') }}
-              </button>
-            </div>
-
-            <div class="space-y-3">
-              <div
-                v-for="(item, index) in form.inclusions"
-                :key="index"
-                class="flex items-start gap-3"
-              >
-                <span class="material-icons text-green-500 mt-2">check_circle</span>
-                <div class="flex-1">
-                  <MultiLangInput v-model="form.inclusions[index]" :languages="B2C_LANGUAGES" />
-                </div>
-                <button class="text-red-500 hover:text-red-700 mt-2" @click="removeInclusion(index)">
-                  <span class="material-icons">close</span>
                 </button>
               </div>
             </div>
+
+            <!-- Starting Price -->
+            <div>
+              <label class="form-label">{{ $t('tour.basePricing.startingPrice') }}</label>
+              <div class="relative w-1/2">
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium"
+                >
+                  {{ getCurrencySymbol(form.basePricing.currency) }}
+                </span>
+                <input
+                  v-model.number="form.basePricing.startingPrice"
+                  type="number"
+                  min="0"
+                  class="form-input pl-8"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <!-- Detailed Accommodation Pricing (Optional) -->
+            <div
+              v-if="showDetailedPricing"
+              class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700 space-y-4"
+            >
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ $t('tour.basePricing.accommodationHint') }}
+              </p>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="form-label text-xs">{{ $t('tour.basePricing.single') }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.single"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label class="form-label text-xs">{{ $t('tour.basePricing.double') }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.double"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label class="form-label text-xs">{{ $t('tour.basePricing.triple') }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.triple"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label class="form-label text-xs">{{ $t('tour.basePricing.childWithBed') }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.childWithBed"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label class="form-label text-xs">{{
+                    $t('tour.basePricing.childWithoutBed')
+                  }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.childWithoutBed"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label class="form-label text-xs">{{ $t('tour.basePricing.infant') }}</label>
+                  <input
+                    v-model.number="form.basePricing.accommodationPricing.infant"
+                    type="number"
+                    min="0"
+                    class="form-input"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Exclusions -->
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('tour.exclusions.title') }}</h3>
-              <button class="btn-outline btn-sm" @click="addExclusion">
-                <span class="material-icons mr-1">add</span>
-                {{ $t('tour.exclusions.add') }}
+          <!-- Tags Card -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
+            <h3 class="text-lg font-medium mb-4">{{ $t('tour.fields.tags') }}</h3>
+
+            <div class="flex gap-2">
+              <input
+                v-model="tagInput"
+                type="text"
+                class="form-input flex-1"
+                :placeholder="$t('tour.fields.tagsPlaceholder')"
+                @keydown.enter.prevent="addTag"
+              />
+              <button type="button" class="btn-outline" @click="addTag">
+                <span class="material-icons mr-2">add</span>
+                {{ $t('common.add') }}
               </button>
             </div>
 
-            <div class="space-y-3">
-              <div
-                v-for="(item, index) in form.exclusions"
-                :key="index"
-                class="flex items-start gap-3"
+            <div class="flex flex-wrap gap-2 mt-4">
+              <span
+                v-for="tag in form.tags"
+                :key="tag"
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200"
               >
-                <span class="material-icons text-red-500 mt-2">cancel</span>
-                <div class="flex-1">
-                  <MultiLangInput v-model="form.exclusions[index]" :languages="B2C_LANGUAGES" />
-                </div>
-                <button class="text-red-500 hover:text-red-700 mt-2" @click="removeExclusion(index)">
-                  <span class="material-icons">close</span>
+                {{ tag }}
+                <button
+                  type="button"
+                  class="text-gray-400 hover:text-red-500"
+                  @click="removeTag(tag)"
+                >
+                  <span class="material-icons text-sm">close</span>
                 </button>
-              </div>
+              </span>
+              <span v-if="form.tags.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+                {{ $t('tour.fields.noTags') }}
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Departures Tab (only for existing tours) -->
-        <div v-show="activeTab === 'departures'" class="max-w-6xl">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-lg font-medium">{{ $t('departure.title') }}</h3>
-              <button v-if="!isNew" class="btn-primary" @click="goToDepartures">
+        <!-- Schedule -->
+        <div v-show="activeTab === 'schedule'" class="max-w-6xl space-y-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium">{{ $t('tour.tabs.schedule') }}</h3>
+              <button v-if="!isNew" type="button" class="btn-outline" @click="goToDepartures">
                 <span class="material-icons mr-2">calendar_month</span>
                 {{ $t('departure.calendar') }}
               </button>
             </div>
 
-            <div v-if="isNew" class="text-center py-12 text-gray-500">
-              <span class="material-icons text-4xl mb-2">info</span>
-              <p>{{ $t('common.saveFirst') || 'Save the tour first to manage departures' }}</p>
-            </div>
+            <TourScheduleBuilder
+              :tour-id="isNew ? '' : String(route.params.id)"
+              @created="onDeparturesCreated"
+            />
+          </div>
+        </div>
 
-            <div v-else-if="departures.length === 0" class="text-center py-12 text-gray-500">
-              <span class="material-icons text-4xl mb-2">event</span>
-              <p>{{ $t('departure.noDepartures') }}</p>
-              <button class="btn-primary mt-4" @click="goToDepartures">
-                {{ $t('departure.createFirst') }}
+        <!-- Route -->
+        <div v-show="activeTab === 'route'" class="max-w-4xl space-y-6">
+          <TourRouteEditor
+            v-model="form.routePlan"
+            :tour-id="isNew ? '' : String(route.params.id)"
+          />
+        </div>
+
+        <!-- Content -->
+        <div v-show="activeTab === 'content'" class="max-w-4xl space-y-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-4"
+          >
+            <h3 class="text-lg font-medium">{{ $t('tour.tabs.content') }}</h3>
+
+            <div>
+              <label class="form-label">{{ $t('tour.content.shortDescription') }}</label>
+              <MultiLangInput
+                v-model="form.content.shortDescription"
+                :languages="B2C_LANGUAGES"
+                type="textarea"
+                :rows="2"
+              />
+            </div>
+            <div>
+              <label class="form-label">{{ $t('tour.content.description') }}</label>
+              <MultiLangInput
+                v-model="form.content.description"
+                :languages="B2C_LANGUAGES"
+                type="textarea"
+                :rows="5"
+              />
+            </div>
+            <div>
+              <label class="form-label">{{ $t('tour.content.importantInfo') }}</label>
+              <MultiLangInput
+                v-model="form.content.importantInfo"
+                :languages="B2C_LANGUAGES"
+                type="textarea"
+                :rows="4"
+              />
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-4"
+          >
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-medium">{{ $t('tour.content.included') }}</h3>
+              <button type="button" class="btn-outline btn-sm" @click="addIncluded">
+                <span class="material-icons mr-1">add</span>
+                {{ $t('common.add') }}
               </button>
             </div>
+            <div class="space-y-3">
+              <div
+                v-for="(item, idx) in form.content.included"
+                :key="idx"
+                class="flex items-start gap-3"
+              >
+                <span class="material-icons text-green-500 mt-2">check_circle</span>
+                <div class="flex-1">
+                  <MultiLangInput v-model="form.content.included[idx]" :languages="B2C_LANGUAGES" />
+                </div>
+                <button
+                  type="button"
+                  class="text-red-500 hover:text-red-700 mt-2"
+                  @click="removeIncluded(idx)"
+                >
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+              <p
+                v-if="form.content.included.length === 0"
+                class="text-sm text-gray-500 dark:text-gray-400"
+              >
+                {{ $t('tour.content.noIncluded') }}
+              </p>
+            </div>
+          </div>
 
-            <div v-else class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b border-gray-200 dark:border-slate-700">
-                    <th class="text-left py-3 px-4 font-medium text-gray-500">{{ $t('departure.fields.departureDate') }}</th>
-                    <th class="text-left py-3 px-4 font-medium text-gray-500">{{ $t('departure.fields.returnDate') }}</th>
-                    <th class="text-center py-3 px-4 font-medium text-gray-500">{{ $t('departure.capacity.available') }}</th>
-                    <th class="text-left py-3 px-4 font-medium text-gray-500">{{ $t('departure.fields.status') }}</th>
-                    <th class="text-right py-3 px-4 font-medium text-gray-500">{{ $t('departure.fields.price') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="dep in departures"
-                    :key="dep._id"
-                    class="border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/50"
-                  >
-                    <td class="py-3 px-4">{{ formatDate(dep.departureDate) }}</td>
-                    <td class="py-3 px-4">{{ formatDate(dep.returnDate) }}</td>
-                    <td class="py-3 px-4 text-center">
-                      <span class="font-medium">{{ dep.capacity?.available || 0 }}</span>
-                      <span class="text-gray-500"> / {{ dep.capacity?.total || 0 }}</span>
-                    </td>
-                    <td class="py-3 px-4">
-                      <span class="px-2 py-1 rounded-full text-xs font-medium" :class="getDepartureStatusClass(dep.status)">
-                        {{ $t(`departure.departureStatuses.${dep.status}`) }}
-                      </span>
-                    </td>
-                    <td class="py-3 px-4 text-right font-medium">
-                      {{ formatCurrency(dep.pricing?.adult?.double, dep.currency) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6 space-y-4"
+          >
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-medium">{{ $t('tour.content.excluded') }}</h3>
+              <button type="button" class="btn-outline btn-sm" @click="addExcluded">
+                <span class="material-icons mr-1">add</span>
+                {{ $t('common.add') }}
+              </button>
+            </div>
+            <div class="space-y-3">
+              <div
+                v-for="(item, idx) in form.content.excluded"
+                :key="idx"
+                class="flex items-start gap-3"
+              >
+                <span class="material-icons text-red-500 mt-2">cancel</span>
+                <div class="flex-1">
+                  <MultiLangInput v-model="form.content.excluded[idx]" :languages="B2C_LANGUAGES" />
+                </div>
+                <button
+                  type="button"
+                  class="text-red-500 hover:text-red-700 mt-2"
+                  @click="removeExcluded(idx)"
+                >
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+              <p
+                v-if="form.content.excluded.length === 0"
+                class="text-sm text-gray-500 dark:text-gray-400"
+              >
+                {{ $t('tour.content.noExcluded') }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gallery -->
+        <div v-show="activeTab === 'gallery'" class="max-w-6xl space-y-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
+            <TourGalleryUploader
+              v-model="form.gallery"
+              :tour-id="isNew ? '' : String(route.params.id)"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-4">
+              {{ $t('tour.gallery.saveHint') }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Extras -->
+        <div v-show="activeTab === 'extras'" class="max-w-4xl space-y-6">
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+          >
+            <h3 class="text-lg font-medium mb-2">{{ $t('tour.tabs.extras') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ $t('tour.extras.manageHint') }}
+            </p>
+            <div class="mt-4">
+              <button type="button" class="btn-outline" @click="goToExtras">
+                <span class="material-icons mr-2">extension</span>
+                {{ $t('extra.extras') }}
+              </button>
             </div>
           </div>
         </div>
@@ -582,406 +537,339 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
 import { useTourStore } from '@/stores/tour'
-import { getTourTypes, getTransportationTypes, getMealPlans } from '@/services/tourService'
+import * as tourService from '@/services/tourService'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
-import { formatCurrency } from '@booking-engine/utils'
+import TourScheduleBuilder from '@/components/tour/TourScheduleBuilder.vue'
+import TourRouteEditor from '@/components/tour/TourRouteEditor.vue'
+import TourGalleryUploader from '@/components/tour/TourGalleryUploader.vue'
 import { B2C_LANGUAGES } from '@/constants/languages'
+import { CURRENCIES } from '@/data/countries'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-const toast = useToast()
 const tourStore = useTourStore()
 
-// State
 const isLoading = ref(false)
 const isSaving = ref(false)
 const activeTab = ref('basic')
+const tagInput = ref('')
+const tourTypes = ref([])
+const showDetailedPricing = ref(false)
 
-// Data
-const tourTypes = getTourTypes()
-const transportTypes = getTransportationTypes()
-const mealPlans = getMealPlans()
-
-// Computed
 const isNew = computed(() => route.name === 'tour-new' || route.params.id === 'new')
-const departures = computed(() => tourStore.departures)
 
-// Form
-const form = ref({
-  code: '',
-  name: { tr: '', en: '' },
-  shortDescription: { tr: '', en: '' },
-  description: { tr: '', en: '' },
-  tourType: 'package',
-  destination: {
-    country: '',
-    city: '',
-    region: ''
-  },
-  duration: {
-    nights: 0,
-    days: 1
-  },
-  transportation: [],
-  accommodations: [],
-  itinerary: [],
-  inclusions: [],
-  exclusions: [],
-  images: [],
-  isFeatured: false,
-  displayOrder: 0,
-  status: 'draft',
-  visibility: {
-    b2c: true,
-    b2b: true
+const tabs = computed(() => [
+  { key: 'basic', label: t('tour.tabs.basic'), icon: 'info' },
+  { key: 'schedule', label: t('tour.tabs.schedule'), icon: 'event' },
+  { key: 'route', label: t('tour.tabs.route'), icon: 'route' },
+  { key: 'content', label: t('tour.tabs.content'), icon: 'subject' },
+  { key: 'gallery', label: t('tour.tabs.gallery'), icon: 'photo_library' },
+  { key: 'extras', label: t('tour.tabs.extras'), icon: 'extension' }
+])
+
+const form = ref(getEmptyForm())
+
+function getEmptyForm() {
+  return {
+    code: '',
+    name: { tr: '', en: '' },
+    status: 'draft',
+    type: 'other',
+    visibility: { b2c: true, b2b: true },
+    isFeatured: false,
+    displayOrder: 0,
+    tags: [],
+    basePricing: {
+      currency: 'TRY',
+      startingPrice: 0,
+      accommodationPricing: {
+        single: null,
+        double: null,
+        triple: null,
+        childWithBed: null,
+        childWithoutBed: null,
+        infant: null
+      }
+    },
+    content: {
+      shortDescription: { tr: '', en: '' },
+      description: { tr: '', en: '' },
+      importantInfo: { tr: '', en: '' },
+      included: [],
+      excluded: []
+    },
+    routePlan: { mode: 'sequence', stops: [] },
+    gallery: []
   }
-})
-
-// Tabs
-const tabs = computed(() => {
-  const baseTabs = [
-    { key: 'basic', label: t('tour.tabs.basic'), icon: 'info' },
-    { key: 'itinerary', label: t('tour.tabs.itinerary'), icon: 'route' },
-    { key: 'transportation', label: t('tour.tabs.transportation'), icon: 'commute' },
-    { key: 'accommodations', label: t('tour.tabs.accommodations'), icon: 'hotel' },
-    { key: 'extras', label: t('tour.tabs.extras'), icon: 'playlist_add' }
-  ]
-
-  if (!isNew.value) {
-    baseTabs.push({ key: 'departures', label: t('departure.departures'), icon: 'event' })
-  }
-
-  return baseTabs
-})
-
-// Methods
-const getLocalizedName = (name) => {
-  if (!name) return ''
-  return name[locale.value] || name.tr || name.en || ''
 }
 
-// Generate tour code automatically
-const generateTourCode = () => {
-  const prefix = 'TUR'
+function getLocalized(obj) {
+  if (!obj) return ''
+  if (typeof obj === 'string') return obj
+  return obj[locale.value] || obj.tr || obj.en || ''
+}
+
+function getCurrencySymbol(code) {
+  const curr = CURRENCIES.find(c => c.code === code)
+  return curr?.symbol || code
+}
+
+function generateTourCode() {
+  const prefix = 'TOUR'
   const timestamp = Date.now().toString(36).toUpperCase().slice(-4)
   const random = Math.random().toString(36).substring(2, 5).toUpperCase()
   form.value.code = `${prefix}${timestamp}${random}`
 }
 
-// Auto-sync days when nights change
-const onNightsChange = () => {
-  if (form.value.duration.nights >= 0) {
-    form.value.duration.days = form.value.duration.nights + 1
+function addTag() {
+  const v = String(tagInput.value || '').trim()
+  if (!v) return
+  if (!form.value.tags.includes(v)) {
+    form.value.tags.push(v)
   }
+  tagInput.value = ''
 }
 
-const getTransportIcon = (type) => {
-  const icons = {
-    flight: { icon: 'flight', class: 'text-blue-500' },
-    bus: { icon: 'directions_bus', class: 'text-orange-500' },
-    ferry: { icon: 'directions_boat', class: 'text-cyan-500' },
-    car: { icon: 'directions_car', class: 'text-purple-500' },
-    train: { icon: 'train', class: 'text-green-500' },
-    combined: { icon: 'multiple_stop', class: 'text-gray-500' }
-  }
-  return icons[type] || { icon: 'help', class: 'text-gray-400' }
+function removeTag(tag) {
+  form.value.tags = form.value.tags.filter(t => t !== tag)
 }
 
-const getDepartureStatusClass = (status) => {
-  const classes = {
-    scheduled: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    confirmed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-    cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    completed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-    sold_out: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-  }
-  return classes[status] || classes.scheduled
+function addIncluded() {
+  form.value.content.included.push({ tr: '', en: '' })
+}
+function removeIncluded(idx) {
+  form.value.content.included.splice(idx, 1)
+}
+function addExcluded() {
+  form.value.content.excluded.push({ tr: '', en: '' })
+}
+function removeExcluded(idx) {
+  form.value.content.excluded.splice(idx, 1)
 }
 
-const formatDate = (date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString(locale.value, { day: '2-digit', month: 'short', year: 'numeric' })
-}
+function sanitizePayload(data) {
+  const payload = JSON.parse(JSON.stringify(data || {}))
 
-// Itinerary Methods
-const addItineraryDay = () => {
-  form.value.itinerary.push({
-    day: form.value.itinerary.length + 1,
-    title: { tr: '', en: '' },
-    description: { tr: '', en: '' },
-    meals: { breakfast: false, lunch: false, dinner: false },
-    activities: [],
-    overnight: ''
-  })
-}
-
-const removeItineraryDay = (index) => {
-  form.value.itinerary.splice(index, 1)
-  // Renumber days
-  form.value.itinerary.forEach((day, i) => {
-    day.day = i + 1
-  })
-}
-
-// Transportation Methods
-const addTransportation = () => {
-  form.value.transportation.push({
-    type: 'flight',
-    direction: 'outbound',
-    carrier: '',
-    class: 'economy',
-    isIncluded: true,
-    sequence: form.value.transportation.length + 1
-  })
-}
-
-const removeTransportation = (index) => {
-  form.value.transportation.splice(index, 1)
-}
-
-// Accommodation Methods
-const addAccommodation = () => {
-  form.value.accommodations.push({
-    hotelName: '',
-    nights: 1,
-    mealPlan: 'bed_breakfast',
-    starRating: 4,
-    roomType: ''
-  })
-}
-
-const removeAccommodation = (index) => {
-  form.value.accommodations.splice(index, 1)
-}
-
-// Inclusion/Exclusion Methods
-const addInclusion = () => {
-  form.value.inclusions.push({ tr: '', en: '' })
-}
-
-const removeInclusion = (index) => {
-  form.value.inclusions.splice(index, 1)
-}
-
-const addExclusion = () => {
-  form.value.exclusions.push({ tr: '', en: '' })
-}
-
-const removeExclusion = (index) => {
-  form.value.exclusions.splice(index, 1)
-}
-
-// Navigation
-const goBack = () => {
-  router.push('/tours')
-}
-
-const goToDepartures = () => {
-  router.push(`/tours/${route.params.id}/departures`)
-}
-
-// Transform form data to match API schema
-const transformFormData = (data) => {
-  const transformed = { ...data }
-
-  // Transform accommodations: mealPlan -> mealPlanCode
-  if (transformed.accommodations?.length) {
-    transformed.accommodations = transformed.accommodations.map(acc => ({
-      ...acc,
-      mealPlanCode: acc.mealPlan || acc.mealPlanCode,
-      mealPlan: undefined // Remove ObjectId field
-    }))
-  }
-
-  // Transform itinerary meals: { breakfast: true } -> ['breakfast']
-  if (transformed.itinerary?.length) {
-    transformed.itinerary = transformed.itinerary.map(day => {
-      let mealsArray = []
-      if (day.meals) {
-        if (Array.isArray(day.meals)) {
-          mealsArray = day.meals
-        } else if (typeof day.meals === 'object') {
-          // Convert object to array
-          if (day.meals.breakfast) mealsArray.push('breakfast')
-          if (day.meals.lunch) mealsArray.push('lunch')
-          if (day.meals.dinner) mealsArray.push('dinner')
-          if (day.meals.snack) mealsArray.push('snack')
-        }
-      }
-      return {
-        ...day,
-        meals: mealsArray
-      }
+  // Remove UI-only fields from route stops
+  if (payload.routePlan?.stops?.length) {
+    payload.routePlan.stops = payload.routePlan.stops.map(s => {
+      const { location, ...rest } = s
+      return rest
     })
   }
 
-  return transformed
+  // Auto primaryLocation from first stop if not set
+  const firstStop = payload.routePlan?.stops?.[0]
+  if (firstStop?.locationRef?.refId && firstStop?.locationSnapshot?.name) {
+    payload.primaryLocation = {
+      type: firstStop.locationRef.type,
+      refId: firstStop.locationRef.refId,
+      name: firstStop.locationSnapshot.name
+    }
+  }
+
+  // Normalize gallery orders
+  if (Array.isArray(payload.gallery)) {
+    payload.gallery = payload.gallery.map((g, idx) => ({ ...g, order: idx + 1 }))
+  }
+
+  return payload
 }
 
-// Save
-const saveTour = async () => {
+async function saveTour() {
   isSaving.value = true
   try {
-    const payload = transformFormData(form.value)
+    const payload = sanitizePayload(form.value)
     if (isNew.value) {
-      const newTour = await tourStore.createTour(payload)
-      router.replace(`/tours/${newTour._id}`)
+      const created = await tourStore.createTour(payload)
+      router.replace(`/tours/${created._id}`)
     } else {
       await tourStore.updateTour(route.params.id, payload)
     }
-  } catch (error) {
-    console.error('Save error:', error)
   } finally {
     isSaving.value = false
   }
 }
 
-// Duplicate
-const duplicateTour = async () => {
-  try {
-    const newTour = await tourStore.duplicateTour(route.params.id)
-    router.push(`/tours/${newTour._id}`)
-  } catch (error) {
-    console.error('Duplicate error:', error)
-  }
+async function duplicateTour() {
+  const created = await tourStore.duplicateTour(route.params.id)
+  router.push(`/tours/${created._id}`)
 }
 
-// Load Tour
-const loadTour = async () => {
-  if (isNew.value) return
+function goBack() {
+  router.push('/tours')
+}
 
+function goToDepartures() {
+  router.push(`/tours/${route.params.id}/departures`)
+}
+
+function goToExtras() {
+  router.push('/tours/extras')
+}
+
+function onDeparturesCreated() {
+  // no-op for now; could show toast via store
+}
+
+async function loadTour() {
+  if (isNew.value) {
+    form.value = getEmptyForm()
+    return
+  }
   isLoading.value = true
   try {
     const tour = await tourStore.fetchTour(route.params.id)
-    if (tour) {
-      // Map tour data to form
-      Object.keys(form.value).forEach(key => {
-        if (tour[key] !== undefined) {
-          form.value[key] = tour[key]
+    const emptyForm = getEmptyForm()
+    form.value = {
+      ...emptyForm,
+      ...tour,
+      basePricing: {
+        ...emptyForm.basePricing,
+        ...(tour?.basePricing || {}),
+        accommodationPricing: {
+          ...emptyForm.basePricing.accommodationPricing,
+          ...(tour?.basePricing?.accommodationPricing || {})
         }
-      })
-
-      // Load departures
-      await tourStore.fetchDepartures(route.params.id)
+      },
+      content: { ...emptyForm.content, ...(tour?.content || {}) },
+      routePlan: { ...emptyForm.routePlan, ...(tour?.routePlan || {}) },
+      gallery: tour?.gallery || []
     }
-  } catch (error) {
-    console.error('Load error:', error)
+    // Show detailed pricing if any accommodation pricing exists
+    const accPricing = form.value.basePricing.accommodationPricing
+    showDetailedPricing.value = !!(
+      accPricing?.single ||
+      accPricing?.double ||
+      accPricing?.triple ||
+      accPricing?.childWithBed ||
+      accPricing?.childWithoutBed ||
+      accPricing?.infant
+    )
   } finally {
     isLoading.value = false
   }
 }
 
-// Watch for route changes
-watch(() => route.params.id, () => {
-  loadTour()
-})
+watch(
+  () => route.params.id,
+  () => loadTour()
+)
 
-// Apply AI imported data to form
-const applyAIData = (data) => {
-  if (!data) return
+function applyAIData(aiData) {
+  if (!aiData) return
 
-  // Basic fields
-  if (data.code) form.value.code = data.code
-  if (data.name) form.value.name = data.name
-  if (data.shortDescription) form.value.shortDescription = data.shortDescription
-  if (data.description) form.value.description = data.description
-  if (data.tourType) form.value.tourType = data.tourType
+  // Map AI extracted data to form structure
+  if (aiData.code) form.value.code = aiData.code
+  if (aiData.name) form.value.name = { tr: aiData.name?.tr || '', en: aiData.name?.en || '' }
+  if (aiData.tourType) form.value.type = aiData.tourType
 
-  // Destination
-  if (data.destination) {
-    form.value.destination = {
-      country: data.destination.country || '',
-      city: data.destination.city || '',
-      region: data.destination.region || ''
+  // Base Pricing - extract starting price from double occupancy (most common)
+  if (aiData.basePricing) {
+    const startingPrice =
+      aiData.basePricing.startingPrice ||
+      aiData.basePricing.adult?.double ||
+      aiData.basePricing.adult?.single ||
+      0
+
+    // Check if detailed pricing was extracted
+    const hasDetailedPricing =
+      aiData.basePricing.adult?.single ||
+      aiData.basePricing.adult?.double ||
+      aiData.basePricing.adult?.triple
+
+    form.value.basePricing = {
+      currency: aiData.basePricing.currency || 'TRY',
+      startingPrice,
+      accommodationPricing: hasDetailedPricing
+        ? {
+            single: aiData.basePricing.adult?.single || null,
+            double: aiData.basePricing.adult?.double || null,
+            triple: aiData.basePricing.adult?.triple || null,
+            childWithBed: aiData.basePricing.child?.withBed || null,
+            childWithoutBed: aiData.basePricing.child?.withoutBed || null,
+            infant: aiData.basePricing.infant?.price || null
+          }
+        : getEmptyForm().basePricing.accommodationPricing
+    }
+
+    // Show detailed pricing toggle if AI extracted detailed prices
+    if (hasDetailedPricing) {
+      showDetailedPricing.value = true
     }
   }
 
-  // Duration
-  if (data.duration) {
-    form.value.duration = {
-      nights: data.duration.nights || 0,
-      days: data.duration.days || 1
+  // Content
+  if (aiData.shortDescription) {
+    form.value.content.shortDescription = {
+      tr: aiData.shortDescription?.tr || '',
+      en: aiData.shortDescription?.en || ''
     }
   }
-
-  // Transportation
-  if (data.transportation?.length) {
-    form.value.transportation = data.transportation.map((t, idx) => ({
-      type: t.type || 'flight',
-      direction: 'outbound',
-      carrier: t.carrier || '',
-      class: t.class || 'economy',
-      isIncluded: t.isIncluded !== false,
-      sequence: idx + 1
-    }))
-  }
-
-  // Accommodations
-  if (data.accommodations?.length) {
-    form.value.accommodations = data.accommodations.map((a, idx) => ({
-      hotelName: a.hotelName || '',
-      nights: a.nights || 1,
-      mealPlan: a.mealPlanCode?.toLowerCase().replace(/-/g, '_') || 'bed_breakfast',
-      starRating: a.starRating || 4,
-      isMain: idx === 0
-    }))
-  }
-
-  // Itinerary
-  if (data.itinerary?.length) {
-    form.value.itinerary = data.itinerary.map(day => ({
-      day: day.day || 1,
-      title: day.title || { tr: '', en: '' },
-      description: day.description || { tr: '', en: '' },
-      meals: {
-        breakfast: day.meals?.includes('breakfast') || false,
-        lunch: day.meals?.includes('lunch') || false,
-        dinner: day.meals?.includes('dinner') || false
-      },
-      activities: day.activities || [],
-      overnight: day.accommodation || ''
-    }))
+  if (aiData.description) {
+    form.value.content.description = {
+      tr: aiData.description?.tr || '',
+      en: aiData.description?.en || ''
+    }
   }
 
   // Inclusions
-  if (data.inclusions?.length) {
-    form.value.inclusions = data.inclusions.map(item => {
-      if (typeof item === 'object' && item.tr !== undefined) {
-        return item
-      }
-      return { tr: String(item), en: '' }
-    })
+  if (Array.isArray(aiData.inclusions) && aiData.inclusions.length > 0) {
+    form.value.content.included = aiData.inclusions.map(item => ({
+      tr: item?.tr || (typeof item === 'string' ? item : ''),
+      en: item?.en || ''
+    }))
   }
 
   // Exclusions
-  if (data.exclusions?.length) {
-    form.value.exclusions = data.exclusions.map(item => {
-      if (typeof item === 'object' && item.tr !== undefined) {
-        return item
-      }
-      return { tr: String(item), en: '' }
-    })
+  if (Array.isArray(aiData.exclusions) && aiData.exclusions.length > 0) {
+    form.value.content.excluded = aiData.exclusions.map(item => ({
+      tr: item?.tr || (typeof item === 'string' ? item : ''),
+      en: item?.en || ''
+    }))
+  }
+
+  // Tags from highlights
+  if (Array.isArray(aiData.highlights)) {
+    form.value.tags = aiData.highlights
+      .map(h => h?.tr || (typeof h === 'string' ? h : ''))
+      .filter(Boolean)
+      .slice(0, 10)
+  }
+
+  // Route stops from itinerary
+  if (Array.isArray(aiData.itinerary) && aiData.itinerary.length > 0) {
+    form.value.routePlan.stops = aiData.itinerary.map((day, idx) => ({
+      sequence: idx + 1,
+      locationRef: { type: 'city', refId: null },
+      locationSnapshot: {
+        name: day.overnight?.tr || day.accommodation || '',
+        countryCode: 'TR'
+      },
+      stay: { unit: 'days', value: 1 },
+      title: { tr: day.title?.tr || `Gün ${day.day}`, en: day.title?.en || `Day ${day.day}` },
+      description: { tr: day.description?.tr || '', en: day.description?.en || '' },
+      tags: day.meals || []
+    }))
   }
 }
 
-// Lifecycle
 onMounted(() => {
   loadTour()
+  tourTypes.value = tourService.getTourTypes()
 
   // Check for AI imported data
   if (route.query.ai === 'true') {
-    const aiData = sessionStorage.getItem('aiTourData')
-    if (aiData) {
+    const aiDataStr = sessionStorage.getItem('aiTourData')
+    if (aiDataStr) {
       try {
-        const parsedData = JSON.parse(aiData)
-        applyAIData(parsedData)
+        const aiData = JSON.parse(aiDataStr)
+        applyAIData(aiData)
         sessionStorage.removeItem('aiTourData')
-        toast.success(t('tour.aiImport.success'))
-      } catch (error) {
-        console.error('Failed to parse AI data:', error)
+      } catch (e) {
+        console.error('Failed to parse AI data:', e)
       }
     }
   }

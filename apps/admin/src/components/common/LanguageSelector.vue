@@ -1,7 +1,12 @@
 <template>
   <div ref="dropdownRef" class="relative">
     <button
-      class="flex items-center gap-2 px-3 py-2 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+      class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+      :class="
+        variant === 'auth'
+          ? 'text-white hover:bg-white/10'
+          : 'text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+      "
       :title="$t('nav.language')"
       @click="isOpen = !isOpen"
     >
@@ -79,6 +84,15 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { setLocale } from '@/plugins/i18n'
+
+// Props
+defineProps({
+  variant: {
+    type: String,
+    default: 'default', // 'default' or 'auth'
+    validator: value => ['default', 'auth'].includes(value)
+  }
+})
 
 const { locale } = useI18n()
 const isOpen = ref(false)

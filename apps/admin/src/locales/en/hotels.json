@@ -776,6 +776,7 @@
     "hierarchicalLocation": "Hierarchical Location",
     "hierarchicalLocationHelp": "Define the hotel location by selecting country, city and tourism region",
     "cities": "Cities",
+    "districts": "Districts",
     "regions": "Tourism Regions",
     "tourismRegions": "Tourism Regions",
     "noCities": "No cities defined for this country yet",
@@ -814,6 +815,11 @@
     "noRegionsSelected": "No regions selected yet",
     "allRegionsSelected": "All regions selected",
     "noRegionsAvailable": "No tourism regions defined for this city",
-    "selectCityForRegions": "Select a city to view tourism regions"
+    "selectCityForRegions": "Select a city to view tourism regions",
+    "createNew": "Create New Location",
+    "name": "Name",
+    "type": "Location Type",
+    "countryCode": "Country Code",
+    "created": "Location created successfully"
   }
 }

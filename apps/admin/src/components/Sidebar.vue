@@ -8,20 +8,15 @@
       class="flex items-center px-4 mb-6"
       :class="uiStore.sidebarExpanded ? 'justify-between' : 'justify-center'"
     >
-      <!-- App Logo -->
-      <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-        <img
-          src="/favicon-96x96.png"
-          alt="M"
-          class="w-12 h-12 object-contain"
-        />
+      <!-- App Logo - Uses uploaded favicon if available -->
+      <div
+        class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+      >
+        <img :src="siteSettingsStore.faviconUrl" alt="Logo" class="w-10 h-10 object-contain" />
       </div>
 
       <!-- Current Module Icon (only when expanded) -->
-      <span
-        v-if="uiStore.sidebarExpanded"
-        class="ml-3 truncate flex items-center"
-      >
+      <span v-if="uiStore.sidebarExpanded" class="ml-3 truncate flex items-center">
         <span
           class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0"
         >
@@ -128,11 +123,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { usePartnerStore } from '@/stores/partner'
+import { useSiteSettingsStore } from '@/stores/siteSettings'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -140,7 +136,15 @@ const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const partnerStore = usePartnerStore()
+const siteSettingsStore = useSiteSettingsStore()
 const { t } = useI18n()
+
+// Fetch site settings if not loaded (for favicon)
+onMounted(() => {
+  if (!siteSettingsStore.loaded && !siteSettingsStore.loading) {
+    siteSettingsStore.fetchSettings()
+  }
+})
 
 // Emit
 const emit = defineEmits(['navigate'])
@@ -210,7 +214,12 @@ const mainSection = computed(() => {
 
   // Dashboard is always visible if user has permission
   if (hasPermission('dashboard')) {
-    items.push({ name: 'dashboard', to: '/dashboard', icon: 'dashboard', label: t('nav.dashboard') })
+    items.push({
+      name: 'dashboard',
+      to: '/dashboard',
+      icon: 'dashboard',
+      label: t('nav.dashboard')
+    })
   }
 
   // Determine effective view mode:
@@ -297,10 +306,20 @@ const mainSection = computed(() => {
       items.push({ name: 'hotels', to: '/hotels', icon: 'hotel', label: t('nav.hotels') })
     }
     if (hasPermission('planning')) {
-      items.push({ name: 'planning', to: '/planning', icon: 'event_note', label: t('nav.planning') })
+      items.push({
+        name: 'planning',
+        to: '/planning',
+        icon: 'event_note',
+        label: t('nav.planning')
+      })
     }
     if (hasPermission('booking')) {
-      items.push({ name: 'bookings', to: '/bookings', icon: 'book_online', label: t('nav.bookings') })
+      items.push({
+        name: 'bookings',
+        to: '/bookings',
+        icon: 'book_online',
+        label: t('nav.bookings')
+      })
     }
     if (hasPermission('tours') || hasPermission('booking')) {
       items.push({ name: 'tours', to: '/tours', icon: 'tour', label: t('nav.tours') })
@@ -309,7 +328,12 @@ const mainSection = computed(() => {
       items.push({ name: 'pms-integration', to: '/pms-integration', icon: 'link', label: 'PMS' })
     }
     if (hasPermission('settings')) {
-      items.push({ name: 'developers', to: '/developers', icon: 'code', label: t('nav.developers') })
+      items.push({
+        name: 'developers',
+        to: '/developers',
+        icon: 'code',
+        label: t('nav.developers')
+      })
     }
 
     // Only real partner users can see their own subscription

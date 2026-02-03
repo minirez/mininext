@@ -1,11 +1,15 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 flex items-center justify-center p-4">
+  <div
+    class="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 flex items-center justify-center p-4"
+  >
     <!-- Loading State -->
     <div
       v-if="loading"
       class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md text-center"
     >
-      <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div
+        class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
         <span class="material-icons text-3xl text-purple-600 animate-spin">refresh</span>
       </div>
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -21,7 +25,9 @@
       v-else-if="error"
       class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md text-center"
     >
-      <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div
+        class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
         <span class="material-icons text-3xl text-red-600 dark:text-red-400">error</span>
       </div>
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -44,7 +50,9 @@
       v-else-if="success"
       class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md text-center"
     >
-      <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div
+        class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
         <span class="material-icons text-3xl text-green-600 dark:text-green-400">check_circle</span>
       </div>
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -69,7 +77,9 @@
     >
       <!-- Header -->
       <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30">
+        <div
+          class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30"
+        >
           <span class="material-icons text-3xl text-white">how_to_reg</span>
         </div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -83,7 +93,9 @@
       <!-- User Info -->
       <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+          <div
+            class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"
+          >
             <span class="material-icons text-purple-600 dark:text-purple-400">email</span>
           </div>
           <div class="flex-1">
@@ -176,7 +188,10 @@
               }}</span>
             </button>
           </div>
-          <p v-if="errors.confirmPassword" class="mt-1 text-sm text-red-500 flex items-center gap-1">
+          <p
+            v-if="errors.confirmPassword"
+            class="mt-1 text-sm text-red-500 flex items-center gap-1"
+          >
             <span class="material-icons text-sm">error</span>
             {{ errors.confirmPassword }}
           </p>
@@ -198,7 +213,10 @@
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-500 dark:text-slate-400">
           {{ $t('users.activation.alreadyHaveAccount') }}
-          <router-link to="/login" class="text-purple-600 dark:text-purple-400 hover:underline font-medium">
+          <router-link
+            to="/login"
+            class="text-purple-600 dark:text-purple-400 hover:underline font-medium"
+          >
             {{ $t('auth.login') }}
           </router-link>
         </p>
@@ -220,8 +238,14 @@ const { t } = useI18n()
 const toast = useToast()
 
 // Async action composables
-const { isLoading: loading, execute: executeVerify } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
-const { isLoading: saving, execute: executeActivate } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loading, execute: executeVerify } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
+const { isLoading: saving, execute: executeActivate } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 const error = ref(false)
 const errorMessage = ref('')
@@ -295,18 +319,15 @@ onMounted(async () => {
     return
   }
 
-  await executeVerify(
-    () => verifyActivationToken(token),
-    {
-      onSuccess: response => {
-        user.value = response.data
-      },
-      onError: err => {
-        error.value = true
-        errorMessage.value = err.response?.data?.message || t('users.activation.invalidOrExpired')
-      }
+  await executeVerify(() => verifyActivationToken(token), {
+    onSuccess: response => {
+      user.value = response.data
+    },
+    onError: err => {
+      error.value = true
+      errorMessage.value = err.response?.data?.message || t('users.activation.invalidOrExpired')
     }
-  )
+  })
 })
 
 // Handle form submit
