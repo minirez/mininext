@@ -211,6 +211,28 @@ const updateMyProfile = async data => {
   }
 }
 
+// Update my admin theme (for partner users)
+const updateMyAdminTheme = async theme => {
+  try {
+    const response = await apiClient.put('/partners/my/admin-theme', { theme })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Update my admin theme failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Update partner admin theme (for platform admins)
+const updatePartnerAdminTheme = async (partnerId, theme) => {
+  try {
+    const response = await apiClient.put(`/partners/${partnerId}/admin-theme`, { theme })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Update partner admin theme failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 // Upload my logo (for partner users)
 const uploadMyLogo = async file => {
   try {
@@ -357,6 +379,8 @@ export default {
   // Partner Self-Profile
   getMyProfile,
   updateMyProfile,
+  updateMyAdminTheme,
+  updatePartnerAdminTheme,
   uploadMyLogo,
   deleteMyLogo,
   uploadMyFavicon,

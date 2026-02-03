@@ -209,6 +209,16 @@ const userSchema = new mongoose.Schema(
         paymentReminder: { type: Boolean, default: true },
         systemUpdates: { type: Boolean, default: true }
       }
+    },
+
+    // User preferences (overrides partner branding where applicable)
+    preferences: {
+      // Admin panel theme - overrides partner.branding.adminTheme when set
+      adminTheme: {
+        type: String,
+        trim: true,
+        default: null
+      }
     }
   },
   {

@@ -40,7 +40,9 @@
       </div>
 
       <!-- Auth Form Container -->
-      <div class="bg-white rounded-2xl shadow-xl p-8">
+      <div
+        class="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-2xl shadow-xl p-8"
+      >
         <router-view />
       </div>
 

@@ -94,6 +94,13 @@ const partnerSchema = new mongoose.Schema(
     branding: {
       logo: String,
       favicon: String,
+      // Admin panel theme preference (stored per partner)
+      // NOTE: Used by apps/admin theme engine; safe to keep under branding for minimal churn
+      adminTheme: {
+        type: String,
+        default: 'midnight-blue',
+        trim: true
+      },
 
       // B2C Site Domain (Müşterilerin rezervasyon yaptığı site)
       siteDomain: {

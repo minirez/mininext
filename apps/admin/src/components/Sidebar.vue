@@ -8,19 +8,25 @@
       class="flex items-center px-4 mb-6"
       :class="uiStore.sidebarExpanded ? 'justify-between' : 'justify-center'"
     >
-      <!-- Dynamic Module Icon -->
-      <div
-        class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0"
-      >
-        <span class="material-icons text-white">{{ currentModuleIcon }}</span>
+      <!-- App Logo -->
+      <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0">
+        <img
+          src="/favicon-96x96.png"
+          alt="M"
+          class="w-12 h-12 object-contain"
+        />
       </div>
 
-      <!-- App Name (only when expanded) -->
+      <!-- Current Module Icon (only when expanded) -->
       <span
         v-if="uiStore.sidebarExpanded"
-        class="text-lg font-semibold text-gray-800 dark:text-white ml-3 truncate"
+        class="ml-3 truncate flex items-center"
       >
-        Booking
+        <span
+          class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0"
+        >
+          <span class="material-icons text-white">{{ currentModuleIcon }}</span>
+        </span>
       </span>
     </div>
 

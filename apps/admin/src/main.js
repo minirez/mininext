@@ -1,4 +1,5 @@
 import './assets/tailwind.css' // Import Tailwind CSS
+import './assets/themesLive.css' // Admin theme variables
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -16,9 +17,15 @@ async function initApp() {
 
   const app = createApp(App)
 
-  app.use(createPinia())
+  const pinia = createPinia()
+  app.use(pinia)
   app.use(router)
   app.use(i18n)
+
+  // Initialize theme engine early (before mount)
+  const { useThemeStore } = await import('@/stores/theme')
+  const themeStore = useThemeStore()
+  await themeStore.initializeTheme()
 
   // Expose router globally for service worker message handling
   window.__vueRouter = router

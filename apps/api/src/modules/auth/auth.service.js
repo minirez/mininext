@@ -258,13 +258,15 @@ export const me = asyncHandler(async (req, res) => {
         isOnline: user.isOnline,
         lastLogin: user.lastLogin,
         notificationPreferences: user.notificationPreferences,
+        preferences: user.preferences || {},
         avatar: user.avatar
       },
       account: account
         ? {
             id: account._id,
             name: user.accountType === 'partner' ? account.companyName : account.name,
-            type: user.accountType
+            type: user.accountType,
+            branding: account.branding || {}
           }
         : null
     }
@@ -527,6 +529,45 @@ export const unblockLoginBlock = asyncHandler(async (req, res) => {
     success: true,
     message: req.t ? req.t('ACCOUNT_UNBLOCKED') : 'Account has been unblocked successfully.',
     data: result
+  })
+})
+
+// Valid admin theme IDs
+const ADMIN_THEME_IDS = [
+  'midnight-blue', 'ocean', 'nord', 'graphite', 'sand', 'forest', 'rose', 'sunset',
+  'lavender', 'emerald', 'citrus', 'cyber', 'slate', 'coffee', 'winter', 'aurora',
+  'candy', 'abyss', 'silk', 'vintage'
+]
+
+const normalizeAdminThemeId = theme => {
+  if (!theme || typeof theme !== 'string') return null
+  const trimmed = theme.trim()
+  return ADMIN_THEME_IDS.includes(trimmed) ? trimmed : null
+}
+
+// Update user's admin theme preference
+export const updateMyAdminTheme = asyncHandler(async (req, res) => {
+  const { theme } = req.body
+
+  const normalized = normalizeAdminThemeId(theme)
+  if (!normalized) {
+    throw new BadRequestError('INVALID_THEME_ID')
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { 'preferences.adminTheme': normalized },
+    { new: true }
+  )
+
+  logger.info(`User ${req.user.email} updated admin theme to: ${normalized}`)
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('THEME_UPDATED') : 'Theme preference updated successfully',
+    data: {
+      preferences: user.preferences
+    }
   })
 })
 

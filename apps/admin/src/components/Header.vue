@@ -56,6 +56,9 @@
         <!-- Partner Selector (Platform Admin Only) -->
         <PartnerSelector />
 
+        <!-- Theme Selector -->
+        <ThemeSelector />
+
         <!-- Notification Bell -->
         <NotificationBell />
 
@@ -242,6 +245,7 @@ import { useHotelStore } from '@/stores/hotel'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
 import HotelSelector from '@/components/common/HotelSelector.vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
+import ThemeSelector from '@/components/common/ThemeSelector.vue'
 import { getAvatarUrl } from '@/utils/imageUrl'
 
 const router = useRouter()

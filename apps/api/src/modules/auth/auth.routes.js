@@ -326,6 +326,34 @@ router.post('/admin/unblock-account', protect, requirePlatformAdmin, authService
 
 /**
  * @swagger
+ * /api/auth/my/admin-theme:
+ *   put:
+ *     tags: [Auth]
+ *     summary: Update user's admin theme preference
+ *     description: Update the authenticated user's personal admin panel theme preference. This overrides the partner's branding theme.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [theme]
+ *             properties:
+ *               theme:
+ *                 type: string
+ *                 description: Theme ID (e.g., midnight-blue, ocean, nord, graphite)
+ *     responses:
+ *       200:
+ *         description: Theme preference updated successfully
+ *       400:
+ *         description: Invalid theme ID
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.put('/my/admin-theme', protect, authService.updateMyAdminTheme)
+
+/**
+ * @swagger
  * /api/auth/avatar:
  *   post:
  *     tags: [Auth]

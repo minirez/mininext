@@ -641,6 +641,28 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  // Force Mini theme on auth/public pages (no component lifecycle needed)
+  if (typeof document !== 'undefined') {
+    const isMiniThemeRoute =
+      to.path === '/auth' ||
+      to.path.startsWith('/auth/') ||
+      to.path.startsWith('/activate/') ||
+      to.path.startsWith('/invite/accept/')
+
+    if (isMiniThemeRoute) {
+      document.documentElement.dataset.theme = 'mini'
+    } else {
+      // Restore selected theme for all other routes
+      try {
+        const { useThemeStore } = await import('@/stores/theme')
+        const themeStore = useThemeStore()
+        document.documentElement.dataset.theme = themeStore.themeId
+      } catch {
+        // ignore (theme store not ready)
+      }
+    }
+  }
+
   // Handle regular admin routes
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresPlatformAdmin = to.matched.some(record => record.meta.requiresPlatformAdmin)

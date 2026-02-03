@@ -195,6 +195,16 @@ const terminateOtherSessions = async () => {
   }
 }
 
+const updateMyAdminTheme = async theme => {
+  try {
+    const response = await apiClient.put('/auth/my/admin-theme', { theme })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Auth Service: Update admin theme failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   login,
   verify2FA,
@@ -214,5 +224,7 @@ export default {
   // Sessions
   getMySessions,
   terminateSession,
-  terminateOtherSessions
+  terminateOtherSessions,
+  // Theme
+  updateMyAdminTheme
 }

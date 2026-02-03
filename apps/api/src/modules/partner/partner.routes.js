@@ -10,6 +10,7 @@ const router = express.Router()
 // These routes are for partners to manage their own profile
 router.get('/my/profile', protect, requirePartner, partnerService.getMyProfile)
 router.put('/my/profile', protect, requirePartner, partnerService.updateMyProfile)
+router.put('/my/admin-theme', protect, requirePartner, partnerService.updateMyAdminTheme)
 router.post('/my/profile/logo', protect, requirePartner, upload.single('logo'), partnerService.uploadMyLogo)
 router.delete('/my/profile/logo', protect, requirePartner, partnerService.deleteMyLogo)
 router.post('/my/profile/favicon', protect, requirePartner, upload.single('favicon'), partnerService.uploadMyFavicon)
@@ -32,6 +33,7 @@ router.get('/subscriptions/purchases', partnerService.getAllPurchases)
 
 router.get('/:id', partnerService.getPartner)
 router.put('/:id', partnerService.updatePartner)
+router.put('/:id/admin-theme', partnerService.updatePartnerAdminTheme)
 router.delete('/:id', partnerService.deletePartner)
 
 // Actions

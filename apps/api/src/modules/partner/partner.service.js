@@ -1146,6 +1146,95 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   })
 })
 
+// ==================== Admin Theme Preference ====================
+
+// Keep a single source of truth for allowed theme ids (admin panel)
+const ADMIN_THEME_IDS = [
+  'midnight-blue', // default (blue / dark blue)
+  'ocean',
+  'nord',
+  'graphite',
+  'sand',
+  'forest',
+  'rose',
+  'sunset',
+  'lavender',
+  'emerald',
+  'citrus',
+  'cyber',
+  'slate',
+  'coffee',
+  'winter',
+  'aurora',
+  'candy',
+  'abyss',
+  'silk',
+  'vintage'
+]
+
+const normalizeAdminThemeId = theme => {
+  if (!theme || typeof theme !== 'string') return null
+  const trimmed = theme.trim()
+  return ADMIN_THEME_IDS.includes(trimmed) ? trimmed : null
+}
+
+/**
+ * Update my admin theme (partner users)
+ * Route: PUT /partners/my/admin-theme
+ */
+export const updateMyAdminTheme = asyncHandler(async (req, res) => {
+  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  if (!partnerId) {
+    throw new BadRequestError('NOT_A_PARTNER_USER')
+  }
+
+  const theme = normalizeAdminThemeId(req.body?.theme)
+  if (!theme) {
+    throw new BadRequestError('INVALID_ADMIN_THEME')
+  }
+
+  const partner = await Partner.findById(partnerId)
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  if (!partner.branding) partner.branding = {}
+  partner.branding.adminTheme = theme
+  await partner.save()
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('ADMIN_THEME_UPDATED') : 'Admin theme updated successfully',
+    data: { theme: partner.branding.adminTheme }
+  })
+})
+
+/**
+ * Update a partner's admin theme (platform admin)
+ * Route: PUT /partners/:id/admin-theme
+ */
+export const updatePartnerAdminTheme = asyncHandler(async (req, res) => {
+  const theme = normalizeAdminThemeId(req.body?.theme)
+  if (!theme) {
+    throw new BadRequestError('INVALID_ADMIN_THEME')
+  }
+
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  if (!partner.branding) partner.branding = {}
+  partner.branding.adminTheme = theme
+  await partner.save()
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('ADMIN_THEME_UPDATED') : 'Admin theme updated successfully',
+    data: { theme: partner.branding.adminTheme }
+  })
+})
+
 // Upload my logo (for partner users)
 export const uploadMyLogo = asyncHandler(async (req, res) => {
   const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null

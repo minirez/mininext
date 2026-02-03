@@ -133,6 +133,32 @@
       "az": "Azerbaijani"
     }
   },
+  "themes": {
+    "select": "Select theme",
+    "options": {
+      "mini": "Mini",
+      "midnightBlue": "Mini",
+      "ocean": "Ocean",
+      "nord": "Nord",
+      "graphite": "Graphite",
+      "sand": "Sand",
+      "forest": "Forest",
+      "rose": "Rose",
+      "sunset": "Sunset",
+      "lavender": "Lavender",
+      "emerald": "Emerald",
+      "citrus": "Citrus",
+      "cyber": "Cyber",
+      "slate": "Slate",
+      "coffee": "Coffee",
+      "winter": "Winter",
+      "aurora": "Aurora",
+      "candy": "Candy",
+      "abyss": "Abyss",
+      "silk": "Silk",
+      "vintage": "Vintage"
+    }
+  },
   "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",

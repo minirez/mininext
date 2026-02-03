@@ -133,6 +133,32 @@
       "az": "Azerice"
     }
   },
+  "themes": {
+    "select": "Tema seç",
+    "options": {
+      "mini": "Mini",
+      "midnightBlue": "Mini",
+      "ocean": "Okyanus",
+      "nord": "Nord",
+      "graphite": "Grafit",
+      "sand": "Kum",
+      "forest": "Orman",
+      "rose": "Gül",
+      "sunset": "Gün Batımı",
+      "lavender": "Lavanta",
+      "emerald": "Zümrüt",
+      "citrus": "Narenciye",
+      "cyber": "Siber",
+      "slate": "Arduvaz",
+      "coffee": "Kahve",
+      "winter": "Kış",
+      "aurora": "Aurora",
+      "candy": "Şeker",
+      "abyss": "Uçurum",
+      "silk": "İpek",
+      "vintage": "Vintage"
+    }
+  },
   "validation": {
     "required": "Bu alan zorunludur",
     "email": "Geçerli bir e-posta adresi giriniz",
