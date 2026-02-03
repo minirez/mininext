@@ -43,8 +43,9 @@
       "contentLabel": "Tour Information",
       "placeholder": "Paste the tour package information here...\n\nExample:\n- Tour name and code\n- Destination country and city\n- Number of nights and days\n- Transportation details\n- Hotel information\n- Daily itinerary\n- Included and excluded services\n- Cancellation policy",
       "hint": "Enter detailed information with at least 50 characters",
-      "processing": "AI Processing...",
+      "processing": "AI Analyzing Tour Information",
       "processingDescription": "Tour information is being analyzed and fields are being filled.",
+      "processingHint": "This usually takes 10-30 seconds",
       "success": "Data extracted successfully",
       "error": "Failed to extract data",
       "extract": "Extract Data",
@@ -55,7 +56,13 @@
       "noAccommodations": "No accommodation found",
       "noItinerary": "No itinerary found",
       "noInclusions": "No inclusions found",
-      "noExclusions": "No exclusions found"
+      "noExclusions": "No exclusions found",
+      "steps": {
+        "analyzing": "Analyzing text content...",
+        "extracting": "Extracting tour information...",
+        "structuring": "Structuring data...",
+        "validating": "Validating results..."
+      }
     },
 
     "meals": {

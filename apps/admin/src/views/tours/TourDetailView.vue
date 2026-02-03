@@ -371,6 +371,7 @@
             </div>
 
             <TourScheduleBuilder
+              ref="scheduleBuilderRef"
               :tour-id="isNew ? '' : String(route.params.id)"
               @created="onDeparturesCreated"
               @schedule-changed="onScheduleChanged"
@@ -559,6 +560,8 @@ const tagInput = ref('')
 const tourTypes = ref([])
 const showDetailedPricing = ref(false)
 const pendingDepartures = ref([])
+const scheduleBuilderRef = ref(null)
+const pendingAISchedule = ref(null) // Store AI schedule data until component is ready
 
 const isNew = computed(() => route.name === 'tour-new' || route.params.id === 'new')
 
@@ -782,6 +785,14 @@ watch(
   () => loadTour()
 )
 
+// Apply pending AI schedule when schedule tab becomes active
+watch(activeTab, (newTab) => {
+  if (newTab === 'schedule' && pendingAISchedule.value) {
+    // Small delay to ensure component is fully mounted
+    setTimeout(() => applyAISchedule(), 100)
+  }
+})
+
 function applyAIData(aiData) {
   if (!aiData) return
 
@@ -877,6 +888,43 @@ function applyAIData(aiData) {
       description: { tr: day.description?.tr || '', en: day.description?.en || '' },
       tags: day.meals || []
     }))
+  }
+
+  // Schedule data from AI
+  // Calculate duration from multiple sources
+  let durationDays = 1
+  if (aiData.duration?.days) {
+    durationDays = aiData.duration.days
+  } else if (aiData.itinerary?.length) {
+    durationDays = aiData.itinerary.length
+  } else if (aiData.schedule?.departureDate && aiData.schedule?.returnDate) {
+    const depDate = new Date(aiData.schedule.departureDate)
+    const retDate = new Date(aiData.schedule.returnDate)
+    if (!isNaN(depDate.getTime()) && !isNaN(retDate.getTime())) {
+      durationDays = Math.max(1, Math.ceil((retDate - depDate) / (1000 * 60 * 60 * 24)) + 1)
+    }
+  }
+
+  // Store schedule data for later application (component might not be mounted yet)
+  if (aiData.schedule) {
+    pendingAISchedule.value = {
+      schedule: aiData.schedule,
+      durationDays,
+      pricing: aiData.basePricing
+    }
+    
+    // Try to apply immediately if ref is available
+    applyAISchedule()
+  }
+}
+
+function applyAISchedule() {
+  if (!pendingAISchedule.value) return
+  
+  if (scheduleBuilderRef.value?.setFromAI) {
+    const { schedule, durationDays, pricing } = pendingAISchedule.value
+    scheduleBuilderRef.value.setFromAI(schedule, durationDays, pricing)
+    pendingAISchedule.value = null
   }
 }
 

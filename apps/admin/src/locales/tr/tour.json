@@ -43,8 +43,9 @@
       "contentLabel": "Tur Bilgileri",
       "placeholder": "Tur paketinin bilgilerini buraya yapıştırın...\n\nÖrnek:\n- Tur adı ve kodu\n- Gidilecek ülke ve şehir\n- Kaç gece kaç gün\n- Ulaşım bilgileri\n- Otel bilgileri\n- Günlük program\n- Dahil olan ve olmayan hizmetler\n- İptal koşulları",
       "hint": "En az 50 karakter içeren detaylı bilgi girin",
-      "processing": "AI İşleniyor...",
+      "processing": "AI Tur Bilgilerini Analiz Ediyor",
       "processingDescription": "Tur bilgileri analiz ediliyor ve gerekli alanlar dolduruluyor.",
+      "processingHint": "Bu işlem genellikle 10-30 saniye sürer",
       "success": "Veriler başarıyla çıkarıldı",
       "error": "Veri çıkarılamadı",
       "extract": "Verileri Çıkar",
@@ -55,7 +56,13 @@
       "noAccommodations": "Konaklama bilgisi bulunamadı",
       "noItinerary": "Günlük program bulunamadı",
       "noInclusions": "Dahil olan hizmet bulunamadı",
-      "noExclusions": "Dahil olmayan hizmet bulunamadı"
+      "noExclusions": "Dahil olmayan hizmet bulunamadı",
+      "steps": {
+        "analyzing": "Metin analiz ediliyor...",
+        "extracting": "Tur bilgileri çıkarılıyor...",
+        "structuring": "Veriler yapılandırılıyor...",
+        "validating": "Sonuçlar doğrulanıyor..."
+      }
     },
 
     "meals": {

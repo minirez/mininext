@@ -23,6 +23,12 @@ export const extractTourData = async (content, retryCount = 0) => {
 5. Enum değerleri için sadece belirtilen seçenekleri kullan
 6. Fiyatları currency ve basePricing içinde döndür
 
+KRİTİK - İÇERİK KORUMA KURALLARI:
+- description alanlarını KESİNLİKLE ÖZETLEME! Metindeki açıklamaları OLDUĞU GİBİ al.
+- Günlük program açıklamalarını (itinerary.description) metinden AYNEN kopyala, kısaltma!
+- Sadece shortDescription alanı için 1-2 cümlelik özet yap.
+- İngilizce çevirilerde de aynı detay seviyesini koru.
+
 TUR VERİ ŞEMASI:
 
 {
@@ -32,12 +38,12 @@ TUR VERİ ŞEMASI:
     "en": "English tour name"
   },
   "shortDescription": {
-    "tr": "Kısa açıklama (1-2 cümle)",
+    "tr": "Kısa açıklama (1-2 cümle) - SADECE BU ALAN ÖZETLENEBİLİR",
     "en": "Short description"
   },
   "description": {
-    "tr": "Detaylı açıklama",
-    "en": "Detailed description"
+    "tr": "Detaylı açıklama - METİNDEN AYNEN AL, ÖZETLEME!",
+    "en": "Detailed description - Full translation, no summarization"
   },
   "tourType": "cruise|cultural|international|activity|workshop|transfer|nature|city|museum|adventure|religious|yacht|boat|ferry|other",
   "destination": {
@@ -55,6 +61,13 @@ TUR VERİ ŞEMASI:
   "duration": {
     "nights": 2,
     "days": 3
+  },
+  "schedule": {
+    "isOneTime": true,
+    "departureDate": "2026-03-20",
+    "returnDate": "2026-03-22",
+    "departureTime": "07:20",
+    "returnTime": "20:30"
   },
   "basePricing": {
     "currency": "TRY|EUR|USD|GBP",
@@ -84,14 +97,14 @@ TUR VERİ ŞEMASI:
           "flightNo": "PC1913",
           "departure": "ERCAN",
           "arrival": "İSTANBUL (SAW)",
-          "date": "20 MART 2026",
+          "date": "2026-03-20",
           "time": "07:20"
         },
         "return": {
           "flightNo": "PC1926",
           "departure": "İSTANBUL (SAW)",
           "arrival": "ECN",
-          "date": "22 MART 2026",
+          "date": "2026-03-22",
           "time": "20:30"
         }
       }
@@ -125,7 +138,7 @@ TUR VERİ ŞEMASI:
     {
       "day": 1,
       "title": { "tr": "Varış Günü", "en": "Arrival Day" },
-      "description": { "tr": "Detaylı günlük program açıklaması", "en": "Detailed daily program description" },
+      "description": { "tr": "GÜNLÜK PROGRAMI METİNDEN AYNEN AL - TÜM DETAYLARI KORU!", "en": "Full daily program - preserve ALL details from source text" },
       "meals": ["dinner"],
       "activities": [
         { "tr": "Havalimanı karşılama", "en": "Airport pickup" },
@@ -162,6 +175,15 @@ TUR VERİ ŞEMASI:
   }
 }
 
+TARİH VE ZAMAN ÇIKARIMI (ÇOK ÖNEMLİ):
+- Metinde belirli tarihler varsa (ör: "20 MART 2026", "22 Mart 2026") bunları schedule objesine ekle
+- Tarihleri ISO formatında döndür: YYYY-MM-DD (ör: 2026-03-20)
+- Türkçe ayları dönüştür: OCAK=01, ŞUBAT=02, MART=03, NİSAN=04, MAYIS=05, HAZİRAN=06, TEMMUZ=07, AĞUSTOS=08, EYLÜL=09, EKİM=10, KASIM=11, ARALIK=12
+- Tek seferlik tur (belirli tarih) ise isOneTime: true
+- Düzenli/tekrarlayan tur ise isOneTime: false
+- Uçuş saatlerini de schedule.departureTime ve schedule.returnTime olarak ekle
+- flightInfo içindeki tarihleri de ISO formatında (YYYY-MM-DD) ver
+
 FİYATLANDIRMA TALİMATLARI:
 - startingPrice: En düşük kişi başı fiyatı (genellikle "İki kişilik odada kişi başı" fiyatı)
 - Detaylı fiyat tablosu varsa (tek kişilik, iki kişilik, çocuk vb.) adult, child, infant objelerini doldur
@@ -174,10 +196,11 @@ FİYATLANDIRMA TALİMATLARI:
 - Peşin/Nakit fiyatları tercih et (varsa)
 - Para birimi TRY, EUR, USD, GBP olabilir
 
-GÜNLÜK PROGRAM TALİMATLARI:
+GÜNLÜK PROGRAM TALİMATLARI (ÇOK ÖNEMLİ - ÖZETLEME!):
 - Her gün için ayrı bir itinerary objesi oluştur
 - Gün numarasını (day) doğru sırayla ver
-- Günlük açıklamayı (description) metinden detaylı şekilde al
+- Günlük açıklamayı (description) metinden AYNEN al - HİÇBİR ŞEYİ ÇIKARMA veya ÖZETLEME!
+- Metinde "1.GÜN:", "2.GÜN:" vb. ile başlayan bölümleri tam olarak aktar
 - Yemekleri (meals): breakfast, lunch, dinner, snack olarak belirt
 - Aktiviteleri ziyaret edilen yerlerden çıkar
 - Konaklama bilgisini her gün için ekle
@@ -193,6 +216,7 @@ ULAŞIM TALİMATLARI:
 - Ana ulaşım tipini belirt (uçak, otobüs, gemi vb.)
 - Uçuş bilgilerini flightInfo'ya ekle (varsa)
 - Taşıyıcı firmaları belirt (Pegasus, THY vb.)
+- Tarihleri ISO formatında ver!
 
 DAHİL/HARİÇ HİZMETLER:
 - "Ücrete Dahil Olan Hizmetler" bölümünü inclusions'a aktar

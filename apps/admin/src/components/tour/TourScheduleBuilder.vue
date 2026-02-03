@@ -1194,6 +1194,63 @@ watch(
   { deep: true }
 )
 
+/**
+ * Set schedule from AI import data
+ * @param {Object} aiSchedule - Schedule data from AI extraction
+ * @param {boolean} aiSchedule.isOneTime - Whether this is a one-time tour
+ * @param {string} aiSchedule.departureDate - ISO date string (YYYY-MM-DD)
+ * @param {string} aiSchedule.returnDate - ISO date string (YYYY-MM-DD)
+ * @param {string} aiSchedule.departureTime - Time string (HH:mm)
+ * @param {string} aiSchedule.returnTime - Time string (HH:mm)
+ * @param {number} durationDays - Tour duration in days
+ * @param {Object} pricing - Optional pricing info
+ */
+function setFromAI(aiSchedule, durationDays = 1, pricing = null) {
+  if (!aiSchedule) return
+  
+  // Set schedule type
+  if (aiSchedule.isOneTime) {
+    scheduleType.value = 'onetime'
+  } else {
+    scheduleType.value = 'recurring'
+    form.value.preset = 'custom_dates'
+  }
+  
+  // Set duration
+  if (durationDays && durationDays >= 1) {
+    form.value.durationDays = durationDays
+  }
+  
+  // Set departure date
+  if (aiSchedule.departureDate) {
+    form.value.customDates = [aiSchedule.departureDate]
+    
+    // Navigate calendar to the departure month
+    const depDate = new Date(aiSchedule.departureDate)
+    if (!isNaN(depDate.getTime())) {
+      currentMonth.value = new Date(depDate.getFullYear(), depDate.getMonth(), 1)
+    }
+  }
+  
+  // Set times
+  if (aiSchedule.departureTime) {
+    form.value.time.start = aiSchedule.departureTime
+  }
+  if (aiSchedule.returnTime) {
+    form.value.time.end = aiSchedule.returnTime
+  }
+  
+  // Set pricing if provided
+  if (pricing) {
+    if (pricing.currency) form.value.currency = pricing.currency
+    if (pricing.startingPrice) form.value.priceAdultDouble = pricing.startingPrice
+    if (pricing.adult?.double) form.value.priceAdultDouble = pricing.adult.double
+  }
+}
+
+// Expose method for parent component
+defineExpose({ setFromAI })
+
 onMounted(() => {
   const now = new Date()
   const to = addDays(now, 30)

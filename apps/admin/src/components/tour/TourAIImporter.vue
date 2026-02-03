@@ -23,14 +23,63 @@
       </div>
 
       <!-- Step 2: Processing -->
-      <div v-else-if="step === 'processing'" class="text-center py-12">
-        <span class="material-icons animate-spin text-5xl text-teal-500 mb-4">refresh</span>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          {{ $t('tour.aiImport.processing') }}
-        </h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">
-          {{ $t('tour.aiImport.processingDescription') }}
-        </p>
+      <div v-else-if="step === 'processing'" class="py-8">
+        <div class="max-w-md mx-auto">
+          <!-- Animated Icon -->
+          <div class="flex justify-center mb-6">
+            <div class="relative">
+              <div class="w-20 h-20 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                <span class="material-icons text-4xl text-teal-500 animate-pulse">auto_awesome</span>
+              </div>
+              <div class="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin"></div>
+            </div>
+          </div>
+
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2 text-center">
+            {{ $t('tour.aiImport.processing') }}
+          </h3>
+          
+          <!-- Progress Steps -->
+          <div class="space-y-3 mb-6">
+            <div 
+              v-for="(pStep, idx) in processingSteps" 
+              :key="idx"
+              class="flex items-center gap-3 text-sm"
+            >
+              <div 
+                class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                :class="getStepClass(idx)"
+              >
+                <span v-if="idx < currentProcessingStep" class="material-icons text-sm text-white">check</span>
+                <span v-else-if="idx === currentProcessingStep" class="material-icons text-sm text-white animate-pulse">more_horiz</span>
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">{{ idx + 1 }}</span>
+              </div>
+              <span 
+                :class="idx <= currentProcessingStep 
+                  ? 'text-gray-900 dark:text-white' 
+                  : 'text-gray-400 dark:text-gray-500'"
+              >
+                {{ pStep }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="relative h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div 
+              class="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-500 ease-out"
+              :style="{ width: `${progressPercent}%` }"
+            ></div>
+            <div 
+              class="absolute inset-y-0 left-0 bg-teal-300/50 rounded-full animate-pulse"
+              :style="{ width: `${progressPercent + 5}%` }"
+            ></div>
+          </div>
+          
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-3 text-center">
+            {{ $t('tour.aiImport.processingHint') }}
+          </p>
+        </div>
       </div>
 
       <!-- Step 3: Preview -->
@@ -296,6 +345,17 @@ const content = ref('')
 const extractedData = ref(null)
 const errorMessage = ref('')
 const activeTab = ref('basic')
+const currentProcessingStep = ref(0)
+const progressPercent = ref(0)
+let progressInterval = null
+
+// Processing steps
+const processingSteps = computed(() => [
+  t('tour.aiImport.steps.analyzing'),
+  t('tour.aiImport.steps.extracting'),
+  t('tour.aiImport.steps.structuring'),
+  t('tour.aiImport.steps.validating')
+])
 
 // Preview tabs
 const previewTabs = computed(() => [
@@ -320,6 +380,8 @@ const formatPrice = (value, currency = 'TRY') => {
 // Methods
 const handleClose = () => {
   emit('update:modelValue', false)
+  // Stop any running progress animation
+  stopProgressAnimation(false)
   // Reset state after animation
   setTimeout(() => {
     step.value = 'input'
@@ -327,14 +389,63 @@ const handleClose = () => {
     extractedData.value = null
     errorMessage.value = ''
     activeTab.value = 'basic'
+    currentProcessingStep.value = 0
+    progressPercent.value = 0
   }, 300)
+}
+
+const startProgressAnimation = () => {
+  currentProcessingStep.value = 0
+  progressPercent.value = 0
+  
+  // Animate progress gradually
+  progressInterval = setInterval(() => {
+    if (progressPercent.value < 90) {
+      progressPercent.value += Math.random() * 8 + 2
+      
+      // Update step based on progress
+      if (progressPercent.value > 25 && currentProcessingStep.value < 1) {
+        currentProcessingStep.value = 1
+      } else if (progressPercent.value > 50 && currentProcessingStep.value < 2) {
+        currentProcessingStep.value = 2
+      } else if (progressPercent.value > 75 && currentProcessingStep.value < 3) {
+        currentProcessingStep.value = 3
+      }
+    }
+  }, 400)
+}
+
+const stopProgressAnimation = (success = true) => {
+  if (progressInterval) {
+    clearInterval(progressInterval)
+    progressInterval = null
+  }
+  
+  if (success) {
+    currentProcessingStep.value = processingSteps.value.length
+    progressPercent.value = 100
+  }
+}
+
+const getStepClass = (idx) => {
+  if (idx < currentProcessingStep.value) {
+    return 'bg-teal-500'
+  } else if (idx === currentProcessingStep.value) {
+    return 'bg-teal-500'
+  }
+  return 'bg-gray-200 dark:bg-slate-700'
 }
 
 const extractData = async () => {
   step.value = 'processing'
+  startProgressAnimation()
 
   try {
     const result = await tourService.aiExtractTour(content.value)
+    stopProgressAnimation(true)
+
+    // Small delay to show 100% completion
+    await new Promise(resolve => setTimeout(resolve, 300))
 
     if (result.success && result.data) {
       extractedData.value = result.data
@@ -344,6 +455,7 @@ const extractData = async () => {
       throw new Error(result.message || 'Extraction failed')
     }
   } catch (error) {
+    stopProgressAnimation(false)
     console.error('AI extraction error:', error)
     errorMessage.value = error.response?.data?.message || error.message || t('tour.aiImport.extractionError')
     step.value = 'error'
