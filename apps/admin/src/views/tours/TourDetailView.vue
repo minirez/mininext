@@ -373,6 +373,7 @@
             <TourScheduleBuilder
               :tour-id="isNew ? '' : String(route.params.id)"
               @created="onDeparturesCreated"
+              @schedule-changed="onScheduleChanged"
             />
           </div>
         </div>
@@ -557,17 +558,24 @@ const activeTab = ref('basic')
 const tagInput = ref('')
 const tourTypes = ref([])
 const showDetailedPricing = ref(false)
+const pendingDepartures = ref([])
 
 const isNew = computed(() => route.name === 'tour-new' || route.params.id === 'new')
 
-const tabs = computed(() => [
-  { key: 'basic', label: t('tour.tabs.basic'), icon: 'info' },
-  { key: 'schedule', label: t('tour.tabs.schedule'), icon: 'event' },
-  { key: 'route', label: t('tour.tabs.route'), icon: 'route' },
-  { key: 'content', label: t('tour.tabs.content'), icon: 'subject' },
-  { key: 'gallery', label: t('tour.tabs.gallery'), icon: 'photo_library' },
-  { key: 'extras', label: t('tour.tabs.extras'), icon: 'extension' }
-])
+const tabs = computed(() => {
+  const baseTabs = [
+    { key: 'basic', label: t('tour.tabs.basic'), icon: 'info' },
+    { key: 'schedule', label: t('tour.tabs.schedule'), icon: 'event' },
+    { key: 'route', label: t('tour.tabs.route'), icon: 'route' },
+    { key: 'content', label: t('tour.tabs.content'), icon: 'subject' },
+    { key: 'gallery', label: t('tour.tabs.gallery'), icon: 'photo_library' }
+  ]
+  // Only show Extras tab for existing tours, not new ones
+  if (!isNew.value) {
+    baseTabs.push({ key: 'extras', label: t('tour.tabs.extras'), icon: 'extension' })
+  }
+  return baseTabs
+})
 
 const form = ref(getEmptyForm())
 
@@ -684,6 +692,18 @@ async function saveTour() {
     const payload = sanitizePayload(form.value)
     if (isNew.value) {
       const created = await tourStore.createTour(payload)
+      
+      // Auto-create departures in background if schedule was defined
+      if (pendingDepartures.value.length > 0) {
+        try {
+          await tourStore.bulkCreateDepartures(created._id, { departures: pendingDepartures.value })
+          pendingDepartures.value = []
+        } catch (depError) {
+          console.error('Failed to create departures:', depError)
+          // Don't block tour creation if departures fail
+        }
+      }
+      
       router.replace(`/tours/${created._id}`)
     } else {
       await tourStore.updateTour(route.params.id, payload)
@@ -712,6 +732,10 @@ function goToExtras() {
 
 function onDeparturesCreated() {
   // no-op for now; could show toast via store
+}
+
+function onScheduleChanged(departures) {
+  pendingDepartures.value = departures || []
 }
 
 async function loadTour() {

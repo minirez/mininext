@@ -38,7 +38,8 @@ const auditLogSchema = new mongoose.Schema(
         'system',
         'agency',
         'location',
-        'tag'
+        'tag',
+        'tour'
       ],
       index: true
     },

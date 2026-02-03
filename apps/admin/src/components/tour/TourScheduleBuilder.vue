@@ -544,7 +544,7 @@ const { t, locale } = useI18n()
 const props = defineProps({
   tourId: { type: String, default: '' }
 })
-const emit = defineEmits(['created'])
+const emit = defineEmits(['created', 'schedule-changed'])
 
 const saving = ref(false)
 const loadingExisting = ref(false)
@@ -1164,6 +1164,34 @@ watch(
   () => props.tourId,
   () => loadExisting(),
   { immediate: true }
+)
+
+// Emit schedule data whenever generated departures or settings change
+// This allows parent components to capture pending departures for auto-creation
+watch(
+  [generated, () => form.value.durationDays, () => form.value.time, () => form.value.currency, () => form.value.capacityTotal, () => form.value.priceAdultDouble],
+  () => {
+    if (!props.tourId && generated.value.length > 0) {
+      const duration = Math.max(1, Number(form.value.durationDays || 1))
+      const departures = generated.value.map(d => {
+        const depDate = new Date(d)
+        const retDate = duration === 1 ? depDate : addDays(depDate, duration - 1)
+        return {
+          departureDate: depDate.toISOString(),
+          returnDate: retDate.toISOString(),
+          time: form.value.time?.start || form.value.time?.end ? { ...form.value.time } : undefined,
+          currency: form.value.currency,
+          capacity: { total: Number(form.value.capacityTotal || 30) },
+          pricing: { adult: { double: Number(form.value.priceAdultDouble || 0) } },
+          status: 'scheduled'
+        }
+      })
+      emit('schedule-changed', departures)
+    } else {
+      emit('schedule-changed', [])
+    }
+  },
+  { deep: true }
 )
 
 onMounted(() => {
