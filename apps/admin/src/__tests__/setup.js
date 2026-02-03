@@ -2,7 +2,6 @@
  * Vitest Test Setup
  * Global configuration for Vue component tests
  */
-
 import { config } from '@vue/test-utils'
 
 // Mock vue-i18n
