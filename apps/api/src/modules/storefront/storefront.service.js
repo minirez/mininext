@@ -21,7 +21,11 @@ import {
   getStorefrontFileUrl,
   getStorefrontUploadSubPath,
   normalizeStorefrontUploadType,
-  deleteStorefrontFile
+  deleteStorefrontFile,
+  md5FileHex,
+  md5BufferHex,
+  getExistingStorefrontFileByMd5,
+  setStorefrontFileMd5
 } from '#helpers/storefrontUpload.js'
 import logger from '#core/logger.js'
 import {
@@ -52,6 +56,11 @@ const getPartnerIdOrThrow = req => {
   if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
   return partnerId
 }
+
+const toPosixPath = (p) => String(p || '').replace(/\\/g, '/')
+
+const getStorefrontUploadsUrlFromRelativePath = (partnerId, relativePath) =>
+  `storefront/${partnerId}/${toPosixPath(relativePath).replace(/^\/+/, '')}`
 
 const attachB2cDomain = async (storefront, partnerId) => {
   try {
@@ -747,10 +756,45 @@ export const downloadAndUploadImage = asyncHandler(async (req, res) => {
   const imageData = await downloadImageForUpload(imageUrl)
   if (!imageData) throw new BadRequestError('IMAGE_DOWNLOAD_FAILED')
 
+  // MD5 dedupe: if we already have this exact image bytes for this partner,
+  // reuse the existing file instead of writing another copy.
+  const md5 = md5BufferHex(imageData.buffer)
+  const existingRelativePath = await getExistingStorefrontFileByMd5(partnerId, md5)
+  if (existingRelativePath) {
+    const existingFilename = path.basename(existingRelativePath)
+    const url = getStorefrontUploadsUrlFromRelativePath(partnerId, existingRelativePath)
+
+    let existingSize = imageData.size
+    try {
+      const abs = path.join(getStorefrontDiskPath(partnerId, ''), existingRelativePath)
+      const stat = await fs.promises.stat(abs)
+      existingSize = stat.size
+    } catch {}
+
+    return res.json({
+      success: true,
+      message: req.t('IMAGE_UPLOADED'),
+      data: {
+        id: existingFilename.replace(/\.[^/.]+$/, ''),
+        url,
+        link: url,
+        filename: existingFilename,
+        size: existingSize,
+        uploadType: normalized,
+        uploadIndex,
+        originalUrl: imageUrl,
+        reused: true
+      }
+    })
+  }
+
   const filename = `${normalized}-${Date.now()}-${Math.round(Math.random() * 1e9)}${imageData.extension}`
   const subPath = getStorefrontUploadSubPath({ uploadType: normalized, uploadIndex })
   const uploadsDir = getStorefrontDiskPath(partnerId, subPath)
   await fs.promises.writeFile(path.join(uploadsDir, filename), imageData.buffer)
+
+  const relativePath = `${subPath}/${filename}`
+  await setStorefrontFileMd5(partnerId, md5, relativePath)
 
   const fileUrl = getStorefrontFileUrl(partnerId, normalized, filename, uploadIndex)
   res.json({
@@ -776,8 +820,59 @@ export const uploadImage = asyncHandler(async (req, res) => {
   if (!req.file) throw new BadRequestError('FILE_REQUIRED')
 
   const { uploadType = 'general', uploadIndex = '0', sectionType, sectionIndex } = req.body
+  const normalized = normalizeStorefrontUploadType(uploadType)
   const { filename, size } = req.file
-  const fileUrl = getStorefrontFileUrl(partnerId, uploadType, filename, uploadIndex, {
+
+  const subPath = getStorefrontUploadSubPath({
+    uploadType: normalized,
+    uploadIndex,
+    sectionType,
+    sectionIndex
+  })
+  const currentRelativePath = `${subPath}/${filename}`
+
+  // MD5 dedupe (post-upload): if an identical file already exists, delete the new one and reuse.
+  let md5 = null
+  try {
+    md5 = await md5FileHex(req.file.path)
+  } catch {}
+
+  if (md5) {
+    const existingRelativePath = await getExistingStorefrontFileByMd5(partnerId, md5)
+    if (existingRelativePath && existingRelativePath !== currentRelativePath) {
+      try {
+        await fs.promises.unlink(req.file.path)
+      } catch {}
+
+      const existingFilename = path.basename(existingRelativePath)
+      const url = getStorefrontUploadsUrlFromRelativePath(partnerId, existingRelativePath)
+
+      let existingSize = size
+      try {
+        const abs = path.join(getStorefrontDiskPath(partnerId, ''), existingRelativePath)
+        const stat = await fs.promises.stat(abs)
+        existingSize = stat.size
+      } catch {}
+
+      return res.json({
+        success: true,
+        message: req.t('FILE_UPLOADED'),
+        data: {
+          id: existingFilename.replace(/\.[^/.]+$/, ''),
+          url,
+          filename: existingFilename,
+          size: existingSize,
+          uploadType: normalized,
+          uploadIndex,
+          reused: true
+        }
+      })
+    }
+
+    await setStorefrontFileMd5(partnerId, md5, currentRelativePath)
+  }
+
+  const fileUrl = getStorefrontFileUrl(partnerId, normalized, filename, uploadIndex, {
     sectionType,
     sectionIndex
   })
@@ -790,7 +885,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
       url: fileUrl,
       filename,
       size,
-      uploadType,
+      uploadType: normalized,
       uploadIndex
     }
   })

@@ -14,6 +14,7 @@ import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import crypto from 'crypto'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -21,6 +22,168 @@ const __dirname = path.dirname(__filename)
 // Create uploads directory structure
 const uploadsDir = path.join(__dirname, '../../uploads')
 const storefrontDir = path.join(uploadsDir, 'storefront')
+
+// ==================== MD5 DEDUPE (PER PARTNER) ====================
+
+/**
+ * We keep a tiny per-partner index file mapping md5 -> relativePath
+ * to avoid rescanning directories on every upload.
+ *
+ * NOTE: This is best-effort and optimized for the common case (single API instance).
+ */
+const md5IndexLocks = new Map()
+
+const withPartnerMd5Lock = async (partnerId, fn) => {
+  const key = String(partnerId)
+  const prev = md5IndexLocks.get(key) || Promise.resolve()
+
+  let release
+  const next = new Promise(resolve => {
+    release = resolve
+  })
+  const chain = prev.then(() => next)
+  md5IndexLocks.set(key, chain)
+
+  try {
+    await prev
+    return await fn()
+  } finally {
+    release()
+    // Cleanup: only remove if no newer lock was queued
+    if (md5IndexLocks.get(key) === chain) md5IndexLocks.delete(key)
+  }
+}
+
+const getPartnerRootDir = (partnerId) => {
+  const partnerDir = path.join(storefrontDir, partnerId.toString())
+  if (!fs.existsSync(partnerDir)) fs.mkdirSync(partnerDir, { recursive: true })
+  return partnerDir
+}
+
+const getPartnerMd5IndexPath = (partnerId) => path.join(getPartnerRootDir(partnerId), '.md5-index.json')
+
+const readMd5Index = async (partnerId) => {
+  const indexPath = getPartnerMd5IndexPath(partnerId)
+  try {
+    if (!fs.existsSync(indexPath)) return null
+    const raw = await fs.promises.readFile(indexPath, 'utf8')
+    const parsed = JSON.parse(raw || '{}')
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+const writeMd5Index = async (partnerId, index) => {
+  const indexPath = getPartnerMd5IndexPath(partnerId)
+  try {
+    await fs.promises.writeFile(indexPath, JSON.stringify(index || {}, null, 0), 'utf8')
+  } catch {
+    // best-effort
+  }
+}
+
+export const md5BufferHex = (buffer) => crypto.createHash('md5').update(buffer).digest('hex')
+
+export const md5FileHex = async (filePath) =>
+  new Promise((resolve, reject) => {
+    const hash = crypto.createHash('md5')
+    const stream = fs.createReadStream(filePath)
+    stream.on('data', chunk => hash.update(chunk))
+    stream.on('error', reject)
+    stream.on('end', () => resolve(hash.digest('hex')))
+  })
+
+const toPosixPath = (p) => String(p || '').replace(/\\/g, '/')
+
+const isLikelyImageFile = (filename) => {
+  const ext = path.extname(String(filename || '')).toLowerCase()
+  return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico'].includes(ext)
+}
+
+const buildMd5IndexFromDisk = async (partnerId) => {
+  const root = getPartnerRootDir(partnerId)
+  const index = {}
+
+  const walk = async (dirAbs) => {
+    let entries = []
+    try {
+      entries = await fs.promises.readdir(dirAbs, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    for (const ent of entries) {
+      // Skip dotfiles/folders
+      if (ent.name?.startsWith?.('.')) continue
+
+      const abs = path.join(dirAbs, ent.name)
+      if (ent.isDirectory()) {
+        await walk(abs)
+        continue
+      }
+
+      if (!ent.isFile()) continue
+      if (!isLikelyImageFile(ent.name)) continue
+
+      try {
+        const md5 = await md5FileHex(abs)
+        if (!md5) continue
+        if (index[md5]) continue
+
+        const rel = toPosixPath(path.relative(root, abs)).replace(/^\/+/, '')
+        if (rel) index[md5] = rel
+      } catch {
+        // ignore individual file failures
+      }
+    }
+  }
+
+  await walk(root)
+  return index
+}
+
+/**
+ * Get an existing relative path for this md5 (if any), and clean stale entries.
+ * @returns {Promise<string|null>} relativePath (posix-ish, no leading slash)
+ */
+export const getExistingStorefrontFileByMd5 = async (partnerId, md5Hex) =>
+  withPartnerMd5Lock(partnerId, async () => {
+    const md5 = String(md5Hex || '').trim().toLowerCase()
+    if (!md5) return null
+
+    let index = await readMd5Index(partnerId)
+    if (index === null) {
+      // First run for this partner: build once (best-effort) to enable true dedupe
+      index = await buildMd5IndexFromDisk(partnerId)
+      await writeMd5Index(partnerId, index)
+    }
+    const rel = typeof index[md5] === 'string' ? index[md5] : null
+    if (!rel) return null
+
+    const abs = path.join(getPartnerRootDir(partnerId), rel)
+    if (fs.existsSync(abs)) return rel
+
+    // stale mapping: remove
+    delete index[md5]
+    await writeMd5Index(partnerId, index)
+    return null
+  })
+
+/**
+ * Register md5 -> relativePath mapping (best-effort).
+ */
+export const setStorefrontFileMd5 = async (partnerId, md5Hex, relativePath) =>
+  withPartnerMd5Lock(partnerId, async () => {
+    const md5 = String(md5Hex || '').trim().toLowerCase()
+    if (!md5) return
+    const rel = String(relativePath || '').replace(/^\/+/, '')
+    if (!rel) return
+
+    const index = (await readMd5Index(partnerId)) || {}
+    index[md5] = rel
+    await writeMd5Index(partnerId, index)
+  })
 
 /**
  * Normalize uploadType values (support legacy aliases).
