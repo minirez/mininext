@@ -1,5 +1,6 @@
 {
   "common": {
+    "hotels": "hotels",
     "currency": "Currency",
     "name": "Name",
     "title": "Title",

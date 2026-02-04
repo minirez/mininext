@@ -232,76 +232,152 @@
           </div>
         </div>
 
-        <!-- Location Items Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div
-            v-for="(location, index) in getLocationsSection().items || []"
-            :key="index"
-            class="group relative"
-          >
-            <!-- Location Photo with Upload -->
+        <!-- Bedbank Theme: Use Paximum Location Picker -->
+        <template v-if="themeType === 'bedbank'">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div
-              class="aspect-[4/5] rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-600 relative"
+              v-for="(location, index) in getLocationsSection().items || []"
+              :key="index"
+              class="group relative"
             >
-              <img
-                v-if="location.photo?.link"
-                :src="getImageUrl(location.photo.link)"
-                :alt="location.city"
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <span class="material-icons text-4xl text-gray-300 dark:text-slate-500"
-                  >location_on</span
-                >
-              </div>
-
-              <!-- Overlay with actions -->
+              <!-- Location Photo with Upload -->
               <div
-                class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+                class="aspect-[4/5] rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-600 relative"
               >
-                <label
-                  class="p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                >
-                  <span class="material-icons text-gray-700">photo_camera</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="handleLocationImageUpload($event, index)"
-                  />
-                </label>
-                <button
-                  class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  @click="removeLocation(index)"
-                >
-                  <span class="material-icons">delete</span>
-                </button>
-              </div>
-            </div>
+                <img
+                  v-if="location.photo?.link"
+                  :src="getImageUrl(location.photo.link)"
+                  :alt="location.bbLocationName"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <span class="material-icons text-4xl text-gray-300 dark:text-slate-500"
+                    >location_on</span
+                  >
+                </div>
 
-            <!-- Location Info -->
-            <div class="mt-2 space-y-1">
-              <input
-                v-model="location.city"
-                type="text"
-                class="form-input text-sm"
-                :placeholder="$t('website.themeEditor.city')"
-              />
-              <input
-                v-model="location.country"
-                type="text"
-                class="form-input text-sm"
-                :placeholder="$t('website.themeEditor.country')"
-              />
-              <input
-                v-model="location.link"
-                type="text"
-                class="form-input text-sm"
-                :placeholder="$t('website.themeEditor.link') || 'Link URL'"
-              />
+                <!-- Overlay with actions -->
+                <div
+                  class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+                >
+                  <label
+                    class="p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <span class="material-icons text-gray-700">photo_camera</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      @change="handleLocationImageUpload($event, index)"
+                    />
+                  </label>
+                  <button
+                    class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    @click="removeLocation(index)"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bedbank Location Info Badge -->
+              <div class="mt-2">
+                <div
+                  v-if="location.bbLocationId"
+                  class="flex items-center gap-1 px-2 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-xs"
+                >
+                  <span class="material-icons text-xs">location_city</span>
+                  <span class="font-medium truncate flex-1">{{ location.bbLocationName }}</span>
+                  <button
+                    class="ml-1 hover:text-red-500 flex-shrink-0"
+                    @click="clearBedbankLocation(index)"
+                  >
+                    <span class="material-icons text-xs">close</span>
+                  </button>
+                </div>
+                <PaximumLocationPicker
+                  v-else
+                  :type-filter="1"
+                  :placeholder="$t('website.themeEditor.searchLocation') || 'Lokasyon ara...'"
+                  @select="loc => handleBedbankLocationSelect(loc, index)"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </template>
+
+        <!-- Standard Theme: City/Country Inputs -->
+        <template v-else>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              v-for="(location, index) in getLocationsSection().items || []"
+              :key="index"
+              class="group relative"
+            >
+              <!-- Location Photo with Upload -->
+              <div
+                class="aspect-[4/5] rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-600 relative"
+              >
+                <img
+                  v-if="location.photo?.link"
+                  :src="getImageUrl(location.photo.link)"
+                  :alt="location.city"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <span class="material-icons text-4xl text-gray-300 dark:text-slate-500"
+                    >location_on</span
+                  >
+                </div>
+
+                <!-- Overlay with actions -->
+                <div
+                  class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+                >
+                  <label
+                    class="p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <span class="material-icons text-gray-700">photo_camera</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      @change="handleLocationImageUpload($event, index)"
+                    />
+                  </label>
+                  <button
+                    class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    @click="removeLocation(index)"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Location Info -->
+              <div class="mt-2 space-y-1">
+                <input
+                  v-model="location.city"
+                  type="text"
+                  class="form-input text-sm"
+                  :placeholder="$t('website.themeEditor.city')"
+                />
+                <input
+                  v-model="location.country"
+                  type="text"
+                  class="form-input text-sm"
+                  :placeholder="$t('website.themeEditor.country')"
+                />
+                <input
+                  v-model="location.link"
+                  type="text"
+                  class="form-input text-sm"
+                  :placeholder="$t('website.themeEditor.link') || 'Link URL'"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
 
         <div
           v-if="!getLocationsSection().items?.length"
@@ -615,35 +691,84 @@
           </div>
         </div>
 
-        <!-- Product IDs -->
-        <div class="mb-4">
-          <label class="form-label">{{ $t('website.themeEditor.productIds') }}</label>
-          <p class="text-xs text-gray-500 dark:text-slate-400 mb-2">
-            {{ $t('website.themeEditor.productIdsHint') }}
-          </p>
-          <div class="flex flex-wrap gap-2">
+        <!-- Bedbank Theme: Use Paximum Hotel Picker -->
+        <template v-if="themeType === 'bedbank'">
+          <div class="mb-4">
+            <label class="form-label">{{
+              $t('website.themeEditor.showcaseHotels') || 'Vitrin Otelleri'
+            }}</label>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">
+              {{
+                $t('website.themeEditor.showcaseHotelsHint') ||
+                'Vitrinde gösterilecek otelleri Paximum veritabanından arayarak seçin'
+              }}
+            </p>
+
+            <!-- Hotel Search -->
+            <PaximumLocationPicker
+              :type-filter="2"
+              :placeholder="$t('website.themeEditor.searchHotel') || 'Otel ara...'"
+              @select="handleBedbankShowcaseSelect"
+            />
+
+            <!-- Selected Hotels List -->
+            <div v-if="getBedbankShowcaseIds().length > 0" class="mt-4 space-y-2">
+              <div
+                v-for="(hotel, index) in getBedbankShowcaseIds()"
+                :key="hotel.id"
+                class="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg"
+              >
+                <span class="material-icons text-sm">hotel</span>
+                <span class="flex-1 text-sm font-medium">{{ hotel.name }}</span>
+                <span class="text-xs text-purple-400">ID: {{ hotel.id }}</span>
+                <button class="hover:text-red-600" @click="removeBedbankShowcaseHotel(index)">
+                  <span class="material-icons text-sm">close</span>
+                </button>
+              </div>
+            </div>
             <div
-              v-for="(id, index) in getProductIds()"
-              :key="index"
-              class="flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm"
+              v-else
+              class="mt-4 text-center py-6 text-gray-400 dark:text-slate-500 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg"
             >
-              <span>{{ id }}</span>
-              <button class="hover:text-red-600" @click="removeProductId(index)">
-                <span class="material-icons text-sm">close</span>
+              <span class="material-icons text-3xl mb-2">hotel</span>
+              <p class="text-sm">
+                {{ $t('website.themeEditor.noShowcaseHotels') || 'Henüz otel seçilmedi' }}
+              </p>
+            </div>
+          </div>
+        </template>
+
+        <!-- Standard Themes: Product IDs -->
+        <template v-else>
+          <div class="mb-4">
+            <label class="form-label">{{ $t('website.themeEditor.productIds') }}</label>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-2">
+              {{ $t('website.themeEditor.productIdsHint') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <div
+                v-for="(id, index) in getProductIds()"
+                :key="index"
+                class="flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm"
+              >
+                <span>{{ id }}</span>
+                <button class="hover:text-red-600" @click="removeProductId(index)">
+                  <span class="material-icons text-sm">close</span>
+                </button>
+              </div>
+              <input
+                v-model="newProductId"
+                type="number"
+                class="form-input text-sm w-24"
+                :placeholder="$t('website.themeEditor.addId')"
+                @keydown.enter.prevent="addProductId"
+              />
+              <button class="btn-outline text-sm" @click="addProductId">
+                <span class="material-icons text-sm">add</span>
               </button>
             </div>
-            <input
-              v-model="newProductId"
-              type="number"
-              class="form-input text-sm w-24"
-              :placeholder="$t('website.themeEditor.addId')"
-              @keydown.enter.prevent="addProductId"
-            />
-            <button class="btn-outline text-sm" @click="addProductId">
-              <span class="material-icons text-sm">add</span>
-            </button>
           </div>
-        </div>
+        </template>
 
         <!-- Cruise Search Location Preset -->
         <div
@@ -768,29 +893,46 @@
                 <span class="material-icons text-sm">delete</span>
               </button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+
+            <!-- Section Title/Description -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="form-label text-xs">{{
-                  $t('website.themeEditor.locationId') || 'Location ID'
+                  $t('website.themeEditor.sectionTitle')
                 }}</label>
-                <input
-                  v-model.number="section.locationId"
-                  type="number"
-                  class="form-input text-sm"
-                  placeholder="e.g. 60208"
-                />
+                <LanguageInput v-model="section.title" size="sm" />
               </div>
               <div>
                 <label class="form-label text-xs">{{
-                  $t('website.themeEditor.locationName') || 'Location Name'
+                  $t('website.themeEditor.sectionDescription')
                 }}</label>
-                <input
-                  v-model="section.locationName"
-                  type="text"
-                  class="form-input text-sm"
-                  placeholder="e.g. Antalya / Türkiye"
-                />
+                <LanguageInput v-model="section.description" size="sm" />
               </div>
+            </div>
+
+            <!-- Location Selection with Paximum Picker -->
+            <div>
+              <label class="form-label text-xs">{{
+                $t('website.themeEditor.selectLocation') || 'Lokasyon Seç'
+              }}</label>
+              <div v-if="section.locationId" class="mt-1">
+                <div
+                  class="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg"
+                >
+                  <span class="material-icons text-sm">location_city</span>
+                  <span class="flex-1 text-sm font-medium">{{ section.locationName }}</span>
+                  <span class="text-xs text-purple-400">ID: {{ section.locationId }}</span>
+                  <button class="hover:text-red-600" @click="clearBedbankSectionLocation(index)">
+                    <span class="material-icons text-sm">close</span>
+                  </button>
+                </div>
+              </div>
+              <PaximumLocationPicker
+                v-else
+                :type-filter="1"
+                :placeholder="$t('website.themeEditor.searchLocation') || 'Lokasyon ara...'"
+                @select="loc => handleBedbankSectionLocationSelect(loc, index)"
+              />
             </div>
           </div>
         </div>
@@ -811,6 +953,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LanguageInput from '@/components/common/LanguageInput.vue'
+import PaximumLocationPicker from './PaximumLocationPicker.vue'
 import { getImageUrl as getCdnImageUrl, getFileUrl } from '@/utils/imageUrl'
 import websiteService from '@/services/websiteService'
 
@@ -1034,13 +1177,105 @@ const addLocation = () => {
   const section = getLocationsSection()
   if (!section.items) section.items = []
   if (section.items.length >= 8) return // Max 8 locations
-  section.items.push({
-    city: '',
-    country: '',
-    photo: {},
-    link: '',
-    index: section.items.length
-  })
+
+  // For bedbank theme, use different structure
+  if (props.themeType === 'bedbank') {
+    section.items.push({
+      bbLocationId: null,
+      bbLocationName: '',
+      photo: {},
+      index: section.items.length
+    })
+  } else {
+    section.items.push({
+      city: '',
+      country: '',
+      photo: {},
+      link: '',
+      index: section.items.length
+    })
+  }
+}
+
+// ==================== BEDBANK LOCATION FUNCTIONS ====================
+
+// Handle bedbank location select from picker
+const handleBedbankLocationSelect = (loc, index) => {
+  if (!loc) return
+  const section = getLocationsSection()
+  if (section.items && section.items[index]) {
+    section.items[index].bbLocationId = parseInt(loc.id)
+    section.items[index].bbLocationName = loc.city
+      ? `${loc.name}, ${loc.country}`
+      : `${loc.name}${loc.country ? ', ' + loc.country : ''}`
+  }
+}
+
+// Clear bedbank location
+const clearBedbankLocation = index => {
+  const section = getLocationsSection()
+  if (section.items && section.items[index]) {
+    section.items[index].bbLocationId = null
+    section.items[index].bbLocationName = ''
+  }
+}
+
+// ==================== BEDBANK SHOWCASE FUNCTIONS ====================
+
+// Get bedbank showcase hotel IDs
+const getBedbankShowcaseIds = () => {
+  if (props.themeType !== 'bedbank') return []
+  if (!localContent.value.showcase) {
+    localContent.value.showcase = { title: [], description: [], ids: [] }
+  }
+  return localContent.value.showcase.ids || []
+}
+
+// Handle bedbank showcase hotel select
+const handleBedbankShowcaseSelect = loc => {
+  if (!loc) return
+  if (!localContent.value.showcase) {
+    localContent.value.showcase = { title: [], description: [], ids: [] }
+  }
+  if (!localContent.value.showcase.ids) {
+    localContent.value.showcase.ids = []
+  }
+  // Check if already exists
+  const exists = localContent.value.showcase.ids.some(h => h.id === parseInt(loc.id))
+  if (!exists) {
+    localContent.value.showcase.ids.push({
+      id: parseInt(loc.id),
+      name: loc.name
+    })
+  }
+}
+
+// Remove bedbank showcase hotel
+const removeBedbankShowcaseHotel = index => {
+  if (localContent.value.showcase?.ids) {
+    localContent.value.showcase.ids.splice(index, 1)
+  }
+}
+
+// ==================== BEDBANK SECTIONS FUNCTIONS ====================
+
+// Handle bedbank section location select
+const handleBedbankSectionLocationSelect = (loc, index) => {
+  if (!loc) return
+  if (localContent.value.sections && localContent.value.sections[index]) {
+    localContent.value.sections[index].locationId = parseInt(loc.id)
+    localContent.value.sections[index].locationName = loc.city
+      ? `${loc.name}, ${loc.country}`
+      : `${loc.name}${loc.country ? ', ' + loc.country : ''}`
+  }
+}
+
+// Clear bedbank section location
+const clearBedbankSectionLocation = index => {
+  if (localContent.value.sections && localContent.value.sections[index]) {
+    localContent.value.sections[index].locationId = null
+    localContent.value.sections[index].locationName = ''
+  }
 }
 
 const removeLocation = index => {

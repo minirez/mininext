@@ -116,6 +116,24 @@
               :saving="saving"
               :sectionType="section.type"
             />
+            <!-- Bedbank Destinations -->
+            <BedbankDestinationsSectionEditor
+              v-else-if="section.type === 'bedbank-destinations'"
+              v-model="form.bedbankDestinations"
+              :saving="saving"
+            />
+            <!-- Bedbank Showcase -->
+            <BedbankShowcaseSectionEditor
+              v-else-if="section.type === 'bedbank-showcase'"
+              v-model="form.bedbankShowcase"
+              :saving="saving"
+            />
+            <!-- Bedbank Section -->
+            <BedbankSectionEditor
+              v-else-if="section.type === 'bedbank-section'"
+              v-model="form.bedbankSections[section.instanceId || 0]"
+              :saving="saving"
+            />
             <!-- Generic fallback -->
             <GenericSectionEditor v-else :saving="saving" :sectionType="section.type" />
           </template>
@@ -194,6 +212,9 @@ import HotelsSectionEditor from './sections/HotelsSectionEditor.vue'
 import ToursSectionEditor from './sections/ToursSectionEditor.vue'
 import GenericSectionEditor from './sections/GenericSectionEditor.vue'
 import UtilitySectionEditor from './sections/UtilitySectionEditor.vue'
+import BedbankDestinationsSectionEditor from './sections/BedbankDestinationsSectionEditor.vue'
+import BedbankShowcaseSectionEditor from './sections/BedbankShowcaseSectionEditor.vue'
+import BedbankSectionEditor from './sections/BedbankSectionEditor.vue'
 
 // Sub-components (inline for simplicity)
 import DraftStatus from './partials/DraftStatus.vue'
@@ -257,6 +278,9 @@ const form = ref({
   cruiseDeals: {},
   transfers: {},
   bedbank: {},
+  bedbankDestinations: { title: [], description: [], items: [] },
+  bedbankShowcase: { title: [], description: [], ids: [] },
+  bedbankSections: {},
   utilitySections: {},
   activeSections: []
 })
@@ -340,6 +364,12 @@ const allSections = computed(() => [
     id: 'bedbank-showcase',
     name: t('website.sections.bedbankShowcase'),
     icon: 'hotel',
+    category: 'content'
+  },
+  {
+    id: 'bedbank-section',
+    name: t('website.sections.bedbankSection'),
+    icon: 'view_agenda',
     category: 'content'
   },
   {
@@ -485,6 +515,9 @@ const buildDraftPayload = () => {
     campaignSection: form.value.campaignSection,
     hotels: form.value.hotels,
     tours: form.value.tours,
+    bedbankDestinations: form.value.bedbankDestinations,
+    bedbankShowcase: form.value.bedbankShowcase,
+    bedbankSections: form.value.bedbankSections,
     activeSections: form.value.activeSections.map((s, i) => ({
       sectionType: toCanonicalSectionType(s.type),
       order: i,
@@ -510,14 +543,34 @@ const addSection = section => {
     }
   }
 
-  // Don't add duplicate non-singletons
-  if (activeSectionIds.value.includes(canonical)) return
+  // Don't add duplicate non-singletons (except for bedbank-section which allows multiple)
+  if (activeSectionIds.value.includes(canonical) && canonical !== 'bedbank-section') return
 
+  // For bedbank-section, check maxCount (3)
+  if (canonical === 'bedbank-section') {
+    const existingCount = form.value.activeSections.filter(
+      s => toCanonicalSectionType(s.type) === 'bedbank-section'
+    ).length
+    if (existingCount >= 3) return
+  }
+
+  const instanceId = `${section.id}-${Date.now()}`
   form.value.activeSections.push({
-    id: `${section.id}-${Date.now()}`,
+    id: instanceId,
     type: section.id,
+    instanceId: instanceId,
     expanded: true
   })
+
+  // Initialize bedbankSections entry for new bedbank-section instance
+  if (canonical === 'bedbank-section') {
+    form.value.bedbankSections[instanceId] = {
+      title: [],
+      description: [],
+      locationId: null,
+      locationName: ''
+    }
+  }
 }
 
 const addSectionById = id => {
@@ -563,6 +616,9 @@ const selectPage = async page => {
       campaignSection: src.campaignSection || [],
       hotels: src.hotels || {},
       tours: src.tours || {},
+      bedbankDestinations: src.bedbankDestinations || { title: [], description: [], items: [] },
+      bedbankShowcase: src.bedbankShowcase || { title: [], description: [], ids: [] },
+      bedbankSections: src.bedbankSections || {},
       activeSections: buildActiveSections(src)
     })
     isDirty.value = false

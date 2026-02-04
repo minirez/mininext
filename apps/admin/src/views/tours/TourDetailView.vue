@@ -95,21 +95,42 @@
 
               <div>
                 <label class="form-label">{{ $t('tour.fields.status') }}</label>
-                <select v-model="form.status" class="form-input">
-                  <option value="draft">{{ $t('tour.statuses.draft') }}</option>
-                  <option value="active">{{ $t('tour.statuses.active') }}</option>
-                  <option value="inactive">{{ $t('tour.statuses.inactive') }}</option>
-                  <option value="archived">{{ $t('tour.statuses.archived') }}</option>
-                </select>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="status in ['draft', 'active', 'inactive', 'archived']"
+                    :key="status"
+                    type="button"
+                    class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
+                    :class="getStatusButtonClass(status)"
+                    @click="form.status = status"
+                  >
+                    <span class="flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(status)"></span>
+                      {{ $t(`tour.statuses.${status}`) }}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label class="form-label">{{ $t('tour.fields.tourType') }}</label>
-                <select v-model="form.type" class="form-input">
-                  <option v-for="opt in tourTypes" :key="opt.value" :value="opt.value">
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="opt in tourTypes"
+                    :key="opt.value"
+                    type="button"
+                    class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5"
+                    :class="
+                      form.type === opt.value
+                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                        : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 hover:border-primary-400'
+                    "
+                    @click="form.type = opt.value"
+                  >
+                    <span class="material-icons text-sm">{{ getTourTypeIcon(opt.value) }}</span>
                     {{ $t(opt.label) }}
-                  </option>
-                </select>
+                  </button>
+                </div>
               </div>
 
               <div class="md:col-span-2">
@@ -625,6 +646,58 @@ function getLocalized(obj) {
 function getCurrencySymbol(code) {
   const curr = CURRENCIES.find(c => c.code === code)
   return curr?.symbol || code
+}
+
+function getStatusButtonClass(status) {
+  const isSelected = form.value.status === status
+  if (!isSelected) {
+    return 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 hover:border-gray-400'
+  }
+  switch (status) {
+    case 'active':
+      return 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+    case 'draft':
+      return 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+    case 'inactive':
+      return 'bg-gray-500 text-white shadow-lg shadow-gray-500/30'
+    case 'archived':
+      return 'bg-slate-600 text-white shadow-lg shadow-slate-600/30'
+    default:
+      return 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+  }
+}
+
+function getStatusDotClass(status) {
+  switch (status) {
+    case 'active':
+      return 'bg-green-300'
+    case 'draft':
+      return 'bg-amber-300'
+    case 'inactive':
+      return 'bg-gray-300'
+    case 'archived':
+      return 'bg-slate-400'
+    default:
+      return 'bg-gray-300'
+  }
+}
+
+function getTourTypeIcon(type) {
+  const icons = {
+    cultural: 'museum',
+    adventure: 'terrain',
+    nature: 'forest',
+    city: 'location_city',
+    beach: 'beach_access',
+    cruise: 'sailing',
+    religious: 'church',
+    wellness: 'spa',
+    gastronomy: 'restaurant',
+    wildlife: 'pets',
+    winter: 'ac_unit',
+    other: 'tour'
+  }
+  return icons[type] || 'tour'
 }
 
 function generateTourCode() {

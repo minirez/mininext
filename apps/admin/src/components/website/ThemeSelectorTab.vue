@@ -148,7 +148,7 @@
         <TransitionGroup 
           name="theme-grid" 
           tag="div" 
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
           <div
             v-for="(theme, index) in availableThemes"
@@ -156,43 +156,60 @@
             class="relative group cursor-pointer transform transition-all duration-300"
             :style="{ transitionDelay: `${index * 50}ms` }"
             @click="selectTheme(theme.id)"
+            @mouseenter="hoveredTheme = theme.id"
+            @mouseleave="hoveredTheme = null"
           >
             <!-- Theme Card -->
             <div
-              class="rounded-xl overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              class="rounded-lg overflow-hidden border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               :class="
                 selectedTheme === theme.id
-                  ? 'border-purple-600 shadow-lg shadow-purple-200 dark:shadow-purple-900/30 ring-2 ring-purple-300 dark:ring-purple-700'
+                  ? 'border-purple-600 shadow-md shadow-purple-200 dark:shadow-purple-900/30 ring-2 ring-purple-300 dark:ring-purple-700'
                   : 'border-gray-200 dark:border-slate-700 hover:border-purple-400'
               "
             >
               <!-- Theme Preview Image -->
-              <div class="aspect-video bg-gray-100 dark:bg-slate-700 relative overflow-hidden">
+              <div class="aspect-[16/10] bg-gray-100 dark:bg-slate-700 relative overflow-hidden">
+                <!-- If user uploaded a hero image, show it always -->
                 <img
-                  v-if="theme.preview"
-                  :src="theme.preview"
+                  v-if="getThemeHeroImage(theme.id)"
+                  :src="getThemeHeroImage(theme.id)"
                   :alt="theme.name"
-                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  class="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
                 />
-                <div
-                  v-else
-                  class="w-full h-full flex items-center justify-center bg-gradient-to-br transition-all duration-500"
-                  :class="theme.gradient"
-                >
-                  <span class="material-icons text-6xl text-white/50 group-hover:scale-110 transition-transform duration-300">{{ theme.icon }}</span>
-                </div>
+                
+                <!-- Otherwise show gradient/preview toggle on hover -->
+                <template v-else>
+                  <!-- Gradient background (default state) -->
+                  <div
+                    class="absolute inset-0 flex items-center justify-center bg-gradient-to-br transition-opacity duration-[250ms]"
+                    :class="[theme.gradient, hoveredTheme === theme.id ? 'opacity-0' : 'opacity-100']"
+                  >
+                    <span class="material-icons text-4xl text-white/50">{{ theme.icon }}</span>
+                  </div>
+                  
+                  <!-- Preview image (shown on hover) -->
+                  <img
+                    v-if="theme.previewImage"
+                    :src="theme.previewImage"
+                    :alt="theme.name"
+                    class="absolute inset-0 w-full h-full object-cover transition-opacity duration-[250ms]"
+                    :class="hoveredTheme === theme.id ? 'opacity-100' : 'opacity-0'"
+                    loading="lazy"
+                  />
+                </template>
 
                 <!-- Hover Overlay with smooth animation -->
                 <div
-                  class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-4"
+                  class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-[250ms] flex items-end justify-center pb-3"
                 >
                   <button
-                    class="px-5 py-2.5 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-all duration-200 shadow-lg transform translate-y-4 group-hover:translate-y-0"
+                    class="px-3 py-1.5 bg-white text-purple-600 rounded-md text-sm font-medium hover:bg-purple-50 transition-all duration-[250ms] shadow-md transform translate-y-3 group-hover:translate-y-0"
                     @click.stop="enterThemeEditor(theme.id)"
                   >
-                    <span class="flex items-center gap-2">
-                      <span class="material-icons text-sm">edit</span>
+                    <span class="flex items-center gap-1.5">
+                      <span class="material-icons text-xs">edit</span>
                       {{ $t('website.themes.modify') }}
                     </span>
                   </button>
@@ -209,9 +226,9 @@
                 >
                   <div
                     v-if="selectedTheme === theme.id"
-                    class="absolute top-3 right-3 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg"
+                    class="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center shadow-md"
                   >
-                    <span class="material-icons text-white text-lg">check</span>
+                    <span class="material-icons text-white text-sm">check</span>
                   </div>
                 </Transition>
 
@@ -226,23 +243,23 @@
                 >
                   <div
                     v-if="selectedTheme === theme.id"
-                    class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-xs rounded-full font-medium shadow-lg flex items-center gap-1"
+                    class="absolute top-2 left-2 px-2 py-0.5 bg-green-500 text-white text-[10px] rounded-full font-medium shadow-md flex items-center gap-0.5"
                   >
-                    <span class="material-icons text-xs">check_circle</span>
+                    <span class="material-icons text-[10px]">check_circle</span>
                     {{ $t('website.themes.active') }}
                   </div>
                 </Transition>
               </div>
 
               <!-- Theme Info -->
-              <div class="p-4 bg-white dark:bg-slate-800">
-                <h4 class="font-semibold text-gray-800 dark:text-white">{{ theme.name }}</h4>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{{ theme.description }}</p>
-                <div class="flex flex-wrap gap-2 mt-3">
+              <div class="p-3 bg-white dark:bg-slate-800">
+                <h4 class="font-medium text-sm text-gray-800 dark:text-white">{{ theme.name }}</h4>
+                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{{ theme.description }}</p>
+                <div class="flex flex-wrap gap-1.5 mt-2">
                   <span
                     v-for="tag in theme.tags"
                     :key="tag"
-                    class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-300"
+                    class="px-1.5 py-0.5 text-[10px] rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 transition-colors hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-300"
                   >
                     {{ tag }}
                   </span>
@@ -299,6 +316,7 @@ const selectedTheme = ref('home1')
 const themeColor = ref('#3498DB')
 const editingTheme = ref(null)
 const themeContent = ref({})
+const hoveredTheme = ref(null)
 
 const presetColors = [
   '#3498DB', // Blue
@@ -311,6 +329,36 @@ const presetColors = [
   '#E91E63'  // Pink
 ]
 
+// Theme to preview image mapping
+const themePreviewImages = {
+  home1: '/previews/hero-1.webp',
+  tour: '/previews/hero-5.webp',
+  flight: '/previews/hero-10.webp',
+  activity: '/previews/hero-6.webp',
+  transfer: '/previews/transfers.webp',
+  cruise: '/previews/hero-9.webp',
+  bedbank: '/previews/hero-bedbank.webp'
+}
+
+// Get uploaded hero image for a theme if it exists
+const getThemeHeroImage = (themeId) => {
+  const storefront = props.storefront
+  if (!storefront) return null
+  
+  // Check theme-specific hero photo
+  if (themeId === 'home1') {
+    return storefront.hero?.photo?.url || null
+  }
+  
+  // For other themes, check in homepageTheme.<themeId>.hero.photo
+  const themeData = storefront.homepageTheme?.[themeId]
+  if (themeData?.hero?.photo?.url) {
+    return themeData.hero.photo.url
+  }
+  
+  return null
+}
+
 const availableThemes = computed(() => [
   {
     id: 'home1',
@@ -318,15 +366,8 @@ const availableThemes = computed(() => [
     description: t('website.themes.home1.description'),
     icon: 'home',
     gradient: 'from-blue-500 to-purple-600',
+    previewImage: themePreviewImages.home1,
     tags: [t('website.themes.tags.hotel'), t('website.themes.tags.tour'), t('website.themes.tags.default')]
-  },
-  {
-    id: 'home2',
-    name: t('website.themes.home2.name'),
-    description: t('website.themes.home2.description'),
-    icon: 'villa',
-    gradient: 'from-emerald-500 to-teal-600',
-    tags: [t('website.themes.tags.hotel'), t('website.themes.tags.modern')]
   },
   {
     id: 'tour',
@@ -334,6 +375,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.tour.description'),
     icon: 'tour',
     gradient: 'from-orange-500 to-red-600',
+    previewImage: themePreviewImages.tour,
     tags: [t('website.themes.tags.tour'), t('website.themes.tags.activity')]
   },
   {
@@ -342,6 +384,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.flight.description'),
     icon: 'flight',
     gradient: 'from-sky-500 to-blue-600',
+    previewImage: themePreviewImages.flight,
     tags: [t('website.themes.tags.flight'), t('website.themes.tags.travel')]
   },
   {
@@ -350,6 +393,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.activity.description'),
     icon: 'local_activity',
     gradient: 'from-pink-500 to-rose-600',
+    previewImage: themePreviewImages.activity,
     tags: [t('website.themes.tags.activity'), t('website.themes.tags.events')]
   },
   {
@@ -358,6 +402,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.transfer.description'),
     icon: 'airport_shuttle',
     gradient: 'from-gray-600 to-slate-800',
+    previewImage: themePreviewImages.transfer,
     tags: [t('website.themes.tags.transfer')]
   },
   {
@@ -366,6 +411,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.cruise.description'),
     icon: 'sailing',
     gradient: 'from-cyan-500 to-blue-700',
+    previewImage: themePreviewImages.cruise,
     tags: [t('website.themes.tags.cruise'), t('website.themes.tags.yacht')]
   },
   {
@@ -374,6 +420,7 @@ const availableThemes = computed(() => [
     description: t('website.themes.bedbank.description'),
     icon: 'bed',
     gradient: 'from-indigo-500 to-purple-700',
+    previewImage: themePreviewImages.bedbank,
     tags: [t('website.themes.tags.hotel'), t('website.themes.tags.global')]
   }
 ])
@@ -387,7 +434,10 @@ watch(
     const currentId = newStorefront?._id || newStorefront?.homepageTheme?.type
     if (newStorefront && currentId !== lastStorefrontId) {
       lastStorefrontId = currentId
-      selectedTheme.value = newStorefront.homepageTheme?.type || 'home1'
+      // Map removed home2 theme to home1
+      let themeType = newStorefront.homepageTheme?.type || 'home1'
+      if (themeType === 'home2') themeType = 'home1'
+      selectedTheme.value = themeType
       themeColor.value = newStorefront.themeColor || '#3498DB'
       // Update theme content if we're editing
       if (editingTheme.value) {
@@ -419,7 +469,6 @@ const loadThemeContent = themeId => {
   // Load theme-specific content based on theme type
   switch (themeId) {
     case 'home1':
-    case 'home2':
       themeContent.value = {
         hero: storefront.hero || {},
         locationSection: storefront.locationSection || {},
@@ -529,8 +578,8 @@ const handleSave = () => {
   // If we're in theme editor, also save the theme-specific content
   if (editingTheme.value) {
     const themeId = editingTheme.value
-    if (themeId === 'home1' || themeId === 'home2') {
-      // For home themes, content is at root level
+    if (themeId === 'home1') {
+      // For home theme, content is at root level
       saveData.hero = themeContent.value.hero
       saveData.locationSection = themeContent.value.locationSection
       saveData.campaignSection = themeContent.value.campaignSection
