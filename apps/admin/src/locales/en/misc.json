@@ -381,6 +381,11 @@
   },
   "website": {
     "fetchError": "Failed to load website settings",
+    "storefrontSource": {
+      "enableNewApi": "Enable new storefront source",
+      "enableNewApiHelp": "Site3 will use the new API only when the domain is whitelisted and this switch is enabled.",
+      "saved": "Storefront source updated"
+    },
     "themeSaved": "Theme settings saved successfully",
     "homepageSaved": "Homepage settings saved successfully",
     "pageSaved": "Page saved successfully",
@@ -392,6 +397,7 @@
       "title": "Preview",
       "openInNewTab": "Open preview in new tab",
       "loading": "Loading preview...",
+      "page": "Page",
       "mobile": "Mobile",
       "tablet": "Tablet",
       "desktop": "Desktop"

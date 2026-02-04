@@ -95,6 +95,12 @@ const settingsSchema = new Schema(
     extranetLink: String,
     siteTitle: String,
     themeColor: String,
+    /**
+     * Master switch for B2C rendering source.
+     * When enabled, beta-whitelisted domains can switch to the new public storefront API rendering.
+     * Site3 should require BOTH: (1) domain in whitelist AND (2) this flag enabled.
+     */
+    storefrontV3Enabled: { type: Boolean, default: false },
     address: String
   },
   { _id: false }

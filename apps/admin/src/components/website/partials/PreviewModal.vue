@@ -7,20 +7,38 @@
           {{ $t('website.preview.title') }}
         </h3>
         
-        <!-- Device Selector -->
-        <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
-          <button
-            v-for="device in devices"
-            :key="device.id"
-            class="p-2 rounded-md transition-all duration-200"
-            :class="activeDevice === device.id 
-              ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm' 
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-            :title="device.label"
-            @click="activeDevice = device.id"
-          >
-            <span class="material-icons text-lg">{{ device.icon }}</span>
-          </button>
+        <div class="flex items-center gap-3">
+          <!-- Page Selector (optional) -->
+          <div v-if="Array.isArray(pages) && pages.length > 0" class="flex items-center gap-2">
+            <span class="text-sm text-gray-500 dark:text-slate-300">{{
+              $t('website.preview.page')
+            }}</span>
+            <select
+              class="form-select text-sm py-1"
+              :value="selectedPageId || ''"
+              @change="$emit('update:selectedPageId', $event.target.value)"
+            >
+              <option v-for="p in pages" :key="p.id" :value="p.id">
+                {{ (p.name || p.url || '/') + (p.url ? ` (${p.url})` : '') }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Device Selector -->
+          <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
+            <button
+              v-for="device in devices"
+              :key="device.id"
+              class="p-2 rounded-md transition-all duration-200"
+              :class="activeDevice === device.id 
+                ? 'bg-white dark:bg-slate-600 text-purple-600 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              :title="device.label"
+              @click="activeDevice = device.id"
+            >
+              <span class="material-icons text-lg">{{ device.icon }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </template>
@@ -81,8 +99,13 @@ import Modal from '@/components/ui/overlay/Modal.vue'
 
 const { t } = useI18n()
 
-defineProps({ modelValue: Boolean, url: String })
-defineEmits(['update:modelValue'])
+defineProps({
+  modelValue: Boolean,
+  url: String,
+  pages: { type: Array, default: () => [] },
+  selectedPageId: { type: [String, null], default: null }
+})
+defineEmits(['update:modelValue', 'update:selectedPageId'])
 
 const activeDevice = ref('desktop')
 

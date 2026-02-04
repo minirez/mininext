@@ -381,6 +381,11 @@
   },
   "website": {
     "fetchError": "Web sitesi ayarları yüklenemedi",
+    "storefrontSource": {
+      "enableNewApi": "Yeni storefront kaynağını etkinleştir",
+      "enableNewApiHelp": "Site3, yalnızca domain whitelist'te ise ve bu anahtar açık ise yeni API'yi kullanır.",
+      "saved": "Storefront kaynağı güncellendi"
+    },
     "themeSaved": "Tema ayarları başarıyla kaydedildi",
     "homepageSaved": "Anasayfa ayarları başarıyla kaydedildi",
     "pageSaved": "Sayfa başarıyla kaydedildi",
@@ -391,7 +396,8 @@
     "preview": {
       "title": "Önizleme",
       "openInNewTab": "Önizlemeyi yeni sekmede aç",
-      "loading": "Önizleme yükleniyor..."
+      "loading": "Önizleme yükleniyor...",
+      "page": "Sayfa"
     },
     "draft": {
       "saving": "Kaydediliyor...",

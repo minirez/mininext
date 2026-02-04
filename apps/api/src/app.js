@@ -131,6 +131,11 @@ app.use('/api/pay', paymentLinkPublicRoutes)
 import publicStorefrontRoutes from './modules/public/publicStorefront.routes.js'
 app.use('/api/public/storefront', publicStorefrontRoutes)
 
+// Legacy storefront routes (backward compatibility with site3)
+// These use the old API structure with referer-based partner resolution
+import legacyStorefrontRoutes from './modules/legacyStorefront/legacyStorefront.routes.js'
+app.use('/storefronts', legacyStorefrontRoutes)
+
 // Short URL redirect (for link.mini.com / link.minires.com)
 import shortUrlRoutes from './modules/shortUrl/shortUrl.routes.js'
 app.use('/l', shortUrlRoutes)

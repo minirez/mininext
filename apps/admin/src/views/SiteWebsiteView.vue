@@ -21,8 +21,27 @@
             </span>
           </button>
 
+          <!-- Master switch: enable new storefront source for this partner -->
+          <div v-if="storefront" class="ml-auto pr-4 flex items-center gap-4">
+            <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+              <input
+                type="checkbox"
+                class="form-checkbox"
+                :checked="Boolean(storefront?.settings?.storefrontV3Enabled)"
+                :disabled="loading || saving"
+                @change="e => handleStorefrontSourceToggle(e.target.checked)"
+              />
+              <span>{{ $t('website.storefrontSource.enableNewApi') }}</span>
+            </label>
+
+            <span class="text-xs text-gray-400 dark:text-slate-500 hidden lg:inline">
+              {{ $t('website.storefrontSource.enableNewApiHelp') }}
+            </span>
+          </div>
+
           <!-- AI Import Button -->
-          <div class="ml-auto pr-4">
+          <div v-else class="ml-auto pr-4"></div>
+          <div class="pr-4">
             <button
               class="px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors flex items-center gap-2"
               @click="showAIImporter = true"
@@ -149,6 +168,28 @@ usePartnerContext({
 const handleThemeSave = async data => {
   await executeSave(() => websiteService.updateTheme(data), {
     successMessage: 'website.themeSaved',
+    onSuccess: async () => {
+      await fetchStorefront()
+    }
+  })
+}
+
+const handleStorefrontSourceToggle = async enabled => {
+  if (!storefront.value) return
+
+  const nextSettings = {
+    ...(storefront.value.settings || {}),
+    storefrontV3Enabled: Boolean(enabled)
+  }
+
+  // Optimistic update to keep UI responsive
+  storefront.value = {
+    ...storefront.value,
+    settings: nextSettings
+  }
+
+  await executeSave(() => websiteService.updateStorefront({ settings: nextSettings }), {
+    successMessage: 'website.storefrontSource.saved',
     onSuccess: async () => {
       await fetchStorefront()
     }

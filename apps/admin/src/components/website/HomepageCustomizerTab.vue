@@ -157,7 +157,13 @@
 
     <!-- Preview Modal -->
     <SectionPreviewModal v-model="previewSection" :sections="allSections" @add="addSectionById" />
-    <PreviewModal v-model="showPreview" :url="previewUrl" />
+    <PreviewModal
+      v-model="showPreview"
+      :url="previewUrl"
+      :pages="useCustomTheme ? pages : []"
+      :selectedPageId="previewPageId"
+      @update:selectedPageId="previewPageId = $event"
+    />
     <PresetModal v-model="showPresetModal" @save="confirmSavePreset" />
 
     <!-- Confirm Dialogs -->
@@ -240,6 +246,7 @@ const previewSection = ref(null)
 const showPreview = ref(false)
 const showPresetModal = ref(false)
 const previewUrl = ref('')
+const previewPageId = ref(null)
 
 // Draft state
 const isDirty = ref(false)
@@ -808,13 +815,58 @@ const confirmSavePreset = name => {
 
 // ==================== PREVIEW & PUBLISH ====================
 
+const normalizePath = raw => {
+  if (!raw) return '/'
+  const s = String(raw).split('?')[0].split('#')[0].trim()
+  if (!s) return '/'
+  const withSlash = s.startsWith('/') ? s : `/${s}`
+  const collapsed = withSlash.replace(/\/{2,}/g, '/')
+  const noTrailing = collapsed.length > 1 ? collapsed.replace(/\/+$/, '') : collapsed
+  return noTrailing || '/'
+}
+
+const buildDraftLiveUrl = (domain, pageUrl = '/') => {
+  const path = normalizePath(pageUrl || '/')
+  const suffix = path === '/' ? '' : path
+  // Always use lowercase route; site3 middleware will also canonicalize, but this avoids redirects.
+  return `https://${domain}/draftlive${suffix}`
+}
+
+const computePreviewUrl = () => {
+  const domain = props.storefront?.settings?.b2cDomain
+  if (!domain) return ''
+
+  if (!useCustomTheme.value) {
+    return buildDraftLiveUrl(domain, '/')
+  }
+
+  const page = pages.value.find(p => p.id === previewPageId.value) || selectedPage.value
+  return buildDraftLiveUrl(domain, page?.url || '/')
+}
+
 const handlePreview = async () => {
   await saveDraft()
   const domain = props.storefront?.settings?.b2cDomain
   if (!domain) return toast.error(t('siteSettings.setup.enterDomainFirst'))
-  previewUrl.value = `https://${domain}/draftLive`
+  // Default preview page selection to the currently edited page (or active page).
+  if (useCustomTheme.value) {
+    previewPageId.value =
+      selectedPageId.value || pages.value.find(p => p.isActive)?.id || pages.value[0]?.id || null
+  } else {
+    previewPageId.value = null
+  }
+
+  previewUrl.value = computePreviewUrl()
   showPreview.value = true
 }
+
+watch(
+  () => [showPreview.value, previewPageId.value],
+  () => {
+    if (!showPreview.value) return
+    previewUrl.value = computePreviewUrl()
+  }
+)
 
 const handlePublish = async () => {
   clearTimeout(autoSaveTimer.value)

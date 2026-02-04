@@ -251,6 +251,7 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
       draft: 1,
       'homepageTheme.type': 1,
       'settings.themeColor': 1,
+      'settings.storefrontV3Enabled': 1,
       'settings.siteTitle': 1,
       'settings.name': 1,
       'settings.logo': 1,
