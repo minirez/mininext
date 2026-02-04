@@ -183,6 +183,16 @@ export async function getUpcomingDepartures(params = {}) {
   return data
 }
 
+/**
+ * Bulk update departure pricing for a tour
+ * @param {string} tourId - Tour ID
+ * @param {Object} payload - { pricing, currency, onlyFuture }
+ */
+export async function bulkUpdateDeparturePricing(tourId, payload) {
+  const { data } = await api.put(`${BASE_URL}/${tourId}/departures/pricing`, payload)
+  return data
+}
+
 // =====================
 // EXTRA OPERATIONS
 // =====================
@@ -473,6 +483,7 @@ export default {
   searchDepartures,
   checkAvailability,
   getUpcomingDepartures,
+  bulkUpdateDeparturePricing,
   // Extras
   getExtras,
   getExtra,

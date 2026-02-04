@@ -1248,8 +1248,8 @@ function setFromAI(aiSchedule, durationDays = 1, pricing = null) {
   }
 }
 
-// Expose method for parent component
-defineExpose({ setFromAI })
+// Expose methods for parent component
+defineExpose({ setFromAI, loadExisting })
 
 onMounted(() => {
   const now = new Date()

@@ -282,7 +282,45 @@ const mainSection = computed(() => {
   }
 
   // Partner menu items (visible when in partner view, filtered by permissions)
+  // Order: Dashboard (above), Rezervasyonlar, Oteller, Planlama, Turlar, Site Yönetimi, then rest
   if (isPartnerView) {
+    // 1. Rezervasyonlar
+    if (hasPermission('booking')) {
+      items.push({
+        name: 'bookings',
+        to: '/bookings',
+        icon: 'book_online',
+        label: t('nav.bookings')
+      })
+    }
+    // 2. Oteller
+    if (hasPermission('hotels')) {
+      items.push({ name: 'hotels', to: '/hotels', icon: 'hotel', label: t('nav.hotels') })
+    }
+    // 3. Planlama
+    if (hasPermission('planning')) {
+      items.push({
+        name: 'planning',
+        to: '/planning',
+        icon: 'event_note',
+        label: t('nav.planning')
+      })
+    }
+    // 4. Turlar & Aktiviteler
+    if (hasPermission('tours') || hasPermission('booking')) {
+      items.push({ name: 'tours', to: '/tours', icon: 'tour', label: t('nav.tours') })
+    }
+    // 5. Site Yönetimi
+    if (hasPermission('settings')) {
+      items.push({
+        name: 'site-management',
+        to: '/site-management/settings',
+        icon: 'language',
+        label: t('nav.siteManagement')
+      })
+    }
+
+    // --- Rest of the items ---
     // Payment - tüm partnerlar için
     items.push({
       name: 'payment',
@@ -295,34 +333,6 @@ const mainSection = computed(() => {
     }
     if (hasPermission('settings')) {
       items.push({ name: 'users', to: '/users', icon: 'people', label: t('nav.users') })
-      items.push({
-        name: 'site-management',
-        to: '/site-management/settings',
-        icon: 'language',
-        label: t('nav.siteManagement')
-      })
-    }
-    if (hasPermission('hotels')) {
-      items.push({ name: 'hotels', to: '/hotels', icon: 'hotel', label: t('nav.hotels') })
-    }
-    if (hasPermission('planning')) {
-      items.push({
-        name: 'planning',
-        to: '/planning',
-        icon: 'event_note',
-        label: t('nav.planning')
-      })
-    }
-    if (hasPermission('booking')) {
-      items.push({
-        name: 'bookings',
-        to: '/bookings',
-        icon: 'book_online',
-        label: t('nav.bookings')
-      })
-    }
-    if (hasPermission('tours') || hasPermission('booking')) {
-      items.push({ name: 'tours', to: '/tours', icon: 'tour', label: t('nav.tours') })
     }
     if (hasPermission('pms')) {
       items.push({ name: 'pms-integration', to: '/pms-integration', icon: 'link', label: 'PMS' })

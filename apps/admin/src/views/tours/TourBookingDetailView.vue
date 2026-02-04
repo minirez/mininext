@@ -12,7 +12,7 @@
         <div>
           <div class="flex items-center gap-3">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-              {{ booking?.bookingNumber || $t('tourBooking.bookingDetails') }}
+              {{ booking?.bookingNo || $t('tourBooking.bookingDetails') }}
             </h1>
             <StatusBadge v-if="booking" :status="booking.status" :statusMap="bookingStatusMap" />
           </div>
@@ -251,7 +251,7 @@
 
           <div class="space-y-3">
             <div
-              v-for="(payment, index) in booking.payments || []"
+              v-for="(transaction, index) in booking.payment?.transactions || []"
               :key="index"
               class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700 last:border-0"
             >
@@ -259,23 +259,25 @@
                 <p class="font-medium text-gray-900 dark:text-white">
                   {{
                     formatCurrency(
-                      payment.amount,
-                      payment.currency || booking.pricing?.currency || 'TRY'
+                      transaction.amount,
+                      transaction.currency || booking.pricing?.currency || 'TRY'
                     )
                   }}
                 </p>
                 <p class="text-sm text-gray-500">
-                  {{ formatDate(payment.date) }} -
-                  {{ $t(`agencies.paymentMethods.${payment.method}`) }}
+                  {{ formatDate(transaction.paidAt) }} -
+                  {{ getPaymentMethodLabel(transaction.method) }}
+                </p>
+                <p v-if="transaction.note" class="text-xs text-gray-400 mt-1">
+                  {{ transaction.note }}
                 </p>
               </div>
-              <StatusBadge :status="payment.status" :statusMap="paymentStatusMap" />
             </div>
             <div
-              v-if="!booking.payments?.length"
+              v-if="!booking.payment?.transactions?.length"
               class="text-center py-4 text-gray-500 dark:text-gray-400"
             >
-              Henüz ödeme kaydı yok
+              {{ $t('payment.noPayments') }}
             </div>
           </div>
         </div>
@@ -370,7 +372,7 @@
                 $t('tourBooking.fields.bookingNumber')
               }}</span>
               <span class="font-mono text-gray-900 dark:text-white">{{
-                booking.bookingNumber
+                booking.bookingNo
               }}</span>
             </div>
             <div class="flex justify-between">
@@ -601,8 +603,17 @@ function getTourImage(tour) {
 }
 
 function getPassengerVisaStatus(passenger) {
-  const visaInfo = booking.value?.visaStatus?.find(v => v.passengerId === passenger._id)
-  return visaInfo?.status || 'not_required'
+  return passenger?.visa?.status || 'not_required'
+}
+
+function getPaymentMethodLabel(method) {
+  const methodMap = {
+    credit_card: t('payment.type.credit_card'),
+    bank_transfer: t('payment.type.bank_transfer'),
+    cash: t('payment.type.cash'),
+    agency_credit: t('payment.type.agency_credit')
+  }
+  return methodMap[method] || method
 }
 
 async function loadBooking() {
@@ -628,7 +639,7 @@ async function confirmBooking() {
 async function cancelBooking() {
   cancelling.value = true
   try {
-    await tourStore.cancelBooking(booking.value._id, cancelReason.value)
+    await tourStore.cancelBooking(booking.value._id, { reason: cancelReason.value })
     booking.value.status = 'cancelled'
     showCancelModal.value = false
   } finally {
@@ -639,10 +650,11 @@ async function cancelBooking() {
 async function addPayment() {
   addingPayment.value = true
   try {
-    await tourStore.addBookingPayment(booking.value._id, {
-      ...paymentForm.value,
-      currency: booking.value.pricing?.currency || 'TRY',
-      date: new Date()
+    await tourStore.addPayment(booking.value._id, {
+      amount: paymentForm.value.amount,
+      method: paymentForm.value.method,
+      note: paymentForm.value.notes,
+      currency: booking.value.pricing?.currency || 'TRY'
     })
     await loadBooking()
     showPaymentModal.value = false

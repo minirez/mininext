@@ -730,6 +730,48 @@ export const getDepartureAvailability = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Bulk update pricing for all departures of a tour
+ * Used when tour base pricing changes
+ */
+export const bulkUpdateDeparturePricing = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { tourId } = req.params
+  const { pricing, currency, onlyFuture = true } = req.body || {}
+
+  if (!pricing) {
+    throw new BadRequestError('REQUIRED_PRICING')
+  }
+
+  const tourExists = await Tour.exists({ _id: tourId, partner: partnerId })
+  if (!tourExists) throw new NotFoundError('TOUR_NOT_FOUND')
+
+  // Build filter for departures to update
+  const filter = { partner: partnerId, tour: tourId }
+
+  // Only update future departures by default
+  if (onlyFuture) {
+    filter.departureDate = { $gte: new Date() }
+    filter.status = { $nin: ['cancelled', 'completed'] }
+  }
+
+  // Build update
+  const update = { pricing }
+  if (currency) {
+    update.currency = currency
+  }
+
+  const result = await TourDeparture.updateMany(filter, { $set: update })
+
+  res.json({
+    success: true,
+    data: {
+      modifiedCount: result.modifiedCount,
+      matchedCount: result.matchedCount
+    }
+  })
+})
+
 // ==================== EXTRAS ====================
 
 export const getExtras = asyncHandler(async (req, res) => {
@@ -992,6 +1034,26 @@ export const calculateBookingPrice = asyncHandler(async (req, res) => {
   })
 })
 
+/**
+ * Generate unique booking number with retry logic
+ */
+async function generateUniqueBookingNo(partnerId, maxRetries = 5) {
+  const dateStr = new Date().toISOString().slice(0, 10).replaceAll('-', '')
+
+  for (let i = 0; i < maxRetries; i++) {
+    const bookingNo = `TRB-${dateStr}-${nanoid(6).toUpperCase()}`
+
+    // Check if this booking number already exists for this partner
+    const exists = await TourBooking.exists({ partner: partnerId, bookingNo })
+    if (!exists) {
+      return bookingNo
+    }
+  }
+
+  // Fallback with timestamp for guaranteed uniqueness
+  return `TRB-${dateStr}-${Date.now().toString(36).toUpperCase()}`
+}
+
 export const createBooking = asyncHandler(async (req, res) => {
   const partnerId = requirePartnerId(req)
   const body = req.body || {}
@@ -1013,13 +1075,14 @@ export const createBooking = asyncHandler(async (req, res) => {
     throw new ConflictError('DEPARTURE_NOT_BOOKABLE')
   }
 
+  // Generate unique booking number
+  const bookingNo = body.bookingNo || (await generateUniqueBookingNo(partnerId))
+
   const booking = await TourBooking.create({
     partner: partnerId,
     tour: body.tour,
     departure: body.departure,
-    bookingNo:
-      body.bookingNo ||
-      `TRB-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${nanoid(6).toUpperCase()}`,
+    bookingNo,
     passengers: body.passengers || [],
     contact: body.contact || {},
     extras: body.extras || [],

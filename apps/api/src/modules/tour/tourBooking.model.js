@@ -129,7 +129,7 @@ const tourBookingSchema = new Schema(
       index: true
     },
 
-    bookingNo: { type: String, trim: true, index: true },
+    bookingNo: { type: String, trim: true, index: true, unique: true, sparse: true },
 
     passengers: { type: [passengerSchema], default: [] },
     seatCount: { type: Number, default: 0, min: 0 },

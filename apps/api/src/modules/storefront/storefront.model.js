@@ -394,7 +394,7 @@ const homepageThemeSchema = new Schema(
   {
     type: {
       type: String,
-      enum: ['home1', 'home2', 'tour', 'flight', 'activity', 'hotel', 'transfer', 'cruise'],
+      enum: ['home1', 'home2', 'tour', 'flight', 'activity', 'hotel', 'transfer', 'cruise', 'bedbank'],
       default: 'home1'
     },
     home1: { type: defaultThemeSchema, default: () => ({}) },

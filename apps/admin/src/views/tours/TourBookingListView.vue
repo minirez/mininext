@@ -242,7 +242,7 @@
                 <td class="px-4 py-3">
                   <div class="flex items-center">
                     <span class="font-mono font-medium text-purple-600 dark:text-purple-400">
-                      {{ booking.bookingNumber }}
+                      {{ booking.bookingNo }}
                     </span>
                     <span
                       v-if="booking.salesChannel === 'b2b'"
@@ -255,7 +255,7 @@
                 <td class="px-4 py-3">
                   <div>
                     <p class="font-medium text-gray-900 dark:text-white">
-                      {{ booking.tour?.name || '-' }}
+                      {{ getLocalizedName(booking.tour?.name) || '-' }}
                     </p>
                     <p class="text-sm text-gray-500">{{ booking.tour?.code || '' }}</p>
                   </div>
@@ -429,8 +429,8 @@ const filteredBookings = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(b => {
-      const bookingNo = (b.bookingNumber || '').toLowerCase()
-      const tourName = (b.tour?.name || '').toLowerCase()
+      const bookingNo = (b.bookingNo || '').toLowerCase()
+      const tourName = getLocalizedName(b.tour?.name).toLowerCase()
       const leadPassenger = getLeadPassenger(b)
       const passengerName = leadPassenger
         ? `${leadPassenger.firstName} ${leadPassenger.lastName}`.toLowerCase()
@@ -485,6 +485,12 @@ const bookingStatusMap = {
 }
 
 // Methods
+function getLocalizedName(obj) {
+  if (!obj) return ''
+  if (typeof obj === 'string') return obj
+  return obj[locale.value] || obj.tr || obj.en || ''
+}
+
 function formatDate(date) {
   if (!date) return '-'
   return new Date(date).toLocaleDateString(locale.value === 'tr' ? 'tr-TR' : 'en-US', {
@@ -558,7 +564,7 @@ function getRowActions(booking) {
 
 function confirmBooking(booking) {
   confirmDialogTitle.value = t('tourBooking.actions.confirm')
-  confirmDialogMessage.value = `${booking.bookingNumber} numaralı rezervasyonu onaylamak istediğinize emin misiniz?`
+  confirmDialogMessage.value = `${booking.bookingNo} numaralı rezervasyonu onaylamak istediğinize emin misiniz?`
   confirmDialogVariant.value = 'primary'
   confirmDialogAction.value = async () => {
     await tourStore.updateBookingStatus(booking._id, 'confirmed')
@@ -577,7 +583,7 @@ async function confirmCancel() {
 
   cancelling.value = true
   try {
-    await tourStore.cancelBooking(cancellingBooking.value._id, cancelReason.value)
+    await tourStore.cancelBooking(cancellingBooking.value._id, { reason: cancelReason.value })
     showCancelModal.value = false
     cancellingBooking.value = null
   } finally {

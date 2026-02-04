@@ -130,8 +130,7 @@
               </div>
             </div>
             <div class="flex items-end">
-              <BaseButton @click="searchTours" :loading="searching" class="w-full">
-                <span class="material-icons mr-2">search</span>
+              <BaseButton @click="searchTours" :loading="searching" class="w-full" iconLeft="search">
                 {{ $t('common.search') }}
               </BaseButton>
             </div>
@@ -178,8 +177,13 @@
                     </div>
                     <div class="text-right">
                       <p class="font-medium text-purple-600 dark:text-purple-400">
-                        {{ $t('wizard.pricePerPerson') }}:
-                        {{ formatCurrency(getLowestPrice(tour), 'TRY') }}
+                        <template v-if="getLowestPrice(tour)">
+                          {{ $t('wizard.pricePerPerson') }}:
+                          {{ formatCurrency(getLowestPrice(tour), tour.currency || 'TRY') }}
+                        </template>
+                        <template v-else>
+                          <span class="text-gray-500">{{ $t('wizard.selectDeparture') }}</span>
+                        </template>
                       </p>
                     </div>
                   </div>
@@ -283,8 +287,7 @@
               <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ $t('tourBooking.passenger.title') }}
               </h3>
-              <BaseButton variant="secondary" size="sm" @click="addPassenger">
-                <span class="material-icons mr-1">add</span>
+              <BaseButton variant="secondary" size="sm" @click="addPassenger" iconLeft="add">
                 {{ $t('tourBooking.passenger.add') }}
               </BaseButton>
             </div>
@@ -489,7 +492,7 @@
 
             <!-- Tour Info -->
             <div class="border-b border-gray-200 dark:border-slate-700 pb-4 mb-4">
-              <h4 class="font-medium text-gray-900 dark:text-white">{{ selectedTour?.name }}</h4>
+              <h4 class="font-medium text-gray-900 dark:text-white">{{ getLocalizedName(selectedTour?.name) }}</h4>
               <p class="text-sm text-gray-500">{{ selectedTour?.code }}</p>
               <div class="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
                 <span
@@ -597,7 +600,7 @@
           <div v-if="selectedTour && selectedDeparture" class="space-y-3">
             <!-- Tour -->
             <div class="pb-3 border-b border-gray-200 dark:border-slate-700">
-              <p class="font-medium text-gray-900 dark:text-white">{{ selectedTour.name }}</p>
+              <p class="font-medium text-gray-900 dark:text-white">{{ getLocalizedName(selectedTour.name) }}</p>
               <p class="text-sm text-gray-500">{{ formatDate(selectedDeparture.departureDate) }}</p>
             </div>
 
@@ -667,9 +670,9 @@
               @click="nextStep"
               :disabled="!canProceed"
               class="w-full"
+              iconRight="arrow_forward"
             >
               {{ $t('common.continue') }}
-              <span class="material-icons ml-2">arrow_forward</span>
             </BaseButton>
             <BaseButton
               v-if="currentStep === 3"
@@ -685,8 +688,8 @@
               variant="secondary"
               @click="previousStep"
               class="w-full"
+              iconLeft="arrow_back"
             >
-              <span class="material-icons mr-2">arrow_back</span>
               {{ $t('common.back') }}
             </BaseButton>
           </div>
@@ -859,8 +862,12 @@ function getTotalPassengers() {
 }
 
 function getLowestPrice(tour) {
-  // Price hint is derived on backend search endpoint; fallback to 0 here.
-  return tour.priceFrom || 0
+  // Price hint may come from backend search endpoint or be missing
+  // If not available, show a dash instead of 0 to avoid confusion
+  if (tour.priceFrom && tour.priceFrom > 0) {
+    return tour.priceFrom
+  }
+  return null // Will trigger "price varies" message
 }
 
 function getLocalizedName(obj) {
@@ -887,11 +894,12 @@ async function searchTours() {
   searching.value = true
   searched.value = false
   try {
-    // Search tours with filters
-    await tourStore.fetchTours({
-      search: searchForm.value.destination,
-      status: 'active'
-    })
+    // Search tours with filters - destination searches in names, locations, and tags
+    const params = { status: 'active' }
+    if (searchForm.value.destination?.trim()) {
+      params.search = searchForm.value.destination.trim()
+    }
+    await tourStore.fetchTours(params)
     searchResults.value = tourStore.tours
     searched.value = true
   } finally {

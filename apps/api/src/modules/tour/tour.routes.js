@@ -44,6 +44,7 @@ router.get('/departures/:id/availability', service.getDepartureAvailability)
 router.get('/:tourId/departures', service.getTourDepartures)
 router.post('/:tourId/departures', service.createTourDeparture)
 router.post('/:tourId/departures/bulk', service.bulkCreateDepartures)
+router.put('/:tourId/departures/pricing', service.bulkUpdateDeparturePricing)
 
 // ==================== EXTRAS ====================
 router.get('/extras', service.getExtras)

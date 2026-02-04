@@ -783,6 +783,20 @@ async function saveTour() {
       router.replace(`/tours/${created._id}`)
     } else {
       await tourStore.updateTour(route.params.id, payload)
+      
+      // Auto-create departures for existing tours if any were scheduled
+      if (pendingDepartures.value.length > 0) {
+        try {
+          await tourStore.bulkCreateDepartures(route.params.id, { departures: pendingDepartures.value })
+          pendingDepartures.value = []
+          // Refresh the schedule builder to show new departures
+          if (scheduleBuilderRef.value?.loadExisting) {
+            scheduleBuilderRef.value.loadExisting()
+          }
+        } catch (depError) {
+          console.error('Failed to create departures:', depError)
+        }
+      }
     }
   } finally {
     isSaving.value = false

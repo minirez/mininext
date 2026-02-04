@@ -125,80 +125,80 @@
         <!-- Section Import Selection -->
         <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
           <h4 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-3">
-            {{ $t('website.aiMigration.selectSections') || 'Select sections to import' }}
+            {{ $t('website.aiMigration.selectSections') }}
           </h4>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
             <label v-if="extractedData.hero?.photo?.link || extractedData.hero?.title?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.hero" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.hero') || 'Hero Banner' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.hero') }}</span>
             </label>
             <label v-if="extractedData.locationSection?.items?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.locationSection" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.locations') || 'Locations' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.locations') }}</span>
             </label>
             <label v-if="extractedData.campaignSection?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.campaignSection" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.campaigns') || 'Campaigns' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.campaigns') }}</span>
             </label>
             <label v-if="extractedData.hotels?.ids?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.hotels" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.hotels') || 'Hotels' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.hotels') }}</span>
             </label>
             <label v-if="extractedData.tours?.ids?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.tours" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.tours') || 'Tours' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.tours') }}</span>
             </label>
             <label v-if="extractedData.pages?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.pages" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.pages') || 'Pages' }} ({{ extractedData.pages?.length || 0 }})</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.aiMigration.tabs.pages') }} ({{ extractedData.pages?.length || 0 }})</span>
             </label>
             <label v-if="extractedData.photos?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.photos" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.photos') || 'Photos' }} ({{ extractedData.photos?.length || 0 }})</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.aiMigration.tabs.photos') }} ({{ extractedData.photos?.length || 0 }})</span>
             </label>
             <label v-if="extractedData.settings" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.settings" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.aiMigration.tabs.settings') || 'Settings' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.aiMigration.tabs.settings') }}</span>
             </label>
             <label v-if="extractedData.header?.tabs?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.header" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.header.title') || 'Header' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.header.title') }}</span>
             </label>
             <label v-if="extractedData.footer?.items?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.footer" class="form-checkbox" />
-              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.footer.title') || 'Footer' }}</span>
+              <span class="text-gray-700 dark:text-slate-300">{{ $t('website.footer.title') }}</span>
             </label>
           </div>
           
           <!-- Homepage Theme Sections -->
           <div v-if="hasAnyThemeData" class="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
             <h5 class="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2 uppercase tracking-wide">
-              {{ $t('website.aiMigration.themeSpecificSections') || 'Theme-Specific Sections' }}
+              {{ $t('website.aiMigration.themeSpecificSections') }}
             </h5>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
               <label v-if="extractedData.homepageTheme?.tour?.hero?.photo?.link" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.tourTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.tour.name') || 'Tour Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.tour.name') }}</span>
               </label>
               <label v-if="extractedData.homepageTheme?.flight?.hero?.photo?.length || extractedData.homepageTheme?.flight?.routes?.items?.length" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.flightTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.flight.name') || 'Flight Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.flight.name') }}</span>
               </label>
               <label v-if="extractedData.homepageTheme?.activity?.hero?.photo?.link" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.activityTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.activity.name') || 'Activity Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.activity.name') }}</span>
               </label>
               <label v-if="extractedData.homepageTheme?.bedbank?.hero?.photo?.link || extractedData.homepageTheme?.bedbank?.locations?.items?.length" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.bedbankTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.bedbank.name') || 'Bedbank Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.bedbank.name') }}</span>
               </label>
               <label v-if="extractedData.homepageTheme?.transfer?.hero?.photo?.link" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.transferTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.transfer.name') || 'Transfer Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.transfer.name') }}</span>
               </label>
               <label v-if="extractedData.homepageTheme?.cruise?.hero?.photo?.link" class="flex items-center gap-2 text-sm">
                 <input type="checkbox" v-model="importSections.cruiseTheme" class="form-checkbox" />
-                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.cruise.name') || 'Cruise Theme' }}</span>
+                <span class="text-gray-700 dark:text-slate-300">{{ $t('website.themes.cruise.name') }}</span>
               </label>
             </div>
           </div>
@@ -268,6 +268,128 @@
           </div>
         </div>
 
+        <!-- Header Preview -->
+        <div v-show="activeTab === 'header'" class="space-y-4">
+          <div v-if="extractedData.header?.tabs?.length" class="space-y-3">
+            <div class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
+              <label class="text-xs text-gray-500 dark:text-slate-500">{{ $t('website.header.types.title') }}</label>
+              <p class="font-medium text-gray-900 dark:text-white">
+                {{ extractedData.header.headerType || '-' }}
+              </p>
+            </div>
+
+            <div
+              v-for="(tab, tabIndex) in extractedData.header.tabs"
+              :key="tabIndex"
+              class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4"
+            >
+              <div class="flex items-center gap-4">
+                <div v-if="tab.photo?.link" class="w-14 h-14 rounded overflow-hidden flex-shrink-0">
+                  <img :src="getImageUrl(tab.photo.link)" class="w-full h-full object-cover" />
+                </div>
+                <div class="min-w-0">
+                  <h4 class="font-medium text-gray-900 dark:text-white truncate">
+                    {{ getLocalizedText(tab.title, 'en') || getLocalizedText(tab.title, 'tr') || '-' }}
+                  </h4>
+                  <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
+                    {{ tab.link || '-' }}
+                  </p>
+                </div>
+              </div>
+
+              <div v-if="tab.items?.length" class="mt-3 space-y-2">
+                <div class="text-xs font-medium text-gray-600 dark:text-slate-400">
+                  {{ $t('website.header.menuItems') }}
+                </div>
+                <div
+                  v-for="(item, itemIndex) in tab.items"
+                  :key="itemIndex"
+                  class="border border-gray-200 dark:border-slate-700 rounded-md p-3 bg-white/50 dark:bg-slate-900/20"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {{ getLocalizedText(item.title, 'en') || getLocalizedText(item.title, 'tr') || '-' }}
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-slate-400 truncate">
+                        {{ item.link || '-' }}
+                      </div>
+                    </div>
+                    <span class="text-xs text-gray-400 dark:text-slate-500">
+                      #{{ itemIndex + 1 }}
+                    </span>
+                  </div>
+
+                  <div v-if="item.subItems?.length" class="mt-2">
+                    <div class="text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">
+                      {{ $t('website.header.addSubItem') }}
+                    </div>
+                    <ul class="space-y-1">
+                      <li
+                        v-for="(sub, subIndex) in item.subItems"
+                        :key="subIndex"
+                        class="text-xs text-gray-700 dark:text-slate-300 flex items-center justify-between gap-2"
+                      >
+                        <span class="truncate">
+                          {{ getLocalizedText(sub.title, 'en') || getLocalizedText(sub.title, 'tr') || '-' }}
+                        </span>
+                        <span class="text-gray-400 dark:text-slate-500 truncate max-w-[50%]">
+                          {{ sub.link || '-' }}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="mt-3 text-xs text-gray-400 dark:text-slate-500">
+                {{ $t('website.header.noItems') }}
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500 dark:text-slate-400">
+            {{ $t('website.header.noTabs') }}
+          </div>
+        </div>
+
+        <!-- Footer Preview -->
+        <div v-show="activeTab === 'footer'" class="space-y-3 max-h-[400px] overflow-y-auto">
+          <div
+            v-for="(col, colIndex) in extractedData.footer?.items || []"
+            :key="colIndex"
+            class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4"
+          >
+            <div class="flex items-center justify-between">
+              <h4 class="font-medium text-gray-900 dark:text-white">
+                {{ getLocalizedText(col.title, 'en') || getLocalizedText(col.title, 'tr') || '-' }}
+              </h4>
+              <span class="text-xs text-gray-400 dark:text-slate-500">#{{ colIndex + 1 }}</span>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">
+              {{ col.link || '-' }}
+            </p>
+
+            <div v-if="col.subItems?.length" class="mt-3">
+              <ul class="space-y-1">
+                <li
+                  v-for="(link, linkIndex) in col.subItems"
+                  :key="linkIndex"
+                  class="text-xs text-gray-700 dark:text-slate-300 flex items-center justify-between gap-2"
+                >
+                  <span class="truncate">
+                    {{ getLocalizedText(link.title, 'en') || getLocalizedText(link.title, 'tr') || '-' }}
+                  </span>
+                  <span class="text-gray-400 dark:text-slate-500 truncate max-w-[55%]">
+                    {{ link.link || '-' }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div v-if="!extractedData.footer?.items?.length" class="text-center py-8 text-gray-500 dark:text-slate-400">
+            {{ $t('website.footer.noColumns') }}
+          </div>
+        </div>
+
         <!-- Locations Preview -->
         <div v-show="activeTab === 'locations'" class="space-y-3 max-h-[400px] overflow-y-auto">
           <div
@@ -316,7 +438,7 @@
         <div v-show="activeTab === 'pages'" class="space-y-3 max-h-[400px] overflow-y-auto">
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
             <p class="text-sm text-blue-700 dark:text-blue-300">
-              {{ $t('website.aiMigration.pagesNote') || 'Pages will be imported as CMS pages for your website.' }}
+              {{ $t('website.aiMigration.pagesNote') }}
             </p>
           </div>
           <div
@@ -335,7 +457,7 @@
             <p v-if="page.content?.length" class="text-sm text-gray-500 dark:text-slate-400 line-clamp-2">
               {{ getPageContentPreview(page.content) }}
             </p>
-            <div v-else class="text-xs text-gray-400">{{ $t('website.aiMigration.noContent') || 'No content' }}</div>
+            <div v-else class="text-xs text-gray-400">{{ $t('website.aiMigration.noContent') }}</div>
           </div>
           <div v-if="!extractedData.pages?.length" class="text-center py-8 text-gray-500 dark:text-slate-400">
             {{ $t('website.aiMigration.noPagesData') }}
@@ -346,7 +468,7 @@
         <div v-show="activeTab === 'photos'" class="space-y-4">
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
             <p class="text-sm text-blue-700 dark:text-blue-300">
-              {{ $t('website.aiMigration.photosNote') || 'These are general photos stored in the storefront photo gallery.' }}
+              {{ $t('website.aiMigration.photosNote') }}
             </p>
           </div>
           <div class="grid grid-cols-4 md:grid-cols-6 gap-2 max-h-[400px] overflow-y-auto">
@@ -362,7 +484,7 @@
             </div>
           </div>
           <div v-if="!extractedData.photos?.length" class="text-center py-8 text-gray-500 dark:text-slate-400">
-            {{ $t('website.aiMigration.noPhotosData') || 'No photos found in the data.' }}
+            {{ $t('website.aiMigration.noPhotosData') }}
           </div>
         </div>
 
@@ -477,8 +599,8 @@ const currentUploadingImage = ref('')
 
 // Import section selections - all enabled by default, user can uncheck
 const importSections = ref({
-  hero: false,           // Hero banner - disabled by default since it often creates unwanted blocks
-  locationSection: false, // Locations - disabled by default since it often creates unwanted blocks
+  hero: true,
+  locationSection: true,
   campaignSection: true,
   hotels: true,
   tours: true,
@@ -513,15 +635,35 @@ const hasAnyThemeData = computed(() => {
 })
 
 // Preview tabs
-const previewTabs = computed(() => [
-  { key: 'hero', label: t('website.aiMigration.tabs.hero') },
-  { key: 'settings', label: t('website.aiMigration.tabs.settings') },
-  { key: 'locations', label: t('website.aiMigration.tabs.locations') },
-  { key: 'campaigns', label: t('website.aiMigration.tabs.campaigns') },
-  { key: 'pages', label: t('website.aiMigration.tabs.pages') + ` (${extractedData.value?.pages?.length || 0})` },
-  { key: 'photos', label: t('website.aiMigration.tabs.photos') + ` (${extractedData.value?.photos?.length || 0})` },
-  { key: 'images', label: t('website.aiMigration.tabs.images') }
-])
+const previewTabs = computed(() => {
+  const tabs = [
+    { key: 'hero', label: t('website.aiMigration.tabs.hero') },
+    { key: 'settings', label: t('website.aiMigration.tabs.settings') }
+  ]
+
+  if (extractedData.value?.header?.tabs?.length)
+    tabs.push({ key: 'header', label: t('website.header.title') })
+  if (extractedData.value?.footer?.items?.length)
+    tabs.push({ key: 'footer', label: t('website.footer.title') })
+
+  tabs.push(
+    { key: 'locations', label: t('website.aiMigration.tabs.locations') },
+    { key: 'campaigns', label: t('website.aiMigration.tabs.campaigns') },
+    {
+      key: 'pages',
+      label:
+        t('website.aiMigration.tabs.pages') + ` (${extractedData.value?.pages?.length || 0})`
+    },
+    {
+      key: 'photos',
+      label:
+        t('website.aiMigration.tabs.photos') + ` (${extractedData.value?.photos?.length || 0})`
+    },
+    { key: 'images', label: t('website.aiMigration.tabs.images') }
+  )
+
+  return tabs
+})
 
 // Check if JSON is valid
 const isValidJson = computed(() => {
@@ -578,10 +720,10 @@ const handleClose = () => {
     activeTab.value = 'hero'
     applyingData.value = false
     uploadProgress.value = { current: 0, total: 0 }
-    // Reset import sections (hero & locations off by default to avoid unexpected blocks)
+    // Reset import sections
     importSections.value = {
-      hero: false,
-      locationSection: false,
+      hero: true,
+      locationSection: true,
       campaignSection: true,
       hotels: true,
       tours: true,
@@ -859,7 +1001,7 @@ const applyData = async () => {
       // Show detailed success message
       let successMsg = t('website.aiMigration.applySuccess')
       if (result.pagesImported > 0) {
-        successMsg += ` (${result.pagesImported} ${t('website.aiMigration.tabs.pages') || 'pages'} imported)`
+        successMsg += ` (${result.pagesImported} ${t('website.aiMigration.tabs.pages')} ${t('website.aiMigration.pagesImported')})`
       }
       toast.success(successMsg)
       emit('apply', result.data)

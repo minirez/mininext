@@ -428,6 +428,8 @@
       "buttonLabel": "Migrate with AI",
       "title": "Migrate Storefront with AI",
       "description": "Paste your existing storefront JSON data below. The system will analyze the data and migrate images to your new storefront.",
+      "selectSections": "Select sections to import",
+      "themeSpecificSections": "Theme-Specific Sections",
       "contentLabel": "Storefront JSON Data",
       "placeholder": "Paste your storefront JSON data here...\n\nExample:\n{\n  \"data\": {\n    \"hero\": { ... },\n    \"settings\": { ... },\n    ...\n  }\n}",
       "hint": "Paste the complete JSON response from your existing storefront API",
@@ -469,6 +471,7 @@
       "migrationSuccess": "Data extracted successfully",
       "migrationError": "Failed to process storefront data",
       "applySuccess": "Storefront migrated successfully!",
+      "pagesImported": "imported",
       "applyError": "Failed to apply migration"
     },
     "tabs": {

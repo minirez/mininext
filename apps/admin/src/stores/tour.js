@@ -336,6 +336,19 @@ export const useTourStore = defineStore('tour', () => {
     }
   }
 
+  async function bulkUpdateDeparturePricing(tourId, payload) {
+    loading.value = true
+    try {
+      const response = await tourService.bulkUpdateDeparturePricing(tourId, payload)
+      return response.data
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update departure pricing')
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // =====================
   // ACTIONS - Extras
   // =====================
