@@ -1173,7 +1173,9 @@
       "defaultMarkup": "Default Markup",
       "defaultMarkupHint": "Default markup percentage to apply on Paximum prices",
       "testConnection": "Test Connection",
-      "testSuccess": "Paximum connection successful"
+      "testSuccess": "Paximum connection successful",
+      "endpointRequired": "Paximum API endpoint is required",
+      "credentialsRequired": "Paximum credentials are incomplete (agency, username, password required)"
     },
     "billing": {
       "title": "Billing Settings",

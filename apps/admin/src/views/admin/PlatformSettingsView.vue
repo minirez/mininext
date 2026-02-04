@@ -1422,13 +1422,32 @@ const generateVAPID = async () => {
   )
 }
 
-// Test Paximum connection
+// Test Paximum connection with values from input boxes
 const testPaximumConnection = async () => {
+  // Validate required fields before sending
+  const paximumSettings = settings.value.paximum
+  if (!paximumSettings.endpoint) {
+    toast.error(t('platformSettings.paximum.endpointRequired'))
+    return
+  }
+  if (!paximumSettings.agency || !paximumSettings.user || !paximumSettings.password) {
+    toast.error(t('platformSettings.paximum.credentialsRequired'))
+    return
+  }
+
   await executeTestPaximum(
-    () => platformSettingsService.testPaximum(),
+    () => platformSettingsService.testPaximum({
+      endpoint: paximumSettings.endpoint,
+      agency: paximumSettings.agency,
+      user: paximumSettings.user,
+      password: paximumSettings.password,
+      defaultMarkup: paximumSettings.defaultMarkup
+    }),
     {
-      onSuccess: result => {
+      onSuccess: async (result) => {
         toast.success(result.message || t('platformSettings.paximum.testSuccess'))
+        // Reload settings to reflect saved values
+        await loadSettings()
       },
       onError: error => {
         toast.error(error.response?.data?.error || error.message)

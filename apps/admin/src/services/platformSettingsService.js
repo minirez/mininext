@@ -49,10 +49,16 @@ export const getVAPIDPublicKey = async () => {
 }
 
 /**
- * Test Paximum connection
+ * Test Paximum connection with provided credentials
+ * @param {Object} credentials - Paximum credentials to test
+ * @param {string} credentials.endpoint - API endpoint
+ * @param {string} credentials.agency - Agency code
+ * @param {string} credentials.user - User code
+ * @param {string} credentials.password - Password
+ * @param {number} credentials.defaultMarkup - Default markup percentage
  */
-export const testPaximum = async () => {
-  const response = await apiClient.post('/platform-settings/test-paximum')
+export const testPaximum = async (credentials) => {
+  const response = await apiClient.post('/platform-settings/test-paximum', credentials)
   return response.data
 }
 

@@ -1,4 +1,5 @@
 import PlatformSettings from './platformSettings.model.js'
+import AuditLog from '#modules/audit/audit.model.js'
 import { asyncHandler } from '#helpers'
 import logger from '#core/logger.js'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
@@ -336,34 +337,34 @@ export const getVAPIDPublicKey = asyncHandler(async (req, res) => {
 
 /**
  * Test Paximum connection
- * Attempts to authenticate with Paximum API
+ * Tests with provided credentials from request body, then saves if successful
  */
 export const testPaximum = asyncHandler(async (req, res) => {
-  const settings = await PlatformSettings.getSettings()
-  const credentials = settings.getPaximumCredentials()
+  const { endpoint, agency, user, password, defaultMarkup } = req.body
 
-  if (!credentials) {
+  // Validate required fields
+  if (!endpoint) {
     return res.status(400).json({
       success: false,
-      error: 'Paximum is not configured or not enabled'
+      error: 'Paximum endpoint is required'
     })
   }
 
-  if (!credentials.agency || !credentials.user || !credentials.password) {
+  if (!agency || !user || !password) {
     return res.status(400).json({
       success: false,
-      error: 'Paximum credentials are not complete'
+      error: 'Paximum credentials are not complete (agency, user, password required)'
     })
   }
 
   try {
-    // Try to authenticate with Paximum
+    // Try to authenticate with Paximum using provided credentials
     const response = await axios.post(
-      `${credentials.endpoint}/api/authenticationservice/login`,
+      `${endpoint}/api/authenticationservice/login`,
       {
-        Agency: credentials.agency,
-        User: credentials.user,
-        Password: credentials.password
+        Agency: agency,
+        User: user,
+        Password: password
       },
       {
         headers: { 'Content-Type': 'application/json' },
@@ -372,19 +373,68 @@ export const testPaximum = asyncHandler(async (req, res) => {
     )
 
     if (response.data?.body?.token) {
+      // Connection successful - save credentials to database
+      const settings = await PlatformSettings.getSettings()
+
+      settings.paximum = settings.paximum || {}
+      settings.paximum.enabled = true
+      settings.paximum.endpoint = endpoint
+      settings.paximum.agency = agency
+      settings.paximum.user = user
+      settings.paximum.password = password
+      if (defaultMarkup !== undefined) {
+        settings.paximum.defaultMarkup = defaultMarkup
+      }
+
       // Update token cache
       await settings.updatePaximumToken(
         response.data.body.token,
         new Date(response.data.body.expiresOn)
       )
 
-      logger.info('Paximum connection test successful')
+      await settings.save()
+
+      // Create audit log for Paximum settings update
+      await AuditLog.log({
+        actor: {
+          userId: req.user?._id,
+          email: req.user?.email,
+          name: req.user?.name,
+          role: req.user?.role || 'admin',
+          ip: req.ip,
+          userAgent: req.headers?.['user-agent']
+        },
+        module: 'settings',
+        subModule: 'paximum',
+        action: 'update',
+        target: {
+          collection: 'platform_settings',
+          documentName: 'Paximum Integration'
+        },
+        changes: {
+          after: {
+            endpoint: endpoint,
+            agency: agency,
+            defaultMarkup: defaultMarkup
+          }
+        },
+        request: {
+          method: req.method,
+          path: req.originalUrl
+        },
+        metadata: {
+          reason: 'Paximum connection test successful, credentials saved'
+        },
+        status: 'success'
+      })
+
+      logger.info('Paximum connection test successful, credentials saved')
 
       res.json({
         success: true,
-        message: 'Paximum bağlantısı başarılı',
+        message: 'Paximum bağlantısı başarılı, ayarlar kaydedildi',
         data: {
-          agency: credentials.agency,
+          agency: agency,
           tokenExpiry: response.data.body.expiresOn
         }
       })
@@ -393,6 +443,38 @@ export const testPaximum = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     logger.error('Paximum connection test failed:', error.message)
+
+    // Log failed connection attempt
+    await AuditLog.log({
+      actor: {
+        userId: req.user?._id,
+        email: req.user?.email,
+        name: req.user?.name,
+        role: req.user?.role || 'admin',
+        ip: req.ip,
+        userAgent: req.headers?.['user-agent']
+      },
+      module: 'settings',
+      subModule: 'paximum',
+      action: 'update',
+      target: {
+        collection: 'platform_settings',
+        documentName: 'Paximum Integration'
+      },
+      changes: {
+        after: {
+          endpoint: endpoint,
+          agency: agency
+        }
+      },
+      request: {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: 400
+      },
+      status: 'failure',
+      errorMessage: error.response?.data?.header?.messages?.[0]?.message || error.message
+    })
 
     res.status(400).json({
       success: false,

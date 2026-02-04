@@ -1102,7 +1102,9 @@
       "defaultMarkup": "Varsayılan Kar Oranı",
       "defaultMarkupHint": "Paximum fiyatlarına uygulanacak varsayılan kar yüzdesi",
       "testConnection": "Bağlantıyı Test Et",
-      "testSuccess": "Paximum bağlantısı başarılı"
+      "testSuccess": "Paximum bağlantısı başarılı",
+      "endpointRequired": "Paximum API endpoint gerekli",
+      "credentialsRequired": "Paximum kimlik bilgileri eksik (agency, kullanıcı adı, şifre gerekli)"
     },
     "billing": {
       "title": "Fatura Ayarları",
