@@ -411,7 +411,7 @@
       "selectSections": "İçe aktarılacak bölümleri seçin",
       "themeSpecificSections": "Tema Bazlı Bölümler",
       "contentLabel": "Site JSON Verisi",
-      "placeholder": "Site JSON verinizi buraya yapıştırın...\n\nÖrnek:\n{\n  \"data\": {\n    \"hero\": { ... },\n    \"settings\": { ... },\n    ...\n  }\n}",
+      "placeholder": "Site JSON verinizi buraya yapıştırın...\n\nİpucu: Doğrudan storefront nesnesini veya en üstte \"data\" alanı bulunan bir API yanıtını yapıştırabilirsiniz.",
       "hint": "Mevcut site API'nizden aldığınız tam JSON yanıtını yapıştırın",
       "downloadImages": "Görselleri indir ve yeni depolamaya yükle",
       "processing": "Veri Analiz Ediliyor...",

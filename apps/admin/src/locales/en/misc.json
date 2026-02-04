@@ -431,7 +431,7 @@
       "selectSections": "Select sections to import",
       "themeSpecificSections": "Theme-Specific Sections",
       "contentLabel": "Storefront JSON Data",
-      "placeholder": "Paste your storefront JSON data here...\n\nExample:\n{\n  \"data\": {\n    \"hero\": { ... },\n    \"settings\": { ... },\n    ...\n  }\n}",
+      "placeholder": "Paste your storefront JSON data here...\n\nTip: You can paste either the raw storefront object or an API response that contains a top-level \"data\" field.",
       "hint": "Paste the complete JSON response from your existing storefront API",
       "downloadImages": "Download and re-upload images to new storage",
       "processing": "Analyzing Data...",
