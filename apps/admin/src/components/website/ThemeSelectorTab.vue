@@ -3,7 +3,9 @@
     <!-- Theme Editor View (when editing a specific theme) -->
     <div v-if="editingTheme">
       <!-- Top Action Bar with Save Button -->
-      <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-slate-700">
+      <div
+        class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-slate-700"
+      >
         <button
           class="flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white transition-colors"
           @click="exitThemeEditor"
@@ -12,18 +14,30 @@
           {{ $t('website.themes.backToThemes') }}
         </button>
         <div class="flex items-center gap-3">
-          <button
-            class="btn-outline flex items-center gap-2"
-            @click="previewCurrentTheme"
-          >
+          <button class="btn-outline flex items-center gap-2" @click="previewCurrentTheme">
             <span class="material-icons text-sm">visibility</span>
             {{ $t('website.themes.preview') }}
           </button>
-          <button class="btn-primary flex items-center gap-2" :disabled="saving" @click="handleSave">
+          <button
+            class="btn-primary flex items-center gap-2"
+            :disabled="saving"
+            @click="handleSave"
+          >
             <span v-if="saving" class="animate-spin">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
             </span>
             <span class="material-icons text-base" v-else>save</span>
@@ -33,7 +47,10 @@
       </div>
 
       <!-- Theme Editor Header -->
-      <div class="bg-gradient-to-br rounded-xl p-6 mb-6 text-white" :class="getThemeGradient(editingTheme)">
+      <div
+        class="bg-gradient-to-br rounded-xl p-6 mb-6 text-white"
+        :class="getThemeGradient(editingTheme)"
+      >
         <div class="flex items-center gap-4">
           <span class="material-icons text-4xl opacity-80">{{ getThemeIcon(editingTheme) }}</span>
           <div>
@@ -56,8 +73,19 @@
         <button class="btn-primary flex items-center gap-2" :disabled="saving" @click="handleSave">
           <span v-if="saving" class="animate-spin">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           </span>
           <span class="material-icons text-base" v-else>save</span>
@@ -69,7 +97,9 @@
     <!-- Theme Selection Grid (default view) -->
     <div v-else>
       <!-- Top Action Bar with Save Button -->
-      <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-slate-700 mb-6">
+      <div
+        class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-slate-700 mb-6"
+      >
         <div>
           <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
             {{ $t('website.themes.title') }}
@@ -81,8 +111,19 @@
         <button class="btn-primary flex items-center gap-2" :disabled="saving" @click="handleSave">
           <span v-if="saving" class="animate-spin">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           </span>
           <span class="material-icons text-base" v-else>save</span>
@@ -91,7 +132,9 @@
       </div>
 
       <!-- Theme Color - Moved to TOP -->
-      <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-700 mb-6">
+      <div
+        class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-700 mb-6"
+      >
         <div class="flex items-center justify-between">
           <div>
             <h4 class="text-sm font-semibold text-gray-800 dark:text-white flex items-center gap-2">
@@ -117,7 +160,9 @@
                 @click="themeColor = color"
               />
             </div>
-            <div class="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-slate-700">
+            <div
+              class="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-slate-700"
+            >
               <label class="relative cursor-pointer">
                 <input
                   v-model="themeColor"
@@ -141,13 +186,12 @@
           </div>
         </div>
       </div>
-      
-      <div>
 
+      <div>
         <!-- Theme Grid with Animations -->
-        <TransitionGroup 
-          name="theme-grid" 
-          tag="div" 
+        <TransitionGroup
+          name="theme-grid"
+          tag="div"
           class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
           <div
@@ -178,17 +222,20 @@
                   class="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
                 />
-                
+
                 <!-- Otherwise show gradient/preview toggle on hover -->
                 <template v-else>
                   <!-- Gradient background (default state) -->
                   <div
                     class="absolute inset-0 flex items-center justify-center bg-gradient-to-br transition-opacity duration-[250ms]"
-                    :class="[theme.gradient, hoveredTheme === theme.id ? 'opacity-0' : 'opacity-100']"
+                    :class="[
+                      theme.gradient,
+                      hoveredTheme === theme.id ? 'opacity-0' : 'opacity-100'
+                    ]"
                   >
                     <span class="material-icons text-4xl text-white/50">{{ theme.icon }}</span>
                   </div>
-                  
+
                   <!-- Preview image (shown on hover) -->
                   <img
                     v-if="theme.previewImage"
@@ -254,7 +301,9 @@
               <!-- Theme Info -->
               <div class="p-3 bg-white dark:bg-slate-800">
                 <h4 class="font-medium text-sm text-gray-800 dark:text-white">{{ theme.name }}</h4>
-                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{{ theme.description }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                  {{ theme.description }}
+                </p>
                 <div class="flex flex-wrap gap-1.5 mt-2">
                   <span
                     v-for="tag in theme.tags"
@@ -302,6 +351,7 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ThemeContentEditor from './ThemeContentEditor.vue'
+import { getFileUrl } from '@/utils/imageUrl'
 
 const { t } = useI18n()
 
@@ -326,7 +376,7 @@ const presetColors = [
   '#F39C12', // Orange
   '#1ABC9C', // Teal
   '#34495E', // Dark Blue
-  '#E91E63'  // Pink
+  '#E91E63' // Pink
 ]
 
 // Theme to preview image mapping
@@ -341,21 +391,35 @@ const themePreviewImages = {
 }
 
 // Get uploaded hero image for a theme if it exists
-const getThemeHeroImage = (themeId) => {
+const resolveStorefrontUploadUrl = photoOrLink => {
+  if (!photoOrLink) return null
+  const link =
+    typeof photoOrLink === 'string' ? photoOrLink : photoOrLink?.link || photoOrLink?.url || ''
+  if (!link) return null
+  if (link.startsWith('http://') || link.startsWith('https://')) return link
+  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
+  if (link.startsWith('/uploads/')) return getFileUrl(link)
+  return link
+}
+
+const getThemeHeroImage = themeId => {
   const storefront = props.storefront
   if (!storefront) return null
-  
-  // Check theme-specific hero photo
-  if (themeId === 'home1') {
-    return storefront.hero?.photo?.url || null
-  }
-  
-  // For other themes, check in homepageTheme.<themeId>.hero.photo
+
+  // Primary source: homepageTheme.<themeId>.hero.photo
   const themeData = storefront.homepageTheme?.[themeId]
-  if (themeData?.hero?.photo?.url) {
-    return themeData.hero.photo.url
+  const heroPhoto = themeData?.hero?.photo
+  if (Array.isArray(heroPhoto)) {
+    const firstWithLink = heroPhoto.find(p => p?.link || p?.url) || heroPhoto[0]
+    return resolveStorefrontUploadUrl(firstWithLink)
   }
-  
+  if (heroPhoto) return resolveStorefrontUploadUrl(heroPhoto)
+
+  // Backwards-compat: some older payloads stored home1 at root
+  if (themeId === 'home1') {
+    return resolveStorefrontUploadUrl(storefront.hero?.photo || storefront.hero?.photo?.url)
+  }
+
   return null
 }
 
@@ -367,7 +431,11 @@ const availableThemes = computed(() => [
     icon: 'home',
     gradient: 'from-blue-500 to-purple-600',
     previewImage: themePreviewImages.home1,
-    tags: [t('website.themes.tags.hotel'), t('website.themes.tags.tour'), t('website.themes.tags.default')]
+    tags: [
+      t('website.themes.tags.hotel'),
+      t('website.themes.tags.tour'),
+      t('website.themes.tags.default')
+    ]
   },
   {
     id: 'tour',
@@ -431,14 +499,14 @@ watch(
   () => props.storefront,
   newStorefront => {
     // Only update if storefront actually changed (not on every nested prop change)
-    const currentId = newStorefront?._id || newStorefront?.homepageTheme?.type
+    const currentId = `${newStorefront?._id || ''}:${newStorefront?.updatedAt || ''}:${newStorefront?.homepageTheme?.type || ''}`
     if (newStorefront && currentId !== lastStorefrontId) {
       lastStorefrontId = currentId
       // Map removed home2 theme to home1
       let themeType = newStorefront.homepageTheme?.type || 'home1'
       if (themeType === 'home2') themeType = 'home1'
       selectedTheme.value = themeType
-      themeColor.value = newStorefront.themeColor || '#3498DB'
+      themeColor.value = newStorefront.settings?.themeColor || newStorefront.themeColor || '#3498DB'
       // Update theme content if we're editing
       if (editingTheme.value) {
         loadThemeContent(editingTheme.value)
@@ -469,18 +537,23 @@ const loadThemeContent = themeId => {
   // Load theme-specific content based on theme type
   switch (themeId) {
     case 'home1':
-      themeContent.value = {
-        hero: storefront.hero || {},
-        locationSection: storefront.locationSection || {},
-        campaignSection: storefront.campaignSection || [],
-        hotels: storefront.hotels || {},
-        tours: storefront.tours || {}
+      themeContent.value = storefront.homepageTheme?.home1 || {
+        hero: { photo: {}, title: [], description: [] },
+        locationSection: { title: [], description: [], items: [] },
+        campaignSection: [],
+        hotels: { title: [], description: [], ids: [], names: [] },
+        tours: { title: [], description: [], ids: [], names: [] }
       }
       break
     case 'tour':
       themeContent.value = storefront.homepageTheme?.tour || {
         hero: { photo: {}, title: [], description: [] },
-        campaignSection: { title: [], description: [], campaign: { photo: {}, title: [], url: '', description: [] }, campaignTourIds: [] },
+        campaignSection: {
+          title: [],
+          description: [],
+          campaign: { photo: {}, title: [], url: '', description: [] },
+          campaignTourIds: []
+        },
         locations: { title: [], description: [], items: [] },
         tours: { title: [], description: [], ids: [], names: [] },
         subdomain: { status: false, value: '' },
@@ -568,23 +641,22 @@ const previewCurrentTheme = () => {
 }
 
 const handleSave = () => {
+  const storefront = props.storefront
+
   const saveData = {
     homepageTheme: {
       type: selectedTheme.value
     },
-    themeColor: themeColor.value
+    // Store themeColor under settings to match API schema
+    settings: { ...(storefront?.settings || {}), themeColor: themeColor.value }
   }
 
   // If we're in theme editor, also save the theme-specific content
   if (editingTheme.value) {
     const themeId = editingTheme.value
     if (themeId === 'home1') {
-      // For home theme, content is at root level
-      saveData.hero = themeContent.value.hero
-      saveData.locationSection = themeContent.value.locationSection
-      saveData.campaignSection = themeContent.value.campaignSection
-      saveData.hotels = themeContent.value.hotels
-      saveData.tours = themeContent.value.tours
+      // Save home1 theme content into homepageTheme.home1 (API schema)
+      saveData.homepageTheme.home1 = themeContent.value
     } else {
       // For other themes, content goes into homepageTheme.<themeId>
       saveData.homepageTheme[themeId] = themeContent.value

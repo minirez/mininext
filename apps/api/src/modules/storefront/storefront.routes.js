@@ -79,12 +79,4 @@ router.post('/ai-migrate/apply', requireAdmin, service.applyMigratedStorefront)
 router.post('/ai-migrate/download-image', requireAdmin, service.downloadAndUploadImage)
 
 // ==================== LEGACY COMPATIBILITY ====================
-// These redirect to updateStorefront internally
-
-router.put('/hero', requireAdmin, service.updateHero)
-router.put('/settings', requireAdmin, service.updateSettings)
-router.put('/header', requireAdmin, service.updateHeader)
-router.put('/footer', requireAdmin, service.updateFooter)
-router.put('/homepage-theme', requireAdmin, service.updateHomepageTheme)
-
 export default router

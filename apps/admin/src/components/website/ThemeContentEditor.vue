@@ -45,8 +45,8 @@
                 class="w-full h-32 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center mb-3"
               >
                 <img
-                  v-if="getFlightHeroPhoto(0)?.link"
-                  :src="getImageUrl(getFlightHeroPhoto(0)?.link)"
+                  v-if="getFlightHeroPhoto(0)?.link || getFlightHeroPhoto(0)?.url"
+                  :src="getImageUrl(getFlightHeroPhoto(0))"
                   class="w-full h-full object-cover"
                 />
                 <span v-else class="material-icons text-4xl text-gray-400">image</span>
@@ -64,7 +64,7 @@
                 />
               </label>
               <button
-                v-if="getFlightHeroPhoto(0)?.link"
+                v-if="getFlightHeroPhoto(0)?.link || getFlightHeroPhoto(0)?.url"
                 class="w-full mt-2 text-red-600 hover:text-red-700 text-sm flex items-center justify-center gap-1"
                 @click="removeFlightHeroPhoto(0)"
               >
@@ -78,8 +78,8 @@
                 class="w-full h-32 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center mb-3"
               >
                 <img
-                  v-if="getFlightHeroPhoto(1)?.link"
-                  :src="getImageUrl(getFlightHeroPhoto(1)?.link)"
+                  v-if="getFlightHeroPhoto(1)?.link || getFlightHeroPhoto(1)?.url"
+                  :src="getImageUrl(getFlightHeroPhoto(1))"
                   class="w-full h-full object-cover"
                 />
                 <span v-else class="material-icons text-4xl text-gray-400">image</span>
@@ -97,7 +97,7 @@
                 />
               </label>
               <button
-                v-if="getFlightHeroPhoto(1)?.link"
+                v-if="getFlightHeroPhoto(1)?.link || getFlightHeroPhoto(1)?.url"
                 class="w-full mt-2 text-red-600 hover:text-red-700 text-sm flex items-center justify-center gap-1"
                 @click="removeFlightHeroPhoto(1)"
               >
@@ -116,8 +116,8 @@
               class="w-48 h-32 rounded-lg overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center"
             >
               <img
-                v-if="localContent.hero?.photo?.link"
-                :src="getImageUrl(localContent.hero.photo.link)"
+                v-if="localContent.hero?.photo?.link || localContent.hero?.photo?.url"
+                :src="getImageUrl(localContent.hero.photo)"
                 class="w-full h-full object-cover"
               />
               <span v-else class="material-icons text-4xl text-gray-400">image</span>
@@ -136,7 +136,7 @@
                 />
               </label>
               <button
-                v-if="localContent.hero?.photo?.link"
+                v-if="localContent.hero?.photo?.link || localContent.hero?.photo?.url"
                 class="ml-2 text-red-600 hover:text-red-700 text-sm"
                 @click="removeHeroPhoto"
               >
@@ -1120,11 +1120,17 @@ const hasCategoriesSetting = computed(() => {
 // Helper functions
 const getImageUrl = photo => {
   if (!photo) return ''
-  const link = typeof photo === 'string' ? photo : photo.link
+  const link = typeof photo === 'string' ? photo : photo.link || photo.url
   if (!link) return ''
   if (link.startsWith('http')) return link
   if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
   return getCdnImageUrl(link)
+}
+
+const normalizeUploadedPhoto = data => {
+  if (!data || typeof data !== 'object') return data
+  if (!data.link && data.url) return { ...data, link: data.url }
+  return data
 }
 
 const isSearchOptionSelected = optionId => {
@@ -1301,7 +1307,7 @@ const handleLocationImageUpload = async (event, index) => {
     if (response.success) {
       const section = getLocationsSection()
       if (section.items && section.items[index]) {
-        section.items[index].photo = response.data
+        section.items[index].photo = normalizeUploadedPhoto(response.data)
       }
     }
   } catch (error) {
@@ -1380,7 +1386,7 @@ const handleCampaignImageUpload = async (event, index) => {
     if (response.success) {
       const campaigns = getCampaignsArray()
       if (campaigns && campaigns[index]) {
-        campaigns[index].photo = response.data
+        campaigns[index].photo = normalizeUploadedPhoto(response.data)
       }
     }
   } catch (error) {
@@ -1484,7 +1490,7 @@ const handleFlightHeroUpload = async (event, index) => {
     const response = await websiteService.uploadSectionImage(file, 'flight-hero', index)
     if (response.success) {
       ensureFlightHeroArray()
-      localContent.value.hero.photo[index] = response.data
+      localContent.value.hero.photo[index] = normalizeUploadedPhoto(response.data)
     }
   } catch (error) {
     console.error('Upload failed:', error)
@@ -1515,7 +1521,7 @@ const handleHeroImageUpload = async event => {
       if (!localContent.value.hero) {
         localContent.value.hero = { photo: {}, title: [], description: [] }
       }
-      localContent.value.hero.photo = response.data
+      localContent.value.hero.photo = normalizeUploadedPhoto(response.data)
     }
   } catch (error) {
     console.error('Upload failed:', error)

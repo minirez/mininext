@@ -166,7 +166,8 @@ usePartnerContext({
 })
 
 const handleThemeSave = async data => {
-  await executeSave(() => websiteService.updateTheme(data), {
+  // Use unified update endpoint so payload shape is preserved
+  await executeSave(() => websiteService.updateStorefront(data), {
     successMessage: 'website.themeSaved',
     onSuccess: async () => {
       await fetchStorefront()

@@ -41,9 +41,6 @@ export const getStorefront = (options = {}) =>
 export const updateStorefront = data =>
   request('Update storefront', () => apiClient.put('/storefronts', data))
 
-// Legacy aliases
-export const updateTheme = data =>
-  request('Update theme', () => apiClient.put('/storefronts/homepage-theme', data))
 export const updateHomepage = updateStorefront
 
 // ==================== DRAFT ====================
@@ -122,7 +119,6 @@ export const deleteThemePreset = presetId =>
 export default {
   getStorefront,
   updateStorefront,
-  updateTheme,
   updateHomepage,
   saveDraft,
   publishDraft,

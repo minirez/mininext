@@ -57,7 +57,7 @@ const getPartnerIdOrThrow = req => {
   return partnerId
 }
 
-const toPosixPath = (p) => String(p || '').replace(/\\/g, '/')
+const toPosixPath = p => String(p || '').replace(/\\/g, '/')
 
 const getStorefrontUploadsUrlFromRelativePath = (partnerId, relativePath) =>
   `storefront/${partnerId}/${toPosixPath(relativePath).replace(/^\/+/, '')}`
@@ -861,6 +861,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
         data: {
           id: existingFilename.replace(/\.[^/.]+$/, ''),
           url,
+          link: url,
           filename: existingFilename,
           size: existingSize,
           uploadType: normalized,
@@ -884,6 +885,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
     data: {
       id: filename.replace(/\.[^/.]+$/, ''),
       url: fileUrl,
+      link: fileUrl,
       filename,
       size,
       uploadType: normalized,
@@ -899,39 +901,6 @@ export const deleteImage = asyncHandler(async (req, res) => {
 
   const deleted = deleteStorefrontFile(partnerId, relativePath)
   res.json({ success: deleted, message: deleted ? req.t('FILE_DELETED') : req.t('FILE_NOT_FOUND') })
-})
-
-// ==================== LEGACY COMPATIBILITY (redirect to updateStorefront) ====================
-
-export const updateHero = asyncHandler(async (req, res) => {
-  req.body = { hero: req.body }
-  return updateStorefront(req, res)
-})
-
-export const updateSettings = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerIdOrThrow(req)
-  const storefront = await Storefront.getOrCreateForPartner(partnerId)
-  storefront.settings = {
-    ...(storefront.settings?.toObject?.() || storefront.settings),
-    ...req.body
-  }
-  await storefront.save()
-  res.json({ success: true, message: req.t('SETTINGS_UPDATED'), data: storefront.settings })
-})
-
-export const updateHeader = asyncHandler(async (req, res) => {
-  req.body = { header: req.body }
-  return updateStorefront(req, res)
-})
-
-export const updateFooter = asyncHandler(async (req, res) => {
-  req.body = { footer: req.body }
-  return updateStorefront(req, res)
-})
-
-export const updateHomepageTheme = asyncHandler(async (req, res) => {
-  req.body = { homepageTheme: req.body }
-  return updateStorefront(req, res)
 })
 
 export const updateCustomTheme = asyncHandler(async (req, res) => {
