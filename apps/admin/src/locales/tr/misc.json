@@ -384,7 +384,8 @@
     "storefrontSource": {
       "enableNewApi": "Yeni storefront kaynağını etkinleştir",
       "enableNewApiHelp": "Site3, yalnızca domain whitelist'te ise ve bu anahtar açık ise yeni API'yi kullanır.",
-      "saved": "Storefront kaynağı güncellendi"
+      "saved": "Storefront kaynağı güncellendi",
+      "v3Api": "V3 API"
     },
     "themeSaved": "Tema ayarları başarıyla kaydedildi",
     "homepageSaved": "Anasayfa ayarları başarıyla kaydedildi",
@@ -692,6 +693,7 @@
       "addTab": "Sekme Ekle",
       "tabTitle": "Sekme Başlığı",
       "tabLink": "Sekme Linki",
+      "tabLinkPlaceholder": "https://ornek.com veya /sayfa-yolu",
       "navigationTabs": "Navigasyon Sekmeleri",
       "menuItems": "Menü Öğeleri",
       "addItem": "Öğe Ekle",
@@ -702,6 +704,12 @@
       "subItemLink": "Alt Öğe Linki",
       "noItems": "Menü öğesi yok. Açılır menü öğeleri eklemek için 'Öğe Ekle'ye tıklayın.",
       "noTabs": "Henüz navigasyon sekmesi yok",
+      "addTabHelp": "İlk navigasyon öğenizi oluşturmak için 'Sekme Ekle'ye tıklayın",
+      "untitledTab": "İsimsiz Sekme",
+      "noLink": "Link belirlenmedi",
+      "items": "öğe",
+      "editTab": "Navigasyon Sekmesini Düzenle",
+      "uploadPhoto": "Fotoğraf Yükle",
       "types": {
         "title": "Başlık Stili",
         "default": "Varsayılan Başlık",

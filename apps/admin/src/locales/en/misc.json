@@ -384,7 +384,8 @@
     "storefrontSource": {
       "enableNewApi": "Enable new storefront source",
       "enableNewApiHelp": "Site3 will use the new API only when the domain is whitelisted and this switch is enabled.",
-      "saved": "Storefront source updated"
+      "saved": "Storefront source updated",
+      "v3Api": "V3 API"
     },
     "themeSaved": "Theme settings saved successfully",
     "homepageSaved": "Homepage settings saved successfully",
@@ -716,6 +717,7 @@
       "addTab": "Add Tab",
       "tabTitle": "Tab Title",
       "tabLink": "Tab Link",
+      "tabLinkPlaceholder": "https://example.com or /page-path",
       "navigationTabs": "Navigation Tabs",
       "menuItems": "Menu Items",
       "addItem": "Add Item",
@@ -726,6 +728,12 @@
       "subItemLink": "Sub-Item Link",
       "noItems": "No menu items. Click 'Add Item' to add dropdown menu items.",
       "noTabs": "No navigation tabs yet",
+      "addTabHelp": "Click 'Add Tab' to create your first navigation item",
+      "untitledTab": "Untitled Tab",
+      "noLink": "No link set",
+      "items": "items",
+      "editTab": "Edit Navigation Tab",
+      "uploadPhoto": "Upload Photo",
       "types": {
         "title": "Header Style",
         "default": "Default Header",

@@ -22,21 +22,32 @@
           </button>
 
           <!-- Master switch: enable new storefront source for this partner -->
-          <div v-if="storefront" class="ml-auto pr-4 flex items-center gap-4">
-            <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
-              <input
-                type="checkbox"
-                class="form-checkbox"
-                :checked="Boolean(storefront?.settings?.storefrontV3Enabled)"
-                :disabled="loading || saving"
-                @change="e => handleStorefrontSourceToggle(e.target.checked)"
-              />
-              <span>{{ $t('website.storefrontSource.enableNewApi') }}</span>
-            </label>
-
-            <span class="text-xs text-gray-400 dark:text-slate-500 hidden lg:inline">
-              {{ $t('website.storefrontSource.enableNewApiHelp') }}
-            </span>
+          <div v-if="storefront" class="ml-auto pr-4 flex items-center gap-2">
+            <button
+              class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200"
+              :class="
+                storefront?.settings?.storefrontV3Enabled
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 ring-1 ring-green-200 dark:ring-green-800'
+                  : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400 ring-1 ring-gray-200 dark:ring-slate-600 hover:bg-gray-200 dark:hover:bg-slate-600'
+              "
+              :disabled="loading || saving"
+              :title="$t('website.storefrontSource.enableNewApiHelp')"
+              @click="handleStorefrontSourceToggle(!storefront?.settings?.storefrontV3Enabled)"
+            >
+              <span
+                class="material-icons text-base transition-transform duration-200"
+                :class="{ 'rotate-180': storefront?.settings?.storefrontV3Enabled }"
+              >
+                {{ storefront?.settings?.storefrontV3Enabled ? 'toggle_on' : 'toggle_off' }}
+              </span>
+              <span>{{ $t('website.storefrontSource.v3Api') }}</span>
+              <span
+                v-if="storefront?.settings?.storefrontV3Enabled"
+                class="px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 rounded"
+              >
+                {{ $t('common.active') }}
+              </span>
+            </button>
           </div>
 
           <!-- AI Import Button -->
