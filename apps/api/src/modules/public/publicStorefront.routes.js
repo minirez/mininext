@@ -10,6 +10,12 @@ import * as publicStorefrontService from './publicStorefront.service.js'
 const router = express.Router()
 
 /**
+ * GET /public/storefront/version
+ * Lightweight V3 check for B2C renderer selection
+ */
+router.get('/version', publicStorefrontService.getStorefrontVersion)
+
+/**
  * GET /public/storefront
  * Get storefront data for B2C website rendering
  */

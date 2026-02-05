@@ -17,6 +17,27 @@ import { BadRequestError, NotFoundError } from '#core/errors.js'
 import crypto from 'crypto'
 
 /**
+ * GET /public/storefront/version
+ * Lightweight endpoint for B2C to check V3 renderer status
+ * Returns only the essential version flag - no extra data
+ */
+export const getStorefrontVersion = asyncHandler(async (req, res) => {
+  const partnerId = await resolvePartnerFromRequest(req)
+  if (!partnerId) {
+    return res.json({ v3: false })
+  }
+
+  const storefront = await Storefront.findOne(
+    { partner: partnerId },
+    { 'settings.storefrontV3Enabled': 1 }
+  ).lean()
+
+  res.json({
+    v3: storefront?.settings?.storefrontV3Enabled === true
+  })
+})
+
+/**
  * Normalize a URL path (strip query/hash, ensure leading slash, collapse slashes, remove trailing slash).
  */
 const normalizePath = raw => {

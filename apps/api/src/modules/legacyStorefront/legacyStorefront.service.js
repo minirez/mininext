@@ -202,11 +202,7 @@ export const legacySearch = asyncHandler(async (req, res) => {
       Hotel.find({
         ...baseQuery,
         'visibility.b2c': true,
-        $or: [
-          { name: termRegex },
-          { 'address.city': termRegex },
-          { 'address.district': termRegex }
-        ]
+        $or: [{ name: termRegex }, { 'address.city': termRegex }, { 'address.district': termRegex }]
       })
         .select('name address.city address.district images slug')
         .limit(10)
@@ -261,11 +257,7 @@ export const legacySearch = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find({
       ...baseQuery,
       'visibility.b2c': true,
-      $or: [
-        { name: termRegex },
-        { 'address.city': termRegex },
-        { 'address.district': termRegex }
-      ]
+      $or: [{ name: termRegex }, { 'address.city': termRegex }, { 'address.district': termRegex }]
     })
       .select('name address.city address.district images slug')
       .limit(20)
@@ -378,7 +370,9 @@ export const legacyLocationSearch = asyncHandler(async (req, res) => {
     if (h.address?.district) locationSet.add(h.address.district)
   }
 
-  const locations = Array.from(locationSet).map(name => ({ name })).slice(0, 20)
+  const locations = Array.from(locationSet)
+    .map(name => ({ name }))
+    .slice(0, 20)
 
   res.json({
     status: true,
