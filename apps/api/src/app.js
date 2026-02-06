@@ -34,6 +34,7 @@ app.use(
 app.use('/api/public', cors({ origin: true, credentials: false }))
 
 // CORS - Dynamic origin validation for multi-tenant domains
+// Public routes are already handled above with open CORS, skip them here
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
@@ -81,7 +82,11 @@ const corsOptions = {
   },
   credentials: true
 }
-app.use(cors(corsOptions))
+// Skip public routes - they already have open CORS (widget can embed on any domain)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/public')) return next()
+  cors(corsOptions)(req, res, next)
+})
 
 // Body parser (10MB limit - sufficient for most uploads, prevents DoS)
 app.use(express.json({ limit: '10mb' }))
