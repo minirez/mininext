@@ -1,5 +1,23 @@
 {
   "widget": {
+    "enabled": "Widget Enabled",
+    "enabledDescription": "Enable the widget to allow customers to book directly from your website",
+    "modes": {
+      "floating": "Floating Button",
+      "inline": "Inline",
+      "fullpage": "Full Page"
+    },
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto (System)"
+    },
+    "positions": {
+      "bottomRight": "Bottom Right",
+      "bottomLeft": "Bottom Left",
+      "topRight": "Top Right",
+      "topLeft": "Top Left"
+    },
     "bookNow": "Book Now",
     "selectDates": "Select Your Dates",
     "selectDatesDescription": "Choose your check-in and check-out dates",

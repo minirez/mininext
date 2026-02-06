@@ -3,7 +3,7 @@
  * HTTP client for public API endpoints
  */
 
-const DEFAULT_API_URL = 'https://app.maxirez.com/api'
+const DEFAULT_API_URL = 'https://api.maxirez.com/api'
 
 /**
  * Make API request
@@ -42,8 +42,9 @@ export const widgetApi = {
   /**
    * Get widget configuration for hotel
    */
-  async getWidgetConfig(hotelCode, apiUrl) {
-    return request(`/hotels/${hotelCode}/widget-config`, {}, apiUrl)
+  async getWidgetConfig(hotelCode, partnerId, apiUrl) {
+    const query = partnerId ? `?partner=${partnerId}` : ''
+    return request(`/hotels/${hotelCode}/widget-config${query}`, {}, apiUrl)
   },
 
   /**

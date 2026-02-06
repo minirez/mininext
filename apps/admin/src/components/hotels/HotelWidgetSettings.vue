@@ -421,12 +421,20 @@ const modeDescription = computed(() => {
   return descriptions[form.value.mode] || ''
 })
 
+// Resolve partner ID
+const partnerId = computed(() => {
+  const p = props.hotel?.partner
+  if (!p) return ''
+  return typeof p === 'object' ? (p._id || p.id || '') : p
+})
+
 // Generate embed code
 const embedCode = computed(() => {
   const hotelSlug = props.hotel?.slug || 'YOUR-HOTEL-CODE'
   const attrs = [
     `src="https://widget.maxirez.com/widget.js"`,
     `data-hotel="${hotelSlug}"`,
+    `data-partner="${partnerId.value || 'YOUR-PARTNER-ID'}"`,
     `data-mode="${form.value.mode}"`,
     `data-theme="${form.value.theme}"`,
     `data-primary-color="${form.value.primaryColor}"`

@@ -19,7 +19,7 @@ const getDefaultApiUrl = () => {
       return 'https://api.mini.com/api'
     }
   }
-  return 'https://app.maxirez.com/api'
+  return 'https://api.maxirez.com/api'
 }
 
 /**
@@ -29,6 +29,7 @@ const getDefaultApiUrl = () => {
 export async function createWidget(config = {}) {
   const {
     hotelCode,
+    partnerId,
     mode = 'floating',
     theme = 'light',
     primaryColor = '#6366f1',
@@ -91,6 +92,7 @@ export async function createWidget(config = {}) {
   const widgetStore = useWidgetStore()
   await widgetStore.initialize({
     hotelCode,
+    partnerId,
     mode,
     theme,
     primaryColor,
@@ -145,6 +147,7 @@ function autoInit() {
 
   const config = {
     hotelCode: script.dataset.hotel,
+    partnerId: script.dataset.partner,
     mode: script.dataset.mode || 'floating',
     theme: script.dataset.theme || 'light',
     primaryColor: script.dataset.primaryColor || script.dataset.color || '#6366f1',

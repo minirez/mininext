@@ -47,8 +47,14 @@ export const createBooking = asyncHandler(async (req, res) => {
   const { hotelCode, checkIn, checkOut, rooms, contact, billing, specialRequests, countryCode } =
     req.body
 
-  // Validate hotel
-  const hotel = await Hotel.findOne({ slug: hotelCode.toLowerCase(), status: 'active' })
+  // Validate hotel (hotelCode can be slug or _id)
+  const hotelQuery = { status: 'active' }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+  const hotel = await Hotel.findOne(hotelQuery)
     .select('_id partner name slug pricingSettings')
     .lean()
 

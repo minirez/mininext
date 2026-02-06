@@ -1,5 +1,23 @@
 {
   "widget": {
+    "enabled": "Widget Aktif",
+    "enabledDescription": "Widget'ı etkinleştirerek müşterilerinizin web sitenizden doğrudan rezervasyon yapmasını sağlayın",
+    "modes": {
+      "floating": "Yüzen Buton",
+      "inline": "Sayfa İçi",
+      "fullpage": "Tam Sayfa"
+    },
+    "themes": {
+      "light": "Açık",
+      "dark": "Koyu",
+      "auto": "Otomatik (Sistem)"
+    },
+    "positions": {
+      "bottomRight": "Sağ Alt",
+      "bottomLeft": "Sol Alt",
+      "topRight": "Sağ Üst",
+      "topLeft": "Sol Üst"
+    },
     "bookNow": "Rezervasyon Yap",
     "selectDates": "Tarihlerinizi Seçin",
     "selectDatesDescription": "Giriş ve çıkış tarihlerinizi seçin",

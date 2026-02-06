@@ -30,6 +30,9 @@ app.use(
   })
 )
 
+// CORS for public routes (widget embeds on any domain)
+app.use('/api/public', cors({ origin: true, credentials: false }))
+
 // CORS - Dynamic origin validation for multi-tenant domains
 const corsOptions = {
   origin: (origin, callback) => {
@@ -62,6 +65,11 @@ const corsOptions = {
         if (hostname.endsWith('.minirezervasyon.com') || hostname === 'minirezervasyon.com') {
           return callback(null, true)
         }
+      }
+
+      // Allow *.maxirez.com for production subdomains
+      if (hostname.endsWith('.maxirez.com') || hostname === 'maxirez.com') {
+        return callback(null, true)
       }
 
       // Production: Only allow configured origins

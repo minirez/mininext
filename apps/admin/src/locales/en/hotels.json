@@ -749,6 +749,25 @@
       "draft": "Draft",
       "active": "Active",
       "inactive": "Inactive"
+    },
+    "widgetSettings": "Widget Settings",
+    "widgetModal": {
+      "title": "Widget Integration",
+      "subtitle": "Add a booking widget to your website",
+      "loading": "Loading widget settings...",
+      "selectMode": "Display Mode",
+      "floatingDesc": "Floating button in the corner, opens a panel when clicked",
+      "inlineDesc": "Compact search form embedded in the page",
+      "fullpageDesc": "Standalone booking page that covers the entire page",
+      "themeAndColor": "Theme & Color",
+      "customColor": "Custom Color",
+      "buttonPosition": "Button Position",
+      "integrationCode": "Integration Code",
+      "integrationNote": "Paste this code before the </body> tag on your website. The widget will load automatically.",
+      "saveSuccess": "Widget settings saved",
+      "saveFailed": "Failed to save widget settings",
+      "demoPage": "Demo Page",
+      "demoPageDesc": "Opens a sample page to preview the widget in action"
     }
   },
   "tags": {

@@ -1,9 +1,26 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { symlinkSync, existsSync, unlinkSync } from 'fs'
+
+// Post-build: create widget.js -> widget.iife.js symlink
+function widgetSymlinkPlugin() {
+  return {
+    name: 'widget-symlink',
+    closeBundle() {
+      const dist = resolve(__dirname, 'dist')
+      const link = resolve(dist, 'widget.js')
+      const target = 'widget.iife.js'
+      try {
+        if (existsSync(link)) unlinkSync(link)
+        symlinkSync(target, link)
+      } catch (_e) { /* ignore */ }
+    }
+  }
+}
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), widgetSymlinkPlugin()],
 
   // Resolve aliases
   resolve: {
@@ -43,6 +60,7 @@ export default defineConfig({
     port: 5174,
     host: true, // Listen on all addresses
     cors: true,
+    allowedHosts: ['widget.mini.com'],
     // Allow serving from widget.mini.com
     hmr: {
       host: 'widget.mini.com',
@@ -53,9 +71,10 @@ export default defineConfig({
   // Define environment variables
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     __API_URL__: JSON.stringify(
       process.env.NODE_ENV === 'production'
-        ? 'https://app.maxirez.com/api'
+        ? 'https://api.maxirez.com/api'
         : 'https://api.mini.com/api'
     )
   }

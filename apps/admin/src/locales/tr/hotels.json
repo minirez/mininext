@@ -749,6 +749,25 @@
       "draft": "Taslak",
       "active": "Aktif",
       "inactive": "Pasif"
+    },
+    "widgetSettings": "Widget Ayarları",
+    "widgetModal": {
+      "title": "Widget Entegrasyonu",
+      "subtitle": "Web sitenize rezervasyon widget'ı ekleyin",
+      "loading": "Widget ayarları yükleniyor...",
+      "selectMode": "Görüntüleme Modu",
+      "floatingDesc": "Sayfanın köşesinde yüzen buton, tıklanınca panel açılır",
+      "inlineDesc": "Sayfanın içine gömülü kompakt arama formu",
+      "fullpageDesc": "Tüm sayfayı kaplayan bağımsız rezervasyon sayfası",
+      "themeAndColor": "Tema & Renk",
+      "customColor": "Özel Renk",
+      "buttonPosition": "Buton Pozisyonu",
+      "integrationCode": "Entegrasyon Kodu",
+      "integrationNote": "Bu kodu web sitenizin </body> etiketinden önce yapıştırın. Widget otomatik olarak yüklenecektir.",
+      "saveSuccess": "Widget ayarları kaydedildi",
+      "saveFailed": "Widget ayarları kaydedilemedi",
+      "demoPage": "Demo Sayfası",
+      "demoPageDesc": "Widget'ın çalışan halini görmek için örnek bir sayfa açar"
     }
   },
   "tags": {

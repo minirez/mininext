@@ -149,6 +149,7 @@ export const detectMarket = asyncHandler(async (req, res) => {
  */
 export const getWidgetConfig = asyncHandler(async (req, res) => {
   const { hotelCode } = req.params
+  const { partner: partnerId } = req.query
 
   // hotelCode can be either slug or _id
   const query = {
@@ -161,6 +162,11 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
     query._id = hotelCode
   } else {
     query.slug = hotelCode
+  }
+
+  // If partner ID provided, scope to that partner
+  if (partnerId && partnerId.match(/^[0-9a-fA-F]{24}$/)) {
+    query.partner = partnerId
   }
 
   const hotel = await Hotel.findOne(query)

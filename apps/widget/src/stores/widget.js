@@ -11,6 +11,7 @@ export const useWidgetStore = defineStore('widget', () => {
   // Configuration
   const config = ref({
     hotelCode: '',
+    partnerId: '',
     mode: 'floating',
     theme: 'light',
     primaryColor: '#7c3aed',
@@ -141,6 +142,9 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   // Computed
+  // Resolved hotel ID (globally unique) - prefer over slug for API calls
+  const resolvedHotelCode = computed(() => hotelInfo.value?.id || config.value.hotelCode)
+
   const effectiveTheme = computed(() => {
     if (config.value.theme === 'auto') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -168,7 +172,7 @@ export const useWidgetStore = defineStore('widget', () => {
 
       // Load hotel and widget config
       const [hotelData, marketData] = await Promise.all([
-        widgetApi.getWidgetConfig(cfg.hotelCode, cfg.apiUrl),
+        widgetApi.getWidgetConfig(cfg.hotelCode, cfg.partnerId, cfg.apiUrl),
         widgetApi.detectMarket(cfg.apiUrl)
       ])
 
@@ -243,7 +247,7 @@ export const useWidgetStore = defineStore('widget', () => {
       error.value = null
 
       const results = await widgetApi.searchAvailability(
-        config.value.hotelCode,
+        resolvedHotelCode.value,
         {
           checkIn: searchParams.value.checkIn,
           checkOut: searchParams.value.checkOut,
@@ -286,7 +290,7 @@ export const useWidgetStore = defineStore('widget', () => {
       error.value = null
 
       const bookingPayload = {
-        hotelCode: config.value.hotelCode,
+        hotelCode: resolvedHotelCode.value,
         checkIn: searchParams.value.checkIn,
         checkOut: searchParams.value.checkOut,
         rooms: bookingData.value.rooms,

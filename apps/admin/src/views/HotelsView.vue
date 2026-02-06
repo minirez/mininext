@@ -423,6 +423,13 @@
               >
                 <span class="material-icons text-lg">{{ row.featured ? 'star' : 'star_border' }}</span>
               </button>
+              <button
+                class="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                :title="$t('hotels.widgetSettings')"
+                @click="openWidgetModal(row)"
+              >
+                <span class="material-icons text-lg">code</span>
+              </button>
               <router-link
                 :to="`/hotels/${row._id}`"
                 class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -503,6 +510,13 @@
         </button>
       </template>
     </Modal>
+
+    <!-- Widget Settings Modal -->
+    <HotelWidgetModal
+      v-model="showWidgetModal"
+      :hotel="selectedWidgetHotel"
+      @saved="onWidgetSaved"
+    />
   </div>
 </template>
 
@@ -512,6 +526,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
+import HotelWidgetModal from '@/components/hotels/HotelWidgetModal.vue'
 import hotelService from '@/services/hotelService'
 import { usePartnerContext } from '@/composables/usePartnerContext'
 import { useListView } from '@/composables/useListView'
@@ -534,7 +549,9 @@ const cities = ref([])
 const sortBy = ref('')
 const showDeleteModal = ref(false)
 const showBulkDeleteModal = ref(false)
+const showWidgetModal = ref(false)
 const selectedHotel = ref(null)
+const selectedWidgetHotel = ref(null)
 
 const stats = reactive({
   total: 0,
@@ -754,6 +771,15 @@ const toggleFeatured = async hotel => {
       }
     }
   )
+}
+
+const openWidgetModal = hotel => {
+  selectedWidgetHotel.value = hotel
+  showWidgetModal.value = true
+}
+
+const onWidgetSaved = () => {
+  showWidgetModal.value = false
 }
 
 const confirmDelete = hotel => {

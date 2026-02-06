@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
 import ViewHeader from '../components/ViewHeader.vue'
@@ -36,6 +36,48 @@ const contact = ref({ ...widgetStore.bookingData.contact })
 const specialRequests = ref(widgetStore.bookingData.specialRequests || '')
 const selectedPaymentMethod = ref(widgetStore.paymentMethod)
 
+// Guest data
+const roomGuests = ref([])
+
+function initGuests() {
+  const guests = []
+  const adults = searchParams.value.adults || 1
+  const children = searchParams.value.children || []
+
+  for (let i = 0; i < adults; i++) {
+    guests.push({
+      type: 'adult',
+      title: '',
+      firstName: i === 0 ? (contact.value.firstName || '') : '',
+      lastName: i === 0 ? (contact.value.lastName || '') : '',
+      isLead: i === 0
+    })
+  }
+
+  for (const childAge of children) {
+    guests.push({
+      type: 'child',
+      title: '',
+      firstName: '',
+      lastName: '',
+      age: childAge
+    })
+  }
+
+  roomGuests.value = guests
+}
+
+// Sync lead guest with contact info
+watch(
+  () => [contact.value.firstName, contact.value.lastName],
+  ([firstName, lastName]) => {
+    if (roomGuests.value.length > 0 && roomGuests.value[0].isLead) {
+      roomGuests.value[0].firstName = firstName || ''
+      roomGuests.value[0].lastName = lastName || ''
+    }
+  }
+)
+
 // Form validation
 const errors = ref({})
 
@@ -59,6 +101,16 @@ function validateForm() {
     }
   }
 
+  // Validate guests
+  roomGuests.value.forEach((guest, index) => {
+    if (!guest.firstName?.trim()) {
+      errors.value[`guest_${index}_firstName`] = 'Ad gerekli'
+    }
+    if (!guest.lastName?.trim()) {
+      errors.value[`guest_${index}_lastName`] = 'Soyad gerekli'
+    }
+  })
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -69,6 +121,16 @@ async function submit() {
   widgetStore.bookingData.contact = { ...contact.value }
   widgetStore.bookingData.specialRequests = specialRequests.value
   widgetStore.paymentMethod = selectedPaymentMethod.value
+
+  // Set guests data
+  widgetStore.bookingData.rooms[0].guests = roomGuests.value.map(g => ({
+    type: g.type,
+    title: g.title || (g.type === 'adult' ? 'mr' : undefined),
+    firstName: g.firstName,
+    lastName: g.lastName,
+    age: g.age,
+    isLead: g.isLead || false
+  }))
 
   // Create booking
   await widgetStore.createBooking()
@@ -86,6 +148,9 @@ onMounted(() => {
   } else if (paymentMethods.value.payAtHotel) {
     selectedPaymentMethod.value = 'pay_at_hotel'
   }
+
+  // Initialize guest list from search params
+  initGuests()
 })
 </script>
 
@@ -197,6 +262,64 @@ onMounted(() => {
             :country="widgetStore.detectedMarket?.countryCode || 'TR'"
             :error="errors.phone"
           />
+        </div>
+      </div>
+
+      <!-- Guest Details -->
+      <div class="form-section">
+        <h3 class="form-section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Misafir Bilgileri
+        </h3>
+
+        <div v-for="(guest, index) in roomGuests" :key="index" class="guest-card">
+          <div class="guest-card-header">
+            <span class="guest-badge" :class="guest.type">
+              {{ guest.type === 'adult' ? 'Yetişkin' : `Çocuk (${guest.age} yaş)` }}
+              {{ guest.type === 'adult' ? (roomGuests.filter(g => g.type === 'adult').indexOf(guest) + 1) : (roomGuests.filter(g => g.type === 'child').indexOf(guest) + 1) }}
+            </span>
+            <span v-if="guest.isLead" class="lead-badge">Sorumlu Misafir</span>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Ünvan</label>
+              <select v-model="guest.title" class="form-input">
+                <option value="">Seçiniz</option>
+                <option value="mr">Bay</option>
+                <option value="mrs">Bayan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ad *</label>
+              <input
+                v-model="guest.firstName"
+                type="text"
+                class="form-input"
+                :class="{ error: errors[`guest_${index}_firstName`] }"
+                placeholder="Ad"
+                :disabled="guest.isLead"
+              />
+              <span v-if="errors[`guest_${index}_firstName`]" class="form-error">{{ errors[`guest_${index}_firstName`] }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Soyad *</label>
+              <input
+                v-model="guest.lastName"
+                type="text"
+                class="form-input"
+                :class="{ error: errors[`guest_${index}_lastName`] }"
+                placeholder="Soyad"
+                :disabled="guest.isLead"
+              />
+              <span v-if="errors[`guest_${index}_lastName`]" class="form-error">{{ errors[`guest_${index}_lastName`] }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
