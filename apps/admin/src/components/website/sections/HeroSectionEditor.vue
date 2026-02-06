@@ -118,7 +118,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getImageUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl } from '@/utils/imageUrl'
 import websiteService from '@/services/websiteService'
 import LanguageInput from '@/components/common/LanguageInput.vue'
 
@@ -130,6 +130,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const getImageUrl = getStorefrontImageUrl
 
 const searchOptionsList = computed(() => [
   { id: 'hotel', icon: 'hotel', label: t('website.hero.options.hotel') },

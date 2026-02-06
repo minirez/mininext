@@ -107,4 +107,19 @@ export const getAvatarUrl = entity => {
   return getFileUrl(entity.avatar.url)
 }
 
+/**
+ * Get storefront section image URL
+ * Handles both CDN images and storefront uploads (served from API server)
+ * @param {string|Object} photo - Photo link string, or object with { link, url }
+ * @returns {string} Full image URL
+ */
+export const getStorefrontImageUrl = photo => {
+  if (!photo) return ''
+  const link = typeof photo === 'string' ? photo : photo?.link || photo?.url || ''
+  if (!link) return ''
+  if (link.startsWith('http://') || link.startsWith('https://')) return link
+  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
+  return getImageUrl(link)
+}
+
 export default getImageUrl

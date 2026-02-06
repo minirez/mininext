@@ -116,7 +116,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
-import { getImageUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl as getImageUrl } from '@/utils/imageUrl'
 import websiteService from '@/services/websiteService'
 import LanguageInput from '@/components/common/LanguageInput.vue'
 

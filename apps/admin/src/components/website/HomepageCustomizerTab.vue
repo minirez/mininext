@@ -204,9 +204,9 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
-import { toCanonicalSectionType, SECTION_CONFIG } from '@booking-engine/constants'
+import { toCanonicalSectionType } from '@booking-engine/constants'
 import websiteService from '@/services/websiteService'
-import { getImageUrl as getCdnImageUrl, getFileUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl } from '@/utils/imageUrl'
 
 // Components
 import WebsiteHeaderEditor from './homepage/WebsiteHeaderEditor.vue'
@@ -429,14 +429,7 @@ const setActiveTab = async id => {
   activeTab.value = id
 }
 
-const getImageUrl = photo => {
-  if (!photo) return ''
-  const link = typeof photo === 'string' ? photo : photo.link
-  if (!link) return ''
-  if (link.startsWith('http')) return link
-  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
-  return getCdnImageUrl(link)
-}
+const getImageUrl = getStorefrontImageUrl
 
 // ==================== DRAFT MANAGEMENT ====================
 
@@ -525,10 +518,13 @@ const buildDraftPayload = () => {
     bedbankDestinations: form.value.bedbankDestinations,
     bedbankShowcase: form.value.bedbankShowcase,
     bedbankSections: form.value.bedbankSections,
+    utilitySections: form.value.utilitySections,
     activeSections: form.value.activeSections.map((s, i) => ({
       sectionType: toCanonicalSectionType(s.type),
       order: i,
-      enabled: true
+      enabled: true,
+      // Preserve instanceId so site3 can match bedbank-section to its data in bedbankSections
+      ...(s.instanceId ? { instanceId: s.instanceId } : {})
     }))
   }
 }
@@ -591,7 +587,8 @@ const removeSection = index => form.value.activeSections.splice(index, 1)
 
 const loadPages = async () => {
   const sfPresets = props.storefront?.savedThemePresets || []
-  const activeId = getActivePresetId() || sfPresets[0]?.id || null
+  // Use local appliedPresetId first (may have been updated by applyPreset before storefront refreshes)
+  const activeId = appliedPresetId.value || getActivePresetId() || sfPresets[0]?.id || null
   const activePreset = sfPresets.find(p => p.id === activeId) || sfPresets[0] || null
 
   pages.value = clone(activePreset?.pages || [])
@@ -603,6 +600,10 @@ const loadPages = async () => {
   if (!selectedPageId.value && pages.value.length) {
     const active = pages.value.find(p => p.isActive) || pages.value[0]
     await selectPage(active)
+  } else if (selectedPageId.value && pages.value.length) {
+    // Re-select the current page to refresh form data from (potentially updated) customization
+    const currentPage = pages.value.find(p => p.id === selectedPageId.value)
+    if (currentPage) await selectPage(currentPage)
   }
 }
 
@@ -611,27 +612,29 @@ const selectPage = async page => {
   if (isDirty.value) await saveDraft()
   selectedPageId.value = page.id
 
-  if (activeTab.value === 'sections') {
-    const src =
-      page.customization && Object.keys(page.customization).length
-        ? page.customization
-        : props.storefront
-    suppressAutoSave.value = true
-    Object.assign(form.value, {
-      hero: src.hero || {},
-      locationSection: src.locationSection || {},
-      campaignSection: src.campaignSection || [],
-      hotels: src.hotels || {},
-      tours: src.tours || {},
-      bedbankDestinations: src.bedbankDestinations || { title: [], description: [], items: [] },
-      bedbankShowcase: src.bedbankShowcase || { title: [], description: [], ids: [] },
-      bedbankSections: src.bedbankSections || {},
-      activeSections: buildActiveSections(src)
-    })
-    isDirty.value = false
-    await nextTick()
-    suppressAutoSave.value = false
-  }
+  // Always load section data from the page customization (not only when on sections tab),
+  // so data is ready when the user switches tabs.
+  const src =
+    page.customization && Object.keys(page.customization).length
+      ? page.customization
+      : props.storefront
+  const wasSuppressed = suppressAutoSave.value
+  suppressAutoSave.value = true
+  Object.assign(form.value, {
+    hero: src.hero || {},
+    locationSection: src.locationSection || {},
+    campaignSection: src.campaignSection || [],
+    hotels: src.hotels || {},
+    tours: src.tours || {},
+    bedbankDestinations: src.bedbankDestinations || { title: [], description: [], items: [] },
+    bedbankShowcase: src.bedbankShowcase || { title: [], description: [], ids: [] },
+    bedbankSections: src.bedbankSections || {},
+    utilitySections: src.utilitySections || {},
+    activeSections: buildActiveSections(src)
+  })
+  isDirty.value = false
+  await nextTick()
+  if (!wasSuppressed) suppressAutoSave.value = false
 }
 
 const selectPageById = id => {
@@ -747,6 +750,10 @@ const loadPresets = async () => {
 
 const savePreset = async name => {
   try {
+    // Ensure any pending changes are saved to draft before creating the preset
+    clearTimeout(autoSaveTimer.value)
+    if (isDirty.value) await saveDraft()
+
     await websiteService.saveThemePreset(name)
     await loadPresets()
     toast.success(t('website.presets.saved'))
@@ -769,12 +776,18 @@ const confirmApplyPreset = async () => {
   try {
     await websiteService.applyThemePreset(id)
     appliedPresetId.value = id
+
+    // Update local presets & pages from the newly applied preset immediately,
+    // BEFORE refreshing the storefront (which triggers the watcher).
     await loadPresets()
+
     toast.success(t('website.presets.applied'))
-    // Refresh storefront data but stay on current tab
+
+    // Refresh storefront data; the watcher will call loadPages -> selectPage
+    // which populates form from the correct preset page customization.
     const currentTab = activeTab.value
     emit('refresh')
-    // Restore tab after refresh
+    // Restore tab after refresh (emit may re-render)
     await nextTick()
     activeTab.value = currentTab
   } catch (e) {
@@ -845,6 +858,9 @@ const computePreviewUrl = () => {
 }
 
 const handlePreview = async () => {
+  // Force-save any pending changes (clear auto-save timer and mark dirty to ensure save runs)
+  clearTimeout(autoSaveTimer.value)
+  isDirty.value = true
   await saveDraft()
   const domain = props.storefront?.settings?.b2cDomain
   if (!domain) return toast.error(t('siteSettings.setup.enterDomainFirst'))
@@ -879,8 +895,9 @@ const handlePublish = async () => {
 const buildActiveSections = src => {
   if (src?.activeSections?.length) {
     return src.activeSections.map((s, i) => ({
-      id: s.id || `s-${i}`,
+      id: s.id || s.instanceId || `s-${i}`,
       type: s.type || s.sectionType,
+      instanceId: s.instanceId || s.id || `s-${i}`,
       expanded: false
     }))
   }
@@ -906,6 +923,7 @@ watch(
     suppressAutoSave.value = true
     clearTimeout(autoSaveTimer.value)
 
+    // Only set header/footer from root storefront - sections come from the active page customization.
     form.value = {
       header: { headerType: sf.header?.headerType || 'default', tabs: sf.header?.tabs || [] },
       footer: { items: sf.footer?.items || [] },
@@ -919,6 +937,9 @@ watch(
       cruiseDeals: sf.cruiseDeals || {},
       transfers: sf.transfers || {},
       bedbank: sf.bedbank || {},
+      bedbankDestinations: sf.bedbankDestinations || { title: [], description: [], items: [] },
+      bedbankShowcase: sf.bedbankShowcase || { title: [], description: [], ids: [] },
+      bedbankSections: sf.bedbankSections || {},
       utilitySections: sf.utilitySections || {},
       activeSections: buildActiveSections(sf)
     }
@@ -927,11 +948,14 @@ watch(
     // Load active preset ID from customTheme
     appliedPresetId.value = sf.customTheme?.activePresetId || null
     isDirty.value = false
-    await nextTick()
-    suppressAutoSave.value = false
 
+    // Load pages BEFORE releasing auto-save so selectPage can populate form
+    // from the active page customization (overriding the root-level defaults above).
     await loadPages()
     await loadPresets()
+
+    await nextTick()
+    suppressAutoSave.value = false
   },
   { immediate: true }
 )
