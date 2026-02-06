@@ -136,7 +136,7 @@ app.use('/api/public/storefront', publicStorefrontRoutes)
 import legacyStorefrontRoutes from './modules/legacyStorefront/legacyStorefront.routes.js'
 app.use('/storefronts', legacyStorefrontRoutes)
 
-// Short URL redirect (for link.mini.com / link.minires.com)
+// Short URL redirect (for link.mini.com / link.maxirez.com)
 import shortUrlRoutes from './modules/shortUrl/shortUrl.routes.js'
 app.use('/l', shortUrlRoutes)
 

@@ -94,7 +94,7 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
   const result = { email: null, sms: null }
 
   // Default company info for platform-level links
-  const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MiniRes'
+  const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MaxiRez'
   const companyLogo = partner?.branding?.logo || null
 
   // Format amount and currency
@@ -103,8 +103,8 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
   const formattedExpiry = new Date(paymentLink.expiresAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   // Site ve support bilgileri
-  const siteUrl = partner?.branding?.website || process.env.FRONTEND_URL || 'https://app.minires.com'
-  const supportEmail = partner?.supportEmail || process.env.SUPPORT_EMAIL || 'destek@minires.com'
+  const siteUrl = partner?.branding?.website || process.env.FRONTEND_URL || 'https://app.maxirez.com'
+  const supportEmail = partner?.supportEmail || process.env.SUPPORT_EMAIL || 'destek@maxirez.com'
 
   // Logo URL - tam URL olmalı
   let logoUrl = ''
@@ -112,7 +112,7 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
     if (companyLogo.startsWith('http')) {
       logoUrl = companyLogo
     } else {
-      const apiUrl = process.env.API_URL || 'https://api.minires.com'
+      const apiUrl = process.env.API_URL || 'https://api.maxirez.com'
       logoUrl = `${apiUrl}${companyLogo}`
     }
   }

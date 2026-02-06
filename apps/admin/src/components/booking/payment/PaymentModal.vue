@@ -77,7 +77,18 @@
                 <PaymentStatusBadge :status="payment.status" />
               </div>
               <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">
-                {{ formatPrice(payment.amount, payment.currency) }}
+                <template v-if="payment.cardDetails?.currencyConversion">
+                  {{ formatPrice(payment.cardDetails.currencyConversion.originalAmount, payment.cardDetails.currencyConversion.originalCurrency) }}
+                </template>
+                <template v-else>
+                  {{ formatPrice(payment.amount, payment.currency) }}
+                </template>
+              </p>
+              <!-- Currency conversion info (DCC) -->
+              <p v-if="payment.cardDetails?.currencyConversion" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1">
+                <span class="material-icons text-xs">currency_exchange</span>
+                {{ formatPrice(payment.cardDetails.currencyConversion.convertedAmount, 'TRY') }} olarak ödendi
+                <span class="text-gray-400 dark:text-slate-500">(1 {{ payment.cardDetails.currencyConversion.originalCurrency }} = {{ payment.cardDetails.currencyConversion.exchangeRate }} ₺)</span>
               </p>
               <!-- Bank Transfer Details -->
               <div

@@ -78,7 +78,7 @@ shortUrlSchema.index({ createdAt: -1 })
 // Virtuals
 shortUrlSchema.virtual('shortUrl').get(function () {
   const isDev = process.env.NODE_ENV === 'development'
-  const baseUrl = isDev ? 'https://link.mini.com' : 'https://link.minires.com'
+  const baseUrl = isDev ? 'https://link.mini.com' : 'https://link.maxirez.com'
   return `${baseUrl}/${this.code}`
 })
 

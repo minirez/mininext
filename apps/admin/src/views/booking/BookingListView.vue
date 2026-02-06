@@ -366,6 +366,12 @@
               <span class="font-medium text-gray-900 dark:text-white">
                 {{ formatPrice(row.payment?.paidAmount || 0, row.pricing.currency) }}
               </span>
+              <span v-if="row.payment?.currencyConversion" class="relative group/dcc">
+                <span class="material-icons text-amber-500 dark:text-amber-400" style="font-size: 13px; vertical-align: middle;">currency_exchange</span>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/dcc:opacity-100 pointer-events-none transition-opacity shadow-lg z-50">
+                  {{ formatPrice(row.payment.currencyConversion.convertedAmount, row.payment.currencyConversion.convertedCurrency) }} olarak ödendi
+                </span>
+              </span>
               <span class="text-gray-400 dark:text-slate-500">/</span>
               <span class="text-gray-500 dark:text-slate-400 text-sm">
                 {{ formatPrice(row.pricing.grandTotal, row.pricing.currency) }}

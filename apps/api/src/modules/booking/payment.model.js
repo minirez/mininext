@@ -83,7 +83,15 @@ const paymentSchema = new mongoose.Schema(
       // 3D Secure
       requires3D: { type: Boolean, default: false },
       formUrl: { type: String }, // 3D Secure form URL
-      processedAt: { type: Date } // When payment was processed
+      processedAt: { type: Date }, // When payment was processed
+      // Currency conversion (DCC) - when TR card pays in foreign currency
+      currencyConversion: {
+        originalCurrency: { type: String },  // Booking currency (EUR, USD)
+        originalAmount: { type: Number },    // Amount in booking currency
+        convertedCurrency: { type: String }, // Payment currency (TRY)
+        convertedAmount: { type: Number },   // Amount charged in TRY
+        exchangeRate: { type: Number }       // Exchange rate used
+      }
     },
 
     // Bank Transfer Details
@@ -182,7 +190,20 @@ paymentSchema.statics.findByBooking = function (bookingId) {
 paymentSchema.statics.calculatePaidAmount = async function (bookingId) {
   const result = await this.aggregate([
     { $match: { booking: new mongoose.Types.ObjectId(bookingId), status: 'completed' } },
-    { $group: { _id: null, total: { $sum: '$amount' } } }
+    {
+      $group: {
+        _id: null,
+        total: {
+          $sum: {
+            $cond: [
+              { $gt: ['$cardDetails.currencyConversion.originalAmount', null] },
+              '$cardDetails.currencyConversion.originalAmount',
+              '$amount'
+            ]
+          }
+        }
+      }
+    }
   ])
   return result[0]?.total || 0
 }

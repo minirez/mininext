@@ -328,8 +328,8 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
   }
 
   // Base URL for booking
-  const baseUrl = config.adminUrl || 'https://app.minires.com'
-  const siteUrl = config.frontendUrl || 'https://minires.com'
+  const baseUrl = config.adminUrl || 'https://app.maxirez.com'
+  const siteUrl = config.frontendUrl || 'https://maxirez.com'
   const bookingUrl = `${baseUrl}/bookings/${booking._id}`
 
   // Email title based on type
@@ -376,9 +376,9 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
       ? `https://${partner.branding.siteDomain}`
       : siteUrl,
     LOGO_URL: partner.branding?.logo
-      ? `${config.apiUrl || 'https://app.minires.com'}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
+      ? `${config.apiUrl || 'https://app.maxirez.com'}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
       : `${siteUrl}/logo.png`,
-    SUPPORT_EMAIL: partner.email || config.supportEmail || 'destek@minires.com',
+    SUPPORT_EMAIL: partner.email || config.supportEmail || 'destek@maxirez.com',
     COMPANY_NAME: partner.companyName || labels.COMPANY_NAME || 'Booking Engine',
     COMPANY_ADDRESS: partner.address ? `${partner.address.street || ''}, ${partner.address.city || ''} ${partner.address.postalCode || ''}`.trim().replace(/^,\s*|,\s*$/g, '') : (labels.COMPANY_ADDRESS || ''),
 

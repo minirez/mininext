@@ -231,7 +231,7 @@ const methodClass = computed(() => {
 })
 
 const baseUrl = computed(() => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.minires.com/api'
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.maxirez.com/api'
   return `${apiUrl}/public`
 })
 

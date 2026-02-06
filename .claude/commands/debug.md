@@ -7,18 +7,18 @@ Bu komut debugging ve sorun giderme bilgileri sağlar.
 ## Debug Endpoint'leri
 
 ### Production API
-**Base URL:** `https://app.minires.com/api/debug`
+**Base URL:** `https://app.maxirez.com/api/debug`
 **API Key:** `dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9`
 
 ```bash
 # Issues listesi
-curl -H "x-debug-key: API_KEY" "https://app.minires.com/api/debug/issues?status=open"
+curl -H "x-debug-key: API_KEY" "https://app.maxirez.com/api/debug/issues?status=open"
 
 # Tek issue
-curl -H "x-debug-key: API_KEY" "https://app.minires.com/api/debug/issues/{issueId}"
+curl -H "x-debug-key: API_KEY" "https://app.maxirez.com/api/debug/issues/{issueId}"
 
 # Sistem istatistikleri
-curl -H "x-debug-key: API_KEY" "https://app.minires.com/api/debug/stats"
+curl -H "x-debug-key: API_KEY" "https://app.maxirez.com/api/debug/stats"
 ```
 
 ### Local Development
@@ -62,7 +62,7 @@ pm2 logs api
 **Kontrol:**
 ```bash
 # .env dosyasında
-PAYMENT_PUBLIC_URL=https://api.minires.com/payment-api
+PAYMENT_PUBLIC_URL=https://api.maxirez.com/payment-api
 ```
 
 **Çözüm:**

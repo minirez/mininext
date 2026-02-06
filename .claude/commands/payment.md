@@ -183,7 +183,7 @@ PARATIKA_MERCHANT_KEY=xxx
 PARATIKA_MERCHANT_PASSWORD=xxx
 
 # Public URL (3D Secure callback için)
-PAYMENT_PUBLIC_URL=https://api.minires.com/payment-api
+PAYMENT_PUBLIC_URL=https://api.maxirez.com/payment-api
 ```
 
 ---

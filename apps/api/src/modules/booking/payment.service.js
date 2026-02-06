@@ -57,14 +57,17 @@ export const getPayments = asyncHandler(async (req, res) => {
 
   const payments = await Payment.findByBooking(bookingId)
 
-  // Calculate totals
+  // Calculate totals (use booking-currency amount when DCC conversion was applied)
+  const getBookingAmount = (p) =>
+    p.cardDetails?.currencyConversion?.originalAmount || p.amount
+
   const paidAmount = payments
     .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + getBookingAmount(p), 0)
 
   const pendingAmount = payments
     .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0)
+    .reduce((sum, p) => sum + getBookingAmount(p), 0)
 
   res.json({
     success: true,
@@ -513,7 +516,17 @@ export async function updateBookingPayment(bookingId) {
         _id: null,
         paidAmount: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'completed'] }, '$amount', 0]
+            $cond: [
+              { $eq: ['$status', 'completed'] },
+              {
+                $cond: [
+                  { $gt: ['$cardDetails.currencyConversion.originalAmount', null] },
+                  '$cardDetails.currencyConversion.originalAmount',
+                  '$amount'
+                ]
+              },
+              0
+            ]
           }
         },
         hasRefund: {
@@ -733,7 +746,7 @@ export const processCardPayment = asyncHandler(async (req, res) => {
 
   // Determine payment form URL based on request host
   // Development: payment.mini.com (dedicated payment domain)
-  // Production: payment.minires.com (dedicated payment domain)
+  // Production: payment.maxirez.com (dedicated payment domain)
   const getFormUrl = (transactionId) => {
     if (!requires3D) return null
     const host = req.get('host') || ''
@@ -741,8 +754,8 @@ export const processCardPayment = asyncHandler(async (req, res) => {
     if (host.includes('mini.com')) {
       return `https://payment.mini.com/payment/${transactionId}/form`
     }
-    // Default to minires.com for production
-    return `https://payment.minires.com/payment/${transactionId}/form`
+    // Default to maxirez.com for production
+    return `https://payment.maxirez.com/payment/${transactionId}/form`
   }
 
   const formUrl = getFormUrl(result.transactionId)

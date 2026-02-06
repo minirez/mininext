@@ -76,7 +76,7 @@ const config = {
   // SSL/Nginx Configuration
   ssl: {
     serverPublicIp: process.env.SERVER_PUBLIC_IP,
-    certbotEmail: process.env.CERTBOT_EMAIL || 'admin@minires.com',
+    certbotEmail: process.env.CERTBOT_EMAIL || 'admin@maxirez.com',
     certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/certbot',
     nginxSitesAvailable: process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available',
     nginxSitesEnabled: process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabled',

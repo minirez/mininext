@@ -191,7 +191,7 @@ const templates = ref([])
 const baseHotelName = ref('')
 const selectedTemplates = ref([])
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.minires.com'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://api.maxirez.com'
 
 const allSelected = computed(() => {
   const selectableCount = templates.value.filter(t => !isAlreadyImported(t.code)).length

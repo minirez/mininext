@@ -330,7 +330,7 @@ Yeni özellik eklerken kontrol et:
 
 Production sistemine hızlı erişim için debug endpoint'leri:
 
-**Base URL:** `https://app.minires.com/api/debug`
+**Base URL:** `https://app.maxirez.com/api/debug`
 
 **API Key:** `dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9`
 
@@ -339,15 +339,15 @@ Production sistemine hızlı erişim için debug endpoint'leri:
 ```bash
 # Tüm açık issues'ları getir
 curl -H "x-debug-key: dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9" \
-  "https://app.minires.com/api/debug/issues?status=open"
+  "https://app.maxirez.com/api/debug/issues?status=open"
 
 # Tek bir issue detayı
 curl -H "x-debug-key: dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9" \
-  "https://app.minires.com/api/debug/issues/{issueId}"
+  "https://app.maxirez.com/api/debug/issues/{issueId}"
 
 # Sistem istatistikleri
 curl -H "x-debug-key: dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9" \
-  "https://app.minires.com/api/debug/stats"
+  "https://app.maxirez.com/api/debug/stats"
 ```
 
 ### Endpoint'ler
@@ -361,7 +361,7 @@ curl -H "x-debug-key: dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962
 ### WebFetch ile Kullanım
 
 ```
-WebFetch URL: https://app.minires.com/api/debug/issues?status=open&key=dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9
+WebFetch URL: https://app.maxirez.com/api/debug/issues?status=open&key=dab1e4a01913bfdbc2dc7239ee07f196c0564f6482ea6adb59873f5962264ad9
 ```
 
 ---

@@ -59,7 +59,7 @@ const getSocketInstance = () => {
   let baseUrl =
     import.meta.env.VITE_SOCKET_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    'https://api.minires.com'
+    'https://api.maxirez.com'
   // Socket.IO /api prefix'siz çalışır
   baseUrl = baseUrl.replace(/\/api\/?$/, '')
 

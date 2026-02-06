@@ -119,15 +119,22 @@ export const listBookings = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: '$booking',
-        paidAmount: { $sum: '$amount' },
-        paymentCount: { $sum: 1 }
+        paidAmount: { $sum: {
+          $cond: [
+            { $gt: ['$cardDetails.currencyConversion.originalAmount', null] },
+            '$cardDetails.currencyConversion.originalAmount',
+            '$amount'
+          ]
+        }},
+        paymentCount: { $sum: 1 },
+        currencyConversion: { $first: '$cardDetails.currencyConversion' }
       }
     }
   ])
 
   // Create a map for quick lookup
   const paymentMap = new Map(
-    paymentAggregates.map(p => [p._id.toString(), { paidAmount: p.paidAmount, paymentCount: p.paymentCount }])
+    paymentAggregates.map(p => [p._id.toString(), { paidAmount: p.paidAmount, paymentCount: p.paymentCount, currencyConversion: p.currencyConversion || null }])
   )
 
   // Map bookings for response with calculated payment data
@@ -177,7 +184,8 @@ export const listBookings = asyncHandler(async (req, res) => {
     },
     payment: {
       status: paymentStatus,
-      paidAmount: paymentData.paidAmount
+      paidAmount: paymentData.paidAmount,
+      ...(paymentData.currencyConversion && { currencyConversion: paymentData.currencyConversion })
     },
     source: {
       type: b.source?.type,
@@ -280,7 +288,13 @@ export const getBookingDetail = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: null,
-        paidAmount: { $sum: '$amount' },
+        paidAmount: { $sum: {
+          $cond: [
+            { $gt: ['$cardDetails.currencyConversion.originalAmount', null] },
+            '$cardDetails.currencyConversion.originalAmount',
+            '$amount'
+          ]
+        }},
         paymentCount: { $sum: 1 }
       }
     }
@@ -1222,7 +1236,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   // Send notification
   if (sendEmail || sendSms) {
     try {
-      const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MiniRes'
+      const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MaxiRez'
       const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(finalTotal)
       const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[market.currency] || market.currency
       const formattedExpiry = new Date(expiresAt).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })

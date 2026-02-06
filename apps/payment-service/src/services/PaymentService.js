@@ -193,7 +193,18 @@ async function findSuitablePos(partnerId, currency, binInfo) {
   }
 
   // Get all active POS for this currency
-  const allPos = await VirtualPos.find(query).sort({ priority: -1 }); // Higher priority first
+  let allPos = await VirtualPos.find(query).sort({ priority: -1 }); // Higher priority first
+
+  // Fallback: partner POS bulunamazsa platform POS'larini dene
+  if (!allPos.length && partnerId) {
+    console.log(`[POS] No POS found for partner ${partnerId}, falling back to platform POS`);
+    const platformQuery = {
+      currencies: currencyLower,
+      status: true,
+      $or: [{ partnerId: null }, { partnerId: { $exists: false } }]
+    };
+    allPos = await VirtualPos.find(platformQuery).sort({ priority: -1 });
+  }
 
   if (!allPos.length) {
     return null;
@@ -269,7 +280,7 @@ function generateInstallmentOptions(pos, amount, currency, binInfo) {
  * Create and start payment
  */
 export async function createPayment(data) {
-  const { posId, amount, currency, installment, card, customer, externalId } = data;
+  const { posId, amount, currency, installment, card, customer, externalId, partnerId } = data;
 
   // Get POS
   const pos = await VirtualPos.findById(posId);
@@ -294,6 +305,7 @@ export async function createPayment(data) {
   // Create transaction
   const transaction = new Transaction({
     pos: pos._id,
+    partnerId: partnerId || null,
     amount,
     currency,
     installment: installment || 1,

@@ -103,7 +103,8 @@ router.post('/pay', async (req, res) => {
         cvv: card.cvv
       },
       customer: customer || {},
-      externalId
+      externalId,
+      partnerId: partnerId || null
     });
 
     res.json(result);

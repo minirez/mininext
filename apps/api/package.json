@@ -17,11 +17,11 @@
     "#utils/*": "./src/utils/*"
   },
   "scripts": {
-    "dev": "NODE_ENV=development nodemon src/index.js",
+    "dev": "NODE_ENV=development node --watch --env-file=.env src/index.js",
     "start": "NODE_ENV=production node src/index.js",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
-    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },
@@ -66,9 +66,7 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
     "cross-env": "^7.0.3",
-    "jest": "^30.2.0",
-    "nodemon": "^3.0.2"
+    "vitest": "^1.2.0"
   }
 }

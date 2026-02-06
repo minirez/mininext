@@ -220,7 +220,7 @@ paymentLinkSchema.virtual('isExpired').get(function () {
 
 paymentLinkSchema.virtual('paymentUrl').get(function () {
   const isDev = process.env.NODE_ENV === 'development'
-  const defaultUrl = isDev ? 'https://payment.mini.com' : 'https://payment.minires.com'
+  const defaultUrl = isDev ? 'https://payment.mini.com' : 'https://payment.maxirez.com'
   const baseUrl = process.env.PAYMENT_PUBLIC_URL || defaultUrl
   return `${baseUrl}/pay-link/${this.token}`
 })

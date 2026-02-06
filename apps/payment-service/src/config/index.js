@@ -19,9 +19,9 @@ function isDev() {
  * In production: uses CALLBACK_BASE_URL env variable
  */
 function getCallbackBaseUrl() {
-  // In production, use CALLBACK_BASE_URL or default to payment.minires.com
+  // In production, use CALLBACK_BASE_URL or default to payment.maxirez.com
   if (!isDev()) {
-    return process.env.CALLBACK_BASE_URL || 'https://payment.minires.com';
+    return process.env.CALLBACK_BASE_URL || 'https://payment.maxirez.com';
   }
 
   // In development, always use localhost
@@ -36,7 +36,7 @@ function getCallbackBaseUrl() {
 function getFrontendUrl() {
   // In production, use FRONTEND_URL or default
   if (!isDev()) {
-    return process.env.FRONTEND_URL || 'https://app.minires.com';
+    return process.env.FRONTEND_URL || 'https://app.maxirez.com';
   }
 
   return 'http://localhost:5173';

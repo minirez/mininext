@@ -9,6 +9,7 @@ import users from './users.json'
 import issues from './issues.json'
 import emailLogs from './emailLogs.json'
 import tour from './tour.json'
+import widget from './widget.json'
 
 export default {
   ...common,
@@ -21,5 +22,6 @@ export default {
   ...users,
   ...issues,
   emailLogs,
-  ...tour
+  ...tour,
+  ...widget
 }

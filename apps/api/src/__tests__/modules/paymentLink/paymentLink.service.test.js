@@ -87,10 +87,10 @@ describe('PaymentLink Service', () => {
       it('should generate correct payment URL for production', () => {
         const token = 'prod-token-456'
         process.env.NODE_ENV = 'production'
-        const baseUrl = 'https://payment.minires.com'
+        const baseUrl = 'https://payment.maxirez.com'
         const paymentUrl = `${baseUrl}/pay-link/${token}`
 
-        expect(paymentUrl).toBe('https://payment.minires.com/pay-link/prod-token-456')
+        expect(paymentUrl).toBe('https://payment.maxirez.com/pay-link/prod-token-456')
       })
 
       it('should use custom PAYMENT_PUBLIC_URL if set', () => {

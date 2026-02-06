@@ -425,6 +425,33 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
     }
   }
 
+  // Check infant capacity
+  const infantGroup = childAgeGroups.find(g => g.code === 'infant')
+  const maxInfantAge = infantGroup?.maxAge ?? 2
+
+  let infantCount = 0
+  let childCount = 0
+  for (const child of effectiveChildren) {
+    const childAge = typeof child === 'object' ? child.age : child
+    if (childAge !== undefined && childAge <= maxInfantAge) {
+      infantCount++
+    } else if (childAge !== undefined) {
+      childCount++
+    }
+  }
+
+  const maxInfants = roomType.occupancy?.maxInfants ?? 1
+  if (infantCount > maxInfants) {
+    return {
+      success: false,
+      capacityExceeded: true,
+      error: 'INFANT_CAPACITY_EXCEEDED',
+      message: `Maximum ${maxInfants} infant(s) allowed for this room type`,
+      maxInfants,
+      requestedInfants: infantCount
+    }
+  }
+
   // Build daily breakdown
   const dailyBreakdown = []
   let totalBasePrice = 0

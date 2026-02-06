@@ -12,10 +12,39 @@ services:
     networks:
       - booking-network
 
+  redis:
+    image: redis:alpine
+    container_name: booking-engine-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: booking-engine-meilisearch
+    restart: unless-stopped
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=masterKey123
+      - MEILI_ENV=development
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - booking-network
+
 networks:
   booking-network:
     driver: bridge
 
 volumes:
   mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  meilisearch_data:
     driver: local

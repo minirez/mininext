@@ -72,7 +72,7 @@ router.get('/issues', async (req, res) => {
         filename: att.filename,
         url: att.url?.startsWith('http')
           ? att.url
-          : `https://app.minires.com${att.url}`,
+          : `https://app.maxirez.com${att.url}`,
         type: att.mimetype
       })),
       comments: issue.comments?.length || 0,
@@ -131,7 +131,7 @@ router.get('/issues/:id', async (req, res) => {
         filename: att.filename,
         url: att.url?.startsWith('http')
           ? att.url
-          : `https://app.minires.com${att.url}`,
+          : `https://app.maxirez.com${att.url}`,
         type: att.mimetype
       })),
       comments: issue.comments?.map(c => ({

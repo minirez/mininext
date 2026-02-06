@@ -89,9 +89,16 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     throw new BadRequestError('MAX_30_NIGHTS')
   }
 
-  // Get hotel
-  const hotel = await Hotel.findOne({ code: hotelCode.toUpperCase(), status: 'active' })
-    .select('_id code name childAgeGroups')
+  // Get hotel (hotelCode can be slug or _id)
+  const hotelQuery = { status: 'active', 'visibility.b2c': true }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+
+  const hotel = await Hotel.findOne(hotelQuery)
+    .select('_id slug name childAgeGroups')
     .lean()
 
   if (!hotel) {
@@ -211,7 +218,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     success: true,
     data: {
       hotel: {
-        code: hotel.code,
+        slug: hotel.slug,
         name: hotel.name
       },
       search: {
@@ -250,8 +257,15 @@ export const getPriceQuote = asyncHandler(async (req, res) => {
     throw new BadRequestError('MISSING_REQUIRED_FIELDS')
   }
 
-  // Get hotel
-  const hotel = await Hotel.findOne({ code: hotelCode.toUpperCase(), status: 'active' })
+  // Get hotel (hotelCode can be slug or _id)
+  const hotelQuery = { status: 'active', 'visibility.b2c': true }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+
+  const hotel = await Hotel.findOne(hotelQuery)
   if (!hotel) {
     throw new NotFoundError('HOTEL_NOT_FOUND')
   }
@@ -299,7 +313,7 @@ export const getPriceQuote = asyncHandler(async (req, res) => {
     success: true,
     data: {
       hotel: {
-        code: hotel.code,
+        slug: hotel.slug,
         name: hotel.name
       },
       roomType: {
@@ -342,8 +356,15 @@ export const checkAvailability = asyncHandler(async (req, res) => {
     throw new BadRequestError('DATES_REQUIRED')
   }
 
-  // Get hotel
-  const hotel = await Hotel.findOne({ code: hotelCode.toUpperCase(), status: 'active' })
+  // Get hotel (hotelCode can be slug or _id)
+  const hotelQuery = { status: 'active', 'visibility.b2c': true }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+
+  const hotel = await Hotel.findOne(hotelQuery)
   if (!hotel) {
     throw new NotFoundError('HOTEL_NOT_FOUND')
   }
@@ -410,7 +431,7 @@ export const checkAvailability = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      hotel: hotel.code,
+      hotel: hotel.slug,
       checkIn,
       checkOut,
       market: market.code,
@@ -428,7 +449,15 @@ export const getActiveCampaigns = asyncHandler(async (req, res) => {
   const { hotelCode } = req.params
   const { checkIn, checkOut } = req.query
 
-  const hotel = await Hotel.findOne({ code: hotelCode.toUpperCase(), status: 'active' })
+  // Get hotel (hotelCode can be slug or _id)
+  const hotelQuery = { status: 'active', 'visibility.b2c': true }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+
+  const hotel = await Hotel.findOne(hotelQuery)
   if (!hotel) {
     throw new NotFoundError('HOTEL_NOT_FOUND')
   }

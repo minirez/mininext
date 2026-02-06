@@ -6,7 +6,7 @@
  */
 
 // Image CDN base URL
-const IMAGES_BASE_URL = import.meta.env.VITE_IMAGES_URL || 'https://images.minires.com'
+const IMAGES_BASE_URL = import.meta.env.VITE_IMAGES_URL || 'https://images.maxirez.com'
 
 /**
  * Get full image URL from a relative path

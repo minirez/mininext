@@ -242,7 +242,7 @@ components/booking/wizard/
 ```env
 VITE_API_BASE_URL=http://localhost:4000/api
 VITE_SOCKET_URL=http://localhost:4000
-VITE_CDN_URL=https://cdn.minires.com
+VITE_CDN_URL=https://cdn.maxirez.com
 ```
 
 ```javascript

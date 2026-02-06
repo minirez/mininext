@@ -795,6 +795,68 @@ const hotelSchema = new mongoose.Schema(
       }
     ],
 
+    // ===== B2C WIDGET CONFIG =====
+    // Configuration for the embeddable booking widget
+    widgetConfig: {
+      // Widget enabled
+      enabled: { type: Boolean, default: true },
+
+      // Display settings
+      mode: {
+        type: String,
+        enum: ['floating', 'inline', 'fullpage'],
+        default: 'floating'
+      },
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'auto'],
+        default: 'light'
+      },
+      primaryColor: { type: String, default: '#7c3aed' },
+
+      // Trigger button
+      triggerPosition: {
+        type: String,
+        enum: ['bottom-right', 'bottom-left', 'top-right', 'top-left'],
+        default: 'bottom-right'
+      },
+      triggerText: multiLangString(),
+
+      // WhatsApp integration
+      whatsapp: {
+        enabled: { type: Boolean, default: false },
+        number: { type: String, trim: true }, // Format: +905551234567
+        message: multiLangString() // Default message template
+      },
+
+      // Payment methods available in widget
+      paymentMethods: {
+        creditCard: { type: Boolean, default: true },
+        payAtHotel: { type: Boolean, default: true },
+        bankTransfer: { type: Boolean, default: false }
+      },
+
+      // Guest options
+      guestOptions: {
+        requireNationality: { type: Boolean, default: true },
+        requireBirthDate: { type: Boolean, default: false },
+        requirePhone: { type: Boolean, default: true }
+      },
+
+      // Display options
+      showPoweredBy: { type: Boolean, default: true },
+      showRoomCapacity: { type: Boolean, default: true },
+      showCampaigns: { type: Boolean, default: true },
+      showOriginalPrice: { type: Boolean, default: true },
+
+      // Booking options
+      minAdvanceBookingDays: { type: Number, default: 0, min: 0 }, // Minimum days before check-in
+      maxAdvanceBookingDays: { type: Number, default: 365, min: 1 }, // Maximum days in advance
+
+      // Custom CSS (for advanced users)
+      customCss: { type: String, trim: true }
+    },
+
     // Display settings
     featured: { type: Boolean, default: false },
     displayOrder: { type: Number, default: 0 },

@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES2022",
+        "checkJs": true,
+        "allowJs": true,
+        "jsx": "preserve",
+        "strict": false,
+        "baseUrl": ".",
+        "paths": {
+            "@booking-engine/*": [
+                "packages/*/src"
+            ],
+            "#*": [
+                "apps/api/src/*"
+            ],
+            "@/*": [
+                "apps/admin/src/*"
+            ]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "**/node_modules",
+        "dist",
+        ".turbo",
+        "coverage"
+    ]
+}

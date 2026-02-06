@@ -221,6 +221,11 @@
           <div v-show="activeTab === 'seo'">
             <HotelSeoForm ref="seoFormRef" :hotel="hotel" :saving="saving" />
           </div>
+
+          <!-- Widget Tab -->
+          <div v-show="activeTab === 'widget'">
+            <HotelWidgetSettings ref="widgetFormRef" :hotel="hotel" :saving="saving" />
+          </div>
         </form>
       </div>
     </template>
@@ -242,6 +247,7 @@ import HotelGallery from '@/components/hotels/HotelGallery.vue'
 import HotelPolicies from '@/components/hotels/HotelPolicies.vue'
 import HotelProfile from '@/components/hotels/HotelProfile.vue'
 import HotelSeoForm from '@/components/hotels/HotelSeoForm.vue'
+import HotelWidgetSettings from '@/components/hotels/HotelWidgetSettings.vue'
 import HotelSourceSelector from '@/components/hotels/HotelSourceSelector.vue'
 import HotelBaseSelector from '@/components/hotels/HotelBaseSelector.vue'
 import HotelDataDisplay from '@/components/hotels/HotelDataDisplay.vue'
@@ -420,6 +426,7 @@ const addressFormRef = ref(null)
 const policiesFormRef = ref(null)
 const profileFormRef = ref(null)
 const seoFormRef = ref(null)
+const widgetFormRef = ref(null)
 
 // Tab errors tracking
 const tabErrors = reactive({
@@ -429,7 +436,8 @@ const tabErrors = reactive({
   profile: {},
   gallery: {},
   policies: {},
-  seo: {}
+  seo: {},
+  widget: {}
 })
 
 // Map of fields to tabs for error badge display
@@ -508,6 +516,7 @@ const collectFormData = () => {
   const policiesData = policiesFormRef.value?.getFormData?.() || {}
   const profileData = profileFormRef.value?.getFormData?.() || {}
   const seoData = seoFormRef.value?.getFormData?.() || {}
+  const widgetData = widgetFormRef.value?.getFormData?.() || {}
 
   // Merge all form data including top form
   return {
@@ -517,6 +526,7 @@ const collectFormData = () => {
     ...policiesData,
     ...profileData,
     ...seoData,
+    ...widgetData,
     status: form.value.status,
     featured: form.value.featured,
     displayOrder: form.value.displayOrder
@@ -534,7 +544,8 @@ const tabs = computed(() => [
   { id: 'profile', label: t('hotels.tabs.profile'), icon: 'description', requiresSave: false },
   { id: 'gallery', label: t('hotels.tabs.gallery'), icon: 'photo_library', requiresSave: true },
   { id: 'policies', label: t('hotels.tabs.policies'), icon: 'policy', requiresSave: false },
-  { id: 'seo', label: t('hotels.tabs.seo'), icon: 'search', requiresSave: false }
+  { id: 'seo', label: t('hotels.tabs.seo'), icon: 'search', requiresSave: false },
+  { id: 'widget', label: t('hotels.tabs.widget'), icon: 'widgets', requiresSave: true }
 ])
 
 // Add disabled flag for new hotels

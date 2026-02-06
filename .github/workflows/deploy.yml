@@ -46,10 +46,10 @@ jobs:
       - name: Build with Turbo (Remote Cache)
         run: pnpm turbo run build --filter=booking-engine-admin
         env:
-          VITE_API_BASE_URL: https://api.minires.com/api
-          VITE_SOCKET_URL: https://api.minires.com
-          VITE_IMAGES_URL: https://images.minires.com
-          VITE_PAYMENT_API_URL: https://api.minires.com/payment-api
+          VITE_API_BASE_URL: https://api.maxirez.com/api
+          VITE_SOCKET_URL: https://api.maxirez.com
+          VITE_IMAGES_URL: https://images.maxirez.com
+          VITE_PAYMENT_API_URL: https://api.maxirez.com/payment-api
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -93,10 +93,10 @@ jobs:
             JWT_REFRESH_EXPIRE=7d
 
             # CORS
-            CORS_ORIGIN=https://app.minires.com
+            CORS_ORIGIN=https://app.maxirez.com
 
             # Admin Panel URL (for email links)
-            ADMIN_URL=https://app.minires.com
+            ADMIN_URL=https://app.maxirez.com
 
             # Encryption
             ENCRYPTION_KEY=${ENCRYPTION_KEY}
@@ -127,20 +127,20 @@ jobs:
             JWT_SECRET=${JWT_SECRET}
 
             # CORS - Production domains
-            CORS_ORIGIN=https://pms.minires.com,https://app.minires.com,https://api.minires.com
+            CORS_ORIGIN=https://pms.maxirez.com,https://app.maxirez.com,https://api.maxirez.com
 
             # Callback URL for 3D Secure redirects
-            CALLBACK_BASE_URL=https://api.minires.com/payment-api
+            CALLBACK_BASE_URL=https://api.maxirez.com/payment-api
 
             # Frontend URL for result redirects
-            FRONTEND_URL=https://app.minires.com
+            FRONTEND_URL=https://app.maxirez.com
 
             # Server Public IP (for bank POS configuration)
             SERVER_PUBLIC_IP=94.130.195.4
             EOF
 
             pnpm install --frozen-lockfile
-            VITE_API_BASE_URL=https://api.minires.com/api VITE_SOCKET_URL=https://api.minires.com VITE_IMAGES_URL=https://images.minires.com VITE_PAYMENT_API_URL=https://api.minires.com/payment-api pnpm turbo run build --filter=booking-engine-admin
+            VITE_API_BASE_URL=https://api.maxirez.com/api VITE_SOCKET_URL=https://api.maxirez.com VITE_IMAGES_URL=https://images.maxirez.com VITE_PAYMENT_API_URL=https://api.maxirez.com/payment-api pnpm turbo run build --filter=booking-engine-admin
 
             # Restart all services with PM2
             pm2 restart all || pm2 start ecosystem.config.cjs

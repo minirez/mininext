@@ -22,3 +22,15 @@ export {
 
 // Booking operations
 export { createBooking, getBooking, cancelBooking } from './publicBooking.service.js'
+
+// Widget operations
+export { detectMarket, getWidgetConfig } from './publicWidget.service.js'
+
+// Payment operations (for B2C widget)
+export {
+  queryBinPublic,
+  initiateBookingPayment,
+  getPaymentStatus,
+  getPaymentMethods,
+  payment3DCallback
+} from './publicPayment.service.js'

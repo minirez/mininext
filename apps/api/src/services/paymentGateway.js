@@ -61,6 +61,11 @@ async function makeRequest(method, endpoint, data = null, token = null, { timeou
     headers['Authorization'] = `Bearer ${token}`
   }
 
+  // Pass partnerId as x-user-id header if available (required by payment service)
+  if (data?.partnerId) {
+    headers['x-user-id'] = data.partnerId
+  }
+
   const fetchOptions = {
     method,
     headers
@@ -162,6 +167,17 @@ export async function queryBin(bin, amount, currency, partnerId = null, token = 
 }
 
 /**
+ * Lookup BIN info (card country, brand, bank) without POS selection
+ * @param {string} bin - First 6-8 digits of card
+ * @param {string} partnerId - Partner ID (required for auth header)
+ * @returns {Promise<Object>} - { status, bin: { bank, brand, type, family, country } }
+ */
+export async function lookupBin(bin, partnerId = null, token = null) {
+  // Pass partnerId as data so makeRequest sets x-user-id header
+  return makeRequest('GET', `/bins/lookup/${bin}`, { partnerId }, token, { retries: 1 })
+}
+
+/**
  * Process credit card payment
  * @param {Object} params - Payment parameters
  * @param {string} params.posId - Optional POS ID (auto-selected if not provided)
@@ -216,8 +232,8 @@ export async function cancelTransaction(transactionId, token = null) {
  */
 export function getPaymentFormUrl(transactionId) {
   // Use public-facing URL for browser redirect
-  // Payment service runs on api.minires.com (separate from main API)
-  const publicUrl = process.env.PAYMENT_PUBLIC_URL || 'https://api.minires.com/payment-api'
+  // Payment service runs on api.maxirez.com (separate from main API)
+  const publicUrl = process.env.PAYMENT_PUBLIC_URL || 'https://api.maxirez.com/payment-api'
   return `${publicUrl}/payment/${transactionId}/form`
 }
 
@@ -271,6 +287,7 @@ export async function getDefaultRates(partnerId = null, currency = 'try') {
 // Default export for convenience
 export default {
   queryBin,
+  lookupBin,
   processPayment,
   getTransactionStatus,
   refundTransaction,

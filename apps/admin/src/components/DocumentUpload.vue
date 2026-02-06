@@ -221,7 +221,7 @@ const handleDelete = documentId => {
 
 const openLightbox = doc => {
   // Use authenticated endpoint instead of static file serving
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.maxirez.com/api'
   lightboxUrl.value = `${apiBaseUrl}${props.baseUrl}/${props.partnerId}/documents/${doc._id}/file`
   lightboxTitle.value = doc.name
   showLightbox.value = true

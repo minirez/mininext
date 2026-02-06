@@ -892,7 +892,7 @@ const updateChildCount = count => {
 const getRoomTypeName = roomType => getRoomTypeNameUtil(roomType, locale.value)
 
 // API base URL for images
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.minires.com/api'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.maxirez.com/api'
 const imageBaseUrl = apiBaseUrl.replace('/api', '')
 
 // Wrapper for getRoomImage to include base URL

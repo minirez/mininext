@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaxiRez Widget Development</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .demo-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: white;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 2rem;
+    }
+    .config-panel {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .config-panel h2 {
+      margin: 0 0 1rem;
+      font-size: 1.125rem;
+      color: #1f2937;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #6b7280;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    input[type="color"] {
+      height: 42px;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button.secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    button.secondary:hover {
+      background: #e5e7eb;
+      box-shadow: none;
+    }
+    #inline-container {
+      min-height: 500px;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .demo-hotel-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 0.5rem 0.5rem 0 0;
+      margin-bottom: -8px;
+    }
+    .demo-note {
+      margin-top: 2rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 0.75rem;
+      color: rgba(255,255,255,0.9);
+      font-size: 0.875rem;
+    }
+    .demo-note code {
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-size: 0.8125rem;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="demo-content">
+    <h1>MaxiRez Widget</h1>
+    <p class="subtitle">Otel web siteleri icin gomulu rezervasyon widget'i</p>
+
+    <div class="config-panel">
+      <h2>Widget Yapilandirmasi</h2>
+      <div class="config-grid">
+        <div>
+          <label for="hotel">Otel Kodu (slug)</label>
+          <input type="text" id="hotel" value="ahama-hotel" />
+        </div>
+        <div>
+          <label for="mode">Mod</label>
+          <select id="mode">
+            <option value="floating">Floating (Popup)</option>
+            <option value="inline">Inline (Gomulu)</option>
+            <option value="fullpage">Fullpage (Tam Sayfa)</option>
+          </select>
+        </div>
+        <div>
+          <label for="theme">Tema</label>
+          <select id="theme">
+            <option value="light">Acik</option>
+            <option value="dark">Koyu</option>
+            <option value="auto">Otomatik</option>
+          </select>
+        </div>
+        <div>
+          <label for="color">Ana Renk</label>
+          <input type="color" id="color" value="#6366f1" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button onclick="loadWidget()">Widget'i Yukle</button>
+        <button class="secondary" onclick="window.MaxiResWidget?.open()">Ac</button>
+        <button class="secondary" onclick="window.MaxiResWidget?.close()">Kapat</button>
+      </div>
+    </div>
+
+    <div id="inline-container"></div>
+
+    <div class="demo-note">
+      <strong>Gelistirici Notu:</strong> Widget'i kendi sitenize eklemek icin <code>&lt;script&gt;</code> tag'i ile yukleyebilirsiniz.
+      <br><br>
+      <code>data-hotel="otel-slug" data-mode="floating" data-theme="light"</code>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createWidget } from './src/widget-entry.js'
+
+    window.loadWidget = async function() {
+      // Remove existing widget
+      if (window.MaxiResWidget) {
+        window.MaxiResWidget.destroy()
+      }
+
+      const mode = document.getElementById('mode').value
+
+      const config = {
+        hotelCode: document.getElementById('hotel').value,
+        mode: mode,
+        theme: document.getElementById('theme').value,
+        primaryColor: document.getElementById('color').value,
+        language: 'tr',
+        apiUrl: 'http://localhost:4000/api',
+        containerId: mode === 'inline' ? 'inline-container' : undefined,
+        position: 'bottom-right'
+      }
+
+      // Show/hide inline container
+      document.getElementById('inline-container').style.display = mode === 'inline' ? 'block' : 'none'
+
+      await createWidget(config)
+
+      // Auto-open for testing in floating mode
+      if (mode === 'floating') {
+        setTimeout(() => window.MaxiResWidget?.open(), 500)
+      }
+    }
+
+    // Handle mode change
+    document.getElementById('mode').addEventListener('change', function() {
+      const mode = this.value
+      document.getElementById('inline-container').style.display = mode === 'inline' ? 'block' : 'none'
+    })
+
+    // Initial state
+    document.getElementById('inline-container').style.display = 'none'
+
+    // Load on page ready
+    window.loadWidget()
+  </script>
+</body>
+</html>

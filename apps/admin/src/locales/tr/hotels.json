@@ -103,7 +103,8 @@
       "data": "Otel Datası",
       "hotelData": "Otel Datası",
       "settings": "Ayarlar",
-      "roomTemplates": "Oda Şablonları"
+      "roomTemplates": "Oda Şablonları",
+      "widget": "Widget"
     },
     "linkedHotel": {
       "notice": "Bu otel HotelBase'e bağlı",
@@ -818,5 +819,79 @@
     "type": "Lokasyon Tipi",
     "countryCode": "Ülke Kodu",
     "created": "Lokasyon başarıyla oluşturuldu"
+  },
+  "widget": {
+    "enabled": "Widget Aktif",
+    "enabledDescription": "Widget'ı etkinleştirerek müşterilerinizin web sitenizden doğrudan rezervasyon yapmasını sağlayın",
+    "appearance": "Görünüm",
+    "mode": "Görüntüleme Modu",
+    "modes": {
+      "floating": "Yüzen Buton",
+      "floatingDesc": "Sayfanın köşesinde yüzen bir buton, tıklandığında modal açılır",
+      "inline": "Sayfa İçi",
+      "inlineDesc": "Sayfanın içinde gömülü kompakt arama formu",
+      "fullpage": "Tam Sayfa",
+      "fullpageDesc": "Tüm sayfayı kaplayan bağımsız rezervasyon sayfası"
+    },
+    "theme": "Tema",
+    "themes": {
+      "light": "Açık",
+      "dark": "Koyu",
+      "auto": "Otomatik (Sistem)"
+    },
+    "primaryColor": "Ana Renk",
+    "triggerPosition": "Buton Konumu",
+    "positions": {
+      "bottomRight": "Sağ Alt",
+      "bottomLeft": "Sol Alt",
+      "topRight": "Sağ Üst",
+      "topLeft": "Sol Üst"
+    },
+    "triggerText": "Buton Metni",
+    "triggerTextPlaceholder": "Rezervasyon Yap",
+    "triggerTextHelp": "Boş bırakılırsa varsayılan metin kullanılır",
+    "whatsapp": {
+      "title": "WhatsApp Entegrasyonu",
+      "enable": "WhatsApp butonunu göster",
+      "number": "WhatsApp Numarası",
+      "numberPlaceholder": "+90 555 123 4567",
+      "numberHelp": "Ülke kodu ile birlikte tam numara",
+      "message": "Varsayılan Mesaj",
+      "messagePlaceholder": "Merhaba, rezervasyon hakkında bilgi almak istiyorum..."
+    },
+    "paymentMethods": {
+      "title": "Ödeme Yöntemleri",
+      "creditCard": "Kredi Kartı",
+      "creditCardDesc": "Online güvenli ödeme (iyzico/Stripe)",
+      "payAtHotel": "Otelde Öde",
+      "payAtHotelDesc": "Müşteri otele geldiğinde ödeme yapar",
+      "bankTransfer": "Havale/EFT",
+      "bankTransferDesc": "Banka hesabına havale ile ödeme"
+    },
+    "guestOptions": {
+      "title": "Misafir Bilgileri",
+      "requirePhone": "Telefon numarası zorunlu",
+      "requireNationality": "Uyruk bilgisi zorunlu",
+      "requireBirthDate": "Doğum tarihi zorunlu"
+    },
+    "displayOptions": {
+      "title": "Görüntüleme Seçenekleri",
+      "showRoomCapacity": "Oda kapasitesini göster",
+      "showCampaigns": "Kampanyaları göster",
+      "showOriginalPrice": "İndirimli fiyatlarda orijinal fiyatı göster",
+      "showPoweredBy": "'Powered by MaxiRez' rozetini göster"
+    },
+    "bookingRules": {
+      "title": "Rezervasyon Kuralları",
+      "minAdvance": "Minimum Önceden Rezervasyon",
+      "minAdvanceHelp": "Giriş tarihinden kaç gün önce rezervasyon yapılabilir (0 = aynı gün)",
+      "maxAdvance": "Maksimum Önceden Rezervasyon",
+      "maxAdvanceHelp": "En fazla kaç gün sonrası için rezervasyon yapılabilir"
+    },
+    "embedCode": {
+      "title": "Embed Kodu",
+      "description": "Aşağıdaki kodu web sitenizin </body> etiketinin hemen öncesine yapıştırın:",
+      "note": "Widget, siteniz yayına alındığında otomatik olarak görünecektir. Değişiklikler kaydettiğinizde anında uygulanır."
+    }
   }
 }

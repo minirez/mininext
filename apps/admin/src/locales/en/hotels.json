@@ -103,7 +103,8 @@
       "data": "Hotel Data",
       "hotelData": "Hotel Data",
       "settings": "Settings",
-      "roomTemplates": "Room Templates"
+      "roomTemplates": "Room Templates",
+      "widget": "Widget"
     },
     "linkedHotel": {
       "notice": "This hotel is linked to HotelBase",
@@ -821,5 +822,79 @@
     "type": "Location Type",
     "countryCode": "Country Code",
     "created": "Location created successfully"
+  },
+  "widget": {
+    "enabled": "Widget Enabled",
+    "enabledDescription": "Enable the widget to allow customers to book directly from your website",
+    "appearance": "Appearance",
+    "mode": "Display Mode",
+    "modes": {
+      "floating": "Floating Button",
+      "floatingDesc": "A floating button in the corner of the page, opens a modal when clicked",
+      "inline": "Inline",
+      "inlineDesc": "Compact search form embedded in the page",
+      "fullpage": "Full Page",
+      "fullpageDesc": "Standalone booking page that covers the entire page"
+    },
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto (System)"
+    },
+    "primaryColor": "Primary Color",
+    "triggerPosition": "Button Position",
+    "positions": {
+      "bottomRight": "Bottom Right",
+      "bottomLeft": "Bottom Left",
+      "topRight": "Top Right",
+      "topLeft": "Top Left"
+    },
+    "triggerText": "Button Text",
+    "triggerTextPlaceholder": "Book Now",
+    "triggerTextHelp": "Leave empty to use default text",
+    "whatsapp": {
+      "title": "WhatsApp Integration",
+      "enable": "Show WhatsApp button",
+      "number": "WhatsApp Number",
+      "numberPlaceholder": "+1 555 123 4567",
+      "numberHelp": "Full number with country code",
+      "message": "Default Message",
+      "messagePlaceholder": "Hello, I would like to inquire about a reservation..."
+    },
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "creditCard": "Credit Card",
+      "creditCardDesc": "Secure online payment (iyzico/Stripe)",
+      "payAtHotel": "Pay at Hotel",
+      "payAtHotelDesc": "Customer pays when arriving at the hotel",
+      "bankTransfer": "Bank Transfer",
+      "bankTransferDesc": "Payment via bank transfer"
+    },
+    "guestOptions": {
+      "title": "Guest Information",
+      "requirePhone": "Phone number required",
+      "requireNationality": "Nationality required",
+      "requireBirthDate": "Birth date required"
+    },
+    "displayOptions": {
+      "title": "Display Options",
+      "showRoomCapacity": "Show room capacity",
+      "showCampaigns": "Show campaigns",
+      "showOriginalPrice": "Show original price for discounted rates",
+      "showPoweredBy": "Show 'Powered by MaxiRez' badge"
+    },
+    "bookingRules": {
+      "title": "Booking Rules",
+      "minAdvance": "Minimum Advance Booking",
+      "minAdvanceHelp": "How many days before check-in can a booking be made (0 = same day)",
+      "maxAdvance": "Maximum Advance Booking",
+      "maxAdvanceHelp": "How far in advance can bookings be made"
+    },
+    "embedCode": {
+      "title": "Embed Code",
+      "description": "Paste the following code just before the </body> tag on your website:",
+      "note": "The widget will appear automatically when your site is live. Changes are applied instantly when saved."
+    }
   }
 }
