@@ -263,6 +263,7 @@ const openDemoPage = () => {
   const primaryColor = form.value.primaryColor || '#7c3aed'
   const scriptTag = embedCode.value
 
+  const cacheBust = Date.now()
   const html = `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -369,15 +370,21 @@ const openDemoPage = () => {
     &copy; 2026 ${hotelName} &mdash; Bu bir demo sayfasıdır. Widget önizlemesi için oluşturulmuştur.
   </footer>
 
-  ${scriptTag}
+  <script
+    src="https://widget.maxirez.com/widget.js?v=${cacheBust}"
+    data-hotel="${props.hotel?.slug || ''}"
+    data-partner="${partnerId.value}"
+    data-mode="${form.value.mode}"
+    data-theme="${form.value.theme}"
+    data-primary-color="${form.value.primaryColor}"${form.value.mode === 'floating' && form.value.triggerPosition !== 'bottom-right' ? `\n    data-position="${form.value.triggerPosition}"` : ''}
+  ><\/script>
 </body>
 </html>`
 
-  const win = window.open('', '_blank')
-  if (win) {
-    win.document.write(html)
-    win.document.close()
-  }
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 const loadConfig = async () => {
