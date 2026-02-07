@@ -2,10 +2,12 @@
 import { ref, computed } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
+import { useTranslation } from '../composables/useTranslation'
 import ViewHeader from '../components/ViewHeader.vue'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateShort } = useFormatters()
+const { t } = useTranslation()
 
 const searchResults = computed(() => widgetStore.searchResults)
 const searchParams = computed(() => widgetStore.searchParams)
@@ -36,7 +38,7 @@ function getRoomName(roomType) {
 
 // Get room category/type
 function getRoomCategory(roomType) {
-  return roomType?.category || roomType?.type || 'Standart Oda'
+  return roomType?.category || roomType?.type || t('results.standardRoom')
 }
 
 // Get room specs (size, view, bed type)
@@ -82,11 +84,11 @@ function getMealPlanName(mealPlan) {
 // Get meal plan description based on code
 function getMealPlanDesc(option) {
   const code = option.mealPlan?.code?.toLowerCase() || ''
-  if (code.includes('ro') || code.includes('room')) return 'Sadece konaklama'
-  if (code.includes('bb') || code.includes('breakfast')) return 'Kahvaltı dahil'
-  if (code.includes('hb') || code.includes('half')) return 'Yarım pansiyon'
-  if (code.includes('fb') || code.includes('full')) return 'Tam pansiyon'
-  if (code.includes('ai') || code.includes('all')) return 'Her şey dahil'
+  if (code.includes('ro') || code.includes('room')) return t('results.mealPlans.roomOnly')
+  if (code.includes('bb') || code.includes('breakfast')) return t('results.mealPlans.breakfast')
+  if (code.includes('hb') || code.includes('half')) return t('results.mealPlans.halfBoard')
+  if (code.includes('fb') || code.includes('full')) return t('results.mealPlans.fullBoard')
+  if (code.includes('ai') || code.includes('all')) return t('results.mealPlans.allInclusive')
   return ''
 }
 
@@ -107,26 +109,26 @@ function getUnavailabilityReason(roomResult) {
 
       for (const issue of issues) {
         if (issue.type === 'minStay' || issue.reason === 'minStay') {
-          return `Bu odada en az ${issue.required || issue.minNights || 2} gece kalmalısınız`
+          return t('results.unavailable.minStay', { nights: issue.required || issue.minNights || 2 })
         }
         if (issue.type === 'releaseDays' || issue.reason === 'releaseDays') {
-          return `Bu odaya en az ${issue.required || issue.releaseDays || 2} gün önceden rezervasyon yapmalısınız`
+          return t('results.unavailable.releaseDays', { days: issue.required || issue.releaseDays || 2 })
         }
         if (issue.type === 'stopSale' || issue.reason === 'stopSale') {
-          return 'Bu oda şu anda satışa kapalıdır'
+          return t('results.unavailable.stopSale')
         }
         if (issue.type === 'noInventory' || issue.reason === 'noInventory') {
-          return 'Bu tarihler için müsait oda yok'
+          return t('results.unavailable.noInventory')
         }
       }
     }
   }
 
   if (roomResult.capacityExceeded) {
-    return roomResult.capacityMessage || 'Oda kapasitesi yetersiz'
+    return roomResult.capacityMessage || t('results.unavailable.capacityExceeded')
   }
 
-  return 'Bu oda seçili tarihler için müsait değil'
+  return t('results.unavailable.default')
 }
 
 // Get amenity icon
@@ -153,24 +155,12 @@ function getAmenityIcon(amenity) {
 
 // Format amenity name
 function formatAmenity(amenity) {
-  const names = {
-    wifi: 'WiFi',
-    airConditioning: 'Klima',
-    ac: 'Klima',
-    tv: 'TV',
-    minibar: 'Minibar',
-    safe: 'Kasa',
-    balcony: 'Balkon',
-    seaView: 'Deniz Manzarası',
-    pool: 'Havuz',
-    spa: 'Spa',
-    gym: 'Spor Salonu',
-    restaurant: 'Restoran',
-    parking: 'Otopark',
-    kitchen: 'Mutfak',
-    kitchenette: 'Mini Mutfak'
+  const key = `results.amenities.${amenity}`
+  const translated = t(key)
+  if (translated === key) {
+    return amenity.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
   }
-  return names[amenity] || amenity.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+  return translated
 }
 
 // Get room images
@@ -216,7 +206,7 @@ function prevImage() {
     <div class="search-summary-card">
       <div class="summary-dates">
         <div class="summary-date">
-          <span class="summary-date-label">Giriş</span>
+          <span class="summary-date-label">{{ t('common.checkIn') }}</span>
           <span class="summary-date-value">{{ formatDateShort(searchParams.checkIn) }}</span>
         </div>
         <div class="summary-divider">
@@ -226,12 +216,12 @@ function prevImage() {
           </svg>
         </div>
         <div class="summary-date">
-          <span class="summary-date-label">Çıkış</span>
+          <span class="summary-date-label">{{ t('common.checkOut') }}</span>
           <span class="summary-date-value">{{ formatDateShort(searchParams.checkOut) }}</span>
         </div>
       </div>
       <div class="summary-info">
-        <span class="summary-nights">{{ nights }} gece</span>
+        <span class="summary-nights">{{ nights }} {{ t('common.night') }}</span>
         <span class="summary-guests">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -255,7 +245,7 @@ function prevImage() {
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
       <div class="spinner"></div>
-      <span>Uygun odalar aranıyor...</span>
+      <span>{{ t('results.searching') }}</span>
     </div>
 
     <!-- Results -->
@@ -397,14 +387,14 @@ function prevImage() {
           <line x1="8" y1="11" x2="14" y2="11"></line>
         </svg>
       </div>
-      <h3 class="no-results-title">Uygun oda bulunamadı</h3>
-      <p class="no-results-text">Seçilen tarihlerde müsait oda bulunmamaktadır. Lütfen farklı tarihler deneyiniz.</p>
+      <h3 class="no-results-title">{{ t('results.noResults') }}</h3>
+      <p class="no-results-text">{{ t('results.noResultsDesc') }}</p>
       <button class="btn btn-primary" @click="widgetStore.goBack()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
-        Tarihleri Değiştir
+        {{ t('results.changeDates') }}
       </button>
     </div>
 

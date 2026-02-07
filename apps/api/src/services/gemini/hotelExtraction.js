@@ -1,7 +1,16 @@
 import logger from '../../core/logger.js'
 import { getAI, generateContent, GEMINI_MODEL } from './client.js'
 import { preprocessRoomContent, isJsonTruncated, repairTruncatedJson } from './helpers.js'
-import { JSDOM } from 'jsdom'
+
+// Lazy-loaded JSDOM
+let _JSDOM = null
+const getJSDOM = async () => {
+  if (!_JSDOM) {
+    const mod = await import('jsdom')
+    _JSDOM = mod.JSDOM
+  }
+  return _JSDOM
+}
 
 /**
  * Fetch URL content using HTTP with browser-like headers
@@ -40,6 +49,7 @@ const fetchUrlContent = async (url, options = {}) => {
     logger.info(`Fetched ${html.length} characters from ${url}`)
 
     // Parse HTML and extract text content
+    const JSDOM = await getJSDOM()
     const dom = new JSDOM(html)
     const document = dom.window.document
 

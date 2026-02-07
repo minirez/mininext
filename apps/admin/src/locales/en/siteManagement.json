@@ -1,0 +1,17 @@
+{
+  "siteManagement": {
+    "title": "Site Management",
+    "description": "Manage your website and pages",
+    "tabs": {
+      "settings": "Site Settings",
+      "pages": "Edit Website",
+      "website": "Manage Website",
+      "notifications": "Notifications",
+      "company": "Company Profile"
+    },
+    "pages": {
+      "title": "Pages",
+      "comingSoon": "Coming soon"
+    }
+  }
+}

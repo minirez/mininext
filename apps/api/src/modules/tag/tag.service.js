@@ -1,174 +1,160 @@
 import Tag, { TAG_LANGUAGES } from './tag.model.js'
-import { NotFoundError, BadRequestError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
-import { batchTranslate } from '#services/geminiService.js'
+import { BadRequestError } from '#core/errors.js'
+import { BaseEntityService } from '#services/base/BaseEntityService.js'
+import { sendSuccess, sendCreated } from '#services/responseHelper.js'
 import logger from '#core/logger.js'
 
-/**
- * Get all tags
- */
-export const getTags = asyncHandler(async (req, res) => {
-  const { search, active = 'true' } = req.query
+class TagService extends BaseEntityService {
+  constructor() {
+    super(Tag, {
+      entityName: 'tag',
+      allowedFields: ['name', 'color', 'isActive'],
+      searchFields: ['name.tr', 'name.en'],
+      defaultSort: { 'name.tr': 1 }
+    })
 
-  const filter = {}
-
-  if (active === 'true') {
-    filter.isActive = true
+    // Bind custom methods
+    this.searchTags = this.searchTags.bind(this)
   }
 
-  if (search) {
-    filter.$or = [
-      { 'name.tr': { $regex: search, $options: 'i' } },
-      { 'name.en': { $regex: search, $options: 'i' } }
-    ]
+  /**
+   * Tags are global (not tenant-scoped)
+   */
+  getTenantFilter(_req) {
+    return {}
   }
 
-  const tags = await Tag.find(filter).sort({ 'name.tr': 1 })
+  /**
+   * Custom filter: active filter + multilingual search
+   */
+  buildFilter(req) {
+    const { search, active = 'true' } = req.query
+    const filter = {}
 
-  res.json({
-    success: true,
-    data: tags
-  })
-})
+    if (active === 'true') {
+      filter.isActive = true
+    }
 
-/**
- * Get single tag by ID
- */
-export const getTag = asyncHandler(async (req, res) => {
-  const tag = await Tag.findById(req.params.id)
+    if (search) {
+      filter.$or = [
+        { 'name.tr': { $regex: search, $options: 'i' } },
+        { 'name.en': { $regex: search, $options: 'i' } }
+      ]
+    }
 
-  if (!tag) {
-    throw new NotFoundError('TAG_NOT_FOUND')
+    return filter
   }
 
-  res.json({
-    success: true,
-    data: tag
-  })
-})
+  /**
+   * Override list to return all tags without pagination (backward compat)
+   */
+  async list(req, res) {
+    const filter = this.buildFilter(req)
 
-/**
- * Create a new tag with auto-translation
- */
-export const createTag = asyncHandler(async (req, res) => {
-  const { name, color, sourceLang = 'tr' } = req.body
+    const tags = await Tag.find(filter).sort(this.config.defaultSort)
 
-  if (!name || !name[sourceLang]) {
-    throw new BadRequestError('TAG_NAME_REQUIRED')
-  }
-
-  // Check for duplicate
-  const existingTag = await Tag.findOne({
-    [`name.${sourceLang}`]: { $regex: `^${name[sourceLang]}$`, $options: 'i' }
-  })
-
-  if (existingTag) {
-    throw new BadRequestError('TAG_ALREADY_EXISTS')
-  }
-
-  // Auto-translate to all languages
-  let translatedName = { ...name }
-
-  try {
-    logger.info(`Translating tag "${name[sourceLang]}" to ${TAG_LANGUAGES.length} languages...`)
-
-    // Use batchTranslate for all 20 languages
-    translatedName = await batchTranslate(
-      { [sourceLang]: name[sourceLang] },
-      sourceLang,
-      TAG_LANGUAGES
-    )
-
-    logger.info('Tag translation completed successfully')
-  } catch (error) {
-    logger.error('Tag translation failed:', error.message)
-    // Continue with source language only if translation fails
-    translatedName = { [sourceLang]: name[sourceLang] }
-  }
-
-  const tag = new Tag({
-    name: translatedName,
-    color: color || '#6366f1',
-    isActive: true
-  })
-
-  await tag.save()
-
-  res.status(201).json({
-    success: true,
-    data: tag,
-    message: 'TAG_CREATED'
-  })
-})
-
-/**
- * Update tag
- */
-export const updateTag = asyncHandler(async (req, res) => {
-  const { name, color, isActive } = req.body
-
-  const tag = await Tag.findById(req.params.id)
-
-  if (!tag) {
-    throw new NotFoundError('TAG_NOT_FOUND')
-  }
-
-  if (name) {
-    tag.name = { ...tag.name, ...name }
-  }
-
-  if (color !== undefined) {
-    tag.color = color
-  }
-
-  if (isActive !== undefined) {
-    tag.isActive = isActive
-  }
-
-  await tag.save()
-
-  res.json({
-    success: true,
-    data: tag,
-    message: 'TAG_UPDATED'
-  })
-})
-
-/**
- * Delete tag
- */
-export const deleteTag = asyncHandler(async (req, res) => {
-  const tag = await Tag.findById(req.params.id)
-
-  if (!tag) {
-    throw new NotFoundError('TAG_NOT_FOUND')
-  }
-
-  await tag.deleteOne()
-
-  res.json({
-    success: true,
-    message: 'TAG_DELETED'
-  })
-})
-
-/**
- * Search tags (for autocomplete)
- */
-export const searchTags = asyncHandler(async (req, res) => {
-  const { q, lang = 'tr', limit = 10 } = req.query
-
-  if (!q || q.length < 2) {
-    return res.json({
+    res.json({
       success: true,
-      data: []
+      data: tags
     })
   }
 
-  const tags = await Tag.search(q, lang).limit(parseInt(limit))
+  /**
+   * Override create: duplicate check + auto-translation via batchTranslate
+   */
+  async create(req, res) {
+    const { name, color, sourceLang = 'tr' } = req.body
 
-  res.json({
-    success: true,
-    data: tags
-  })
-})
+    if (!name || !name[sourceLang]) {
+      throw new BadRequestError('TAG_NAME_REQUIRED')
+    }
+
+    // Check for duplicate
+    const existingTag = await Tag.findOne({
+      [`name.${sourceLang}`]: { $regex: `^${name[sourceLang]}$`, $options: 'i' }
+    })
+
+    if (existingTag) {
+      throw new BadRequestError('TAG_ALREADY_EXISTS')
+    }
+
+    // Auto-translate to all languages
+    let translatedName = { ...name }
+
+    try {
+      logger.info(`Translating tag "${name[sourceLang]}" to ${TAG_LANGUAGES.length} languages...`)
+
+      const { batchTranslate } = await import('#services/geminiService.js')
+      translatedName = await batchTranslate(
+        { [sourceLang]: name[sourceLang] },
+        sourceLang,
+        TAG_LANGUAGES
+      )
+
+      logger.info('Tag translation completed successfully')
+    } catch (error) {
+      logger.error('Tag translation failed:', error.message)
+      // Continue with source language only if translation fails
+      translatedName = { [sourceLang]: name[sourceLang] }
+    }
+
+    const tag = await Tag.create({
+      name: translatedName,
+      color: color || '#6366f1',
+      isActive: true
+    })
+
+    sendCreated(res, tag)
+  }
+
+  /**
+   * Override update: merge name object instead of replacing
+   */
+  async update(req, res) {
+    const { name, color, isActive } = req.body
+
+    const tag = await this.findByIdWithTenant(req.params.id, req)
+
+    if (!tag) {
+      throw new BadRequestError('TAG_NOT_FOUND')
+    }
+
+    if (name) {
+      tag.name = { ...tag.name, ...name }
+    }
+
+    if (color !== undefined) {
+      tag.color = color
+    }
+
+    if (isActive !== undefined) {
+      tag.isActive = isActive
+    }
+
+    await tag.save()
+
+    sendSuccess(res, tag)
+  }
+
+  /**
+   * Search tags for autocomplete
+   */
+  async searchTags(req, res) {
+    const { q, lang = 'tr', limit = 10 } = req.query
+
+    if (!q || q.length < 2) {
+      return res.json({
+        success: true,
+        data: []
+      })
+    }
+
+    const tags = await Tag.search(q, lang).limit(parseInt(limit))
+
+    sendSuccess(res, tags)
+  }
+}
+
+const tagService = new TagService()
+
+export default tagService

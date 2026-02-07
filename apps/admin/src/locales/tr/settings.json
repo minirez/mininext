@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "title": "Ayarlar",
+    "description": "Sistem ayarlarını yönetin",
+    "agencies": {
+      "title": "Acenteler",
+      "description": "Otelle çalışan acenteleri yönetin",
+      "addAgency": "Acente Ekle",
+      "newAgency": "Yeni Acente",
+      "editAgency": "Acente Düzenle",
+      "companyName": "Şirket Adı",
+      "tradeName": "Ticari Unvan",
+      "noAgencies": "Henüz acente eklenmemiş",
+      "noAgenciesDesc": "Otelle çalışan acenteleri buradan ekleyebilirsiniz.",
+      "addFirst": "İlk Acenteyi Ekle",
+      "deleteTitle": "Acente Sil",
+      "deleteConfirm": "{name} acentesini silmek istediğinize emin misiniz?",
+      "created": "Acente başarıyla oluşturuldu",
+      "updated": "Acente başarıyla güncellendi",
+      "deleted": "Acente başarıyla silindi"
+    }
+  }
+}

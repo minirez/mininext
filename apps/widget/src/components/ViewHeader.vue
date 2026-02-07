@@ -32,41 +32,4 @@ function goBack() {
   </div>
 </template>
 
-<style scoped>
-.view-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg-secondary);
-  border: none;
-  border-radius: 10px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.back-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.back-btn:active {
-  transform: scale(0.95);
-}
-
-.view-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-</style>
+<!-- Styles in widget.css for Shadow DOM compatibility -->

@@ -2,11 +2,13 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
+import { useTranslation } from '../composables/useTranslation'
 import ViewHeader from '../components/ViewHeader.vue'
 import PhoneInput from '../components/PhoneInput.vue'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateMedium } = useFormatters()
+const { t } = useTranslation()
 
 const selectedRoom = computed(() => widgetStore.selectedRoom)
 const selectedOption = computed(() => widgetStore.selectedOption)
@@ -85,29 +87,29 @@ function validateForm() {
   errors.value = {}
 
   if (!contact.value.firstName?.trim()) {
-    errors.value.firstName = 'Ad gerekli'
+    errors.value.firstName = t('booking.errors.firstNameRequired')
   }
   if (!contact.value.lastName?.trim()) {
-    errors.value.lastName = 'Soyad gerekli'
+    errors.value.lastName = t('booking.errors.lastNameRequired')
   }
   if (!contact.value.email?.trim() || !contact.value.email.includes('@')) {
-    errors.value.email = 'Geçerli bir e-posta adresi giriniz'
+    errors.value.email = t('booking.errors.emailInvalid')
   }
   if (widgetConfig.value?.guestOptions?.requirePhone !== false) {
     if (!contact.value.phone?.trim()) {
-      errors.value.phone = 'Telefon numarası gerekli'
+      errors.value.phone = t('booking.errors.phoneRequired')
     } else if (contact.value.phone.replace(/\D/g, '').length < 10) {
-      errors.value.phone = 'Geçerli bir telefon numarası giriniz'
+      errors.value.phone = t('booking.errors.phoneInvalid')
     }
   }
 
   // Validate guests
   roomGuests.value.forEach((guest, index) => {
     if (!guest.firstName?.trim()) {
-      errors.value[`guest_${index}_firstName`] = 'Ad gerekli'
+      errors.value[`guest_${index}_firstName`] = t('booking.errors.firstNameRequired')
     }
     if (!guest.lastName?.trim()) {
-      errors.value[`guest_${index}_lastName`] = 'Soyad gerekli'
+      errors.value[`guest_${index}_lastName`] = t('booking.errors.lastNameRequired')
     }
   })
 
@@ -156,7 +158,7 @@ onMounted(() => {
 
 <template>
   <div class="booking-view">
-    <ViewHeader title="Rezervasyon Bilgileri" />
+    <ViewHeader :title="t('booking.title')" />
 
     <!-- Error Message -->
     <div v-if="errorMessage" class="alert alert-error">
@@ -178,24 +180,24 @@ onMounted(() => {
       </div>
       <div class="summary-card-dates">
         <div class="summary-date">
-          <div class="summary-date-label">Giriş</div>
+          <div class="summary-date-label">{{ t('common.checkIn') }}</div>
           <div class="summary-date-value">{{ formatDateMedium(searchParams.checkIn) }}</div>
         </div>
         <div class="summary-date-divider">→</div>
         <div class="summary-date">
-          <div class="summary-date-label">Çıkış</div>
+          <div class="summary-date-label">{{ t('common.checkOut') }}</div>
           <div class="summary-date-value">{{ formatDateMedium(searchParams.checkOut) }}</div>
         </div>
       </div>
       <div class="summary-card-footer">
         <div>
           <div class="summary-guests">
-            {{ searchParams.adults }} yetişkin{{ searchParams.children.length > 0 ? `, ${searchParams.children.length} çocuk` : '' }}
+            {{ searchParams.adults }} {{ t('common.adults') }}{{ searchParams.children.length > 0 ? `, ${searchParams.children.length} ${t('common.children')}` : '' }}
           </div>
-          <div class="summary-nights">{{ nights }} gece</div>
+          <div class="summary-nights">{{ nights }} {{ t('common.night') }}</div>
         </div>
         <div class="summary-card-total">
-          <div class="summary-card-total-label">Toplam</div>
+          <div class="summary-card-total-label">{{ t('common.total') }}</div>
           <div class="summary-card-total-value">{{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}</div>
         </div>
       </div>
@@ -209,36 +211,36 @@ onMounted(() => {
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          İletişim Bilgileri
+          {{ t('booking.contactInfo') }}
         </h3>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Ad *</label>
+            <label class="form-label">{{ t('booking.form.firstName') }} {{ t('common.required') }}</label>
             <input
               v-model="contact.firstName"
               type="text"
               class="form-input"
               :class="{ error: errors.firstName }"
-              placeholder="Adınız"
+              :placeholder="t('booking.form.firstNamePlaceholder')"
             />
             <span v-if="errors.firstName" class="form-error">{{ errors.firstName }}</span>
           </div>
           <div class="form-group">
-            <label class="form-label">Soyad *</label>
+            <label class="form-label">{{ t('booking.form.lastName') }} {{ t('common.required') }}</label>
             <input
               v-model="contact.lastName"
               type="text"
               class="form-input"
               :class="{ error: errors.lastName }"
-              placeholder="Soyadınız"
+              :placeholder="t('booking.form.lastNamePlaceholder')"
             />
             <span v-if="errors.lastName" class="form-error">{{ errors.lastName }}</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">E-posta *</label>
+          <label class="form-label">{{ t('booking.form.email') }} {{ t('common.required') }}</label>
           <div class="input-with-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -249,14 +251,14 @@ onMounted(() => {
               type="email"
               class="form-input"
               :class="{ error: errors.email }"
-              placeholder="ornek@email.com"
+              :placeholder="t('booking.form.emailPlaceholder')"
             />
           </div>
           <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Telefon {{ widgetConfig?.guestOptions?.requirePhone !== false ? '*' : '' }}</label>
+          <label class="form-label">{{ t('booking.form.phone') }} {{ widgetConfig?.guestOptions?.requirePhone !== false ? t('common.required') : '' }}</label>
           <PhoneInput
             v-model="contact.phone"
             :country="widgetStore.detectedMarket?.countryCode || 'TR'"
@@ -274,47 +276,47 @@ onMounted(() => {
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
-          Misafir Bilgileri
+          {{ t('booking.guestInfo') }}
         </h3>
 
         <div v-for="(guest, index) in roomGuests" :key="index" class="guest-card">
           <div class="guest-card-header">
             <span class="guest-badge" :class="guest.type">
-              {{ guest.type === 'adult' ? 'Yetişkin' : `Çocuk (${guest.age} yaş)` }}
+              {{ guest.type === 'adult' ? t('booking.guest.adult') : t('booking.guest.childWithAge', { age: guest.age }) }}
               {{ guest.type === 'adult' ? (roomGuests.filter(g => g.type === 'adult').indexOf(guest) + 1) : (roomGuests.filter(g => g.type === 'child').indexOf(guest) + 1) }}
             </span>
-            <span v-if="guest.isLead" class="lead-badge">Sorumlu Misafir</span>
+            <span v-if="guest.isLead" class="lead-badge">{{ t('booking.guest.leadGuest') }}</span>
           </div>
 
           <div class="form-row-3">
             <div class="form-group">
-              <label class="form-label">Ünvan</label>
+              <label class="form-label">{{ t('booking.form.title') }}</label>
               <select v-model="guest.title" class="form-input">
-                <option value="">Seçiniz</option>
-                <option value="mr">Bay</option>
-                <option value="mrs">Bayan</option>
+                <option value="">{{ t('booking.form.selectTitle') }}</option>
+                <option value="mr">{{ t('booking.form.mr') }}</option>
+                <option value="mrs">{{ t('booking.form.mrs') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Ad *</label>
+              <label class="form-label">{{ t('booking.form.firstName') }} {{ t('common.required') }}</label>
               <input
                 v-model="guest.firstName"
                 type="text"
                 class="form-input"
                 :class="{ error: errors[`guest_${index}_firstName`] }"
-                placeholder="Ad"
+                :placeholder="t('booking.form.firstName')"
                 :disabled="guest.isLead"
               />
               <span v-if="errors[`guest_${index}_firstName`]" class="form-error">{{ errors[`guest_${index}_firstName`] }}</span>
             </div>
             <div class="form-group">
-              <label class="form-label">Soyad *</label>
+              <label class="form-label">{{ t('booking.form.lastName') }} {{ t('common.required') }}</label>
               <input
                 v-model="guest.lastName"
                 type="text"
                 class="form-input"
                 :class="{ error: errors[`guest_${index}_lastName`] }"
-                placeholder="Soyad"
+                :placeholder="t('booking.form.lastName')"
                 :disabled="guest.isLead"
               />
               <span v-if="errors[`guest_${index}_lastName`]" class="form-error">{{ errors[`guest_${index}_lastName`] }}</span>
@@ -334,16 +336,16 @@ onMounted(() => {
             <line x1="3" y1="12" x2="3.01" y2="12"></line>
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
-          Özel İstekler
+          {{ t('booking.specialRequests') }}
         </h3>
         <div class="form-group">
           <textarea
             v-model="specialRequests"
             class="form-input"
             rows="3"
-            placeholder="Varsa özel isteklerinizi yazabilirsiniz..."
+            :placeholder="t('booking.form.specialRequestsPlaceholder')"
           ></textarea>
-          <span class="form-hint">Erken giriş, geç çıkış, özel düzenleme vb. isteklerinizi belirtebilirsiniz.</span>
+          <span class="form-hint">{{ t('booking.form.specialRequestsHint') }}</span>
         </div>
       </div>
 
@@ -354,7 +356,7 @@ onMounted(() => {
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
             <line x1="1" y1="10" x2="23" y2="10"></line>
           </svg>
-          Ödeme Yöntemi
+          {{ t('booking.paymentMethod') }}
         </h3>
 
         <div class="payment-methods">
@@ -367,8 +369,8 @@ onMounted(() => {
               </svg>
             </div>
             <div class="payment-method-info">
-              <span class="payment-method-name">Kredi Kartı</span>
-              <span class="payment-method-desc">Güvenli online ödeme</span>
+              <span class="payment-method-name">{{ t('booking.payment.creditCard') }}</span>
+              <span class="payment-method-desc">{{ t('booking.payment.creditCardDesc') }}</span>
             </div>
             <div class="payment-method-check">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -386,8 +388,8 @@ onMounted(() => {
               </svg>
             </div>
             <div class="payment-method-info">
-              <span class="payment-method-name">Otelde Ödeme</span>
-              <span class="payment-method-desc">Giriş sırasında ödeyin</span>
+              <span class="payment-method-name">{{ t('booking.payment.payAtHotel') }}</span>
+              <span class="payment-method-desc">{{ t('booking.payment.payAtHotelDesc') }}</span>
             </div>
             <div class="payment-method-check">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -405,8 +407,8 @@ onMounted(() => {
               </svg>
             </div>
             <div class="payment-method-info">
-              <span class="payment-method-name">Banka Transferi</span>
-              <span class="payment-method-desc">Havale/EFT ile ödeyin</span>
+              <span class="payment-method-name">{{ t('booking.payment.bankTransfer') }}</span>
+              <span class="payment-method-desc">{{ t('booking.payment.bankTransferDesc') }}</span>
             </div>
             <div class="payment-method-check">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -421,7 +423,7 @@ onMounted(() => {
       <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="isLoading">
         <span v-if="isLoading" class="spinner"></span>
         <template v-else>
-          {{ selectedPaymentMethod === 'credit_card' ? 'Ödemeye Geç' : 'Rezervasyonu Tamamla' }}
+          {{ selectedPaymentMethod === 'credit_card' ? t('booking.submit.goToPayment') : t('booking.submit.completeBooking') }}
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>

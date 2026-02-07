@@ -10,6 +10,17 @@ import issues from './issues.json'
 import emailLogs from './emailLogs.json'
 import tour from './tour.json'
 import widget from './widget.json'
+import agencies from './agencies.json'
+import partners from './partners.json'
+import developers from './developers.json'
+import settings from './settings.json'
+import siteSettings from './siteSettings.json'
+import siteManagement from './siteManagement.json'
+import website from './website.json'
+import companyProfile from './companyProfile.json'
+import notifications from './notifications.json'
+import mySubscription from './mySubscription.json'
+import paymentLink from './paymentLink.json'
 
 export default {
   ...common,
@@ -23,5 +34,16 @@ export default {
   ...issues,
   emailLogs,
   ...tour,
-  ...widget
+  ...widget,
+  ...agencies,
+  ...partners,
+  ...developers,
+  ...settings,
+  ...siteSettings,
+  ...siteManagement,
+  ...website,
+  ...companyProfile,
+  ...notifications,
+  ...mySubscription,
+  ...paymentLink
 }

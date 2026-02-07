@@ -1,7 +1,8 @@
 import express from 'express'
-import * as emailLogService from './emailLog.service.js'
+import emailLogService from './emailLog.service.js'
 import { protect } from '#middleware/auth.js'
 import { requirePermission } from '#middleware/permission.js'
+import { asyncHandler } from '#helpers'
 
 const router = express.Router()
 
@@ -9,15 +10,15 @@ const router = express.Router()
 router.use(protect)
 
 // Get email logs (platform: all, partner: own)
-router.get('/', requirePermission('settings', 'view'), emailLogService.getEmailLogs)
+router.get('/', requirePermission('settings', 'view'), asyncHandler(emailLogService.list))
 
 // Get email stats
-router.get('/stats', requirePermission('settings', 'view'), emailLogService.getEmailStats)
+router.get('/stats', requirePermission('settings', 'view'), asyncHandler(emailLogService.getStats))
 
 // Get single email log
-router.get('/:id', requirePermission('settings', 'view'), emailLogService.getEmailLog)
+router.get('/:id', requirePermission('settings', 'view'), asyncHandler(emailLogService.getById))
 
 // Retry failed email (platform only)
-router.post('/:id/retry', requirePermission('settings', 'edit'), emailLogService.retryEmail)
+router.post('/:id/retry', requirePermission('settings', 'edit'), asyncHandler(emailLogService.retry))
 
 export default router

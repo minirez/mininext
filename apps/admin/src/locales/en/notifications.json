@@ -1,0 +1,24 @@
+{
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark All as Read",
+    "noNotifications": "No notifications",
+    "viewAll": "View All Notifications",
+    "justNow": "Just now",
+    "minutesAgo": "{n} minutes ago",
+    "hoursAgo": "{n} hours ago",
+    "daysAgo": "{n} days ago",
+    "types": {
+      "pms:checkin": "Check-in Completed",
+      "pms:checkout": "Check-out Completed",
+      "pms:room_ready": "Room Ready",
+      "pms:room_dirty": "Room Dirty",
+      "pms:payment_received": "Payment Received",
+      "pms:housekeeping_started": "Cleaning Started",
+      "pms:housekeeping_completed": "Cleaning Completed",
+      "booking:new": "New Booking",
+      "booking:confirmed": "Booking Confirmed",
+      "booking:cancelled": "Booking Cancelled"
+    }
+  }
+}

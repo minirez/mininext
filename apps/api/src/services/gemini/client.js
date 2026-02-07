@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai'
 import logger from '../../core/logger.js'
 import config from '../../config/index.js'
 
@@ -12,6 +11,16 @@ const API_KEY_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 // Initialize the AI client
 let ai = null
 let aiKeyHash = null
+
+// Lazy-loaded GoogleGenAI constructor
+let _GoogleGenAI = null
+const getGoogleGenAI = async () => {
+  if (!_GoogleGenAI) {
+    const mod = await import('@google/genai')
+    _GoogleGenAI = mod.GoogleGenAI
+  }
+  return _GoogleGenAI
+}
 
 // Language names for better translation context
 export const languageNames = {
@@ -84,6 +93,7 @@ export const getAI = async () => {
   // Create new client if key changed or not initialized
   const keyHash = apiKey.substring(0, 10)
   if (!ai || aiKeyHash !== keyHash) {
+    const GoogleGenAI = await getGoogleGenAI()
     ai = new GoogleGenAI({ apiKey })
     aiKeyHash = keyHash
   }

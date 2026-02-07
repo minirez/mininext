@@ -1,0 +1,23 @@
+{
+  "developers": {
+    "title": "API Documentation",
+    "description": "Public API documentation for developers",
+    "openApi": "Open API",
+    "quickStart": "Quick Start",
+    "quickStartDesc": "Get started with our Public API in minutes. No authentication required.",
+    "baseUrl": "Base URL",
+    "baseUrlDesc": "All API endpoints are relative to this base URL.",
+    "authentication": "Authentication",
+    "noAuthRequired": "No Authentication Required",
+    "noAuthDesc": "The Public API is open and doesn't require API keys or authentication tokens.",
+    "rateLimiting": "Rate Limiting",
+    "globalLimit": "Global Limit",
+    "searchLimit": "Search Limit",
+    "bookingLimit": "Booking Limit",
+    "responseCodes": "Response Codes",
+    "status": "Status",
+    "hotels": "Hotels",
+    "search": "Search & Availability",
+    "booking": "Booking"
+  }
+}

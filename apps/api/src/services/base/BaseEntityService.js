@@ -29,6 +29,13 @@ export class BaseEntityService {
   /**
    * @param {Model} Model - Mongoose model
    * @param {Object} config - Service configuration
+   * @param {string} [config.entityName] - Entity name for error messages
+   * @param {string[]} [config.allowedFields] - Fields allowed in create/update
+   * @param {string[]} [config.searchFields] - Fields to search in
+   * @param {Object} [config.defaultSort] - Default sort order
+   * @param {Array|string} [config.populate] - Population options
+   * @param {string} [config.select] - Field selection
+   * @param {boolean} [config.softDelete] - Enable soft delete (sets deletedAt instead of removing)
    */
   constructor(Model, config = {}) {
     this.Model = Model
@@ -39,6 +46,7 @@ export class BaseEntityService {
       defaultSort: config.defaultSort || { createdAt: -1 },
       populate: config.populate || null,
       select: config.select || '-__v',
+      softDelete: config.softDelete || false,
       ...config
     }
 
@@ -68,6 +76,11 @@ export class BaseEntityService {
   buildFilter(req) {
     const { query } = req
     const baseFilter = this.getTenantFilter(req)
+
+    // Soft delete: exclude deleted records by default
+    if (this.config.softDelete && !query.includeDeleted) {
+      baseFilter.deletedAt = { $exists: false }
+    }
 
     return buildFilterFromQuery(query, {
       baseFilter,
@@ -146,7 +159,13 @@ export class BaseEntityService {
       data.createdBy = req.user._id
     }
 
+    // Hook: before create
+    await this.beforeCreate(data, req)
+
     const entity = await this.Model.create(data)
+
+    // Hook: after create
+    await this.afterCreate(entity, req)
 
     sendCreated(res, entity)
   }
@@ -171,7 +190,13 @@ export class BaseEntityService {
       entity.updatedBy = req.user._id
     }
 
+    // Hook: before update
+    await this.beforeUpdate(entity, req)
+
     await entity.save()
+
+    // Hook: after update
+    await this.afterUpdate(entity, req)
 
     sendMessage(res, req.t(`${this.entityNameUpper}_UPDATED`), entity)
   }
@@ -191,7 +216,13 @@ export class BaseEntityService {
     // Check for dependencies before delete
     await this.checkDependencies(entity, req)
 
-    await entity.deleteOne()
+    if (this.config.softDelete) {
+      entity.deletedAt = new Date()
+      if (req.user) entity.deletedBy = req.user._id
+      await entity.save()
+    } else {
+      await entity.deleteOne()
+    }
 
     sendMessage(res, req.t(`${this.entityNameUpper}_DELETED`))
   }
@@ -312,6 +343,20 @@ export class BaseEntityService {
     // Override in subclass
     // Example: throw new ConflictError('ENTITY_HAS_DEPENDENCIES')
   }
+
+  // ==================== Lifecycle Hooks ====================
+
+  /** Override in subclass for pre-create logic (validation, defaults, etc.) */
+  async beforeCreate(_data, _req) {}
+
+  /** Override in subclass for post-create logic (notifications, logging, etc.) */
+  async afterCreate(_entity, _req) {}
+
+  /** Override in subclass for pre-update logic */
+  async beforeUpdate(_entity, _req) {}
+
+  /** Override in subclass for post-update logic */
+  async afterUpdate(_entity, _req) {}
 
   /**
    * Parse sort parameter from query string

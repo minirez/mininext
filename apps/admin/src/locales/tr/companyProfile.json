@@ -1,0 +1,40 @@
+{
+  "companyProfile": {
+    "title": "Şirket Profili",
+    "description": "Şirket bilgilerinizi düzenleyin",
+    "tabs": {
+      "company": "Şirket Bilgileri",
+      "tax": "Vergi Bilgileri",
+      "address": "Adres",
+      "branding": "Logo & Favicon"
+    },
+    "fields": {
+      "companyName": "Şirket Adı",
+      "tradeName": "Ticari Unvan",
+      "phone": "Telefon",
+      "taxOffice": "Vergi Dairesi",
+      "taxNumber": "Vergi Numarası",
+      "street": "Adres",
+      "city": "Şehir",
+      "country": "Ülke",
+      "postalCode": "Posta Kodu",
+      "logo": "Logo",
+      "favicon": "Favicon"
+    },
+    "actions": {
+      "uploadLogo": "Logo Yükle",
+      "uploadFavicon": "Favicon Yükle",
+      "deleteLogo": "Logoyu Sil",
+      "deleteFavicon": "Favicon'u Sil"
+    },
+    "messages": {
+      "saved": "Şirket bilgileri kaydedildi",
+      "logoUploaded": "Logo yüklendi",
+      "logoDeleted": "Logo silindi",
+      "faviconUploaded": "Favicon yüklendi",
+      "faviconDeleted": "Favicon silindi",
+      "fetchError": "Şirket bilgileri yüklenemedi"
+    },
+    "taxInfoNote": "Vergi bilgileri fatura ve resmi belgelerinizde kullanılacaktır."
+  }
+}

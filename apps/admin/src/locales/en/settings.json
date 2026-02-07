@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "title": "Settings",
+    "description": "Manage system settings",
+    "agencies": {
+      "title": "Agencies",
+      "description": "Manage travel agencies working with the hotel",
+      "addAgency": "Add Agency",
+      "newAgency": "New Agency",
+      "editAgency": "Edit Agency",
+      "companyName": "Company Name",
+      "tradeName": "Trade Name",
+      "noAgencies": "No agencies added yet",
+      "noAgenciesDesc": "You can add travel agencies working with the hotel here.",
+      "addFirst": "Add First Agency",
+      "deleteTitle": "Delete Agency",
+      "deleteConfirm": "Are you sure you want to delete {name}?",
+      "created": "Agency created successfully",
+      "updated": "Agency updated successfully",
+      "deleted": "Agency deleted successfully"
+    }
+  }
+}

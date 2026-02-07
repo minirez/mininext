@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useWidgetStore } from '../stores/widget'
+import { useTranslation } from '../composables/useTranslation'
 import DateRangePicker from '../components/DateRangePicker.vue'
 
 const widgetStore = useWidgetStore()
+const { t } = useTranslation()
 
 const checkIn = computed({
   get: () => widgetStore.searchParams.checkIn,
@@ -36,9 +38,9 @@ const minDate = computed(() => {
 
 // Guest summary text
 const guestSummary = computed(() => {
-  let text = `${adults.value} Yetişkin`
+  let text = `${adults.value} ${t('search.adultLabel')}`
   if (childrenCount.value > 0) {
-    text += `, ${childrenCount.value} Çocuk`
+    text += `, ${childrenCount.value} ${t('search.childLabel')}`
   }
   return text
 })
@@ -116,7 +118,7 @@ onMounted(() => {
     <form @submit.prevent="search" class="search-form">
       <!-- Date Selection -->
       <div class="form-group">
-        <label class="form-label">Tarihler</label>
+        <label class="form-label">{{ t('search.dates') }}</label>
         <DateRangePicker
           :check-in="checkIn"
           :check-out="checkOut"
@@ -128,7 +130,7 @@ onMounted(() => {
 
       <!-- Guest Selector -->
       <div class="form-group">
-        <label class="form-label">Misafirler</label>
+        <label class="form-label">{{ t('search.guests') }}</label>
         <div
           :class="['guest-selector', { open: showGuestSelector }]"
           @click="showGuestSelector = !showGuestSelector"
@@ -152,8 +154,8 @@ onMounted(() => {
           <!-- Adults -->
           <div class="guest-row">
             <div>
-              <div class="guest-row-label">Yetişkin</div>
-              <div class="guest-row-sublabel">18 yaş ve üzeri</div>
+              <div class="guest-row-label">{{ t('search.adultLabel') }}</div>
+              <div class="guest-row-sublabel">{{ t('search.adultDesc') }}</div>
             </div>
             <div class="guest-counter">
               <button type="button" @click.stop="updateAdults(-1)" :disabled="adults <= 1">−</button>
@@ -165,8 +167,8 @@ onMounted(() => {
           <!-- Children -->
           <div class="guest-row">
             <div>
-              <div class="guest-row-label">Çocuk</div>
-              <div class="guest-row-sublabel">0-17 yaş</div>
+              <div class="guest-row-label">{{ t('search.childLabel') }}</div>
+              <div class="guest-row-sublabel">{{ t('search.childDesc') }}</div>
             </div>
             <div class="guest-counter">
               <button type="button" @click.stop="updateChildren(-1)" :disabled="childrenCount <= 0">−</button>
@@ -177,7 +179,7 @@ onMounted(() => {
 
           <!-- Child Ages -->
           <div v-if="childrenCount > 0" class="child-ages-section">
-            <div class="guest-row-label">Çocuk Yaşları</div>
+            <div class="guest-row-label">{{ t('search.childAges') }}</div>
             <div class="child-ages-grid">
               <select
                 v-for="(age, index) in childAges"
@@ -187,7 +189,7 @@ onMounted(() => {
                 @click.stop
                 class="form-input child-age-select"
               >
-                <option v-for="a in 18" :key="a - 1" :value="a - 1">{{ a - 1 }} yaş</option>
+                <option v-for="a in 18" :key="a - 1" :value="a - 1">{{ a - 1 }} {{ t('search.ageLabel') }}</option>
               </select>
             </div>
           </div>
@@ -202,7 +204,7 @@ onMounted(() => {
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          Oda Ara
+          {{ t('search.searchButton') }}
         </template>
       </button>
     </form>

@@ -1,0 +1,24 @@
+{
+  "notifications": {
+    "title": "Bildirimler",
+    "markAllRead": "Tümünü Okundu İşaretle",
+    "noNotifications": "Bildirim yok",
+    "viewAll": "Tüm Bildirimleri Gör",
+    "justNow": "Az önce",
+    "minutesAgo": "{n} dakika önce",
+    "hoursAgo": "{n} saat önce",
+    "daysAgo": "{n} gün önce",
+    "types": {
+      "pms:checkin": "Check-in Yapıldı",
+      "pms:checkout": "Check-out Yapıldı",
+      "pms:room_ready": "Oda Hazır",
+      "pms:room_dirty": "Oda Kirli",
+      "pms:payment_received": "Ödeme Alındı",
+      "pms:housekeeping_started": "Temizlik Başladı",
+      "pms:housekeeping_completed": "Temizlik Tamamlandı",
+      "booking:new": "Yeni Rezervasyon",
+      "booking:confirmed": "Rezervasyon Onaylandı",
+      "booking:cancelled": "Rezervasyon İptal Edildi"
+    }
+  }
+}

@@ -33,14 +33,24 @@ export { parsePricingCommand } from './pricingParser.js'
 // Contract parser exports
 export { parseHotelContract } from './contractParser.js'
 
+// Lazy module cache for default export
+const _modules = {}
+const _lazyLoad = async (mod) => {
+  if (!_modules[mod]) {
+    _modules[mod] = await import(`./${mod}.js`)
+  }
+  return _modules[mod]
+}
+
 // Default export for backward compatibility
+// Methods are lazy-loaded on first call to avoid loading heavy dependencies at startup
 export default {
-  translateText: (await import('./translation.js')).translateText,
-  translateFields: (await import('./translation.js')).translateFields,
-  batchTranslate: (await import('./translation.js')).batchTranslate,
-  parsePricingCommand: (await import('./pricingParser.js')).parsePricingCommand,
-  extractHotelData: (await import('./hotelExtraction.js')).extractHotelData,
-  extractHotelDataFromUrl: (await import('./hotelExtraction.js')).extractHotelDataFromUrl,
-  parseHotelContract: (await import('./contractParser.js')).parseHotelContract,
-  languageNames: (await import('./client.js')).languageNames
+  translateText: (...args) => _lazyLoad('translation').then(m => m.translateText(...args)),
+  translateFields: (...args) => _lazyLoad('translation').then(m => m.translateFields(...args)),
+  batchTranslate: (...args) => _lazyLoad('translation').then(m => m.batchTranslate(...args)),
+  parsePricingCommand: (...args) => _lazyLoad('pricingParser').then(m => m.parsePricingCommand(...args)),
+  extractHotelData: (...args) => _lazyLoad('hotelExtraction').then(m => m.extractHotelData(...args)),
+  extractHotelDataFromUrl: (...args) => _lazyLoad('hotelExtraction').then(m => m.extractHotelDataFromUrl(...args)),
+  parseHotelContract: (...args) => _lazyLoad('contractParser').then(m => m.parseHotelContract(...args)),
+  get languageNames() { return import('./client.js').then(m => m.languageNames) }
 }

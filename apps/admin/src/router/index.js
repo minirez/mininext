@@ -1,58 +1,30 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { h } from 'vue'
 import { routerLogger } from '@/utils/logger'
-
-// Empty component for tab-based routes (parent handles rendering)
-const EmptyRouteView = { render: () => h('div') }
 
 // Import Layouts
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
 
-// Lazy load components for better performance
-const LoginView = () => import('../views/LoginView.vue')
-const RegisterView = () => import('../views/RegisterView.vue')
-const ForcePasswordChangeView = () => import('../views/ForcePasswordChangeView.vue')
+// Import modular route files
+import adminRoutes from './routes/admin.js'
+import { authLayoutRoutes, standaloneAuthRoutes, authRedirects } from './routes/auth.js'
+import bookingRoutes from './routes/booking.js'
+import tourRoutes from './routes/tours.js'
+import paymentRoutes from './routes/payment.js'
+import hotelRoutes from './routes/hotels.js'
+import siteRoutes from './routes/site.js'
+
+// Lazy load components for standalone routes
 const DashboardView = () => import('../views/DashboardView.vue')
 const PartnersView = () => import('../views/PartnersView.vue')
 const PartnerSubscriptionsView = () => import('../views/partners/SubscriptionsView.vue')
 const AgenciesView = () => import('../views/AgenciesView.vue')
 const AgencyUsersView = () => import('../views/AgencyUsersView.vue')
-const SiteManagementView = () => import('../views/SiteManagementView.vue')
-const SiteSettingsView = () => import('../views/SiteSettingsView.vue')
-const SiteWebsiteView = () => import('../views/SiteWebsiteView.vue')
-const _SiteEmailSetupView = () => import('../views/SiteEmailSetupView.vue')
-const SiteNotificationsView = () => import('../views/SiteNotificationsView.vue')
 const ProfileView = () => import('../views/ProfileView.vue')
-const HotelsView = () => import('../views/HotelsView.vue')
-const HotelDetailView = () => import('../views/HotelDetailView.vue')
-const PlanningView = () => import('../views/PlanningView.vue')
-const RoomTypeDetailView = () => import('../views/RoomTypeDetailView.vue')
-const MarketDetailView = () => import('../views/MarketDetailView.vue')
-const RegionManagementView = () => import('../views/admin/RegionManagementView.vue')
-const HotelBaseListView = () => import('../views/admin/HotelBaseListView.vue')
-const HotelBaseDetailView = () => import('../views/admin/HotelBaseDetailView.vue')
-const AuditLogsView = () => import('../views/admin/AuditLogsView.vue')
-const PlatformSettingsView = () => import('../views/admin/PlatformSettingsView.vue')
-const EmailLogsView = () => import('../views/admin/EmailLogsView.vue')
 const DevelopersView = () => import('../views/DevelopersView.vue')
 const UIShowcaseView = () => import('../views/UIShowcaseView.vue')
-const BookingListView = () => import('../views/booking/BookingListView.vue')
-const BookingWizardView = () => import('../views/booking/BookingWizardView.vue')
-const BookingDetailView = () => import('../views/booking/BookingDetailView.vue')
 const UsersView = () => import('../views/UsersView.vue')
-const InviteAcceptView = () => import('../views/InviteAcceptView.vue')
-const ActivateAccountView = () => import('../views/ActivateAccountView.vue')
 const IssuesView = () => import('../views/IssuesView.vue')
 const IssueDetailView = () => import('../views/IssueDetailView.vue')
-
-// Tour Module
-const TourListView = () => import('../views/tours/TourListView.vue')
-const TourDetailView = () => import('../views/tours/TourDetailView.vue')
-const TourDepartureListView = () => import('../views/tours/TourDepartureListView.vue')
-const TourExtraListView = () => import('../views/tours/TourExtraListView.vue')
-const TourBookingListView = () => import('../views/tours/TourBookingListView.vue')
-const TourBookingDetailView = () => import('../views/tours/TourBookingDetailView.vue')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,72 +57,6 @@ const router = createRouter({
           meta: { requiresPlatformAdmin: true }
         },
         {
-          path: 'admin/regions',
-          name: 'region-management',
-          component: RegionManagementView,
-          meta: { requiresPlatformAdmin: true }
-        },
-        {
-          path: 'admin/hotel-base',
-          name: 'hotel-base',
-          component: HotelBaseListView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'hotels.hotelBase.title',
-            descriptionKey: 'hotels.hotelBase.description'
-          }
-        },
-        {
-          path: 'admin/hotel-base/new',
-          name: 'hotel-base-new',
-          component: HotelBaseDetailView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'hotels.hotelBase.newHotel',
-            descriptionKey: 'hotels.hotelBase.newHotelDesc'
-          }
-        },
-        {
-          path: 'admin/hotel-base/:id',
-          name: 'hotel-base-detail',
-          component: HotelBaseDetailView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'hotels.hotelBase.editHotel',
-            descriptionKey: 'hotels.hotelBase.editHotelDesc'
-          }
-        },
-        {
-          path: 'admin/audit-logs',
-          name: 'audit-logs',
-          component: AuditLogsView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'audit.title',
-            descriptionKey: 'audit.description'
-          }
-        },
-        {
-          path: 'admin/platform-settings',
-          name: 'platform-settings',
-          component: PlatformSettingsView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'platformSettings.title',
-            descriptionKey: 'platformSettings.description'
-          }
-        },
-        {
-          path: 'admin/email-logs',
-          name: 'email-logs',
-          component: EmailLogsView,
-          meta: {
-            requiresPlatformAdmin: true,
-            titleKey: 'emailLogs.title',
-            descriptionKey: 'emailLogs.description'
-          }
-        },
-        {
           path: 'agencies',
           name: 'agencies',
           component: AgenciesView,
@@ -173,43 +79,6 @@ const router = createRouter({
           }
         },
         {
-          path: 'site-management',
-          component: SiteManagementView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'siteManagement.title',
-            descriptionKey: 'siteManagement.description',
-            requiredPermission: 'settings'
-          },
-          children: [
-            {
-              path: '',
-              redirect: 'settings'
-            },
-            {
-              path: 'settings',
-              name: 'site-settings',
-              component: SiteSettingsView
-            },
-            {
-              path: 'pages',
-              name: 'site-pages',
-              component: SiteWebsiteView
-            },
-            {
-              path: 'notifications',
-              name: 'site-notifications',
-              component: SiteNotificationsView
-            },
-            {
-              path: 'company',
-              name: 'site-company-profile',
-              component: () => import('../views/CompanyProfileView.vue'),
-              meta: { tab: 'company' }
-            }
-          ]
-        },
-        {
           path: 'profile',
           name: 'profile',
           component: ProfileView
@@ -224,214 +93,10 @@ const router = createRouter({
           }
         },
         {
-          path: 'hotels',
-          name: 'hotels',
-          component: HotelsView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'hotels' }
-        },
-        {
-          path: 'hotels/new',
-          name: 'hotel-new',
-          component: HotelDetailView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'hotels' }
-        },
-        {
-          path: 'hotels/:id',
-          name: 'hotel-detail',
-          component: HotelDetailView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'hotels' }
-        },
-        {
-          path: 'planning',
-          component: PlanningView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'planning' },
-          children: [
-            {
-              path: '',
-              redirect: '/planning/settings'
-            },
-            {
-              path: 'settings',
-              name: 'planning-settings',
-              component: EmptyRouteView,
-              meta: { tab: 'settings' }
-            },
-            {
-              path: 'rooms',
-              name: 'planning-rooms',
-              component: EmptyRouteView,
-              meta: { tab: 'rooms' }
-            },
-            {
-              path: 'markets',
-              name: 'planning-markets',
-              component: EmptyRouteView,
-              meta: { tab: 'markets' }
-            },
-            {
-              path: 'campaigns',
-              name: 'planning-campaigns',
-              component: EmptyRouteView,
-              meta: { tab: 'campaigns' }
-            },
-            {
-              path: 'pricing',
-              name: 'planning-pricing',
-              component: EmptyRouteView,
-              meta: { tab: 'pricing' }
-            },
-            {
-              path: 'hotels/:hotelId/room-types/new',
-              name: 'room-type-new',
-              component: RoomTypeDetailView
-            },
-            {
-              path: 'hotels/:hotelId/room-types/:id',
-              name: 'room-type-detail',
-              component: RoomTypeDetailView
-            },
-            {
-              path: 'hotels/:hotelId/markets/new',
-              name: 'market-new',
-              component: MarketDetailView
-            },
-            {
-              path: 'hotels/:hotelId/markets/:id',
-              name: 'market-detail',
-              component: MarketDetailView
-            }
-          ]
-        },
-        {
           path: 'developers',
           name: 'developers',
           component: DevelopersView,
           meta: { requiresPartnerOrAdmin: true, requiredPermission: 'settings' }
-        },
-        {
-          path: 'bookings',
-          name: 'bookings',
-          component: BookingListView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'booking' }
-        },
-        {
-          path: 'bookings/new',
-          name: 'booking-new',
-          component: BookingWizardView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'booking' }
-        },
-        {
-          path: 'bookings/draft/:bookingNumber',
-          name: 'booking-draft',
-          component: BookingWizardView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'booking' }
-        },
-        {
-          path: 'bookings/:id',
-          name: 'booking-detail',
-          component: BookingDetailView,
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'booking' }
-        },
-        // Tour Module
-        {
-          path: 'tours',
-          name: 'tours',
-          component: TourListView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'tour.title',
-            descriptionKey: 'tour.description',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/new',
-          name: 'tour-new',
-          component: TourDetailView,
-          props: { id: 'new' },
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'tour.newTour',
-            descriptionKey: 'tour.description',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/departures',
-          name: 'tour-departures',
-          component: TourDepartureListView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'departure.title',
-            descriptionKey: 'departure.calendar',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/extras',
-          name: 'tour-extras',
-          component: TourExtraListView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'extra.title',
-            descriptionKey: 'extra.extras',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/bookings',
-          name: 'tour-bookings',
-          component: TourBookingListView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'tourBooking.title',
-            descriptionKey: 'tourBooking.bookings',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/bookings/new',
-          name: 'tour-booking-new',
-          component: () => import('../views/tours/TourBookingWizardView.vue'),
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'wizard.title',
-            descriptionKey: 'tourBooking.newBooking',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/bookings/:id',
-          name: 'tour-booking-detail',
-          component: TourBookingDetailView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'tourBooking.bookingDetails',
-            descriptionKey: 'tourBooking.bookings',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/:id',
-          name: 'tour-detail',
-          component: TourDetailView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'tour.editTour',
-            descriptionKey: 'tour.tourDetails',
-            requiredPermission: 'booking'
-          }
-        },
-        {
-          path: 'tours/:id/departures',
-          name: 'tour-departure-management',
-          component: TourDepartureListView,
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'departure.title',
-            descriptionKey: 'departure.departures',
-            requiredPermission: 'booking'
-          }
         },
         // PMS Integration
         {
@@ -469,139 +134,24 @@ const router = createRouter({
             titleKey: 'issues.title'
           }
         },
-        // Virtual POS / Payment Management (Platform admin & Partner admin)
-        {
-          path: 'payment',
-          component: () => import('../views/payment/PaymentModule.vue'),
-          meta: {
-            requiresPartnerOrAdmin: true,
-            titleKey: 'payment.title'
-          },
-          children: [
-            {
-              path: '',
-              redirect: '/payment/test'
-            },
-            {
-              path: 'test',
-              name: 'payment-test',
-              component: () => import('../views/payment/PaymentTest.vue'),
-              meta: { tab: 'test' }
-            },
-            {
-              path: 'transactions',
-              name: 'payment-transactions',
-              component: () => import('../views/payment/PaymentTransactions.vue'),
-              meta: { tab: 'transactions' }
-            },
-            {
-              path: 'links',
-              name: 'payment-links',
-              component: () => import('../views/payment/PaymentLinkListView.vue'),
-              meta: { tab: 'links' }
-            },
-            {
-              path: 'pos',
-              name: 'payment-pos',
-              component: () => import('../views/payment/PaymentPos.vue'),
-              meta: { tab: 'pos' }
-            },
-            {
-              path: 'commissions',
-              name: 'payment-commissions',
-              component: () => import('../views/payment/PaymentCommissions.vue'),
-              meta: { tab: 'commissions' }
-            },
-            {
-              path: 'bins',
-              name: 'payment-bins',
-              component: () => import('../views/payment/PaymentBins.vue'),
-              meta: { tab: 'bins' }
-            },
-            {
-              path: 'docs',
-              name: 'payment-docs',
-              component: () => import('../views/payment/PaymentDocs.vue'),
-              meta: { tab: 'docs' }
-            }
-          ]
-        }
+        // Modular routes
+        ...adminRoutes,
+        ...bookingRoutes,
+        ...tourRoutes,
+        ...hotelRoutes,
+        ...siteRoutes,
+        ...paymentRoutes
       ]
     },
 
     // Routes using the Auth Layout (for public pages like login)
-    {
-      path: '/auth',
-      component: AuthLayout,
-      children: [
-        {
-          path: '',
-          redirect: 'login'
-        },
-        {
-          path: 'login',
-          name: 'login',
-          component: LoginView
-        },
-        {
-          path: 'force-password-change',
-          name: 'force-password-change',
-          component: ForcePasswordChangeView,
-          meta: { requiresAuth: true }
-        },
-        {
-          path: 'forgot-password',
-          name: 'forgot-password',
-          component: () => import('../views/ForgotPasswordView.vue')
-        },
-        {
-          path: 'reset-password/:token',
-          name: 'reset-password',
-          component: () => import('../views/ResetPasswordView.vue')
-        }
-      ]
-    },
+    authLayoutRoutes,
 
-    // Register page (standalone, no layout wrapper)
-    {
-      path: '/auth/register',
-      name: 'register',
-      component: RegisterView
-    },
+    // Standalone auth routes
+    ...standaloneAuthRoutes,
 
-    // Invite Accept (legacy - for old invite links)
-    {
-      path: '/invite/accept/:token',
-      name: 'invite-accept',
-      component: InviteAcceptView,
-      meta: { public: true }
-    },
-
-    // Account Activation (public - no auth required)
-    {
-      path: '/activate/:token',
-      name: 'activate-account',
-      component: ActivateAccountView,
-      meta: { public: true }
-    },
-
-    // Redirect shortcuts for auth routes
-    {
-      path: '/login',
-      redirect: '/auth/login'
-    },
-    {
-      path: '/register',
-      redirect: '/auth/register'
-    },
-    {
-      path: '/forgot-password',
-      redirect: '/auth/forgot-password'
-    },
-    {
-      path: '/reset-password/:token',
-      redirect: to => `/auth/reset-password/${to.params.token}`
-    },
+    // Auth redirects
+    ...authRedirects,
 
     // Catch-all 404 route
     {

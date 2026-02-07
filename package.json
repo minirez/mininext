@@ -1,35 +1,44 @@
 {
-    "name": "booking-engine-monorepo",
-    "version": "1.0.0",
-    "private": true,
-    "type": "module",
-    "workspaces": [
-        "apps/*"
-    ],
-    "scripts": {
-        "create-module": "node scripts/create-module.js",
-        "build": "turbo run build",
-        "dev": "turbo run dev",
-        "dev:pm2": "pm2 start ecosystem.config.cjs",
-        "dev:api": "cd apps/api && node --watch src/index.js",
-        "dev:admin": "cd apps/admin && npx vite --host",
-        "stop": "pm2 stop all",
-        "restart": "pm2 restart all",
-        "logs": "pm2 logs",
-        "status": "pm2 status",
-        "test": "turbo run test",
-        "test:coverage": "turbo run test:coverage",
-        "lint": "turbo run lint",
-        "lint:fix": "turbo run lint:fix",
-        "format": "prettier --write \"apps/**/*.{js,vue,json,css,scss,md}\"",
-        "format:check": "prettier --check \"apps/**/*.{js,vue,json,css,scss,md}\""
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "eslint": "^9.39.2",
-        "globals": "^17.0.0",
-        "prettier": "^3.0.0",
-        "turbo": "^2.0.0"
-    },
-    "packageManager": "pnpm@9.15.4"
+  "name": "booking-engine-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "create-module": "node scripts/create-module.js",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:pm2": "pm2 start ecosystem.config.cjs",
+    "dev:api": "cd apps/api && node --watch src/index.js",
+    "dev:admin": "cd apps/admin && npx vite --host",
+    "stop": "pm2 stop all",
+    "restart": "pm2 restart all",
+    "logs": "pm2 logs",
+    "status": "pm2 status",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"{apps,packages}/**/*.{js,vue,json,css,scss,md}\"",
+    "format:check": "prettier --check \"{apps,packages}/**/*.{js,vue,json,css,scss,md}\"",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0"
+  },
+  "lint-staged": {
+    "*.{js,vue,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@9.15.4"
 }

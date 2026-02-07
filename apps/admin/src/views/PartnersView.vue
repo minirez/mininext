@@ -1055,18 +1055,35 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import partnerService from '@/services/partnerService'
-import subscriptionInvoiceService from '@/services/subscriptionInvoiceService'
 import { useI18n } from 'vue-i18n'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
+import { usePartnerSubscription } from '@/composables/usePartnerSubscription'
 
 const { t } = useI18n()
+
+// Subscription composable
+const subscription = usePartnerSubscription()
+
+// Re-export subscription properties for template access
+const {
+  showSubscriptionModal, showEditPurchaseModal, showMarkPaidModal,
+  subscriptionPlans, subscriptionStatus, useCustomPmsLimit,
+  activeSubscriptionTab, subscriptionTabs, subscriptionForm,
+  purchaseForm, editPurchaseForm, markPaidForm,
+  savingSubscription, addingPurchase, updatingPurchase, markingPaid,
+  subscriptionStatusMap,
+  getRemainingDays, getGracePeriodDays, isPmsEnabledForRow,
+  getProvisionedHotels, getPmsLimit, getSubscriptionStatusForRow,
+  openEditPurchaseModal, openMarkPaidModal,
+  getInvoiceForPurchase, downloadInvoice
+} = subscription
 
 // Navigation items
 const navItems = computed(() => [
@@ -1096,74 +1113,13 @@ const { isLoading: submitting, execute: executeSubmit } = useAsyncAction()
 const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
 const { isLoading: approving, execute: executeApprove } = useAsyncAction()
 const { isLoading: uploading, execute: executeUpload } = useAsyncAction()
-const { isLoading: savingSubscription, execute: executeSubscription } = useAsyncAction()
 
 const partners = ref([])
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const showApproveModal = ref(false)
-const showSubscriptionModal = ref(false)
 const isEditing = ref(false)
 const selectedPartner = ref(null)
-
-// Subscription management
-const subscriptionPlans = ref([])
-const subscriptionStatus = ref(null)
-const partnerInvoices = ref([])
-const useCustomPmsLimit = ref(false)
-const activeSubscriptionTab = ref('purchases')
-
-const subscriptionTabs = [
-  { id: 'purchases', label: t('partners.subscription.purchasesTab') },
-  { id: 'settings', label: t('partners.subscription.settingsTab') },
-  { id: 'notes', label: t('partners.subscription.notesTab') }
-]
-
-const subscriptionForm = ref({
-  customLimits: {
-    pmsMaxHotels: null
-  },
-  notes: ''
-})
-
-const purchaseForm = ref({
-  plan: 'business',
-  startDate: new Date().toISOString().split('T')[0],
-  endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-  amount: null,
-  currency: 'USD'
-})
-
-const addingPurchase = ref(false)
-
-// Edit purchase
-const showEditPurchaseModal = ref(false)
-const editPurchaseForm = ref({
-  _id: null,
-  plan: 'business',
-  startDate: '',
-  endDate: '',
-  amount: null,
-  currency: 'USD',
-  paymentMethod: 'bank_transfer',
-  paymentReference: '',
-  paymentNotes: ''
-})
-const updatingPurchase = ref(false)
-
-// Mark as paid
-const showMarkPaidModal = ref(false)
-const markPaidForm = ref({
-  _id: null,
-  plan: '',
-  amount: null,
-  currency: 'USD',
-  paymentDate: new Date().toISOString().split('T')[0],
-  paymentMethod: 'bank_transfer',
-  paymentReference: '',
-  paymentNotes: ''
-})
-const markingPaid = ref(false)
 
 // Helper functions for formatting
 const formatCurrency = (amount, currency = 'USD') => {
@@ -1210,85 +1166,12 @@ const columns = [
   { key: 'status', label: t('common.status.label') }
 ]
 
-// Subscription status map for badges
-const subscriptionStatusMap = {
-  active: { variant: 'success', label: t('partners.subscription.statusActive') },
-  expired: { variant: 'danger', label: t('partners.subscription.statusExpired') },
-  grace_period: { variant: 'warning', label: t('partners.subscription.statusGracePeriod') },
-  cancelled: { variant: 'secondary', label: t('partners.subscription.statusCancelled') },
-  suspended: { variant: 'danger', label: t('partners.subscription.statusSuspended') }
-}
-
 // Status options for form
 const statusOptions = [
   { value: 'active', label: t('common.active'), color: 'green' },
   { value: 'pending', label: t('common.pending'), color: 'yellow' },
   { value: 'inactive', label: t('common.inactive'), color: 'red' }
 ]
-
-// Plan badge variants
-const getPlanBadgeVariant = plan => {
-  const variants = {
-    business: 'info',
-    professional: 'primary',
-    enterprise: 'success'
-  }
-  return variants[plan] || 'secondary'
-}
-
-// Helper functions for list display
-const getRemainingDays = row => {
-  if (!row.subscription?.endDate) return null
-  const endDate = new Date(row.subscription.endDate)
-  const now = new Date()
-  const diff = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
-  return Math.max(0, diff)
-}
-
-const getGracePeriodDays = row => {
-  if (!row.subscription?.gracePeriodEndDate) return 0
-  const gracePeriodEnd = new Date(row.subscription.gracePeriodEndDate)
-  const now = new Date()
-  const diff = Math.ceil((gracePeriodEnd - now) / (1000 * 60 * 60 * 24))
-  return Math.max(0, diff)
-}
-
-const isPmsEnabledForRow = row => {
-  const limit =
-    row.subscription?.customLimits?.pmsMaxHotels ?? row.subscription?.features?.pms?.maxHotels ?? 0
-  return limit > 0 || limit === -1
-}
-
-const getProvisionedHotels = row => {
-  return row.pmsIntegration?.provisionedHotels?.filter(h => h.status === 'active').length || 0
-}
-
-const getPmsLimit = row => {
-  const limit =
-    row.subscription?.customLimits?.pmsMaxHotels ?? row.subscription?.features?.pms?.maxHotels ?? 0
-  return limit === -1 ? '∞' : limit
-}
-
-const getSubscriptionStatusForRow = row => {
-  if (!row.subscription?.startDate) return 'active'
-  if (row.subscription?.status === 'cancelled') return 'cancelled'
-  if (row.subscription?.status === 'suspended') return 'suspended'
-
-  const now = new Date()
-  const endDate = row.subscription?.endDate ? new Date(row.subscription.endDate) : null
-  const gracePeriodEnd = row.subscription?.gracePeriodEndDate
-    ? new Date(row.subscription.gracePeriodEndDate)
-    : null
-
-  if (endDate && now > endDate) {
-    if (gracePeriodEnd && now <= gracePeriodEnd) {
-      return 'grace_period'
-    }
-    return 'expired'
-  }
-
-  return 'active'
-}
 
 const fetchPartners = async () => {
   await executeFetch(
@@ -1350,311 +1233,29 @@ const openEditModal = partner => {
   showModal.value = true
 }
 
-const openSubscriptionModal = async partner => {
-  selectedPartner.value = partner
-  showSubscriptionModal.value = true
-  await loadSubscriptionData(partner._id)
+// Subscription modal - delegated to composable
+const openSubscriptionModal = (partner) => {
+  subscription.openSubscriptionModal(partner, selectedPartner)
 }
 
-// Subscription management functions
-const loadSubscriptionPlans = async () => {
-  try {
-    const response = await partnerService.getSubscriptionPlans()
-    subscriptionPlans.value = response.data || []
-  } catch {
-    // Plans loading failed silently - use fallback
-    subscriptionPlans.value = [
-      {
-        id: 'webdesign',
-        name: 'Web Design',
-        description: t('partners.subscription.planDescriptions.webdesign'),
-        price: { yearly: 29 },
-        features: { pms: { enabled: false, maxHotels: 0 }, webDesign: { enabled: true, maxSites: 1, ssl: true, customDomain: true } }
-      },
-      {
-        id: 'business',
-        name: 'Business',
-        description: t('partners.subscription.planDescriptions.business'),
-        price: { yearly: 118.9 },
-        features: { pms: { enabled: false, maxHotels: 0 } }
-      },
-      {
-        id: 'professional',
-        name: 'Professional',
-        description: t('partners.subscription.planDescriptions.professional'),
-        price: { yearly: 178.8 },
-        features: { pms: { enabled: true, maxHotels: 5 } }
-      },
-      {
-        id: 'enterprise',
-        name: 'Enterprise',
-        description: t('partners.subscription.planDescriptions.enterprise'),
-        price: { yearly: 298.8 },
-        features: { pms: { enabled: true, maxHotels: -1 } }
-      }
-    ]
-  }
+const handleSaveSubscription = () => {
+  subscription.handleSaveSubscription(selectedPartner.value, fetchPartners)
 }
 
-const loadSubscriptionData = async partnerId => {
-  try {
-    const response = await partnerService.getSubscription(partnerId)
-    subscriptionStatus.value = response.data
-
-    // Populate settings form
-    subscriptionForm.value = {
-      customLimits: {
-        pmsMaxHotels: response.data?.customLimits?.pmsMaxHotels ?? null
-      },
-      notes: response.data?.notes || ''
-    }
-
-    // Check if custom limit is set
-    useCustomPmsLimit.value = response.data?.customLimits?.pmsMaxHotels != null
-
-    // Reset active tab
-    activeSubscriptionTab.value = 'purchases'
-
-    // Reset purchase form with defaults
-    const today = new Date().toISOString().split('T')[0]
-    const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
-    purchaseForm.value = {
-      plan: response.data?.plan || 'business',
-      startDate: today,
-      endDate: nextYear,
-      amount: subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price?.yearly || null,
-      currency: 'USD'
-    }
-
-    // Load partner invoices
-    try {
-      const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(partnerId)
-      partnerInvoices.value = invoicesResponse.data?.invoices || []
-    } catch {
-      partnerInvoices.value = []
-    }
-  } catch {
-    // Reset to defaults on error
-    subscriptionStatus.value = null
-    subscriptionForm.value = {
-      customLimits: { pmsMaxHotels: null },
-      notes: ''
-    }
-    useCustomPmsLimit.value = false
-    activeSubscriptionTab.value = 'purchases'
-    partnerInvoices.value = []
-  }
+const handleAddPurchase = () => {
+  subscription.handleAddPurchase(selectedPartner.value, fetchPartners)
 }
 
-const handleSaveSubscription = async () => {
-  if (!selectedPartner.value) return
-
-  const data = {
-    notes: subscriptionForm.value.notes
-  }
-
-  // Only include custom limits if checkbox is checked
-  if (useCustomPmsLimit.value) {
-    data.customLimits = {
-      pmsMaxHotels: subscriptionForm.value.customLimits.pmsMaxHotels
-    }
-  } else {
-    // Clear custom limits
-    data.customLimits = {
-      pmsMaxHotels: null
-    }
-  }
-
-  await executeSubscription(
-    () => partnerService.updateSubscription(selectedPartner.value._id, data),
-    {
-      successMessage: 'partners.subscription.updateSuccess',
-      errorMessage: 'common.operationFailed',
-      onSuccess: response => {
-        subscriptionStatus.value = response.data
-        showSubscriptionModal.value = false
-        fetchPartners() // Refresh list
-      }
-    }
-  )
+const handleUpdatePurchase = () => {
+  subscription.handleUpdatePurchase(selectedPartner.value, fetchPartners)
 }
 
-// Purchase handlers
-const handleAddPurchase = async () => {
-  if (!selectedPartner.value || !purchaseForm.value.amount) return
-
-  addingPurchase.value = true
-  try {
-    const response = await partnerService.addPurchase(selectedPartner.value._id, {
-      plan: purchaseForm.value.plan,
-      startDate: purchaseForm.value.startDate,
-      endDate: purchaseForm.value.endDate,
-      amount: purchaseForm.value.amount,
-      currency: purchaseForm.value.currency
-    })
-
-    // Update subscription status
-    subscriptionStatus.value = response.data.subscription
-
-    // Reset purchase form
-    const today = new Date().toISOString().split('T')[0]
-    const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
-    purchaseForm.value = {
-      plan: response.data.subscription?.plan || 'business',
-      startDate: today,
-      endDate: nextYear,
-      amount: null,
-      currency: 'USD'
-    }
-
-    // Reload invoices
-    try {
-      const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(selectedPartner.value._id)
-      partnerInvoices.value = invoicesResponse.data?.invoices || []
-    } catch {
-      partnerInvoices.value = []
-    }
-
-    // Refresh partners list to show updated status
-    fetchPartners()
-  } catch {
-    // Error handled by API client
-  } finally {
-    addingPurchase.value = false
-  }
+const handleMarkAsPaid = () => {
+  subscription.handleMarkAsPaid(selectedPartner.value, fetchPartners)
 }
 
-// Open edit purchase modal
-const openEditPurchaseModal = (purchase) => {
-  // Helper to safely format date
-  const formatDateForInput = (date) => {
-    if (!date) return ''
-    const d = new Date(date)
-    return d.toISOString().split('T')[0]
-  }
-
-  editPurchaseForm.value = {
-    _id: purchase._id,
-    plan: purchase.plan,
-    startDate: formatDateForInput(purchase.period?.startDate),
-    endDate: formatDateForInput(purchase.period?.endDate),
-    amount: purchase.price?.amount,
-    currency: purchase.price?.currency || 'USD',
-    paymentMethod: purchase.payment?.method || 'bank_transfer',
-    paymentReference: purchase.payment?.reference || '',
-    paymentNotes: purchase.payment?.notes || ''
-  }
-  showEditPurchaseModal.value = true
-}
-
-// Handle update purchase
-const handleUpdatePurchase = async () => {
-  if (!selectedPartner.value || !editPurchaseForm.value._id) return
-
-  updatingPurchase.value = true
-  try {
-    const response = await partnerService.updatePurchase(
-      selectedPartner.value._id,
-      editPurchaseForm.value._id,
-      {
-        plan: editPurchaseForm.value.plan,
-        startDate: editPurchaseForm.value.startDate,
-        endDate: editPurchaseForm.value.endDate,
-        amount: editPurchaseForm.value.amount,
-        currency: editPurchaseForm.value.currency,
-        paymentMethod: editPurchaseForm.value.paymentMethod,
-        paymentReference: editPurchaseForm.value.paymentReference,
-        paymentNotes: editPurchaseForm.value.paymentNotes
-      }
-    )
-
-    subscriptionStatus.value = response.data.subscription
-    showEditPurchaseModal.value = false
-    fetchPartners()
-  } catch {
-    // Error handled by API client
-  } finally {
-    updatingPurchase.value = false
-  }
-}
-
-// Open mark paid modal
-const openMarkPaidModal = (purchase) => {
-  markPaidForm.value = {
-    _id: purchase._id,
-    plan: purchase.plan,
-    amount: purchase.price?.amount,
-    currency: purchase.price?.currency || 'USD',
-    paymentDate: new Date().toISOString().split('T')[0],
-    paymentMethod: 'bank_transfer',
-    paymentReference: '',
-    paymentNotes: ''
-  }
-  showMarkPaidModal.value = true
-}
-
-// Handle mark as paid
-const handleMarkAsPaid = async () => {
-  if (!selectedPartner.value || !markPaidForm.value._id || !markPaidForm.value.paymentDate) return
-
-  markingPaid.value = true
-  try {
-    const response = await partnerService.markPurchaseAsPaid(
-      selectedPartner.value._id,
-      markPaidForm.value._id,
-      {
-        paymentDate: markPaidForm.value.paymentDate,
-        paymentMethod: markPaidForm.value.paymentMethod,
-        paymentReference: markPaidForm.value.paymentReference,
-        paymentNotes: markPaidForm.value.paymentNotes
-      }
-    )
-
-    subscriptionStatus.value = response.data.subscription
-    showMarkPaidModal.value = false
-
-    // Reload invoices
-    try {
-      const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(selectedPartner.value._id)
-      partnerInvoices.value = invoicesResponse.data?.invoices || []
-    } catch {
-      partnerInvoices.value = []
-    }
-
-    fetchPartners()
-  } catch {
-    // Error handled by API client
-  } finally {
-    markingPaid.value = false
-  }
-}
-
-const confirmCancelPurchase = async purchaseId => {
-  const reason = prompt(t('partners.subscription.cancelReason'))
-  if (reason === null) return // User pressed cancel
-  if (!selectedPartner.value) return
-
-  try {
-    const response = await partnerService.cancelPurchase(selectedPartner.value._id, purchaseId, reason)
-    subscriptionStatus.value = response.data.subscription
-    fetchPartners()
-  } catch {
-    // Error handled by API client
-  }
-}
-
-// Get invoice for a specific purchase
-const getInvoiceForPurchase = purchaseId => {
-  return partnerInvoices.value.find(inv => inv.purchase?.toString() === purchaseId?.toString())
-}
-
-// Download invoice PDF
-const downloadInvoice = async (invoiceId, invoiceNumber) => {
-  try {
-    await subscriptionInvoiceService.downloadPDF(invoiceId, invoiceNumber)
-  } catch {
-    // Error handled by service
-  }
+const confirmCancelPurchase = (purchaseId) => {
+  subscription.confirmCancelPurchase(purchaseId, selectedPartner.value, fetchPartners)
 }
 
 const handleSubmit = async () => {
@@ -1746,6 +1347,6 @@ const confirmDeleteDocument = async documentId => {
 
 onMounted(() => {
   fetchPartners()
-  loadSubscriptionPlans()
+  subscription.loadSubscriptionPlans()
 })
 </script>

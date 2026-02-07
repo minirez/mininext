@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useTranslation } from '../composables/useTranslation'
+
+const { t, getLocale } = useTranslation()
 
 const props = defineProps({
   checkIn: String,
@@ -24,11 +27,9 @@ if (props.checkIn) {
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 
-const DAYS_TR = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz']
-const MONTHS_TR = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-]
+// Reactive day/month names from translations
+const DAYS = computed(() => t('datePicker.days'))
+const MONTHS = computed(() => t('datePicker.months'))
 
 // Night count
 const nights = computed(() => {
@@ -116,7 +117,7 @@ const calendarDays = computed(() => {
 const monthTitle = computed(() => {
   const year = currentMonth.value.getFullYear()
   const month = currentMonth.value.getMonth()
-  return `${MONTHS_TR[month]} ${year}`
+  return `${MONTHS.value[month]} ${year}`
 })
 
 // Can navigate to previous month?
@@ -214,7 +215,6 @@ function toggleCalendar() {
       currentMonth.value = new Date(props.checkIn)
     }
     // If both dates are selected, keep selecting as checkIn for next interaction
-    // but show current range in status
     if (props.checkIn && props.checkOut) {
       selecting.value = 'checkIn'
     }
@@ -225,13 +225,17 @@ function toggleCalendar() {
 function formatDisplay(dateStr) {
   if (!dateStr) return '—'
   const d = new Date(dateStr)
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+  const locale = getLocale()
+  const localeStr = locale === 'tr' ? 'tr-TR' : 'en-US'
+  return d.toLocaleDateString(localeStr, { day: 'numeric', month: 'short' })
 }
 
 function formatDisplayLong(dateStr) {
-  if (!dateStr) return 'Tarih seçin'
+  if (!dateStr) return t('datePicker.status.selectDate')
   const d = new Date(dateStr)
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const locale = getLocale()
+  const localeStr = locale === 'tr' ? 'tr-TR' : 'en-US'
+  return d.toLocaleDateString(localeStr, { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 // Quick select presets
@@ -260,7 +264,7 @@ watch(() => props.checkIn, (val) => {
     <div class="drp-trigger" @click="toggleCalendar" :class="{ active: isOpen }">
       <div class="drp-dates">
         <div class="drp-date-col" :class="{ selecting: isOpen && selecting === 'checkIn' }">
-          <span class="drp-date-label">Giriş</span>
+          <span class="drp-date-label">{{ t('common.checkIn') }}</span>
           <span class="drp-date-value">{{ formatDisplay(checkIn) }}</span>
         </div>
         <div class="drp-arrow">
@@ -270,7 +274,7 @@ watch(() => props.checkIn, (val) => {
           </svg>
         </div>
         <div class="drp-date-col" :class="{ selecting: isOpen && selecting === 'checkOut' }">
-          <span class="drp-date-label">Çıkış</span>
+          <span class="drp-date-label">{{ t('common.checkOut') }}</span>
           <span class="drp-date-value">{{ formatDisplay(checkOut) }}</span>
         </div>
       </div>
@@ -278,7 +282,7 @@ watch(() => props.checkIn, (val) => {
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
-        {{ nights }} gece
+        {{ nights }} {{ t('common.night') }}
       </div>
     </div>
 
@@ -286,21 +290,21 @@ watch(() => props.checkIn, (val) => {
     <div v-if="isOpen" class="drp-panel">
       <!-- Quick Presets -->
       <div class="drp-presets">
-        <button type="button" class="drp-preset" @click="selectPreset(1)">1 gece</button>
-        <button type="button" class="drp-preset" @click="selectPreset(2)">2 gece</button>
-        <button type="button" class="drp-preset" @click="selectPreset(3)">3 gece</button>
-        <button type="button" class="drp-preset" @click="selectPreset(5)">5 gece</button>
-        <button type="button" class="drp-preset" @click="selectPreset(7)">7 gece</button>
+        <button type="button" class="drp-preset" @click="selectPreset(1)">{{ t('datePicker.presets.oneNight') }}</button>
+        <button type="button" class="drp-preset" @click="selectPreset(2)">{{ t('datePicker.presets.twoNights') }}</button>
+        <button type="button" class="drp-preset" @click="selectPreset(3)">{{ t('datePicker.presets.threeNights') }}</button>
+        <button type="button" class="drp-preset" @click="selectPreset(5)">{{ t('datePicker.presets.fiveNights') }}</button>
+        <button type="button" class="drp-preset" @click="selectPreset(7)">{{ t('datePicker.presets.sevenNights') }}</button>
       </div>
 
       <!-- Selection Status -->
       <div class="drp-status">
         <span v-if="checkIn && checkOut && selecting === 'checkIn'">
           {{ formatDisplayLong(checkIn) }} — {{ formatDisplayLong(checkOut) }}
-          <small class="drp-status-hint">Yeni tarih seçebilirsiniz</small>
+          <small class="drp-status-hint">{{ t('datePicker.status.canSelectNew') }}</small>
         </span>
-        <span v-else-if="selecting === 'checkIn'">Giriş tarihi seçin</span>
-        <span v-else-if="!checkOut">Çıkış tarihi seçin</span>
+        <span v-else-if="selecting === 'checkIn'">{{ t('datePicker.status.selectCheckIn') }}</span>
+        <span v-else-if="!checkOut">{{ t('datePicker.status.selectCheckOut') }}</span>
         <span v-else>
           {{ formatDisplayLong(checkIn) }} — {{ formatDisplayLong(checkOut) }}
         </span>
@@ -323,7 +327,7 @@ watch(() => props.checkIn, (val) => {
 
       <!-- Day Names -->
       <div class="drp-weekdays">
-        <span v-for="day in DAYS_TR" :key="day" class="drp-weekday">{{ day }}</span>
+        <span v-for="day in DAYS" :key="day" class="drp-weekday">{{ day }}</span>
       </div>
 
       <!-- Calendar Grid -->

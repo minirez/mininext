@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
+import { useTranslation } from '../composables/useTranslation'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateLong } = useFormatters()
+const { t } = useTranslation()
 
 const booking = computed(() => widgetStore.booking)
 const hotelInfo = computed(() => widgetStore.hotelInfo)
@@ -51,23 +53,23 @@ function closeWidget() {
         </svg>
       </div>
 
-      <h2 class="success-title">Rezervasyonunuz Alındı!</h2>
+      <h2 class="success-title">{{ t('confirmation.title') }}</h2>
 
       <p class="success-subtitle">
         <template v-if="isPaid">
-          Ödemeniz başarıyla alındı. Rezervasyonunuz onaylandı.
+          {{ t('confirmation.messages.paid') }}
         </template>
         <template v-else-if="paymentMethod === 'pay_at_hotel'">
-          Rezervasyonunuz alındı. Ödemenizi otelde yapabilirsiniz.
+          {{ t('confirmation.messages.payAtHotel') }}
         </template>
         <template v-else>
-          Rezervasyonunuz alındı. Onay bilgileri e-posta adresinize gönderildi.
+          {{ t('confirmation.messages.default') }}
         </template>
       </p>
 
       <!-- Booking Reference -->
       <div class="booking-ref">
-        <span class="booking-ref-label">Rezervasyon No</span>
+        <span class="booking-ref-label">{{ t('confirmation.bookingNumber') }}</span>
         <span class="booking-ref-value">{{ booking?.bookingNumber }}</span>
       </div>
     </div>
@@ -93,7 +95,7 @@ function closeWidget() {
       <!-- Date & Guest Info -->
       <div class="details-dates">
         <div class="details-date">
-          <span class="details-date-label">Giriş</span>
+          <span class="details-date-label">{{ t('common.checkIn') }}</span>
           <span class="details-date-value">{{ formatDateLong(searchParams.checkIn || booking?.checkIn) }}</span>
         </div>
         <div class="details-date-divider">
@@ -103,7 +105,7 @@ function closeWidget() {
           </svg>
         </div>
         <div class="details-date">
-          <span class="details-date-label">Çıkış</span>
+          <span class="details-date-label">{{ t('common.checkOut') }}</span>
           <span class="details-date-value">{{ formatDateLong(searchParams.checkOut || booking?.checkOut) }}</span>
         </div>
       </div>
@@ -115,9 +117,9 @@ function closeWidget() {
             <circle cx="9" cy="7" r="4"></circle>
           </svg>
           <span>
-            {{ searchParams.adults || booking?.guests?.adults }} yetişkin
+            {{ searchParams.adults || booking?.guests?.adults }} {{ t('common.adults') }}
             <template v-if="(searchParams.children?.length || booking?.guests?.children) > 0">
-              , {{ searchParams.children?.length || booking?.guests?.children }} çocuk
+              , {{ searchParams.children?.length || booking?.guests?.children }} {{ t('common.children') }}
             </template>
           </span>
         </div>
@@ -126,7 +128,7 @@ function closeWidget() {
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <span>{{ nights || booking?.nights }} gece</span>
+          <span>{{ nights || booking?.nights }} {{ t('common.night') }}</span>
         </div>
       </div>
 
@@ -145,7 +147,7 @@ function closeWidget() {
       <!-- Price & Status -->
       <div class="details-footer">
         <div class="details-price">
-          <span class="details-price-label">Toplam</span>
+          <span class="details-price-label">{{ t('common.total') }}</span>
           <span class="details-price-value">{{ formatCurrency(booking?.pricing?.grandTotal || selectedOption?.pricing?.finalTotal || 0) }}</span>
         </div>
         <div class="details-status" :class="isPaid ? 'paid' : 'pending'">
@@ -159,7 +161,7 @@ function closeWidget() {
               <polyline points="12 6 12 12 16 14"></polyline>
             </template>
           </svg>
-          <span>{{ isPaid ? 'Ödendi' : 'Beklemede' }}</span>
+          <span>{{ isPaid ? t('confirmation.status.paid') : t('confirmation.status.pending') }}</span>
         </div>
       </div>
     </div>
@@ -171,7 +173,7 @@ function closeWidget() {
         <polyline points="22,6 12,13 2,6"></polyline>
       </svg>
       <div class="email-note-text">
-        <span>Rezervasyon detayları gönderildi:</span>
+        <span>{{ t('confirmation.emailSent') }}</span>
         <strong>{{ contactEmail }}</strong>
       </div>
     </div>
@@ -183,10 +185,10 @@ function closeWidget() {
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        Yeni Rezervasyon
+        {{ t('confirmation.newBooking') }}
       </button>
       <button v-if="widgetStore.config.mode === 'floating'" class="btn btn-secondary btn-block" @click="closeWidget">
-        Kapat
+        {{ t('common.close') }}
       </button>
     </div>
   </div>

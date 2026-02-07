@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useWidgetStore } from './stores/widget'
+import { useTranslation, setLocale } from './composables/useTranslation'
 
 // Views
 import SearchView from './views/SearchView.vue'
@@ -10,6 +11,12 @@ import PaymentView from './views/PaymentView.vue'
 import ConfirmationView from './views/ConfirmationView.vue'
 
 const widgetStore = useWidgetStore()
+const { t } = useTranslation()
+
+// Sync widget language config with translation system
+watch(() => widgetStore.config.language, (lang) => {
+  if (lang) setLocale(lang)
+}, { immediate: true })
 
 const isOpen = computed(() => widgetStore.isOpen)
 const currentStep = computed(() => widgetStore.currentStep)
@@ -35,14 +42,20 @@ const currentView = computed(() => viewComponents[currentStep.value] || SearchVi
 
 // Step indicator
 const steps = ['search', 'results', 'booking', 'payment', 'confirmation']
-const stepLabels = { search: 'Tarih', results: 'Odalar', booking: 'Bilgiler', payment: 'Ödeme', confirmation: 'Onay' }
+const stepLabels = computed(() => ({
+  search: t('steps.search'),
+  results: t('steps.results'),
+  booking: t('steps.booking'),
+  payment: t('steps.payment'),
+  confirmation: t('steps.confirmation')
+}))
 const currentStepIndex = computed(() => steps.indexOf(currentStep.value))
 
 // Trigger button text
 const triggerText = computed(() => {
   const texts = widgetStore.widgetConfig?.triggerText
   const lang = widgetStore.config.language || 'tr'
-  return texts?.[lang] || texts?.tr || 'Rezervasyon Yap'
+  return texts?.[lang] || texts?.tr || t('search.triggerButton')
 })
 
 function openWidget() {
@@ -123,7 +136,7 @@ function closeWidget() {
 
         <!-- Footer -->
         <div v-if="showPoweredBy" class="widget-footer">
-          Powered by <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
+          {{ t('footer.poweredBy') }} <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
         </div>
       </div>
   </div>
@@ -134,7 +147,7 @@ function closeWidget() {
       <component :is="currentView" />
     </div>
     <div v-if="showPoweredBy" class="widget-footer">
-      Powered by <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
+      {{ t('footer.poweredBy') }} <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
     </div>
   </div>
 
@@ -172,7 +185,7 @@ function closeWidget() {
         <component :is="currentView" />
       </div>
       <div v-if="showPoweredBy" class="widget-footer">
-        Powered by <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
+        {{ t('footer.poweredBy') }} <a href="https://maxirez.com" target="_blank" rel="noopener">MaxiRez</a>
       </div>
     </div>
   </div>

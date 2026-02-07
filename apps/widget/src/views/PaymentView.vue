@@ -2,11 +2,13 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
+import { useTranslation } from '../composables/useTranslation'
 import { widgetApi } from '../services/api'
 import ViewHeader from '../components/ViewHeader.vue'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency } = useFormatters()
+const { t } = useTranslation()
 
 // Template refs
 const cardNumberRef = ref(null)
@@ -71,7 +73,6 @@ const expiryFormatted = computed({
 
     if (digits.length >= 1) {
       const first = parseInt(digits[0], 10)
-      // Ilk rakam 2-9 ise otomatik "0" prefix ekle (ör. "3" -> "03")
       if (first >= 2) {
         digits = '0' + digits
         digits = digits.slice(0, 4)
@@ -80,11 +81,9 @@ const expiryFormatted = computed({
 
     if (digits.length >= 2) {
       let month = parseInt(digits.slice(0, 2), 10)
-      // Ay 00 olamaz -> 01 yap
       if (month === 0) {
         digits = '01' + digits.slice(2)
       }
-      // Ay 12'den buyuk olamaz -> 12 yap
       if (month > 12) {
         digits = '12' + digits.slice(2)
       }
@@ -161,15 +160,13 @@ watch(() => cardData.value.number, (newVal) => {
 
 // Auto-focus: MM/YY tamamlaninca real-time validate + CVV'ye gec
 watch(() => cardData.value.expiry, (newVal) => {
-  // Hata temizle yazarken
   if (errors.value.expiry) {
     errors.value.expiry = ''
   }
 
   if (newVal.length === 5) {
-    // Gecmis tarih kontrolu
     if (isCardExpired(newVal)) {
-      errors.value.expiry = 'Kartınızın süresi dolmuş'
+      errors.value.expiry = t('payment.errors.cardExpired')
       return
     }
     nextTick(() => cvvRef.value?.focus())
@@ -218,7 +215,7 @@ async function queryBin(bin) {
         monthlyAmount: amt,
         totalAmount: amt,
         interestRate: 0,
-        label: 'Tek Çekim'
+        label: t('payment.installment.single')
       }]
     } else {
       installmentOptions.value = result.installments.map(inst => ({
@@ -227,8 +224,8 @@ async function queryBin(bin) {
         totalAmount: inst.amount || inst.totalAmount || 0,
         interestRate: inst.interestRate || 0,
         label: inst.count === 1
-          ? 'Tek Çekim'
-          : `${inst.count} Taksit`
+          ? t('payment.installment.single')
+          : t('payment.installment.count', { count: inst.count })
       }))
     }
 
@@ -241,7 +238,7 @@ async function queryBin(bin) {
       monthlyAmount: totalAmount.value,
       totalAmount: totalAmount.value,
       interestRate: 0,
-      label: 'Tek Çekim'
+      label: t('payment.installment.single')
     }]
   } finally {
     binQueryLoading.value = false
@@ -252,25 +249,25 @@ function validateForm() {
   errors.value = {}
 
   if (!cardData.value.holder.trim()) {
-    errors.value.holder = 'Kart sahibi adı gerekli'
+    errors.value.holder = t('payment.errors.holderRequired')
   }
 
   const cardNumber = cardData.value.number.replace(/\s/g, '')
   if (cardNumber.length !== 16) {
-    errors.value.number = 'Geçerli bir kart numarası giriniz'
+    errors.value.number = t('payment.errors.numberInvalid')
   } else if (!luhnCheck(cardNumber)) {
-    errors.value.number = 'Kart numarası geçersiz'
+    errors.value.number = t('payment.errors.numberLuhn')
   }
 
   const [month, year] = cardData.value.expiry.split('/')
   if (!month || !year || parseInt(month) < 1 || parseInt(month) > 12) {
-    errors.value.expiry = 'Geçerli bir son kullanma tarihi giriniz'
+    errors.value.expiry = t('payment.errors.expiryInvalid')
   } else if (isCardExpired(cardData.value.expiry)) {
-    errors.value.expiry = 'Kartınızın süresi dolmuş'
+    errors.value.expiry = t('payment.errors.cardExpired')
   }
 
   if (cardData.value.cvv.length < 3) {
-    errors.value.cvv = 'Geçerli bir CVV giriniz'
+    errors.value.cvv = t('payment.errors.cvvInvalid')
   }
 
   return Object.keys(errors.value).length === 0
@@ -310,7 +307,7 @@ function handlePaymentMessage(event) {
     if (event.data.data?.success) {
       widgetStore.currentStep = 'confirmation'
     } else {
-      widgetStore.error = event.data.data?.message || 'Ödeme başarısız oldu'
+      widgetStore.error = event.data.data?.message || t('payment.errors.paymentFailed')
     }
   }
 }
@@ -329,7 +326,7 @@ function startStatusCheck() {
         stopStatusCheck()
         show3DModal.value = false
         payment3DUrl.value = ''
-        widgetStore.error = 'Ödeme başarısız oldu'
+        widgetStore.error = t('payment.errors.paymentFailed')
       }
     } catch (err) {
       console.error('[PaymentView] Status check failed:', err)
@@ -361,7 +358,7 @@ onMounted(() => {
   if (paymentStatus === 'success') {
     widgetStore.currentStep = 'confirmation'
   } else if (paymentStatus === 'failed') {
-    widgetStore.error = 'Ödeme işlemi başarısız oldu. Lütfen tekrar deneyiniz.'
+    widgetStore.error = t('payment.errors.paymentFailedRetry')
   }
 })
 
@@ -373,7 +370,7 @@ onUnmounted(() => {
 
 <template>
   <div class="payment-view">
-    <ViewHeader title="Ödeme" />
+    <ViewHeader :title="t('payment.title')" />
 
     <!-- Error Message -->
     <div v-if="errorMessage" class="alert alert-error">
@@ -388,19 +385,19 @@ onUnmounted(() => {
     <!-- Order Summary -->
     <div class="order-summary">
       <div class="order-summary-row">
-        <span class="order-summary-label">Rezervasyon No</span>
+        <span class="order-summary-label">{{ t('payment.bookingNumber') }}</span>
         <span class="order-summary-value booking-number">{{ booking?.bookingNumber }}</span>
       </div>
       <div v-if="currencyConversion" class="order-summary-row">
-        <span class="order-summary-label">Tutar ({{ currencyConversion.originalCurrency }})</span>
+        <span class="order-summary-label">{{ t('payment.amount') }} ({{ currencyConversion.originalCurrency }})</span>
         <span class="order-summary-value">{{ formatCurrency(currencyConversion.originalAmount, currencyConversion.originalCurrency) }}</span>
       </div>
       <div v-if="currencyConversion" class="order-summary-row">
-        <span class="order-summary-label">Kur</span>
+        <span class="order-summary-label">{{ t('payment.exchangeRate') }}</span>
         <span class="order-summary-value">1 {{ currencyConversion.originalCurrency }} = {{ currencyConversion.exchangeRate }} TRY</span>
       </div>
       <div class="order-summary-row total">
-        <span class="order-summary-label">Ödenecek Tutar</span>
+        <span class="order-summary-label">{{ t('payment.amountToPay') }}</span>
         <span class="order-summary-value price">{{ formatCurrency(effectiveAmount, effectiveCurrency) }}</span>
       </div>
     </div>
@@ -409,13 +406,13 @@ onUnmounted(() => {
     <form @submit.prevent="submitPayment" class="payment-form">
       <!-- Card Holder -->
       <div class="form-group">
-        <label class="form-label">Kart Üzerindeki İsim</label>
+        <label class="form-label">{{ t('payment.card.holder') }}</label>
         <input
           v-model="cardData.holder"
           type="text"
           class="form-input"
           :class="{ error: errors.holder }"
-          placeholder="AD SOYAD"
+          :placeholder="t('payment.card.holderPlaceholder')"
           autocomplete="cc-name"
           style="text-transform: uppercase;"
         />
@@ -424,7 +421,7 @@ onUnmounted(() => {
 
       <!-- Card Number -->
       <div class="form-group">
-        <label class="form-label">Kart Numarası</label>
+        <label class="form-label">{{ t('payment.card.number') }}</label>
         <div class="card-input-wrapper">
           <input
             ref="cardNumberRef"
@@ -432,7 +429,7 @@ onUnmounted(() => {
             type="text"
             class="form-input card-number-input"
             :class="{ error: errors.number }"
-            placeholder="0000 0000 0000 0000"
+            :placeholder="t('payment.card.numberPlaceholder')"
             autocomplete="cc-number"
             inputmode="numeric"
             @keydown="numericKeydown"
@@ -481,14 +478,14 @@ onUnmounted(() => {
       <!-- Expiry & CVV Row -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Son Kullanma</label>
+          <label class="form-label">{{ t('payment.card.expiry') }}</label>
           <input
             ref="expiryRef"
             v-model="expiryFormatted"
             type="text"
             class="form-input"
             :class="{ error: errors.expiry }"
-            placeholder="AA/YY"
+            :placeholder="t('payment.card.expiryPlaceholder')"
             autocomplete="cc-exp"
             inputmode="numeric"
             maxlength="5"
@@ -497,7 +494,7 @@ onUnmounted(() => {
           <span v-if="errors.expiry" class="form-error">{{ errors.expiry }}</span>
         </div>
         <div class="form-group">
-          <label class="form-label">CVV / CVC</label>
+          <label class="form-label">{{ t('payment.card.cvv') }}</label>
           <div class="cvv-input-wrapper">
             <input
               ref="cvvRef"
@@ -525,7 +522,7 @@ onUnmounted(() => {
 
       <!-- Installment Selection -->
       <div v-if="installmentOptions.length > 1" class="form-group">
-        <label class="form-label">Taksit Seçimi</label>
+        <label class="form-label">{{ t('payment.installment.title') }}</label>
         <div class="installment-options">
           <label
             v-for="option in installmentOptions"
@@ -570,7 +567,7 @@ onUnmounted(() => {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
-          {{ formatCurrency(effectiveAmount, effectiveCurrency) }} Öde
+          {{ t('payment.submit.pay', { amount: formatCurrency(effectiveAmount, effectiveCurrency) }) }}
         </template>
       </button>
 
@@ -580,7 +577,7 @@ onUnmounted(() => {
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        <span>256-bit SSL ile güvenli ödeme</span>
+        <span>{{ t('payment.submit.securityBadge') }}</span>
       </div>
     </form>
 
@@ -593,7 +590,7 @@ onUnmounted(() => {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
-            <span>3D Secure Doğrulama</span>
+            <span>{{ t('payment.secure3D.title') }}</span>
           </div>
           <button class="secure-modal-close" @click="cancel3DPayment">&#10005;</button>
         </div>
@@ -606,11 +603,11 @@ onUnmounted(() => {
           />
           <div v-if="iframeLoading" class="secure-iframe-loading">
             <div class="spinner"></div>
-            <span>Banka sayfası yükleniyor...</span>
+            <span>{{ t('payment.secure3D.loading') }}</span>
           </div>
         </div>
         <div class="secure-modal-footer">
-          <button class="btn-text" @click="cancel3DPayment">İptal Et</button>
+          <button class="btn-text" @click="cancel3DPayment">{{ t('payment.secure3D.cancel') }}</button>
         </div>
       </div>
     </div>

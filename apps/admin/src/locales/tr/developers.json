@@ -1,0 +1,23 @@
+{
+  "developers": {
+    "title": "API Dokümantasyonu",
+    "description": "Geliştiriciler için Public API dokümantasyonu",
+    "openApi": "API'yi Aç",
+    "quickStart": "Hızlı Başlangıç",
+    "quickStartDesc": "Public API'yi dakikalar içinde kullanmaya başlayın. Kimlik doğrulama gerekmez.",
+    "baseUrl": "Ana URL",
+    "baseUrlDesc": "Tüm API endpointleri bu ana URL'e görelidir.",
+    "authentication": "Kimlik Doğrulama",
+    "noAuthRequired": "Kimlik Doğrulama Gerekmez",
+    "noAuthDesc": "Public API açıktır ve API anahtarı veya token gerektirmez.",
+    "rateLimiting": "Hız Sınırlaması",
+    "globalLimit": "Genel Limit",
+    "searchLimit": "Arama Limiti",
+    "bookingLimit": "Rezervasyon Limiti",
+    "responseCodes": "Yanıt Kodları",
+    "status": "Durum",
+    "hotels": "Oteller",
+    "search": "Arama & Müsaitlik",
+    "booking": "Rezervasyon"
+  }
+}

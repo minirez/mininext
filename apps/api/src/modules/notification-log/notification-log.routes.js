@@ -3,8 +3,9 @@
  */
 
 import express from 'express'
-import * as notificationLogService from './notification-log.service.js'
-import { protect, requireAdmin } from '#middleware/auth.js'
+import notificationLogService from './notification-log.service.js'
+import { protect } from '#middleware/auth.js'
+import { asyncHandler } from '#helpers'
 
 const router = express.Router()
 
@@ -12,18 +13,18 @@ const router = express.Router()
 router.use(protect)
 
 // Get notification logs (with filters)
-router.get('/', notificationLogService.getNotificationLogs)
+router.get('/', asyncHandler(notificationLogService.list))
 
 // Get statistics
-router.get('/stats', notificationLogService.getNotificationStats)
+router.get('/stats', asyncHandler(notificationLogService.getStats))
 
 // Get type breakdown (for charts)
-router.get('/breakdown', notificationLogService.getTypeBreakdown)
+router.get('/breakdown', asyncHandler(notificationLogService.getTypeBreakdown))
 
 // Get channel performance
-router.get('/channels', notificationLogService.getChannelStats)
+router.get('/channels', asyncHandler(notificationLogService.getChannelStats))
 
 // Get single log detail
-router.get('/:id', notificationLogService.getNotificationLog)
+router.get('/:id', asyncHandler(notificationLogService.getById))
 
 export default router

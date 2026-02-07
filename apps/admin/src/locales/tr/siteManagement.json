@@ -1,0 +1,17 @@
+{
+  "siteManagement": {
+    "title": "Site Yönetimi",
+    "description": "Web sitenizi ve sayfalarınızı yönetin",
+    "tabs": {
+      "settings": "Site Ayarları",
+      "pages": "Web Sitesini Düzenle",
+      "website": "Web Sitesi Yönetimi",
+      "notifications": "Bildirimler",
+      "company": "Şirket Profili"
+    },
+    "pages": {
+      "title": "Sayfalar",
+      "comingSoon": "Yakında"
+    }
+  }
+}

@@ -1,5 +1,14 @@
-import FirecrawlApp from '@mendable/firecrawl-js'
 import { getFirecrawlApiKey } from './cache.js'
+
+// Lazy-loaded FirecrawlApp constructor
+let _FirecrawlApp = null
+const getFirecrawlAppClass = async () => {
+  if (!_FirecrawlApp) {
+    const mod = await import('@mendable/firecrawl-js')
+    _FirecrawlApp = mod.default
+  }
+  return _FirecrawlApp
+}
 
 // Initialize Firecrawl client
 let firecrawl = null
@@ -20,6 +29,7 @@ export const getFirecrawl = async () => {
     return firecrawl
   }
 
+  const FirecrawlApp = await getFirecrawlAppClass()
   firecrawl = new FirecrawlApp({ apiKey })
   firecrawlApiKeyUsed = apiKey
   return firecrawl
