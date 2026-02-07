@@ -1,1 +1,1 @@
-node ./node_modules/lint-staged/bin/lint-staged.js
+sh node_modules/.bin/lint-staged
