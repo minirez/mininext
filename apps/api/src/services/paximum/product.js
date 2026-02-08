@@ -63,6 +63,7 @@ export async function searchLocations(query, productType = 2) {
 export async function searchHotels(params, markupPercent = 10) {
   const {
     arrivalLocations,
+    Products,
     checkIn,
     nights,
     roomCriteria,
@@ -70,12 +71,6 @@ export async function searchHotels(params, markupPercent = 10) {
     currency = 'TRY',
     culture = 'tr-TR'
   } = params
-
-  // Build request based on location type
-  // Type 1 = City/Region: use ArrivalLocations with type: 2 (always 2 for cities!)
-  // Type 2 = Hotel: use Products array
-  const location = arrivalLocations?.[0]
-  const isHotel = location?.type === 2
 
   const requestBody = {
     ProductType: 2, // Hotel
@@ -85,18 +80,22 @@ export async function searchHotels(params, markupPercent = 10) {
     GetOnlyBestOffers: false, // false = get ALL offers, not just best one
     CheckIn: checkIn, // Format: YYYY-MM-DD
     Night: nights,
-    RoomCriteria: roomCriteria, // [{ Adult: 2, ChildAges: [] }]
+    RoomCriteria: roomCriteria, // [{ adult: 2, childAges: [] }]
     Nationality: nationality,
     Currency: currency,
     Culture: culture
   }
 
-  if (isHotel) {
-    // For hotels, use Products array
-    requestBody.Products = [location.id]
+  // If explicit Products array is provided (single-hotel search / showcase),
+  // pass it directly — no arrivalLocations needed.
+  if (Products && Products.length) {
+    requestBody.Products = Products.map(String)
   } else {
-    // For cities/regions, use ArrivalLocations with type: 2 (required by Paximum)
-    requestBody.ArrivalLocations = [{ id: location.id, type: 2 }]
+    // Location-based search: forward arrivalLocations as-is to Paximum.
+    // The frontend already sends the correct Paximum format:
+    //   [{id: "60689", type: 2}]  →  city/region search
+    // We pass it through directly, same as the old backend did.
+    requestBody.ArrivalLocations = arrivalLocations
   }
 
   const result = await makeRequest(`${PRODUCT_SERVICE}/pricesearch`, requestBody)

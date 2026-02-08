@@ -50,6 +50,7 @@ export const searchLocations = asyncHandler(async (req, res) => {
 export const searchHotels = asyncHandler(async (req, res) => {
   const {
     arrivalLocations,
+    Products,
     checkIn,
     nights,
     roomCriteria,
@@ -59,7 +60,7 @@ export const searchHotels = asyncHandler(async (req, res) => {
     markupPercent
   } = req.body
 
-  if (!arrivalLocations || !arrivalLocations.length) {
+  if ((!arrivalLocations || !arrivalLocations.length) && (!Products || !Products.length)) {
     throw new BadRequestError('Lokasyon seçimi gereklidir')
   }
 
@@ -80,6 +81,7 @@ export const searchHotels = asyncHandler(async (req, res) => {
   const result = await paximumService.searchHotels(
     {
       arrivalLocations,
+      Products,
       checkIn,
       nights,
       roomCriteria,
@@ -93,7 +95,7 @@ export const searchHotels = asyncHandler(async (req, res) => {
   const { hotels, searchId } = result
 
   logger.info('Paximum: Hotel search completed', {
-    location: arrivalLocations[0],
+    location: arrivalLocations?.[0] || Products?.[0],
     checkIn,
     nights,
     resultCount: hotels.length,
