@@ -218,7 +218,7 @@ export const beginTransaction = asyncHandler(async (req, res) => {
 
   logger.info('Paximum: Transaction started', {
     transactionId: result.transactionId,
-    userId: req.user._id
+    userId: req.user?._id || 'storefront'
   })
 
   res.json({
@@ -284,7 +284,7 @@ export const commitTransaction = asyncHandler(async (req, res) => {
   logger.info('Paximum: Reservation committed', {
     transactionId,
     reservationNumber: result.reservation?.reservationNumber,
-    userId: req.user._id
+    userId: req.user?._id || 'storefront'
   })
 
   res.json({
@@ -348,7 +348,7 @@ export const cancelReservation = asyncHandler(async (req, res) => {
 
   logger.info('Paximum: Reservation cancelled', {
     reservationNumber,
-    userId: req.user._id
+    userId: req.user?._id || 'storefront'
   })
 
   res.json({

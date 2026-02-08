@@ -88,6 +88,9 @@ const config = {
     apiBackend: process.env.API_BACKEND_URL || 'http://localhost:4000'
   },
 
+  // Storefront API Key - For server-to-server auth from storefront frontends (site3 etc.)
+  storefrontApiKey: process.env.STOREFRONT_API_KEY || '',
+
   // PMS Integration - Message queue for standalone PMS system
   pms: {
     queueEnabled: process.env.PMS_QUEUE_ENABLED === 'true',

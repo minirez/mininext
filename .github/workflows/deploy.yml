@@ -63,6 +63,7 @@ jobs:
           AWS_SES_REGION: ${{ secrets.AWS_SES_REGION }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          STOREFRONT_API_KEY: ${{ secrets.STOREFRONT_KEY }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -70,7 +71,7 @@ jobs:
           port: 22
           timeout: 120s
           command_timeout: 30m
-          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,GEMINI_API_KEY,FIRECRAWL_API_KEY
+          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,GEMINI_API_KEY,FIRECRAWL_API_KEY,STOREFRONT_API_KEY
           script: |
             export PNPM_HOME="/root/.local/share/pnpm"
             export PATH="$PNPM_HOME:$PATH"
@@ -111,6 +112,9 @@ jobs:
 
             # Firecrawl (Web Scraping)
             FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+
+            # Storefront API Key (server-to-server auth for site3 etc.)
+            STOREFRONT_API_KEY=${STOREFRONT_API_KEY}
             EOF
 
             # Create/Update .env file for Payment Service
