@@ -11,9 +11,21 @@ const router = express.Router()
 router.get('/my/profile', protect, requirePartner, partnerService.getMyProfile)
 router.put('/my/profile', protect, requirePartner, partnerService.updateMyProfile)
 router.put('/my/admin-theme', protect, requirePartner, partnerService.updateMyAdminTheme)
-router.post('/my/profile/logo', protect, requirePartner, upload.single('logo'), partnerService.uploadMyLogo)
+router.post(
+  '/my/profile/logo',
+  protect,
+  requirePartner,
+  upload.single('logo'),
+  partnerService.uploadMyLogo
+)
 router.delete('/my/profile/logo', protect, requirePartner, partnerService.deleteMyLogo)
-router.post('/my/profile/favicon', protect, requirePartner, upload.single('favicon'), partnerService.uploadMyFavicon)
+router.post(
+  '/my/profile/favicon',
+  protect,
+  requirePartner,
+  upload.single('favicon'),
+  partnerService.uploadMyFavicon
+)
 router.delete('/my/profile/favicon', protect, requirePartner, partnerService.deleteMyFavicon)
 
 // ==================== Admin Routes (require admin role) ====================
@@ -40,10 +52,6 @@ router.delete('/:id', partnerService.deletePartner)
 router.post('/:id/activate', partnerService.activatePartner)
 router.post('/:id/deactivate', partnerService.deactivatePartner)
 router.post('/:id/approve', partnerService.approvePartner)
-
-// PMS Integration
-router.post('/:id/activate-pms', partnerService.activatePms)
-router.get('/:id/pms-status', partnerService.getPmsStatus)
 
 // Subscription Management (purchases & PMS limits)
 router.get('/:id/subscription', partnerService.getSubscription)

@@ -23,37 +23,45 @@ const __dirname = path.dirname(__filename)
  */
 const ROUTE_CONFIG = {
   // Plural endpoints
-  'partner': 'partners',
-  'agency': 'agencies',
-  'user': 'users',
-  'session': 'sessions',
-  'hotel': 'hotels',
-  'tag': 'tags',
-  'location': 'locations',
-  'booking': 'bookings',
-  'notification': 'notifications',
-  'issue': 'issues',
+  partner: 'partners',
+  agency: 'agencies',
+  user: 'users',
+  session: 'sessions',
+  hotel: 'hotels',
+  tag: 'tags',
+  location: 'locations',
+  booking: 'bookings',
+  notification: 'notifications',
+  issue: 'issues',
   'email-log': 'email-logs',
 
   // Kebab-case endpoints
-  'siteSettings': 'site-settings',
+  siteSettings: 'site-settings',
   'platform-settings': 'platform-settings',
-  'audit': 'audit-logs',
+  audit: 'audit-logs',
 
   // Notification logs
   'notification-log': 'notification-logs',
 
   // Subscription invoices
-  'subscriptionInvoice': 'subscription-invoices',
+  subscriptionInvoice: 'subscription-invoices',
 
   // Payment links
-  'paymentLink': 'payment-links',
+  paymentLink: 'payment-links',
 
   // Storefront (B2C website configuration)
-  'storefront': 'storefronts',
+  storefront: 'storefronts',
 
   // Debug endpoint (Claude Code access)
-  'debug': 'debug',
+  debug: 'debug',
+
+  // PMS modules
+  'pms-frontdesk': 'pms/frontdesk',
+  'pms-housekeeping': 'pms/housekeeping',
+  'pms-guest': 'pms/guests',
+  'pms-billing': 'pms/billing',
+  'pms-reservation': 'pms/reservations',
+  'pms-settings': 'pms/settings'
 }
 
 /**

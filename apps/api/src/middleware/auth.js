@@ -154,6 +154,99 @@ export const requirePartnerOrAdmin = (req, res, next) => {
   next()
 }
 
+// ==========================================
+// PMS MIDDLEWARE
+// ==========================================
+
+// Require PMS access - Partner user (or platform admin) with PMS permissions
+export const requirePmsAccess = (req, res, next) => {
+  // Platform admins always have full access
+  if (req.user.accountType === 'platform') {
+    return next()
+  }
+
+  // Must be a partner user
+  if (req.user.accountType !== 'partner') {
+    throw new UnauthorizedError('FORBIDDEN')
+  }
+
+  // Check PMS access
+  if (!req.user.hasPmsAccess()) {
+    throw new UnauthorizedError('PMS_ACCESS_DENIED')
+  }
+
+  // Set req.partner for downstream services
+  if (!req.partner) {
+    req.partner = req.account
+  }
+
+  next()
+}
+
+// Require specific PMS permission (granular)
+// Usage: requirePmsPermission('frontdesk.checkin')
+export const requirePmsPermission = permission => {
+  return (req, res, next) => {
+    // Platform admins always have full access
+    if (req.user.accountType === 'platform') {
+      return next()
+    }
+
+    // Admin role has full access
+    if (req.user.role === 'admin') {
+      return next()
+    }
+
+    // Check specific PMS permission
+    if (!req.user.hasPmsPermission(permission)) {
+      throw new UnauthorizedError('PMS_PERMISSION_DENIED')
+    }
+
+    next()
+  }
+}
+
+// Set PMS hotel context from :hotelId param
+// Validates hotel belongs to partner and attaches hotel + partner to req
+export const setPmsHotelContext = async (req, res, next) => {
+  try {
+    const { hotelId } = req.params
+    if (!hotelId) {
+      throw new UnauthorizedError('HOTEL_ID_REQUIRED')
+    }
+
+    const { default: Hotel } = await import('../modules/hotel/hotel.model.js')
+    const hotel = await Hotel.findById(hotelId)
+
+    if (!hotel) {
+      throw new UnauthorizedError('HOTEL_NOT_FOUND')
+    }
+
+    // For partner users, verify hotel belongs to their partner account
+    if (req.user.accountType === 'partner') {
+      const partnerId = req.account?._id || req.partner?._id
+      if (!partnerId || hotel.partner?.toString() !== partnerId.toString()) {
+        throw new UnauthorizedError('HOTEL_ACCESS_DENIED')
+      }
+    }
+
+    // For platform admin, also resolve partner
+    if (req.user.accountType === 'platform' && hotel.partner) {
+      if (!req.partner) {
+        const partnerDoc = await Partner.findById(hotel.partner)
+        req.partner = partnerDoc
+      }
+    }
+
+    req.hotel = hotel
+    req.hotelId = hotel._id
+
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+
 // Set partner context from hotel (for platform admins viewing hotel data)
 export const setPartnerFromHotel = async (req, res, next) => {
   try {

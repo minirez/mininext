@@ -9,7 +9,6 @@ import aiRoutes from './routes/hotelAI.routes.js'
 import linkRoutes from './routes/hotelLink.routes.js'
 import crudRoutes from './routes/hotelCrud.routes.js'
 import photosRoutes from './routes/hotelPhotos.routes.js'
-import pmsRoutes from './routes/hotelPMS.routes.js'
 
 const router = express.Router()
 
@@ -30,6 +29,5 @@ router.use(partnerContext)
 router.use('/', linkRoutes) // Link/unlink to base hotels
 router.use('/', crudRoutes) // Partner hotel CRUD
 router.use('/', photosRoutes) // Image and logo management
-router.use('/', pmsRoutes) // PMS integration
 
 export default router

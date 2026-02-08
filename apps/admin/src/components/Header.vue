@@ -45,13 +45,38 @@
 
       <!-- Right side: Hotel Selector, Partner Selector, User menu -->
       <div class="flex items-center gap-2">
-        <!-- Hotel Selector (only on routes that need it) -->
-        <div v-if="showHotelSelector" class="w-48 md:w-56">
+        <!-- PMS Hotel Selector (only on PMS routes) -->
+        <div v-if="isPmsRoute" class="w-48 md:w-56">
+          <PmsHotelSelector />
+        </div>
+
+        <!-- Hotel Selector (only on planning routes) -->
+        <div v-else-if="showHotelSelector" class="w-48 md:w-56">
           <HotelSelector
             :model-value="hotelStore.selectedHotel"
             @update:model-value="hotelStore.setHotel"
           />
         </div>
+
+        <!-- PMS / BE Mode Toggle -->
+        <button
+          v-if="isPmsRoute"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          :title="$t('pms.backToPanel')"
+          @click="switchToPanel"
+        >
+          <span class="material-icons text-lg">dashboard</span>
+          <span v-if="!uiStore.isMobile">MaxiRez</span>
+        </button>
+        <button
+          v-else-if="showPmsLink"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+          :title="'PMS'"
+          @click="switchToPms"
+        >
+          <span class="material-icons text-lg">apartment</span>
+          <span v-if="!uiStore.isMobile">PMS</span>
+        </button>
 
         <!-- Partner Selector (Platform Admin Only) -->
         <PartnerSelector />
@@ -204,8 +229,10 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { useHotelStore } from '@/stores/hotel'
+import { usePmsStore } from '@/stores/pms'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
 import HotelSelector from '@/components/common/HotelSelector.vue'
+import PmsHotelSelector from '@/components/pms/PmsHotelSelector.vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
 import ThemeSelector from '@/components/common/ThemeSelector.vue'
 import { getAvatarUrl } from '@/utils/imageUrl'
@@ -242,9 +269,44 @@ const props = defineProps({
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const hotelStore = useHotelStore()
+const pmsStore = usePmsStore()
 
 // User avatar URL using shared utility
 const userAvatarUrl = computed(() => getAvatarUrl(authStore.user))
+
+// PMS route detection
+const isPmsRoute = computed(() => route.path.startsWith('/pms/'))
+
+// Show PMS link for partner users with PMS permission (when not already in PMS mode)
+const showPmsLink = computed(() => {
+  if (isPmsRoute.value) return false
+  const user = authStore.user
+  if (!user) return false
+  // Platform admins always see PMS link
+  if (authStore.isPlatformAdmin) return true
+  // Partner users with PMS permission
+  if (user.accountType === 'partner') {
+    const permissions = user.permissions || []
+    const pmsPerm = permissions.find(p => p.module === 'pms')
+    return pmsPerm?.actions?.view === true || user.role === 'admin' || user.pmsRole
+  }
+  return false
+})
+
+// Switch to PMS mode
+const switchToPms = () => {
+  pmsStore.enterPmsMode()
+  if (hotelStore.selectedHotel) {
+    pmsStore.setHotel(hotelStore.selectedHotel)
+  }
+  router.push('/pms/dashboard')
+}
+
+// Switch back to panel
+const switchToPanel = () => {
+  pmsStore.exitPmsMode()
+  router.push('/dashboard')
+}
 
 // Routes that need hotel selector
 const hotelRequiredRoutes = [
@@ -291,8 +353,30 @@ const planningTitles = computed(() => ({
   'market-detail': t('planning.markets.editMarket')
 }))
 
+// PMS route titles
+const pmsTitles = computed(() => ({
+  'pms-dashboard': t('pms.nav.dashboard'),
+  'pms-front-desk': t('pms.nav.frontDesk'),
+  'pms-room-plan': t('pms.nav.roomPlan'),
+  'pms-reservations': t('pms.nav.reservations'),
+  'pms-housekeeping': t('pms.nav.housekeeping'),
+  'pms-housekeeping-mobile': t('pms.nav.housekeeping'),
+  'pms-guests': t('pms.nav.guests'),
+  'pms-guest-detail': t('pms.nav.guests'),
+  'pms-kbs': t('pms.nav.kbs'),
+  'pms-cashier': t('pms.nav.cashier'),
+  'pms-billing': t('pms.nav.billing'),
+  'pms-night-audit': t('pms.nav.nightAudit'),
+  'pms-reports': t('pms.nav.reports'),
+  'pms-settings': t('pms.nav.settings'),
+  'pms-users': t('pms.nav.users')
+}))
+
 // Dynamic title based on route
 const displayTitle = computed(() => {
+  if (isPmsRoute.value) {
+    return pmsTitles.value[route.name] || 'PMS'
+  }
   if (isPlanningRoute.value) {
     return planningTitles.value[route.name] || t('planning.title')
   }
@@ -301,6 +385,9 @@ const displayTitle = computed(() => {
 
 // Dynamic description based on route
 const displayDescription = computed(() => {
+  if (isPmsRoute.value && pmsStore.hotelName) {
+    return pmsStore.hotelName
+  }
   if (isPlanningRoute.value && selectedHotelName.value) {
     return selectedHotelName.value
   }

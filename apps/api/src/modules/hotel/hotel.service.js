@@ -255,7 +255,9 @@ export const updateHotel = asyncHandler(async (req, res) => {
     const generatedAmenities = generateAmenitiesFromProfile(hotel.profile)
     if (generatedAmenities.length > 0) {
       hotel.amenities = generatedAmenities
-      logger.info(`Auto-generated amenities for hotel ${hotel._id}: ${generatedAmenities.join(', ')}`)
+      logger.info(
+        `Auto-generated amenities for hotel ${hotel._id}: ${generatedAmenities.join(', ')}`
+      )
     }
   }
 
@@ -372,130 +374,4 @@ export const getHotelCities = asyncHandler(async (req, res) => {
       count: c.count
     }))
   })
-})
-
-// ===== PMS Integration Endpoints =====
-
-/**
- * Get hotel PMS status
- * Returns whether hotel is provisioned to PMS and its status
- */
-export const getHotelPmsStatus = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  if (!partnerId) {
-    throw new BadRequestError('PARTNER_REQUIRED')
-  }
-
-  // Verify hotel ownership
-  await verifyHotelOwnership(id, partnerId)
-
-  // Get partner with PMS integration data
-  const partner = await Partner.findById(partnerId)
-  if (!partner) {
-    throw new NotFoundError('PARTNER_NOT_FOUND')
-  }
-
-  // Find hotel in provisioned hotels list
-  const provisionedHotel = partner.pmsIntegration?.provisionedHotels?.find(
-    h => h.hotelId?.toString() === id
-  )
-
-  res.json({
-    success: true,
-    data: {
-      pmsStatus: provisionedHotel
-        ? {
-            status: provisionedHotel.status,
-            pmsHotelId: provisionedHotel.pmsHotelId,
-            provisionedAt: provisionedHotel.provisionedAt
-          }
-        : null,
-      pmsEnabled: partner.pmsIntegration?.enabled || false
-    }
-  })
-})
-
-/**
- * Provision hotel to PMS
- * Queues hotel provisioning job and returns temporary credentials
- */
-export const provisionHotelToPms = asyncHandler(async (req, res) => {
-  const partnerId = getPartnerId(req)
-  const { id } = req.params
-
-  if (!partnerId) {
-    throw new BadRequestError('PARTNER_REQUIRED')
-  }
-
-  // Verify hotel ownership
-  const hotel = await verifyHotelOwnership(id, partnerId)
-
-  // Get partner
-  const partner = await Partner.findById(partnerId)
-  if (!partner) {
-    throw new NotFoundError('PARTNER_NOT_FOUND')
-  }
-
-  // Check if PMS integration is enabled for partner (using subscription-aware method)
-  if (!partner.isPmsEnabled()) {
-    throw new BadRequestError('PMS_NOT_ENABLED')
-  }
-
-  // Check if partner can provision more hotels (limit check)
-  if (!partner.canProvisionMoreHotels()) {
-    throw new BadRequestError('PMS_HOTEL_LIMIT_REACHED')
-  }
-
-  // Check if already provisioned
-  const existingProvisioning = partner.pmsIntegration?.provisionedHotels?.find(
-    h => h.hotelId?.toString() === id
-  )
-  if (existingProvisioning?.status === 'active') {
-    throw new BadRequestError('HOTEL_ALREADY_PROVISIONED')
-  }
-
-  // Import queue service dynamically to avoid circular dependencies
-  const { queueHotelProvisioning, queueUserProvisioning } = await import('#services/pmsQueueService.js')
-
-  // Generate temporary password for PMS admin user
-  const crypto = await import('crypto')
-  const tempPassword = crypto.randomBytes(8).toString('hex')
-
-  try {
-    // Queue hotel provisioning
-    const hotelJob = await queueHotelProvisioning(partner, hotel)
-
-    // Queue admin user provisioning (use partner admin)
-    const adminUser = {
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email
-    }
-    const userJob = await queueUserProvisioning(partner, hotel, adminUser, tempPassword)
-
-    // Update partner's provisioned hotels
-    await partner.updateHotelProvisionStatus(id, {
-      status: 'pending',
-      provisionedAt: new Date()
-    })
-    await partner.save()
-
-    logger.info(`Hotel ${id} provisioning started for partner ${partnerId}`)
-
-    res.json({
-      success: true,
-      message: req.t('HOTEL_PROVISIONING_STARTED'),
-      data: {
-        hotelJobId: hotelJob.jobId,
-        userJobId: userJob.jobId,
-        username: req.user.email,
-        tempPassword
-      }
-    })
-  } catch (error) {
-    logger.error(`Hotel provisioning failed: ${error.message}`)
-    throw new BadRequestError('PROVISIONING_FAILED')
-  }
 })

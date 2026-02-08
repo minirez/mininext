@@ -16,7 +16,20 @@ import logger from '#core/logger.js'
 
 // Create user (sends activation email)
 export const createUser = asyncHandler(async (req, res) => {
-  const { accountType, accountId, name, email, role, permissions } = req.body
+  const {
+    accountType,
+    accountId,
+    name,
+    email,
+    role,
+    permissions,
+    password,
+    pmsRole,
+    pmsDepartment,
+    pmsPermissions,
+    position,
+    phone
+  } = req.body
 
   // Determine account info
   let targetAccountType = accountType
@@ -30,11 +43,17 @@ export const createUser = asyncHandler(async (req, res) => {
 
   // Verify permissions
   if (req.user.accountType === 'partner') {
-    if (targetAccountType !== 'partner' || targetAccountId.toString() !== req.user.accountId.toString()) {
+    if (
+      targetAccountType !== 'partner' ||
+      targetAccountId.toString() !== req.user.accountId.toString()
+    ) {
       throw new ForbiddenError('FORBIDDEN')
     }
   } else if (req.user.accountType === 'agency') {
-    if (targetAccountType !== 'agency' || targetAccountId.toString() !== req.user.accountId.toString()) {
+    if (
+      targetAccountType !== 'agency' ||
+      targetAccountId.toString() !== req.user.accountId.toString()
+    ) {
       throw new ForbiddenError('FORBIDDEN')
     }
   }
@@ -62,7 +81,8 @@ export const createUser = asyncHandler(async (req, res) => {
     throw new BadRequestError('USER_ALREADY_EXISTS')
   }
 
-  // Create user with pending status (no password yet)
+  // Create user - if password provided, set active directly (PMS staff);
+  // otherwise use pending + activation email flow
   const user = new User({
     accountType: targetAccountType,
     accountId: targetAccountId,
@@ -70,32 +90,38 @@ export const createUser = asyncHandler(async (req, res) => {
     email,
     role: role || 'user',
     permissions: permissions || [],
-    status: 'pending',
+    pmsRole: pmsRole || undefined,
+    pmsDepartment: pmsDepartment || undefined,
+    pmsPermissions: pmsPermissions || [],
+    position: position || undefined,
+    phone: phone || undefined,
+    status: password ? 'active' : 'pending',
+    ...(password ? { password } : {}),
     invitedBy: req.user._id
   })
 
-  // Generate activation token
-  const activationToken = user.generateActivationToken()
-  await user.save()
+  if (!password) {
+    // Generate activation token and send email
+    const activationToken = user.generateActivationToken()
+    await user.save()
 
-  // Send activation email
-  try {
-    // Determine partnerId for email settings
-    const partnerId = targetAccountType === 'partner' ? targetAccountId : null
-
-    await sendActivationEmail({
-      to: email,
-      name,
-      inviterName: req.user.name,
-      accountName,
-      token: activationToken,
-      partnerId,
-      partnerCity
-    })
-    logger.info(`Activation email sent to ${email}`)
-  } catch (error) {
-    logger.error('Failed to send activation email:', error)
-    // Don't fail the request, user can resend later
+    try {
+      const partnerId = targetAccountType === 'partner' ? targetAccountId : null
+      await sendActivationEmail({
+        to: email,
+        name,
+        inviterName: req.user.name,
+        accountName,
+        token: activationToken,
+        partnerId,
+        partnerCity
+      })
+      logger.info(`Activation email sent to ${email}`)
+    } catch (error) {
+      logger.error('Failed to send activation email:', error)
+    }
+  } else {
+    await user.save()
   }
 
   // Remove sensitive fields from response
@@ -113,7 +139,18 @@ export const createUser = asyncHandler(async (req, res) => {
 
 // Get all users
 export const getUsers = asyncHandler(async (req, res) => {
-  const { accountType, accountId, status, search, role, page = 1, limit = 20 } = req.query
+  const {
+    accountType,
+    accountId,
+    status,
+    search,
+    role,
+    pmsRole,
+    pmsDepartment,
+    pmsAccess,
+    page = 1,
+    limit = 20
+  } = req.query
 
   // Build filter based on user permissions
   const filter = {}
@@ -138,6 +175,11 @@ export const getUsers = asyncHandler(async (req, res) => {
       { email: { $regex: search, $options: 'i' } }
     ]
   }
+
+  // PMS-specific filters
+  if (pmsRole) filter.pmsRole = pmsRole
+  if (pmsDepartment) filter.pmsDepartment = pmsDepartment
+  if (pmsAccess === 'true') filter.pmsRole = { $ne: null }
 
   // Pagination
   const skip = (page - 1) * limit
@@ -214,7 +256,12 @@ export const updateUser = asyncHandler(async (req, res) => {
     'preferredLanguage',
     'avatar',
     'notificationSettings',
-    'status'
+    'status',
+    'pmsRole',
+    'pmsDepartment',
+    'pmsPermissions',
+    'position',
+    'language'
   ]
 
   allowedFields.forEach(field => {
@@ -361,7 +408,12 @@ export const activateAccount = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       password: '(Şifrenizi zaten belirlediniz)',
-      accountType: user.accountType === 'partner' ? 'Partner' : user.accountType === 'agency' ? 'Acente' : 'Platform',
+      accountType:
+        user.accountType === 'partner'
+          ? 'Partner'
+          : user.accountType === 'agency'
+            ? 'Acente'
+            : 'Platform',
       accountName,
       loginUrl
     })

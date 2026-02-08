@@ -5,6 +5,7 @@ const HotelBaseDetailView = () => import('@/views/admin/HotelBaseDetailView.vue'
 const AuditLogsView = () => import('@/views/admin/AuditLogsView.vue')
 const PlatformSettingsView = () => import('@/views/admin/PlatformSettingsView.vue')
 const EmailLogsView = () => import('@/views/admin/EmailLogsView.vue')
+const MailboxView = () => import('@/views/admin/MailboxView.vue')
 
 export default [
   {
@@ -71,6 +72,16 @@ export default [
       requiresPlatformAdmin: true,
       titleKey: 'emailLogs.title',
       descriptionKey: 'emailLogs.description'
+    }
+  },
+  {
+    path: 'admin/mailbox',
+    name: 'mailbox',
+    component: MailboxView,
+    meta: {
+      requiresPlatformAdmin: true,
+      titleKey: 'mailbox.title',
+      descriptionKey: 'mailbox.description'
     }
   }
 ]
