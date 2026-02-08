@@ -646,12 +646,16 @@
         @updated="handleStayCardUpdated"
         @check-out="handleStayCardCheckOut"
         @change-room="
-          handleStayCardClose()
-          fetchData()
+          () => {
+            handleStayCardClose()
+            fetchData()
+          }
         "
         @extend-stay="
-          handleStayCardClose()
-          fetchData()
+          () => {
+            handleStayCardClose()
+            fetchData()
+          }
         "
       />
 
