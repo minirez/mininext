@@ -96,6 +96,15 @@
     "desktop": "Desktop",
     "mobile": "Mobile",
     "tablet": "Tablet",
+    "departments": {
+      "management": "Management",
+      "sales": "Sales",
+      "front_office": "Front Office",
+      "housekeeping": "Housekeeping",
+      "accounting": "Accounting",
+      "food_beverage": "Food & Beverage",
+      "maintenance": "Maintenance"
+    },
     "actions": {
       "activate": "Activate",
       "deactivate": "Deactivate",

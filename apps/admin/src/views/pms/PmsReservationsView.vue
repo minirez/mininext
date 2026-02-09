@@ -239,11 +239,13 @@
         <template #cell-roomType="{ row }">
           <div>
             <p class="text-gray-900 dark:text-white">
-              {{ row.roomTypeName || '-' }}
+              {{ getRoomTypeName(row) }}
             </p>
             <p class="text-xs text-gray-500 dark:text-slate-400">
-              {{ row.adults || 1 }} {{ t('reservations.adults') }}
-              <span v-if="row.children">, {{ row.children }} {{ t('reservations.children') }}</span>
+              {{ row.totalAdults || 1 }} {{ t('reservations.adults') }}
+              <span v-if="row.totalChildren"
+                >, {{ row.totalChildren }} {{ t('reservations.children') }}</span
+              >
             </p>
           </div>
         </template>
@@ -323,7 +325,7 @@
             </button>
             <button
               class="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
-              :title="t('reservations.detail')"
+              :title="t('common.detail')"
               @click.stop="openDetail(row)"
             >
               <span class="material-icons text-lg">visibility</span>
@@ -439,17 +441,35 @@ const columns = computed(() => [
 
 // Helper functions for guest data
 const getMainGuestName = row => {
-  // Find main guest from guests array
-  const mainGuest = row.guests?.find(g => g.isMainGuest) || row.guests?.[0]
-  if (mainGuest) {
-    return `${mainGuest.firstName || ''} ${mainGuest.lastName || ''}`.trim() || '-'
+  const lead = row.leadGuest
+  if (lead?.firstName) {
+    return `${lead.firstName} ${lead.lastName || ''}`.trim()
   }
   return '-'
 }
 
 const getMainGuestEmail = row => {
-  const mainGuest = row.guests?.find(g => g.isMainGuest) || row.guests?.[0]
-  return mainGuest?.email || mainGuest?.phone || '-'
+  return row.contact?.email || row.contact?.phone || '-'
+}
+
+const getRoomTypeName = row => {
+  if (!row.rooms?.length) return '-'
+  if (row.rooms.length === 1) {
+    const name = row.rooms[0].roomTypeName
+    return name?.[locale.value] || name?.tr || name?.en || '-'
+  }
+  // Multi-room: show unique room type names
+  const names = [
+    ...new Set(
+      row.rooms
+        .map(r => {
+          const n = r.roomTypeName
+          return n?.[locale.value] || n?.tr || n?.en || ''
+        })
+        .filter(Boolean)
+    )
+  ]
+  return names.join(', ') || '-'
 }
 
 const calculateNights = (checkIn, checkOut) => {

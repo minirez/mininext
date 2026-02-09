@@ -26,11 +26,23 @@ const getSESCommands = async () => {
  * @param {string} options.text - Plain text content (optional)
  * @param {string} options.from - From email (optional, uses config default)
  * @param {string} options.partnerId - Partner ID for partner-specific settings (optional)
+ * @param {string} options.partnerType - Partner type for dynamic from domain: 'hotel' or 'agency' (optional)
  * @param {string} options.type - Email type for logging (optional)
  * @param {string} options.userId - Related user ID (optional)
  * @param {Object} options.metadata - Additional metadata (optional)
  */
-export const sendEmail = async ({ to, subject, html, text, from, partnerId, type = 'other', userId, metadata }) => {
+export const sendEmail = async ({
+  to,
+  subject,
+  html,
+  text,
+  from,
+  partnerId,
+  partnerType,
+  type = 'other',
+  userId,
+  metadata
+}) => {
   // Create email log entry
   let emailLog = null
   try {
@@ -79,7 +91,36 @@ export const sendEmail = async ({ to, subject, html, text, from, partnerId, type
     const cacheKey = settings.source === 'partner' ? `partner-${partnerId}` : 'platform'
     const client = await getSESClient(settings, cacheKey)
 
-    const fromAddress = from || `${settings.fromName} <${settings.fromEmail}>`
+    // Determine from address with dynamic domain based on partnerType
+    let fromAddress = from
+    if (!fromAddress) {
+      let fromEmail = settings.fromEmail
+      let fromName = settings.fromName
+
+      // Resolve partnerType from partner record if not provided
+      let resolvedPartnerType = partnerType
+      if (!resolvedPartnerType && partnerId) {
+        try {
+          const { default: Partner } = await import('../../modules/partner/partner.model.js')
+          const partner = await Partner.findById(partnerId).select('partnerType').lean()
+          resolvedPartnerType = partner?.partnerType
+        } catch (e) {
+          // Ignore - will use default domain
+        }
+      }
+
+      // Switch domain for hotel partners: maxirez.com -> minirez.com
+      if (resolvedPartnerType === 'hotel') {
+        if (fromEmail) {
+          fromEmail = fromEmail.replace(/@maxirez\.com$/, '@minirez.com')
+        }
+        if (fromName) {
+          fromName = fromName.replace(/Maxirez/gi, 'Minirez')
+        }
+      }
+
+      fromAddress = `${fromName} <${fromEmail}>`
+    }
 
     const params = {
       Source: fromAddress,

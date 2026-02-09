@@ -96,6 +96,15 @@
     "desktop": "Masaüstü",
     "mobile": "Mobil",
     "tablet": "Tablet",
+    "departments": {
+      "management": "Yönetim",
+      "sales": "Satış",
+      "front_office": "Ön Büro",
+      "housekeeping": "Kat Hizmetleri",
+      "accounting": "Muhasebe",
+      "food_beverage": "Yiyecek & İçecek",
+      "maintenance": "Bakım"
+    },
     "actions": {
       "activate": "Aktif Et",
       "deactivate": "Pasif Et",

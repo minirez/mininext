@@ -1,5 +1,6 @@
 <template>
   <Modal v-model="show" :title="$t('frontDesk.checkIn.title')" size="lg" @close="close">
+    <!-- Multi-room badge in reservation info -->
     <div v-if="booking" class="space-y-6">
       <!-- Reservation Info -->
       <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
@@ -8,6 +9,17 @@
             <h4 class="font-medium text-blue-900 dark:text-blue-100">{{ guestDisplayName }}</h4>
             <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
               {{ reservationNumber }}
+              <span
+                v-if="booking._isMultiRoom"
+                class="ml-1 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded"
+              >
+                {{
+                  $t('frontDesk.roomOf', {
+                    current: booking._roomIndex + 1,
+                    total: booking._totalRooms
+                  })
+                }}
+              </span>
             </p>
           </div>
           <div class="text-right">
@@ -20,7 +32,7 @@
           </div>
         </div>
         <div class="mt-3 flex items-center gap-4 text-sm text-blue-600 dark:text-blue-400">
-          <span>{{ booking.roomType?.name?.tr || booking.roomType?.code }}</span>
+          <span>{{ roomTypeName }}</span>
           <span>{{ adultsCount }} {{ $t('frontDesk.checkIn.adults') }}</span>
           <span v-if="childrenCount"
             >{{ childrenCount }} {{ $t('frontDesk.checkIn.children') }}</span
@@ -215,12 +227,25 @@ const show = computed({
 
 // Helper: Check if this is a Stay object (has guests array) or Booking object
 const isStayObject = computed(() => {
+  if (props.booking?._type === 'booking_room') return false // Per-room booking entry
   return props.booking?.guests && Array.isArray(props.booking.guests)
 })
+
+// Per-room booking data
+const roomIndex = computed(() => props.booking?._roomIndex ?? 0)
+const bookingRoom = computed(() => props.booking?._roomData || props.booking?.rooms?.[0])
 
 // Computed properties to handle both Booking and Stay objects
 const guestDisplayName = computed(() => {
   if (!props.booking) return ''
+  // Per-room booking entry
+  const roomData = props.booking?._roomData
+  if (roomData?.guests?.length > 0) {
+    const lead = roomData.guests.find(g => g.isLead) || roomData.guests[0]
+    if (lead?.firstName && lead.firstName !== 'Guest') {
+      return `${lead.firstName} ${lead.lastName || ''}`.trim()
+    }
+  }
   if (isStayObject.value) {
     const mainGuest = props.booking.guests?.find(g => g.isMainGuest) || props.booking.guests?.[0]
     return mainGuest ? `${mainGuest.firstName} ${mainGuest.lastName}` : t('frontDesk.checkIn.guest')
@@ -276,16 +301,57 @@ const nightsCount = computed(() => {
 
 const adultsCount = computed(() => {
   if (!props.booking) return 0
-  return isStayObject.value ? props.booking.adultsCount : props.booking.adults
+  if (isStayObject.value) return props.booking.adultsCount || 0
+  // Per-room: count adults from _roomData.guests
+  const guests = bookingRoom.value?.guests || []
+  if (guests.length > 0) {
+    return guests.filter(g => g.type === 'adult' || !g.type).length
+  }
+  return props.booking.adults || 0
 })
 
 const childrenCount = computed(() => {
   if (!props.booking) return 0
-  return isStayObject.value ? props.booking.childrenCount : props.booking.children
+  if (isStayObject.value) return props.booking.childrenCount || 0
+  // Per-room: count children from _roomData.guests
+  const guests = bookingRoom.value?.guests || []
+  if (guests.length > 0) {
+    return guests.filter(g => g.type === 'child' || g.type === 'infant').length
+  }
+  return props.booking.children || 0
+})
+
+// Get room type display name from Booking or Stay
+const roomTypeName = computed(() => {
+  if (!props.booking) return ''
+  // Per-room booking entry
+  const roomData = bookingRoom.value
+  if (roomData?.roomTypeName) {
+    return roomData.roomTypeName.tr || roomData.roomTypeCode || ''
+  }
+  if (roomData?.roomType?.name) {
+    return roomData.roomType.name.tr || roomData.roomTypeCode || ''
+  }
+  // Stay: has populated roomType
+  if (props.booking.roomType?.name) {
+    return props.booking.roomType.name.tr || props.booking.roomType.code || ''
+  }
+  // Booking: roomType info inside rooms array (fallback)
+  const room = props.booking.rooms?.[0]
+  if (room) {
+    if (room.roomType?.name) return room.roomType.name.tr || room.roomTypeCode || ''
+    if (room.roomTypeName?.tr) return room.roomTypeName.tr
+    return room.roomTypeCode || ''
+  }
+  return ''
 })
 
 // Get the expected room type from booking
 const expectedRoomTypeId = computed(() => {
+  // Per-room booking entry
+  const roomData = bookingRoom.value
+  if (roomData?.roomType?._id) return roomData.roomType._id
+  if (roomData?.roomType && typeof roomData.roomType === 'string') return roomData.roomType
   return (
     props.booking?.roomType?._id ||
     props.booking?.rooms?.[0]?.roomType?._id ||
@@ -353,6 +419,7 @@ const submit = async () => {
       await stayService.checkInFromBooking(props.hotelId, {
         bookingId: props.booking._id,
         roomId: selectedRoomId.value,
+        roomIndex: roomIndex.value,
         guests,
         specialRequests: specialRequests.value
       })
@@ -392,8 +459,18 @@ watch(
       selectedRoomId.value = ''
       specialRequests.value = props.booking.specialRequests || ''
 
-      // Handle both Booking and Stay objects
-      if (isStayObject.value) {
+      // Handle per-room booking entry, Stay, or Booking objects
+      const roomData = props.booking?._roomData
+      if (roomData?.guests?.length > 0) {
+        // Per-room booking entry - use room-specific guests
+        const lead = roomData.guests.find(g => g.isLead) || roomData.guests[0]
+        guestForm.value = {
+          firstName: lead?.firstName || '',
+          lastName: lead?.lastName || '',
+          idNumber: '',
+          phone: props.booking.contact?.phone || ''
+        }
+      } else if (isStayObject.value) {
         // Stay object - use guests array
         const mainGuest =
           props.booking.guests?.find(g => g.isMainGuest) || props.booking.guests?.[0]

@@ -89,7 +89,16 @@ export const TEMPLATE_VARIABLES = {
     'COMPANY_NAME',
     'COMPANY_LOGO'
   ],
-  'email-reply': ['REPLY_BODY', 'ORIGINAL_FROM', 'ORIGINAL_DATE', 'ORIGINAL_BODY', 'SUBJECT']
+  'email-reply': ['REPLY_BODY', 'ORIGINAL_FROM', 'ORIGINAL_DATE', 'ORIGINAL_BODY', 'SUBJECT'],
+  'new-partner-notification': [
+    'PARTNER_NAME',
+    'PARTNER_EMAIL',
+    'PARTNER_PHONE',
+    'PARTNER_TYPE',
+    'CONTACT_NAME',
+    'SUBMITTED_AT',
+    'REVIEW_URL'
+  ]
 }
 
 /**
@@ -225,7 +234,23 @@ export const TEMPLATE_LABELS = {
     PAY_NOW_BUTTON: 'Şimdi Öde',
     SECURITY_NOTE_LABEL: 'Güvenlik Notu',
     SECURITY_NOTE:
-      'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.'
+      'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.',
+
+    // New Partner Notification
+    NEW_PARTNER_TITLE: 'Yeni Partner Başvurusu',
+    NEW_PARTNER_SUBTITLE: 'Yeni bir partner başvurusu alındı.',
+    PARTNER_INFO_TITLE: 'Partner Bilgileri',
+    PARTNER_NAME_LABEL: 'Firma Adı',
+    PARTNER_EMAIL_LABEL: 'E-posta',
+    PARTNER_PHONE_LABEL: 'Telefon',
+    PARTNER_TYPE_LABEL: 'Partner Tipi',
+    CONTACT_NAME_LABEL: 'Yetkili Kişi',
+    SUBMITTED_AT_LABEL: 'Başvuru Tarihi',
+    PARTNER_TYPE_HOTEL: 'Otel',
+    PARTNER_TYPE_AGENCY: 'Acente',
+    REVIEW_BUTTON: 'Başvuruyu İncele',
+    NEW_PARTNER_FOOTER_NOTE:
+      'Bu e-posta yeni bir partner başvurusu alındığında otomatik olarak gönderilmiştir.'
   },
   en: {
     // Common - Layout
@@ -355,7 +380,23 @@ export const TEMPLATE_LABELS = {
     PAY_NOW_BUTTON: 'Pay Now',
     SECURITY_NOTE_LABEL: 'Security Note',
     SECURITY_NOTE:
-      'This payment is secured with 3D Secure. Your card details are transmitted encrypted.'
+      'This payment is secured with 3D Secure. Your card details are transmitted encrypted.',
+
+    // New Partner Notification
+    NEW_PARTNER_TITLE: 'New Partner Application',
+    NEW_PARTNER_SUBTITLE: 'A new partner application has been received.',
+    PARTNER_INFO_TITLE: 'Partner Information',
+    PARTNER_NAME_LABEL: 'Company Name',
+    PARTNER_EMAIL_LABEL: 'Email',
+    PARTNER_PHONE_LABEL: 'Phone',
+    PARTNER_TYPE_LABEL: 'Partner Type',
+    CONTACT_NAME_LABEL: 'Contact Person',
+    SUBMITTED_AT_LABEL: 'Submitted At',
+    PARTNER_TYPE_HOTEL: 'Hotel',
+    PARTNER_TYPE_AGENCY: 'Agency',
+    REVIEW_BUTTON: 'Review Application',
+    NEW_PARTNER_FOOTER_NOTE:
+      'This email was sent automatically when a new partner application was received.'
   }
 }
 

@@ -36,14 +36,14 @@ export const getCompanies = async (params = {}) => {
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
-export const getCompany = async (id) => {
+export const getCompany = async id => {
   console.warn('getCompany is deprecated - use partnerId on POS')
   const response = await posClient.get(`/companies/${id}`)
   return response.data
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
-export const createCompany = async (data) => {
+export const createCompany = async data => {
   console.warn('createCompany is deprecated - use partnerId on POS')
   const response = await posClient.post('/companies', data)
   return response.data
@@ -57,7 +57,7 @@ export const updateCompany = async (id, data) => {
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
-export const deleteCompany = async (id) => {
+export const deleteCompany = async id => {
   console.warn('deleteCompany is deprecated - use partnerId on POS')
   const response = await posClient.delete(`/companies/${id}`)
   return response.data
@@ -72,12 +72,12 @@ export const getPosList = async (params = {}) => {
   return response.data
 }
 
-export const getPos = async (id) => {
+export const getPos = async id => {
   const response = await posClient.get(`/pos/${id}`)
   return response.data
 }
 
-export const createPos = async (data) => {
+export const createPos = async data => {
   const response = await posClient.post('/pos', data)
   return response.data
 }
@@ -87,7 +87,7 @@ export const updatePos = async (id, data) => {
   return response.data
 }
 
-export const deletePos = async (id) => {
+export const deletePos = async id => {
   const response = await posClient.delete(`/pos/${id}`)
   return response.data
 }
@@ -117,7 +117,7 @@ export const getTransactions = async (params = {}) => {
   return response.data
 }
 
-export const getTransaction = async (id) => {
+export const getTransaction = async id => {
   const response = await posClient.get(`/transactions/${id}`)
   return response.data
 }
@@ -141,12 +141,12 @@ export const getBins = async (params = {}) => {
   return response.data
 }
 
-export const getBin = async (id) => {
+export const getBin = async id => {
   const response = await posClient.get(`/bins/${id}`)
   return response.data
 }
 
-export const createBin = async (data) => {
+export const createBin = async data => {
   const response = await posClient.post('/bins', data)
   return response.data
 }
@@ -156,17 +156,17 @@ export const updateBin = async (id, data) => {
   return response.data
 }
 
-export const deleteBin = async (id) => {
+export const deleteBin = async id => {
   const response = await posClient.delete(`/bins/${id}`)
   return response.data
 }
 
-export const importBins = async (data) => {
+export const importBins = async data => {
   const response = await posClient.post('/bins/import', data)
   return response.data
 }
 
-export const lookupBin = async (binNumber) => {
+export const lookupBin = async binNumber => {
   const response = await posClient.get(`/bins/lookup/${binNumber}`)
   return response.data
 }
@@ -175,7 +175,7 @@ export const lookupBin = async (binNumber) => {
 // Payment Test
 // ============================================================================
 
-export const testPayment = async (data) => {
+export const testPayment = async data => {
   const response = await posClient.post('/pay', data)
   return response.data
 }
@@ -190,8 +190,9 @@ export const getPaymentProviders = async () => {
  * Used for displaying IP address requirements for bank POS configuration
  */
 export const getServerInfo = async () => {
-  // Use base URL without /api (info endpoint is at root)
-  const baseUrl = PAYMENT_API.replace('/api', '')
+  // Use base URL without path (info endpoint is at server root)
+  const url = new URL(PAYMENT_API)
+  const baseUrl = `${url.protocol}//${url.host}`
   const response = await axios.get(`${baseUrl}/info`)
   return response.data
 }
@@ -205,12 +206,12 @@ export const getPartnerCommissions = async (params = {}) => {
   return response.data
 }
 
-export const getPartnerCommission = async (id) => {
+export const getPartnerCommission = async id => {
   const response = await posClient.get(`/partner-commissions/${id}`)
   return response.data
 }
 
-export const createPartnerCommission = async (data) => {
+export const createPartnerCommission = async data => {
   const response = await posClient.post('/partner-commissions', data)
   return response.data
 }
@@ -220,12 +221,12 @@ export const updatePartnerCommission = async (id, data) => {
   return response.data
 }
 
-export const deletePartnerCommission = async (id) => {
+export const deletePartnerCommission = async id => {
   const response = await posClient.delete(`/partner-commissions/${id}`)
   return response.data
 }
 
-export const calculateCommission = async (data) => {
+export const calculateCommission = async data => {
   const response = await posClient.post('/partner-commissions/calculate', data)
   return response.data
 }
@@ -241,7 +242,7 @@ export const companyApi = {
   create: createCompany,
   update: updateCompany,
   delete: deleteCompany,
-  getApiKeys: async (id) => {
+  getApiKeys: async id => {
     console.warn('companyApi.getApiKeys is deprecated')
     const response = await posClient.get(`/companies/${id}/api-keys`)
     return response
@@ -268,11 +269,11 @@ export const binApi = {
   update: updateBin,
   delete: deleteBin,
   bulkImport: importBins,
-  search: async (bin) => {
+  search: async bin => {
     const response = await posClient.get(`/bins/search/${bin}`)
     return response
   },
-  lookup: async (bin) => {
+  lookup: async bin => {
     const response = await posClient.get(`/bins/lookup/${bin}`)
     return response
   },
@@ -329,27 +330,27 @@ export const transactionApi = {
 
 export const paymentApi = {
   pay: testPayment,
-  queryBin: async (data) => {
+  queryBin: async data => {
     const response = await posClient.post('/bin', data)
     return response
   },
-  getStatus: async (id) => {
+  getStatus: async id => {
     const response = await posClient.get(`/${id}`)
     return response
   },
-  refund: async (transactionId) => {
+  refund: async transactionId => {
     const response = await posClient.post('/refund', { transactionId })
     return response
   },
-  cancel: async (transactionId) => {
+  cancel: async transactionId => {
     const response = await posClient.post('/cancel', { transactionId })
     return response
   },
-  queryStatus: async (id) => {
+  queryStatus: async id => {
     const response = await posClient.get(`/status/${id}`)
     return response
   },
-  getCapabilities: async (posId) => {
+  getCapabilities: async posId => {
     const response = await posClient.get(`/capabilities/${posId}`)
     return response
   }

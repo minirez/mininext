@@ -794,7 +794,10 @@ import {
   calculateDefaultDates,
   calculateNights
 } from '@/utils/priceQueryHelpers'
-import { transformApiResultToMpResult, groupResultsByRoomType } from '@/utils/priceResultTransformer'
+import {
+  transformApiResultToMpResult,
+  groupResultsByRoomType
+} from '@/utils/priceResultTransformer'
 
 const { locale } = useI18n()
 
@@ -891,9 +894,15 @@ const updateChildCount = count => {
 // Wrapper for getRoomTypeName to use locale
 const getRoomTypeName = roomType => getRoomTypeNameUtil(roomType, locale.value)
 
-// API base URL for images
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.maxirez.com/api'
-const imageBaseUrl = apiBaseUrl.replace('/api', '')
+// API base URL for images - use URL parser to correctly extract host
+const imageBaseUrl = (() => {
+  try {
+    const url = new URL(import.meta.env.VITE_API_BASE_URL || 'https://api.maxirez.com/api')
+    return `${url.protocol}//${url.host}`
+  } catch {
+    return ''
+  }
+})()
 
 // Wrapper for getRoomImage to include base URL
 const getRoomImage = roomType => getRoomImageUtil(roomType, imageBaseUrl)

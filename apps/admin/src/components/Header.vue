@@ -296,7 +296,8 @@ const showPmsLink = computed(() => {
 // Switch to PMS mode
 const switchToPms = () => {
   pmsStore.enterPmsMode()
-  if (hotelStore.selectedHotel) {
+  // Only copy from hotelStore if PMS doesn't already have a hotel
+  if (!pmsStore.selectedPmsHotel && hotelStore.selectedHotel) {
     pmsStore.setHotel(hotelStore.selectedHotel)
   }
   router.push('/pms/dashboard')

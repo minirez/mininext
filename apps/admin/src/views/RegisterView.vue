@@ -52,14 +52,14 @@
       <!-- Registration Form -->
       <div v-else class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-6 text-white">
+        <div class="bg-gradient-to-r px-8 py-6 text-white" :class="branding.config.headerGradient">
           <div class="flex items-center gap-4">
             <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-              <span class="material-icons text-3xl">business</span>
+              <span class="material-icons text-3xl">{{ branding.icon }}</span>
             </div>
             <div>
-              <h2 class="text-2xl font-bold">{{ $t('auth.partnerRegister') }}</h2>
-              <p class="text-purple-100 mt-1">{{ $t('auth.createPartnerAccount') }}</p>
+              <h2 class="text-2xl font-bold">{{ $t(branding.config.registerTitle) }}</h2>
+              <p class="mt-1 opacity-80">{{ $t(branding.config.registerSubtitle) }}</p>
             </div>
           </div>
         </div>
@@ -83,7 +83,7 @@
               <h3
                 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
               >
-                <span class="material-icons text-purple-600">domain</span>
+                <span class="material-icons" :class="branding.config.accentColor">domain</span>
                 {{ $t('auth.companyInfo') }}
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -146,7 +146,7 @@
               <h3
                 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
               >
-                <span class="material-icons text-purple-600">person</span>
+                <span class="material-icons" :class="branding.config.accentColor">person</span>
                 {{ $t('auth.contactPerson') }}
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,28 +193,15 @@
                   </p>
                 </div>
                 <div>
-                  <label for="phone" class="form-label">{{ $t('auth.phone') }} *</label>
-                  <div class="relative">
-                    <span
-                      class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      >phone</span
-                    >
-                    <input
-                      id="phone"
-                      v-model="form.phone"
-                      type="tel"
-                      class="form-input pl-10"
-                      :class="{
-                        'border-red-500 focus:border-red-500 focus:ring-red-500': errors.phone
-                      }"
-                      placeholder="+90 555 123 45 67"
-                      :disabled="loading"
-                      @input="clearError('phone')"
-                    />
-                  </div>
-                  <p v-if="errors.phone" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {{ errors.phone }}
-                  </p>
+                  <PhoneInput
+                    v-model="form.phone"
+                    :label="$t('auth.phone')"
+                    :required="true"
+                    :disabled="loading"
+                    :error="errors.phone"
+                    :country="form.address.country"
+                    @change="clearError('phone')"
+                  />
                 </div>
               </div>
             </div>
@@ -224,7 +211,7 @@
               <h3
                 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"
               >
-                <span class="material-icons text-purple-600">location_on</span>
+                <span class="material-icons" :class="branding.config.accentColor">location_on</span>
                 {{ $t('auth.address') }}
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,7 +256,8 @@
                 <input
                   v-model="form.acceptTerms"
                   type="checkbox"
-                  class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  class="mt-1 h-4 w-4 border-gray-300 rounded"
+                  :class="branding.config.checkboxColor"
                   @change="clearError('acceptTerms')"
                 />
                 <span
@@ -281,11 +269,11 @@
                   "
                 >
                   {{ $t('auth.termsPrefix') }}
-                  <a href="#" class="text-purple-600 hover:underline">{{
+                  <a href="#" class="hover:underline" :class="branding.config.accentColor">{{
                     $t('auth.termsOfService')
                   }}</a>
                   {{ $t('auth.and') }}
-                  <a href="#" class="text-purple-600 hover:underline">{{
+                  <a href="#" class="hover:underline" :class="branding.config.accentColor">{{
                     $t('auth.privacyPolicy')
                   }}</a>
                   {{ $t('auth.termsSuffix') }}
@@ -327,10 +315,7 @@
           <div class="mt-6 text-center pt-6 border-t border-gray-200 dark:border-slate-700">
             <p class="text-gray-600 dark:text-slate-400">
               {{ $t('auth.alreadyHaveAccount') }}
-              <RouterLink
-                to="/auth/login"
-                class="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
-              >
+              <RouterLink to="/auth/login" class="font-medium" :class="branding.config.linkColor">
                 {{ $t('auth.loginHere') }}
               </RouterLink>
             </p>
@@ -348,10 +333,13 @@ import apiClient from '@/services/api'
 import { useI18n } from 'vue-i18n'
 import CountrySelect from '@/components/common/CountrySelect.vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
+import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import { useUIStore } from '@/stores/ui'
+import { useDomainBranding } from '@/composables/useDomainBranding'
 
 const { t } = useI18n()
 const uiStore = useUIStore()
+const branding = useDomainBranding()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
@@ -466,7 +454,8 @@ const handleRegister = async () => {
       phone: form.value.phone.trim(),
       taxOffice: form.value.taxOffice.trim(),
       taxNumber: form.value.taxNumber.trim(),
-      address: form.value.address
+      address: form.value.address,
+      partnerType: branding.partnerType
     })
 
     if (response.data.success) {

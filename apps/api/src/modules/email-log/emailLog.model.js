@@ -25,6 +25,7 @@ const emailLogSchema = new mongoose.Schema(
         'night-audit',
         'payment-reminder',
         'checkin-reminder',
+        'new-partner-notification',
         'other'
       ],
       default: 'other',

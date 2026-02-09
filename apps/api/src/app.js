@@ -76,6 +76,11 @@ const corsOptions = {
         return callback(null, true)
       }
 
+      // Allow *.minirez.com for hotel partner domain
+      if (hostname.endsWith('.minirez.com') || hostname === 'minirez.com') {
+        return callback(null, true)
+      }
+
       // Production: Only allow configured origins
       // Partner domains should be added to CORS_ORIGIN env variable
       return callback(new Error('Origin not allowed by CORS'), false)

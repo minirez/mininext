@@ -136,6 +136,12 @@ const staySchema = new mongoose.Schema(
       default: null
     },
 
+    // Which room index from booking.rooms[] this stay represents (for multi-room bookings)
+    roomIndex: {
+      type: Number,
+      default: 0
+    },
+
     // Stay dates
     checkInDate: {
       type: Date,

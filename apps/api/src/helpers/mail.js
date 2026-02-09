@@ -23,7 +23,8 @@ export {
   sendBookingCancellation,
   sendPasswordResetEmail,
   sendNightAuditReports,
-  sendIssueNudgeEmail
+  sendIssueNudgeEmail,
+  sendNewPartnerNotification
 } from './mail/senders.js'
 
 // Default export for backward compatibility
@@ -37,7 +38,8 @@ import {
   sendBookingCancellation,
   sendPasswordResetEmail,
   sendNightAuditReports,
-  sendIssueNudgeEmail
+  sendIssueNudgeEmail,
+  sendNewPartnerNotification
 } from './mail/senders.js'
 
 export default {
@@ -51,6 +53,7 @@ export default {
   sendPasswordResetEmail,
   sendNightAuditReports,
   sendIssueNudgeEmail,
+  sendNewPartnerNotification,
   clearEmailCache,
   getAdminUrl
 }

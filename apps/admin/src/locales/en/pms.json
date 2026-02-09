@@ -1972,6 +1972,8 @@
     "doCheckOut": "Check-out",
     "status": "Status",
     "noGuestInfo": "No guest information",
+    "roomOf": "Room {current}/{total}",
+    "roomsCheckedIn": "{count} room(s) checked in",
     "noExpectedArrivals": "No expected arrivals today",
     "noExpectedDepartures": "No expected departures today",
     "noArrivals": "No pending arrivals",

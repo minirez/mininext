@@ -21,21 +21,30 @@ let _supportsTransactions = null
 
 /**
  * Check if current MongoDB deployment supports transactions.
- * Transactions require a replica set. Result is cached after first check.
+ * Uses topology check - transactions require replica set or sharded cluster.
  */
-async function checkTransactionSupport() {
+function checkTransactionSupport() {
   if (_supportsTransactions !== null) return _supportsTransactions
 
   try {
-    const session = await mongoose.startSession()
-    session.startTransaction()
-    await session.abortTransaction()
-    session.endSession()
-    _supportsTransactions = true
-    logger.info('[Transaction] Transactions supported (replica set detected)')
+    const topology = mongoose.connection?.client?.topology
+    const description = topology?.s?.description || topology?.description
+    const type = description?.type
+
+    if (type === 'ReplicaSetWithPrimary' || type === 'Sharded') {
+      _supportsTransactions = true
+      logger.info(`[Transaction] Transactions supported (topology: ${type})`)
+    } else {
+      _supportsTransactions = false
+      logger.info(
+        `[Transaction] Transactions not supported (topology: ${type || 'standalone'}). Using graceful fallback.`
+      )
+    }
   } catch {
     _supportsTransactions = false
-    logger.info('[Transaction] Transactions not supported (standalone mode). Using graceful fallback.')
+    logger.info(
+      '[Transaction] Transactions not supported (could not determine topology). Using graceful fallback.'
+    )
   }
 
   return _supportsTransactions
@@ -52,7 +61,7 @@ async function checkTransactionSupport() {
  * @returns {*} The return value of fn
  */
 export async function withTransaction(fn) {
-  const supportsTransactions = await checkTransactionSupport()
+  const supportsTransactions = checkTransactionSupport()
 
   if (!supportsTransactions) {
     return fn(null)

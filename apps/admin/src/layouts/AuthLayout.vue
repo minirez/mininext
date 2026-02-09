@@ -1,6 +1,7 @@
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-purple-800"
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br"
+    :class="[branding.config.gradientFrom, branding.config.gradientTo]"
   >
     <!-- Top Bar: Language & Theme -->
     <div class="fixed top-4 right-4 flex items-center gap-2 z-50">
@@ -23,8 +24,10 @@
         >
           <img :src="aaLogo" alt="AdviceAl Logo" class="w-24 h-24 object-contain" />
         </div>
-        <h1 class="text-3xl font-bold text-white">{{ $t('auth.portalTitle') }}</h1>
-        <p class="text-purple-200 mt-2">{{ $t('auth.portalSubtitle') }}</p>
+        <h1 class="text-3xl font-bold text-white">{{ $t(branding.config.portalTitle) }}</h1>
+        <p class="mt-2" :class="branding.config.textMuted">
+          {{ $t(branding.config.portalSubtitle) }}
+        </p>
       </div>
 
       <!-- Auth Form Container -->
@@ -36,13 +39,14 @@
 
       <!-- Footer -->
       <div class="text-center mt-8">
-        <p class="text-purple-200 text-sm">
+        <p class="text-sm" :class="branding.config.textMuted">
           © {{ new Date().getFullYear() }}
           <a
             href="https://adviceal.com"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-purple-100 hover:text-white underline transition-colors"
+            class="hover:text-white underline transition-colors"
+            :class="branding.config.textAccent"
             >{{ $t('auth.footerCompany') }}</a
           >, {{ $t('auth.footerSlogan') }}
         </p>
@@ -52,10 +56,12 @@
     <!-- Background Pattern -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div
-        class="absolute -top-16 -right-16 w-64 h-64 bg-purple-500 rounded-full opacity-20 blur-3xl"
+        class="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-20 blur-3xl"
+        :class="branding.config.bgCircle1"
       ></div>
       <div
-        class="absolute -bottom-16 -left-16 w-96 h-96 bg-purple-700 rounded-full opacity-20 blur-3xl"
+        class="absolute -bottom-16 -left-16 w-96 h-96 rounded-full opacity-20 blur-3xl"
+        :class="branding.config.bgCircle2"
       ></div>
     </div>
   </div>
@@ -65,9 +71,11 @@
 import { computed } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
+import { useDomainBranding } from '@/composables/useDomainBranding'
 import aaLogo from '@/assets/aa-logo.jpeg'
 
 const uiStore = useUIStore()
+const branding = useDomainBranding()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()

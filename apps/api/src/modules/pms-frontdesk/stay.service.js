@@ -211,22 +211,68 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
-  // Get expected arrivals from Bookings (not yet converted to Stay)
-  const checkedInBookingIds = await Stay.find({
-    hotel: hotelId,
-    booking: { $ne: null }
-  }).distinct('booking')
-
+  // Get expected arrivals from Bookings (per-room expansion for multi-room bookings)
   let expectedFromBookings = []
   try {
-    expectedFromBookings = await Booking.find({
+    // 1. Get today's bookings (confirmed + pending)
+    const todayBookings = await Booking.find({
       hotel: hotelId,
       checkIn: { $gte: today, $lt: tomorrow },
-      status: { $in: ['confirmed', 'pending'] },
-      _id: { $nin: checkedInBookingIds }
-    }).populate('roomType', 'name code')
+      status: { $in: ['confirmed', 'pending'] }
+    }).lean()
+
+    // 2. Get all stays for these bookings (to check which rooms are already checked in)
+    const bookingIds = todayBookings.map(b => b._id)
+    const existingStays = await Stay.find({
+      hotel: hotelId,
+      booking: { $in: bookingIds }
+    })
+      .select('booking roomIndex')
+      .lean()
+
+    // Build a map: bookingId -> Set of checked-in roomIndexes
+    const checkedInMap = new Map()
+    for (const stay of existingStays) {
+      const key = stay.booking.toString()
+      if (!checkedInMap.has(key)) checkedInMap.set(key, new Set())
+      checkedInMap.get(key).add(stay.roomIndex ?? 0)
+    }
+
+    // 3. Expand each booking into per-room entries
+    for (const booking of todayBookings) {
+      const bookingKey = booking._id.toString()
+      const checkedInRooms = checkedInMap.get(bookingKey) || new Set()
+      const rooms = booking.rooms || []
+
+      if (rooms.length <= 1) {
+        // Single-room or no rooms: check if already checked in
+        if (checkedInRooms.has(0)) continue
+        expectedFromBookings.push({
+          ...booking,
+          _type: 'booking_room',
+          _roomIndex: 0,
+          _totalRooms: Math.max(rooms.length, 1),
+          _isMultiRoom: false,
+          _checkedInCount: checkedInRooms.size,
+          _roomData: rooms[0] || null
+        })
+      } else {
+        // Multi-room booking: one entry per unchecked room
+        for (let i = 0; i < rooms.length; i++) {
+          if (checkedInRooms.has(i)) continue
+          expectedFromBookings.push({
+            ...booking,
+            _type: 'booking_room',
+            _roomIndex: i,
+            _totalRooms: rooms.length,
+            _isMultiRoom: true,
+            _checkedInCount: checkedInRooms.size,
+            _roomData: rooms[i]
+          })
+        }
+      }
+    }
   } catch (error) {
-    // Log the error but don't fail - Booking model might not be initialized
     logger.warn('Failed to fetch expected bookings:', { error: error.message, hotelId })
   }
 
@@ -472,7 +518,7 @@ export const walkInCheckIn = asyncHandler(async (req, res) => {
  */
 export const checkInFromBooking = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { bookingId, roomId, guests, specialRequests } = req.body
+  const { bookingId, roomId, roomIndex = 0, guests, specialRequests } = req.body
 
   // CRITICAL: Acquire distributed lock for this room to prevent concurrent check-ins
   // This prevents race conditions when two requests try to check into the same room
@@ -547,17 +593,96 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       }
     }
 
-    // Use provided guests or booking guests
-    const guestList = guests ||
-      booking.guests || [
-        {
-          firstName: booking.customerName?.split(' ')[0] || 'Misafir',
-          lastName: booking.customerName?.split(' ').slice(1).join(' ') || '',
-          isMainGuest: true,
-          phone: booking.customerPhone,
-          email: booking.customerEmail
+    // Use provided guests, or extract from booking structure
+    let guestList = guests
+    if (!guestList || guestList.length === 0) {
+      const lead = booking.leadGuest
+      const bookingRoom = booking.rooms?.[roomIndex] || booking.rooms?.[0]
+      const roomGuests = bookingRoom?.guests || []
+
+      // For multi-room bookings, prefer the room's own lead guest
+      const roomLead = roomGuests.find(g => g.isLead)
+      const hasRoomLead = roomLead?.firstName && roomLead.firstName !== 'Guest'
+
+      if (hasRoomLead) {
+        // Use room's own lead guest as main guest
+        guestList = [
+          {
+            firstName: roomLead.firstName,
+            lastName: roomLead.lastName || '-',
+            type: roomLead.type || 'adult',
+            nationality: roomLead.nationality,
+            isMainGuest: true,
+            phone: booking.contact?.phone,
+            email: booking.contact?.email
+          }
+        ]
+        // Add remaining room guests (non-lead, with real names)
+        for (const g of roomGuests) {
+          if (
+            g === roomLead ||
+            (g.firstName === roomLead.firstName && g.lastName === roomLead.lastName)
+          )
+            continue
+          if (g.firstName && g.firstName !== 'Guest') {
+            guestList.push({
+              firstName: g.firstName,
+              lastName: g.lastName || '-',
+              type: g.type || 'adult',
+              nationality: g.nationality,
+              isMainGuest: false
+            })
+          }
         }
-      ]
+      } else if (lead?.firstName && lead.firstName !== 'Guest') {
+        // Fallback to booking leadGuest (single-room or no room lead)
+        guestList = [
+          {
+            firstName: lead.firstName,
+            lastName: lead.lastName || '-',
+            type: lead.type || 'adult',
+            nationality: lead.nationality,
+            isMainGuest: true,
+            phone: booking.contact?.phone,
+            email: booking.contact?.email
+          }
+        ]
+        for (const g of roomGuests) {
+          if (g.isLead || (g.firstName === lead.firstName && g.lastName === lead.lastName)) continue
+          if (g.firstName && g.firstName !== 'Guest') {
+            guestList.push({
+              firstName: g.firstName,
+              lastName: g.lastName || '-',
+              type: g.type || 'adult',
+              nationality: g.nationality,
+              isMainGuest: false
+            })
+          }
+        }
+      } else if (roomGuests.length > 0) {
+        // No usable lead at all, use room guests
+        guestList = roomGuests
+          .filter(g => g.firstName && g.firstName !== 'Guest')
+          .map((g, i) => ({
+            firstName: g.firstName,
+            lastName: g.lastName || '-',
+            type: g.type || 'adult',
+            nationality: g.nationality,
+            isMainGuest: g.isLead || i === 0
+          }))
+      }
+
+      // Final fallback
+      if (!guestList || guestList.length === 0) {
+        guestList = [
+          {
+            firstName: lead?.firstName || 'Misafir',
+            lastName: lead?.lastName || '-',
+            isMainGuest: true
+          }
+        ]
+      }
+    }
 
     // Execute critical operations within a transaction
     const stay = await withTransaction(async session => {
@@ -588,8 +713,8 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         throw new BadRequestError('Oda artık müsait değil - başka bir işlem tarafından alındı')
       }
 
-      // Check if pending Stay exists (from booking confirmation)
-      let existingStay = await Stay.findOne({ booking: bookingId }).session(session)
+      // Check if pending Stay exists for this specific room index
+      let existingStay = await Stay.findOne({ booking: bookingId, roomIndex }).session(session)
 
       let savedStay
       if (existingStay) {
@@ -613,6 +738,8 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         savedStay = await existingStay.save({ session })
       } else {
         // No pending Stay exists (backward compatibility) - create new one
+        const bookingRoom = booking.rooms?.[roomIndex] || booking.rooms?.[0]
+        const roomFinalTotal = bookingRoom?.pricing?.finalTotal
         const [newStay] = await Stay.create(
           [
             {
@@ -621,6 +748,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
               roomType: room.roomType._id,
               booking: bookingId,
               bookingNumber: booking.bookingNumber,
+              roomIndex,
               checkInDate: checkIn,
               checkOutDate: checkOut,
               actualCheckIn: new Date(),
@@ -628,10 +756,10 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
               guests: guestList,
               adultsCount: booking.adults || 1,
               childrenCount: booking.children || 0,
-              mealPlan: booking.mealPlan,
+              mealPlan: bookingRoom?.mealPlan || booking.mealPlan,
               mealPlanCode: booking.mealPlanCode,
-              roomRate: booking.totalAmount ?? 0,
-              totalAmount: booking.totalAmount ?? 0,
+              roomRate: roomFinalTotal ?? booking.totalAmount ?? 0,
+              totalAmount: roomFinalTotal ?? booking.totalAmount ?? 0,
               paidAmount: booking.paidAmount ?? 0,
               specialRequests: specialRequests || booking.specialRequests,
               source: 'booking',
@@ -645,8 +773,13 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         savedStay = newStay
       }
 
-      // Update booking status
-      await Booking.updateOne({ _id: bookingId }, { $set: { status: 'checked_in' } }, { session })
+      // Conditionally update booking status:
+      // Only set checked_in when ALL rooms have been checked in
+      const totalRooms = booking.rooms?.length || 1
+      const stayCount = await Stay.countDocuments({ booking: bookingId }).session(session)
+      if (stayCount >= totalRooms) {
+        await Booking.updateOne({ _id: bookingId }, { $set: { status: 'checked_in' } }, { session })
+      }
 
       return savedStay
     })
@@ -803,13 +936,23 @@ export const checkOut = asyncHandler(async (req, res) => {
       { session }
     )
 
-    // Update Booking status if exists
+    // Conditionally update Booking status if exists
+    // Only set checked_out when ALL rooms have checked out
     if (stay.booking) {
-      await Booking.updateOne(
-        { _id: stay.booking },
-        { $set: { status: 'checked_out' } },
-        { session }
-      )
+      const bk = await Booking.findById(stay.booking).select('rooms').lean().session(session)
+      const totalRooms = bk?.rooms?.length || 1
+      // Count stays that are now checked_out (includes current one just updated above)
+      const checkedOutCount = await Stay.countDocuments({
+        booking: stay.booking,
+        status: STAY_STATUS.CHECKED_OUT
+      }).session(session)
+      if (checkedOutCount >= totalRooms) {
+        await Booking.updateOne(
+          { _id: stay.booking },
+          { $set: { status: 'checked_out' } },
+          { session }
+        )
+      }
     }
 
     return { actualCheckOut: stayUpdateData.actualCheckOut }
@@ -1603,10 +1746,16 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
   // Update room status
   await room.checkIn(stay.booking, stay.guests, stay.checkOutDate)
 
-  // Update booking status if exists
+  // Conditionally update booking status if exists
+  // Only set checked_in when ALL rooms have been checked in
   if (stay.booking) {
     try {
-      await Booking.findByIdAndUpdate(stay.booking, { status: 'checked_in' })
+      const booking = await Booking.findById(stay.booking).select('rooms').lean()
+      const totalRooms = booking?.rooms?.length || 1
+      const stayCount = await Stay.countDocuments({ booking: stay.booking })
+      if (stayCount >= totalRooms) {
+        await Booking.findByIdAndUpdate(stay.booking, { status: 'checked_in' })
+      }
     } catch {
       // Non-critical - booking status update failed
     }

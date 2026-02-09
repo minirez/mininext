@@ -1971,6 +1971,8 @@
     "doCheckOut": "Check-out",
     "status": "Durum",
     "noGuestInfo": "Misafir bilgisi yok",
+    "roomOf": "Oda {current}/{total}",
+    "roomsCheckedIn": "{count} oda giriş yaptı",
     "noExpectedArrivals": "Bugün beklenen giriş yok",
     "noExpectedDepartures": "Bugün beklenen çıkış yok",
     "noArrivals": "Beklenen giriş yok",

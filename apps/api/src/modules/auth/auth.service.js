@@ -5,10 +5,15 @@ import User from '../user/user.model.js'
 import Partner from '../partner/partner.model.js'
 import Agency from '../agency/agency.model.js'
 import Session from '../session/session.model.js'
-import { UnauthorizedError, BadRequestError, TooManyRequestsError, ValidationError } from '#core/errors.js'
+import {
+  UnauthorizedError,
+  BadRequestError,
+  TooManyRequestsError,
+  ValidationError
+} from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { verify2FAToken } from '#helpers/twoFactor.js'
-import { sendPasswordResetEmail, getAdminUrl } from '#helpers/mail.js'
+import { sendPasswordResetEmail, sendNewPartnerNotification, getAdminUrl } from '#helpers/mail.js'
 import {
   checkLoginLockout,
   recordFailedLogin,
@@ -67,7 +72,9 @@ export const login = asyncHandler(async (req, res) => {
   if (!user || !(await user.comparePassword(password))) {
     // Record failed attempt
     const failedResult = await recordFailedLogin(email)
-    logger.warn(`Failed login attempt for ${email}. Remaining attempts: ${failedResult.remainingAttempts}`)
+    logger.warn(
+      `Failed login attempt for ${email}. Remaining attempts: ${failedResult.remainingAttempts}`
+    )
 
     if (failedResult.isLocked) {
       if (failedResult.isBlocked) {
@@ -133,7 +140,8 @@ export const login = asyncHandler(async (req, res) => {
   try {
     await Session.createFromToken(user._id, accessToken, {
       userAgent: req.headers['user-agent'],
-      ipAddress: req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0]
+      ipAddress:
+        req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0]
     })
   } catch (sessionError) {
     logger.error('Failed to create session:', sessionError)
@@ -345,12 +353,25 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 // Partner registration (public endpoint - no password required)
 export const register = asyncHandler(async (req, res) => {
-  const { companyName, tradeName, name, email, phone, taxOffice, taxNumber, address } = req.body
+  const {
+    companyName,
+    tradeName,
+    name,
+    email,
+    phone,
+    taxOffice,
+    taxNumber,
+    address,
+    partnerType: rawPartnerType
+  } = req.body
 
   // Validation
   if (!companyName || !name || !email || !phone) {
     throw new BadRequestError('REQUIRED_REGISTRATION_FIELDS')
   }
+
+  // Validate partnerType
+  const partnerType = ['hotel', 'agency'].includes(rawPartnerType) ? rawPartnerType : 'agency'
 
   // Check if email already exists
   const existingUser = await User.findOne({ email: email.toLowerCase() })
@@ -367,6 +388,7 @@ export const register = asyncHandler(async (req, res) => {
   const partner = await Partner.create({
     companyName,
     tradeName,
+    partnerType,
     email: email.toLowerCase(),
     phone,
     taxOffice,
@@ -387,7 +409,16 @@ export const register = asyncHandler(async (req, res) => {
     status: 'pending_activation' // Will be activated on approval
   })
 
-  logger.info(`New partner registration: ${companyName} (${email})`)
+  logger.info(`New partner registration: ${companyName} (${email}) [${partnerType}]`)
+
+  // Send notification to platform admins (non-blocking)
+  sendNewPartnerNotification({
+    partnerName: companyName,
+    partnerEmail: email.toLowerCase(),
+    partnerPhone: phone,
+    partnerType,
+    contactName: name
+  }).catch(err => logger.warn('Failed to send new partner notification:', err.message))
 
   res.status(201).json({
     success: true,
@@ -425,7 +456,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     logger.info(`Password reset requested for non-existent email: ${email}`)
     return res.json({
       success: true,
-      message: req.t ? req.t('PASSWORD_RESET_EMAIL_SENT') : 'If the email exists, a password reset link has been sent.'
+      message: req.t
+        ? req.t('PASSWORD_RESET_EMAIL_SENT')
+        : 'If the email exists, a password reset link has been sent.'
     })
   }
 
@@ -434,7 +467,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     logger.warn(`Password reset requested for inactive account: ${email}`)
     return res.json({
       success: true,
-      message: req.t ? req.t('PASSWORD_RESET_EMAIL_SENT') : 'If the email exists, a password reset link has been sent.'
+      message: req.t
+        ? req.t('PASSWORD_RESET_EMAIL_SENT')
+        : 'If the email exists, a password reset link has been sent.'
     })
   }
 
@@ -509,7 +544,9 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: req.t ? req.t('PASSWORD_RESET_SUCCESS') : 'Password has been reset successfully. You can now login with your new password.'
+    message: req.t
+      ? req.t('PASSWORD_RESET_SUCCESS')
+      : 'Password has been reset successfully. You can now login with your new password.'
   })
 })
 
@@ -534,9 +571,26 @@ export const unblockLoginBlock = asyncHandler(async (req, res) => {
 
 // Valid admin theme IDs
 const ADMIN_THEME_IDS = [
-  'midnight-blue', 'ocean', 'nord', 'graphite', 'sand', 'forest', 'rose', 'sunset',
-  'lavender', 'emerald', 'citrus', 'cyber', 'slate', 'coffee', 'winter', 'aurora',
-  'candy', 'abyss', 'silk', 'vintage'
+  'midnight-blue',
+  'ocean',
+  'nord',
+  'graphite',
+  'sand',
+  'forest',
+  'rose',
+  'sunset',
+  'lavender',
+  'emerald',
+  'citrus',
+  'cyber',
+  'slate',
+  'coffee',
+  'winter',
+  'aurora',
+  'candy',
+  'abyss',
+  'silk',
+  'vintage'
 ]
 
 const normalizeAdminThemeId = theme => {
@@ -615,10 +669,7 @@ export const deleteAvatar = asyncHandler(async (req, res) => {
   }
 
   // Update user using findByIdAndUpdate for reliability
-  await User.findByIdAndUpdate(
-    req.user._id,
-    { $unset: { avatar: 1 } }
-  )
+  await User.findByIdAndUpdate(req.user._id, { $unset: { avatar: 1 } })
 
   res.json({
     success: true,

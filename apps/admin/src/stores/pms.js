@@ -19,9 +19,8 @@ export const usePmsStore = defineStore('pms', () => {
 
   function exitPmsMode() {
     isPmsMode.value = false
-    selectedPmsHotel.value = null
     localStorage.setItem('isPmsMode', 'false')
-    localStorage.removeItem('selectedPmsHotel')
+    // Don't clear hotel - preserve it for when user returns to PMS
   }
 
   function setHotel(hotel) {

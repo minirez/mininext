@@ -90,7 +90,7 @@
             <div v-else class="space-y-3">
               <div
                 v-for="item in todayActivity.expectedArrivals"
-                :key="item._id"
+                :key="item._id + '-' + (item._roomIndex ?? '')"
                 class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg"
               >
                 <div class="flex items-center gap-4">
@@ -104,13 +104,25 @@
                       {{ getGuestName(item) }}
                     </p>
                     <p class="text-sm text-gray-500 dark:text-slate-400">
-                      {{ item.bookingNumber || item.stayNumber }} - {{ t('frontDesk.room') }}
-                      {{ item.room?.roomNumber || t('frontDesk.notAssigned') }} -
-                      {{
-                        item.roomType?.name?.[locale] ||
-                        item.roomType?.name?.tr ||
-                        item.roomType?.code
-                      }}
+                      {{ item.bookingNumber || item.stayNumber }}
+                      <span
+                        v-if="item._isMultiRoom"
+                        class="ml-1 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded"
+                      >
+                        {{
+                          t('frontDesk.roomOf', {
+                            current: item._roomIndex + 1,
+                            total: item._totalRooms
+                          })
+                        }}
+                      </span>
+                      - {{ getRoomTypeName(item) }}
+                      <span
+                        v-if="item._checkedInCount > 0"
+                        class="ml-1 text-xs text-green-600 dark:text-green-400"
+                      >
+                        ({{ t('frontDesk.roomsCheckedIn', { count: item._checkedInCount }) }})
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -352,6 +364,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import stayService from '@/services/pms/stayService'
 import { useAccessibility } from '@/composables/useAccessibility'
@@ -364,6 +377,8 @@ import CheckOutModal from '@/components/pms/frontdesk/CheckOutModal.vue'
 import StayCard from '@/components/pms/stay/StayCard.vue'
 
 const { t, locale } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 const pmsStore = usePmsStore()
 const hotelId = computed(() => pmsStore.hotelId)
@@ -463,6 +478,13 @@ const statsCards = computed(() => [
 
 // Helper to get guest name from Booking or Stay object
 const getGuestName = item => {
+  // Per-room booking entry: use room-specific guests
+  if (item._roomData?.guests?.length > 0) {
+    const lead = item._roomData.guests.find(g => g.isLead) || item._roomData.guests[0]
+    if (lead?.firstName && lead.firstName !== 'Guest') {
+      return `${lead.firstName} ${lead.lastName || ''}`.trim()
+    }
+  }
   // If it's a Stay, use guests array
   if (item.guests && item.guests.length > 0) {
     const mainGuest = item.guests.find(g => g.isMainGuest) || item.guests[0]
@@ -481,6 +503,45 @@ const getGuestName = item => {
   return t('frontDesk.noGuestInfo')
 }
 
+// Helper to get room type name from Booking or Stay object
+const getRoomTypeName = item => {
+  // Per-room booking entry: use room-specific data
+  if (item._roomData?.roomTypeName) {
+    return (
+      item._roomData.roomTypeName[locale.value] ||
+      item._roomData.roomTypeName.tr ||
+      item._roomData.roomTypeCode ||
+      ''
+    )
+  }
+  if (item._roomData?.roomType?.name) {
+    return (
+      item._roomData.roomType.name[locale.value] ||
+      item._roomData.roomType.name.tr ||
+      item._roomData.roomTypeCode ||
+      ''
+    )
+  }
+  // Stay object: populated roomType
+  if (item.roomType?.name) {
+    return item.roomType.name[locale.value] || item.roomType.name.tr || item.roomType.code || ''
+  }
+  // Booking object: roomType info is inside rooms array
+  const room = item.rooms?.[0]
+  if (room) {
+    // Populated rooms.roomType
+    if (room.roomType?.name) {
+      return room.roomType.name[locale.value] || room.roomType.name.tr || room.roomTypeCode || ''
+    }
+    // Embedded roomTypeName
+    if (room.roomTypeName) {
+      return room.roomTypeName[locale.value] || room.roomTypeName.tr || room.roomTypeCode || ''
+    }
+    return room.roomTypeCode || ''
+  }
+  return ''
+}
+
 // Methods
 const fetchData = async () => {
   if (!hotelId.value) return
@@ -496,6 +557,17 @@ const fetchData = async () => {
     statistics.value = statsRes.data || {}
     todayActivity.value = activityRes.data || {}
     activeStays.value = staysRes.data || []
+
+    // Auto-open check-in modal if booking query param exists
+    const bookingId = route.query.booking
+    if (bookingId) {
+      const booking = todayActivity.value.expectedArrivals?.find(b => b._id === bookingId)
+      if (booking) {
+        openCheckInModal(booking)
+      }
+      // Clear query param to prevent re-opening on refresh
+      router.replace({ query: {} })
+    }
   } catch (error) {
     console.error('Failed to fetch front desk data:', error)
     toast.error(t('frontDesk.errors.loadFailed'))
@@ -535,7 +607,13 @@ const handleStayCardCheckOut = stay => {
 }
 
 const handleCheckInComplete = async () => {
+  // Clear booking query param after check-in
+  if (route.query.booking) {
+    router.replace({ query: {} })
+  }
   await fetchData()
+  // Switch to today_checkins tab to show the just-checked-in guest
+  activeTab.value = 'today_checkins'
 }
 
 const handleCheckOutComplete = async () => {
