@@ -77,9 +77,8 @@ jobs:
             export PATH="$PNPM_HOME:$PATH"
             export TURBO_TOKEN="${TURBO_TOKEN}"
             cd /var/www/booking-engine
-            git stash
-            git clean -fd apps/admin/public/tinymce/ 2>/dev/null || true
-            git pull origin main || { echo "Git pull failed"; exit 1; }
+            git fetch origin main || { echo "Git fetch failed"; exit 1; }
+            git reset --hard origin/main
 
             # Create/Update .env file for API
             cat > apps/api/.env << EOF
