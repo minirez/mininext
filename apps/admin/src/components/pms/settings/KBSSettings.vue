@@ -66,6 +66,7 @@
         <input
           v-model="localSettings.username"
           type="text"
+          autocomplete="off"
           class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
           :placeholder="$t('settings.kbs.usernamePlaceholder')"
           @input="emitChange"
@@ -80,6 +81,7 @@
           <input
             v-model="localSettings.password"
             :type="showPassword ? 'text' : 'password'"
+            autocomplete="new-password"
             class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
             :placeholder="$t('settings.kbs.passwordPlaceholder')"
             @input="emitChange"
