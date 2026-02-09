@@ -23,8 +23,8 @@
         >
           <img :src="siteSettingsStore.faviconUrl" alt="Logo" class="w-20 h-20 object-contain" />
         </div>
-        <h1 class="text-3xl font-bold text-white">Booking Engine</h1>
-        <p class="text-purple-200 mt-2">Admin Panel</p>
+        <h1 class="text-3xl font-bold text-white">{{ $t('auth.portalTitle') }}</h1>
+        <p class="text-purple-200 mt-2">{{ $t('auth.portalSubtitle') }}</p>
       </div>
 
       <!-- Auth Form Container -->
@@ -37,7 +37,14 @@
       <!-- Footer -->
       <div class="text-center mt-8">
         <p class="text-purple-200 text-sm">
-          © {{ new Date().getFullYear() }} Booking Engine. All rights reserved.
+          © {{ new Date().getFullYear() }}
+          <a
+            href="https://adviceal.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-purple-100 hover:text-white underline transition-colors"
+            >{{ $t('auth.footerCompany') }}</a
+          >, {{ $t('auth.footerSlogan') }}
         </p>
       </div>
     </div>
