@@ -43,9 +43,8 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
   const childAgeGroups = getEffectiveChildAgeGroups(hotel, market, season)
 
   // Find max child age from age groups
-  const maxChildAge = childAgeGroups.length > 0
-    ? Math.max(...childAgeGroups.map(ag => ag.maxAge || 0))
-    : 12 // Default max child age if no groups defined (industry standard: 0-12 child, 13+ adult)
+  const maxChildAge =
+    childAgeGroups.length > 0 ? Math.max(...childAgeGroups.map(ag => ag.maxAge || 0)) : 12 // Default max child age if no groups defined (industry standard: 0-12 child, 13+ adult)
 
   // Separate children: those above max age should be counted as adults
   const validChildren = []
@@ -107,6 +106,10 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
     currency: rate.currency || market?.currency || 'EUR'
   }
 
+  // Determine infant age threshold from childAgeGroups (used in all pricing types)
+  const infantGroup = childAgeGroups.find(g => g.code === 'infant')
+  const maxInfantAge = infantGroup?.maxAge ?? 2
+
   if (pricingType === 'unit') {
     // Unit-based pricing
     result.basePrice = rate.pricePerNight || 0
@@ -156,15 +159,20 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
     // Calculate child pricing
     children.forEach((child, index) => {
       const childOrder = index + 1
+      const childAge = typeof child === 'object' ? child.age : child
       let childPrice = 0
 
-      // Try childOrderPricing first (position-based)
-      if (rate.childOrderPricing && rate.childOrderPricing[index] !== undefined) {
+      // Check if this child is an infant - use extraInfant price
+      if (childAge !== undefined && childAge <= maxInfantAge) {
+        childPrice = rate.extraInfant || 0
+      }
+      // Try childOrderPricing first (position-based) for non-infant children
+      else if (rate.childOrderPricing && rate.childOrderPricing[index] !== undefined) {
         childPrice = rate.childOrderPricing[index]
       }
       // Then try childPricing (age-based tiers)
-      else if (rate.childPricing && rate.childPricing.length > 0 && child.age !== undefined) {
-        const tier = rate.childPricing.find(t => child.age >= t.minAge && child.age <= t.maxAge)
+      else if (rate.childPricing && rate.childPricing.length > 0 && childAge !== undefined) {
+        const tier = rate.childPricing.find(t => childAge >= t.minAge && childAge <= t.maxAge)
         if (tier) {
           childPrice = tier.price
         }
@@ -177,8 +185,8 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
       result.childPrice += childPrice
       if (childPrice > 0) {
         result.breakdown.push({
-          type: 'child',
-          description: `Child ${childOrder} (age ${child.age || 'N/A'})`,
+          type: childAge !== undefined && childAge <= maxInfantAge ? 'infant' : 'child',
+          description: `${childAge !== undefined && childAge <= maxInfantAge ? 'Infant' : 'Child'} ${childOrder} (age ${childAge ?? 'N/A'})`,
           amount: childPrice
         })
       }
@@ -203,15 +211,23 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
         amount: occupancyPrice
       })
 
-      // Child pricing for OBP without multipliers - use childOrderPricing
+      // Child pricing for OBP without multipliers
       children.forEach((child, index) => {
         const childOrder = index + 1
+        const childAge = typeof child === 'object' ? child.age : child
         let childPrice = 0
 
-        if (rate.childOrderPricing && rate.childOrderPricing[index] !== undefined) {
+        // Check if this child is an infant - use extraInfant price
+        if (childAge !== undefined && childAge <= maxInfantAge) {
+          childPrice = rate.extraInfant || 0
+        }
+        // Try childOrderPricing (position-based) for non-infant children
+        else if (rate.childOrderPricing && rate.childOrderPricing[index] !== undefined) {
           childPrice = rate.childOrderPricing[index]
-        } else if (rate.childPricing && rate.childPricing.length > 0 && child.age !== undefined) {
-          const tier = rate.childPricing.find(t => child.age >= t.minAge && child.age <= t.maxAge)
+        }
+        // Then try childPricing (age-based tiers)
+        else if (rate.childPricing && rate.childPricing.length > 0 && childAge !== undefined) {
+          const tier = rate.childPricing.find(t => childAge >= t.minAge && childAge <= t.maxAge)
           if (tier) {
             childPrice = tier.price
           }
@@ -220,8 +236,8 @@ export function calculateOccupancyPrice(rate, options = {}, context = {}) {
         result.childPrice += childPrice
         if (childPrice > 0) {
           result.breakdown.push({
-            type: 'child',
-            description: `Child ${childOrder} (age ${child.age || 'N/A'})`,
+            type: childAge !== undefined && childAge <= maxInfantAge ? 'infant' : 'child',
+            description: `${childAge !== undefined && childAge <= maxInfantAge ? 'Infant' : 'Child'} ${childOrder} (age ${childAge ?? 'N/A'})`,
             amount: childPrice
           })
         }
