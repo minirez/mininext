@@ -1,5 +1,8 @@
 <template>
   <div class="space-y-6">
+    <!-- Hidden dummy fields to prevent browser autofill -->
+    <input type="text" name="prevent_autofill" style="display: none" tabindex="-1" />
+    <input type="password" name="prevent_autofill_pass" style="display: none" tabindex="-1" />
     <!-- Save Button -->
     <div class="flex justify-end">
       <button
@@ -73,7 +76,9 @@
                 v-model="settings.aws.ses.accessKeyId"
                 type="password"
                 :placeholder="settings.aws.ses.accessKeyId ? '********' : ''"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -85,7 +90,9 @@
                 v-model="settings.aws.ses.secretAccessKey"
                 type="password"
                 :placeholder="settings.aws.ses.secretAccessKey ? '********' : ''"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -120,6 +127,7 @@
               v-model="testEmailAddress"
               type="email"
               :placeholder="$t('platformSettings.email.testEmailPlaceholder')"
+              autocomplete="off"
               class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
             />
             <button
@@ -170,7 +178,9 @@
                 v-model="settings.netgsm.usercode"
                 type="password"
                 :placeholder="settings.netgsm.usercode ? '********' : ''"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -182,7 +192,9 @@
                 v-model="settings.netgsm.password"
                 type="password"
                 :placeholder="settings.netgsm.password ? '********' : ''"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -209,6 +221,7 @@
               v-model="testPhoneNumber"
               type="tel"
               :placeholder="$t('platformSettings.sms.testPhonePlaceholder')"
+              autocomplete="off"
               class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
             />
             <button
@@ -259,7 +272,9 @@
                 v-model="settings.gemini.apiKey"
                 type="password"
                 :placeholder="settings.gemini.apiKey ? '********' : 'AIzaSy...'"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
               <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -305,7 +320,9 @@
                 v-model="settings.firecrawl.apiKey"
                 type="password"
                 :placeholder="settings.firecrawl.apiKey ? '********' : 'fc-...'"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
               <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -387,7 +404,9 @@
                 v-model="settings.paximum.password"
                 type="password"
                 :placeholder="settings.paximum.password ? '********' : ''"
-                autocomplete="off"
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -401,6 +420,7 @@
                   type="number"
                   min="0"
                   max="100"
+                  autocomplete="off"
                   class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
                 <span class="text-gray-500">%</span>
@@ -461,6 +481,7 @@
                   v-model="settings.webPush.publicKey"
                   type="text"
                   readonly
+                  autocomplete="off"
                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white font-mono text-sm"
                 />
                 <button
@@ -481,6 +502,9 @@
                 type="password"
                 :placeholder="settings.webPush.privateKey ? '********' : ''"
                 readonly
+                autocomplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -492,6 +516,7 @@
                 v-model="settings.webPush.contactEmail"
                 type="email"
                 placeholder="admin@example.com"
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -548,6 +573,7 @@
                   v-model="settings.billing.companyName"
                   type="text"
                   :placeholder="$t('platformSettings.billing.companyNamePlaceholder')"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -559,6 +585,7 @@
                   v-model="settings.billing.taxNumber"
                   type="text"
                   placeholder="1234567890"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -570,6 +597,7 @@
                   v-model="settings.billing.taxOffice"
                   type="text"
                   :placeholder="$t('platformSettings.billing.taxOfficePlaceholder')"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -581,6 +609,7 @@
                   v-model="settings.billing.email"
                   type="email"
                   placeholder="billing@company.com"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -592,6 +621,7 @@
                   v-model="settings.billing.phone"
                   type="tel"
                   placeholder="+90 212 123 4567"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -612,6 +642,7 @@
                   v-model="settings.billing.address.street"
                   type="text"
                   :placeholder="$t('platformSettings.billing.streetPlaceholder')"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -623,6 +654,7 @@
                   v-model="settings.billing.address.city"
                   type="text"
                   placeholder="Istanbul"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -634,6 +666,7 @@
                   v-model="settings.billing.address.country"
                   type="text"
                   placeholder="Türkiye"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -645,6 +678,7 @@
                   v-model="settings.billing.address.postalCode"
                   type="text"
                   placeholder="34000"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -666,6 +700,7 @@
                   type="text"
                   placeholder="INV"
                   maxlength="10"
+                  autocomplete="off"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
                 <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -682,6 +717,7 @@
                     type="number"
                     min="0"
                     max="100"
+                    autocomplete="off"
                     class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                   />
                   <span class="text-gray-500">%</span>
@@ -722,7 +758,10 @@
                 {{ $t('common.add') }}
               </button>
             </div>
-            <div v-if="settings.billing.bankAccounts.length === 0" class="text-center py-6 text-gray-500 dark:text-slate-400">
+            <div
+              v-if="settings.billing.bankAccounts.length === 0"
+              class="text-center py-6 text-gray-500 dark:text-slate-400"
+            >
               {{ $t('platformSettings.billing.noBankAccounts') }}
             </div>
             <div v-else class="space-y-4">
@@ -752,6 +791,7 @@
                       v-model="account.bankName"
                       type="text"
                       placeholder="Garanti BBVA"
+                      autocomplete="off"
                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -763,6 +803,7 @@
                       v-model="account.accountName"
                       type="text"
                       :placeholder="$t('platformSettings.billing.accountNamePlaceholder')"
+                      autocomplete="off"
                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -774,6 +815,7 @@
                       v-model="account.iban"
                       type="text"
                       placeholder="TR00 0000 0000 0000 0000 0000 00"
+                      autocomplete="off"
                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono"
                     />
                   </div>
@@ -785,6 +827,7 @@
                       v-model="account.swift"
                       type="text"
                       placeholder="TGBATRIS"
+                      autocomplete="off"
                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -838,7 +881,9 @@
         </div>
         <div class="p-6 space-y-6">
           <!-- Scheduler Status -->
-          <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+          <div
+            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg"
+          >
             <div class="flex items-center gap-3">
               <span
                 :class="[
@@ -851,16 +896,23 @@
                   {{ $t('platformSettings.exchange.scheduler') }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-slate-400">
-                  {{ schedulerStatus.isRunning ? $t('platformSettings.exchange.schedulerRunning') : $t('platformSettings.exchange.schedulerStopped') }}
+                  {{
+                    schedulerStatus.isRunning
+                      ? $t('platformSettings.exchange.schedulerRunning')
+                      : $t('platformSettings.exchange.schedulerStopped')
+                  }}
                   <span v-if="schedulerStatus.isRunning">
-                    ({{ $t('platformSettings.exchange.every') }} {{ schedulerStatus.checkInterval }} {{ $t('platformSettings.exchange.minutes') }})
+                    ({{ $t('platformSettings.exchange.every') }} {{ schedulerStatus.checkInterval }}
+                    {{ $t('platformSettings.exchange.minutes') }})
                   </span>
                 </p>
               </div>
             </div>
             <div class="text-right">
               <p class="text-xs text-gray-500 dark:text-slate-400">
-                {{ $t('platformSettings.exchange.workingHours') }}: {{ schedulerStatus.workingHours?.start || 9 }}:00 - {{ schedulerStatus.workingHours?.end || 17 }}:00 (TR)
+                {{ $t('platformSettings.exchange.workingHours') }}:
+                {{ schedulerStatus.workingHours?.start || 9 }}:00 -
+                {{ schedulerStatus.workingHours?.end || 17 }}:00 (TR)
               </p>
               <p
                 :class="[
@@ -868,7 +920,11 @@
                   schedulerStatus.isWithinWorkingHours ? 'text-green-600' : 'text-gray-500'
                 ]"
               >
-                {{ schedulerStatus.isWithinWorkingHours ? $t('platformSettings.exchange.withinWorkingHours') : $t('platformSettings.exchange.outsideWorkingHours') }}
+                {{
+                  schedulerStatus.isWithinWorkingHours
+                    ? $t('platformSettings.exchange.withinWorkingHours')
+                    : $t('platformSettings.exchange.outsideWorkingHours')
+                }}
               </p>
             </div>
           </div>
@@ -893,7 +949,13 @@
                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                 ]"
               >
-                {{ exchangeRates.source === 'tcmb' ? 'TCMB' : exchangeRates.source === 'fallback' ? $t('platformSettings.exchange.fallback') : $t('platformSettings.exchange.manual') }}
+                {{
+                  exchangeRates.source === 'tcmb'
+                    ? 'TCMB'
+                    : exchangeRates.source === 'fallback'
+                      ? $t('platformSettings.exchange.fallback')
+                      : $t('platformSettings.exchange.manual')
+                }}
               </span>
               <span v-if="exchangeRates.bulletin" class="text-xs text-gray-500 dark:text-slate-400">
                 {{ $t('platformSettings.exchange.bulletin') }}: {{ exchangeRates.bulletin }}
@@ -952,9 +1014,16 @@
               class="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300 flex items-center gap-1"
               @click="showAllCurrencies = !showAllCurrencies"
             >
-              <span class="material-icons text-sm">{{ showAllCurrencies ? 'expand_less' : 'expand_more' }}</span>
-              {{ showAllCurrencies ? $t('platformSettings.exchange.showLess') : $t('platformSettings.exchange.showAll') }}
-              ({{ Object.keys(exchangeRates?.rates || {}).length }} {{ $t('platformSettings.exchange.currencies') }})
+              <span class="material-icons text-sm">{{
+                showAllCurrencies ? 'expand_less' : 'expand_more'
+              }}</span>
+              {{
+                showAllCurrencies
+                  ? $t('platformSettings.exchange.showLess')
+                  : $t('platformSettings.exchange.showAll')
+              }}
+              ({{ Object.keys(exchangeRates?.rates || {}).length }}
+              {{ $t('platformSettings.exchange.currencies') }})
             </button>
           </div>
 
@@ -1009,6 +1078,7 @@
                 :value="manualRateModal.currency"
                 type="text"
                 readonly
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -1021,6 +1091,7 @@
                 type="number"
                 step="0.0001"
                 min="0"
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -1028,7 +1099,9 @@
               {{ $t('platformSettings.exchange.manualRateNote') }}
             </p>
           </div>
-          <div class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+          <div
+            class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3"
+          >
             <button
               class="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200"
               @click="manualRateModal.show = false"
@@ -1040,7 +1113,9 @@
               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50"
               @click="saveManualRate"
             >
-              <span v-if="settingManualRate" class="material-icons animate-spin text-sm mr-1">refresh</span>
+              <span v-if="settingManualRate" class="material-icons animate-spin text-sm mr-1"
+                >refresh</span
+              >
               {{ $t('common.save') }}
             </button>
           </div>

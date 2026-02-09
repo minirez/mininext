@@ -11,6 +11,8 @@ export * from './i18n.js'
 export * from './twoFactor.js'
 export * from './partnerIsolation.js'
 export * from './withTransaction.js'
+export * from './foreignKeyValidator.js'
+export * from './sanitize.js'
 
 // Named exports for modules with default exports
 export { default as phoneFormatter } from './phoneFormatter.js'

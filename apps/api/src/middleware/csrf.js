@@ -26,13 +26,14 @@ const EXEMPT_PATHS = [
   '/api/public',
   '/api/docs',
   '/api/exchange',
+  '/api/mailbox',
   '/health'
 ]
 
 /**
  * Path'in muaf olup olmadığını kontrol et
  */
-const isExemptPath = (path) => {
+const isExemptPath = path => {
   return EXEMPT_PATHS.some(exempt => path.startsWith(exempt))
 }
 

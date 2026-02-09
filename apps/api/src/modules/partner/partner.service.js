@@ -19,11 +19,7 @@ export {
 } from './partnerProfile.service.js'
 
 // Document management
-export {
-  uploadDocument,
-  deleteDocument,
-  serveDocument
-} from './partnerDocuments.service.js'
+export { uploadDocument, deleteDocument, serveDocument } from './partnerDocuments.service.js'
 
 // Email settings and SES integration
 export {
@@ -43,12 +39,6 @@ export {
   getSMSBalance,
   getSMSProviders
 } from './partnerSMS.service.js'
-
-// PMS integration
-export {
-  activatePms,
-  getPmsStatus
-} from './partnerPMS.service.js'
 
 // Branding and self-profile management
 export {

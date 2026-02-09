@@ -40,7 +40,9 @@ export function usePartnerSubscription() {
   const purchaseForm = ref({
     plan: 'business',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+      .toISOString()
+      .split('T')[0],
     amount: null,
     currency: 'USD'
   })
@@ -96,17 +98,21 @@ export function usePartnerSubscription() {
 
   const isPmsEnabledForRow = row => {
     const limit =
-      row.subscription?.customLimits?.pmsMaxHotels ?? row.subscription?.features?.pms?.maxHotels ?? 0
+      row.subscription?.customLimits?.pmsMaxHotels ??
+      row.subscription?.features?.pms?.maxHotels ??
+      0
     return limit > 0 || limit === -1
   }
 
-  const getProvisionedHotels = row => {
-    return row.pmsIntegration?.provisionedHotels?.filter(h => h.status === 'active').length || 0
+  const getProvisionedHotels = () => {
+    return 0
   }
 
   const getPmsLimit = row => {
     const limit =
-      row.subscription?.customLimits?.pmsMaxHotels ?? row.subscription?.features?.pms?.maxHotels ?? 0
+      row.subscription?.customLimits?.pmsMaxHotels ??
+      row.subscription?.features?.pms?.maxHotels ??
+      0
     return limit === -1 ? '∞' : limit
   }
 
@@ -143,7 +149,10 @@ export function usePartnerSubscription() {
           name: 'Web Design',
           description: t('partners.subscription.planDescriptions.webdesign'),
           price: { yearly: 29 },
-          features: { pms: { enabled: false, maxHotels: 0 }, webDesign: { enabled: true, maxSites: 1, ssl: true, customDomain: true } }
+          features: {
+            pms: { enabled: false, maxHotels: 0 },
+            webDesign: { enabled: true, maxSites: 1, ssl: true, customDomain: true }
+          }
         },
         {
           id: 'business',
@@ -187,12 +196,16 @@ export function usePartnerSubscription() {
       activeSubscriptionTab.value = 'purchases'
 
       const today = new Date().toISOString().split('T')[0]
-      const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
+      const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+        .toISOString()
+        .split('T')[0]
       purchaseForm.value = {
         plan: response.data?.plan || 'business',
         startDate: today,
         endDate: nextYear,
-        amount: subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price?.yearly || null,
+        amount:
+          subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price
+            ?.yearly || null,
         currency: 'USD'
       }
 
@@ -269,7 +282,9 @@ export function usePartnerSubscription() {
       subscriptionStatus.value = response.data.subscription
 
       const today = new Date().toISOString().split('T')[0]
-      const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
+      const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+        .toISOString()
+        .split('T')[0]
       purchaseForm.value = {
         plan: response.data.subscription?.plan || 'business',
         startDate: today,
@@ -279,7 +294,9 @@ export function usePartnerSubscription() {
       }
 
       try {
-        const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(selectedPartner._id)
+        const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(
+          selectedPartner._id
+        )
         partnerInvoices.value = invoicesResponse.data?.invoices || []
       } catch {
         partnerInvoices.value = []
@@ -294,8 +311,8 @@ export function usePartnerSubscription() {
   }
 
   // Open edit purchase modal
-  const openEditPurchaseModal = (purchase) => {
-    const formatDateForInput = (date) => {
+  const openEditPurchaseModal = purchase => {
+    const formatDateForInput = date => {
       if (!date) return ''
       const d = new Date(date)
       return d.toISOString().split('T')[0]
@@ -347,7 +364,7 @@ export function usePartnerSubscription() {
   }
 
   // Open mark paid modal
-  const openMarkPaidModal = (purchase) => {
+  const openMarkPaidModal = purchase => {
     markPaidForm.value = {
       _id: purchase._id,
       plan: purchase.plan,
@@ -382,7 +399,9 @@ export function usePartnerSubscription() {
       showMarkPaidModal.value = false
 
       try {
-        const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(selectedPartner._id)
+        const invoicesResponse = await subscriptionInvoiceService.getPartnerInvoices(
+          selectedPartner._id
+        )
         partnerInvoices.value = invoicesResponse.data?.invoices || []
       } catch {
         partnerInvoices.value = []

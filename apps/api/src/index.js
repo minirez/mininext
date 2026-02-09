@@ -7,16 +7,12 @@ import bootstrap from './core/bootstrap.js'
 import { initSocket } from './core/socket.js'
 import { initRedis, closeRedis } from './core/redis.js'
 import { startExchangeScheduler, stopExchangeScheduler } from './services/exchangeScheduler.js'
-import { initPmsQueue, closePmsQueue } from './services/pmsQueueService.js'
 
 // Connect to database
 await connectDB()
 
 // Initialize Redis (optional - for distributed rate limiting)
 await initRedis()
-
-// Initialize PMS Queue (requires Redis)
-await initPmsQueue()
 
 // Run bootstrap (initial setup)
 await bootstrap()
@@ -45,9 +41,6 @@ const gracefulShutdown = async signal => {
 
   // Stop exchange scheduler
   stopExchangeScheduler()
-
-  // Close PMS queue
-  await closePmsQueue()
 
   // Close Redis connection
   await closeRedis()

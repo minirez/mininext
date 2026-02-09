@@ -139,7 +139,17 @@ const userSchema = new mongoose.Schema(
             'agencies',
             'hotels',
             'pms',
-            'payment-link'
+            'payment-link',
+            'pms-dashboard',
+            'pms-frontdesk',
+            'pms-housekeeping',
+            'pms-guests',
+            'pms-cashier',
+            'pms-billing',
+            'pms-nightaudit',
+            'pms-reports',
+            'pms-settings',
+            'pms-kbs'
           ]
         },
         actions: {
@@ -209,6 +219,61 @@ const userSchema = new mongoose.Schema(
         paymentReminder: { type: Boolean, default: true },
         systemUpdates: { type: Boolean, default: true }
       }
+    },
+
+    // PMS-specific fields
+    pmsRole: {
+      type: String,
+      enum: {
+        values: [
+          'gm',
+          'night_manager',
+          'sales_manager',
+          'reservation_clerk',
+          'front_desk_manager',
+          'receptionist',
+          'bellboy',
+          'housekeeping_manager',
+          'maid',
+          'accounting_manager',
+          'purchasing',
+          'technical_chief',
+          'technician',
+          null
+        ],
+        message: 'INVALID_PMS_ROLE'
+      },
+      default: null
+    },
+
+    pmsDepartment: {
+      type: String,
+      enum: {
+        values: [
+          'management',
+          'front_office',
+          'housekeeping',
+          'accounting',
+          'food_beverage',
+          'maintenance',
+          'sales',
+          null
+        ],
+        message: 'INVALID_PMS_DEPARTMENT'
+      },
+      default: null
+    },
+
+    pmsPermissions: [
+      {
+        type: String,
+        trim: true
+      }
+    ],
+
+    position: {
+      type: String,
+      trim: true
     },
 
     // User preferences (overrides partner branding where applicable)
@@ -284,6 +349,24 @@ userSchema.methods.hasPermission = function (module, action) {
   return permission.actions?.[action] === true
 }
 
+// Check if user has PMS access
+userSchema.methods.hasPmsAccess = function () {
+  if (this.role === 'admin') return true
+  if (this.pmsRole) return true
+  if (this.pmsPermissions && this.pmsPermissions.length > 0) return true
+  // Check if user has 'pms' module permission
+  const pmsPerm = this.permissions?.find(p => p.module === 'pms')
+  return pmsPerm?.actions?.view === true
+}
+
+// Check specific PMS permission (granular)
+userSchema.methods.hasPmsPermission = function (permission) {
+  if (this.role === 'admin') return true
+  if (this.pmsRole === 'gm') return true
+  if (this.pmsPermissions?.includes('*')) return true
+  return this.pmsPermissions?.includes(permission) === true
+}
+
 // Get all effective permissions (for UI)
 userSchema.methods.getEffectivePermissions = function () {
   const modules = [
@@ -296,7 +379,17 @@ userSchema.methods.getEffectivePermissions = function () {
     'users',
     'agencies',
     'hotels',
-    'pms'
+    'pms',
+    'pms-dashboard',
+    'pms-frontdesk',
+    'pms-housekeeping',
+    'pms-guests',
+    'pms-cashier',
+    'pms-billing',
+    'pms-nightaudit',
+    'pms-reports',
+    'pms-settings',
+    'pms-kbs'
   ]
 
   // Admin has all permissions

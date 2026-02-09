@@ -89,13 +89,7 @@ const config = {
   },
 
   // Storefront API Key - For server-to-server auth from storefront frontends (site3 etc.)
-  storefrontApiKey: process.env.STOREFRONT_API_KEY || '',
-
-  // PMS Integration - Message queue for standalone PMS system
-  pms: {
-    queueEnabled: process.env.PMS_QUEUE_ENABLED === 'true',
-    apiUrl: process.env.PMS_API_URL || 'https://pms.example.com/api'
-  }
+  storefrontApiKey: process.env.STOREFRONT_API_KEY || ''
 }
 
 // Validation

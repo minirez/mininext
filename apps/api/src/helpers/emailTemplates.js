@@ -88,7 +88,8 @@ export const TEMPLATE_VARIABLES = {
     'EXPIRY_DATE',
     'COMPANY_NAME',
     'COMPANY_LOGO'
-  ]
+  ],
+  'email-reply': ['REPLY_BODY', 'ORIGINAL_FROM', 'ORIGINAL_DATE', 'ORIGINAL_BODY', 'SUBJECT']
 }
 
 /**
@@ -97,12 +98,15 @@ export const TEMPLATE_VARIABLES = {
 export const TEMPLATE_LABELS = {
   tr: {
     // Common - Layout
-    COMPANY_NAME: 'Booking Engine',
+    COMPANY_NAME: 'Maxirez',
     COMPANY_ADDRESS: 'İstanbul, Türkiye',
     FOOTER_TEXT: 'Bu e-posta otomatik olarak gönderilmiştir.',
     UNSUBSCRIBE_TEXT: 'E-posta bildirimlerinden çık',
     UNSUBSCRIBE_URL: '#',
     HELP_TEXT: 'Yardıma mı ihtiyacınız var? Bize ulaşın:',
+    SUPPORT_EMAIL: 'info@maxirez.com',
+    SITE_URL: 'https://app.maxirez.com',
+    LOGO_URL: 'https://app.maxirez.com/minirez.png',
     LANG: 'tr',
 
     // Booking Confirmation
@@ -201,7 +205,8 @@ export const TEMPLATE_LABELS = {
     ACTIVATION_ACCOUNT_INFO_TITLE: 'Hesap Bilgileri',
     ACTIVATION_ACCOUNT_LABEL: 'Hesap',
     ACTIVATION_ROLE_LABEL: 'Rol',
-    ACTIVATION_DESCRIPTION: 'Aşağıdaki butona tıklayarak hesabınızı aktifleştirin ve şifrenizi belirleyin.',
+    ACTIVATION_DESCRIPTION:
+      'Aşağıdaki butona tıklayarak hesabınızı aktifleştirin ve şifrenizi belirleyin.',
     ACTIVATION_ACTIVATE_BUTTON: 'Hesabı Aktifleştir',
     ACTIVATION_ALTERNATIVE_TEXT: 'Buton çalışmıyorsa aşağıdaki linki kullanın:',
     ACTIVATION_EXPIRY_WARNING: 'Bu link 7 gün içinde geçerliliğini yitirecektir.',
@@ -219,16 +224,20 @@ export const TEMPLATE_LABELS = {
     EXPIRY_WARNING_LABEL: 'Bu link şu tarihe kadar geçerlidir',
     PAY_NOW_BUTTON: 'Şimdi Öde',
     SECURITY_NOTE_LABEL: 'Güvenlik Notu',
-    SECURITY_NOTE: 'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.'
+    SECURITY_NOTE:
+      'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.'
   },
   en: {
     // Common - Layout
-    COMPANY_NAME: 'Booking Engine',
+    COMPANY_NAME: 'Maxirez',
     COMPANY_ADDRESS: 'Istanbul, Turkey',
     FOOTER_TEXT: 'This email was sent automatically.',
     UNSUBSCRIBE_TEXT: 'Unsubscribe from emails',
     UNSUBSCRIBE_URL: '#',
     HELP_TEXT: 'Need help? Contact us:',
+    SUPPORT_EMAIL: 'info@maxirez.com',
+    SITE_URL: 'https://app.maxirez.com',
+    LOGO_URL: 'https://app.maxirez.com/minirez.png',
     LANG: 'en',
 
     // Booking Confirmation
@@ -326,7 +335,8 @@ export const TEMPLATE_LABELS = {
     ACTIVATION_ACCOUNT_INFO_TITLE: 'Account Information',
     ACTIVATION_ACCOUNT_LABEL: 'Account',
     ACTIVATION_ROLE_LABEL: 'Role',
-    ACTIVATION_DESCRIPTION: 'Click the button below to activate your account and set your password.',
+    ACTIVATION_DESCRIPTION:
+      'Click the button below to activate your account and set your password.',
     ACTIVATION_ACTIVATE_BUTTON: 'Activate Account',
     ACTIVATION_ALTERNATIVE_TEXT: "If the button doesn't work, use the link below:",
     ACTIVATION_EXPIRY_WARNING: 'This link will expire in 7 days.',
@@ -344,7 +354,8 @@ export const TEMPLATE_LABELS = {
     EXPIRY_WARNING_LABEL: 'This link is valid until',
     PAY_NOW_BUTTON: 'Pay Now',
     SECURITY_NOTE_LABEL: 'Security Note',
-    SECURITY_NOTE: 'This payment is secured with 3D Secure. Your card details are transmitted encrypted.'
+    SECURITY_NOTE:
+      'This payment is secured with 3D Secure. Your card details are transmitted encrypted.'
   }
 }
 

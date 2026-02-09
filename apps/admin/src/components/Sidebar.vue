@@ -128,6 +128,7 @@ import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { usePartnerStore } from '@/stores/partner'
+import { usePmsStore } from '@/stores/pms'
 import { useSiteSettingsStore } from '@/stores/siteSettings'
 import { useI18n } from 'vue-i18n'
 
@@ -136,6 +137,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const partnerStore = usePartnerStore()
+const pmsStore = usePmsStore()
 const siteSettingsStore = useSiteSettingsStore()
 const { t } = useI18n()
 
@@ -164,6 +166,7 @@ const currentModuleIcon = computed(() => {
     '/admin/audit-logs': 'history',
     '/admin/platform-settings': 'settings',
     '/admin/email-logs': 'mail',
+    '/admin/mailbox': 'inbox',
     '/agencies': 'groups',
     '/site-management': 'language',
     '/hotels': 'hotel',
@@ -173,6 +176,19 @@ const currentModuleIcon = computed(() => {
     '/profile': 'person',
     '/developers': 'code',
     '/pms-integration': 'link',
+    '/pms/dashboard': 'dashboard',
+    '/pms/front-desk': 'hotel',
+    '/pms/room-plan': 'grid_view',
+    '/pms/housekeeping': 'cleaning_services',
+    '/pms/reservations': 'book_online',
+    '/pms/guests': 'people',
+    '/pms/kbs': 'badge',
+    '/pms/cashier': 'point_of_sale',
+    '/pms/billing': 'receipt_long',
+    '/pms/night-audit': 'nightlight',
+    '/pms/reports': 'assessment',
+    '/pms/settings': 'settings',
+    '/pms/users': 'manage_accounts',
     '/my-subscription': 'card_membership',
     '/issues': 'bug_report',
     '/payment': 'payments'
@@ -208,9 +224,90 @@ const hasPermission = module => {
   return permission?.actions?.view === true
 }
 
+// Check if current route is a PMS route
+const isPmsView = computed(() => route.path.startsWith('/pms/'))
+
 // Main section - always visible
 const mainSection = computed(() => {
   const items = []
+
+  // PMS View Mode - show PMS navigation
+  if (isPmsView.value) {
+    items.push({
+      name: 'pms-dashboard',
+      to: '/pms/dashboard',
+      icon: 'dashboard',
+      label: t('pms.nav.dashboard')
+    })
+    items.push({
+      name: 'pms-front-desk',
+      to: '/pms/front-desk',
+      icon: 'hotel',
+      label: t('pms.nav.frontDesk')
+    })
+    items.push({
+      name: 'pms-room-plan',
+      to: '/pms/room-plan',
+      icon: 'grid_view',
+      label: t('pms.nav.roomPlan')
+    })
+    items.push({
+      name: 'pms-reservations',
+      to: '/pms/reservations',
+      icon: 'book_online',
+      label: t('pms.nav.reservations')
+    })
+    items.push({
+      name: 'pms-housekeeping',
+      to: '/pms/housekeeping',
+      icon: 'cleaning_services',
+      label: t('pms.nav.housekeeping')
+    })
+    items.push({
+      name: 'pms-guests',
+      to: '/pms/guests',
+      icon: 'people',
+      label: t('pms.nav.guests')
+    })
+    items.push({
+      name: 'pms-cashier',
+      to: '/pms/cashier',
+      icon: 'point_of_sale',
+      label: t('pms.nav.cashier')
+    })
+    items.push({
+      name: 'pms-billing',
+      to: '/pms/billing',
+      icon: 'receipt_long',
+      label: t('pms.nav.billing')
+    })
+    items.push({ name: 'pms-kbs', to: '/pms/kbs', icon: 'badge', label: t('pms.nav.kbs') })
+    items.push({
+      name: 'pms-night-audit',
+      to: '/pms/night-audit',
+      icon: 'nightlight',
+      label: t('pms.nav.nightAudit')
+    })
+    items.push({
+      name: 'pms-reports',
+      to: '/pms/reports',
+      icon: 'assessment',
+      label: t('pms.nav.reports')
+    })
+    items.push({
+      name: 'pms-users',
+      to: '/pms/users',
+      icon: 'manage_accounts',
+      label: t('pms.nav.users')
+    })
+    items.push({
+      name: 'pms-settings',
+      to: '/pms/settings',
+      icon: 'settings',
+      label: t('pms.nav.settings')
+    })
+    return items
+  }
 
   // Dashboard is always visible if user has permission
   if (hasPermission('dashboard')) {
@@ -266,6 +363,12 @@ const mainSection = computed(() => {
       to: '/admin/email-logs',
       icon: 'mail',
       label: t('nav.emailLogs')
+    })
+    items.push({
+      name: 'mailbox',
+      to: '/admin/mailbox',
+      icon: 'inbox',
+      label: t('nav.mailbox')
     })
     items.push({
       name: 'issues',
@@ -335,7 +438,7 @@ const mainSection = computed(() => {
       items.push({ name: 'users', to: '/users', icon: 'people', label: t('nav.users') })
     }
     if (hasPermission('pms')) {
-      items.push({ name: 'pms-integration', to: '/pms-integration', icon: 'link', label: 'PMS' })
+      items.push({ name: 'pms', to: '/pms/dashboard', icon: 'apartment', label: 'PMS' })
     }
     if (hasPermission('settings')) {
       items.push({
@@ -360,24 +463,42 @@ const mainSection = computed(() => {
   return items
 })
 
-const bottomNavItems = computed(() => [
-  {
+const bottomNavItems = computed(() => {
+  const items = []
+
+  // Show "Back to Panel" when in PMS view
+  if (isPmsView.value) {
+    items.push({
+      name: 'back-to-panel',
+      icon: 'arrow_back',
+      label: t('pms.backToPanel'),
+      action: () => {
+        pmsStore.exitPmsMode()
+        router.push('/dashboard')
+      }
+    })
+  }
+
+  items.push({
     name: 'profile',
     icon: 'person',
     label: t('nav.profile'),
     action: () => {
       router.push('/profile')
     }
-  },
-  {
+  })
+
+  items.push({
     name: 'logout',
     icon: 'logout',
     label: t('auth.logout'),
     action: () => {
       authStore.logout()
     }
-  }
-])
+  })
+
+  return items
+})
 </script>
 
 <style scoped>

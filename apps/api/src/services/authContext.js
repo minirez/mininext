@@ -24,6 +24,11 @@ export const getPartnerId = req => {
     return req.account.partner._id || req.account.partner
   }
 
+  // PMS context - partner set by setPmsHotelContext middleware
+  if (req.partner?._id) {
+    return req.partner._id
+  }
+
   // Platform admin viewing as specific partner (via header/query)
   if (req.partnerId) {
     return req.partnerId

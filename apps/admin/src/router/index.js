@@ -12,6 +12,7 @@ import tourRoutes from './routes/tours.js'
 import paymentRoutes from './routes/payment.js'
 import hotelRoutes from './routes/hotels.js'
 import siteRoutes from './routes/site.js'
+import pmsRoutes from './routes/pms.js'
 
 // Lazy load components for standalone routes
 const DashboardView = () => import('../views/DashboardView.vue')
@@ -98,12 +99,11 @@ const router = createRouter({
           component: DevelopersView,
           meta: { requiresPartnerOrAdmin: true, requiredPermission: 'settings' }
         },
-        // PMS Integration
+        // PMS Integration (legacy - redirect to PMS dashboard)
         {
           path: 'pms-integration',
           name: 'pms-integration',
-          component: () => import('../views/PmsIntegrationView.vue'),
-          meta: { requiresPartnerOrAdmin: true, requiredPermission: 'pms' }
+          redirect: '/pms/dashboard'
         },
         // My Subscription (for partner users only)
         {
@@ -140,7 +140,8 @@ const router = createRouter({
         ...tourRoutes,
         ...hotelRoutes,
         ...siteRoutes,
-        ...paymentRoutes
+        ...paymentRoutes,
+        ...pmsRoutes
       ]
     },
 
@@ -220,7 +221,8 @@ router.beforeEach(async (to, from, next) => {
   const requiresPartner = to.matched.some(record => record.meta.requiresPartner)
 
   // Get required permission from route meta (check all matched routes)
-  const requiredPermission = to.matched.find(record => record.meta.requiredPermission)?.meta.requiredPermission
+  const requiredPermission = to.matched.find(record => record.meta.requiredPermission)?.meta
+    .requiredPermission
 
   // Check authentication on first load
   if (authStore.token && !authStore.user) {
@@ -256,12 +258,27 @@ router.beforeEach(async (to, from, next) => {
     next({ name: 'dashboard' })
   } else if (requiredPermission && !hasModulePermission(authStore, requiredPermission)) {
     // Check module-level permission
-    routerLogger.warn(`Authorization failed: User does not have permission for module '${requiredPermission}'`)
+    routerLogger.warn(
+      `Authorization failed: User does not have permission for module '${requiredPermission}'`
+    )
     next({ name: 'dashboard' })
   } else if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
     // Redirect to dashboard if already logged in
     next({ name: 'dashboard' })
   } else {
+    // Auto-manage PMS mode based on route
+    const isPmsRoute = to.matched.some(record => record.meta.isPmsRoute)
+    if (isPmsRoute) {
+      try {
+        const { usePmsStore } = await import('@/stores/pms')
+        const pmsStore = usePmsStore()
+        if (!pmsStore.isPmsMode) {
+          pmsStore.enterPmsMode()
+        }
+      } catch {
+        // PMS store not ready
+      }
+    }
     // Proceed to the route
     next()
   }
