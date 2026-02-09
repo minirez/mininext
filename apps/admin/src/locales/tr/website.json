@@ -180,6 +180,9 @@
       "title": "Web Sitesi Temaları",
       "description": "Web siteniz için bir tema seçin. Önizleyin ve markanıza uygun şekilde özelleştirin.",
       "preview": "Önizle",
+      "modify": "Düzenle",
+      "active": "Aktif",
+      "backToThemes": "Temalara Dön",
       "themeColor": "Tema Rengi",
       "themeColorDescription": "Markanızın ana rengini seçin",
       "tags": {
@@ -223,6 +226,10 @@
       "cruise": {
         "name": "Cruise ve Yat",
         "description": "Cruise ve yat kiralama odaklı tasarım"
+      },
+      "hotel": {
+        "name": "Otel Odaklı",
+        "description": "Otel portföyünüzü sergileyen otel merkezli düzen"
       },
       "bedbank": {
         "name": "Global Oteller",
@@ -305,6 +312,18 @@
         "tour": "Tur",
         "transfer": "Transfer",
         "activity": "Aktivite"
+      },
+      "productPicker": {
+        "hotelsLabel": "Öne Çıkan Oteller",
+        "hotelsHint": "Anasayfada sergilemek için portföyünüzdeki otelleri arayıp seçin",
+        "searchHotels": "Otel ara...",
+        "noHotelsSelected": "Henüz otel seçilmedi",
+        "toursLabel": "Öne Çıkan Turlar ve Aktiviteler",
+        "toursHint": "Anasayfada sergilemek için portföyünüzdeki turları arayıp seçin",
+        "searchTours": "Tur ara...",
+        "noToursSelected": "Henüz tur seçilmedi",
+        "manualIdEntry": "Manuel ID gir",
+        "enterNumericId": "Ürün ID"
       }
     },
     "header": {

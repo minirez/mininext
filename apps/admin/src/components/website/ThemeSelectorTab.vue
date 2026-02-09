@@ -382,6 +382,7 @@ const presetColors = [
 // Theme to preview image mapping
 const themePreviewImages = {
   home1: '/previews/hero-1.webp',
+  hotel: '/previews/hero-1.webp',
   tour: '/previews/hero-5.webp',
   flight: '/previews/hero-10.webp',
   activity: '/previews/hero-6.webp',
@@ -490,6 +491,15 @@ const availableThemes = computed(() => [
     gradient: 'from-indigo-500 to-purple-700',
     previewImage: themePreviewImages.bedbank,
     tags: [t('website.themes.tags.hotel'), t('website.themes.tags.global')]
+  },
+  {
+    id: 'hotel',
+    name: t('website.themes.hotel.name'),
+    description: t('website.themes.hotel.description'),
+    icon: 'hotel',
+    gradient: 'from-emerald-500 to-teal-700',
+    previewImage: themePreviewImages.hotel,
+    tags: [t('website.themes.tags.hotel'), t('website.themes.tags.default')]
   }
 ])
 
@@ -541,8 +551,17 @@ const loadThemeContent = themeId => {
         hero: { photo: {}, title: [], description: [] },
         locationSection: { title: [], description: [], items: [] },
         campaignSection: [],
-        hotels: { title: [], description: [], ids: [], names: [] },
-        tours: { title: [], description: [], ids: [], names: [] }
+        hotels: { title: [], description: [], ids: [], items: [] },
+        tours: { title: [], description: [], ids: [], items: [] }
+      }
+      break
+    case 'hotel':
+      themeContent.value = storefront.homepageTheme?.hotel || {
+        hero: { photo: {}, title: [], description: [] },
+        locationSection: { title: [], description: [], items: [] },
+        campaignSection: [],
+        hotels: { title: [], description: [], ids: [], items: [] },
+        tours: { title: [], description: [], ids: [], items: [] }
       }
       break
     case 'tour':

@@ -175,12 +175,24 @@ const pageSchema = new Schema(
 
 // ==================== SHOWCASE SCHEMAS ====================
 
+/** Structured item stored by ProductPicker (new format) */
+const showcaseItemSchema = new Schema(
+  {
+    id: { type: String },
+    _id: false,
+    name: { type: String, default: '' },
+    location: { type: String, default: '' }
+  },
+  { _id: false }
+)
+
 const hotelShowcaseSchema = new Schema(
   {
     title: { type: [langSchema], default: defaultLang },
     description: { type: [langSchema], default: defaultLang },
-    ids: [Number],
-    names: [String]
+    ids: [Schema.Types.Mixed], // legacy: numeric IDs, kept for backward compat
+    names: [String], // legacy
+    items: { type: [showcaseItemSchema], default: () => [] } // new format
   },
   { _id: false }
 )
@@ -189,8 +201,9 @@ const tourShowcaseSchema = new Schema(
   {
     title: { type: [langSchema], default: defaultLang },
     description: { type: [langSchema], default: defaultLang },
-    ids: [Number],
-    names: { type: [langSchema], default: defaultLang }
+    ids: [Schema.Types.Mixed], // legacy
+    names: { type: [langSchema], default: defaultLang }, // legacy
+    items: { type: [showcaseItemSchema], default: () => [] } // new format
   },
   { _id: false }
 )
@@ -400,7 +413,17 @@ const homepageThemeSchema = new Schema(
   {
     type: {
       type: String,
-      enum: ['home1', 'home2', 'tour', 'flight', 'activity', 'hotel', 'transfer', 'cruise', 'bedbank'],
+      enum: [
+        'home1',
+        'home2',
+        'tour',
+        'flight',
+        'activity',
+        'hotel',
+        'transfer',
+        'cruise',
+        'bedbank'
+      ],
       default: 'home1'
     },
     home1: { type: defaultThemeSchema, default: () => ({}) },

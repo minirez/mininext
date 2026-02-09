@@ -248,6 +248,10 @@
         "name": "Cruise & Yacht",
         "description": "Cruise and yacht charter focused design"
       },
+      "hotel": {
+        "name": "Hotel Focus",
+        "description": "Hotel-centric layout showcasing your property portfolio"
+      },
       "bedbank": {
         "name": "Global Hotels",
         "description": "International hotel inventory with location sections"
@@ -329,6 +333,18 @@
         "tour": "Tour",
         "transfer": "Transfer",
         "activity": "Activity"
+      },
+      "productPicker": {
+        "hotelsLabel": "Featured Hotels",
+        "hotelsHint": "Search and select hotels from your portfolio to showcase on the homepage",
+        "searchHotels": "Search hotels...",
+        "noHotelsSelected": "No hotels selected yet",
+        "toursLabel": "Featured Tours & Activities",
+        "toursHint": "Search and select tours from your portfolio to showcase on the homepage",
+        "searchTours": "Search tours...",
+        "noToursSelected": "No tours selected yet",
+        "manualIdEntry": "Enter ID manually",
+        "enterNumericId": "Product ID"
       }
     },
     "header": {

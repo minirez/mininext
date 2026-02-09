@@ -161,8 +161,11 @@
           <LanguageInput v-model="localContent.hero.description" type="textarea" />
         </div>
 
-        <!-- Search Options (for home1/home2) -->
-        <div v-if="themeType === 'home1' || themeType === 'home2'" class="mb-4">
+        <!-- Search Options (for home1/home2/hotel) -->
+        <div
+          v-if="themeType === 'home1' || themeType === 'home2' || themeType === 'hotel'"
+          class="mb-4"
+        >
           <label class="form-label">{{ $t('website.themeEditor.searchOptions') }}</label>
           <div class="flex flex-wrap gap-2">
             <label
@@ -188,7 +191,10 @@
         </div>
 
         <!-- Backdrop Filter -->
-        <div v-if="themeType === 'home1' || themeType === 'home2'" class="mb-4">
+        <div
+          v-if="themeType === 'home1' || themeType === 'home2' || themeType === 'hotel'"
+          class="mb-4"
+        >
           <label class="flex items-center gap-2 cursor-pointer">
             <input
               v-model="localContent.hero.backdropFilter"
@@ -738,7 +744,69 @@
           </div>
         </template>
 
-        <!-- Standard Themes: Product IDs -->
+        <!-- Home/Hotel Themes: Separate Hotel + Tour Pickers -->
+        <template v-else-if="hasHotelAndTourSections">
+          <!-- Hotels -->
+          <div class="mb-6">
+            <label class="form-label flex items-center gap-2">
+              <span class="material-icons text-purple-500 text-base">hotel</span>
+              {{ $t('website.themeEditor.productPicker.hotelsLabel') }}
+            </label>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">
+              {{ $t('website.themeEditor.productPicker.hotelsHint') }}
+            </p>
+            <ProductPicker
+              :model-value="hotelItems"
+              product-type="hotel"
+              :fetch-fn="fetchHotels"
+              :placeholder="$t('website.themeEditor.productPicker.searchHotels')"
+              :empty-text="$t('website.themeEditor.productPicker.noHotelsSelected')"
+              @update:model-value="updateHotelItems"
+            />
+          </div>
+
+          <!-- Tours -->
+          <div class="mb-4 pt-6 border-t border-gray-200 dark:border-slate-700">
+            <label class="form-label flex items-center gap-2">
+              <span class="material-icons text-orange-500 text-base">tour</span>
+              {{ $t('website.themeEditor.productPicker.toursLabel') }}
+            </label>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">
+              {{ $t('website.themeEditor.productPicker.toursHint') }}
+            </p>
+            <ProductPicker
+              :model-value="tourItems"
+              product-type="tour"
+              :fetch-fn="fetchTours"
+              :placeholder="$t('website.themeEditor.productPicker.searchTours')"
+              :empty-text="$t('website.themeEditor.productPicker.noToursSelected')"
+              @update:model-value="updateTourItems"
+            />
+          </div>
+        </template>
+
+        <!-- Tour-only themes -->
+        <template v-else-if="hasTourOnlySection">
+          <div class="mb-4">
+            <label class="form-label flex items-center gap-2">
+              <span class="material-icons text-orange-500 text-base">tour</span>
+              {{ $t('website.themeEditor.productPicker.toursLabel') }}
+            </label>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">
+              {{ $t('website.themeEditor.productPicker.toursHint') }}
+            </p>
+            <ProductPicker
+              :model-value="tourItems"
+              product-type="tour"
+              :fetch-fn="fetchTours"
+              :placeholder="$t('website.themeEditor.productPicker.searchTours')"
+              :empty-text="$t('website.themeEditor.productPicker.noToursSelected')"
+              @update:model-value="updateTourItems"
+            />
+          </div>
+        </template>
+
+        <!-- Fallback for other themes: numeric ID input (transfer, etc.) -->
         <template v-else>
           <div class="mb-4">
             <label class="form-label">{{ $t('website.themeEditor.productIds') }}</label>
@@ -954,8 +1022,11 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LanguageInput from '@/components/common/LanguageInput.vue'
 import PaximumLocationPicker from './PaximumLocationPicker.vue'
+import ProductPicker from './ProductPicker.vue'
 import { getImageUrl as getCdnImageUrl, getFileUrl } from '@/utils/imageUrl'
 import websiteService from '@/services/websiteService'
+import hotelService from '@/services/hotelService'
+import tourService from '@/services/tourService'
 
 const { t } = useI18n()
 
@@ -1017,6 +1088,7 @@ const themeSections = computed(() => {
   switch (props.themeType) {
     case 'home1':
     case 'home2':
+    case 'hotel':
       return [
         ...baseSections,
         { id: 'locations', label: t('website.themeEditor.tabs.locations'), icon: 'location_on' },
@@ -1117,6 +1189,123 @@ const hasCategoriesSetting = computed(() => {
   return ['tour', 'activity'].includes(props.themeType)
 })
 
+// Themes that show separate hotel + tour picker sections
+const hasHotelAndTourSections = computed(() => {
+  return ['home1', 'home2', 'hotel'].includes(props.themeType)
+})
+
+// Themes with only tour picker (tour, activity, cruise)
+const hasTourOnlySection = computed(() => {
+  return ['tour', 'activity', 'cruise'].includes(props.themeType)
+})
+
+// ==================== PRODUCT PICKER HELPERS ====================
+
+/** Fetch hotels from partner portfolio */
+const fetchHotels = params => hotelService.getHotels(params)
+
+/** Fetch tours from partner portfolio */
+const fetchTours = params => tourService.getTours(params)
+
+/**
+ * Convert between storefront schema items and ProductPicker items.
+ * Storefront stores: { ids: [Number], names: [String] } or { ids: [Number], items: [{id, name, ...}] }
+ * ProductPicker uses: [{ id, _id, name, location? }]
+ */
+const hotelItems = computed(() => {
+  const section = getHotelSection()
+  // New format: items array with { id, name, location }
+  if (section.items?.length) return section.items
+  // Legacy format: ids + names arrays
+  if (section.ids?.length) {
+    return section.ids.map((id, i) => ({
+      id: String(id),
+      _id: String(id),
+      name: section.names?.[i] || `#${id}`
+    }))
+  }
+  return []
+})
+
+const tourItems = computed(() => {
+  const section = getTourSection()
+  if (section.items?.length) return section.items
+  if (section.ids?.length) {
+    return section.ids.map((id, i) => ({
+      id: String(id),
+      _id: String(id),
+      name: section.names?.[i] || `#${id}`
+    }))
+  }
+  return []
+})
+
+const getHotelSection = () => {
+  if (!localContent.value.hotels) {
+    localContent.value.hotels = { title: [], description: [], ids: [], items: [] }
+  }
+  return localContent.value.hotels
+}
+
+const getTourSection = () => {
+  // For home/hotel themes, tours is in localContent.tours
+  // For tour theme, also localContent.tours
+  // For activity, tourIds.top4/bottom8 - handled separately
+  if (props.themeType === 'activity') {
+    if (!localContent.value.tourIds) {
+      localContent.value.tourIds = { top4: [], bottom8: [], items: [] }
+    }
+    // Wrap activity tourIds into a tour-like section
+    return {
+      get title() {
+        return []
+      },
+      get description() {
+        return []
+      },
+      get ids() {
+        return [
+          ...(localContent.value.tourIds.top4 || []),
+          ...(localContent.value.tourIds.bottom8 || [])
+        ]
+      },
+      get items() {
+        return localContent.value.tourIds.items || []
+      }
+    }
+  }
+  if (!localContent.value.tours) {
+    localContent.value.tours = { title: [], description: [], ids: [], items: [] }
+  }
+  return localContent.value.tours
+}
+
+const updateHotelItems = items => {
+  const section = getHotelSection()
+  section.items = items
+  // Also sync legacy ids for backward compatibility with B2C consumer
+  section.ids = items.map(i => i.id || i._id).filter(Boolean)
+  section.names = items.map(i => i.name || '').filter(Boolean)
+}
+
+const updateTourItems = items => {
+  if (props.themeType === 'activity') {
+    if (!localContent.value.tourIds) {
+      localContent.value.tourIds = { top4: [], bottom8: [], items: [] }
+    }
+    localContent.value.tourIds.items = items
+    // Split into top4 and bottom8 for legacy compat
+    const ids = items.map(i => i.id || i._id).filter(Boolean)
+    localContent.value.tourIds.top4 = ids.slice(0, 4)
+    localContent.value.tourIds.bottom8 = ids.slice(4, 12)
+    return
+  }
+  const section = getTourSection()
+  section.items = items
+  section.ids = items.map(i => i.id || i._id).filter(Boolean)
+  section.names = items.map(i => i.name || '').filter(Boolean)
+}
+
 // Helper functions
 const getImageUrl = photo => {
   if (!photo) return ''
@@ -1167,7 +1356,7 @@ const toggleCategory = categoryId => {
 
 // Get locations section based on theme type
 const getLocationsSection = () => {
-  if (props.themeType === 'home1' || props.themeType === 'home2') {
+  if (props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel') {
     if (!localContent.value.locationSection) {
       localContent.value.locationSection = { title: [], description: [], items: [] }
     }
@@ -1300,7 +1489,7 @@ const handleLocationImageUpload = async (event, index) => {
 
   try {
     const uploadType =
-      props.themeType === 'home1' || props.themeType === 'home2'
+      props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel'
         ? 'location'
         : `${props.themeType}-location`
     const response = await websiteService.uploadSectionImage(file, uploadType, index)
@@ -1318,7 +1507,7 @@ const handleLocationImageUpload = async (event, index) => {
 
 // Get campaigns based on theme type
 const getCampaignsArray = () => {
-  if (props.themeType === 'home1' || props.themeType === 'home2') {
+  if (props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel') {
     if (!localContent.value.campaignSection) {
       localContent.value.campaignSection = []
     }
@@ -1348,7 +1537,7 @@ const addCampaign = () => {
     ]
   }
 
-  if (props.themeType === 'home1' || props.themeType === 'home2') {
+  if (props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel') {
     if (!localContent.value.campaignSection) {
       localContent.value.campaignSection = []
     }
@@ -1365,7 +1554,7 @@ const addCampaign = () => {
 }
 
 const removeCampaign = index => {
-  if (props.themeType === 'home1' || props.themeType === 'home2') {
+  if (props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel') {
     localContent.value.campaignSection.splice(index, 1)
   } else {
     localContent.value.campaignSection.campaign.splice(index, 1)
@@ -1379,7 +1568,7 @@ const handleCampaignImageUpload = async (event, index) => {
 
   try {
     const uploadType =
-      props.themeType === 'home1' || props.themeType === 'home2'
+      props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel'
         ? 'campaign'
         : `${props.themeType}-campaign`
     const response = await websiteService.uploadSectionImage(file, uploadType, index)
@@ -1400,9 +1589,10 @@ const getProductsSection = () => {
   switch (props.themeType) {
     case 'home1':
     case 'home2':
-      // Return hotels or tours section
+    case 'hotel':
+      // Return hotels section (used for section title/desc)
       if (!localContent.value.hotels) {
-        localContent.value.hotels = { title: [], description: [], ids: [], names: [] }
+        localContent.value.hotels = { title: [], description: [], ids: [], items: [] }
       }
       return localContent.value.hotels
     case 'tour':
@@ -1513,7 +1703,7 @@ const handleHeroImageUpload = async event => {
 
   try {
     const uploadType =
-      props.themeType === 'home1' || props.themeType === 'home2'
+      props.themeType === 'home1' || props.themeType === 'home2' || props.themeType === 'hotel'
         ? 'hero'
         : `${props.themeType}-hero`
     const response = await websiteService.uploadSectionImage(file, uploadType)
