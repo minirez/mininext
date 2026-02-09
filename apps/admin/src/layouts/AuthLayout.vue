@@ -19,9 +19,9 @@
       <!-- Logo -->
       <div class="text-center mb-8">
         <div
-          class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
+          class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
         >
-          <img :src="siteSettingsStore.faviconUrl" alt="Logo" class="w-20 h-20 object-contain" />
+          <img :src="aaLogo" alt="AdviceAl Logo" class="w-24 h-24 object-contain" />
         </div>
         <h1 class="text-3xl font-bold text-white">{{ $t('auth.portalTitle') }}</h1>
         <p class="text-purple-200 mt-2">{{ $t('auth.portalSubtitle') }}</p>
@@ -62,23 +62,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
-import { useSiteSettingsStore } from '@/stores/siteSettings'
+import aaLogo from '@/assets/aa-logo.jpeg'
 
 const uiStore = useUIStore()
-const siteSettingsStore = useSiteSettingsStore()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
-
-// Fetch site settings for favicon (if not already loaded)
-onMounted(() => {
-  if (!siteSettingsStore.loaded && !siteSettingsStore.loading) {
-    siteSettingsStore.fetchSettings()
-  }
-})
 </script>
 
 <style scoped>
