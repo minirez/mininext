@@ -14,82 +14,83 @@ export const REPORT_TYPES = {
   VIP_GUESTS: 'vip_guests'
 }
 
+// Labels are i18n keys - use t() to translate in components
 export const REPORT_CATEGORIES = [
   {
     id: 'operational',
-    label: 'Operasyonel',
+    labelKey: 'reports.categories.operational',
     icon: 'analytics',
     color: 'blue',
     reports: [
       {
         type: REPORT_TYPES.OCCUPANCY,
-        label: 'Doluluk Raporu',
+        labelKey: 'reports.types.occupancy',
         icon: 'hotel',
-        description: 'Gunluk doluluk oranlari ve oda durumlari'
+        descriptionKey: 'reports.descriptions.occupancy'
       },
       {
         type: REPORT_TYPES.ARRIVALS,
-        label: 'Giris Raporu',
+        labelKey: 'reports.types.arrivals',
         icon: 'login',
-        description: 'Bugunku ve gelecek girisler'
+        descriptionKey: 'reports.descriptions.arrivals'
       },
       {
         type: REPORT_TYPES.DEPARTURES,
-        label: 'Cikis Raporu',
+        labelKey: 'reports.types.departures',
         icon: 'logout',
-        description: 'Bugunku ve gelecek cikislar'
+        descriptionKey: 'reports.descriptions.departures'
       },
       {
         type: REPORT_TYPES.IN_HOUSE,
-        label: 'Konaklayan Misafirler',
+        labelKey: 'reports.types.inHouse',
         icon: 'people',
-        description: 'Su an otelde bulunan misafirler'
+        descriptionKey: 'reports.descriptions.inHouse'
       },
       {
         type: REPORT_TYPES.HOUSEKEEPING,
-        label: 'Housekeeping Raporu',
+        labelKey: 'reports.types.housekeeping',
         icon: 'cleaning_services',
-        description: 'Oda temizlik durumlari'
+        descriptionKey: 'reports.descriptions.housekeeping'
       }
     ]
   },
   {
     id: 'financial',
-    label: 'Finansal',
+    labelKey: 'reports.categories.financial',
     icon: 'payments',
     color: 'green',
     reports: [
       {
         type: REPORT_TYPES.REVENUE,
-        label: 'Gelir Raporu',
+        labelKey: 'reports.types.revenue',
         icon: 'trending_up',
-        description: 'Gelir ve odeme analizleri'
+        descriptionKey: 'reports.descriptions.revenue'
       },
       {
         type: REPORT_TYPES.SHIFTS,
-        label: 'Vardiya Raporu',
+        labelKey: 'reports.types.shifts',
         icon: 'schedule',
-        description: 'Kasa vardiya raporlari'
+        descriptionKey: 'reports.descriptions.shifts'
       }
     ]
   },
   {
     id: 'guest',
-    label: 'Misafir',
+    labelKey: 'reports.categories.guest',
     icon: 'person',
     color: 'purple',
     reports: [
       {
         type: REPORT_TYPES.NATIONALITY,
-        label: 'Ulke Bazli Rapor',
+        labelKey: 'reports.types.nationality',
         icon: 'public',
-        description: 'Misafirlerin ulkelere gore dagilimi'
+        descriptionKey: 'reports.descriptions.nationality'
       },
       {
         type: REPORT_TYPES.VIP_GUESTS,
-        label: 'VIP Misafirler',
+        labelKey: 'reports.types.vipGuests',
         icon: 'workspace_premium',
-        description: 'VIP misafir listesi ve istatistikleri'
+        descriptionKey: 'reports.descriptions.vipGuests'
       }
     ]
   }
@@ -214,17 +215,18 @@ export const getDateRange = period => {
   }
 }
 
+// Date range options - values are i18n keys
 export const DATE_RANGE_OPTIONS = [
-  { value: 'today', label: 'Bugun' },
-  { value: 'yesterday', label: 'Dun' },
-  { value: 'this_week', label: 'Bu Hafta' },
-  { value: 'last_week', label: 'Gecen Hafta' },
-  { value: 'this_month', label: 'Bu Ay' },
-  { value: 'last_month', label: 'Gecen Ay' },
-  { value: 'last_30_days', label: 'Son 30 Gun' },
-  { value: 'last_90_days', label: 'Son 90 Gun' },
-  { value: 'this_year', label: 'Bu Yil' },
-  { value: 'custom', label: 'Ozel Tarih' }
+  { value: 'today', labelKey: 'reports.dateRange.today' },
+  { value: 'yesterday', labelKey: 'reports.dateRange.yesterday' },
+  { value: 'this_week', labelKey: 'reports.dateRange.thisWeek' },
+  { value: 'last_week', labelKey: 'reports.dateRange.lastWeek' },
+  { value: 'this_month', labelKey: 'reports.dateRange.thisMonth' },
+  { value: 'last_month', labelKey: 'reports.dateRange.lastMonth' },
+  { value: 'last_30_days', labelKey: 'reports.dateRange.last30Days' },
+  { value: 'last_90_days', labelKey: 'reports.dateRange.last90Days' },
+  { value: 'this_year', labelKey: 'reports.dateRange.thisYear' },
+  { value: 'custom', labelKey: 'reports.dateRange.custom' }
 ]
 
 export default {

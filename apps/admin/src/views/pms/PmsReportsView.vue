@@ -22,7 +22,7 @@
             @change="onDateRangeChange"
           >
             <option v-for="opt in dateRangeOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
+              {{ $t(opt.labelKey) }}
             </option>
           </select>
           <template v-if="dateRangeType === 'custom'">
@@ -66,7 +66,7 @@
               >
             </div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ category.label }}
+              {{ $t(category.labelKey) }}
             </h3>
           </div>
           <ul class="space-y-2">
@@ -78,8 +78,8 @@
             >
               <span class="material-icons text-lg">{{ report.icon }}</span>
               <div class="flex-1">
-                <p class="text-sm font-medium">{{ report.label }}</p>
-                <p class="text-xs text-gray-400">{{ report.description }}</p>
+                <p class="text-sm font-medium">{{ $t(report.labelKey) }}</p>
+                <p class="text-xs text-gray-400">{{ $t(report.descriptionKey) }}</p>
               </div>
               <span class="material-icons text-gray-400">chevron_right</span>
             </li>
@@ -99,10 +99,10 @@
           </button>
           <div>
             <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-              {{ selectedReport.label }}
+              {{ $t(selectedReport.labelKey) }}
             </h2>
             <p class="text-sm text-gray-500 dark:text-slate-400">
-              {{ selectedReport.description }}
+              {{ $t(selectedReport.descriptionKey) }}
             </p>
           </div>
         </div>

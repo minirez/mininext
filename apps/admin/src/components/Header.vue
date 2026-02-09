@@ -226,6 +226,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { setLocale } from '@/plugins/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { useHotelStore } from '@/stores/hotel'
@@ -249,9 +250,8 @@ const languages = [
 
 const currentLocale = computed(() => locale.value)
 
-const changeLanguage = lang => {
-  locale.value = lang
-  localStorage.setItem('language', lang)
+const changeLanguage = async lang => {
+  await setLocale(lang)
 }
 
 // Props

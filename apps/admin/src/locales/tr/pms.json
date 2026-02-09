@@ -1734,6 +1734,45 @@
     "refresh": "Yenile",
     "loading": "Rapor yükleniyor...",
     "unknownType": "Bilinmeyen rapor tipi",
+    "categories": {
+      "operational": "Operasyonel",
+      "financial": "Finansal",
+      "guest": "Misafir"
+    },
+    "types": {
+      "occupancy": "Doluluk Raporu",
+      "arrivals": "Giriş Raporu",
+      "departures": "Çıkış Raporu",
+      "inHouse": "Konaklayan Misafirler",
+      "housekeeping": "Housekeeping Raporu",
+      "revenue": "Gelir Raporu",
+      "shifts": "Vardiya Raporu",
+      "nationality": "Ülke Bazlı Rapor",
+      "vipGuests": "VIP Misafirler"
+    },
+    "descriptions": {
+      "occupancy": "Günlük doluluk oranları ve oda durumları",
+      "arrivals": "Bugünkü ve gelecek girişler",
+      "departures": "Bugünkü ve gelecek çıkışlar",
+      "inHouse": "Şu an otelde bulunan misafirler",
+      "housekeeping": "Oda temizlik durumları",
+      "revenue": "Gelir ve ödeme analizleri",
+      "shifts": "Kasa vardiya raporları",
+      "nationality": "Misafirlerin ülkelere göre dağılımı",
+      "vipGuests": "VIP misafir listesi ve istatistikleri"
+    },
+    "dateRange": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "thisWeek": "Bu Hafta",
+      "lastWeek": "Geçen Hafta",
+      "thisMonth": "Bu Ay",
+      "lastMonth": "Geçen Ay",
+      "last30Days": "Son 30 Gün",
+      "last90Days": "Son 90 Gün",
+      "thisYear": "Bu Yıl",
+      "custom": "Özel Tarih"
+    },
     "loadError": "Rapor yüklenemedi",
     "occupiedRooms": "Dolu Oda",
     "totalGuests": "Toplam Misafir",
@@ -1839,6 +1878,9 @@
     },
     "vip": {
       "totalVip": "Toplam VIP",
+      "platinum": "Platinum",
+      "gold": "Gold",
+      "silver": "Silver",
       "totalSpent": "VIP Misafirler Toplam Harcama",
       "guestList": "VIP Misafir Listesi",
       "contact": "İletişim",

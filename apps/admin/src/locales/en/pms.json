@@ -1735,6 +1735,45 @@
     "refresh": "Refresh",
     "loading": "Loading report...",
     "unknownType": "Unknown report type",
+    "categories": {
+      "operational": "Operational",
+      "financial": "Financial",
+      "guest": "Guest"
+    },
+    "types": {
+      "occupancy": "Occupancy Report",
+      "arrivals": "Arrivals Report",
+      "departures": "Departures Report",
+      "inHouse": "In-House Guests",
+      "housekeeping": "Housekeeping Report",
+      "revenue": "Revenue Report",
+      "shifts": "Shift Report",
+      "nationality": "Nationality Report",
+      "vipGuests": "VIP Guests"
+    },
+    "descriptions": {
+      "occupancy": "Daily occupancy rates and room status",
+      "arrivals": "Today's and upcoming arrivals",
+      "departures": "Today's and upcoming departures",
+      "inHouse": "Guests currently staying at the hotel",
+      "housekeeping": "Room cleaning status",
+      "revenue": "Revenue and payment analytics",
+      "shifts": "Cash register shift reports",
+      "nationality": "Guest distribution by nationality",
+      "vipGuests": "VIP guest list and statistics"
+    },
+    "dateRange": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastWeek": "Last Week",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "thisYear": "This Year",
+      "custom": "Custom Date"
+    },
     "loadError": "Failed to load report",
     "occupiedRooms": "Occupied Rooms",
     "totalGuests": "Total Guests",
@@ -1840,6 +1879,9 @@
     },
     "vip": {
       "totalVip": "Total VIP",
+      "platinum": "Platinum",
+      "gold": "Gold",
+      "silver": "Silver",
       "totalSpent": "VIP Guests Total Spending",
       "guestList": "VIP Guest List",
       "contact": "Contact",

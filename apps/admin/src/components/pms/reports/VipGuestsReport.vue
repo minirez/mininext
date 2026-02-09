@@ -13,7 +13,7 @@
       <div
         class="bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 p-4"
       >
-        <p class="text-sm text-purple-600 dark:text-purple-400">Platinum</p>
+        <p class="text-sm text-purple-600 dark:text-purple-400">{{ $t('reports.vip.platinum') }}</p>
         <p class="text-2xl font-bold text-purple-700 dark:text-purple-300">
           {{ data?.summary?.platinum || 0 }}
         </p>
@@ -21,7 +21,7 @@
       <div
         class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800 p-4"
       >
-        <p class="text-sm text-yellow-600 dark:text-yellow-400">Gold</p>
+        <p class="text-sm text-yellow-600 dark:text-yellow-400">{{ $t('reports.vip.gold') }}</p>
         <p class="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
           {{ data?.summary?.gold || 0 }}
         </p>
@@ -29,7 +29,7 @@
       <div
         class="bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 p-4"
       >
-        <p class="text-sm text-gray-600 dark:text-gray-400">Silver</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('reports.vip.silver') }}</p>
         <p class="text-2xl font-bold text-gray-700 dark:text-gray-300">
           {{ data?.summary?.silver || 0 }}
         </p>
