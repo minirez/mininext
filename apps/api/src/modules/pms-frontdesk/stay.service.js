@@ -214,10 +214,12 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   // Get expected arrivals from Bookings (per-room expansion for multi-room bookings)
   let expectedFromBookings = []
   try {
-    // 1. Get today's bookings (confirmed + pending)
+    // 1. Get bookings with checkIn <= today that are still not fully checked in
+    // This includes past-date bookings where guests haven't arrived yet
     const todayBookings = await Booking.find({
       hotel: hotelId,
-      checkIn: { $gte: today, $lt: tomorrow },
+      checkIn: { $lt: tomorrow },
+      checkOut: { $gt: today },
       status: { $in: ['confirmed', 'pending'] }
     }).lean()
 
@@ -277,9 +279,11 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   }
 
   // Get pending Stays (direct reservations created in hotel, not yet checked in)
+  // Include past-date pending stays where guests haven't arrived yet
   const pendingStays = await Stay.find({
     hotel: hotelId,
-    checkInDate: { $gte: today, $lt: tomorrow },
+    checkInDate: { $lt: tomorrow },
+    checkOutDate: { $gt: today },
     status: STAY_STATUS.PENDING
   })
     .populate('room', 'roomNumber floor')
@@ -296,10 +300,10 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
 
-  // Get pending check-outs (should check out today)
+  // Get pending check-outs (should check out today or overdue)
   const pendingCheckOuts = await Stay.find({
     hotel: hotelId,
-    checkOutDate: { $gte: today, $lt: tomorrow },
+    checkOutDate: { $lte: tomorrow },
     status: STAY_STATUS.CHECKED_IN
   })
     .populate('room', 'roomNumber floor')
