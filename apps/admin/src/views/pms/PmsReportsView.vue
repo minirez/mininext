@@ -259,16 +259,27 @@ const fetchReport = async () => {
       case REPORT_TYPES.OCCUPANCY:
         response = await reportsService.getOccupancyReport(hotelId.value, params)
         break
-      case REPORT_TYPES.ARRIVALS:
-        response = await reportsService.getArrivalsReport(hotelId.value, {
-          date: filters.value.startDate
-        })
+      case REPORT_TYPES.ARRIVALS: {
+        // Arrivals report is single-day: use today when range selected
+        const arrDate =
+          dateRangeType.value === 'today' ||
+          dateRangeType.value === 'yesterday' ||
+          dateRangeType.value === 'custom'
+            ? filters.value.startDate
+            : new Date().toLocaleDateString('sv-SE')
+        response = await reportsService.getArrivalsReport(hotelId.value, { date: arrDate })
         break
-      case REPORT_TYPES.DEPARTURES:
-        response = await reportsService.getDeparturesReport(hotelId.value, {
-          date: filters.value.startDate
-        })
+      }
+      case REPORT_TYPES.DEPARTURES: {
+        const depDate =
+          dateRangeType.value === 'today' ||
+          dateRangeType.value === 'yesterday' ||
+          dateRangeType.value === 'custom'
+            ? filters.value.startDate
+            : new Date().toLocaleDateString('sv-SE')
+        response = await reportsService.getDeparturesReport(hotelId.value, { date: depDate })
         break
+      }
       case REPORT_TYPES.IN_HOUSE:
         response = await reportsService.getInHouseReport(hotelId.value)
         break

@@ -1852,6 +1852,8 @@
       "noShow": "No-Show",
       "arrivalsList": "Giriş Listesi",
       "status": {
+        "expected": "Bekleniyor",
+        "overdue": "Gecikmiş",
         "reserved": "Bekleniyor",
         "confirmed": "Onaylandı",
         "checkedIn": "Giriş Yaptı",

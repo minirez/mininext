@@ -205,25 +205,54 @@ export const getArrivalsReport = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
   const { date, status } = req.query
 
-  const targetDate = date ? new Date(date) : new Date()
+  const targetDate = date ? new Date(date + 'T00:00:00') : new Date()
   const startOfDay = new Date(targetDate)
   startOfDay.setHours(0, 0, 0, 0)
   const endOfDay = new Date(targetDate)
   endOfDay.setHours(23, 59, 59, 999)
 
-  const query = {
+  // 1. Get stays with checkInDate on target date (already checked in today)
+  const stayQuery = {
     hotel: hotelId,
     checkInDate: { $gte: startOfDay, $lte: endOfDay }
   }
-
   if (status && status !== 'all') {
-    query.status = status
+    stayQuery.status = status
   }
 
-  const arrivals = await Stay.find(query)
+  const stays = await Stay.find(stayQuery)
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name')
     .sort({ checkInDate: 1 })
+    .lean()
+
+  // 2. Get bookings that should arrive by target date but haven't checked in yet
+  // This includes: checkIn <= endOfDay (today or overdue) AND checkOut > startOfDay (still valid)
+  const stayBookingIds = stays.map(s => s.booking?.toString()).filter(Boolean)
+
+  // Also exclude bookings that already have stays (partially or fully checked in)
+  const allStaysForHotel = await Stay.find({
+    hotel: hotelId,
+    booking: { $exists: true, $ne: null }
+  })
+    .select('booking')
+    .lean()
+  const allStayBookingIds = [
+    ...new Set([
+      ...stayBookingIds,
+      ...allStaysForHotel.map(s => s.booking?.toString()).filter(Boolean)
+    ])
+  ]
+
+  const bookings = await Booking.find({
+    hotel: hotelId,
+    checkIn: { $lte: endOfDay },
+    checkOut: { $gt: startOfDay },
+    status: { $in: ['confirmed', 'pending'] },
+    _id: { $nin: allStayBookingIds }
+  })
+    .populate('rooms.roomType', 'name')
+    .sort({ checkIn: 1 })
     .lean()
 
   // Helper to get main guest from embedded guests array
@@ -232,45 +261,82 @@ export const getArrivalsReport = asyncHandler(async (req, res) => {
     return stay.guests.find(g => g.isMainGuest) || stay.guests[0]
   }
 
-  // Group by status
-  const byStatus = {
-    expected: arrivals.filter(a => a.status === 'pending'),
-    checkedIn: arrivals.filter(a => a.status === 'checked_in'),
-    noShow: arrivals.filter(a => a.status === 'no_show'),
-    cancelled: arrivals.filter(a => a.status === 'cancelled')
+  // Build unified arrivals list
+  const arrivals = []
+
+  // Add stays
+  for (const a of stays) {
+    const mainGuest = getMainGuest(a)
+    arrivals.push({
+      stayNumber: a.stayNumber,
+      bookingNumber: a.bookingNumber,
+      guestName: mainGuest ? `${mainGuest.firstName} ${mainGuest.lastName}` : 'Bilinmiyor',
+      phone: mainGuest?.phone,
+      nationality: mainGuest?.nationality,
+      roomNumber: a.room?.roomNumber || 'Atanmadi',
+      roomType: a.roomType?.name?.tr || a.roomType?.name?.en,
+      adults: a.adultsCount,
+      children: a.childrenCount,
+      nights: a.nights,
+      status: a.status,
+      totalAmount: a.totalAmount,
+      paidAmount: a.paidAmount,
+      balance: a.balance,
+      source: a.source,
+      notes: a.specialRequests
+    })
   }
+
+  // Add bookings as expected arrivals
+  for (const b of bookings) {
+    const nights = Math.ceil((new Date(b.checkOut) - new Date(b.checkIn)) / (1000 * 60 * 60 * 24))
+    const roomTypeName = b.rooms?.[0]?.roomType?.name?.tr || b.rooms?.[0]?.roomType?.name?.en || ''
+    // Mark as overdue if checkIn is before target date
+    const isOverdue = new Date(b.checkIn) < startOfDay
+    arrivals.push({
+      stayNumber: null,
+      bookingNumber: b.bookingNumber,
+      guestName: b.leadGuest ? `${b.leadGuest.firstName} ${b.leadGuest.lastName}` : 'Bilinmiyor',
+      phone: b.contact?.phone,
+      nationality: b.leadGuest?.nationality,
+      roomNumber: 'Atanmadı',
+      roomType: roomTypeName,
+      adults: b.totalAdults || 0,
+      children: b.totalChildren || 0,
+      nights,
+      status: isOverdue ? 'overdue' : 'expected',
+      totalAmount: b.totalAmount || 0,
+      paidAmount: b.paidAmount || 0,
+      balance: (b.totalAmount || 0) - (b.paidAmount || 0),
+      source: b.source,
+      notes: b.specialRequests
+    })
+  }
+
+  // Group by status
+  const expected = arrivals.filter(
+    a => a.status === 'expected' || a.status === 'pending' || a.status === 'overdue'
+  )
+  const checkedIn = arrivals.filter(a => a.status === 'checked_in')
+  const noShow = arrivals.filter(a => a.status === 'no_show')
+  const cancelled = arrivals.filter(a => a.status === 'cancelled')
+
+  // Format date as local YYYY-MM-DD
+  const pad = n => String(n).padStart(2, '0')
+  const dateStr = `${targetDate.getFullYear()}-${pad(targetDate.getMonth() + 1)}-${pad(targetDate.getDate())}`
 
   res.json({
     success: true,
     data: {
-      date: targetDate.toISOString().split('T')[0],
+      date: dateStr,
       summary: {
         total: arrivals.length,
-        expected: byStatus.expected.length,
-        checkedIn: byStatus.checkedIn.length,
-        noShow: byStatus.noShow.length,
-        cancelled: byStatus.cancelled.length
+        expected: expected.length,
+        checkedIn: checkedIn.length,
+        noShow: noShow.length,
+        cancelled: cancelled.length
       },
-      arrivals: arrivals.map(a => {
-        const mainGuest = getMainGuest(a)
-        return {
-          stayNumber: a.stayNumber,
-          guestName: mainGuest ? `${mainGuest.firstName} ${mainGuest.lastName}` : 'Bilinmiyor',
-          phone: mainGuest?.phone,
-          nationality: mainGuest?.nationality,
-          roomNumber: a.room?.roomNumber || 'Atanmadi',
-          roomType: a.roomType?.name?.tr || a.roomType?.name?.en,
-          adults: a.adultsCount,
-          children: a.childrenCount,
-          nights: a.nights,
-          status: a.status,
-          totalAmount: a.totalAmount,
-          paidAmount: a.paidAmount,
-          balance: a.balance,
-          source: a.source,
-          notes: a.specialRequests
-        }
-      })
+      arrivals
     }
   })
 })
@@ -280,7 +346,7 @@ export const getDeparturesReport = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
   const { date, status } = req.query
 
-  const targetDate = date ? new Date(date) : new Date()
+  const targetDate = date ? new Date(date + 'T00:00:00') : new Date()
   const startOfDay = new Date(targetDate)
   startOfDay.setHours(0, 0, 0, 0)
   const endOfDay = new Date(targetDate)
@@ -313,10 +379,13 @@ export const getDeparturesReport = asyncHandler(async (req, res) => {
     checkedOut: departures.filter(d => d.status === 'checked_out')
   }
 
+  const pad = n => String(n).padStart(2, '0')
+  const depDateStr = `${targetDate.getFullYear()}-${pad(targetDate.getMonth() + 1)}-${pad(targetDate.getDate())}`
+
   res.json({
     success: true,
     data: {
-      date: targetDate.toISOString().split('T')[0],
+      date: depDateStr,
       summary: {
         total: departures.length,
         expected: byStatus.expected.length,

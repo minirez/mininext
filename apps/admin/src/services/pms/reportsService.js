@@ -207,9 +207,10 @@ export const getDateRange = period => {
     default:
       break
   }
+  const pad = n => String(n).padStart(2, '0')
   return {
-    startDate: startDate.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0]
+    startDate: `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`,
+    endDate: `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`
   }
 }
 

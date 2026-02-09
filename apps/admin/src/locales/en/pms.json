@@ -1853,6 +1853,8 @@
       "noShow": "No-Show",
       "arrivalsList": "Arrivals List",
       "status": {
+        "expected": "Expected",
+        "overdue": "Overdue",
         "reserved": "Waiting",
         "confirmed": "Confirmed",
         "checkedIn": "Checked In",

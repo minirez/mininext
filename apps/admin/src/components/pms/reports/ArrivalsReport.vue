@@ -76,7 +76,10 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-            <tr v-for="arrival in data?.arrivals || []" :key="arrival.stayNumber">
+            <tr
+              v-for="(arrival, idx) in data?.arrivals || []"
+              :key="arrival.stayNumber || arrival.bookingNumber || idx"
+            >
               <td class="px-4 py-3">
                 <p class="text-sm font-medium text-gray-900 dark:text-white">
                   {{ arrival.guestName }}
@@ -129,6 +132,9 @@ const formatCurrency = amount => {
 
 const getStatusLabel = status => {
   const statusMap = {
+    expected: 'reports.arrivals.status.expected',
+    overdue: 'reports.arrivals.status.overdue',
+    pending: 'reports.arrivals.status.expected',
     reserved: 'reports.arrivals.status.reserved',
     confirmed: 'reports.arrivals.status.confirmed',
     checked_in: 'reports.arrivals.status.checkedIn',
@@ -140,6 +146,9 @@ const getStatusLabel = status => {
 
 const getStatusClass = status => {
   const classes = {
+    expected: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    overdue: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
     reserved: 'bg-blue-100 text-blue-800',
     confirmed: 'bg-indigo-100 text-indigo-800',
     checked_in: 'bg-green-100 text-green-800',
