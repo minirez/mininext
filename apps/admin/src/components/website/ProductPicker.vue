@@ -181,6 +181,7 @@ const inputRef = ref(null)
 const dropdownRef = ref(null)
 const query = ref('')
 const suggestions = ref([])
+const initialResults = ref([]) // cached initial results so we don't re-fetch on every focus
 const loading = ref(false)
 const showSuggestions = ref(false)
 const showLegacyInput = ref(false)
@@ -264,16 +265,48 @@ const updateDropdownPosition = () => {
   }
 }
 
+const fetchInitialResults = async () => {
+  if (initialResults.value.length > 0) {
+    // Already cached – reuse
+    suggestions.value = initialResults.value
+    return
+  }
+  loading.value = true
+  try {
+    const result = await props.fetchFn({ limit: 10, status: 'active' })
+    const items = result?.data?.items || result?.data || []
+    initialResults.value = items
+    suggestions.value = items
+    nextTick(updateDropdownPosition)
+  } catch (err) {
+    console.error(`ProductPicker: ${props.productType} initial fetch error`, err)
+  } finally {
+    loading.value = false
+  }
+}
+
 const openDropdown = () => {
   showSuggestions.value = true
   nextTick(updateDropdownPosition)
+  // When the user focuses the input with no query, show initial results immediately
+  if (!query.value) {
+    fetchInitialResults()
+  }
 }
 
 let searchTimeout = null
 const handleSearch = () => {
   clearTimeout(searchTimeout)
+
+  // When the query is cleared, fall back to the cached initial results
+  if (!query.value.trim()) {
+    suggestions.value = initialResults.value
+    nextTick(updateDropdownPosition)
+    return
+  }
+
+  // Require at least 2 chars for an actual search query
   if (query.value.length < 2) {
-    suggestions.value = []
     return
   }
 
@@ -306,8 +339,8 @@ const selectItem = item => {
 
   emit('update:modelValue', [...props.modelValue, entry])
   query.value = ''
-  suggestions.value = []
-  showSuggestions.value = false
+  // After selection, keep dropdown open with initial results so user can add more
+  suggestions.value = initialResults.value
 }
 
 const removeItem = index => {
