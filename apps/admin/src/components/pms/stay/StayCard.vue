@@ -346,6 +346,145 @@
               </Transition>
             </div>
 
+            <!-- Change Room Panel -->
+            <Transition name="slide">
+              <div
+                v-if="showChangeRoomPanel"
+                class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <h4
+                    class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"
+                  >
+                    <span class="material-icons text-sm text-blue-600">swap_horiz</span>
+                    {{ t('stayCard.changeRoomPanel.title') }}
+                  </h4>
+                  <button
+                    class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+                    @click="showChangeRoomPanel = false"
+                  >
+                    <span class="material-icons text-sm">close</span>
+                  </button>
+                </div>
+
+                <div v-if="loadingRooms" class="flex items-center justify-center py-4">
+                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+
+                <template v-else>
+                  <div
+                    v-if="availableRooms.length === 0"
+                    class="text-sm text-gray-500 dark:text-slate-400 py-2"
+                  >
+                    {{ t('stayCard.changeRoomPanel.noRooms') }}
+                  </div>
+                  <div v-else class="space-y-3">
+                    <div
+                      class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[150px] overflow-y-auto"
+                    >
+                      <button
+                        v-for="room in availableRooms"
+                        :key="room._id"
+                        class="p-2 rounded-lg border text-sm text-center transition-colors"
+                        :class="
+                          selectedNewRoomId === room._id
+                            ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                            : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:border-blue-300'
+                        "
+                        @click="selectedNewRoomId = room._id"
+                      >
+                        <div class="font-semibold">{{ room.roomNumber }}</div>
+                        <div class="text-xs text-gray-500 dark:text-slate-400">
+                          {{ room.roomType?.name?.tr || room.roomType?.code || '' }}
+                        </div>
+                      </button>
+                    </div>
+                    <div>
+                      <input
+                        v-model="changeRoomReason"
+                        type="text"
+                        :placeholder="t('stayCard.changeRoomPanel.reasonPlaceholder')"
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div class="flex justify-end">
+                      <button
+                        :disabled="!selectedNewRoomId || saving"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 rounded-lg transition-colors flex items-center gap-2"
+                        @click="handleChangeRoom"
+                      >
+                        <span v-if="saving" class="animate-spin material-icons text-sm">sync</span>
+                        <span class="material-icons text-sm" v-else>swap_horiz</span>
+                        {{ t('stayCard.changeRoomPanel.confirm') }}
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </Transition>
+
+            <!-- Extend Stay Panel -->
+            <Transition name="slide">
+              <div
+                v-if="showExtendPanel"
+                class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-900/20"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <h4
+                    class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2"
+                  >
+                    <span class="material-icons text-sm text-amber-600">event</span>
+                    {{ t('stayCard.extendPanel.title') }}
+                  </h4>
+                  <button
+                    class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+                    @click="showExtendPanel = false"
+                  >
+                    <span class="material-icons text-sm">close</span>
+                  </button>
+                </div>
+
+                <div class="flex items-end gap-4">
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                      {{ t('stayCard.extendPanel.currentCheckout') }}
+                    </label>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{
+                        stay?.checkOutDate
+                          ? new Date(stay.checkOutDate).toLocaleDateString('tr-TR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric'
+                            })
+                          : '-'
+                      }}
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                      {{ t('stayCard.extendPanel.newCheckout') }}
+                    </label>
+                    <input
+                      v-model="newCheckOutDate"
+                      type="date"
+                      :min="stay?.checkOutDate ? stay.checkOutDate.split('T')[0] : ''"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <button
+                    :disabled="!newCheckOutDate || saving"
+                    class="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 rounded-lg transition-colors flex items-center gap-2"
+                    @click="handleExtendStay"
+                  >
+                    <span v-if="saving" class="animate-spin material-icons text-sm">sync</span>
+                    <span class="material-icons text-sm" v-else>event</span>
+                    {{ t('stayCard.extendPanel.confirm') }}
+                  </button>
+                </div>
+              </div>
+            </Transition>
+
             <!-- Actions Bar -->
             <div
               class="px-6 py-4 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-700 rounded-b-2xl"
@@ -360,15 +499,19 @@
                     {{ t('stayCard.addCharge') }}
                   </button>
                   <button
+                    v-if="stay?.status === 'checked_in'"
                     class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors flex items-center gap-2"
-                    @click="$emit('change-room', stay)"
+                    :class="{ 'ring-2 ring-blue-400': showChangeRoomPanel }"
+                    @click="openChangeRoomPanel"
                   >
                     <span class="material-icons text-sm">swap_horiz</span>
                     {{ t('stayCard.changeRoom') }}
                   </button>
                   <button
+                    v-if="stay?.status === 'checked_in'"
                     class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors flex items-center gap-2"
-                    @click="$emit('extend-stay', stay)"
+                    :class="{ 'ring-2 ring-amber-400': showExtendPanel }"
+                    @click="openExtendPanel"
                   >
                     <span class="material-icons text-sm">event</span>
                     {{ t('stayCard.extend') }}
@@ -455,12 +598,25 @@ const {
   addPayment,
   addCharge,
   updateNotes,
+  changeRoom,
+  extendStay,
   addGuest,
   updateGuest,
   removeGuest,
   setMainGuest,
   formatCurrency
 } = useStayCard(stayIdRef, hotelIdRef)
+
+// Change Room state
+const showChangeRoomPanel = ref(false)
+const availableRooms = ref([])
+const loadingRooms = ref(false)
+const selectedNewRoomId = ref(null)
+const changeRoomReason = ref('')
+
+// Extend Stay state
+const showExtendPanel = ref(false)
+const newCheckOutDate = ref('')
 
 // Quick payment form
 const quickPaymentAmount = ref(0)
@@ -648,6 +804,56 @@ const handleRemoveGuest = async guestIndex => {
 const handleSetMainGuest = async guestIndex => {
   const success = await setMainGuest(guestIndex)
   if (success) {
+    emit('updated', stay.value)
+  }
+}
+
+// Change Room handlers
+const openChangeRoomPanel = async () => {
+  showChangeRoomPanel.value = true
+  showExtendPanel.value = false
+  selectedNewRoomId.value = null
+  changeRoomReason.value = ''
+  loadingRooms.value = true
+  try {
+    const { getAvailableRooms } = await import('@/services/pms/stayService.js')
+    const response = await getAvailableRooms(props.hotelId)
+    // Filter out current room
+    const currentRoomId = stay.value?.room?._id || stay.value?.room
+    availableRooms.value = (response.data || []).filter(r => r._id !== currentRoomId)
+  } catch (err) {
+    availableRooms.value = []
+  } finally {
+    loadingRooms.value = false
+  }
+}
+
+const handleChangeRoom = async () => {
+  if (!selectedNewRoomId.value) return
+  const success = await changeRoom(selectedNewRoomId.value, changeRoomReason.value)
+  if (success) {
+    showChangeRoomPanel.value = false
+    emit('updated', stay.value)
+  }
+}
+
+// Extend Stay handlers
+const openExtendPanel = () => {
+  showExtendPanel.value = true
+  showChangeRoomPanel.value = false
+  // Set default to current checkout + 1 day
+  if (stay.value?.checkOutDate) {
+    const current = new Date(stay.value.checkOutDate)
+    current.setDate(current.getDate() + 1)
+    newCheckOutDate.value = current.toISOString().split('T')[0]
+  }
+}
+
+const handleExtendStay = async () => {
+  if (!newCheckOutDate.value) return
+  const success = await extendStay(newCheckOutDate.value)
+  if (success) {
+    showExtendPanel.value = false
     emit('updated', stay.value)
   }
 }

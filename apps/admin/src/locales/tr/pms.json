@@ -2171,6 +2171,18 @@
     "changeRoom": "Oda Değiştir",
     "extend": "Uzat",
     "checkout": "Check-out",
+    "changeRoomPanel": {
+      "title": "Oda Değiştir",
+      "noRooms": "Müsait oda bulunamadı",
+      "reasonPlaceholder": "Sebep (opsiyonel)",
+      "confirm": "Odayı Değiştir"
+    },
+    "extendPanel": {
+      "title": "Konaklamayı Uzat",
+      "currentCheckout": "Mevcut Çıkış",
+      "newCheckout": "Yeni Çıkış Tarihi",
+      "confirm": "Uzat"
+    },
     "tabs": {
       "overview": "Özet",
       "guests": "Misafirler",

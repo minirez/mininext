@@ -2172,6 +2172,18 @@
     "changeRoom": "Change Room",
     "extend": "Extend",
     "checkout": "Check-out",
+    "changeRoomPanel": {
+      "title": "Change Room",
+      "noRooms": "No available rooms found",
+      "reasonPlaceholder": "Reason (optional)",
+      "confirm": "Change Room"
+    },
+    "extendPanel": {
+      "title": "Extend Stay",
+      "currentCheckout": "Current Checkout",
+      "newCheckout": "New Checkout Date",
+      "confirm": "Extend"
+    },
     "tabs": {
       "overview": "Overview",
       "guests": "Guests",

@@ -253,7 +253,7 @@ export function useStayCard(stayId, hotelId) {
       const response = await apiClient.post(
         `${BASE}/${hotelId.value}/stays/${stayId.value}/extend`,
         {
-          newCheckOut
+          newCheckOutDate: newCheckOut
         }
       )
 
