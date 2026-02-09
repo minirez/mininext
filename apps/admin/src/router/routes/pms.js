@@ -14,6 +14,7 @@ const PmsBillingView = () => import('@/views/pms/PmsBillingView.vue')
 const PmsNightAuditView = () => import('@/views/pms/PmsNightAuditView.vue')
 const PmsNightAuditDetailView = () => import('@/views/pms/PmsNightAuditDetailView.vue')
 const PmsReportsView = () => import('@/views/pms/PmsReportsView.vue')
+const PmsChannelManagerView = () => import('@/views/pms/PmsChannelManagerView.vue')
 const PmsSettingsView = () => import('@/views/pms/PmsSettingsView.vue')
 const PmsUsersView = () => import('@/views/pms/PmsUsersView.vue')
 
@@ -101,6 +102,12 @@ const pmsRoutes = [
     name: 'pms-reports',
     component: PmsReportsView,
     meta: { ...pmsMeta, titleKey: 'pms.reports' }
+  },
+  {
+    path: 'pms/channel-manager',
+    name: 'pms-channel-manager',
+    component: PmsChannelManagerView,
+    meta: { ...pmsMeta, titleKey: 'pms.channelManager.title' }
   },
   {
     path: 'pms/settings',

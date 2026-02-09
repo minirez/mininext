@@ -7,6 +7,10 @@ import bootstrap from './core/bootstrap.js'
 import { initSocket } from './core/socket.js'
 import { initRedis, closeRedis } from './core/redis.js'
 import { startExchangeScheduler, stopExchangeScheduler } from './services/exchangeScheduler.js'
+import {
+  startChannelScheduler,
+  stopChannelScheduler
+} from './modules/channel-manager/channelScheduler.js'
 
 // Connect to database
 await connectDB()
@@ -33,6 +37,10 @@ const server = httpServer.listen(config.port, () => {
   // Start exchange rate scheduler
   startExchangeScheduler()
   logger.info('💱 Exchange rate scheduler started')
+
+  // Start channel manager scheduler
+  startChannelScheduler()
+  logger.info('📡 Channel manager scheduler started')
 })
 
 // Graceful shutdown
@@ -41,6 +49,9 @@ const gracefulShutdown = async signal => {
 
   // Stop exchange scheduler
   stopExchangeScheduler()
+
+  // Stop channel manager scheduler
+  stopChannelScheduler()
 
   // Close Redis connection
   await closeRedis()

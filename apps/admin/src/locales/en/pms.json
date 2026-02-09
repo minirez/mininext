@@ -302,6 +302,7 @@
     "kbs": "KBS",
     "nightAudit": "Night Audit",
     "users": "Users",
+    "channelManager": "Channel Manager",
     "settings": "Settings",
     "quickCheckin": "Check-in",
     "quickWalkin": "Walk-in",
@@ -3072,7 +3073,8 @@
       "nightAudit": "Night Audit",
       "reports": "Reports",
       "settings": "Settings",
-      "users": "Users"
+      "users": "Users",
+      "channelManager": "Channel Manager"
     },
     "roles": {
       "gm": "General Manager",
@@ -3090,6 +3092,115 @@
       "food_beverage": "Food & Beverage",
       "maintenance": "Maintenance",
       "sales": "Sales"
+    },
+    "channelManager": {
+      "title": "Channel Manager",
+      "subtitle": "Reseliva channel manager integration",
+      "tabs": {
+        "connection": "Connection",
+        "mapping": "Mapping",
+        "ota": "OTAs",
+        "reservations": "Reservations",
+        "inventory": "Inventory",
+        "logs": "Logs"
+      },
+      "status": {
+        "active": "Connection active",
+        "inactive": "Connection inactive",
+        "error": "Connection error"
+      },
+      "connection": {
+        "userId": "User ID",
+        "userIdPlaceholder": "API user ID",
+        "password": "Password",
+        "passwordPlaceholder": "API password",
+        "propertyId": "Property ID",
+        "propertyIdPlaceholder": "Reseliva property ID",
+        "serviceUrl": "Service URL",
+        "integrationType": "Integration Type",
+        "oneWay": "One Way",
+        "twoWay": "Two Way",
+        "oneWayDesc": "Only fetch reservations from Reseliva",
+        "twoWayDesc": "Fetch reservations + push inventory/rates",
+        "settings": "Sync Settings",
+        "autoConfirm": "Auto-confirm reservations",
+        "includeBreakdown": "Include daily price breakdown",
+        "autoSyncInventory": "Auto-sync inventory",
+        "testConnection": "Test Connection"
+      },
+      "mapping": {
+        "description": "Map Reseliva room types and rate plans to your local room types.",
+        "fetchProducts": "Fetch Products",
+        "noProducts": "No products fetched yet. Click 'Fetch Products' button.",
+        "selectRoomType": "Select room type...",
+        "selectMealPlan": "Select meal plan...",
+        "saveMappings": "Save Mappings"
+      },
+      "ota": {
+        "description": "OTA (Online Travel Agency) channels connected via Reseliva.",
+        "noData": "No OTA data loaded. Click refresh button.",
+        "connected": "Connected OTAs",
+        "notConnected": "Not Connected OTAs",
+        "noConnected": "No connected OTAs found"
+      },
+      "reservations": {
+        "description": "Channel reservations received via Reseliva.",
+        "manualSync": "Manual Sync",
+        "lastSync": "Last Sync",
+        "neverSynced": "Never synced",
+        "created": "created",
+        "cancelled": "cancelled",
+        "modified": "modified",
+        "confirmed": "confirmed"
+      },
+      "inventory": {
+        "description": "Push room availability and rates to Reseliva.",
+        "twoWayRequired": "Two-way integration is required for inventory sync.",
+        "twoWayRequiredDesc": "Change integration type to 'Two Way' in connection settings.",
+        "lastSync": "Last Inventory Sync",
+        "neverSynced": "Never synced",
+        "fullSync": "Full Sync",
+        "roomsSynced": "rooms synced",
+        "confirmTitle": "Full Sync",
+        "confirmDesc": "1 year of inventory and rate data will be sent to Reseliva for all mapped rooms. This may take a few minutes.",
+        "startSync": "Start Sync"
+      },
+      "logs": {
+        "date": "Date",
+        "type": "Type",
+        "direction": "Direction",
+        "status": "Status",
+        "duration": "Duration",
+        "error": "Error",
+        "detail": "Log Detail",
+        "noLogs": "No log entries yet",
+        "allTypes": "All Types",
+        "allStatuses": "All Statuses",
+        "types": {
+          "reservation_fetch": "Res. Fetch",
+          "reservation_confirm": "Res. Confirm",
+          "inventory_update": "Inventory Update",
+          "product_sync": "Product Sync",
+          "ota_sync": "OTA Sync",
+          "error_report": "Error Report",
+          "connection_test": "Connection Test"
+        },
+        "statusValues": {
+          "success": "Success",
+          "error": "Error",
+          "partial": "Partial"
+        }
+      },
+      "messages": {
+        "connectionSaved": "Connection saved",
+        "connectionSuccess": "Connection successful",
+        "connectionFailed": "Connection failed",
+        "connectionDeleted": "Connection deleted",
+        "deleteConfirm": "Are you sure you want to delete this connection?",
+        "mappingsSaved": "Mappings saved",
+        "syncCompleted": "Sync completed",
+        "inventorySyncCompleted": "Inventory sync completed"
+      }
     }
   }
 }

@@ -33,6 +33,9 @@ app.use(
 // CORS for public routes (widget embeds on any domain)
 app.use('/api/public', cors({ origin: true, credentials: false }))
 
+// CORS for channel manager webhooks (called by Reseliva)
+app.use('/api/channel-manager/webhook', cors({ origin: true, credentials: false }))
+
 // CORS - Dynamic origin validation for multi-tenant domains
 // Public routes are already handled above with open CORS, skip them here
 const corsOptions = {

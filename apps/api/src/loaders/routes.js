@@ -61,7 +61,10 @@ const ROUTE_CONFIG = {
   'pms-guest': 'pms/guests',
   'pms-billing': 'pms/billing',
   'pms-reservation': 'pms/reservations',
-  'pms-settings': 'pms/settings'
+  'pms-settings': 'pms/settings',
+
+  // Channel Manager
+  'channel-manager': 'channel-manager'
 }
 
 /**

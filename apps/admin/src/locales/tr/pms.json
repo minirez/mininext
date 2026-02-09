@@ -302,6 +302,7 @@
     "kbs": "KBS",
     "nightAudit": "Night Audit",
     "users": "Kullanıcılar",
+    "channelManager": "Kanal Yönetimi",
     "settings": "Ayarlar",
     "quickCheckin": "Check-in",
     "quickWalkin": "Walk-in",
@@ -3071,7 +3072,8 @@
       "nightAudit": "Gece Kapanış",
       "reports": "Raporlar",
       "settings": "Ayarlar",
-      "users": "Kullanıcılar"
+      "users": "Kullanıcılar",
+      "channelManager": "Kanal Yönetimi"
     },
     "roles": {
       "gm": "Genel Müdür",
@@ -3089,6 +3091,115 @@
       "food_beverage": "Yiyecek & İçecek",
       "maintenance": "Bakım",
       "sales": "Satış"
+    },
+    "channelManager": {
+      "title": "Kanal Yönetimi",
+      "subtitle": "Reseliva kanal yöneticisi entegrasyonu",
+      "tabs": {
+        "connection": "Bağlantı",
+        "mapping": "Eşleştirme",
+        "ota": "OTA'lar",
+        "reservations": "Rezervasyonlar",
+        "inventory": "Envanter",
+        "logs": "Loglar"
+      },
+      "status": {
+        "active": "Bağlantı aktif",
+        "inactive": "Bağlantı devre dışı",
+        "error": "Bağlantı hatası"
+      },
+      "connection": {
+        "userId": "Kullanıcı Adı",
+        "userIdPlaceholder": "API kullanıcı adı",
+        "password": "Şifre",
+        "passwordPlaceholder": "API şifresi",
+        "propertyId": "Otel ID",
+        "propertyIdPlaceholder": "Reseliva otel ID'si",
+        "serviceUrl": "Servis URL",
+        "integrationType": "Entegrasyon Tipi",
+        "oneWay": "Tek Yönlü",
+        "twoWay": "İki Yönlü",
+        "oneWayDesc": "Sadece Reseliva'dan rezervasyon çekme",
+        "twoWayDesc": "Rezervasyon çekme + envanter/fiyat güncelleme",
+        "settings": "Senkronizasyon Ayarları",
+        "autoConfirm": "Rezervasyonları otomatik onayla",
+        "includeBreakdown": "Günlük fiyat detaylarını dahil et",
+        "autoSyncInventory": "Envanteri otomatik senkronize et",
+        "testConnection": "Bağlantıyı Test Et"
+      },
+      "mapping": {
+        "description": "Reseliva oda tipi ve fiyat planlarını yerel oda tiplerinizle eşleştirin.",
+        "fetchProducts": "Ürünleri Çek",
+        "noProducts": "Henüz ürün çekilmedi. 'Ürünleri Çek' butonuna tıklayın.",
+        "selectRoomType": "Oda tipi seçin...",
+        "selectMealPlan": "Yemek planı seçin...",
+        "saveMappings": "Eşleştirmeleri Kaydet"
+      },
+      "ota": {
+        "description": "Reseliva üzerinden bağlı olan OTA (Online Seyahat Acentesi) kanalları.",
+        "noData": "OTA bilgisi yüklenmedi. Yenile butonuna tıklayın.",
+        "connected": "Bağlı OTA'lar",
+        "notConnected": "Bağlı Olmayan OTA'lar",
+        "noConnected": "Bağlı OTA bulunmuyor"
+      },
+      "reservations": {
+        "description": "Reseliva üzerinden gelen kanal rezervasyonları.",
+        "manualSync": "Manuel Senkronizasyon",
+        "lastSync": "Son Senkronizasyon",
+        "neverSynced": "Henüz senkronize edilmedi",
+        "created": "oluşturuldu",
+        "cancelled": "iptal edildi",
+        "modified": "güncellendi",
+        "confirmed": "onaylandı"
+      },
+      "inventory": {
+        "description": "Oda müsaitliği ve fiyatları Reseliva'ya aktarın.",
+        "twoWayRequired": "Envanter senkronizasyonu için iki yönlü entegrasyon gereklidir.",
+        "twoWayRequiredDesc": "Bağlantı ayarlarından entegrasyon tipini 'İki Yönlü' olarak değiştirin.",
+        "lastSync": "Son Envanter Senkronizasyonu",
+        "neverSynced": "Henüz senkronize edilmedi",
+        "fullSync": "Tam Senkronizasyon",
+        "roomsSynced": "oda senkronize edildi",
+        "confirmTitle": "Tam Senkronizasyon",
+        "confirmDesc": "Tüm eşleştirilmiş odalar için 1 yıllık envanter ve fiyat verisi Reseliva'ya gönderilecektir. Bu işlem birkaç dakika sürebilir.",
+        "startSync": "Senkronizasyonu Başlat"
+      },
+      "logs": {
+        "date": "Tarih",
+        "type": "Tip",
+        "direction": "Yön",
+        "status": "Durum",
+        "duration": "Süre",
+        "error": "Hata",
+        "detail": "Log Detayı",
+        "noLogs": "Henüz log kaydı bulunmuyor",
+        "allTypes": "Tüm Tipler",
+        "allStatuses": "Tüm Durumlar",
+        "types": {
+          "reservation_fetch": "Rez. Çekme",
+          "reservation_confirm": "Rez. Onay",
+          "inventory_update": "Envanter Güncelleme",
+          "product_sync": "Ürün Senkronizasyonu",
+          "ota_sync": "OTA Senkronizasyonu",
+          "error_report": "Hata Raporu",
+          "connection_test": "Bağlantı Testi"
+        },
+        "statusValues": {
+          "success": "Başarılı",
+          "error": "Hata",
+          "partial": "Kısmi"
+        }
+      },
+      "messages": {
+        "connectionSaved": "Bağlantı kaydedildi",
+        "connectionSuccess": "Bağlantı başarılı",
+        "connectionFailed": "Bağlantı başarısız",
+        "connectionDeleted": "Bağlantı silindi",
+        "deleteConfirm": "Bu bağlantıyı silmek istediğinize emin misiniz?",
+        "mappingsSaved": "Eşleştirmeler kaydedildi",
+        "syncCompleted": "Senkronizasyon tamamlandı",
+        "inventorySyncCompleted": "Envanter senkronizasyonu tamamlandı"
+      }
     }
   }
 }

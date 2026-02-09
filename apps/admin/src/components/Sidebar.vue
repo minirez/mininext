@@ -188,6 +188,7 @@ const currentModuleIcon = computed(() => {
     '/pms/night-audit': 'nightlight',
     '/pms/reports': 'assessment',
     '/pms/settings': 'settings',
+    '/pms/channel-manager': 'swap_horiz',
     '/pms/users': 'manage_accounts',
     '/my-subscription': 'card_membership',
     '/issues': 'bug_report',
@@ -299,6 +300,12 @@ const mainSection = computed(() => {
       to: '/pms/users',
       icon: 'manage_accounts',
       label: t('pms.nav.users')
+    })
+    items.push({
+      name: 'pms-channel-manager',
+      to: '/pms/channel-manager',
+      icon: 'swap_horiz',
+      label: t('pms.nav.channelManager')
     })
     items.push({
       name: 'pms-settings',
