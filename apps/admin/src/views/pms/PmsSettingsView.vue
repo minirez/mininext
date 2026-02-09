@@ -181,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import * as settingsService from '@/services/pms/settingsService'
@@ -341,6 +341,11 @@ const confirmReset = async () => {
 
 // Lifecycle
 onMounted(() => {
+  loadSettings()
+})
+
+// Reload when hotel changes
+watch(hotelId, () => {
   loadSettings()
 })
 

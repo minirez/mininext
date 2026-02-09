@@ -360,7 +360,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import adminUserService from '@/services/pms/adminUserService'
@@ -648,4 +648,15 @@ onMounted(async () => {
     fetchUsers()
   }
 })
+
+// Reload when hotel changes
+watch(
+  () => pmsStore.hotelId,
+  () => {
+    if (canAccess.value) {
+      fetchHotels()
+      fetchUsers()
+    }
+  }
+)
 </script>
