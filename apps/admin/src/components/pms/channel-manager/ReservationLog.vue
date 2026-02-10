@@ -67,82 +67,25 @@
       </div>
     </div>
 
-    <!-- Logs Table -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr
-            class="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-700"
-          >
-            <th class="py-2 px-3 font-medium">{{ $t('pms.channelManager.logs.date') }}</th>
-            <th class="py-2 px-3 font-medium">{{ $t('pms.channelManager.logs.type') }}</th>
-            <th class="py-2 px-3 font-medium">{{ $t('pms.channelManager.logs.direction') }}</th>
-            <th class="py-2 px-3 font-medium">{{ $t('pms.channelManager.logs.status') }}</th>
-            <th class="py-2 px-3 font-medium">{{ $t('pms.channelManager.logs.duration') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="log in logs"
-            :key="log._id"
-            class="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 cursor-pointer"
-            @click="$emit('viewLog', log._id)"
-          >
-            <td class="py-2 px-3 text-gray-900 dark:text-white">
-              {{ new Date(log.createdAt).toLocaleString('tr-TR') }}
-            </td>
-            <td class="py-2 px-3">
-              <span
-                class="px-2 py-0.5 text-xs rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-              >
-                {{ log.type }}
-              </span>
-            </td>
-            <td class="py-2 px-3">
-              <span
-                class="material-icons text-sm"
-                :class="log.direction === 'inbound' ? 'text-green-500' : 'text-blue-500'"
-              >
-                {{ log.direction === 'inbound' ? 'call_received' : 'call_made' }}
-              </span>
-            </td>
-            <td class="py-2 px-3">
-              <span
-                class="px-2 py-0.5 text-xs rounded-full"
-                :class="{
-                  'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300':
-                    log.status === 'success',
-                  'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300':
-                    log.status === 'error',
-                  'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300':
-                    log.status === 'partial'
-                }"
-              >
-                {{ log.status }}
-              </span>
-            </td>
-            <td class="py-2 px-3 text-gray-500 dark:text-gray-400">
-              {{ log.metadata?.duration ? `${log.metadata.duration}ms` : '-' }}
-            </td>
-          </tr>
-          <tr v-if="!logs || logs.length === 0">
-            <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
-              {{ $t('pms.channelManager.logs.noLogs') }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Empty State -->
+    <div v-if="!lastResults" class="py-12 text-center">
+      <span class="material-icons text-4xl text-gray-300 dark:text-gray-600 mb-3">book_online</span>
+      <p class="text-gray-500 dark:text-gray-400 text-sm">
+        {{ $t('pms.channelManager.reservations.noReservations') }}
+      </p>
+      <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">
+        {{ $t('pms.channelManager.reservations.noReservationsDesc') }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
 defineProps({
-  logs: { type: Array, default: () => [] },
   syncStatus: { type: Object, default: null },
   lastResults: { type: Object, default: null },
   syncing: { type: Boolean, default: false }
 })
 
-defineEmits(['sync', 'viewLog'])
+defineEmits(['sync'])
 </script>

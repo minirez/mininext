@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="t('reservations.cancel.title')" size="md" @close="close">
+  <Modal
+    v-model="show"
+    :title="t('reservations.cancel.title')"
+    size="md"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <div v-if="reservation" class="space-y-6">
       <!-- Reservation Summary -->
       <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">

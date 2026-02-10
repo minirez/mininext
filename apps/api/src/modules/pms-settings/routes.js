@@ -59,6 +59,11 @@ router.put(
   settingsService.updateReservationSettings
 )
 router.put('/hotels/:hotelId/settings/guests', hotelMiddleware, settingsService.updateGuestSettings)
+router.put(
+  '/hotels/:hotelId/settings/exchange',
+  hotelMiddleware,
+  settingsService.updateExchangeSettings
+)
 router.put('/hotels/:hotelId/settings/kbs', hotelMiddleware, settingsService.updateKbsSettings)
 
 // Utility: Generate invoice/receipt numbers

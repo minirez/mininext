@@ -1285,7 +1285,14 @@
     },
     "exchange": {
       "title": "Exchange Rates",
-      "description": "TCMB current rates and manual rate settings",
+      "description": "Select exchange rate source and manage rates",
+      "rateSource": "Rate Source",
+      "tcmbDesc": "Automatic updates from TCMB (every 5 minutes)",
+      "manualMode": "Manual Entry",
+      "manualDesc": "Enter rates manually to use in PMS",
+      "autoUpdating": "Auto-updating",
+      "manualWarning": "Rates are not updated automatically",
+      "manualHint": "TCMB rate will be used for currencies left empty",
       "refreshRates": "Refresh Rates",
       "updateRates": "Update Rates",
       "updating": "Updating...",
@@ -2055,10 +2062,13 @@
       "roomType": "Room Type",
       "allTypes": "All Types",
       "availableRoom": "Available Room",
+      "selectRoom": "Select room",
+      "floor": "Floor",
       "dates": "Dates",
       "checkIn": "Check-in",
       "checkOut": "Check-out",
       "mainGuest": "Main Guest",
+      "guestInfo": "Guest Information",
       "firstName": "First Name",
       "lastName": "Last Name",
       "idType": "ID Type",
@@ -2069,18 +2079,37 @@
         "drivingLicense": "Driving License",
         "other": "Other"
       },
+      "nationality": "Nationality",
+      "age": "Age",
+      "adultN": "Adult {n}",
+      "childN": "Child {n}",
       "occupancy": "Occupancy",
       "adults": "Adults",
       "children": "Children",
+      "mealPlan": "Meal Plan",
       "pricing": "Pricing",
       "totalRate": "Total Rate",
+      "nightlyRate": "Nightly Rate",
+      "totalAmount": "Total Amount",
       "deposit": "Deposit",
       "paymentMethod": "Payment Method",
       "specialRequests": "Special Requests",
       "specialRequestsPlaceholder": "Enter special requests if any...",
       "doCheckIn": "Check-in",
       "success": "Check-in successful",
-      "error": "Check-in failed"
+      "error": "Check-in failed",
+      "validationErrors": "Please check the following fields",
+      "errors": {
+        "roomRequired": "Room selection is required",
+        "checkInRequired": "Check-in date is required",
+        "checkOutRequired": "Check-out date is required",
+        "invalidDates": "Invalid date range",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "rateRequired": "Rate is required"
+      },
+      "autoCalculated": "Auto-calculated",
+      "priceNotAvailable": "Price not available for this combination"
     },
     "checkOutModal": {
       "title": "Check-out",
@@ -2227,6 +2256,10 @@
       "currentCheckout": "Current Checkout",
       "newCheckout": "New Checkout Date",
       "confirm": "Extend"
+    },
+    "shiftWarning": {
+      "noShift": "No active shift! It is recommended to open a shift before recording payments.",
+      "longShift": "Shift has been open for {hours} hours. Please consider closing and opening a new one."
     },
     "tabs": {
       "overview": "Overview",
@@ -3189,6 +3222,8 @@
       "mapping": {
         "description": "Map Reseliva room types and rate plans to your local room types.",
         "fetchProducts": "Fetch Products",
+        "refreshProducts": "Refresh Products",
+        "lastFetched": "Last updated",
         "noProducts": "No products fetched yet. Click 'Fetch Products' button.",
         "selectRoomType": "Select room type...",
         "selectMealPlan": "Select meal plan...",
@@ -3196,10 +3231,19 @@
       },
       "ota": {
         "description": "OTA (Online Travel Agency) channels connected via Reseliva.",
-        "noData": "No OTA data loaded. Click refresh button.",
+        "noData": "No OTA data loaded. Click 'Refresh Channels' button.",
         "connected": "Connected OTAs",
         "notConnected": "Not Connected OTAs",
-        "noConnected": "No connected OTAs found"
+        "noConnected": "No connected OTAs found",
+        "refreshChannels": "Refresh Channels",
+        "fetchProductMappings": "Fetch Product Mappings",
+        "productMappings": "OTA Product Mappings",
+        "directConnection": "Direct connection",
+        "noOtaMapped": "No OTA mapped to this plan yet",
+        "unmappedProducts": "Unmapped OTA Products",
+        "noProductMappings": "OTA product mappings not fetched yet.",
+        "noProductMappingsDesc": "Click 'Fetch Product Mappings' to see which OTA channels are connected to your room types.",
+        "infoText": "OTA connections are managed from the Reseliva extranet panel. Here you can view which channels are connected and their room type / rate plan mappings."
       },
       "reservations": {
         "description": "Channel reservations received via Reseliva.",
@@ -3209,7 +3253,9 @@
         "created": "created",
         "cancelled": "cancelled",
         "modified": "modified",
-        "confirmed": "confirmed"
+        "confirmed": "confirmed",
+        "noReservations": "No channel reservations yet",
+        "noReservationsDesc": "Reservations received via Reseliva will appear here."
       },
       "inventory": {
         "description": "Push room availability and rates to Reseliva.",
@@ -3221,7 +3267,29 @@
         "roomsSynced": "rooms synced",
         "confirmTitle": "Full Sync",
         "confirmDesc": "1 year of inventory and rate data will be sent to Reseliva for all mapped rooms. This may take a few minutes.",
-        "startSync": "Start Sync"
+        "startSync": "Start Sync",
+        "syncQueue": "Sync Queue",
+        "pending": "pending",
+        "processing": "processing",
+        "failed": "failed",
+        "queueEmpty": "Queue empty",
+        "allSynced": "All changes synced",
+        "retryFailed": "Retry",
+        "retryAllFailed": "Retry All Failed",
+        "retryQueued": "Failed syncs queued for retry",
+        "failedSyncs": "Failed Syncs",
+        "totalItems": "changes",
+        "day": "day",
+        "days": "days",
+        "attempts": "attempts",
+        "showDates": "Show dates",
+        "status_pending": "Pending",
+        "status_processing": "Processing",
+        "status_failed": "Failed",
+        "field_availability": "Availability",
+        "field_rates": "Rates",
+        "field_restrictions": "Restrictions",
+        "syncQueueInfo": "Rate and availability changes are automatically queued and sent to Reseliva every 60 seconds."
       },
       "logs": {
         "date": "Date",
@@ -3256,6 +3324,7 @@
         "connectionDeleted": "Connection deleted",
         "deleteConfirm": "Are you sure you want to delete this connection?",
         "mappingsSaved": "Mappings saved",
+        "productsFetched": "Products updated successfully",
         "syncCompleted": "Sync completed",
         "inventorySyncCompleted": "Inventory sync completed"
       }

@@ -1,101 +1,206 @@
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-          {{ $t('settings.exchange.title') }}
-        </h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">
-          {{ $t('settings.exchange.description') }}
-        </p>
-      </div>
-      <button
-        :disabled="refreshing"
-        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
-        @click="refreshRates"
-      >
-        <span class="material-icons text-sm" :class="{ 'animate-spin': refreshing }">refresh</span>
-        {{ $t('settings.exchange.refreshRates') }}
-      </button>
+    <!-- Header -->
+    <div>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        {{ $t('settings.exchange.title') }}
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400">
+        {{ $t('settings.exchange.description') }}
+      </p>
     </div>
 
-    <!-- Scheduler Status -->
-    <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4">
-      <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {{ $t('settings.exchange.autoUpdate') }}
-        </h4>
-        <span
-          class="px-2 py-1 text-xs rounded-full"
+    <!-- Mode Selection -->
+    <div
+      class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5"
+    >
+      <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+        {{ $t('settings.exchange.rateSource') }}
+      </h4>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <!-- TCMB Option -->
+        <button
+          class="p-4 rounded-xl border-2 text-left transition-all"
           :class="
-            schedulerStatus?.isRunning
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            exchangeMode === 'tcmb'
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
           "
+          @click="setMode('tcmb')"
         >
-          {{ schedulerStatus?.isRunning ? $t('common.active') : $t('common.inactive') }}
-        </span>
+          <div class="flex items-center gap-3 mb-2">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              :class="
+                exchangeMode === 'tcmb'
+                  ? 'bg-indigo-100 dark:bg-indigo-800'
+                  : 'bg-gray-100 dark:bg-slate-700'
+              "
+            >
+              <span
+                class="material-icons"
+                :class="
+                  exchangeMode === 'tcmb'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-slate-400'
+                "
+                >public</span
+              >
+            </div>
+            <div>
+              <p
+                class="font-medium"
+                :class="
+                  exchangeMode === 'tcmb'
+                    ? 'text-indigo-700 dark:text-indigo-300'
+                    : 'text-gray-900 dark:text-white'
+                "
+              >
+                TCMB
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                {{ $t('settings.exchange.tcmbDesc') }}
+              </p>
+            </div>
+          </div>
+          <div
+            v-if="exchangeMode === 'tcmb'"
+            class="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-2"
+          >
+            <span class="material-icons text-sm">check_circle</span>
+            {{ $t('settings.exchange.autoUpdating') }}
+          </div>
+        </button>
+
+        <!-- Manual Option -->
+        <button
+          class="p-4 rounded-xl border-2 text-left transition-all"
+          :class="
+            exchangeMode === 'manual'
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
+          "
+          @click="setMode('manual')"
+        >
+          <div class="flex items-center gap-3 mb-2">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center"
+              :class="
+                exchangeMode === 'manual'
+                  ? 'bg-indigo-100 dark:bg-indigo-800'
+                  : 'bg-gray-100 dark:bg-slate-700'
+              "
+            >
+              <span
+                class="material-icons"
+                :class="
+                  exchangeMode === 'manual'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-slate-400'
+                "
+                >edit</span
+              >
+            </div>
+            <div>
+              <p
+                class="font-medium"
+                :class="
+                  exchangeMode === 'manual'
+                    ? 'text-indigo-700 dark:text-indigo-300'
+                    : 'text-gray-900 dark:text-white'
+                "
+              >
+                {{ $t('settings.exchange.manualMode') }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                {{ $t('settings.exchange.manualDesc') }}
+              </p>
+            </div>
+          </div>
+          <div
+            v-if="exchangeMode === 'manual'"
+            class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 mt-2"
+          >
+            <span class="material-icons text-sm">info</span>
+            {{ $t('settings.exchange.manualWarning') }}
+          </div>
+        </button>
       </div>
-      <div class="grid sm:grid-cols-3 gap-4 text-sm">
-        <div>
-          <span class="text-gray-500 dark:text-slate-400"
-            >{{ $t('settings.exchange.interval') }}:</span
+    </div>
+
+    <!-- TCMB Info (only in TCMB mode) -->
+    <div v-if="exchangeMode === 'tcmb'" class="space-y-4">
+      <!-- Scheduler Status -->
+      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ $t('settings.exchange.autoUpdate') }}
+          </h4>
+          <span
+            class="px-2 py-1 text-xs rounded-full"
+            :class="
+              schedulerStatus?.isRunning
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            "
           >
-          <span class="ml-2 text-gray-900 dark:text-white"
-            >{{ schedulerStatus?.checkInterval }} {{ $t('common.minutes') }}</span
-          >
-        </div>
-        <div>
-          <span class="text-gray-500 dark:text-slate-400"
-            >{{ $t('settings.exchange.workingHours') }}:</span
-          >
-          <span class="ml-2 text-gray-900 dark:text-white">
-            {{ schedulerStatus?.workingHours?.start }}:00 -
-            {{ schedulerStatus?.workingHours?.end }}:00
+            {{ schedulerStatus?.isRunning ? $t('common.active') : $t('common.inactive') }}
           </span>
         </div>
-        <div>
-          <span class="text-gray-500 dark:text-slate-400"
-            >{{ $t('settings.exchange.turkeyTime') }}:</span
-          >
-          <span class="ml-2 text-gray-900 dark:text-white"
-            >{{ schedulerStatus?.currentTurkeyHour }}:00</span
-          >
+        <div class="grid sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="text-gray-500 dark:text-slate-400"
+              >{{ $t('settings.exchange.interval') }}:</span
+            >
+            <span class="ml-2 text-gray-900 dark:text-white"
+              >{{ schedulerStatus?.checkInterval }} {{ $t('common.minutes') }}</span
+            >
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-slate-400"
+              >{{ $t('settings.exchange.workingHours') }}:</span
+            >
+            <span class="ml-2 text-gray-900 dark:text-white">
+              {{ schedulerStatus?.workingHours?.start }}:00 -
+              {{ schedulerStatus?.workingHours?.end }}:00
+            </span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-slate-400"
+              >{{ $t('settings.exchange.turkeyTime') }}:</span
+            >
+            <span class="ml-2 text-gray-900 dark:text-white"
+              >{{ schedulerStatus?.currentTurkeyHour }}:00</span
+            >
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Rate Info -->
-    <div
-      v-if="rateInfo"
-      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-    >
-      <div class="flex items-start gap-3">
-        <span class="material-icons text-blue-600 dark:text-blue-400">info</span>
-        <div>
-          <p class="text-sm text-blue-800 dark:text-blue-300">
-            <strong>{{ $t('settings.exchange.source') }}:</strong>
-            {{
-              rateInfo.source === 'tcmb'
-                ? 'TCMB'
-                : rateInfo.source === 'manual'
-                  ? $t('settings.exchange.manual')
-                  : $t('settings.exchange.backup')
-            }}
-            <span v-if="rateInfo.bulletin" class="ml-2"
-              >| <strong>{{ $t('settings.exchange.bulletin') }}:</strong>
-              {{ rateInfo.bulletin }}</span
-            >
-          </p>
-          <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-            {{ $t('settings.exchange.lastUpdate') }}: {{ formatDate(rateInfo.lastUpdated) }}
-          </p>
+      <!-- Rate Info -->
+      <div
+        v-if="rateInfo"
+        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+      >
+        <div class="flex items-start gap-3">
+          <span class="material-icons text-blue-600 dark:text-blue-400">info</span>
+          <div>
+            <p class="text-sm text-blue-800 dark:text-blue-300">
+              <strong>{{ $t('settings.exchange.source') }}:</strong> TCMB
+              <span v-if="rateInfo.bulletin" class="ml-2"
+                >| <strong>{{ $t('settings.exchange.bulletin') }}:</strong>
+                {{ rateInfo.bulletin }}</span
+              >
+            </p>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              {{ $t('settings.exchange.lastUpdate') }}: {{ formatDate(rateInfo.lastUpdated) }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center py-8">
+    <div v-if="loadingRates" class="flex items-center justify-center py-8">
       <span class="material-icons animate-spin text-2xl text-indigo-600">refresh</span>
     </div>
 
@@ -107,84 +212,61 @@
             <th class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
               {{ $t('settings.exchange.currency') }}
             </th>
-            <th class="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-              {{ $t('settings.exchange.rate') }} (TRY)
+            <th
+              v-if="exchangeMode === 'tcmb'"
+              class="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{ $t('settings.exchange.rate') }}
             </th>
-            <th class="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
+            <th
+              v-if="exchangeMode === 'manual'"
+              class="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+            >
               {{ $t('settings.exchange.manualRate') }}
-            </th>
-            <th class="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-              {{ $t('common.action') }}
             </th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="(rate, currency) in rates"
-            :key="currency"
+            v-for="currency in displayCurrencies"
+            :key="currency.code"
             class="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50"
           >
             <td class="py-3 px-4">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-medium text-gray-600 dark:text-gray-400">{{
-                  getCurrencySymbol(currency)
+                  getCurrencySymbol(currency.code)
                 }}</span>
-                <span class="text-gray-900 dark:text-white font-medium">{{ currency }}</span>
+                <span class="text-gray-900 dark:text-white font-medium">{{ currency.code }}</span>
               </div>
             </td>
-            <td class="py-3 px-4 text-right">
-              <span class="text-gray-900 dark:text-white font-mono">{{ formatRate(rate) }}</span>
+            <!-- TCMB Mode: Read-only rates -->
+            <td v-if="exchangeMode === 'tcmb'" class="py-3 px-4 text-right">
+              <span class="text-gray-900 dark:text-white font-mono">{{
+                formatRate(currency.rate)
+              }}</span>
             </td>
-            <td class="py-3 px-4 text-right">
+            <!-- Manual Mode: Editable inputs -->
+            <td v-if="exchangeMode === 'manual'" class="py-3 px-4 text-right">
               <input
-                v-if="editingCurrency === currency"
-                v-model.number="editValue"
+                :value="getManualRate(currency.code)"
                 type="number"
                 step="0.0001"
                 min="0"
-                class="w-32 px-2 py-1 text-right border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                @keyup.enter="saveManualRate(currency)"
-                @keyup.escape="cancelEdit"
+                :placeholder="formatRate(currency.rate)"
+                class="w-36 px-3 py-1.5 text-right border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                @input="onManualRateInput(currency.code, $event)"
               />
-              <span
-                v-else-if="manualRates[currency]"
-                class="text-indigo-600 dark:text-indigo-400 font-mono"
-              >
-                {{ formatRate(manualRates[currency]) }}
-              </span>
-              <span v-else class="text-gray-400">-</span>
-            </td>
-            <td class="py-3 px-4 text-center">
-              <div class="flex items-center justify-center gap-2">
-                <template v-if="editingCurrency === currency">
-                  <button
-                    :disabled="saving"
-                    class="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
-                    @click="saveManualRate(currency)"
-                  >
-                    <span class="material-icons text-sm">check</span>
-                  </button>
-                  <button
-                    class="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                    @click="cancelEdit"
-                  >
-                    <span class="material-icons text-sm">close</span>
-                  </button>
-                </template>
-                <template v-else>
-                  <button
-                    class="p-1 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded"
-                    :title="$t('settings.exchange.enterManualRate')"
-                    @click="startEdit(currency, rate)"
-                  >
-                    <span class="material-icons text-sm">edit</span>
-                  </button>
-                </template>
-              </div>
             </td>
           </tr>
         </tbody>
       </table>
+      <p
+        v-if="exchangeMode === 'manual'"
+        class="text-xs text-gray-400 dark:text-slate-500 mt-2 px-4"
+      >
+        {{ $t('settings.exchange.manualHint') }}
+      </p>
     </div>
 
     <!-- Currency Converter -->
@@ -213,7 +295,9 @@
             v-model="convertFrom"
             class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
           >
-            <option v-for="curr in Object.keys(rates)" :key="curr" :value="curr">{{ curr }}</option>
+            <option v-for="curr in Object.keys(tcmbRates)" :key="curr" :value="curr">
+              {{ curr }}
+            </option>
           </select>
         </div>
         <div>
@@ -224,7 +308,9 @@
             v-model="convertTo"
             class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
           >
-            <option v-for="curr in Object.keys(rates)" :key="curr" :value="curr">{{ curr }}</option>
+            <option v-for="curr in Object.keys(tcmbRates)" :key="curr" :value="curr">
+              {{ curr }}
+            </option>
           </select>
         </div>
         <div>
@@ -243,7 +329,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import * as exchangeService from '@/services/pms/exchangeService'
@@ -251,33 +337,87 @@ import * as exchangeService from '@/services/pms/exchangeService'
 const toast = useToast()
 const { t } = useI18n()
 
+const emit = defineEmits(['update:modelValue', 'change'])
+
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({ mode: 'tcmb', manualRates: {} })
+  },
+  hotelId: {
+    type: String,
+    default: null
+  }
+})
+
 // State
-const loading = ref(true)
-const refreshing = ref(false)
-const saving = ref(false)
-const rates = ref({})
-const manualRates = ref({})
+const loadingRates = ref(true)
+const tcmbRates = ref({})
 const rateInfo = ref(null)
 const schedulerStatus = ref(null)
-const editingCurrency = ref(null)
-const editValue = ref(0)
+
+// Local exchange mode - synced with modelValue
+const exchangeMode = computed(() => props.modelValue?.mode || 'tcmb')
+const localManualRates = computed(() => props.modelValue?.manualRates || {})
+
+// Main currencies to show
+const MAIN_CURRENCIES = ['USD', 'EUR', 'GBP', 'CHF', 'SAR', 'AED', 'RUB', 'JPY', 'CAD', 'AUD']
 
 // Converter state
 const convertAmount = ref(100)
 const convertFrom = ref('USD')
 const convertTo = ref('TRY')
 
+// Computed: currencies to display
+const displayCurrencies = computed(() => {
+  const currencies = []
+  for (const code of MAIN_CURRENCIES) {
+    if (tcmbRates.value[code]) {
+      currencies.push({ code, rate: tcmbRates.value[code] })
+    }
+  }
+  // Add any remaining currencies not in MAIN_CURRENCIES
+  for (const [code, rate] of Object.entries(tcmbRates.value)) {
+    if (code === 'TRY') continue
+    if (!MAIN_CURRENCIES.includes(code)) {
+      currencies.push({ code, rate })
+    }
+  }
+  return currencies
+})
+
 // Methods
+const setMode = mode => {
+  emit('update:modelValue', { ...props.modelValue, mode })
+  emit('change')
+}
+
+const getManualRate = code => {
+  return localManualRates.value[code] || ''
+}
+
+const onManualRateInput = (code, event) => {
+  const value = parseFloat(event.target.value)
+  const newRates = { ...localManualRates.value }
+  if (value && value > 0) {
+    newRates[code] = value
+  } else {
+    delete newRates[code]
+  }
+  emit('update:modelValue', { ...props.modelValue, manualRates: newRates })
+  emit('change')
+}
+
 const loadRates = async () => {
-  loading.value = true
+  loadingRates.value = true
   try {
     const [ratesRes, statusRes] = await Promise.all([
       exchangeService.getExchangeRates(),
-      exchangeService.getSchedulerStatus()
+      exchangeService.getSchedulerStatus().catch(() => ({ success: false }))
     ])
 
     if (ratesRes.success) {
-      rates.value = ratesRes.data.rates || {}
+      tcmbRates.value = ratesRes.data.rates || {}
       rateInfo.value = {
         source: ratesRes.data.source,
         bulletin: ratesRes.data.bulletin,
@@ -292,56 +432,7 @@ const loadRates = async () => {
     console.error('Error loading rates:', error)
     toast.error(t('settings.exchange.errors.loadError'))
   } finally {
-    loading.value = false
-  }
-}
-
-const refreshRates = async () => {
-  refreshing.value = true
-  try {
-    const response = await exchangeService.refreshRates()
-    if (response.success) {
-      toast.success(t('settings.exchange.success.refreshed'))
-      await loadRates()
-    }
-  } catch (error) {
-    console.error('Error refreshing rates:', error)
-    toast.error(t('settings.exchange.errors.refreshError'))
-  } finally {
-    refreshing.value = false
-  }
-}
-
-const startEdit = (currency, currentRate) => {
-  editingCurrency.value = currency
-  editValue.value = manualRates.value[currency] || currentRate
-}
-
-const cancelEdit = () => {
-  editingCurrency.value = null
-  editValue.value = 0
-}
-
-const saveManualRate = async currency => {
-  if (!editValue.value || editValue.value <= 0) {
-    toast.error(t('settings.exchange.errors.invalidRate'))
-    return
-  }
-
-  saving.value = true
-  try {
-    const response = await exchangeService.setManualRate(currency, editValue.value)
-    if (response.success) {
-      manualRates.value[currency] = editValue.value
-      rates.value[currency] = editValue.value
-      toast.success(t('settings.exchange.success.manualRateSet', { currency }))
-      cancelEdit()
-    }
-  } catch (error) {
-    console.error('Error setting manual rate:', error)
-    toast.error(t('settings.exchange.errors.manualRateError'))
-  } finally {
-    saving.value = false
+    loadingRates.value = false
   }
 }
 
@@ -367,14 +458,26 @@ const formatCurrencyResult = (amount, currency) => {
   return exchangeService.formatCurrency(amount, currency)
 }
 
-// Computed
+// Converter computed - uses active rates based on mode
+const activeRates = computed(() => {
+  if (exchangeMode.value === 'manual' && Object.keys(localManualRates.value).length > 0) {
+    // Merge: manual rates override TCMB rates
+    return { ...tcmbRates.value, ...localManualRates.value }
+  }
+  return tcmbRates.value
+})
+
 const convertedResult = computed(() => {
-  if (!convertAmount.value || !rates.value[convertFrom.value] || !rates.value[convertTo.value]) {
+  if (
+    !convertAmount.value ||
+    !activeRates.value[convertFrom.value] ||
+    !activeRates.value[convertTo.value]
+  ) {
     return 0
   }
 
-  const fromRate = rates.value[convertFrom.value]
-  const toRate = rates.value[convertTo.value]
+  const fromRate = activeRates.value[convertFrom.value]
+  const toRate = activeRates.value[convertTo.value]
   const amountInTRY = convertAmount.value * fromRate
   return amountInTRY / toRate
 })

@@ -344,6 +344,20 @@ const settingsSchema = new mongoose.Schema(
       }
     },
 
+    // ===== DÖVİZ KURU AYARLARI =====
+    exchange: {
+      mode: {
+        type: String,
+        enum: ['tcmb', 'manual'],
+        default: 'tcmb'
+      },
+      manualRates: {
+        type: Map,
+        of: Number,
+        default: new Map()
+      }
+    },
+
     // ===== KBS (KİMLİK BİLDİRİM SİSTEMİ) AYARLARI =====
     kbs: {
       enabled: {

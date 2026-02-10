@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="$t('billing.closeShift.title')" size="lg" @close="close">
+  <Modal
+    v-model="show"
+    :title="$t('billing.closeShift.title')"
+    size="lg"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <div class="space-y-6">
       <!-- Shift Summary -->
       <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4">

@@ -358,7 +358,8 @@ export const walkInCheckIn = asyncHandler(async (req, res) => {
     roomRate,
     specialRequests,
     paymentMethod,
-    paymentAmount
+    paymentAmount,
+    currency
   } = req.body
 
   // Validate room (read operation - outside transaction)
@@ -462,6 +463,7 @@ export const walkInCheckIn = asyncHandler(async (req, res) => {
           mealPlan,
           roomRate: roomRate ?? 0,
           totalAmount: roomRate ?? 0,
+          currency: currency || 'TRY',
           specialRequests,
           source: 'walk_in',
           isWalkIn: true,
@@ -879,6 +881,13 @@ export const checkOut = asyncHandler(async (req, res) => {
     activeShift = await CashRegister.getActiveShift(hotelId)
   }
 
+  // Safely resolve guest ref for transaction
+  let guestRef = stay.guests?.[0]?.guest || undefined
+  if (guestRef) {
+    const guestExists = await Guest.exists({ _id: guestRef, hotel: hotelId })
+    if (!guestExists) guestRef = undefined
+  }
+
   // Execute all checkout operations within a transaction
   const checkoutResult = await withTransaction(async session => {
     // If settling balance, create Transaction for final payment
@@ -897,7 +906,7 @@ export const checkOut = asyncHandler(async (req, res) => {
             amountInTRY: stay.balance,
             paymentMethod: method,
             stay: stayId,
-            guest: stay.guests?.[0]?._id,
+            guest: guestRef,
             room: stay.room?._id || stay.room,
             cashRegister: activeShift?._id,
             notes: 'Check-out ödemesi',
@@ -1012,6 +1021,13 @@ export const addExtra = asyncHandler(async (req, res) => {
   const userId = req.user._id
   const totalAmount = amount * quantity
 
+  // Safely resolve guest ref
+  let guestRef = stay.guests?.[0]?.guest || undefined
+  if (guestRef) {
+    const guestExists = await Guest.exists({ _id: guestRef, hotel: hotelId })
+    if (!guestExists) guestRef = undefined
+  }
+
   // Execute extra charge within a transaction
   await withTransaction(async session => {
     // 1. Add extra to Stay
@@ -1044,7 +1060,7 @@ export const addExtra = asyncHandler(async (req, res) => {
           currency: 'TRY',
           amountInTRY: totalAmount,
           stay: stayId,
-          guest: stay.guests?.[0]?._id,
+          guest: guestRef,
           room: stay.room?._id || stay.room,
           notes: `${quantity}x ${description}`,
           createdBy: userId
@@ -1114,6 +1130,13 @@ export const addPayment = asyncHandler(async (req, res) => {
     description += ` (${amount} ${currency} @ ${exchangeRate})`
   }
 
+  // Safely resolve guest ref — verify it exists before passing to Transaction
+  let guestRef = stay.guests?.[0]?.guest || undefined
+  if (guestRef) {
+    const guestExists = await Guest.exists({ _id: guestRef, hotel: hotelId })
+    if (!guestExists) guestRef = undefined
+  }
+
   // Execute payment creation within a transaction
   const transaction = await withTransaction(async session => {
     // Create Transaction
@@ -1130,7 +1153,7 @@ export const addPayment = asyncHandler(async (req, res) => {
           amountInTRY,
           paymentMethod,
           stay: stayId,
-          guest: stay.guests?.[0]?._id,
+          guest: guestRef,
           room: stay.room?._id || stay.room,
           cashRegister: activeShift?._id,
           reference,

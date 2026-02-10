@@ -4,6 +4,7 @@
       v-model="show"
       :title="`${t('guests.detail.title')} - ${guest?.firstName} ${guest?.lastName}`"
       size="xl"
+      :close-on-overlay="false"
       @close="close"
     >
       <div v-if="guest" class="space-y-6">
@@ -441,7 +442,12 @@
     </Modal>
 
     <!-- VIP Modal - Outside main modal -->
-    <Modal v-model="showVipModal" :title="t('guests.detail.vipLevel')" size="sm">
+    <Modal
+      v-model="showVipModal"
+      :title="t('guests.detail.vipLevel')"
+      size="sm"
+      :close-on-overlay="false"
+    >
       <div class="space-y-3">
         <label
           v-for="level in vipLevels"
@@ -469,7 +475,12 @@
     </Modal>
 
     <!-- Blacklist Modal - Outside main modal -->
-    <Modal v-model="showBlacklistModal" :title="t('guests.detail.addToBlacklist')" size="sm">
+    <Modal
+      v-model="showBlacklistModal"
+      :title="t('guests.detail.addToBlacklist')"
+      size="sm"
+      :close-on-overlay="false"
+    >
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >{{ t('guests.detail.reason') }} *</label
@@ -499,7 +510,12 @@
     </Modal>
 
     <!-- Tags Modal - Outside main modal -->
-    <Modal v-model="showTagsModal" :title="t('guests.detail.editTags')" size="sm">
+    <Modal
+      v-model="showTagsModal"
+      :title="t('guests.detail.editTags')"
+      size="sm"
+      :close-on-overlay="false"
+    >
       <div class="space-y-3">
         <div class="flex flex-wrap gap-2">
           <button

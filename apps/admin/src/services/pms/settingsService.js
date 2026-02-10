@@ -77,6 +77,11 @@ export const updateGuestSettings = async (hotelId, guests) => {
   return response.data
 }
 
+export const updateExchangeSettings = async (hotelId, exchange) => {
+  const response = await apiClient.put(`${BASE}/hotels/${hotelId}/settings/exchange`, { exchange })
+  return response.data
+}
+
 export const resetSettings = async (hotelId, section = 'all') => {
   const response = await apiClient.post(`${BASE}/hotels/${hotelId}/settings/reset`, { section })
   return response.data
@@ -164,6 +169,7 @@ export default {
   updateNotificationSettings,
   updateReservationSettings,
   updateGuestSettings,
+  updateExchangeSettings,
   resetSettings,
   getNextInvoiceNumber,
   getNextReceiptNumber,

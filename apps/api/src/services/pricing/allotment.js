@@ -5,6 +5,7 @@
 
 import Rate from '../../modules/planning/rate.model.js'
 import { BadRequestError } from '../../core/errors.js'
+import { queueChannelSync } from '#modules/channel-manager/channelSync.helper.js'
 
 /**
  * Reserve allotment for a booking (decrease available rooms)
@@ -49,6 +50,7 @@ export async function reserveAllotment(params) {
       await rate.save()
 
       updatedRates.push({
+        rateId: rate._id,
         date: rate.date,
         allotment: rate.allotment,
         sold: rate.sold,
@@ -57,6 +59,15 @@ export async function reserveAllotment(params) {
     } catch (error) {
       errors.push({ date, error: error.message })
     }
+  }
+
+  // Channel sync — availability changed
+  if (updatedRates.length > 0 && hotelId) {
+    queueChannelSync(
+      hotelId,
+      updatedRates.map(r => r.rateId.toString()),
+      ['sold']
+    )
   }
 
   return {
@@ -102,6 +113,7 @@ export async function releaseAllotment(params) {
       await rate.save()
 
       updatedRates.push({
+        rateId: rate._id,
         date: rate.date,
         allotment: rate.allotment,
         sold: rate.sold,
@@ -110,6 +122,15 @@ export async function releaseAllotment(params) {
     } catch (error) {
       errors.push({ date, error: error.message })
     }
+  }
+
+  // Channel sync — availability changed
+  if (updatedRates.length > 0 && hotelId) {
+    queueChannelSync(
+      hotelId,
+      updatedRates.map(r => r.rateId.toString()),
+      ['sold']
+    )
   }
 
   return {

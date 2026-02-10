@@ -187,8 +187,24 @@ const handleClickOutside = event => {
   }
 }
 
+const autoSelectIfSingle = async () => {
+  if (pmsStore.hasSelectedHotel) return
+  try {
+    const response = await hotelService.getHotels({ limit: 2 })
+    if (response.success) {
+      const items = response.data.items || []
+      if (items.length === 1) {
+        pmsStore.setHotel(items[0])
+      }
+    }
+  } catch (error) {
+    console.error('Auto-select hotel failed:', error)
+  }
+}
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  autoSelectIfSingle()
 })
 
 onUnmounted(() => {

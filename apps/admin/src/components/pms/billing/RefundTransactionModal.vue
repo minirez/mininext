@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="$t('billing.refundTransaction.title')" size="md" @close="close">
+  <Modal
+    v-model="show"
+    :title="$t('billing.refundTransaction.title')"
+    size="md"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <div class="space-y-4">
       <div
         class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4"

@@ -1,20 +1,23 @@
+import mongoose from 'mongoose'
 import { asyncHandler } from '#helpers'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import { sendSuccess, sendCreated, parsePagination, paginatedQuery } from '#services/helpers.js'
 import logger from '#core/logger.js'
 import ChannelConnection from './channelConnection.model.js'
 import ChannelLog from './channelLog.model.js'
+import PendingSync from './pendingSync.model.js'
 import * as reselivaClient from './reseliva.client.js'
 import { processReservations } from './reservationSync.service.js'
 import { fullSync } from './inventorySync.service.js'
 import { getSchedulerStatus as getSchedulerInfo } from './channelScheduler.js'
+import { getAvailabilityForDate, getRatesForDate } from './channelSync.helper.js'
 
 /**
  * Get connection for a hotel
  */
 export const getConnection = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -29,7 +32,7 @@ export const getConnection = asyncHandler(async (req, res) => {
  */
 export const createOrUpdateConnection = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
   const { credentials, integrationType, settings } = req.body
 
   if (
@@ -76,7 +79,7 @@ export const createOrUpdateConnection = asyncHandler(async (req, res) => {
  */
 export const testConnection = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -121,7 +124,7 @@ export const testConnection = asyncHandler(async (req, res) => {
  */
 export const deleteConnection = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOneAndDelete({
     partner: partnerId,
@@ -140,7 +143,7 @@ export const deleteConnection = asyncHandler(async (req, res) => {
  */
 export const fetchProducts = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -152,7 +155,13 @@ export const fetchProducts = asyncHandler(async (req, res) => {
   }
 
   const products = await reselivaClient.fetchProductList(connection)
-  sendSuccess(res, { products })
+
+  // Cache products in DB so they persist across page refreshes
+  connection.cachedProducts = { roomTypes: products.roomTypes, fetchedAt: new Date() }
+  connection.markModified('cachedProducts')
+  await connection.save()
+
+  sendSuccess(res, { products, connection })
 })
 
 /**
@@ -160,7 +169,7 @@ export const fetchProducts = asyncHandler(async (req, res) => {
  */
 export const saveRoomMappings = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
   const { mappings } = req.body
 
   if (!Array.isArray(mappings)) {
@@ -188,7 +197,7 @@ export const saveRoomMappings = asyncHandler(async (req, res) => {
  */
 export const fetchOTAs = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -216,7 +225,7 @@ export const fetchOTAs = asyncHandler(async (req, res) => {
  */
 export const fetchOTAProducts = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -236,7 +245,7 @@ export const fetchOTAProducts = asyncHandler(async (req, res) => {
  */
 export const getLogs = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
   const { type, status } = req.query
   const { page, limit } = parsePagination(req.query)
 
@@ -275,7 +284,7 @@ export const getLogDetail = asyncHandler(async (req, res) => {
  */
 export const getSyncStatus = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -304,7 +313,7 @@ export const getSyncStatus = asyncHandler(async (req, res) => {
  */
 export const triggerManualSync = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -325,7 +334,7 @@ export const triggerManualSync = asyncHandler(async (req, res) => {
  */
 export const triggerInventorySync = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const partnerId = req.pmsPartner || req.user.partner
+  const partnerId = req.partner?._id || req.hotel?.partner
 
   const connection = await ChannelConnection.findOne({
     partner: partnerId,
@@ -338,14 +347,18 @@ export const triggerInventorySync = asyncHandler(async (req, res) => {
     throw new NotFoundError('Active two-way connection not found')
   }
 
-  // Simple availability function based on room count
-  // In production, this would check actual room inventory
+  // Real availability function using Rate model
   const getAvailability = async (hotel, roomTypeId, date) => {
-    // Placeholder: return 0 (implement with actual inventory logic)
-    return 0
+    return getAvailabilityForDate(hotel, roomTypeId, date)
   }
 
-  const results = await fullSync(connection, getAvailability)
+  // Real rates function using Rate model
+  const getRates = async (hotel, roomTypeId, mealPlanId, date) => {
+    const rateData = await getRatesForDate(hotel, roomTypeId, mealPlanId, date)
+    return rateData?.prices || { price1: 0 }
+  }
+
+  const results = await fullSync(connection, getAvailability, getRates)
   sendSuccess(res, { results })
 })
 
@@ -455,4 +468,108 @@ export const handleErrorReport = asyncHandler(async (req, res) => {
  */
 export const getSchedulerStatus = asyncHandler(async (req, res) => {
   sendSuccess(res, { scheduler: getSchedulerInfo() })
+})
+
+/**
+ * Get pending sync queue status with detailed breakdown
+ */
+export const getPendingSyncs = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+  const hotelOid = new mongoose.Types.ObjectId(hotelId)
+
+  // Status counts
+  const counts = await PendingSync.aggregate([
+    { $match: { hotel: hotelOid } },
+    { $group: { _id: '$status', count: { $sum: 1 } } }
+  ])
+
+  // Detailed breakdown: group by roomType + status
+  const groups = await PendingSync.aggregate([
+    { $match: { hotel: hotelOid } },
+    { $sort: { date: 1 } },
+    {
+      $group: {
+        _id: { roomTypeId: '$roomTypeId', status: '$status' },
+        syncFields: { $addToSet: '$syncFields' },
+        dates: { $push: '$date' },
+        minDate: { $min: '$date' },
+        maxDate: { $max: '$date' },
+        count: { $sum: 1 },
+        lastError: { $last: '$lastError' },
+        maxAttempts: { $max: '$attempts' },
+        items: {
+          $push: {
+            _id: '$_id',
+            date: '$date',
+            syncFields: '$syncFields',
+            status: '$status',
+            attempts: '$attempts',
+            maxAttempts: '$maxAttempts',
+            lastError: '$lastError',
+            scheduledAfter: '$scheduledAfter',
+            createdAt: '$createdAt'
+          }
+        }
+      }
+    },
+    // Lookup room type name
+    {
+      $lookup: {
+        from: 'roomtypes',
+        localField: '_id.roomTypeId',
+        foreignField: '_id',
+        as: 'roomType'
+      }
+    },
+    { $unwind: { path: '$roomType', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        roomTypeId: '$_id.roomTypeId',
+        status: '$_id.status',
+        roomTypeName: { $ifNull: ['$roomType.name', 'Unknown'] },
+        syncFields: 1,
+        minDate: 1,
+        maxDate: 1,
+        count: 1,
+        lastError: 1,
+        maxAttempts: 1,
+        items: { $slice: ['$items', 50] } // cap per-group detail
+      }
+    },
+    { $sort: { status: 1, roomTypeName: 1 } }
+  ])
+
+  // Flatten syncFields (array of arrays → unique set)
+  for (const g of groups) {
+    const flat = new Set()
+    for (const arr of g.syncFields) {
+      if (Array.isArray(arr)) arr.forEach(f => flat.add(f))
+    }
+    g.syncFields = [...flat]
+  }
+
+  sendSuccess(res, { counts, groups })
+})
+
+/**
+ * Retry all failed syncs for a hotel
+ */
+export const retryFailedSyncs = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+
+  const result = await PendingSync.updateMany(
+    { hotel: hotelId, status: 'failed' },
+    {
+      $set: {
+        status: 'pending',
+        attempts: 0,
+        scheduledAfter: new Date()
+      }
+    }
+  )
+
+  sendSuccess(res, {
+    message: 'Failed syncs queued for retry',
+    modifiedCount: result.modifiedCount
+  })
 })

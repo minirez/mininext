@@ -333,7 +333,12 @@
     />
 
     <!-- Delete Confirmation Modal -->
-    <Modal v-model="showDeleteModal" :title="$t('settings.users.deleteUser.title')" size="sm">
+    <Modal
+      v-model="showDeleteModal"
+      :title="$t('settings.users.deleteUser.title')"
+      size="sm"
+      :close-on-overlay="false"
+    >
       <p class="text-gray-600 dark:text-gray-400">
         {{ $t('settings.users.deleteUser.confirmMessage', { name: selectedUser?.name }) }}
       </p>

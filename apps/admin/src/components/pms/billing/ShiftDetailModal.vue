@@ -3,6 +3,7 @@
     v-model="show"
     :title="$t('billing.shiftDetail.title', { number: shift?.shiftNumber || '' })"
     size="xl"
+    :close-on-overlay="false"
     @close="close"
   >
     <div v-if="loading" class="p-8 text-center">

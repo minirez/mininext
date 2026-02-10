@@ -143,7 +143,12 @@
           />
 
           <!-- Exchange Settings -->
-          <ExchangeSettings v-else-if="activeTab === 'exchange'" />
+          <ExchangeSettings
+            v-else-if="activeTab === 'exchange'"
+            v-model="settings.exchange"
+            :hotel-id="hotelId"
+            @change="markChanged"
+          />
         </div>
       </div>
     </template>
@@ -226,6 +231,7 @@ const settings = ref({
   notifications: {},
   reservations: {},
   guests: {},
+  exchange: { mode: 'tcmb', manualRates: {} },
   kbs: {}
 })
 
@@ -273,6 +279,7 @@ const loadSettings = async () => {
         notifications: settingsRes.data.notifications || {},
         reservations: settingsRes.data.reservations || {},
         guests: settingsRes.data.guests || {},
+        exchange: settingsRes.data.exchange || { mode: 'tcmb', manualRates: {} },
         kbs: settingsRes.data.kbs || {}
       }
     }

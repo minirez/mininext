@@ -1,5 +1,25 @@
 <template>
   <div class="space-y-6">
+    <!-- Shift Warning -->
+    <div
+      v-if="shiftWarning"
+      class="flex items-center gap-2 p-3 rounded-lg text-sm"
+      :class="
+        shiftWarning.type === 'no_shift'
+          ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+          : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+      "
+    >
+      <span class="material-icons text-base">{{
+        shiftWarning.type === 'no_shift' ? 'error' : 'warning'
+      }}</span>
+      {{
+        shiftWarning.type === 'no_shift'
+          ? t('stayCard.shiftWarning.noShift')
+          : t('stayCard.shiftWarning.longShift', { hours: shiftWarning.hours })
+      }}
+    </div>
+
     <!-- Add Payment Form -->
     <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
       <h3
@@ -227,6 +247,10 @@ const props = defineProps({
   exchangeRates: {
     type: Object,
     default: () => ({})
+  },
+  shiftWarning: {
+    type: Object,
+    default: null
   }
 })
 

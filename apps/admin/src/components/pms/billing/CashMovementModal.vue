@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="$t('billing.cashMovement.title')" size="md" @close="close">
+  <Modal
+    v-model="show"
+    :title="$t('billing.cashMovement.title')"
+    size="md"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <div class="space-y-4">
       <div>
         <label class="block text-sm text-gray-500 dark:text-slate-400 mb-1"

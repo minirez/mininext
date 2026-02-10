@@ -72,6 +72,17 @@ export const getLogDetail = async (hotelId, logId) => {
   return response.data
 }
 
+// Sync Queue
+export const getPendingSyncs = async hotelId => {
+  const response = await apiClient.get(`${BASE}/hotels/${hotelId}/sync/pending`)
+  return response.data
+}
+
+export const retryFailedSyncs = async hotelId => {
+  const response = await apiClient.post(`${BASE}/hotels/${hotelId}/sync/retry-failed`)
+  return response.data
+}
+
 export default {
   getConnection,
   saveConnection,
@@ -85,5 +96,7 @@ export default {
   triggerInventorySync,
   getSyncStatus,
   getLogs,
-  getLogDetail
+  getLogDetail,
+  getPendingSyncs,
+  retryFailedSyncs
 }

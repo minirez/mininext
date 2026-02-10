@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="$t('billing.transaction.newTransaction')" size="lg" @close="close">
+  <Modal
+    v-model="show"
+    :title="$t('billing.transaction.newTransaction')"
+    size="lg"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <div class="space-y-6">
       <!-- Quick Charge Buttons -->
       <div>

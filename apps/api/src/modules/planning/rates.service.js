@@ -11,6 +11,7 @@ import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import logger from '#core/logger.js'
 import { getPartnerId, verifyHotelOwnership, getAuditActor } from '#services/helpers.js'
+import { queueChannelSync } from '#modules/channel-manager/channelSync.helper.js'
 
 // ==================== RATES ====================
 
@@ -382,6 +383,9 @@ export const quickUpdateSingleRate = asyncHandler(async (req, res) => {
 
   logger.info(`Quick updated rate ${id} for hotel ${hotelId}`)
 
+  // Channel sync (fire-and-forget)
+  queueChannelSync(hotelId, [id], Object.keys(sanitizedUpdate))
+
   res.json({
     success: true,
     message: req.t('RATE_UPDATED'),
@@ -421,6 +425,11 @@ export const quickUpdateRates = asyncHandler(async (req, res) => {
     { $set: { [field]: value } }
   )
 
+  // Channel sync (fire-and-forget)
+  if (result.modifiedCount > 0) {
+    queueChannelSync(hotelId, rateIds, [field])
+  }
+
   res.json({
     success: true,
     message: req.t('RATES_UPDATED'),
@@ -439,6 +448,11 @@ export const toggleStopSale = asyncHandler(async (req, res) => {
   await verifyHotelOwnership(hotelId, partnerId)
 
   const result = await Rate.toggleStopSale(hotelId, rateIds, stopSale, reason)
+
+  // Channel sync (fire-and-forget)
+  if (result.modifiedCount > 0) {
+    queueChannelSync(hotelId, rateIds, ['stopSale'])
+  }
 
   res.json({
     success: true,
@@ -459,6 +473,11 @@ export const updateAllotment = asyncHandler(async (req, res) => {
   await verifyHotelOwnership(hotelId, partnerId)
 
   const result = await Rate.updateAllotment(hotelId, rateIds, allotment)
+
+  // Channel sync (fire-and-forget)
+  if (result.modifiedCount > 0) {
+    queueChannelSync(hotelId, rateIds, ['allotment'])
+  }
 
   res.json({
     success: true,
@@ -538,6 +557,34 @@ export const bulkUpdateByDates = asyncHandler(async (req, res) => {
   logger.info(
     `Bulk update: ${bulkResult.upsertedCount} created, ${bulkResult.modifiedCount} updated`
   )
+
+  // Channel sync (fire-and-forget) — find affected rate IDs
+  if (bulkResult.modifiedCount > 0 || bulkResult.upsertedCount > 0) {
+    const affectedDates = cells.map(c => {
+      const [y, m, d] = c.date.split('-').map(Number)
+      return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0))
+    })
+    const affectedRoomTypes = [...new Set(cells.map(c => c.roomTypeId))]
+
+    Rate.find({
+      hotel: hotelId,
+      roomType: { $in: affectedRoomTypes },
+      date: { $in: affectedDates },
+      status: 'active'
+    })
+      .select('_id')
+      .lean()
+      .then(rates => {
+        if (rates.length > 0) {
+          queueChannelSync(
+            hotelId,
+            rates.map(r => r._id.toString()),
+            Object.keys(sanitizedUpdate)
+          )
+        }
+      })
+      .catch(err => logger.error('Channel sync query failed:', err.message))
+  }
 
   await AuditLog.log({
     actor: getAuditActor(req),

@@ -3,6 +3,7 @@
     v-model="show"
     :title="t('housekeeping.statusModal.title', { room: room?.roomNumber || '' })"
     size="lg"
+    :close-on-overlay="false"
     @close="close"
   >
     <div v-if="room" class="space-y-6">

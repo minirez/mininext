@@ -3,6 +3,7 @@
     v-model="show"
     :title="`${$t('frontDesk.stayDetail.title')} - ${stay?.stayNumber || ''}`"
     size="xl"
+    :close-on-overlay="false"
     @close="close"
   >
     <div v-if="stay" class="space-y-6">

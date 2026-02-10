@@ -374,6 +374,51 @@ export const updateGuestSettings = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Döviz kuru ayarlarını güncelle
+ */
+export const updateExchangeSettings = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+  const { exchange } = req.body
+
+  const hotel = await Hotel.findById(hotelId)
+  if (!hotel) {
+    return res.status(404).json({
+      success: false,
+      message: 'Otel bulunamadı'
+    })
+  }
+
+  const settings = await PmsSettings.getOrCreate(hotelId)
+
+  if (exchange) {
+    if (exchange.mode) {
+      settings.exchange.mode = exchange.mode
+    }
+    if (exchange.manualRates) {
+      // Map olarak kaydet
+      for (const [currency, rate] of Object.entries(exchange.manualRates)) {
+        if (rate !== null && rate !== undefined && rate > 0) {
+          settings.exchange.manualRates.set(currency, rate)
+        } else {
+          settings.exchange.manualRates.delete(currency)
+        }
+      }
+    }
+  }
+
+  await settings.save()
+
+  res.json({
+    success: true,
+    data: {
+      mode: settings.exchange.mode,
+      manualRates: Object.fromEntries(settings.exchange.manualRates)
+    },
+    message: 'Döviz kuru ayarları güncellendi'
+  })
+})
+
+/**
  * KBS ayarlarını güncelle
  */
 export const updateKbsSettings = asyncHandler(async (req, res) => {
@@ -507,6 +552,20 @@ export const updateAllSettings = asyncHandler(async (req, res) => {
     }
     const { autoVipAssignment, ...rest } = updates.guests
     Object.assign(settings.guests, rest)
+  }
+  if (updates.exchange) {
+    if (updates.exchange.mode) {
+      settings.exchange.mode = updates.exchange.mode
+    }
+    if (updates.exchange.manualRates) {
+      for (const [currency, rate] of Object.entries(updates.exchange.manualRates)) {
+        if (rate !== null && rate !== undefined && rate > 0) {
+          settings.exchange.manualRates.set(currency, rate)
+        } else {
+          settings.exchange.manualRates.delete(currency)
+        }
+      }
+    }
   }
 
   await settings.save()

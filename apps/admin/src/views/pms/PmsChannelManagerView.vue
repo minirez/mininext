@@ -66,6 +66,7 @@
             :local-meal-plans="localMealPlans"
             :loading-products="loadingProducts"
             :saving-mappings="savingMappings"
+            :last-fetched-at="connection?.cachedProducts?.fetchedAt || null"
             @fetchProducts="handleFetchProducts"
             @save="handleSaveMappings"
           />
@@ -74,19 +75,22 @@
           <OTAList
             v-else-if="activeTab === 'ota'"
             :ota-list="otaList"
+            :ota-products="otaProducts"
+            :ota-products-fetched-at="otaProductsFetchedAt"
             :loading="loadingOTAs"
+            :loading-products="loadingOTAProducts"
+            :last-fetched-at="connection?.lastSync?.products || null"
             @refresh="handleFetchOTAs"
+            @fetchProducts="handleFetchOTAProducts"
           />
 
           <!-- Reservations -->
           <ReservationLog
             v-else-if="activeTab === 'reservations'"
-            :logs="reservationLogs"
             :sync-status="syncStatus"
             :last-results="lastSyncResults"
             :syncing="syncing"
             @sync="handleReservationSync"
-            @viewLog="handleViewLog"
           />
 
           <!-- Inventory -->
@@ -96,7 +100,11 @@
             :sync-status="syncStatus"
             :last-results="lastInventoryResults"
             :syncing="syncingInventory"
+            :queue-data="queueData"
+            :retrying="retryingFailed"
             @sync="handleInventorySync"
+            @loadQueue="loadQueueStatus"
+            @retryFailed="handleRetryFailed"
           />
 
           <!-- Logs -->
@@ -120,6 +128,8 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { usePmsStore } from '@/stores/pms'
 import * as channelManagerService from '@/services/pms/channelManagerService'
+import { getRoomTypes } from '@/services/planning/roomTypeService'
+import { getMealPlans } from '@/services/planning/mealPlanService'
 import ConnectionSettings from '@/components/pms/channel-manager/ConnectionSettings.vue'
 import ProductMapping from '@/components/pms/channel-manager/ProductMapping.vue'
 import OTAList from '@/components/pms/channel-manager/OTAList.vue'
@@ -148,10 +158,12 @@ const savingMappings = ref(false)
 
 // OTA
 const otaList = ref(null)
+const otaProducts = ref(null)
+const otaProductsFetchedAt = ref(null)
 const loadingOTAs = ref(false)
+const loadingOTAProducts = ref(false)
 
 // Reservations
-const reservationLogs = ref([])
 const syncStatus = ref(null)
 const lastSyncResults = ref(null)
 const syncing = ref(false)
@@ -159,6 +171,10 @@ const syncing = ref(false)
 // Inventory
 const lastInventoryResults = ref(null)
 const syncingInventory = ref(false)
+
+// Sync Queue
+const queueData = ref(null)
+const retryingFailed = ref(false)
 
 // Logs
 const allLogs = ref([])
@@ -191,7 +207,27 @@ async function loadConnection() {
     const res = await channelManagerService.getConnection(hotelId.value)
     connection.value = res.data?.connection || null
 
+    // Always load local room types & meal plans for mapping
+    await loadLocalData()
+
     if (connection.value) {
+      // Restore cached products from DB
+      if (connection.value.cachedProducts?.roomTypes?.length) {
+        products.value = connection.value.cachedProducts.roomTypes
+      }
+
+      // Restore cached OTAs from DB
+      if (connection.value.connectedOTAs?.length) {
+        otaList.value = {
+          connected: connection.value.connectedOTAs
+            .filter(o => o.status === 'connected')
+            .map(o => o.name),
+          notConnected: connection.value.connectedOTAs
+            .filter(o => o.status === 'not_connected')
+            .map(o => o.name)
+        }
+      }
+
       // Load sync status
       await loadSyncStatus()
     }
@@ -199,6 +235,19 @@ async function loadConnection() {
     console.error('Failed to load connection:', err)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadLocalData() {
+  try {
+    const [rtRes, mpRes] = await Promise.all([
+      getRoomTypes(hotelId.value),
+      getMealPlans(hotelId.value)
+    ])
+    localRoomTypes.value = rtRes.data || []
+    localMealPlans.value = mpRes.data || []
+  } catch (err) {
+    console.error('Failed to load local room types / meal plans:', err)
   }
 }
 
@@ -259,6 +308,11 @@ async function handleFetchProducts() {
   try {
     const res = await channelManagerService.fetchProducts(hotelId.value)
     products.value = res.data?.products?.roomTypes || []
+    // Update connection (backend caches products in DB)
+    if (res.data?.connection) {
+      connection.value = res.data.connection
+    }
+    toast.success(t('pms.channelManager.messages.productsFetched'))
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
   } finally {
@@ -292,6 +346,20 @@ async function handleFetchOTAs() {
   }
 }
 
+// OTA product mappings handler
+async function handleFetchOTAProducts() {
+  loadingOTAProducts.value = true
+  try {
+    const res = await channelManagerService.fetchOTAProducts(hotelId.value)
+    otaProducts.value = res.data?.otaProducts || null
+    otaProductsFetchedAt.value = new Date().toISOString()
+  } catch (err) {
+    toast.error(err.response?.data?.error || t('common.error'))
+  } finally {
+    loadingOTAProducts.value = false
+  }
+}
+
 // Reservation sync handlers
 async function handleReservationSync() {
   syncing.value = true
@@ -322,6 +390,29 @@ async function handleInventorySync() {
   }
 }
 
+// Sync Queue handlers
+async function loadQueueStatus() {
+  try {
+    const res = await channelManagerService.getPendingSyncs(hotelId.value)
+    queueData.value = res.data || null
+  } catch (err) {
+    console.error('Failed to load queue status:', err)
+  }
+}
+
+async function handleRetryFailed() {
+  retryingFailed.value = true
+  try {
+    await channelManagerService.retryFailedSyncs(hotelId.value)
+    toast.success(t('pms.channelManager.inventory.retryQueued'))
+    await loadQueueStatus()
+  } catch (err) {
+    toast.error(err.response?.data?.error || t('common.error'))
+  } finally {
+    retryingFailed.value = false
+  }
+}
+
 // Log handlers
 async function handleFilterLogs(filters) {
   try {
@@ -330,7 +421,7 @@ async function handleFilterLogs(filters) {
       status: filters.status || undefined,
       limit: 50
     })
-    allLogs.value = res.data?.items || []
+    allLogs.value = res.data?.data || []
   } catch (err) {
     console.error('Failed to load logs:', err)
   }
@@ -348,14 +439,16 @@ async function handleViewLog(logId) {
   }
 }
 
-// Load logs when tab becomes active
+// Load data when tab becomes active
 watch(activeTab, tab => {
   if (tab === 'logs') {
     handleFilterLogs({})
   }
   if (tab === 'reservations') {
-    handleFilterLogs({ type: 'reservation_fetch' })
     loadSyncStatus()
+  }
+  if (tab === 'inventory') {
+    loadQueueStatus()
   }
 })
 </script>

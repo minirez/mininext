@@ -60,6 +60,10 @@ const channelConnectionSchema = new mongoose.Schema(
       default: 'one_way'
     },
     roomMappings: [roomMappingSchema],
+    cachedProducts: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
+    },
     connectedOTAs: [
       {
         name: { type: String },

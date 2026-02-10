@@ -188,6 +188,7 @@
                 :saving="saving"
                 :available-currencies="availableCurrencies"
                 :exchange-rates="exchangeRates"
+                :shift-warning="shiftWarning"
                 @add-payment="handleAddPayment"
               />
 
@@ -239,6 +240,26 @@
               <!-- Payment Form -->
               <Transition name="slide">
                 <div v-if="quickPaymentOpen" class="px-6 pb-4 space-y-4">
+                  <!-- Shift Warning -->
+                  <div
+                    v-if="shiftWarning"
+                    class="flex items-center gap-2 p-3 rounded-lg text-sm"
+                    :class="
+                      shiftWarning.type === 'no_shift'
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+                        : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                    "
+                  >
+                    <span class="material-icons text-base">{{
+                      shiftWarning.type === 'no_shift' ? 'error' : 'warning'
+                    }}</span>
+                    {{
+                      shiftWarning.type === 'no_shift'
+                        ? t('stayCard.shiftWarning.noShift')
+                        : t('stayCard.shiftWarning.longShift', { hours: shiftWarning.hours })
+                    }}
+                  </div>
+
                   <!-- Quick Amount Buttons -->
                   <div class="flex flex-wrap gap-2">
                     <button
@@ -595,6 +616,7 @@ const {
   stayStatusInfo,
   availableCurrencies,
   exchangeRates,
+  shiftWarning,
   addPayment,
   addCharge,
   updateNotes,

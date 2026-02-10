@@ -1,5 +1,11 @@
 <template>
-  <Modal v-model="show" :title="$t('frontDesk.checkIn.title')" size="lg" @close="close">
+  <Modal
+    v-model="show"
+    :title="$t('frontDesk.checkIn.title')"
+    size="lg"
+    :close-on-overlay="false"
+    @close="close"
+  >
     <!-- Multi-room badge in reservation info -->
     <div v-if="booking" class="space-y-6">
       <!-- Reservation Info -->

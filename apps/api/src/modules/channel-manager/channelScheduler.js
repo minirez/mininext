@@ -6,10 +6,13 @@
 import logger from '#core/logger.js'
 import ChannelConnection from './channelConnection.model.js'
 import { processReservations } from './reservationSync.service.js'
+import { processPendingSync } from './syncQueueProcessor.js'
 
 const DEFAULT_INTERVAL = 10 * 60 * 1000 // 10 minutes
+const SYNC_QUEUE_INTERVAL = 60 * 1000 // 60 seconds
 
 let schedulerInterval = null
+let syncQueueInterval = null
 let isRunning = false
 let isProcessing = false
 
@@ -64,6 +67,11 @@ export function startChannelScheduler() {
 
   // Don't poll immediately on start - let the system stabilize
   schedulerInterval = setInterval(pollConnections, DEFAULT_INTERVAL)
+
+  // Start sync queue processor (60s interval)
+  syncQueueInterval = setInterval(processPendingSync, SYNC_QUEUE_INTERVAL)
+  logger.info('Sync queue processor started', { interval: `${SYNC_QUEUE_INTERVAL / 1000}s` })
+
   isRunning = true
 }
 
@@ -76,6 +84,11 @@ export function stopChannelScheduler() {
   if (schedulerInterval) {
     clearInterval(schedulerInterval)
     schedulerInterval = null
+  }
+
+  if (syncQueueInterval) {
+    clearInterval(syncQueueInterval)
+    syncQueueInterval = null
   }
 
   isRunning = false

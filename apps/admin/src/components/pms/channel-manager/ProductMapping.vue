@@ -2,25 +2,34 @@
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
-      <p class="text-sm text-gray-600 dark:text-gray-400">
-        {{ $t('pms.channelManager.mapping.description') }}
-      </p>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          {{ $t('pms.channelManager.mapping.description') }}
+        </p>
+        <p v-if="lastFetchedAt" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          {{ $t('pms.channelManager.mapping.lastFetched') }}:
+          {{ formatDateTime(lastFetchedAt) }}
+        </p>
+      </div>
       <button
         :disabled="loadingProducts"
         class="px-4 py-2 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 flex items-center gap-2"
         @click="$emit('fetchProducts')"
       >
         <span v-if="loadingProducts" class="material-icons animate-spin text-sm">refresh</span>
-        <span v-else class="material-icons text-sm">cloud_download</span>
-        {{ $t('pms.channelManager.mapping.fetchProducts') }}
+        <span v-else class="material-icons text-sm">{{
+          hasProducts ? 'sync' : 'cloud_download'
+        }}</span>
+        {{
+          hasProducts
+            ? $t('pms.channelManager.mapping.refreshProducts')
+            : $t('pms.channelManager.mapping.fetchProducts')
+        }}
       </button>
     </div>
 
     <!-- No products yet -->
-    <div
-      v-if="!products || products.length === 0"
-      class="text-center py-8 text-gray-500 dark:text-gray-400"
-    >
+    <div v-if="!hasProducts" class="text-center py-8 text-gray-500 dark:text-gray-400">
       <span class="material-icons text-4xl mb-2">inventory_2</span>
       <p>{{ $t('pms.channelManager.mapping.noProducts') }}</p>
     </div>
@@ -103,7 +112,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { locale } = useI18n()
 
 const props = defineProps({
   products: { type: Array, default: () => [] },
@@ -111,12 +123,27 @@ const props = defineProps({
   localRoomTypes: { type: Array, default: () => [] },
   localMealPlans: { type: Array, default: () => [] },
   loadingProducts: { type: Boolean, default: false },
-  savingMappings: { type: Boolean, default: false }
+  savingMappings: { type: Boolean, default: false },
+  lastFetchedAt: { type: [String, Date], default: null }
 })
 
 const emit = defineEmits(['fetchProducts', 'save'])
 
 const mappings = ref([])
+const hasProducts = computed(() => props.products && props.products.length > 0)
+
+const localeMap = { tr: 'tr-TR', en: 'en-US' }
+
+function formatDateTime(date) {
+  if (!date) return ''
+  return new Date(date).toLocaleString(localeMap[locale.value] || 'tr-TR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
 // Initialize mappings from existing data
 watch(

@@ -21,6 +21,9 @@ export function useStayCard(stayId, hotelId) {
   const availableCurrencies = ref(['TRY', 'USD', 'EUR', 'GBP'])
   const exchangeRates = ref({})
 
+  // Shift data
+  const activeShift = ref(null)
+
   // Computed
   const balance = computed(() => stay.value?.balance || 0)
   const isBalanceDue = computed(() => balance.value > 0)
@@ -71,14 +74,27 @@ export function useStayCard(stayId, hotelId) {
     return statusMap[status] || statusMap.pending
   })
 
-  // API base path for PMS in booking-engine
+  const shiftWarning = computed(() => {
+    if (!activeShift.value) {
+      return { type: 'no_shift' }
+    }
+    const openedAt = new Date(activeShift.value.openedAt)
+    const hoursOpen = (Date.now() - openedAt.getTime()) / (1000 * 60 * 60)
+    if (hoursOpen > 24) {
+      return { type: 'long_shift', hours: Math.floor(hoursOpen) }
+    }
+    return null
+  })
+
+  // API base paths
   const BASE = '/pms/frontdesk/hotels'
+  const BILLING_BASE = '/pms/billing/hotels'
 
   // Methods
   const fetchCurrencies = async () => {
     if (!hotelId.value) return
     try {
-      const response = await apiClient.get(`${BASE}/${hotelId.value}/cashier/currencies`)
+      const response = await apiClient.get(`${BILLING_BASE}/${hotelId.value}/cashier/currencies`)
       if (response.data?.data) {
         availableCurrencies.value = response.data.data.availableCurrencies || [
           'TRY',
@@ -93,6 +109,16 @@ export function useStayCard(stayId, hotelId) {
     }
   }
 
+  const fetchActiveShift = async () => {
+    if (!hotelId.value) return
+    try {
+      const response = await apiClient.get(`${BILLING_BASE}/${hotelId.value}/cashier/shifts/active`)
+      activeShift.value = response.data?.data || null
+    } catch (err) {
+      activeShift.value = null
+    }
+  }
+
   const fetchStay = async () => {
     if (!stayId.value || !hotelId.value) return
 
@@ -103,8 +129,8 @@ export function useStayCard(stayId, hotelId) {
       const response = await apiClient.get(`${BASE}/${hotelId.value}/stays/${stayId.value}`)
       stay.value = response.data.data || response.data
 
-      // Fetch currencies when stay is loaded
-      await fetchCurrencies()
+      // Fetch currencies and shift info when stay is loaded
+      await Promise.all([fetchCurrencies(), fetchActiveShift()])
 
       // Auto-open quick payment if balance due
       if (balance.value > 0) {
@@ -457,6 +483,10 @@ export function useStayCard(stayId, hotelId) {
     // Currency data
     availableCurrencies,
     exchangeRates,
+
+    // Shift data
+    activeShift,
+    shiftWarning,
 
     // Computed
     balance,

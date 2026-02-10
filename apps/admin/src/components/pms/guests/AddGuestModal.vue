@@ -3,6 +3,7 @@
     v-model="show"
     :title="isEditMode ? t('guests.modal.editGuest') : t('guests.modal.newGuest')"
     size="lg"
+    :close-on-overlay="false"
     @close="close"
   >
     <div class="space-y-6">

@@ -38,6 +38,8 @@ router.get('/hotels/:hotelId/ota-products', hotelMiddleware, service.fetchOTAPro
 router.post('/hotels/:hotelId/sync/reservations', hotelMiddleware, service.triggerManualSync)
 router.post('/hotels/:hotelId/sync/inventory', hotelMiddleware, service.triggerInventorySync)
 router.get('/hotels/:hotelId/sync/status', hotelMiddleware, service.getSyncStatus)
+router.get('/hotels/:hotelId/sync/pending', hotelMiddleware, service.getPendingSyncs)
+router.post('/hotels/:hotelId/sync/retry-failed', hotelMiddleware, service.retryFailedSyncs)
 
 // Logs
 router.get('/hotels/:hotelId/logs', hotelMiddleware, service.getLogs)

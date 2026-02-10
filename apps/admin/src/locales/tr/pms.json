@@ -1284,7 +1284,14 @@
     },
     "exchange": {
       "title": "Döviz Kurları",
-      "description": "TCMB güncel kurlar ve manuel kur ayarları",
+      "description": "Döviz kuru kaynağını seçin ve kurları yönetin",
+      "rateSource": "Kur Kaynağı",
+      "tcmbDesc": "TCMB'den otomatik güncelleme (her 5 dakika)",
+      "manualMode": "Manuel Giriş",
+      "manualDesc": "Kurları kendiniz girin, PMS'de bu kurlar kullanılsın",
+      "autoUpdating": "Otomatik güncelleniyor",
+      "manualWarning": "Kurlar otomatik güncellenmez",
+      "manualHint": "Boş bırakılan kurlar için TCMB değeri kullanılır",
       "refreshRates": "Kurları Güncelle",
       "updateRates": "Kurları Güncelle",
       "updating": "Güncelleniyor...",
@@ -2054,10 +2061,13 @@
       "roomType": "Oda Tipi",
       "allTypes": "Tüm Tipler",
       "availableRoom": "Müsait Oda",
+      "selectRoom": "Oda seçin",
+      "floor": "Kat",
       "dates": "Tarihler",
       "checkIn": "Giriş",
       "checkOut": "Çıkış",
       "mainGuest": "Ana Misafir",
+      "guestInfo": "Misafir Bilgileri",
       "firstName": "Ad",
       "lastName": "Soyad",
       "idType": "Kimlik Tipi",
@@ -2068,18 +2078,37 @@
         "drivingLicense": "Ehliyet",
         "other": "Diğer"
       },
+      "nationality": "Uyruk",
+      "age": "Yaş",
+      "adultN": "Yetişkin {n}",
+      "childN": "Çocuk {n}",
       "occupancy": "Kişi Sayısı",
       "adults": "Yetişkin",
       "children": "Çocuk",
+      "mealPlan": "Pansiyon",
       "pricing": "Ücretlendirme",
       "totalRate": "Toplam Ücret",
+      "nightlyRate": "Gecelik Ücret",
+      "totalAmount": "Toplam Tutar",
       "deposit": "Peşinat",
       "paymentMethod": "Ödeme Yöntemi",
       "specialRequests": "Özel İstekler",
       "specialRequestsPlaceholder": "Varsa özel istekleri yazın...",
       "doCheckIn": "Check-in Yap",
       "success": "Check-in başarılı",
-      "error": "Check-in yapılamadı"
+      "error": "Check-in yapılamadı",
+      "validationErrors": "Lütfen aşağıdaki alanları kontrol edin",
+      "errors": {
+        "roomRequired": "Oda seçimi zorunludur",
+        "checkInRequired": "Giriş tarihi zorunludur",
+        "checkOutRequired": "Çıkış tarihi zorunludur",
+        "invalidDates": "Geçersiz tarih aralığı",
+        "firstNameRequired": "Ad zorunludur",
+        "lastNameRequired": "Soyad zorunludur",
+        "rateRequired": "Ücret girilmelidir"
+      },
+      "autoCalculated": "Otomatik hesaplandı",
+      "priceNotAvailable": "Bu kombinasyon için fiyat bulunamadı"
     },
     "checkOutModal": {
       "title": "Check-out",
@@ -2226,6 +2255,10 @@
       "currentCheckout": "Mevcut Çıkış",
       "newCheckout": "Yeni Çıkış Tarihi",
       "confirm": "Uzat"
+    },
+    "shiftWarning": {
+      "noShift": "Açık vardiya yok! Ödeme kaydetmeden önce vardiya açmanız önerilir.",
+      "longShift": "Vardiya {hours} saattir açık. Lütfen vardiyayı kapatıp yenisini açmayı düşünün."
     },
     "tabs": {
       "overview": "Özet",
@@ -3188,6 +3221,8 @@
       "mapping": {
         "description": "Reseliva oda tipi ve fiyat planlarını yerel oda tiplerinizle eşleştirin.",
         "fetchProducts": "Ürünleri Çek",
+        "refreshProducts": "Ürünleri Yenile",
+        "lastFetched": "Son güncelleme",
         "noProducts": "Henüz ürün çekilmedi. 'Ürünleri Çek' butonuna tıklayın.",
         "selectRoomType": "Oda tipi seçin...",
         "selectMealPlan": "Yemek planı seçin...",
@@ -3195,10 +3230,19 @@
       },
       "ota": {
         "description": "Reseliva üzerinden bağlı olan OTA (Online Seyahat Acentesi) kanalları.",
-        "noData": "OTA bilgisi yüklenmedi. Yenile butonuna tıklayın.",
+        "noData": "OTA bilgisi yüklenmedi. 'Kanalları Yenile' butonuna tıklayın.",
         "connected": "Bağlı OTA'lar",
         "notConnected": "Bağlı Olmayan OTA'lar",
-        "noConnected": "Bağlı OTA bulunmuyor"
+        "noConnected": "Bağlı OTA bulunmuyor",
+        "refreshChannels": "Kanalları Yenile",
+        "fetchProductMappings": "Ürün Eşleştirmelerini Çek",
+        "productMappings": "OTA Ürün Eşleştirmeleri",
+        "directConnection": "Doğrudan bağlantı",
+        "noOtaMapped": "Bu plana henüz OTA eşleştirilmemiş",
+        "unmappedProducts": "Eşleştirilmemiş OTA Ürünleri",
+        "noProductMappings": "OTA ürün eşleştirmeleri henüz çekilmedi.",
+        "noProductMappingsDesc": "Hangi OTA kanallarının hangi oda tiplerinize bağlı olduğunu görmek için 'Ürün Eşleştirmelerini Çek' butonuna tıklayın.",
+        "infoText": "OTA bağlantıları Reseliva extranet panelinden yönetilir. Burada hangi kanalların bağlı olduğunu ve oda tipi / fiyat planı eşleştirmelerini görüntüleyebilirsiniz."
       },
       "reservations": {
         "description": "Reseliva üzerinden gelen kanal rezervasyonları.",
@@ -3208,7 +3252,9 @@
         "created": "oluşturuldu",
         "cancelled": "iptal edildi",
         "modified": "güncellendi",
-        "confirmed": "onaylandı"
+        "confirmed": "onaylandı",
+        "noReservations": "Henüz kanal rezervasyonu yok",
+        "noReservationsDesc": "Reseliva üzerinden gelen rezervasyonlar burada görünecektir."
       },
       "inventory": {
         "description": "Oda müsaitliği ve fiyatları Reseliva'ya aktarın.",
@@ -3220,7 +3266,29 @@
         "roomsSynced": "oda senkronize edildi",
         "confirmTitle": "Tam Senkronizasyon",
         "confirmDesc": "Tüm eşleştirilmiş odalar için 1 yıllık envanter ve fiyat verisi Reseliva'ya gönderilecektir. Bu işlem birkaç dakika sürebilir.",
-        "startSync": "Senkronizasyonu Başlat"
+        "startSync": "Senkronizasyonu Başlat",
+        "syncQueue": "Senkronizasyon Kuyruğu",
+        "pending": "bekliyor",
+        "processing": "işleniyor",
+        "failed": "başarısız",
+        "queueEmpty": "Kuyruk boş",
+        "allSynced": "Tüm değişiklikler senkronize edildi",
+        "retryFailed": "Yeniden Dene",
+        "retryAllFailed": "Tümünü Yeniden Dene",
+        "retryQueued": "Başarısız senkronizasyonlar yeniden kuyruğa alındı",
+        "failedSyncs": "Başarısız Senkronizasyonlar",
+        "totalItems": "değişiklik",
+        "day": "gün",
+        "days": "gün",
+        "attempts": "deneme",
+        "showDates": "Tarihleri göster",
+        "status_pending": "Bekliyor",
+        "status_processing": "İşleniyor",
+        "status_failed": "Başarısız",
+        "field_availability": "Müsaitlik",
+        "field_rates": "Fiyat",
+        "field_restrictions": "Kısıtlama",
+        "syncQueueInfo": "Fiyat ve müsaitlik değişiklikleri otomatik olarak kuyruğa alınır ve 60 saniyede bir Reseliva'ya gönderilir."
       },
       "logs": {
         "date": "Tarih",
@@ -3255,6 +3323,7 @@
         "connectionDeleted": "Bağlantı silindi",
         "deleteConfirm": "Bu bağlantıyı silmek istediğinize emin misiniz?",
         "mappingsSaved": "Eşleştirmeler kaydedildi",
+        "productsFetched": "Ürünler başarıyla güncellendi",
         "syncCompleted": "Senkronizasyon tamamlandı",
         "inventorySyncCompleted": "Envanter senkronizasyonu tamamlandı"
       }

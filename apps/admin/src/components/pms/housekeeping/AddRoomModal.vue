@@ -5,6 +5,7 @@
       mode === 'bulk' ? t('housekeeping.addRoom.bulkTitle') : t('housekeeping.addRoom.singleTitle')
     "
     size="lg"
+    :close-on-overlay="false"
     @close="close"
   >
     <!-- Mode Tabs -->

@@ -3,6 +3,7 @@
     v-model="show"
     :title="$t('frontDesk.checkOutModal.title')"
     size="lg"
+    :close-on-overlay="false"
     :z-index="60"
     @close="close"
   >
