@@ -26,7 +26,54 @@
     "emailLogs": "E-posta Logları",
     "mailbox": "Posta Kutusu",
     "payment": "Ödeme Sistemi",
-    "tours": "Turlar & Aktiviteler"
+    "tours": "Turlar & Aktiviteler",
+    "platformReservations": "Rezervasyonlar"
+  },
+  "platformBookings": {
+    "title": "Platform Rezervasyonları",
+    "description": "Tüm partnerlerin rezervasyonlarını görüntüleyin ve istatistikleri takip edin",
+    "bookingNumber": "Rez. No",
+    "partner": "Partner",
+    "hotel": "Otel",
+    "guest": "Misafir",
+    "dates": "Tarihler",
+    "totalPrice": "Tutar",
+    "payment": "Ödeme",
+    "createdAt": "Tarih",
+    "searchPlaceholder": "Rez. no, misafir adı, email veya otel adı ile ara...",
+    "allDates": "Tüm Tarihler",
+    "today": "Bugün",
+    "thisWeek": "Bu Hafta",
+    "thisMonth": "Bu Ay",
+    "upcoming": "Gelecek",
+    "past": "Geçmiş",
+    "noBookings": "Henüz rezervasyon bulunmuyor",
+    "reservation": "rezervasyon",
+    "topPartners": "En İyi Partnerler (Dönem Cirosu)",
+    "filteredByPartner": "Partner filtresi",
+    "stats": {
+      "total": "Toplam",
+      "pending": "Bekleyen",
+      "confirmed": "Onaylı",
+      "checkedIn": "Giriş Yapan",
+      "completed": "Tamamlanan",
+      "revenue": "Ciro"
+    },
+    "paymentStatus": {
+      "paid": "Ödendi",
+      "partial": "Kısmi",
+      "pending": "Bekliyor"
+    },
+    "filters": {
+      "guestName": "Misafir Adı",
+      "guestNamePlaceholder": "Ad veya soyad...",
+      "bookingNumber": "Rez. Numarası",
+      "bookingNumberPlaceholder": "BKG-2026-...",
+      "checkInDate": "Giriş Tarihi",
+      "checkOutDate": "Çıkış Tarihi",
+      "reservationDate": "Rez. Tarihi",
+      "clearAll": "Filtreleri Temizle"
+    }
   },
   "paymentSystem": {
     "title": "Ödeme Sistemi",

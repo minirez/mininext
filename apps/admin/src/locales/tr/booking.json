@@ -191,6 +191,7 @@
       "draft": "Taslak",
       "pending": "Beklemede",
       "confirmed": "Onaylandı",
+      "checked_in": "Giriş Yapıldı",
       "cancelled": "İptal Edildi",
       "completed": "Tamamlandı",
       "expired": "Süresi Doldu",

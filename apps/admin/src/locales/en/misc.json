@@ -26,7 +26,54 @@
     "emailLogs": "Email Logs",
     "mailbox": "Mailbox",
     "payment": "Payment System",
-    "tours": "Tours & Activities"
+    "tours": "Tours & Activities",
+    "platformReservations": "Reservations"
+  },
+  "platformBookings": {
+    "title": "Platform Reservations",
+    "description": "View all partner reservations and track statistics",
+    "bookingNumber": "Booking No",
+    "partner": "Partner",
+    "hotel": "Hotel",
+    "guest": "Guest",
+    "dates": "Dates",
+    "totalPrice": "Amount",
+    "payment": "Payment",
+    "createdAt": "Date",
+    "searchPlaceholder": "Search by booking no, guest name, email or hotel...",
+    "allDates": "All Dates",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "noBookings": "No reservations found",
+    "reservation": "reservation",
+    "topPartners": "Top Partners (Period Revenue)",
+    "filteredByPartner": "Partner filter",
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "checkedIn": "Checked In",
+      "completed": "Completed",
+      "revenue": "Revenue"
+    },
+    "paymentStatus": {
+      "paid": "Paid",
+      "partial": "Partial",
+      "pending": "Pending"
+    },
+    "filters": {
+      "guestName": "Guest Name",
+      "guestNamePlaceholder": "First or last name...",
+      "bookingNumber": "Booking Number",
+      "bookingNumberPlaceholder": "BKG-2026-...",
+      "checkInDate": "Check-in Date",
+      "checkOutDate": "Check-out Date",
+      "reservationDate": "Reservation Date",
+      "clearAll": "Clear Filters"
+    }
   },
   "paymentSystem": {
     "title": "Payment System",

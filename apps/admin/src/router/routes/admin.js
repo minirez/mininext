@@ -7,6 +7,7 @@ const PlatformSettingsView = () => import('@/views/admin/PlatformSettingsView.vu
 const EmailLogsView = () => import('@/views/admin/EmailLogsView.vue')
 const MailboxView = () => import('@/views/admin/MailboxView.vue')
 const MigrationView = () => import('@/views/admin/MigrationView.vue')
+const PlatformReservationsView = () => import('@/views/admin/PlatformReservationsView.vue')
 
 export default [
   {
@@ -92,6 +93,16 @@ export default [
     meta: {
       requiresPlatformAdmin: true,
       titleKey: 'migration.title'
+    }
+  },
+  {
+    path: 'admin/reservations',
+    name: 'platform-reservations',
+    component: PlatformReservationsView,
+    meta: {
+      requiresPlatformAdmin: true,
+      titleKey: 'platformBookings.title',
+      descriptionKey: 'platformBookings.description'
     }
   }
 ]

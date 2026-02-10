@@ -63,6 +63,9 @@ const ROUTE_CONFIG = {
   'pms-reservation': 'pms/reservations',
   'pms-settings': 'pms/settings',
 
+  // Platform-level modules
+  'platform-booking': 'platform/bookings',
+
   // Channel Manager
   'channel-manager': 'channel-manager',
 
