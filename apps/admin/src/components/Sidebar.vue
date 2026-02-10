@@ -142,8 +142,10 @@ const siteSettingsStore = useSiteSettingsStore()
 const { t } = useI18n()
 
 // Fetch site settings if not loaded (for favicon)
+// Skip if platform admin without a selected partner (endpoint requires partner context)
 onMounted(() => {
-  if (!siteSettingsStore.loaded && !siteSettingsStore.loading) {
+  const isAdminWithoutPartner = authStore.isPlatformAdmin && !partnerStore.hasSelectedPartner
+  if (!siteSettingsStore.loaded && !siteSettingsStore.loading && !isAdminWithoutPartner) {
     siteSettingsStore.fetchSettings()
   }
 })
