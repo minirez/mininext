@@ -1,0 +1,102 @@
+{
+  "migration": {
+    "title": "Veri Aktarimi",
+    "connection": {
+      "title": "Eski Sistem Baglantisi",
+      "uri": "MongoDB URI",
+      "connect": "Baglan",
+      "disconnect": "Baglantiyi Kes",
+      "connected": "Bagli",
+      "disconnected": "Bagli Degil",
+      "connecting": "Baglaniyor...",
+      "host": "Sunucu",
+      "dbName": "Veritabani"
+    },
+    "accounts": {
+      "title": "Account Secimi",
+      "search": "Account ara...",
+      "hotels": "otel",
+      "selectPartner": "Partner Esle",
+      "noAccounts": "Account bulunamadi",
+      "type": "Tip",
+      "hotelCount": "Otel Sayisi",
+      "selected": "Secili Account"
+    },
+    "hotels": {
+      "title": "Otel Secimi",
+      "selectAll": "Tumunu Sec",
+      "deselectAll": "Secimi Kaldir",
+      "preview": "Onizle",
+      "rooms": "oda tipi",
+      "mealPlans": "konaklama tipi",
+      "photos": "fotograf",
+      "markets": "pazar",
+      "includePhotos": "Fotograflari indir",
+      "includeRooms": "Oda tiplerini aktar",
+      "includeMealPlans": "Konaklama tiplerini aktar",
+      "selected": "secili otel",
+      "noHotels": "Bu account'a ait otel bulunamadi"
+    },
+    "migrate": {
+      "title": "Migration",
+      "start": "Migration Baslat",
+      "confirmTitle": "Migration Baslat",
+      "confirm": "Secili oteller yeni sisteme aktarilacak. Devam etmek istiyor musunuz?",
+      "inProgress": "Migration devam ediyor...",
+      "completed": "Migration tamamlandi",
+      "failed": "Migration basarisiz",
+      "partial": "Kismen basarili",
+      "in_progress": "Devam ediyor",
+      "summary": "Ozet",
+      "totalHotels": "Toplam Otel",
+      "migratedHotels": "Basarili",
+      "failedHotels": "Basarisiz",
+      "totalPhotos": "Toplam Fotograf",
+      "downloadedPhotos": "Indirilen",
+      "duration": "Sure",
+      "errors": "Hatalar",
+      "newMigration": "Yeni Migration",
+      "progress": {
+        "title": "Migration Devam Ediyor",
+        "currentHotel": "Su an",
+        "downloadingPhotos": "Fotograflar indiriliyor",
+        "addingRooms": "Oda tipleri ekleniyor",
+        "addingMealPlans": "Konaklama tipleri ekleniyor",
+        "addingMarkets": "Pazarlar ekleniyor",
+        "processing": "isleniyor...",
+        "success": "basarili",
+        "failed": "basarisiz",
+        "waiting": "bekliyor",
+        "hotel": "Otel",
+        "selectMore": "Baska otel sec"
+      }
+    },
+    "history": {
+      "title": "Migration Gecmisi",
+      "noHistory": "Henuz migration yapilmamis",
+      "viewDetails": "Detay",
+      "performedBy": "Yapan",
+      "date": "Tarih"
+    },
+    "steps": {
+      "connection": "Baglanti",
+      "account": "Account & Partner",
+      "hotels": "Otel Secimi",
+      "migrate": "Migration"
+    },
+    "preview": {
+      "title": "Otel Onizleme",
+      "hotelInfo": "Otel Bilgileri",
+      "roomTypes": "Oda Tipleri",
+      "mealPlans": "Konaklama Tipleri",
+      "markets": "Marketler",
+      "maxOccupant": "Maks. Misafir",
+      "maxAdult": "Maks. Yetiskin",
+      "isBase": "Baz",
+      "code": "Kod",
+      "city": "Sehir",
+      "country": "Ulke",
+      "type": "Tip"
+    }
+  }
+}

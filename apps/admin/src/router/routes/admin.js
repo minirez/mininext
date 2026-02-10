@@ -6,6 +6,7 @@ const AuditLogsView = () => import('@/views/admin/AuditLogsView.vue')
 const PlatformSettingsView = () => import('@/views/admin/PlatformSettingsView.vue')
 const EmailLogsView = () => import('@/views/admin/EmailLogsView.vue')
 const MailboxView = () => import('@/views/admin/MailboxView.vue')
+const MigrationView = () => import('@/views/admin/MigrationView.vue')
 
 export default [
   {
@@ -82,6 +83,15 @@ export default [
       requiresPlatformAdmin: true,
       titleKey: 'mailbox.title',
       descriptionKey: 'mailbox.description'
+    }
+  },
+  {
+    path: 'admin/migration',
+    name: 'migration',
+    component: MigrationView,
+    meta: {
+      requiresPlatformAdmin: true,
+      titleKey: 'migration.title'
     }
   }
 ]

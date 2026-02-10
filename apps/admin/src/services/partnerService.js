@@ -1,9 +1,9 @@
 import apiClient from './api'
 import { apiLogger } from '@/utils/logger'
 
-const getPartners = async () => {
+const getPartners = async (params = {}) => {
   try {
-    const response = await apiClient.get('/partners')
+    const response = await apiClient.get('/partners', { params })
     return response.data
   } catch (error) {
     apiLogger.error('Partner Service: Get partners failed', error.response?.data || error.message)
@@ -56,7 +56,10 @@ const approvePartner = async id => {
     const response = await apiClient.post(`/partners/${id}/approve`)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Approve partner failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Approve partner failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -70,7 +73,10 @@ const uploadDocument = async (id, formData) => {
     })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Upload document failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Upload document failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -80,7 +86,10 @@ const deleteDocument = async (id, documentId) => {
     const response = await apiClient.delete(`/partners/${id}/documents/${documentId}`)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Delete document failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Delete document failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -91,7 +100,10 @@ const getHotelPmsStatus = async hotelId => {
     const response = await apiClient.get(`/hotels/${hotelId}/pms-status`)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get hotel PMS status failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get hotel PMS status failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -101,7 +113,10 @@ const provisionHotelToPms = async (hotelId, options = {}) => {
     const response = await apiClient.post(`/hotels/${hotelId}/provision-pms`, options)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Provision hotel to PMS failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Provision hotel to PMS failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -112,7 +127,10 @@ const getSubscriptionPlans = async () => {
     const response = await apiClient.get('/partners/subscription-plans')
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get subscription plans failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get subscription plans failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -122,7 +140,10 @@ const getSubscription = async partnerId => {
     const response = await apiClient.get(`/partners/${partnerId}/subscription`)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get subscription failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get subscription failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -132,7 +153,10 @@ const updateSubscription = async (partnerId, data) => {
     const response = await apiClient.put(`/partners/${partnerId}/subscription`, data)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Update subscription failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Update subscription failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -152,37 +176,58 @@ const getAllPurchases = async () => {
     const response = await apiClient.get('/partners/subscriptions/purchases')
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get all purchases failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get all purchases failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
 
 const updatePurchase = async (partnerId, purchaseId, data) => {
   try {
-    const response = await apiClient.put(`/partners/${partnerId}/subscription/purchases/${purchaseId}`, data)
+    const response = await apiClient.put(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}`,
+      data
+    )
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Update purchase failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Update purchase failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
 
 const cancelPurchase = async (partnerId, purchaseId, reason) => {
   try {
-    const response = await apiClient.post(`/partners/${partnerId}/subscription/purchases/${purchaseId}/cancel`, { reason })
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}/cancel`,
+      { reason }
+    )
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Cancel purchase failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Cancel purchase failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
 
 const markPurchaseAsPaid = async (partnerId, purchaseId, paymentData) => {
   try {
-    const response = await apiClient.post(`/partners/${partnerId}/subscription/purchases/${purchaseId}/mark-paid`, paymentData)
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}/mark-paid`,
+      paymentData
+    )
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Mark purchase as paid failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Mark purchase as paid failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -206,7 +251,10 @@ const updateMyProfile = async data => {
     const response = await apiClient.put('/partners/my/profile', data)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Update my profile failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Update my profile failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -217,7 +265,10 @@ const updateMyAdminTheme = async theme => {
     const response = await apiClient.put('/partners/my/admin-theme', { theme })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Update my admin theme failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Update my admin theme failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -228,7 +279,10 @@ const updatePartnerAdminTheme = async (partnerId, theme) => {
     const response = await apiClient.put(`/partners/${partnerId}/admin-theme`, { theme })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Update partner admin theme failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Update partner admin theme failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -273,7 +327,10 @@ const uploadMyFavicon = async file => {
     })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Upload my favicon failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Upload my favicon failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -284,7 +341,10 @@ const deleteMyFavicon = async () => {
     const response = await apiClient.delete('/partners/my/profile/favicon')
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Delete my favicon failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Delete my favicon failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -295,7 +355,10 @@ const getMySubscription = async () => {
     const response = await apiClient.get('/my/subscription')
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get my subscription failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get my subscription failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -306,7 +369,10 @@ const getMyInvoices = async (params = {}) => {
     const response = await apiClient.get('/my/invoices', { params })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Get my invoices failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Get my invoices failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -319,7 +385,10 @@ const downloadMyInvoicePdf = async invoiceId => {
     })
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Download invoice PDF failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Download invoice PDF failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -341,7 +410,10 @@ const initiatePurchase = async data => {
     const response = await apiClient.post('/my/subscription/purchase', data)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Initiate purchase failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Initiate purchase failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -352,7 +424,10 @@ const payPendingPurchase = async (purchaseId, data) => {
     const response = await apiClient.post(`/my/subscription/purchases/${purchaseId}/pay`, data)
     return response.data
   } catch (error) {
-    apiLogger.error('Partner Service: Pay pending purchase failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Partner Service: Pay pending purchase failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }

@@ -376,7 +376,7 @@ const hotelSchema = new mongoose.Schema(
       checkOut: { type: String, default: '12:00' },
 
       // Age limits
-      maxBabyAge: { type: Number, default: 2, min: 0, max: 5 },
+      maxBabyAge: { type: Number, default: 2, min: 0, max: 7 },
       maxChildAge: { type: Number, default: 12, min: 0, max: 18 },
 
       // Policy texts (multilingual)
@@ -866,6 +866,12 @@ const hotelSchema = new mongoose.Schema(
       totalBookings: { type: Number, default: 0 },
       averageRating: { type: Number, default: 0 },
       reviewCount: { type: Number, default: 0 }
+    },
+
+    // Migration source tracking
+    source: {
+      type: { type: String, enum: ['manual', 'migration', 'api', 'channel-manager'] },
+      legacyId: Number
     },
 
     // Audit fields

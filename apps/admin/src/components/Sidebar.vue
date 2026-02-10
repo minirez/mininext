@@ -192,7 +192,8 @@ const currentModuleIcon = computed(() => {
     '/pms/users': 'manage_accounts',
     '/my-subscription': 'card_membership',
     '/issues': 'bug_report',
-    '/payment': 'payments'
+    '/payment': 'payments',
+    '/admin/migration': 'swap_horiz'
   }
 
   // Find matching route
@@ -388,6 +389,12 @@ const mainSection = computed(() => {
       to: '/payment',
       icon: 'payments',
       label: t('nav.payment')
+    })
+    items.push({
+      name: 'migration',
+      to: '/admin/migration',
+      icon: 'swap_horiz',
+      label: t('migration.title')
     })
   }
 

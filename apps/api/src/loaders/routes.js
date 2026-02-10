@@ -64,7 +64,10 @@ const ROUTE_CONFIG = {
   'pms-settings': 'pms/settings',
 
   // Channel Manager
-  'channel-manager': 'channel-manager'
+  'channel-manager': 'channel-manager',
+
+  // Migration (legacy system import)
+  migration: 'migration'
 }
 
 /**

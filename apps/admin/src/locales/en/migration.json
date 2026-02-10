@@ -1,0 +1,102 @@
+{
+  "migration": {
+    "title": "Data Migration",
+    "connection": {
+      "title": "Legacy System Connection",
+      "uri": "MongoDB URI",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "connecting": "Connecting...",
+      "host": "Host",
+      "dbName": "Database"
+    },
+    "accounts": {
+      "title": "Account Selection",
+      "search": "Search accounts...",
+      "hotels": "hotels",
+      "selectPartner": "Map Partner",
+      "noAccounts": "No accounts found",
+      "type": "Type",
+      "hotelCount": "Hotel Count",
+      "selected": "Selected Account"
+    },
+    "hotels": {
+      "title": "Hotel Selection",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "preview": "Preview",
+      "rooms": "room types",
+      "mealPlans": "meal plans",
+      "photos": "photos",
+      "markets": "markets",
+      "includePhotos": "Download photos",
+      "includeRooms": "Include room types",
+      "includeMealPlans": "Include meal plans",
+      "selected": "selected hotels",
+      "noHotels": "No hotels found for this account"
+    },
+    "migrate": {
+      "title": "Migration",
+      "start": "Start Migration",
+      "confirmTitle": "Start Migration",
+      "confirm": "Selected hotels will be migrated to the new system. Do you want to continue?",
+      "inProgress": "Migration in progress...",
+      "completed": "Migration completed",
+      "failed": "Migration failed",
+      "partial": "Partially completed",
+      "in_progress": "In progress",
+      "summary": "Summary",
+      "totalHotels": "Total Hotels",
+      "migratedHotels": "Successful",
+      "failedHotels": "Failed",
+      "totalPhotos": "Total Photos",
+      "downloadedPhotos": "Downloaded",
+      "duration": "Duration",
+      "errors": "Errors",
+      "newMigration": "New Migration",
+      "progress": {
+        "title": "Migration In Progress",
+        "currentHotel": "Current",
+        "downloadingPhotos": "Downloading photos",
+        "addingRooms": "Adding room types",
+        "addingMealPlans": "Adding meal plans",
+        "addingMarkets": "Adding markets",
+        "processing": "processing...",
+        "success": "success",
+        "failed": "failed",
+        "waiting": "waiting",
+        "hotel": "Hotel",
+        "selectMore": "Select other hotels"
+      }
+    },
+    "history": {
+      "title": "Migration History",
+      "noHistory": "No migrations yet",
+      "viewDetails": "Details",
+      "performedBy": "Performed by",
+      "date": "Date"
+    },
+    "steps": {
+      "connection": "Connection",
+      "account": "Account & Partner",
+      "hotels": "Hotel Selection",
+      "migrate": "Migration"
+    },
+    "preview": {
+      "title": "Hotel Preview",
+      "hotelInfo": "Hotel Info",
+      "roomTypes": "Room Types",
+      "mealPlans": "Meal Plans",
+      "markets": "Markets",
+      "maxOccupant": "Max Guests",
+      "maxAdult": "Max Adults",
+      "isBase": "Base",
+      "code": "Code",
+      "city": "City",
+      "country": "Country",
+      "type": "Type"
+    }
+  }
+}
