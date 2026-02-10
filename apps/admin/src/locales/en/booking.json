@@ -755,6 +755,8 @@
       "create": "Create Link",
       "sendEmail": "Send via email",
       "sendSms": "Send via SMS",
+      "emailPlaceholder": "Email address",
+      "phonePlaceholder": "Phone number",
       "expiresIn": "Link Validity",
       "linkCreated": "Payment link created!",
       "success": "Payment link created successfully"

@@ -78,17 +78,31 @@
               </div>
               <p class="text-lg font-bold text-gray-900 dark:text-white mt-1">
                 <template v-if="payment.cardDetails?.currencyConversion">
-                  {{ formatPrice(payment.cardDetails.currencyConversion.originalAmount, payment.cardDetails.currencyConversion.originalCurrency) }}
+                  {{
+                    formatPrice(
+                      payment.cardDetails.currencyConversion.originalAmount,
+                      payment.cardDetails.currencyConversion.originalCurrency
+                    )
+                  }}
                 </template>
                 <template v-else>
                   {{ formatPrice(payment.amount, payment.currency) }}
                 </template>
               </p>
               <!-- Currency conversion info (DCC) -->
-              <p v-if="payment.cardDetails?.currencyConversion" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1">
+              <p
+                v-if="payment.cardDetails?.currencyConversion"
+                class="text-xs text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1"
+              >
                 <span class="material-icons text-xs">currency_exchange</span>
-                {{ formatPrice(payment.cardDetails.currencyConversion.convertedAmount, 'TRY') }} olarak ödendi
-                <span class="text-gray-400 dark:text-slate-500">(1 {{ payment.cardDetails.currencyConversion.originalCurrency }} = {{ payment.cardDetails.currencyConversion.exchangeRate }} ₺)</span>
+                {{
+                  formatPrice(payment.cardDetails.currencyConversion.convertedAmount, 'TRY')
+                }}
+                olarak ödendi
+                <span class="text-gray-400 dark:text-slate-500"
+                  >(1 {{ payment.cardDetails.currencyConversion.originalCurrency }} =
+                  {{ payment.cardDetails.currencyConversion.exchangeRate }} ₺)</span
+                >
               </p>
               <!-- Bank Transfer Details -->
               <div
@@ -131,7 +145,9 @@
             <!-- Confirm Button (for pending bank transfers, pay at check-in, and cash payments) -->
             <button
               v-if="
-                (payment.type === 'bank_transfer' || payment.type === 'pay_at_checkin' || payment.type === 'cash') &&
+                (payment.type === 'bank_transfer' ||
+                  payment.type === 'pay_at_checkin' ||
+                  payment.type === 'cash') &&
                 payment.status === 'pending'
               "
               class="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors"
@@ -465,27 +481,36 @@
         <!-- Options -->
         <div class="space-y-3">
           <label class="flex items-center gap-3 cursor-pointer">
-            <input
-              v-model="paymentLinkForm.sendEmail"
-              type="checkbox"
-              class="form-checkbox"
-            />
+            <input v-model="paymentLinkForm.sendEmail" type="checkbox" class="form-checkbox" />
             <span class="text-gray-700 dark:text-slate-300">
               <span class="material-icons text-sm mr-1 align-middle">email</span>
               {{ $t('payment.sendLink.sendEmail') }}
             </span>
           </label>
-          <label class="flex items-center gap-3 cursor-pointer">
+          <!-- Email input when email is checked -->
+          <div v-if="paymentLinkForm.sendEmail" class="ml-8">
             <input
-              v-model="paymentLinkForm.sendSms"
-              type="checkbox"
-              class="form-checkbox"
+              v-model="paymentLinkForm.email"
+              type="email"
+              class="form-input w-full text-sm"
+              :placeholder="$t('payment.sendLink.emailPlaceholder')"
             />
+          </div>
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input v-model="paymentLinkForm.sendSms" type="checkbox" class="form-checkbox" />
             <span class="text-gray-700 dark:text-slate-300">
               <span class="material-icons text-sm mr-1 align-middle">sms</span>
               {{ $t('payment.sendLink.sendSms') }}
             </span>
           </label>
+          <!-- Phone input when SMS is checked -->
+          <div v-if="paymentLinkForm.sendSms" class="ml-8">
+            <PhoneInput
+              v-model="paymentLinkForm.phone"
+              :placeholder="$t('payment.sendLink.phonePlaceholder')"
+              class="text-sm"
+            />
+          </div>
         </div>
 
         <!-- Expiry -->
@@ -503,7 +528,10 @@
         </div>
 
         <!-- Generated Link (if created) -->
-        <div v-if="generatedPaymentLink" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+        <div
+          v-if="generatedPaymentLink"
+          class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+        >
           <p class="text-sm font-medium text-green-800 dark:text-green-300 mb-2">
             {{ $t('payment.sendLink.linkCreated') }}
           </p>
@@ -554,6 +582,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import Lightbox from '@/components/common/Lightbox.vue'
+import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import PaymentStatusBadge from './PaymentStatusBadge.vue'
 import PaymentForm from './PaymentForm.vue'
 import paymentService from '@/services/paymentService'
@@ -610,6 +639,8 @@ const refundForm = reactive({
 const paymentLinkForm = reactive({
   sendEmail: false,
   sendSms: false,
+  email: '',
+  phone: '',
   expiresInDays: 7
 })
 
@@ -781,8 +812,10 @@ const viewReceipt = payment => {
 const handleSendPaymentLink = payment => {
   selectedPayment.value = payment
   generatedPaymentLink.value = ''
-  paymentLinkForm.sendEmail = false
+  paymentLinkForm.sendEmail = true
   paymentLinkForm.sendSms = false
+  paymentLinkForm.email = props.booking?.contact?.email || ''
+  paymentLinkForm.phone = props.booking?.contact?.phone || ''
   paymentLinkForm.expiresInDays = 7
   showPaymentLinkModal.value = true
 }
@@ -799,6 +832,8 @@ const createPaymentLink = async () => {
       {
         sendEmail: paymentLinkForm.sendEmail,
         sendSms: paymentLinkForm.sendSms,
+        email: paymentLinkForm.email,
+        phone: paymentLinkForm.phone,
         expiresInDays: paymentLinkForm.expiresInDays
       }
     )

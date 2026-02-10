@@ -3,7 +3,7 @@ import Issue from './issue.model.js'
 import User from '#modules/user/user.model.js'
 import Notification from '#modules/notification/notification.model.js'
 import { asyncHandler } from '#helpers'
-import { NotFoundError, ForbiddenError, ValidationError } from '#core/errors.js'
+import { NotFoundError, ForbiddenError, ValidationError, BadRequestError } from '#core/errors.js'
 import { getIssueFileUrl, deleteIssueFile, deleteIssueFolder } from '#helpers/issueUpload.js'
 import { sendIssueNudgeEmail } from '#helpers/mail.js'
 import logger from '#core/logger.js'
@@ -120,10 +120,12 @@ export const getIssues = asyncHandler(async (req, res) => {
       ...issue,
       commentCount: comments.length,
       attachmentCount: issue.attachments?.length || 0,
-      lastComment: lastComment ? {
-        user: lastComment.author,
-        createdAt: lastComment.createdAt
-      } : null
+      lastComment: lastComment
+        ? {
+            user: lastComment.author,
+            createdAt: lastComment.createdAt
+          }
+        : null
     }
   })
 
@@ -174,7 +176,7 @@ export const createIssue = asyncHandler(async (req, res) => {
   const issueNumber = await Issue.getNextIssueNumber()
 
   // Normalize assignees to array
-  const assigneeList = Array.isArray(assignees) ? assignees : (assignees ? [assignees] : [])
+  const assigneeList = Array.isArray(assignees) ? assignees : assignees ? [assignees] : []
 
   const issue = await Issue.create({
     issueNumber,
@@ -188,10 +190,12 @@ export const createIssue = asyncHandler(async (req, res) => {
     dueDate,
     metadata,
     watchers: [req.user._id], // Reporter is automatic watcher
-    activity: [{
-      action: 'created',
-      user: req.user._id
-    }]
+    activity: [
+      {
+        action: 'created',
+        user: req.user._id
+      }
+    ]
   })
 
   // Notify assignees
@@ -224,14 +228,7 @@ export const updateIssue = asyncHandler(async (req, res) => {
     throw new NotFoundError('ISSUE_NOT_FOUND')
   }
 
-  const {
-    title,
-    description,
-    priority,
-    category,
-    labels,
-    dueDate
-  } = req.body
+  const { title, description, priority, category, labels, dueDate } = req.body
 
   const changes = []
 
@@ -351,7 +348,7 @@ export const assignIssue = asyncHandler(async (req, res) => {
   const oldAssignees = issue.assignees || []
 
   // Normalize to array
-  const newAssignees = Array.isArray(assignees) ? assignees : (assignees ? [assignees] : [])
+  const newAssignees = Array.isArray(assignees) ? assignees : assignees ? [assignees] : []
 
   if (newAssignees.length > 0) {
     // Validate all users
@@ -426,7 +423,7 @@ export const addComment = asyncHandler(async (req, res) => {
         await sendIssueNotification(
           userId,
           'issue_mentioned',
-          'Issue\'da Bahsedildiniz',
+          "Issue'da Bahsedildiniz",
           `${issue.issueNumber}: ${issue.title}`,
           issue._id
         )
@@ -618,19 +615,13 @@ export const getStats = asyncHandler(async (req, res) => {
     avgResolutionTime
   ] = await Promise.all([
     // Status distribution
-    Issue.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]),
+    Issue.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
 
     // Priority distribution
-    Issue.aggregate([
-      { $group: { _id: '$priority', count: { $sum: 1 } } }
-    ]),
+    Issue.aggregate([{ $group: { _id: '$priority', count: { $sum: 1 } } }]),
 
     // Category distribution
-    Issue.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } }
-    ]),
+    Issue.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]),
 
     // Last 7 days activity
     Issue.aggregate([
@@ -691,9 +682,17 @@ export const getStats = asyncHandler(async (req, res) => {
   ])
 
   const totalIssues = await Issue.countDocuments()
-  const openIssues = await Issue.countDocuments({ status: { $in: ['open', 'in_progress', 'reopened'] } })
-  const myAssigned = await Issue.countDocuments({ assignees: req.user._id, status: { $nin: ['closed', 'resolved'] } })
-  const criticalOpen = await Issue.countDocuments({ priority: 'critical', status: { $in: ['open', 'in_progress', 'reopened'] } })
+  const openIssues = await Issue.countDocuments({
+    status: { $in: ['open', 'in_progress', 'reopened'] }
+  })
+  const myAssigned = await Issue.countDocuments({
+    assignees: req.user._id,
+    status: { $nin: ['closed', 'resolved'] }
+  })
+  const criticalOpen = await Issue.countDocuments({
+    priority: 'critical',
+    status: { $in: ['open', 'in_progress', 'reopened'] }
+  })
 
   res.json({
     success: true,
@@ -739,6 +738,33 @@ export const deleteIssue = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Issue deleted' })
 })
 
+// Restore Deleted Issue (Admin only)
+export const restoreIssue = asyncHandler(async (req, res) => {
+  const issue = await Issue.findById(req.params.id)
+
+  if (!issue) {
+    throw new NotFoundError('ISSUE_NOT_FOUND')
+  }
+
+  if (!issue.isDeleted) {
+    throw new BadRequestError('ISSUE_NOT_DELETED')
+  }
+
+  // Only admin can restore
+  if (req.user.role !== 'admin') {
+    throw new ForbiddenError('ADMIN_ONLY')
+  }
+
+  issue.isDeleted = false
+  issue.deletedAt = undefined
+  issue.deletedBy = undefined
+  issue.addActivity('restored', req.user._id)
+
+  await issue.save()
+
+  res.json({ success: true, message: 'Issue restored', data: issue })
+})
+
 // Hard Delete Issue (Admin only)
 export const hardDeleteIssue = asyncHandler(async (req, res) => {
   const issue = await Issue.findById(req.params.id)
@@ -769,7 +795,9 @@ export const getPlatformUsers = asyncHandler(async (req, res) => {
   const users = await User.find({
     accountType: 'platform',
     status: 'active'
-  }).select('name email avatar role').lean()
+  })
+    .select('name email avatar role')
+    .lean()
 
   res.json({ success: true, data: users })
 })
@@ -803,7 +831,9 @@ export const nudgeIssue = asyncHandler(async (req, res) => {
     allUsers.forEach(u => userMap.set(u._id.toString(), u))
     targetUsers = Array.from(userMap.values())
   } else if (Array.isArray(recipients)) {
-    targetUsers = await User.find({ _id: { $in: recipients } }).select('name email preferredLanguage')
+    targetUsers = await User.find({ _id: { $in: recipients } }).select(
+      'name email preferredLanguage'
+    )
   }
 
   if (targetUsers.length === 0) {

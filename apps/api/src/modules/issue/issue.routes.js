@@ -17,6 +17,7 @@ router.post('/', issueService.createIssue)
 router.get('/:id', issueService.getIssue)
 router.put('/:id', issueService.updateIssue)
 router.delete('/:id', issueService.deleteIssue)
+router.patch('/:id/restore', issueService.restoreIssue)
 
 // Status & Assignment
 router.patch('/:id/status', issueService.changeStatus)

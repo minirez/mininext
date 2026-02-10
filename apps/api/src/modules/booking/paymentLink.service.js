@@ -34,7 +34,12 @@ function getRequiredPartnerId(req, source = 'query') {
  */
 export const createPaymentLinkForPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
-  const { sendEmail = false, sendSms = false } = req.body
+  const {
+    sendEmail = false,
+    sendSms = false,
+    email: overrideEmail,
+    phone: overridePhone
+  } = req.body
   const partnerId = getRequiredPartnerId(req)
 
   // VALIDATION: expiresInDays must be a positive integer (1-365)
@@ -67,22 +72,31 @@ export const createPaymentLinkForPayment = asyncHandler(async (req, res) => {
   })
 
   if (existingLink) {
-    // Update existing link with latest customer info if needed
+    // Update existing link with latest customer info, allow override from request
     const leadGuest = payment.booking?.leadGuest || {}
     const contact = payment.booking?.contact || {}
-    const updatedEmail = leadGuest.email || contact.email || ''
-    const updatedPhone = leadGuest.phone || contact.phone || ''
+    const updatedEmail = overrideEmail || leadGuest.email || contact.email || ''
+    const updatedPhone = overridePhone || leadGuest.phone || contact.phone || ''
 
-    // Update customer info if it was empty before
-    if ((!existingLink.customer.email && updatedEmail) || (!existingLink.customer.phone && updatedPhone)) {
-      existingLink.customer.email = existingLink.customer.email || updatedEmail
-      existingLink.customer.phone = existingLink.customer.phone || updatedPhone
+    // Update customer info if override provided or was empty before
+    const emailChanged = overrideEmail && existingLink.customer.email !== overrideEmail
+    const phoneChanged = overridePhone && existingLink.customer.phone !== overridePhone
+    if (
+      emailChanged ||
+      phoneChanged ||
+      (!existingLink.customer.email && updatedEmail) ||
+      (!existingLink.customer.phone && updatedPhone)
+    ) {
+      existingLink.customer.email = updatedEmail || existingLink.customer.email
+      existingLink.customer.phone = updatedPhone || existingLink.customer.phone
       await existingLink.save()
     }
 
     // Send notifications if requested and not sent before
-    const shouldSendEmail = sendEmail && existingLink.customer.email && !existingLink.notifications.emailSent
-    const shouldSendSms = sendSms && existingLink.customer.phone && !existingLink.notifications.smsSent
+    const shouldSendEmail =
+      sendEmail && existingLink.customer.email && !existingLink.notifications.emailSent
+    const shouldSendSms =
+      sendSms && existingLink.customer.phone && !existingLink.notifications.smsSent
 
     if (shouldSendEmail || shouldSendSms) {
       try {
@@ -106,12 +120,13 @@ export const createPaymentLinkForPayment = asyncHandler(async (req, res) => {
     })
   }
 
-  // Get customer info from booking (leadGuest + contact fallback)
+  // Get customer info from booking (leadGuest + contact fallback), allow override from request
   const leadGuest = payment.booking?.leadGuest || {}
   const contact = payment.booking?.contact || {}
-  const customerName = `${leadGuest.firstName || ''} ${leadGuest.lastName || ''}`.trim() || 'Müşteri'
-  const customerEmail = leadGuest.email || contact.email || ''
-  const customerPhone = leadGuest.phone || contact.phone || ''
+  const customerName =
+    `${leadGuest.firstName || ''} ${leadGuest.lastName || ''}`.trim() || 'Müşteri'
+  const customerEmail = overrideEmail || leadGuest.email || contact.email || ''
+  const customerPhone = overridePhone || leadGuest.phone || contact.phone || ''
 
   // Create payment link
   const expiresAt = new Date()

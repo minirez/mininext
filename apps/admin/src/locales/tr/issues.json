@@ -73,7 +73,8 @@
       "reopen": "Yeniden Aç",
       "nudge": "Dürt",
       "pin": "Sabitle",
-      "unpin": "Sabitlemeyi Kaldır"
+      "unpin": "Sabitlemeyi Kaldır",
+      "restore": "Geri Al"
     },
 
     "nudge": {
@@ -147,6 +148,7 @@
       "created": "Talep oluşturuldu",
       "updated": "Talep güncellendi",
       "deleted": "Talep silindi",
+      "restored": "Talep geri alındı",
       "deleteConfirm": "Bu talebi silmek istediğinize emin misiniz? Bu işlem geri alınabilir.",
       "statusChanged": "Durum değiştirildi",
       "assigned": "Talep atandı",

@@ -220,7 +220,9 @@
               <span class="font-medium text-gray-900 dark:text-white">
                 {{ $t('booking.creditCardOptions.paymentLink') }}
               </span>
-              <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">
+              <span
+                class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full"
+              >
                 {{ $t('booking.creditCardOptions.recommended') }}
               </span>
             </div>
@@ -231,11 +233,14 @@
         </label>
 
         <!-- Notification Options (only for payment_link) -->
-        <div v-if="creditCardOption === 'payment_link'" class="ml-12 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
-          <p class="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+        <div
+          v-if="creditCardOption === 'payment_link'"
+          class="ml-12 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg space-y-3"
+        >
+          <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
             {{ $t('booking.creditCardOptions.sendVia') }}
           </p>
-          <div class="flex flex-wrap gap-4">
+          <div class="space-y-3">
             <label class="flex items-center cursor-pointer">
               <input
                 v-model="sendPaymentLinkEmail"
@@ -247,6 +252,15 @@
                 {{ $t('booking.creditCardOptions.email') }}
               </span>
             </label>
+            <!-- Email input when email is checked -->
+            <div v-if="sendPaymentLinkEmail" class="ml-6">
+              <input
+                v-model="paymentLinkEmail"
+                type="email"
+                class="form-input w-full text-sm"
+                :placeholder="$t('payment.sendLink.emailPlaceholder')"
+              />
+            </div>
             <label class="flex items-center cursor-pointer">
               <input
                 v-model="sendPaymentLinkSms"
@@ -258,6 +272,14 @@
                 {{ $t('booking.creditCardOptions.sms') }}
               </span>
             </label>
+            <!-- Phone input when SMS is checked -->
+            <div v-if="sendPaymentLinkSms" class="ml-6">
+              <PhoneInput
+                v-model="paymentLinkPhone"
+                :placeholder="$t('payment.sendLink.phonePlaceholder')"
+                class="text-sm"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -328,6 +350,7 @@ import { ref, computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
+import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import PaymentCardModal from './PaymentCardModal.vue'
 import paymentService from '@/services/paymentService'
 import paymentLinkService from '@/services/paymentLinkService'
@@ -357,6 +380,8 @@ const cardPaymentId = ref(null)
 const creditCardOption = ref('payment_link') // 'inline' or 'payment_link'
 const sendPaymentLinkEmail = ref(true)
 const sendPaymentLinkSms = ref(false)
+const paymentLinkEmail = ref(props.booking?.contact?.email || '')
+const paymentLinkPhone = ref(props.booking?.contact?.phone || '')
 
 const paymentTypes = [
   { value: 'credit_card', icon: 'credit_card' },
@@ -522,6 +547,8 @@ const handlePaymentLinkSubmit = async () => {
       {
         sendEmail: sendPaymentLinkEmail.value,
         sendSms: sendPaymentLinkSms.value,
+        email: paymentLinkEmail.value,
+        phone: paymentLinkPhone.value,
         expiresInDays: 7
       }
     )

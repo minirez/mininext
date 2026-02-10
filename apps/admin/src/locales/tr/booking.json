@@ -813,6 +813,8 @@
       "create": "Link Oluştur",
       "sendEmail": "E-posta ile gönder",
       "sendSms": "SMS ile gönder",
+      "emailPlaceholder": "E-posta adresi",
+      "phonePlaceholder": "Telefon numarası",
       "expiresIn": "Link Geçerlilik Süresi",
       "linkCreated": "Ödeme linki oluşturuldu!",
       "success": "Ödeme linki başarıyla oluşturuldu"

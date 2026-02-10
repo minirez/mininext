@@ -294,7 +294,11 @@
           {{ $t('booking.bookingSuccessTitle') }}
         </h3>
         <p class="text-gray-500 dark:text-slate-400 mb-4">
-          {{ paymentLinkResult ? $t('booking.creditCardOptions.paymentLinkSentDescription') : $t('booking.bookingSuccessDescription') }}
+          {{
+            paymentLinkResult
+              ? $t('booking.creditCardOptions.paymentLinkSentDescription')
+              : $t('booking.bookingSuccessDescription')
+          }}
         </p>
         <div v-if="bookingResult" class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 mb-4">
           <p class="text-sm text-gray-500 dark:text-slate-400">
@@ -306,7 +310,10 @@
         </div>
 
         <!-- Payment Link Info -->
-        <div v-if="paymentLinkResult" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-4 text-left">
+        <div
+          v-if="paymentLinkResult"
+          class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-4 text-left"
+        >
           <div class="flex items-center mb-3">
             <span class="material-icons text-blue-500 mr-2">link</span>
             <span class="font-medium text-blue-700 dark:text-blue-400">
@@ -536,7 +543,6 @@ const handleConfirm = async () => {
     }
   } catch (error) {
     toast.error(error.message || t('booking.bookingFailed'))
-  } finally {
     isSubmitting.value = false
   }
 }

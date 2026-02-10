@@ -138,7 +138,16 @@
       "monthlyGrowth": "Monthly Rate",
       "activeHotels": "Active Hotels",
       "favoriteHotels": "Most Booked Hotels",
-      "total": "Total"
+      "total": "Total",
+      "welcome": "Welcome!",
+      "welcomeDescription": "Your agency panel is ready. Start by creating your first booking.",
+      "step1": "Search Hotels",
+      "step1Desc": "Check availability at partner hotels",
+      "step2": "Create Booking",
+      "step2Desc": "Quickly book for your customers",
+      "step3": "Earn Commission",
+      "step3Desc": "Earn commission from confirmed bookings",
+      "createFirstBooking": "Create First Booking"
     }
   },
   "audit": {

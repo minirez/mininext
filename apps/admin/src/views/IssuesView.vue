@@ -9,8 +9,18 @@
             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
           </div>
           <div class="p-3 bg-gray-100 dark:bg-slate-700 rounded-full">
-            <svg class="w-6 h-6 text-gray-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            <svg
+              class="w-6 h-6 text-gray-600 dark:text-slate-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
             </svg>
           </div>
         </div>
@@ -23,8 +33,18 @@
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ stats.open }}</p>
           </div>
           <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              class="w-6 h-6 text-blue-600 dark:text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
         </div>
@@ -33,12 +53,26 @@
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('issues.stats.critical') }}</p>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.criticalOpen }}</p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">
+              {{ $t('issues.stats.critical') }}
+            </p>
+            <p class="text-2xl font-bold text-red-600 dark:text-red-400">
+              {{ stats.criticalOpen }}
+            </p>
           </div>
           <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              class="w-6 h-6 text-red-600 dark:text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
         </div>
@@ -47,12 +81,26 @@
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('issues.stats.assignedToMe') }}</p>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ stats.myAssigned }}</p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">
+              {{ $t('issues.stats.assignedToMe') }}
+            </p>
+            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {{ stats.myAssigned }}
+            </p>
           </div>
           <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              class="w-6 h-6 text-purple-600 dark:text-purple-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           </div>
         </div>
@@ -72,8 +120,18 @@
               class="form-input pl-10"
               @input="debouncedSearch"
             />
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
           </div>
 
@@ -104,38 +162,75 @@
             <button
               type="button"
               class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors whitespace-nowrap"
-              :class="showResolved
-                ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 dark:border-green-600'
-                : 'border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'"
+              :class="
+                showResolved
+                  ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 dark:border-green-600'
+                  : 'border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+              "
               @click="toggleShowResolved"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="showResolved" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path v-if="showResolved" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                <path
+                  v-if="showResolved"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  v-if="showResolved"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+                <path
+                  v-else
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                />
               </svg>
-              {{ showResolved ? $t('issues.filters.hideResolved') : $t('issues.filters.showResolved') }}
+              {{
+                showResolved ? $t('issues.filters.hideResolved') : $t('issues.filters.showResolved')
+              }}
             </button>
 
             <!-- Show Deleted Toggle -->
             <button
               type="button"
               class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors whitespace-nowrap"
-              :class="showDeleted
-                ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600'
-                : 'border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'"
+              :class="
+                showDeleted
+                  ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600'
+                  : 'border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+              "
               @click="toggleShowDeleted"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               {{ $t('issues.filters.showDeleted') }}
             </button>
 
             <!-- New Issue Button -->
-            <button class="btn-primary flex items-center whitespace-nowrap" @click="openCreateModal">
+            <button
+              class="btn-primary flex items-center whitespace-nowrap"
+              @click="openCreateModal"
+            >
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               {{ $t('issues.newIssue') }}
             </button>
@@ -163,7 +258,9 @@
               :to="`/issues/${row._id}`"
               class="block hover:text-purple-600 dark:hover:text-purple-400"
             >
-              <span class="text-xs text-gray-500 dark:text-slate-400 font-mono">{{ row.issueNumber }}</span>
+              <span class="text-xs text-gray-500 dark:text-slate-400 font-mono">{{
+                row.issueNumber
+              }}</span>
               <p class="font-medium text-gray-900 dark:text-white line-clamp-1">{{ row.title }}</p>
             </router-link>
           </template>
@@ -223,7 +320,9 @@
               >
                 {{ row.reporter?.name?.charAt(0)?.toUpperCase() || '?' }}
               </div>
-              <span class="text-sm text-gray-600 dark:text-slate-300">{{ row.reporter?.name }}</span>
+              <span class="text-sm text-gray-600 dark:text-slate-300">{{
+                row.reporter?.name
+              }}</span>
             </div>
           </template>
 
@@ -257,7 +356,9 @@
               >
                 {{ row.lastComment.user?.name?.charAt(0)?.toUpperCase() || '?' }}
               </div>
-              <span class="text-sm text-gray-600 dark:text-slate-300">{{ row.lastComment.user?.name }}</span>
+              <span class="text-sm text-gray-600 dark:text-slate-300">{{
+                row.lastComment.user?.name
+              }}</span>
             </div>
             <span v-else class="text-sm text-gray-400 dark:text-slate-500">-</span>
           </template>
@@ -269,7 +370,12 @@
               :title="$t('issues.attachments')"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                />
               </svg>
               {{ row.attachments?.length || 0 }}
             </span>
@@ -291,22 +397,44 @@
                 :title="$t('common.view')"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
                 </svg>
               </router-link>
               <!-- Pin button -->
               <button
                 v-if="!row.isDeleted"
                 class="p-2 rounded-lg transition-colors"
-                :class="row.isPinned
-                  ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-600 dark:hover:text-gray-300'"
+                :class="
+                  row.isPinned
+                    ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-600 dark:hover:text-gray-300'
+                "
                 :title="row.isPinned ? $t('issues.actions.unpin') : $t('issues.actions.pin')"
                 @click="handleTogglePin(row)"
               >
-                <svg class="w-4 h-4" :fill="row.isPinned ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                <svg
+                  class="w-4 h-4"
+                  :fill="row.isPinned ? 'currentColor' : 'none'"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
                 </svg>
               </button>
               <!-- Delete button (only for reporter) -->
@@ -317,16 +445,30 @@
                 @click="confirmDeleteIssue(row)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
-              <!-- Deleted badge -->
-              <span
-                v-if="row.isDeleted"
-                class="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded"
-              >
-                {{ $t('issues.status.deleted') }}
-              </span>
+              <!-- Deleted badge + Restore button -->
+              <template v-if="row.isDeleted">
+                <span
+                  class="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded"
+                >
+                  {{ $t('issues.status.deleted') }}
+                </span>
+                <button
+                  v-if="isAdmin"
+                  class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                  :title="$t('issues.actions.restore')"
+                  @click="handleRestoreIssue(row)"
+                >
+                  <span class="material-icons text-base">restore</span>
+                </button>
+              </template>
             </div>
           </template>
         </DataTable>
@@ -420,16 +562,18 @@ const toggleShowDeleted = () => {
   loadIssues(1)
 }
 
+// Admin check for restore functionality
+const isAdmin = computed(() => authStore.user?.role === 'admin')
+
 // Check if current user can delete issue (reporter or admin)
-const canDeleteIssue = (issue) => {
+const canDeleteIssue = issue => {
   const currentUserId = authStore.user?._id
   const isReporter = issue.reporter?._id === currentUserId
-  const isAdmin = authStore.user?.role === 'admin'
-  return isReporter || isAdmin
+  return isReporter || isAdmin.value
 }
 
 // Confirm delete issue
-const confirmDeleteIssue = (issue) => {
+const confirmDeleteIssue = issue => {
   selectedIssue.value = issue
   showDeleteConfirm.value = true
 }
@@ -451,8 +595,21 @@ const handleDeleteIssue = async () => {
   }
 }
 
+// Handle restore issue (admin only)
+const handleRestoreIssue = async issue => {
+  try {
+    await issueService.restoreIssue(issue._id)
+    toast.success(t('issues.messages.restored'))
+    loadIssues()
+    loadStats()
+  } catch (error) {
+    toast.error(t('common.error'))
+    console.error('Failed to restore issue:', error)
+  }
+}
+
 // Handle toggle pin
-const handleTogglePin = async (issue) => {
+const handleTogglePin = async issue => {
   try {
     const { data } = await issueService.togglePin(issue._id)
     issue.isPinned = data.isPinned
@@ -490,7 +647,12 @@ const columns = computed(() => [
   { key: 'category', label: t('issues.fields.category'), sortable: true },
   { key: 'reporter', label: t('issues.fields.reporter') },
   { key: 'assignees', label: t('issues.fields.assignees') },
-  { key: 'lastComment', label: t('issues.fields.lastComment'), sortable: true, sortKey: 'lastCommentTime' },
+  {
+    key: 'lastComment',
+    label: t('issues.fields.lastComment'),
+    sortable: true,
+    sortKey: 'lastCommentTime'
+  },
   { key: 'attachments', label: '', width: '60px' },
   { key: 'createdAt', label: t('issues.fields.createdAt'), sortable: true }
 ])
@@ -571,9 +733,9 @@ const handleSort = ({ key, order }) => {
   // Find the column to get its sortKey if it has one
   const column = columns.value.find(col => col.key === key)
   const actualSortKey = column?.sortKey || key
-  
+
   sortState.value = { key, order }
-  
+
   // For now, we do frontend sorting since backend might not support all sort keys
   // If backend supports sorting, uncomment and modify loadIssues to pass sort params
 }
@@ -583,17 +745,17 @@ const sortedIssues = computed(() => {
   if (!sortState.value.key || !issues.value.length) {
     return issues.value
   }
-  
+
   const column = columns.value.find(col => col.key === sortState.value.key)
   const sortKey = column?.sortKey || sortState.value.key
   const order = sortState.value.order
-  
+
   // Create a copy to avoid mutating original
   const sorted = [...issues.value]
-  
+
   sorted.sort((a, b) => {
     let aVal, bVal
-    
+
     // Handle special sort keys
     if (sortKey === 'lastCommentTime') {
       // Sort by the last comment's createdAt timestamp
@@ -607,35 +769,35 @@ const sortedIssues = computed(() => {
       aVal = a[sortKey]
       bVal = b[sortKey]
     }
-    
+
     // Handle null/undefined
     if (aVal == null && bVal == null) return 0
     if (aVal == null) return order === 'asc' ? 1 : -1
     if (bVal == null) return order === 'asc' ? -1 : 1
-    
+
     // Compare
     if (typeof aVal === 'string' && typeof bVal === 'string') {
       const comparison = aVal.localeCompare(bVal, 'tr')
       return order === 'asc' ? comparison : -comparison
     }
-    
+
     if (aVal < bVal) return order === 'asc' ? -1 : 1
     if (aVal > bVal) return order === 'asc' ? 1 : -1
     return 0
   })
-  
+
   return sorted
 })
 
 // Handle issue created
-const handleIssueCreated = (issue) => {
+const handleIssueCreated = issue => {
   toast.success(t('issues.messages.created'))
   loadIssues(1)
   loadStats()
 }
 
 // Format date
-const formatDate = (date) => {
+const formatDate = date => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('tr-TR', {
     day: '2-digit',

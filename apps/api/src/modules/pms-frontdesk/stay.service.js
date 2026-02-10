@@ -690,6 +690,18 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       }
     }
 
+    // Link guest profiles to guestList (same as walk-in check-in)
+    guestList = await Promise.all(
+      guestList.map(async (g, index) => {
+        const guestProfileId = await findOrCreateGuestProfileForCheckIn(hotelId, g)
+        return {
+          ...g,
+          guest: guestProfileId,
+          isMainGuest: index === 0 || g.isMainGuest
+        }
+      })
+    )
+
     // Execute critical operations within a transaction
     const stay = await withTransaction(async session => {
       // CRITICAL: First lock the room with conditional update to prevent race conditions
@@ -795,26 +807,22 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
     // Update hotel guest record with stay history
     try {
       const mainGuest = guestList.find(g => g.isMainGuest) || guestList[0]
-      const guestData = {
-        firstName: mainGuest?.firstName || booking.leadGuest?.firstName,
-        lastName: mainGuest?.lastName || booking.leadGuest?.lastName,
-        email: mainGuest?.email || booking.contact?.email,
-        phone: mainGuest?.phone || booking.contact?.phone
-      }
-
-      const guest = await Guest.findOrCreate(hotelId, guestData)
-      if (guest) {
-        await guest.addStayToHistory({
-          _id: stay._id,
-          booking: bookingId,
-          checkInDate: stay.checkInDate,
-          checkOutDate: stay.checkOutDate,
-          room: { roomNumber: room.roomNumber },
-          roomType: { code: room.roomType?.code },
-          totalAmount: stay.totalAmount,
-          nights: stay.nights,
-          status: stay.status
-        })
+      const guestProfileId = mainGuest?.guest
+      if (guestProfileId) {
+        const guest = await Guest.findById(guestProfileId)
+        if (guest) {
+          await guest.addStayToHistory({
+            _id: stay._id,
+            booking: bookingId,
+            checkInDate: stay.checkInDate,
+            checkOutDate: stay.checkOutDate,
+            room: { roomNumber: room.roomNumber },
+            roomType: { code: room.roomType?.code },
+            totalAmount: stay.totalAmount,
+            nights: stay.nights,
+            status: stay.status
+          })
+        }
       }
     } catch (err) {
       logger.warn('[CheckIn] Guest history update failed (non-critical):', err.message)

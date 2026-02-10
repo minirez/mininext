@@ -29,8 +29,17 @@ export const createBooking = asyncHandler(async (req, res) => {
     throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
   }
 
-  const { hotelId, marketId, checkIn, checkOut, rooms, contact, billing, specialRequests, salesChannel = 'b2c' } =
-    req.body
+  const {
+    hotelId,
+    marketId,
+    checkIn,
+    checkOut,
+    rooms,
+    contact,
+    billing,
+    specialRequests,
+    salesChannel = 'b2c'
+  } = req.body
 
   // Validate hotel
   const hotel = await Hotel.findOne({
@@ -149,9 +158,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     }
 
     // Determine display price based on sales channel
-    const channelPrice = salesChannel === 'b2b'
-      ? priceResult.pricing.b2bPrice
-      : priceResult.pricing.b2cPrice
+    const channelPrice =
+      salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
     // Build room booking
     const roomBooking = {
@@ -181,7 +189,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     totalChildren += children.filter(age => age >= 2).length
     totalInfants += children.filter(age => age < 2).length
     subtotal += priceResult.pricing.originalTotal
-    totalDiscount += (priceResult.pricing.originalTotal - channelPrice)
+    totalDiscount += priceResult.pricing.originalTotal - channelPrice
   }
 
   // Calculate final pricing
@@ -193,6 +201,20 @@ export const createBooking = asyncHandler(async (req, res) => {
   let primarySeason = null
   if (processedRooms[0]?.dailyBreakdown?.[0]?.season) {
     primarySeason = processedRooms[0].dailyBreakdown[0].season
+  }
+
+  // Duplicate check - prevent double submission within 2 minutes
+  const recentDuplicate = await Booking.findOne({
+    partner: partnerId,
+    hotel: hotel._id,
+    checkIn: new Date(checkIn),
+    checkOut: new Date(checkOut),
+    'contact.email': contact.email,
+    status: { $nin: ['cancelled'] },
+    createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) }
+  }).lean()
+  if (recentDuplicate) {
+    throw new BadRequestError('DUPLICATE_BOOKING')
   }
 
   // Generate booking number
@@ -211,8 +233,8 @@ export const createBooking = asyncHandler(async (req, res) => {
   }
   if (!leadGuest) {
     leadGuest = {
-      firstName: contact.firstName || 'Guest',
-      lastName: contact.lastName || '',
+      firstName: contact.firstName || 'Misafir',
+      lastName: contact.lastName || '-',
       type: 'adult',
       isLead: true
     }
@@ -455,9 +477,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     }
 
     // Determine display price based on sales channel
-    const channelPrice = salesChannel === 'b2b'
-      ? priceResult.pricing.b2bPrice
-      : priceResult.pricing.b2cPrice
+    const channelPrice =
+      salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
     // Build room booking
     const roomBooking = {
@@ -487,7 +508,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     totalChildren += children.filter(age => age >= 2).length
     totalInfants += children.filter(age => age < 2).length
     subtotal += priceResult.pricing.originalTotal
-    totalDiscount += (priceResult.pricing.originalTotal - channelPrice)
+    totalDiscount += priceResult.pricing.originalTotal - channelPrice
   }
 
   // Calculate final pricing
@@ -500,6 +521,20 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   let primarySeason = null
   if (processedRooms[0]?.dailyBreakdown?.[0]?.season) {
     primarySeason = processedRooms[0].dailyBreakdown[0].season
+  }
+
+  // Duplicate check - prevent double submission within 2 minutes
+  const recentDuplicate = await Booking.findOne({
+    partner: partnerId,
+    hotel: hotel._id,
+    checkIn: new Date(checkIn),
+    checkOut: new Date(checkOut),
+    'contact.email': contact.email,
+    status: { $nin: ['cancelled'] },
+    createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) }
+  }).lean()
+  if (recentDuplicate) {
+    throw new BadRequestError('DUPLICATE_BOOKING')
   }
 
   // Generate booking number
@@ -518,8 +553,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   }
   if (!leadGuest) {
     leadGuest = {
-      firstName: contact.firstName || 'Guest',
-      lastName: contact.lastName || '',
+      firstName: contact.firstName || 'Misafir',
+      lastName: contact.lastName || '-',
       type: 'adult',
       isLead: true
     }
@@ -579,10 +614,11 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
   // Build customer name with fallback
-  const customerName = `${leadGuest.firstName || ''} ${leadGuest.lastName || ''}`.trim() || 'Müşteri'
+  const customerName =
+    `${leadGuest.firstName || ''} ${leadGuest.lastName || ''}`.trim() || 'Müşteri'
 
   // Wrap critical save operations in a transaction (graceful fallback on standalone)
-  const { payment, paymentLink } = await withTransaction(async (session) => {
+  const { payment, paymentLink } = await withTransaction(async session => {
     const opts = session ? { session } : {}
 
     // 1. Save booking
@@ -604,26 +640,31 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     await _payment.save(opts)
 
     // 3. Create payment link
-    const [_paymentLink] = await PaymentLink.create([{
-      partner: partnerId,
-      customer: {
-        name: customerName,
-        email: contact.email,
-        phone: contact.phone
-      },
-      description: `${hotel.name?.tr || hotel.name?.en || bookingNumber} - ${nights} gece konaklama`,
-      amount: finalTotal,
-      currency: market.currency,
-      installment: {
-        enabled: true,
-        maxCount: 6,
-        rates: {}
-      },
-      booking: booking._id,
-      linkedPayment: _payment._id,
-      expiresAt,
-      createdBy: req.user._id
-    }], opts)
+    const [_paymentLink] = await PaymentLink.create(
+      [
+        {
+          partner: partnerId,
+          customer: {
+            name: customerName,
+            email: contact.email,
+            phone: contact.phone
+          },
+          description: `${hotel.name?.tr || hotel.name?.en || bookingNumber} - ${nights} gece konaklama`,
+          amount: finalTotal,
+          currency: market.currency,
+          installment: {
+            enabled: true,
+            maxCount: 6,
+            rates: {}
+          },
+          booking: booking._id,
+          linkedPayment: _payment._id,
+          expiresAt,
+          createdBy: req.user._id
+        }
+      ],
+      opts
+    )
 
     // 4. Update booking with payment link reference
     booking.payment.paymentLinkId = _paymentLink._id
@@ -663,9 +704,16 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   if (sendEmail || sendSms) {
     try {
       const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MaxiRez'
-      const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(finalTotal)
-      const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[market.currency] || market.currency
-      const formattedExpiry = new Date(expiresAt).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+        finalTotal
+      )
+      const currencySymbol =
+        { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[market.currency] || market.currency
+      const formattedExpiry = new Date(expiresAt).toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
 
       const notificationData = {
         CUSTOMER_NAME: customerName,

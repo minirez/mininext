@@ -6,12 +6,12 @@ const getIssues = async (params = {}) => {
   return response.data
 }
 
-const getIssue = async (id) => {
+const getIssue = async id => {
   const response = await apiClient.get(`/issues/${id}`)
   return response.data
 }
 
-const createIssue = async (data) => {
+const createIssue = async data => {
   const response = await apiClient.post('/issues', data)
   return response.data
 }
@@ -21,8 +21,13 @@ const updateIssue = async (id, data) => {
   return response.data
 }
 
-const deleteIssue = async (id) => {
+const deleteIssue = async id => {
   const response = await apiClient.delete(`/issues/${id}`)
+  return response.data
+}
+
+const restoreIssue = async id => {
+  const response = await apiClient.patch(`/issues/${id}/restore`)
   return response.data
 }
 
@@ -38,12 +43,12 @@ const assignIssue = async (id, assignees) => {
   return response.data
 }
 
-const toggleWatch = async (id) => {
+const toggleWatch = async id => {
   const response = await apiClient.patch(`/issues/${id}/watch`)
   return response.data
 }
 
-const togglePin = async (id) => {
+const togglePin = async id => {
   const response = await apiClient.patch(`/issues/${id}/pin`)
   return response.data
 }
@@ -71,7 +76,7 @@ const uploadAttachment = async (id, file, onProgress) => {
 
   const response = await apiClient.post(`/issues/${id}/attachments`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: (e) => onProgress?.(Math.round((e.loaded * 100) / e.total))
+    onUploadProgress: e => onProgress?.(Math.round((e.loaded * 100) / e.total))
   })
   return response.data
 }
@@ -104,6 +109,7 @@ export default {
   createIssue,
   updateIssue,
   deleteIssue,
+  restoreIssue,
   changeStatus,
   assignIssue,
   toggleWatch,

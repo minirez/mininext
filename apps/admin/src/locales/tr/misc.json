@@ -138,7 +138,16 @@
       "monthlyGrowth": "Aylık Oran",
       "activeHotels": "Aktif Otel",
       "favoriteHotels": "En Çok Çalışılan Oteller",
-      "total": "Toplam"
+      "total": "Toplam",
+      "welcome": "Hoş Geldiniz!",
+      "welcomeDescription": "Acente paneliniz hazır. İlk rezervasyonunuzu oluşturarak başlayabilirsiniz.",
+      "step1": "Otel Ara",
+      "step1Desc": "Anlaşmalı otellerde müsaitlik sorgulayın",
+      "step2": "Rezervasyon Oluştur",
+      "step2Desc": "Müşteriniz için hızlıca rezervasyon yapın",
+      "step3": "Komisyon Kazanın",
+      "step3Desc": "Onaylanan rezervasyonlardan komisyon kazanın",
+      "createFirstBooking": "İlk Rezervasyonu Oluştur"
     }
   },
   "audit": {

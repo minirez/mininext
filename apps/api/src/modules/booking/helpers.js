@@ -12,8 +12,8 @@ export const sanitizeGuest = guest => {
   const sanitized = {
     type: guest.type || 'adult',
     title: guest.title || 'mr',
-    firstName: guest.firstName?.trim() || 'Guest',
-    lastName: guest.lastName?.trim() || 'Guest',
+    firstName: guest.firstName?.trim() || 'Misafir',
+    lastName: guest.lastName?.trim() || '-',
     nationality: guest.nationality || '',
     isLead: guest.isLead || false
   }

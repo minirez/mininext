@@ -296,6 +296,7 @@ export const createReservation = asyncHandler(async (req, res) => {
   // Create reservation
   const reservation = new Booking({
     bookingNumber,
+    partner: hotel.partner,
     hotel: hotelId,
     hotelCode: hotel.code,
     hotelName: hotel.name?.tr || hotel.name?.en,
@@ -370,8 +371,8 @@ export const createReservation = asyncHandler(async (req, res) => {
     status: 'confirmed',
     confirmedAt: new Date(),
     source: {
-      type: 'direct',
-      channel: 'Direct',
+      type: 'pms',
+      channel: agencyId ? 'Agency' : 'Direct',
       agencyId: agencyId || undefined
     },
     specialRequests
