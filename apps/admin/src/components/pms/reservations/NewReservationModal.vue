@@ -561,7 +561,19 @@ const submit = async () => {
     emit('created')
     close()
   } catch (error) {
-    toast.error(error.response?.data?.message || t('reservation.createError'))
+    const data = error.response?.data
+    if (data?.message === 'ROOM_TYPE_FULLY_BOOKED') {
+      const d = data.details || {}
+      toast.error(
+        t('reservation.roomTypeFullyBooked', {
+          roomType: d.roomType || '',
+          booked: d.bookedRooms || 0,
+          total: d.totalRooms || 0
+        })
+      )
+    } else {
+      toast.error(data?.message || t('reservation.createError'))
+    }
   } finally {
     loading.value = false
   }

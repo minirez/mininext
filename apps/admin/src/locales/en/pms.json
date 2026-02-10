@@ -951,6 +951,7 @@
     "soldOut": "Sold Out",
     "noRoomTypes": "No room types found",
     "noMealPlans": "No meal plans found",
+    "roomTypeFullyBooked": "{roomType} room type is fully booked for these dates ({booked}/{total} rooms reserved)",
     "errors": {
       "checkInRequired": "Check-in date is required",
       "checkOutRequired": "Check-out date is required",

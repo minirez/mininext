@@ -950,6 +950,7 @@
     "soldOut": "Dolu",
     "noRoomTypes": "Oda tipi bulunamadı",
     "noMealPlans": "Pansiyon tipi bulunamadı",
+    "roomTypeFullyBooked": "{roomType} oda tipi bu tarihler için tamamen dolu ({booked}/{total} oda rezerveli)",
     "errors": {
       "checkInRequired": "Giriş tarihi zorunludur",
       "checkOutRequired": "Çıkış tarihi zorunludur",

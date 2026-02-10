@@ -3,6 +3,7 @@
  * Handles reservation management for frontdesk operations
  */
 
+import mongoose from 'mongoose'
 import { asyncHandler, withTransaction, escapeRegex } from '#helpers'
 import Booking from '#modules/booking/booking.model.js'
 import Room from '#modules/pms-housekeeping/room.model.js'
@@ -287,6 +288,45 @@ export const createReservation = asyncHandler(async (req, res) => {
   const checkInDate = new Date(checkIn)
   const checkOutDate = new Date(checkOut)
   const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24))
+
+  // Availability check - count physical rooms vs overlapping reservations
+  const [totalPhysicalRooms, overlappingResult] = await Promise.all([
+    Room.countDocuments({
+      hotel: hotelId,
+      roomType: roomTypeId,
+      isActive: true,
+      status: { $nin: ['out_of_order'] }
+    }),
+    Booking.aggregate([
+      {
+        $match: {
+          hotel: new mongoose.Types.ObjectId(hotelId),
+          status: { $nin: ['cancelled', 'no_show'] },
+          checkIn: { $lt: checkOutDate },
+          checkOut: { $gt: checkInDate }
+        }
+      },
+      { $unwind: '$rooms' },
+      { $match: { 'rooms.roomType': new mongoose.Types.ObjectId(roomTypeId) } },
+      { $count: 'bookedRooms' }
+    ])
+  ])
+
+  const bookedRooms = overlappingResult[0]?.bookedRooms || 0
+
+  if (totalPhysicalRooms > 0 && bookedRooms >= totalPhysicalRooms) {
+    return res.status(400).json({
+      success: false,
+      message: 'ROOM_TYPE_FULLY_BOOKED',
+      details: {
+        roomType: roomType.name?.tr || roomType.code,
+        totalRooms: totalPhysicalRooms,
+        bookedRooms,
+        checkIn,
+        checkOut
+      }
+    })
+  }
 
   // Generate booking number (hotelCode-timestamp-random)
   const timestamp = Date.now().toString(36).toUpperCase()
