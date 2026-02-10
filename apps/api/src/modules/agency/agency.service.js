@@ -3,6 +3,7 @@ import Partner from '../partner/partner.model.js'
 import User from '../user/user.model.js'
 import { NotFoundError, ConflictError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
+import { getPartnerId } from '#services/helpers.js'
 import { sendWelcomeEmail } from '#helpers/mail.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
@@ -14,15 +15,7 @@ const generatePassword = () => {
 
 // Create agency
 export const createAgency = asyncHandler(async (req, res) => {
-  let partnerId = req.body.partner
-
-  // If user is a partner, use their own ID
-  if (req.user.accountType === 'partner') {
-    partnerId = req.user.accountId
-  } else if (req.partnerId) {
-    // Platform admin viewing as partner
-    partnerId = req.partnerId
-  }
+  const partnerId = req.body.partner || getPartnerId(req)
 
   if (!partnerId) {
     throw new BadRequestError('REQUIRED_PARTNER')
@@ -97,15 +90,10 @@ export const getAgencies = asyncHandler(async (req, res) => {
   // Build filter
   const filter = {}
 
-  // If user is a partner, only show their agencies
-  if (req.user.accountType === 'partner') {
-    filter.partner = req.user.accountId
-  } else if (req.partnerId) {
-    // Platform admin viewing as partner
-    filter.partner = req.partnerId
-  } else if (partner) {
-    // Platform admin filtering by partner
-    filter.partner = partner
+  // Resolve partner context (partner user, PMS context, platform admin)
+  const resolvedPartnerId = partner || getPartnerId(req)
+  if (resolvedPartnerId) {
+    filter.partner = resolvedPartnerId
   }
 
   if (status) filter.status = status
