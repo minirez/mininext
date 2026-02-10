@@ -13,6 +13,7 @@
 import { asyncHandler } from '#helpers'
 import Storefront from '../storefront/storefront.model.js'
 import Partner from '../partner/partner.model.js'
+import SiteSettings from '../siteSettings/siteSettings.model.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import crypto from 'crypto'
 
@@ -340,6 +341,22 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
 
   // Shape response for public consumption
   const publicData = shapePublicResponse(storefront, isDraftLive)
+
+  // Merge site-level maintenance mode from SiteSettings.
+  // If either SiteSettings.general.maintenanceMode OR Storefront.underMaintenance is true,
+  // the B2C frontend should display the maintenance page.
+  try {
+    const siteSettings = await SiteSettings.findOne({ partner: partnerId })
+      .select({ 'general.maintenanceMode': 1, 'general.maintenanceMessage': 1 })
+      .lean()
+
+    if (siteSettings?.general?.maintenanceMode) {
+      publicData.underMaintenance = true
+      publicData.maintenanceMessage = siteSettings.general.maintenanceMessage || ''
+    }
+  } catch (_e) {
+    // Non-critical: if SiteSettings lookup fails, fall back to storefront-only flag
+  }
 
   // If custom theme is enabled, return the resolved active page from the active preset.
   publicData.useCustomTheme = Boolean(storefront?.useCustomTheme)
