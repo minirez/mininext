@@ -325,72 +325,111 @@
         <!-- Transactions Tab -->
         <div v-if="activeTab === 'transactions'" class="p-4">
           <!-- Filters -->
-          <div class="flex flex-wrap gap-4 mb-4">
-            <div class="flex-1 min-w-[200px]">
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400"
-                  >search</span
+          <div
+            class="mb-4 p-4 bg-gray-50 dark:bg-slate-700/30 rounded-xl border border-gray-200 dark:border-slate-700 space-y-3"
+          >
+            <!-- Row 1: Search + Select Filters -->
+            <div class="flex flex-wrap gap-3">
+              <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{{
+                  $t('cashier.searchPlaceholder')
+                }}</label>
+                <div class="relative">
+                  <span
+                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                    >search</span
+                  >
+                  <input
+                    v-model="filters.search"
+                    type="text"
+                    :placeholder="$t('cashier.searchPlaceholder')"
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500"
+                    @input="debouncedFetchTransactions"
+                  />
+                </div>
+              </div>
+              <div class="w-44">
+                <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{{
+                  $t('cashier.columns.type')
+                }}</label>
+                <select
+                  v-model="filters.type"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                  @change="fetchTransactions"
                 >
-                <input
-                  v-model="filters.search"
-                  type="text"
-                  :placeholder="$t('cashier.searchPlaceholder')"
-                  class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                  @input="debouncedFetchTransactions"
-                />
+                  <option value="all">{{ $t('cashier.allTypes') }}</option>
+                  <option v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="w-36">
+                <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{{
+                  $t('cashier.columns.status')
+                }}</label>
+                <select
+                  v-model="filters.status"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                  @change="fetchTransactions"
+                >
+                  <option value="all">{{ $t('cashier.allStatuses') }}</option>
+                  <option value="completed">{{ $t('cashier.status.completed') }}</option>
+                  <option value="cancelled">{{ $t('cashier.status.cancelled') }}</option>
+                  <option value="refunded">{{ $t('cashier.status.refunded') }}</option>
+                </select>
+              </div>
+              <div class="w-32">
+                <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{{
+                  $t('currency.currency')
+                }}</label>
+                <select
+                  v-model="filters.currency"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                  @change="fetchTransactions"
+                >
+                  <option value="all">{{ $t('currency.allCurrencies') }}</option>
+                  <option v-for="curr in availableCurrencies" :key="curr" :value="curr">
+                    {{ getCurrencySymbol(curr) }} {{ curr }}
+                  </option>
+                </select>
               </div>
             </div>
-            <div class="w-40">
-              <select
-                v-model="filters.type"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchTransactions"
+
+            <!-- Row 2: Date Range + Clear Button -->
+            <div class="flex flex-wrap items-end gap-3">
+              <div class="w-48">
+                <DatePicker
+                  v-model="filters.startDate"
+                  :label="$t('cashier.startDate')"
+                  :placeholder="$t('cashier.startDate')"
+                  :max-date="filters.endDate || undefined"
+                  clearable
+                  @change="fetchTransactions"
+                />
+              </div>
+              <div class="w-48">
+                <DatePicker
+                  v-model="filters.endDate"
+                  :label="$t('cashier.endDate')"
+                  :placeholder="$t('cashier.endDate')"
+                  :min-date="filters.startDate || undefined"
+                  clearable
+                  @change="fetchTransactions"
+                />
+              </div>
+              <button
+                v-if="activeFilterCount > 0"
+                class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 transition-colors flex items-center gap-1.5"
+                @click="clearFilters"
               >
-                <option value="all">{{ $t('cashier.allTypes') }}</option>
-                <option v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
-            </div>
-            <div class="w-36">
-              <select
-                v-model="filters.status"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchTransactions"
-              >
-                <option value="all">{{ $t('cashier.allStatuses') }}</option>
-                <option value="completed">{{ $t('cashier.status.completed') }}</option>
-                <option value="cancelled">{{ $t('cashier.status.cancelled') }}</option>
-                <option value="refunded">{{ $t('cashier.status.refunded') }}</option>
-              </select>
-            </div>
-            <div class="w-28">
-              <select
-                v-model="filters.currency"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchTransactions"
-              >
-                <option value="all">{{ $t('currency.allCurrencies') }}</option>
-                <option v-for="curr in availableCurrencies" :key="curr" :value="curr">
-                  {{ getCurrencySymbol(curr) }} {{ curr }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <input
-                v-model="filters.startDate"
-                type="date"
-                class="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchTransactions"
-              />
-            </div>
-            <div>
-              <input
-                v-model="filters.endDate"
-                type="date"
-                class="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchTransactions"
-              />
+                <span class="material-icons text-sm">filter_alt_off</span>
+                {{ $t('cashier.clearFilters') }}
+                <span
+                  class="ml-1 px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-xs font-bold"
+                >
+                  {{ activeFilterCount }}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -793,6 +832,7 @@ import VoidTransactionModal from '@/components/pms/billing/VoidTransactionModal.
 import RefundTransactionModal from '@/components/pms/billing/RefundTransactionModal.vue'
 import CurrencyBalanceCard from '@/components/pms/billing/CurrencyBalanceCard.vue'
 import DataTable from '@/components/ui/data/DataTable.vue'
+import DatePicker from '@/components/ui/date/DatePicker.vue'
 import { usePmsStore } from '@/stores/pms'
 
 const pmsStore = usePmsStore()
@@ -927,7 +967,32 @@ const filters = ref({
   startDate: '',
   endDate: ''
 })
-const transactionTypeOptions = computed(() => getTransactionTypeOptions())
+const transactionTypeOptions = computed(() =>
+  getTransactionTypeOptions().map(opt => ({ ...opt, label: t(opt.label) }))
+)
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.value.search) count++
+  if (filters.value.type !== 'all') count++
+  if (filters.value.status !== 'all') count++
+  if (filters.value.currency !== 'all') count++
+  if (filters.value.startDate) count++
+  if (filters.value.endDate) count++
+  return count
+})
+
+const clearFilters = () => {
+  filters.value = {
+    search: '',
+    type: 'all',
+    status: 'all',
+    currency: 'all',
+    startDate: '',
+    endDate: ''
+  }
+  fetchTransactions()
+}
 
 const transactionColumns = computed(() => [
   { key: 'transactionNumber', label: t('cashier.columns.transactionNumber'), sortable: false },
@@ -1117,7 +1182,10 @@ const formatDateTime = date => {
   })
 }
 
-const getTransactionTypeLabel = type => TRANSACTION_TYPE_INFO[type]?.label || type
+const getTransactionTypeLabel = type => {
+  const key = TRANSACTION_TYPE_INFO[type]?.label
+  return key ? t(key) : type
+}
 const getTransactionTypeIcon = type => TRANSACTION_TYPE_INFO[type]?.icon || 'receipt'
 const getTransactionTypeColor = type => {
   const info = TRANSACTION_TYPE_INFO[type]
@@ -1125,14 +1193,23 @@ const getTransactionTypeColor = type => {
   return `text-${info.color}-600 dark:text-${info.color}-400`
 }
 
-const getPaymentMethodLabel = method => PAYMENT_METHOD_INFO[method]?.label || method || '-'
+const getPaymentMethodLabel = method => {
+  const key = PAYMENT_METHOD_INFO[method]?.label
+  return key ? t(key) : method || '-'
+}
 const getPaymentMethodIcon = method => PAYMENT_METHOD_INFO[method]?.icon || 'help'
 
-const getStatusLabel = status => TRANSACTION_STATUS_INFO[status]?.label || status
+const getStatusLabel = status => {
+  const key = TRANSACTION_STATUS_INFO[status]?.label
+  return key ? t(key) : status
+}
 const getStatusClasses = status =>
   TRANSACTION_STATUS_INFO[status]?.bgClass || 'bg-gray-100 text-gray-800'
 
-const getMovementLabel = type => CASH_MOVEMENT_INFO[type]?.label || type
+const getMovementLabel = type => {
+  const key = CASH_MOVEMENT_INFO[type]?.label
+  return key ? t(key) : type
+}
 const getMovementIcon = type => CASH_MOVEMENT_INFO[type]?.icon || 'swap_horiz'
 const getMovementColor = type => {
   const info = CASH_MOVEMENT_INFO[type]

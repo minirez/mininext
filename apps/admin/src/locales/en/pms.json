@@ -811,6 +811,7 @@
     "allTypes": "All Types",
     "allStatuses": "All Statuses",
     "status": {
+      "pending": "Pending",
       "completed": "Completed",
       "cancelled": "Cancelled",
       "refunded": "Refunded"
@@ -822,7 +823,8 @@
     "allShifts": "All Shifts",
     "shiftStatus": {
       "open": "Open",
-      "closed": "Closed"
+      "closed": "Closed",
+      "suspended": "Suspended"
     },
     "noShifts": "No shifts found",
     "transactionCount": "Transaction Count",
@@ -843,7 +845,11 @@
     },
     "transactionsLoadError": "Failed to load transactions",
     "shiftsLoadError": "Failed to load shifts",
-    "reason": "Reason"
+    "reason": "Reason",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "clearFilters": "Clear Filters",
+    "activeFilters": "Active filter"
   },
   "currency": {
     "currency": "Currency",
@@ -2821,10 +2827,13 @@
       "movementType": "Movement Type",
       "types": {
         "opening": "Opening Balance",
+        "sale": "Sale",
+        "refund": "Refund",
         "deposit": "Deposit",
         "payout": "Payout",
         "withdrawal": "Withdrawal",
-        "adjustment": "Adjustment"
+        "adjustment": "Adjustment",
+        "closing": "Closing"
       },
       "descriptions": {
         "deposit": "Cash deposit into register",
@@ -2927,13 +2936,35 @@
         "payment": "Payment",
         "deposit": "Deposit",
         "advance": "Advance Payment",
+        "refund": "Refund",
+        "discount": "Discount",
+        "void": "Void",
         "expense": "Expense",
         "payout": "Payout"
+      },
+      "quickCharge": {
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "beverage": "Beverage",
+        "minibar": "Minibar",
+        "laundry": "Laundry",
+        "parking": "Parking",
+        "spa": "Spa"
       },
       "messages": {
         "success": "Transaction saved",
         "error": "Failed to save transaction"
-      }
+      },
+      "expenseWarning": "This transaction will be recorded as a cash outflow"
+    },
+    "transactionCategories": {
+      "accommodation": "Accommodation",
+      "foodBeverage": "Food & Beverage",
+      "spaWellness": "Spa & Wellness",
+      "otherServices": "Other Services",
+      "payments": "Payments",
+      "adjustments": "Adjustments"
     },
     "closeShift": {
       "title": "Close Shift",

@@ -339,15 +339,13 @@ const formatTime = date => {
 }
 
 const getPaymentMethodLabel = method => {
-  const info = PAYMENT_METHOD_INFO[method]
-  if (!info) return method || '-'
-  return t(`billing.paymentMethods.${method}`, info.label)
+  const key = PAYMENT_METHOD_INFO[method]?.label
+  return key ? t(key) : method || '-'
 }
 
 const getMovementLabel = type => {
-  const info = CASH_MOVEMENT_INFO[type]
-  if (!info) return type
-  return t(`billing.cashMovement.types.${type}`, info.label)
+  const key = CASH_MOVEMENT_INFO[type]?.label
+  return key ? t(key) : type
 }
 
 const getMovementIcon = type => CASH_MOVEMENT_INFO[type]?.icon || 'swap_horiz'

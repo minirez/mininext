@@ -810,9 +810,10 @@
     "allTypes": "Tüm Tipler",
     "allStatuses": "Tüm Durumlar",
     "status": {
+      "pending": "Beklemede",
       "completed": "Tamamlandı",
-      "cancelled": "İptal",
-      "refunded": "İade"
+      "cancelled": "İptal Edildi",
+      "refunded": "İade Edildi"
     },
     "noTransactions": "İşlem bulunamadı",
     "stay": "Konaklama",
@@ -821,7 +822,8 @@
     "allShifts": "Tüm Vardiyalar",
     "shiftStatus": {
       "open": "Açık",
-      "closed": "Kapalı"
+      "closed": "Kapalı",
+      "suspended": "Askıda"
     },
     "noShifts": "Vardiya bulunamadı",
     "transactionCount": "İşlem Sayısı",
@@ -842,7 +844,11 @@
     },
     "transactionsLoadError": "İşlemler yüklenemedi",
     "shiftsLoadError": "Vardiyalar yüklenemedi",
-    "reason": "Sebep"
+    "reason": "Sebep",
+    "startDate": "Başlangıç Tarihi",
+    "endDate": "Bitiş Tarihi",
+    "clearFilters": "Filtreleri Temizle",
+    "activeFilters": "Aktif filtre"
   },
   "currency": {
     "currency": "Para Birimi",
@@ -2820,10 +2826,13 @@
       "movementType": "Hareket Tipi",
       "types": {
         "opening": "Açılış Bakiyesi",
+        "sale": "Satış",
+        "refund": "İade",
         "deposit": "Para Yatırma",
-        "payout": "Ödeme Yapma",
+        "payout": "Ödeme (Çıkış)",
         "withdrawal": "Para Çekme",
-        "adjustment": "Düzeltme"
+        "adjustment": "Düzeltme",
+        "closing": "Kapanış"
       },
       "descriptions": {
         "deposit": "Kasaya nakit para giriş",
@@ -2926,13 +2935,35 @@
         "payment": "Ödeme",
         "deposit": "Depozito",
         "advance": "Ön Ödeme",
+        "refund": "İade",
+        "discount": "İndirim",
+        "void": "İptal",
         "expense": "Gider",
         "payout": "Ödeme Çıkışı"
+      },
+      "quickCharge": {
+        "breakfast": "Kahvaltı",
+        "lunch": "Öğle Yemeği",
+        "dinner": "Akşam Yemeği",
+        "beverage": "İçecek",
+        "minibar": "Minibar",
+        "laundry": "Çamaşır",
+        "parking": "Otopark",
+        "spa": "Spa"
       },
       "messages": {
         "success": "İşlem kaydedildi",
         "error": "İşlem kaydedilemedi"
-      }
+      },
+      "expenseWarning": "Bu işlem kasadan çıkış olarak kaydedilecektir"
+    },
+    "transactionCategories": {
+      "accommodation": "Konaklama",
+      "foodBeverage": "Yiyecek & İçecek",
+      "spaWellness": "Spa & Wellness",
+      "otherServices": "Diğer Hizmetler",
+      "payments": "Ödemeler",
+      "adjustments": "Düzeltmeler"
     },
     "closeShift": {
       "title": "Vardiya Kapat",

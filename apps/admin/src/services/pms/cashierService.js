@@ -10,17 +10,17 @@ export const SHIFT_STATUS = {
 
 export const SHIFT_STATUS_INFO = {
   open: {
-    label: 'Acik',
+    label: 'cashier.shiftStatus.open',
     color: 'green',
     bgClass: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
   },
   closed: {
-    label: 'Kapali',
+    label: 'cashier.shiftStatus.closed',
     color: 'gray',
     bgClass: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
   },
   suspended: {
-    label: 'Askida',
+    label: 'cashier.shiftStatus.suspended',
     color: 'yellow',
     bgClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
   }
@@ -38,14 +38,18 @@ export const CASH_MOVEMENT_TYPES = {
 }
 
 export const CASH_MOVEMENT_INFO = {
-  opening: { label: 'Acilis', icon: 'login', color: 'blue' },
-  sale: { label: 'Satis', icon: 'shopping_cart', color: 'green' },
-  refund: { label: 'Iade', icon: 'replay', color: 'orange' },
-  payout: { label: 'Odeme (Cikis)', icon: 'payments', color: 'red' },
-  deposit: { label: 'Para Yatirma', icon: 'account_balance_wallet', color: 'green' },
-  withdrawal: { label: 'Para Cekme', icon: 'money_off', color: 'red' },
-  adjustment: { label: 'Duzeltme', icon: 'tune', color: 'purple' },
-  closing: { label: 'Kapanis', icon: 'logout', color: 'gray' }
+  opening: { label: 'billing.cashMovement.types.opening', icon: 'login', color: 'blue' },
+  sale: { label: 'billing.cashMovement.types.sale', icon: 'shopping_cart', color: 'green' },
+  refund: { label: 'billing.cashMovement.types.refund', icon: 'replay', color: 'orange' },
+  payout: { label: 'billing.cashMovement.types.payout', icon: 'payments', color: 'red' },
+  deposit: {
+    label: 'billing.cashMovement.types.deposit',
+    icon: 'account_balance_wallet',
+    color: 'green'
+  },
+  withdrawal: { label: 'billing.cashMovement.types.withdrawal', icon: 'money_off', color: 'red' },
+  adjustment: { label: 'billing.cashMovement.types.adjustment', icon: 'tune', color: 'purple' },
+  closing: { label: 'billing.cashMovement.types.closing', icon: 'logout', color: 'gray' }
 }
 
 export const TRANSACTION_TYPES = {
@@ -70,29 +74,109 @@ export const TRANSACTION_TYPES = {
 }
 
 export const TRANSACTION_TYPE_INFO = {
-  room_charge: { label: 'Oda Ucreti', icon: 'hotel', color: 'blue', category: 'income' },
+  room_charge: {
+    label: 'billing.transaction.types.roomCharge',
+    icon: 'hotel',
+    color: 'blue',
+    category: 'income'
+  },
   extra_charge: {
-    label: 'Ekstra Ucret',
+    label: 'billing.transaction.types.extraCharge',
     icon: 'add_shopping_cart',
     color: 'blue',
     category: 'income'
   },
-  restaurant: { label: 'Restoran', icon: 'restaurant', color: 'orange', category: 'income' },
-  bar: { label: 'Bar', icon: 'local_bar', color: 'purple', category: 'income' },
-  minibar: { label: 'Minibar', icon: 'kitchen', color: 'indigo', category: 'income' },
-  spa: { label: 'Spa', icon: 'spa', color: 'teal', category: 'income' },
-  laundry: { label: 'Camasir', icon: 'local_laundry_service', color: 'cyan', category: 'income' },
-  parking: { label: 'Otopark', icon: 'local_parking', color: 'gray', category: 'income' },
-  phone: { label: 'Telefon', icon: 'phone', color: 'green', category: 'income' },
-  other_income: { label: 'Diger Gelir', icon: 'attach_money', color: 'green', category: 'income' },
-  payment: { label: 'Odeme', icon: 'payments', color: 'green', category: 'payment' },
-  deposit: { label: 'Depozit', icon: 'account_balance_wallet', color: 'blue', category: 'payment' },
-  advance: { label: 'On Odeme', icon: 'forward', color: 'blue', category: 'payment' },
-  refund: { label: 'Iade', icon: 'replay', color: 'red', category: 'refund' },
-  discount: { label: 'Indirim', icon: 'discount', color: 'orange', category: 'adjustment' },
-  void: { label: 'Iptal', icon: 'cancel', color: 'red', category: 'adjustment' },
-  expense: { label: 'Gider', icon: 'receipt_long', color: 'red', category: 'expense' },
-  payout: { label: 'Odeme Cikisi', icon: 'money_off', color: 'red', category: 'expense' }
+  restaurant: {
+    label: 'billing.transaction.types.restaurant',
+    icon: 'restaurant',
+    color: 'orange',
+    category: 'income'
+  },
+  bar: {
+    label: 'billing.transaction.types.bar',
+    icon: 'local_bar',
+    color: 'purple',
+    category: 'income'
+  },
+  minibar: {
+    label: 'billing.transaction.types.minibar',
+    icon: 'kitchen',
+    color: 'indigo',
+    category: 'income'
+  },
+  spa: { label: 'billing.transaction.types.spa', icon: 'spa', color: 'teal', category: 'income' },
+  laundry: {
+    label: 'billing.transaction.types.laundry',
+    icon: 'local_laundry_service',
+    color: 'cyan',
+    category: 'income'
+  },
+  parking: {
+    label: 'billing.transaction.types.parking',
+    icon: 'local_parking',
+    color: 'gray',
+    category: 'income'
+  },
+  phone: {
+    label: 'billing.transaction.types.phone',
+    icon: 'phone',
+    color: 'green',
+    category: 'income'
+  },
+  other_income: {
+    label: 'billing.transaction.types.otherIncome',
+    icon: 'attach_money',
+    color: 'green',
+    category: 'income'
+  },
+  payment: {
+    label: 'billing.transaction.types.payment',
+    icon: 'payments',
+    color: 'green',
+    category: 'payment'
+  },
+  deposit: {
+    label: 'billing.transaction.types.deposit',
+    icon: 'account_balance_wallet',
+    color: 'blue',
+    category: 'payment'
+  },
+  advance: {
+    label: 'billing.transaction.types.advance',
+    icon: 'forward',
+    color: 'blue',
+    category: 'payment'
+  },
+  refund: {
+    label: 'billing.transaction.types.refund',
+    icon: 'replay',
+    color: 'red',
+    category: 'refund'
+  },
+  discount: {
+    label: 'billing.transaction.types.discount',
+    icon: 'discount',
+    color: 'orange',
+    category: 'adjustment'
+  },
+  void: {
+    label: 'billing.transaction.types.void',
+    icon: 'cancel',
+    color: 'red',
+    category: 'adjustment'
+  },
+  expense: {
+    label: 'billing.transaction.types.expense',
+    icon: 'receipt_long',
+    color: 'red',
+    category: 'expense'
+  },
+  payout: {
+    label: 'billing.transaction.types.payout',
+    icon: 'money_off',
+    color: 'red',
+    category: 'expense'
+  }
 }
 
 export const PAYMENT_METHODS = {
@@ -108,15 +192,19 @@ export const PAYMENT_METHODS = {
 }
 
 export const PAYMENT_METHOD_INFO = {
-  cash: { label: 'Nakit', icon: 'payments', color: 'green' },
-  credit_card: { label: 'Kredi Karti', icon: 'credit_card', color: 'blue' },
-  debit_card: { label: 'Banka Karti', icon: 'credit_card', color: 'indigo' },
-  bank_transfer: { label: 'Havale/EFT', icon: 'account_balance', color: 'purple' },
-  room_charge: { label: 'Oda Hesabina', icon: 'hotel', color: 'orange' },
-  city_ledger: { label: 'Cari Hesap', icon: 'business', color: 'teal' },
-  voucher: { label: 'Kupon/Voucher', icon: 'confirmation_number', color: 'pink' },
-  online: { label: 'Online', icon: 'computer', color: 'cyan' },
-  other: { label: 'Diger', icon: 'more_horiz', color: 'gray' }
+  cash: { label: 'billing.paymentMethods.cash', icon: 'payments', color: 'green' },
+  credit_card: { label: 'billing.paymentMethods.credit_card', icon: 'credit_card', color: 'blue' },
+  debit_card: { label: 'billing.paymentMethods.debit_card', icon: 'credit_card', color: 'indigo' },
+  bank_transfer: {
+    label: 'billing.paymentMethods.bank_transfer',
+    icon: 'account_balance',
+    color: 'purple'
+  },
+  room_charge: { label: 'billing.paymentMethods.room_charge', icon: 'hotel', color: 'orange' },
+  city_ledger: { label: 'billing.paymentMethods.city_ledger', icon: 'business', color: 'teal' },
+  voucher: { label: 'billing.paymentMethods.voucher', icon: 'confirmation_number', color: 'pink' },
+  online: { label: 'billing.paymentMethods.online', icon: 'computer', color: 'cyan' },
+  other: { label: 'billing.paymentMethods.other', icon: 'more_horiz', color: 'gray' }
 }
 
 export const TRANSACTION_CATEGORIES = {
@@ -129,12 +217,24 @@ export const TRANSACTION_CATEGORIES = {
 }
 
 export const TRANSACTION_CATEGORY_INFO = {
-  accommodation: { label: 'Konaklama', icon: 'hotel', color: 'blue' },
-  food_beverage: { label: 'Yiyecek & Icecek', icon: 'restaurant', color: 'orange' },
-  spa_wellness: { label: 'Spa & Wellness', icon: 'spa', color: 'teal' },
-  other_services: { label: 'Diger Hizmetler', icon: 'room_service', color: 'purple' },
-  payments: { label: 'Odemeler', icon: 'payments', color: 'green' },
-  adjustments: { label: 'Duzeltmeler', icon: 'tune', color: 'gray' }
+  accommodation: {
+    label: 'billing.transactionCategories.accommodation',
+    icon: 'hotel',
+    color: 'blue'
+  },
+  food_beverage: {
+    label: 'billing.transactionCategories.foodBeverage',
+    icon: 'restaurant',
+    color: 'orange'
+  },
+  spa_wellness: { label: 'billing.transactionCategories.spaWellness', icon: 'spa', color: 'teal' },
+  other_services: {
+    label: 'billing.transactionCategories.otherServices',
+    icon: 'room_service',
+    color: 'purple'
+  },
+  payments: { label: 'billing.transactionCategories.payments', icon: 'payments', color: 'green' },
+  adjustments: { label: 'billing.transactionCategories.adjustments', icon: 'tune', color: 'gray' }
 }
 
 export const TRANSACTION_STATUS = {
@@ -146,36 +246,71 @@ export const TRANSACTION_STATUS = {
 
 export const TRANSACTION_STATUS_INFO = {
   pending: {
-    label: 'Beklemede',
+    label: 'cashier.status.pending',
     color: 'yellow',
     bgClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
   },
   completed: {
-    label: 'Tamamlandi',
+    label: 'cashier.status.completed',
     color: 'green',
     bgClass: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
   },
   cancelled: {
-    label: 'Iptal Edildi',
+    label: 'cashier.status.cancelled',
     color: 'red',
     bgClass: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
   },
   refunded: {
-    label: 'Iade Edildi',
+    label: 'cashier.status.refunded',
     color: 'orange',
     bgClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
   }
 }
 
 export const QUICK_CHARGE_ITEMS = [
-  { type: 'restaurant', description: 'Kahvalti', amount: 0, icon: 'free_breakfast' },
-  { type: 'restaurant', description: 'Ogle Yemegi', amount: 0, icon: 'lunch_dining' },
-  { type: 'restaurant', description: 'Aksam Yemegi', amount: 0, icon: 'dinner_dining' },
-  { type: 'bar', description: 'Icecek', amount: 0, icon: 'local_bar' },
-  { type: 'minibar', description: 'Minibar', amount: 0, icon: 'kitchen' },
-  { type: 'laundry', description: 'Camasir', amount: 0, icon: 'local_laundry_service' },
-  { type: 'parking', description: 'Otopark', amount: 0, icon: 'local_parking' },
-  { type: 'spa', description: 'Spa', amount: 0, icon: 'spa' }
+  {
+    type: 'restaurant',
+    descriptionKey: 'billing.transaction.quickCharge.breakfast',
+    amount: 0,
+    icon: 'free_breakfast'
+  },
+  {
+    type: 'restaurant',
+    descriptionKey: 'billing.transaction.quickCharge.lunch',
+    amount: 0,
+    icon: 'lunch_dining'
+  },
+  {
+    type: 'restaurant',
+    descriptionKey: 'billing.transaction.quickCharge.dinner',
+    amount: 0,
+    icon: 'dinner_dining'
+  },
+  {
+    type: 'bar',
+    descriptionKey: 'billing.transaction.quickCharge.beverage',
+    amount: 0,
+    icon: 'local_bar'
+  },
+  {
+    type: 'minibar',
+    descriptionKey: 'billing.transaction.quickCharge.minibar',
+    amount: 0,
+    icon: 'kitchen'
+  },
+  {
+    type: 'laundry',
+    descriptionKey: 'billing.transaction.quickCharge.laundry',
+    amount: 0,
+    icon: 'local_laundry_service'
+  },
+  {
+    type: 'parking',
+    descriptionKey: 'billing.transaction.quickCharge.parking',
+    amount: 0,
+    icon: 'local_parking'
+  },
+  { type: 'spa', descriptionKey: 'billing.transaction.quickCharge.spa', amount: 0, icon: 'spa' }
 ]
 
 export const getStats = async hotelId => {

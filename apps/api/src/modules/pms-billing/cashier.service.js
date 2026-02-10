@@ -460,22 +460,26 @@ export const createTransaction = asyncHandler(async (req, res) => {
     })
   }
 
+  // Expense types should store negative amounts
+  const EXPENSE_TYPES = ['expense', 'payout', 'refund', 'discount']
+  const finalAmount = EXPENSE_TYPES.includes(type) && amount > 0 ? -amount : amount
+
   // Get active shift
   const activeShift = await CashRegister.getActiveShift(hotelId)
 
   // Calculate exchange rate and amount in TRY
   let exchangeRate = 1
-  let amountInTRY = amount
+  let amountInTRY = finalAmount
   if (currency !== 'TRY') {
     try {
-      const conversion = convertCurrency(amount, currency, 'TRY')
+      const conversion = convertCurrency(Math.abs(finalAmount), currency, 'TRY')
       exchangeRate = conversion.rate
-      amountInTRY = conversion.convertedAmount
+      amountInTRY = finalAmount < 0 ? -conversion.convertedAmount : conversion.convertedAmount
     } catch (error) {
       // Fallback: use shift's captured rates if available
       if (activeShift?.exchangeRatesSnapshot?.rates?.[currency]) {
         exchangeRate = activeShift.exchangeRatesSnapshot.rates[currency]
-        amountInTRY = amount * exchangeRate
+        amountInTRY = finalAmount * exchangeRate
       }
     }
   }
@@ -485,7 +489,7 @@ export const createTransaction = asyncHandler(async (req, res) => {
     type,
     category: category || getCategoryForType(type),
     description,
-    amount,
+    amount: finalAmount,
     currency,
     exchangeRate: currency !== 'TRY' ? exchangeRate : undefined,
     amountInTRY,

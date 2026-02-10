@@ -15,12 +15,13 @@
         <div class="grid grid-cols-4 gap-2">
           <button
             v-for="item in quickChargeItems"
-            :key="item.description"
-            class="p-3 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50 text-center transition-colors"
-            :class="{
-              'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/20':
-                form.type === item.type && form.description === item.description
-            }"
+            :key="item.descriptionKey"
+            class="p-3 border rounded-lg text-center transition-colors"
+            :class="
+              form.type === item.type && form.description === item.description
+                ? 'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700'
+                : 'border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+            "
             @click="selectQuickCharge(item)"
           >
             <span class="material-icons text-gray-600 dark:text-gray-400 block mb-1">{{
@@ -70,6 +71,24 @@
               <option value="payout">{{ $t('billing.transaction.types.payout') }}</option>
             </optgroup>
           </select>
+
+          <!-- Income/Expense Badge -->
+          <div v-if="form.type" class="mt-2">
+            <span
+              v-if="isExpenseType"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+            >
+              <span class="material-icons text-xs">trending_down</span>
+              {{ $t('billing.transaction.groups.expenses') }}
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+            >
+              <span class="material-icons text-xs">trending_up</span>
+              {{ $t('billing.transaction.groups.income') }}
+            </span>
+          </div>
         </div>
         <div>
           <label class="block text-sm text-gray-500 dark:text-slate-400 mb-1"
@@ -90,6 +109,17 @@
             <option value="other">{{ $t('billing.paymentMethods.other') }}</option>
           </select>
         </div>
+      </div>
+
+      <!-- Expense Warning -->
+      <div
+        v-if="isExpenseType"
+        class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+      >
+        <span class="material-icons text-red-500 text-lg">warning</span>
+        <span class="text-sm text-red-700 dark:text-red-300">
+          {{ $t('billing.transaction.expenseWarning') }}
+        </span>
       </div>
 
       <!-- Description -->
@@ -153,9 +183,24 @@
           <label class="block text-sm text-gray-500 dark:text-slate-400 mb-1">{{
             $t('billing.transaction.totalAmount')
           }}</label>
-          <div class="px-4 py-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
-            <p class="text-lg font-bold text-gray-900 dark:text-white">
-              {{ getCurrencySymbol(form.currency) }}{{ formatAmount(totalAmount) }}
+          <div
+            class="px-4 py-2 rounded-lg border"
+            :class="
+              isExpenseType
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            "
+          >
+            <p
+              class="text-lg font-bold"
+              :class="
+                isExpenseType
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-green-600 dark:text-green-400'
+              "
+            >
+              {{ isExpenseType ? '-' : '+' }}{{ getCurrencySymbol(form.currency)
+              }}{{ formatAmount(totalAmount) }}
             </p>
           </div>
         </div>
@@ -173,7 +218,9 @@
             {{ exchangeRates[form.currency] }})
           </span>
           <span class="font-medium text-blue-800 dark:text-blue-200">
-            {{ formatAmount(totalAmount * exchangeRates[form.currency]) }}
+            {{ isExpenseType ? '-' : '+' }}₺{{
+              formatAmount(totalAmount * exchangeRates[form.currency])
+            }}
           </span>
         </div>
       </div>
@@ -214,12 +261,15 @@
         {{ $t('common.cancel') }}
       </button>
       <button
-        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+        class="px-4 py-2 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
+        :class="isExpenseType ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'"
         :disabled="loading || !isValid"
         @click="submit"
       >
         <span v-if="loading" class="animate-spin material-icons text-sm">refresh</span>
-        <span v-else class="material-icons text-sm">add_card</span>
+        <span v-else class="material-icons text-sm">{{
+          isExpenseType ? 'remove_circle' : 'add_card'
+        }}</span>
         {{ $t('billing.transaction.saveTransaction') }}
       </button>
     </template>
@@ -251,7 +301,14 @@ const emit = defineEmits(['update:modelValue', 'created'])
 const toast = useToast()
 const loading = ref(false)
 
-const quickChargeItems = QUICK_CHARGE_ITEMS
+const EXPENSE_TYPES = ['expense', 'payout', 'refund', 'discount']
+
+const quickChargeItems = computed(() =>
+  QUICK_CHARGE_ITEMS.map(item => ({
+    ...item,
+    description: t(item.descriptionKey)
+  }))
+)
 
 // Currency data
 const availableCurrencies = ref(['TRY'])
@@ -310,6 +367,8 @@ const defaultForm = () => ({
 })
 
 const form = ref(defaultForm())
+
+const isExpenseType = computed(() => EXPENSE_TYPES.includes(form.value.type))
 
 const totalAmount = computed(() => {
   return (form.value.quantity || 1) * (form.value.unitPrice || 0)
