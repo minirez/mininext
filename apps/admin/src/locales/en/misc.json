@@ -57,7 +57,8 @@
       "confirmed": "Confirmed",
       "checkedIn": "Checked In",
       "completed": "Completed",
-      "revenue": "Revenue"
+      "revenue": "Revenue",
+      "paid": "Collected"
     },
     "paymentStatus": {
       "paid": "Paid",
@@ -72,6 +73,8 @@
       "checkInDate": "Check-in Date",
       "checkOutDate": "Check-out Date",
       "reservationDate": "Reservation Date",
+      "startDate": "Start",
+      "endDate": "End",
       "clearAll": "Clear Filters"
     }
   },

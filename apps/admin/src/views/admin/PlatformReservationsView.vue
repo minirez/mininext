@@ -14,7 +14,7 @@
 
     <div class="flex-1 overflow-y-auto py-2">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
         <div
           v-for="stat in statCards"
           :key="stat.key"
@@ -30,9 +30,27 @@
               <span class="material-icons" :class="stat.iconClass">{{ stat.icon }}</span>
             </div>
             <div class="min-w-0">
-              <p class="text-2xl font-bold text-gray-900 dark:text-white truncate">
-                {{ stat.value }}
-              </p>
+              <!-- Currency-grouped stats (revenue, paid) -->
+              <template v-if="stat.currencyField">
+                <div v-if="stats[stat.currencyField]?.length" class="flex flex-col gap-0.5">
+                  <p
+                    v-for="rev in stats[stat.currencyField]"
+                    :key="rev.currency"
+                    class="text-lg font-bold text-gray-900 dark:text-white leading-tight"
+                  >
+                    {{ formatPrice(rev.amount, rev.currency) }}
+                  </p>
+                </div>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">
+                  {{ formatPrice(0, 'TRY') }}
+                </p>
+              </template>
+              <!-- Normal stat card -->
+              <template v-else>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                  {{ stat.value }}
+                </p>
+              </template>
               <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ stat.label }}</p>
             </div>
           </div>
@@ -153,7 +171,7 @@
         <!-- Advanced Filters Row -->
         <div
           v-if="showAdvancedFilters"
-          class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
+          class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
         >
           <!-- Guest Name -->
           <div>
@@ -185,68 +203,41 @@
 
           <!-- Check-in Date Range -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
-              {{ $t('platformBookings.filters.checkInDate') }}
-            </label>
-            <div class="flex items-center gap-1">
-              <input
-                v-model="filters.checkInFrom"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-              <span class="text-gray-400 text-xs">-</span>
-              <input
-                v-model="filters.checkInTo"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-            </div>
+            <DateRangePicker
+              v-model="checkInRange"
+              :label="$t('platformBookings.filters.checkInDate')"
+              :start-placeholder="$t('platformBookings.filters.startDate')"
+              :end-placeholder="$t('platformBookings.filters.endDate')"
+              :show-presets="false"
+              :clearable="true"
+              @change="applyFilters"
+            />
           </div>
 
           <!-- Check-out Date Range -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
-              {{ $t('platformBookings.filters.checkOutDate') }}
-            </label>
-            <div class="flex items-center gap-1">
-              <input
-                v-model="filters.checkOutFrom"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-              <span class="text-gray-400 text-xs">-</span>
-              <input
-                v-model="filters.checkOutTo"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-            </div>
+            <DateRangePicker
+              v-model="checkOutRange"
+              :label="$t('platformBookings.filters.checkOutDate')"
+              :start-placeholder="$t('platformBookings.filters.startDate')"
+              :end-placeholder="$t('platformBookings.filters.endDate')"
+              :show-presets="false"
+              :clearable="true"
+              @change="applyFilters"
+            />
           </div>
 
           <!-- Reservation (Created) Date Range -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
-              {{ $t('platformBookings.filters.reservationDate') }}
-            </label>
-            <div class="flex items-center gap-1">
-              <input
-                v-model="filters.createdFrom"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-              <span class="text-gray-400 text-xs">-</span>
-              <input
-                v-model="filters.createdTo"
-                type="date"
-                class="form-input w-full text-sm"
-                @change="applyFilters"
-              />
-            </div>
+            <DateRangePicker
+              v-model="createdRange"
+              :label="$t('platformBookings.filters.reservationDate')"
+              :start-placeholder="$t('platformBookings.filters.startDate')"
+              :end-placeholder="$t('platformBookings.filters.endDate')"
+              :show-presets="false"
+              :clearable="true"
+              @change="applyFilters"
+            />
           </div>
 
           <!-- Clear Filters -->
@@ -513,6 +504,7 @@ import { formatPrice } from '@/utils/formatters'
 import { DEFAULT_PAGE_SIZE } from '@/constants'
 import platformBookingService from '@/services/platformBookingService'
 import DataTable from '@/components/ui/data/DataTable.vue'
+import DateRangePicker from '@/components/ui/date/DateRangePicker.vue'
 
 const { locale, t } = useI18n()
 
@@ -564,6 +556,40 @@ const filters = ref({
 
 // Advanced filters toggle
 const showAdvancedFilters = ref(false)
+
+// DateRangePicker computed v-models
+const checkInRange = computed({
+  get: () => ({
+    start: filters.value.checkInFrom || null,
+    end: filters.value.checkInTo || null
+  }),
+  set: val => {
+    filters.value.checkInFrom = val?.start || ''
+    filters.value.checkInTo = val?.end || ''
+  }
+})
+
+const checkOutRange = computed({
+  get: () => ({
+    start: filters.value.checkOutFrom || null,
+    end: filters.value.checkOutTo || null
+  }),
+  set: val => {
+    filters.value.checkOutFrom = val?.start || ''
+    filters.value.checkOutTo = val?.end || ''
+  }
+})
+
+const createdRange = computed({
+  get: () => ({
+    start: filters.value.createdFrom || null,
+    end: filters.value.createdTo || null
+  }),
+  set: val => {
+    filters.value.createdFrom = val?.start || ''
+    filters.value.createdTo = val?.end || ''
+  }
+})
 
 // Count active advanced filters
 const activeFilterCount = computed(() => {
@@ -646,12 +672,23 @@ const statCards = computed(() => [
   },
   {
     key: 'revenue',
-    value: formatPrice(stats.value.revenue, 'TRY'),
+    value: null,
     label: t('platformBookings.stats.revenue'),
     icon: 'payments',
     bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',
     iconClass: 'text-emerald-500',
-    filterValue: null
+    filterValue: null,
+    currencyField: 'revenueByCurrency'
+  },
+  {
+    key: 'paid',
+    value: null,
+    label: t('platformBookings.stats.paid'),
+    icon: 'price_check',
+    bgClass: 'bg-teal-100 dark:bg-teal-900/30',
+    iconClass: 'text-teal-500',
+    filterValue: null,
+    currencyField: 'paidByCurrency'
   }
 ])
 

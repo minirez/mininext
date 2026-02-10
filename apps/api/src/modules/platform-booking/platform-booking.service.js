@@ -275,74 +275,121 @@ export const getPlatformBookingStats = asyncHandler(async (req, res) => {
     allTimeQuery.partner = new mongoose.Types.ObjectId(partnerId)
   }
 
-  const [periodStats, statusCounts, partnerRevenue] = await Promise.all([
-    // Period-based stats
-    Booking.aggregate([
-      { $match: periodQuery },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: {
-            $sum: {
-              $cond: [{ $in: ['$status', ['confirmed', 'completed']] }, '$pricing.grandTotal', 0]
-            }
-          },
-          totalBookings: { $sum: 1 },
-          totalRooms: { $sum: '$totalRooms' },
-          totalGuests: { $sum: { $add: ['$totalAdults', '$totalChildren'] } }
-        }
-      }
-    ]),
+  // Payment period query
+  const paymentPeriodQuery = { status: 'completed', createdAt: { $gte: startDate } }
+  if (partnerId) {
+    paymentPeriodQuery.partner = new mongoose.Types.ObjectId(partnerId)
+  }
 
-    // All-time status counts
-    Booking.aggregate([
-      { $match: allTimeQuery },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
+  const [periodStats, revenueByCurrency, paidByCurrency, statusCounts, partnerRevenue] =
+    await Promise.all([
+      // Period-based stats (counts only, no revenue)
+      Booking.aggregate([
+        { $match: periodQuery },
+        {
+          $group: {
+            _id: null,
+            totalBookings: { $sum: 1 },
+            totalRooms: { $sum: '$totalRooms' },
+            totalGuests: { $sum: { $add: ['$totalAdults', '$totalChildren'] } }
+          }
         }
-      }
-    ]),
+      ]),
 
-    // Revenue by partner (top 10)
-    Booking.aggregate([
-      {
-        $match: {
-          ...periodQuery,
-          status: { $in: ['confirmed', 'completed'] }
+      // Revenue grouped by currency (booking totals)
+      Booking.aggregate([
+        {
+          $match: {
+            ...periodQuery,
+            status: { $in: ['confirmed', 'completed'] }
+          }
+        },
+        {
+          $group: {
+            _id: '$pricing.currency',
+            amount: { $sum: '$pricing.grandTotal' },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { amount: -1 } }
+      ]),
+
+      // Paid amounts grouped by currency (completed payments)
+      Payment.aggregate([
+        { $match: paymentPeriodQuery },
+        {
+          $group: {
+            _id: {
+              $cond: [
+                { $gt: ['$cardDetails.currencyConversion.originalCurrency', null] },
+                '$cardDetails.currencyConversion.originalCurrency',
+                '$currency'
+              ]
+            },
+            amount: {
+              $sum: {
+                $cond: [
+                  { $gt: ['$cardDetails.currencyConversion.originalAmount', null] },
+                  '$cardDetails.currencyConversion.originalAmount',
+                  '$amount'
+                ]
+              }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { amount: -1 } }
+      ]),
+
+      // All-time status counts
+      Booking.aggregate([
+        { $match: allTimeQuery },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
         }
-      },
-      {
-        $group: {
-          _id: '$partner',
-          revenue: { $sum: '$pricing.grandTotal' },
-          bookingCount: { $sum: 1 },
-          roomCount: { $sum: '$totalRooms' }
+      ]),
+
+      // Revenue by partner (top 10)
+      Booking.aggregate([
+        {
+          $match: {
+            ...periodQuery,
+            status: { $in: ['confirmed', 'completed'] }
+          }
+        },
+        {
+          $group: {
+            _id: '$partner',
+            revenue: { $sum: '$pricing.grandTotal' },
+            bookingCount: { $sum: 1 },
+            roomCount: { $sum: '$totalRooms' }
+          }
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: 'partners',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'partnerInfo'
+          }
+        },
+        { $unwind: { path: '$partnerInfo', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            partnerId: '$_id',
+            companyName: { $ifNull: ['$partnerInfo.companyName', '$partnerInfo.tradeName'] },
+            revenue: 1,
+            bookingCount: 1,
+            roomCount: 1
+          }
         }
-      },
-      { $sort: { revenue: -1 } },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: 'partners',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'partnerInfo'
-        }
-      },
-      { $unwind: { path: '$partnerInfo', preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          partnerId: '$_id',
-          companyName: { $ifNull: ['$partnerInfo.companyName', '$partnerInfo.tradeName'] },
-          revenue: 1,
-          bookingCount: 1,
-          roomCount: 1
-        }
-      }
+      ])
     ])
-  ])
 
   // Convert status counts
   const statusMap = {}
@@ -364,7 +411,16 @@ export const getPlatformBookingStats = asyncHandler(async (req, res) => {
       cancelled: statusMap.cancelled || 0,
       checked_in: statusMap.checked_in || 0,
       no_show: statusMap.no_show || 0,
-      revenue: periodStats[0]?.totalRevenue || 0,
+      revenueByCurrency: revenueByCurrency.map(r => ({
+        currency: r._id || 'TRY',
+        amount: r.amount,
+        count: r.count
+      })),
+      paidByCurrency: paidByCurrency.map(p => ({
+        currency: p._id || 'TRY',
+        amount: p.amount,
+        count: p.count
+      })),
       totalBookings: periodStats[0]?.totalBookings || 0,
       totalRooms: periodStats[0]?.totalRooms || 0,
       totalGuests: periodStats[0]?.totalGuests || 0,
