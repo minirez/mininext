@@ -290,11 +290,7 @@
             {{ filters.checkInTo || '...' }}
             <button
               class="ml-1.5 hover:text-blue-900 dark:hover:text-blue-100"
-              @click="
-                filters.checkInFrom = ''
-                filters.checkInTo = ''
-                applyFilters()
-              "
+              @click="clearCheckInFilter"
             >
               <span class="material-icons text-xs">close</span>
             </button>
@@ -309,11 +305,7 @@
             {{ filters.checkOutTo || '...' }}
             <button
               class="ml-1.5 hover:text-green-900 dark:hover:text-green-100"
-              @click="
-                filters.checkOutFrom = ''
-                filters.checkOutTo = ''
-                applyFilters()
-              "
+              @click="clearCheckOutFilter"
             >
               <span class="material-icons text-xs">close</span>
             </button>
@@ -328,11 +320,7 @@
             {{ filters.createdFrom || '...' }} - {{ filters.createdTo || '...' }}
             <button
               class="ml-1.5 hover:text-amber-900 dark:hover:text-amber-100"
-              @click="
-                filters.createdFrom = ''
-                filters.createdTo = ''
-                applyFilters()
-              "
+              @click="clearCreatedFilter"
             >
               <span class="material-icons text-xs">close</span>
             </button>
@@ -756,6 +744,25 @@ const clearPartnerFilter = () => {
   currentPage.value = 1
   fetchBookings()
   fetchStats()
+}
+
+// Clear individual filter groups
+const clearCheckInFilter = () => {
+  filters.value.checkInFrom = ''
+  filters.value.checkInTo = ''
+  applyFilters()
+}
+
+const clearCheckOutFilter = () => {
+  filters.value.checkOutFrom = ''
+  filters.value.checkOutTo = ''
+  applyFilters()
+}
+
+const clearCreatedFilter = () => {
+  filters.value.createdFrom = ''
+  filters.value.createdTo = ''
+  applyFilters()
 }
 
 // Clear all advanced filters
