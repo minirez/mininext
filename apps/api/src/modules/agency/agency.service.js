@@ -8,9 +8,11 @@ import { sendWelcomeEmail } from '#helpers/mail.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
 
-// Generate random password
+// Generate random password (must satisfy: uppercase + lowercase + number)
 const generatePassword = () => {
-  return crypto.randomBytes(8).toString('hex')
+  const base = crypto.randomBytes(6).toString('hex') // lowercase + digits
+  const upper = String.fromCharCode(65 + crypto.randomInt(26)) // random A-Z
+  return upper + base + crypto.randomInt(10) // e.g. "Xa3f1b9c2e7d4"
 }
 
 // Create agency
