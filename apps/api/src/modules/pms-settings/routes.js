@@ -1,12 +1,13 @@
 import express from 'express'
 import { protect, requirePmsAccess, setPmsHotelContext } from '#middleware/auth.js'
+import { partnerContext } from '#middleware/partnerContext.js'
 import * as settingsService from './settings.service.js'
 import * as agencyService from '#modules/agency/agency.service.js'
 
 const router = express.Router()
 
 const hotelMiddleware = [protect, requirePmsAccess, setPmsHotelContext]
-const pmsAuth = [protect, requirePmsAccess]
+const pmsAuth = [protect, requirePmsAccess, partnerContext]
 
 // Utility endpoints (static data)
 router.get('/timezones', protect, settingsService.getTimezones)
