@@ -141,6 +141,19 @@ export const useWidgetStore = defineStore('widget', () => {
     }
   }
 
+  // Resolve relative asset URLs (uploads, images) to absolute API URLs
+  function resolveAssetUrl(path) {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    const apiUrl = config.value.apiUrl || 'https://api.maxirez.com/api'
+    try {
+      const url = new URL(apiUrl)
+      return `${url.protocol}//${url.host}${path}`
+    } catch {
+      return path
+    }
+  }
+
   // Computed
   // Resolved hotel ID (globally unique) - prefer over slug for API calls
   const resolvedHotelCode = computed(() => hotelInfo.value?.id || config.value.hotelCode)
@@ -195,7 +208,15 @@ export const useWidgetStore = defineStore('widget', () => {
 
       // Start watching for state changes after initialization
       watch(
-        [currentStep, searchParams, selectedRoom, selectedOption, bookingData, paymentMethod, booking],
+        [
+          currentStep,
+          searchParams,
+          selectedRoom,
+          selectedOption,
+          bookingData,
+          paymentMethod,
+          booking
+        ],
         () => debouncedSave(),
         { deep: true }
       )
@@ -273,13 +294,15 @@ export const useWidgetStore = defineStore('widget', () => {
     selectedOption.value = option
 
     // Initialize booking data with room selection
-    bookingData.value.rooms = [{
-      roomTypeCode: roomResult.roomType.code,
-      mealPlanCode: option.mealPlan.code,
-      adults: searchParams.value.adults,
-      children: searchParams.value.children,
-      guests: []
-    }]
+    bookingData.value.rooms = [
+      {
+        roomTypeCode: roomResult.roomType.code,
+        mealPlanCode: option.mealPlan.code,
+        adults: searchParams.value.adults,
+        children: searchParams.value.children,
+        guests: []
+      }
+    ]
 
     currentStep.value = 'booking'
   }
@@ -429,6 +452,9 @@ export const useWidgetStore = defineStore('widget', () => {
     // Computed
     effectiveTheme,
     nights,
+
+    // Helpers
+    resolveAssetUrl,
 
     // Actions
     initialize,

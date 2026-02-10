@@ -9,17 +9,17 @@ const { t } = useTranslation()
 
 const checkIn = computed({
   get: () => widgetStore.searchParams.checkIn,
-  set: (val) => widgetStore.searchParams.checkIn = val
+  set: val => (widgetStore.searchParams.checkIn = val)
 })
 
 const checkOut = computed({
   get: () => widgetStore.searchParams.checkOut,
-  set: (val) => widgetStore.searchParams.checkOut = val
+  set: val => (widgetStore.searchParams.checkOut = val)
 })
 
 const adults = computed({
   get: () => widgetStore.searchParams.adults,
-  set: (val) => widgetStore.searchParams.adults = parseInt(val)
+  set: val => (widgetStore.searchParams.adults = parseInt(val))
 })
 
 const childrenCount = ref(widgetStore.searchParams.children?.length || 0)
@@ -92,22 +92,45 @@ onMounted(() => {
   <div class="search-view">
     <!-- Hotel Hero Card -->
     <div v-if="hotelInfo?.images?.length" class="hero-card">
-      <img :src="hotelInfo.images[0].url || hotelInfo.images[0]" :alt="hotelInfo.name" />
+      <img
+        :src="widgetStore.resolveAssetUrl(hotelInfo.images[0].url || hotelInfo.images[0])"
+        :alt="hotelInfo.name"
+      />
       <div class="hero-overlay">
         <h2 class="hero-title">{{ hotelInfo.name }}</h2>
         <p v-if="hotelInfo.location?.city" class="hero-location">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
-          {{ hotelInfo.location.city }}{{ hotelInfo.location.country ? `, ${hotelInfo.location.country}` : '' }}
+          {{ hotelInfo.location.city
+          }}{{ hotelInfo.location.country ? `, ${hotelInfo.location.country}` : '' }}
         </p>
       </div>
     </div>
 
     <!-- Error Message -->
     <div v-if="errorMessage" class="alert alert-error">
-      <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg
+        class="alert-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="12"></line>
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -123,8 +146,8 @@ onMounted(() => {
           :check-in="checkIn"
           :check-out="checkOut"
           :min-date="minDate"
-          @update:check-in="val => checkIn = val"
-          @update:check-out="val => checkOut = val"
+          @update:check-in="val => (checkIn = val)"
+          @update:check-out="val => (checkOut = val)"
         />
       </div>
 
@@ -136,7 +159,15 @@ onMounted(() => {
           @click="showGuestSelector = !showGuestSelector"
         >
           <div class="guest-selector-info">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -144,7 +175,18 @@ onMounted(() => {
             </svg>
             <span class="guest-selector-text">{{ guestSummary }}</span>
           </div>
-          <svg class="guest-selector-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            class="guest-selector-arrow"
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
         </div>
@@ -158,9 +200,13 @@ onMounted(() => {
               <div class="guest-row-sublabel">{{ t('search.adultDesc') }}</div>
             </div>
             <div class="guest-counter">
-              <button type="button" @click.stop="updateAdults(-1)" :disabled="adults <= 1">−</button>
+              <button type="button" @click.stop="updateAdults(-1)" :disabled="adults <= 1">
+                −
+              </button>
               <span>{{ adults }}</span>
-              <button type="button" @click.stop="updateAdults(1)" :disabled="adults >= 10">+</button>
+              <button type="button" @click.stop="updateAdults(1)" :disabled="adults >= 10">
+                +
+              </button>
             </div>
           </div>
 
@@ -171,9 +217,13 @@ onMounted(() => {
               <div class="guest-row-sublabel">{{ t('search.childDesc') }}</div>
             </div>
             <div class="guest-counter">
-              <button type="button" @click.stop="updateChildren(-1)" :disabled="childrenCount <= 0">−</button>
+              <button type="button" @click.stop="updateChildren(-1)" :disabled="childrenCount <= 0">
+                −
+              </button>
               <span>{{ childrenCount }}</span>
-              <button type="button" @click.stop="updateChildren(1)" :disabled="childrenCount >= 6">+</button>
+              <button type="button" @click.stop="updateChildren(1)" :disabled="childrenCount >= 6">
+                +
+              </button>
             </div>
           </div>
 
@@ -189,7 +239,9 @@ onMounted(() => {
                 @click.stop
                 class="form-input child-age-select"
               >
-                <option v-for="a in 18" :key="a - 1" :value="a - 1">{{ a - 1 }} {{ t('search.ageLabel') }}</option>
+                <option v-for="a in 18" :key="a - 1" :value="a - 1">
+                  {{ a - 1 }} {{ t('search.ageLabel') }}
+                </option>
               </select>
             </div>
           </div>
@@ -200,7 +252,17 @@ onMounted(() => {
       <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="isLoading">
         <span v-if="isLoading" class="spinner"></span>
         <template v-else>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
