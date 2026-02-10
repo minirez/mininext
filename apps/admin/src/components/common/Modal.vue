@@ -10,7 +10,9 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+        :class="zIndex ? '' : 'z-50'"
+        :style="zIndex ? { zIndex } : {}"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
@@ -57,7 +59,10 @@
             </div>
 
             <!-- Body -->
-            <div class="p-4 max-h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden" :class="contentClass">
+            <div
+              class="p-4 max-h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden"
+              :class="contentClass"
+            >
               <slot></slot>
             </div>
 
@@ -115,6 +120,10 @@ const props = defineProps({
   restoreFocus: {
     type: Boolean,
     default: true
+  },
+  zIndex: {
+    type: Number,
+    default: null
   }
 })
 
