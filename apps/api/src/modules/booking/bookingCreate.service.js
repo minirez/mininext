@@ -204,6 +204,7 @@ export const createBooking = asyncHandler(async (req, res) => {
   }
 
   // Duplicate check - prevent double submission within 2 minutes
+  // Idempotent: if duplicate found, return existing booking
   const recentDuplicate = await Booking.findOne({
     partner: partnerId,
     hotel: hotel._id,
@@ -214,7 +215,33 @@ export const createBooking = asyncHandler(async (req, res) => {
     createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) }
   }).lean()
   if (recentDuplicate) {
-    throw new BadRequestError('DUPLICATE_BOOKING')
+    logger.warn(`Duplicate booking detected, returning existing: ${recentDuplicate.bookingNumber}`)
+    await Booking.populate(recentDuplicate, { path: 'hotel', select: 'name slug' })
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id: recentDuplicate._id,
+        bookingNumber: recentDuplicate.bookingNumber,
+        status: recentDuplicate.status,
+        hotel: {
+          _id: recentDuplicate.hotel?._id || recentDuplicate.hotel,
+          name: recentDuplicate.hotel?.name,
+          slug: recentDuplicate.hotel?.slug
+        },
+        checkIn: recentDuplicate.checkIn,
+        checkOut: recentDuplicate.checkOut,
+        nights: recentDuplicate.nights,
+        rooms: recentDuplicate.totalRooms,
+        guests: {
+          adults: recentDuplicate.totalAdults,
+          children: recentDuplicate.totalChildren
+        },
+        pricing: recentDuplicate.pricing,
+        contact: {
+          email: recentDuplicate.contact?.email
+        }
+      }
+    })
   }
 
   // Generate booking number
@@ -524,6 +551,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   }
 
   // Duplicate check - prevent double submission within 2 minutes
+  // Idempotent: if duplicate found, return existing booking + payment link
   const recentDuplicate = await Booking.findOne({
     partner: partnerId,
     hotel: hotel._id,
@@ -534,7 +562,53 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     createdAt: { $gte: new Date(Date.now() - 2 * 60 * 1000) }
   }).lean()
   if (recentDuplicate) {
-    throw new BadRequestError('DUPLICATE_BOOKING')
+    logger.warn(
+      `Duplicate booking detected (payment-link), returning existing: ${recentDuplicate.bookingNumber}`
+    )
+    await Booking.populate(recentDuplicate, { path: 'hotel', select: 'name slug' })
+    const existingPaymentLink = await PaymentLink.findOne({
+      booking: recentDuplicate._id,
+      status: { $ne: 'cancelled' }
+    }).lean()
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        booking: {
+          _id: recentDuplicate._id,
+          bookingNumber: recentDuplicate.bookingNumber,
+          status: recentDuplicate.status,
+          hotel: {
+            _id: recentDuplicate.hotel?._id || recentDuplicate.hotel,
+            name: recentDuplicate.hotel?.name,
+            slug: recentDuplicate.hotel?.slug
+          },
+          checkIn: recentDuplicate.checkIn,
+          checkOut: recentDuplicate.checkOut,
+          nights: recentDuplicate.nights,
+          rooms: recentDuplicate.totalRooms,
+          guests: {
+            adults: recentDuplicate.totalAdults,
+            children: recentDuplicate.totalChildren
+          },
+          pricing: recentDuplicate.pricing,
+          payment: recentDuplicate.payment
+        },
+        paymentLink: existingPaymentLink
+          ? {
+              _id: existingPaymentLink._id,
+              linkNumber: existingPaymentLink.linkNumber,
+              token: existingPaymentLink.token,
+              paymentUrl: existingPaymentLink.paymentUrl,
+              amount: existingPaymentLink.amount,
+              currency: existingPaymentLink.currency,
+              expiresAt: existingPaymentLink.expiresAt,
+              status: existingPaymentLink.status,
+              notifications: existingPaymentLink.notifications
+            }
+          : null
+      }
+    })
   }
 
   // Generate booking number

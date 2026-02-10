@@ -543,6 +543,7 @@ const handleConfirm = async () => {
     }
   } catch (error) {
     toast.error(error.message || t('booking.bookingFailed'))
+  } finally {
     isSubmitting.value = false
   }
 }

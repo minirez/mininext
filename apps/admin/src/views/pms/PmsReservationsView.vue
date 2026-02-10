@@ -355,6 +355,7 @@
         :hotel-id="hotelId"
         :reservation="selectedReservation"
         @updated="onReservationUpdated"
+        @cancel="handleDetailCancel"
       />
 
       <CancelReservationModal
@@ -565,6 +566,11 @@ const openDetail = reservation => {
 const openCancelModal = reservation => {
   selectedReservation.value = reservation
   showCancelModal.value = true
+}
+
+const handleDetailCancel = reservation => {
+  showDetailModal.value = false
+  openCancelModal(reservation)
 }
 
 const handlePageChange = ({ page, perPage }) => {
