@@ -570,25 +570,46 @@
 
         <!-- Shifts Tab -->
         <div v-if="activeTab === 'shifts'" class="p-4">
-          <div class="flex gap-4 mb-4">
-            <div>
-              <input
-                v-model="shiftFilters.date"
-                type="date"
-                class="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchShifts"
-              />
-            </div>
-            <div class="w-36">
-              <select
-                v-model="shiftFilters.status"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                @change="fetchShifts"
+          <div
+            class="mb-4 p-4 bg-gray-50 dark:bg-slate-700/30 rounded-xl border border-gray-200 dark:border-slate-700"
+          >
+            <div class="flex flex-wrap items-end gap-3">
+              <div class="w-48">
+                <DatePicker
+                  v-model="shiftFilters.date"
+                  :label="$t('cashier.columns.date')"
+                  :placeholder="$t('cashier.columns.date')"
+                  clearable
+                  @change="fetchShifts"
+                />
+              </div>
+              <div class="w-40">
+                <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{{
+                  $t('cashier.columns.status')
+                }}</label>
+                <select
+                  v-model="shiftFilters.status"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                  @change="fetchShifts"
+                >
+                  <option value="all">{{ $t('cashier.allShifts') }}</option>
+                  <option value="open">{{ $t('cashier.shiftStatus.open') }}</option>
+                  <option value="closed">{{ $t('cashier.shiftStatus.closed') }}</option>
+                </select>
+              </div>
+              <button
+                v-if="activeShiftFilterCount > 0"
+                class="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 transition-colors flex items-center gap-1.5"
+                @click="clearShiftFilters"
               >
-                <option value="all">{{ $t('cashier.allShifts') }}</option>
-                <option value="open">{{ $t('cashier.shiftStatus.open') }}</option>
-                <option value="closed">{{ $t('cashier.shiftStatus.closed') }}</option>
-              </select>
+                <span class="material-icons text-sm">filter_alt_off</span>
+                {{ $t('cashier.clearFilters') }}
+                <span
+                  class="ml-1 px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-xs font-bold"
+                >
+                  {{ activeShiftFilterCount }}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -1017,6 +1038,18 @@ const shiftFilters = ref({
   date: '',
   status: 'all'
 })
+
+const activeShiftFilterCount = computed(() => {
+  let count = 0
+  if (shiftFilters.value.date) count++
+  if (shiftFilters.value.status !== 'all') count++
+  return count
+})
+
+const clearShiftFilters = () => {
+  shiftFilters.value = { date: '', status: 'all' }
+  fetchShifts()
+}
 
 let debounceTimer = null
 const debouncedFetchTransactions = () => {
