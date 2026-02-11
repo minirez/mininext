@@ -24,8 +24,8 @@ function resolveName(name) {
   if (!name) return ''
   if (typeof name === 'string') return name
   if (typeof name === 'object') {
-    const lang = widgetStore.config.language || 'tr'
-    return name[lang] || name.tr || name.en || Object.values(name).find(v => v) || ''
+    const lang = widgetStore.config.language || 'en'
+    return name[lang] || name.en || name.tr || Object.values(name).find(v => v) || ''
   }
   return String(name)
 }
@@ -50,8 +50,8 @@ function initGuests() {
     guests.push({
       type: 'adult',
       title: '',
-      firstName: i === 0 ? (contact.value.firstName || '') : '',
-      lastName: i === 0 ? (contact.value.lastName || '') : '',
+      firstName: i === 0 ? contact.value.firstName || '' : '',
+      lastName: i === 0 ? contact.value.lastName || '' : '',
       isLead: i === 0
     })
   }
@@ -162,7 +162,16 @@ onMounted(() => {
 
     <!-- Error Message -->
     <div v-if="errorMessage" class="alert alert-error">
-      <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg
+        class="alert-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="8" x2="12" y2="12"></line>
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -192,13 +201,20 @@ onMounted(() => {
       <div class="summary-card-footer">
         <div>
           <div class="summary-guests">
-            {{ searchParams.adults }} {{ t('common.adults') }}{{ searchParams.children.length > 0 ? `, ${searchParams.children.length} ${t('common.children')}` : '' }}
+            {{ searchParams.adults }} {{ t('common.adults')
+            }}{{
+              searchParams.children.length > 0
+                ? `, ${searchParams.children.length} ${t('common.children')}`
+                : ''
+            }}
           </div>
           <div class="summary-nights">{{ nights }} {{ t('common.night') }}</div>
         </div>
         <div class="summary-card-total">
           <div class="summary-card-total-label">{{ t('common.total') }}</div>
-          <div class="summary-card-total-value">{{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}</div>
+          <div class="summary-card-total-value">
+            {{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}
+          </div>
         </div>
       </div>
     </div>
@@ -207,7 +223,17 @@ onMounted(() => {
     <form @submit.prevent="submit" class="booking-form">
       <div class="form-section">
         <h3 class="form-section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
@@ -216,7 +242,9 @@ onMounted(() => {
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">{{ t('booking.form.firstName') }} {{ t('common.required') }}</label>
+            <label class="form-label"
+              >{{ t('booking.form.firstName') }} {{ t('common.required') }}</label
+            >
             <input
               v-model="contact.firstName"
               type="text"
@@ -227,7 +255,9 @@ onMounted(() => {
             <span v-if="errors.firstName" class="form-error">{{ errors.firstName }}</span>
           </div>
           <div class="form-group">
-            <label class="form-label">{{ t('booking.form.lastName') }} {{ t('common.required') }}</label>
+            <label class="form-label"
+              >{{ t('booking.form.lastName') }} {{ t('common.required') }}</label
+            >
             <input
               v-model="contact.lastName"
               type="text"
@@ -242,8 +272,20 @@ onMounted(() => {
         <div class="form-group">
           <label class="form-label">{{ t('booking.form.email') }} {{ t('common.required') }}</label>
           <div class="input-with-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+              ></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
             <input
@@ -258,7 +300,12 @@ onMounted(() => {
         </div>
 
         <div class="form-group">
-          <label class="form-label">{{ t('booking.form.phone') }} {{ widgetConfig?.guestOptions?.requirePhone !== false ? t('common.required') : '' }}</label>
+          <label class="form-label"
+            >{{ t('booking.form.phone') }}
+            {{
+              widgetConfig?.guestOptions?.requirePhone !== false ? t('common.required') : ''
+            }}</label
+          >
           <PhoneInput
             v-model="contact.phone"
             :country="widgetStore.detectedMarket?.countryCode || 'TR'"
@@ -270,7 +317,17 @@ onMounted(() => {
       <!-- Guest Details -->
       <div class="form-section">
         <h3 class="form-section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -282,8 +339,16 @@ onMounted(() => {
         <div v-for="(guest, index) in roomGuests" :key="index" class="guest-card">
           <div class="guest-card-header">
             <span class="guest-badge" :class="guest.type">
-              {{ guest.type === 'adult' ? t('booking.guest.adult') : t('booking.guest.childWithAge', { age: guest.age }) }}
-              {{ guest.type === 'adult' ? (roomGuests.filter(g => g.type === 'adult').indexOf(guest) + 1) : (roomGuests.filter(g => g.type === 'child').indexOf(guest) + 1) }}
+              {{
+                guest.type === 'adult'
+                  ? t('booking.guest.adult')
+                  : t('booking.guest.childWithAge', { age: guest.age })
+              }}
+              {{
+                guest.type === 'adult'
+                  ? roomGuests.filter(g => g.type === 'adult').indexOf(guest) + 1
+                  : roomGuests.filter(g => g.type === 'child').indexOf(guest) + 1
+              }}
             </span>
             <span v-if="guest.isLead" class="lead-badge">{{ t('booking.guest.leadGuest') }}</span>
           </div>
@@ -298,7 +363,9 @@ onMounted(() => {
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">{{ t('booking.form.firstName') }} {{ t('common.required') }}</label>
+              <label class="form-label"
+                >{{ t('booking.form.firstName') }} {{ t('common.required') }}</label
+              >
               <input
                 v-model="guest.firstName"
                 type="text"
@@ -307,10 +374,14 @@ onMounted(() => {
                 :placeholder="t('booking.form.firstName')"
                 :disabled="guest.isLead"
               />
-              <span v-if="errors[`guest_${index}_firstName`]" class="form-error">{{ errors[`guest_${index}_firstName`] }}</span>
+              <span v-if="errors[`guest_${index}_firstName`]" class="form-error">{{
+                errors[`guest_${index}_firstName`]
+              }}</span>
             </div>
             <div class="form-group">
-              <label class="form-label">{{ t('booking.form.lastName') }} {{ t('common.required') }}</label>
+              <label class="form-label"
+                >{{ t('booking.form.lastName') }} {{ t('common.required') }}</label
+              >
               <input
                 v-model="guest.lastName"
                 type="text"
@@ -319,7 +390,9 @@ onMounted(() => {
                 :placeholder="t('booking.form.lastName')"
                 :disabled="guest.isLead"
               />
-              <span v-if="errors[`guest_${index}_lastName`]" class="form-error">{{ errors[`guest_${index}_lastName`] }}</span>
+              <span v-if="errors[`guest_${index}_lastName`]" class="form-error">{{
+                errors[`guest_${index}_lastName`]
+              }}</span>
             </div>
           </div>
         </div>
@@ -328,7 +401,17 @@ onMounted(() => {
       <!-- Special Requests -->
       <div class="form-section">
         <h3 class="form-section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="8" y1="6" x2="21" y2="6"></line>
             <line x1="8" y1="12" x2="21" y2="12"></line>
             <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -352,7 +435,17 @@ onMounted(() => {
       <!-- Payment Method Selection -->
       <div class="form-section">
         <h3 class="form-section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
             <line x1="1" y1="10" x2="23" y2="10"></line>
           </svg>
@@ -360,10 +453,29 @@ onMounted(() => {
         </h3>
 
         <div class="payment-methods">
-          <label v-if="paymentMethods.creditCard" class="payment-method" :class="{ selected: selectedPaymentMethod === 'credit_card' }">
-            <input v-model="selectedPaymentMethod" type="radio" value="credit_card" class="sr-only" />
+          <label
+            v-if="paymentMethods.creditCard"
+            class="payment-method"
+            :class="{ selected: selectedPaymentMethod === 'credit_card' }"
+          >
+            <input
+              v-model="selectedPaymentMethod"
+              type="radio"
+              value="credit_card"
+              class="sr-only"
+            />
             <div class="payment-method-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
@@ -373,16 +485,45 @@ onMounted(() => {
               <span class="payment-method-desc">{{ t('booking.payment.creditCardDesc') }}</span>
             </div>
             <div class="payment-method-check">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
           </label>
 
-          <label v-if="paymentMethods.payAtHotel" class="payment-method" :class="{ selected: selectedPaymentMethod === 'pay_at_hotel' }">
-            <input v-model="selectedPaymentMethod" type="radio" value="pay_at_hotel" class="sr-only" />
+          <label
+            v-if="paymentMethods.payAtHotel"
+            class="payment-method"
+            :class="{ selected: selectedPaymentMethod === 'pay_at_hotel' }"
+          >
+            <input
+              v-model="selectedPaymentMethod"
+              type="radio"
+              value="pay_at_hotel"
+              class="sr-only"
+            />
             <div class="payment-method-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
@@ -392,16 +533,45 @@ onMounted(() => {
               <span class="payment-method-desc">{{ t('booking.payment.payAtHotelDesc') }}</span>
             </div>
             <div class="payment-method-check">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
           </label>
 
-          <label v-if="paymentMethods.bankTransfer" class="payment-method" :class="{ selected: selectedPaymentMethod === 'bank_transfer' }">
-            <input v-model="selectedPaymentMethod" type="radio" value="bank_transfer" class="sr-only" />
+          <label
+            v-if="paymentMethods.bankTransfer"
+            class="payment-method"
+            :class="{ selected: selectedPaymentMethod === 'bank_transfer' }"
+          >
+            <input
+              v-model="selectedPaymentMethod"
+              type="radio"
+              value="bank_transfer"
+              class="sr-only"
+            />
             <div class="payment-method-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <line x1="12" y1="1" x2="12" y2="23"></line>
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
               </svg>
@@ -411,7 +581,17 @@ onMounted(() => {
               <span class="payment-method-desc">{{ t('booking.payment.bankTransferDesc') }}</span>
             </div>
             <div class="payment-method-check">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
@@ -423,8 +603,22 @@ onMounted(() => {
       <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="isLoading">
         <span v-if="isLoading" class="spinner"></span>
         <template v-else>
-          {{ selectedPaymentMethod === 'credit_card' ? t('booking.submit.goToPayment') : t('booking.submit.completeBooking') }}
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          {{
+            selectedPaymentMethod === 'credit_card'
+              ? t('booking.submit.goToPayment')
+              : t('booking.submit.completeBooking')
+          }}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>

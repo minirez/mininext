@@ -15,7 +15,7 @@ export const useWidgetStore = defineStore('widget', () => {
     mode: 'floating',
     theme: 'light',
     primaryColor: '#7c3aed',
-    language: 'tr',
+    language: 'en',
     containerId: null,
     apiUrl: ''
   })
@@ -427,7 +427,28 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   function setLanguage(lang) {
-    const supported = ['tr', 'en']
+    const supported = [
+      'tr',
+      'en',
+      'ru',
+      'el',
+      'de',
+      'es',
+      'it',
+      'fr',
+      'ro',
+      'bg',
+      'pt',
+      'da',
+      'zh',
+      'ar',
+      'fa',
+      'he',
+      'sq',
+      'uk',
+      'pl',
+      'az'
+    ]
     const normalized = lang?.split('-')[0]?.toLowerCase()
     if (supported.includes(normalized) && config.value.language !== normalized) {
       config.value.language = normalized

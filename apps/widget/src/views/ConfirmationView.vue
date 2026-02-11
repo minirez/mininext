@@ -26,8 +26,8 @@ function resolveName(name) {
   if (!name) return ''
   if (typeof name === 'string') return name
   if (typeof name === 'object') {
-    const lang = widgetStore.config.language || 'tr'
-    return name[lang] || name.tr || name.en || Object.values(name).find(v => v) || ''
+    const lang = widgetStore.config.language || 'en'
+    return name[lang] || name.en || name.tr || Object.values(name).find(v => v) || ''
   }
   return String(name)
 }

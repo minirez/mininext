@@ -11,14 +11,35 @@ import { useWidgetStore } from './stores/widget'
 // Import CSS as string for shadow DOM injection
 import widgetStyles from './styles/widget.css?inline'
 
-const SUPPORTED_LANGUAGES = ['tr', 'en']
+const SUPPORTED_LANGUAGES = [
+  'tr',
+  'en',
+  'ru',
+  'el',
+  'de',
+  'es',
+  'it',
+  'fr',
+  'ro',
+  'bg',
+  'pt',
+  'da',
+  'zh',
+  'ar',
+  'fa',
+  'he',
+  'sq',
+  'uk',
+  'pl',
+  'az'
+]
 
 /**
  * Resolve language from config or html lang attribute
  * Priority: explicit config > html lang > 'tr'
  */
 function resolveLanguage(configLang) {
-  if (configLang && configLang !== 'tr') {
+  if (configLang && configLang !== 'en') {
     // Explicit config provided (not default)
     const normalized = configLang.split('-')[0].toLowerCase()
     if (SUPPORTED_LANGUAGES.includes(normalized)) return normalized
@@ -31,7 +52,7 @@ function resolveLanguage(configLang) {
     if (SUPPORTED_LANGUAGES.includes(normalized)) return normalized
   }
 
-  return configLang || 'tr'
+  return configLang || 'en'
 }
 
 // Default API URL based on environment
@@ -63,7 +84,7 @@ export async function createWidget(config = {}) {
 
   // Resolve language: explicit config > html lang > 'tr'
   const explicitLang = config.language
-  const language = resolveLanguage(explicitLang || 'tr')
+  const language = resolveLanguage(explicitLang || 'en')
 
   if (!hotelCode) {
     console.error('[MaxiResWidget] Hotel code is required')

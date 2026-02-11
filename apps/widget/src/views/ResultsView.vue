@@ -7,7 +7,7 @@ import ViewHeader from '../components/ViewHeader.vue'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateShort } = useFormatters()
-const { t } = useTranslation()
+const { t, locale } = useTranslation()
 
 const searchResults = computed(() => widgetStore.searchResults)
 const searchParams = computed(() => widgetStore.searchParams)
@@ -26,19 +26,19 @@ function selectOption(roomResult, option) {
   widgetStore.selectRoom(roomResult, option)
 }
 
+// Get localized value from a multilingual object
+function getLocalizedValue(obj) {
+  if (!obj) return ''
+  if (typeof obj === 'string') return obj
+  const lang = locale.value
+  return obj[lang] || obj.en || obj.tr || Object.values(obj)[0] || ''
+}
+
 // Get room name with locale support
 function getRoomName(roomType) {
   const name = roomType?.name
   if (!name) return roomType?.code || ''
-  if (typeof name === 'object') {
-    return name.tr || name.en || Object.values(name)[0] || ''
-  }
-  return name
-}
-
-// Get room category/type
-function getRoomCategory(roomType) {
-  return roomType?.category || roomType?.type || t('results.standardRoom')
+  return getLocalizedValue(name)
 }
 
 // Get room specs (size, view, bed type)
@@ -46,17 +46,11 @@ function getRoomSpecs(roomType) {
   const specs = []
   if (roomType?.size) specs.push(`${roomType.size} m²`)
   if (roomType?.view) {
-    const view =
-      typeof roomType.view === 'object'
-        ? roomType.view.tr || roomType.view.en || Object.values(roomType.view)[0]
-        : roomType.view
+    const view = getLocalizedValue(roomType.view)
     if (view) specs.push(view)
   }
   if (roomType?.bedType) {
-    const bed =
-      typeof roomType.bedType === 'object'
-        ? roomType.bedType.tr || roomType.bedType.en || Object.values(roomType.bedType)[0]
-        : roomType.bedType
+    const bed = getLocalizedValue(roomType.bedType)
     if (bed) specs.push(bed)
   }
   return specs.join(' • ') || ''
@@ -77,10 +71,7 @@ function getRoomAmenities(roomType) {
 function getMealPlanName(mealPlan) {
   const name = mealPlan?.name
   if (!name) return mealPlan?.code || ''
-  if (typeof name === 'object') {
-    return name.tr || name.en || Object.values(name)[0] || mealPlan?.code || ''
-  }
-  return name
+  return getLocalizedValue(name) || mealPlan?.code || ''
 }
 
 // Get meal plan description based on code
@@ -358,7 +349,6 @@ function prevImage() {
 
           <!-- Info -->
           <div class="room-info">
-            <p class="room-category">{{ getRoomCategory(roomResult.roomType) }}</p>
             <h3 class="room-name">{{ getRoomName(roomResult.roomType) }}</h3>
             <p v-if="getRoomSpecs(roomResult.roomType)" class="room-specs">
               {{ getRoomSpecs(roomResult.roomType) }}

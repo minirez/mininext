@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { useWidgetStore } from './stores/widget'
 import { useTranslation, setLocale } from './composables/useTranslation'
 
@@ -23,6 +23,21 @@ watch(
   { immediate: true }
 )
 
+// Scroll widget content to top on step change
+watch(
+  () => widgetStore.currentStep,
+  () => {
+    nextTick(() => {
+      const root = document.getElementById('maxirez-widget-root')
+      const shadow = root?.shadowRoot
+      if (shadow) {
+        const content = shadow.querySelector('.widget-content')
+        if (content) content.scrollTop = 0
+      }
+    })
+  }
+)
+
 const isOpen = computed(() => widgetStore.isOpen)
 const currentStep = computed(() => widgetStore.currentStep)
 const mode = computed(() => widgetStore.config.mode)
@@ -40,10 +55,28 @@ const position = computed(() => widgetStore.config.position || 'bottom-right')
 // Language Dropdown
 const langDropdownOpen = ref(false)
 const availableLanguages = [
-  { code: 'tr', label: 'TR' },
-  { code: 'en', label: 'EN' }
+  { code: 'tr', label: 'Türkçe' },
+  { code: 'en', label: 'English' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'el', label: 'Ελληνικά' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ro', label: 'Română' },
+  { code: 'bg', label: 'Български' },
+  { code: 'pt', label: 'Português' },
+  { code: 'da', label: 'Dansk' },
+  { code: 'zh', label: '中文' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'fa', label: 'فارسی' },
+  { code: 'he', label: 'עברית' },
+  { code: 'sq', label: 'Shqip' },
+  { code: 'uk', label: 'Українська' },
+  { code: 'pl', label: 'Polski' },
+  { code: 'az', label: 'Azərbaycan' }
 ]
-const currentLang = computed(() => widgetStore.config.language || 'tr')
+const currentLang = computed(() => widgetStore.config.language || 'en')
 
 function toggleLangDropdown() {
   langDropdownOpen.value = !langDropdownOpen.value

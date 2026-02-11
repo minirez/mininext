@@ -10,17 +10,30 @@ export function useFormatters() {
   const widgetStore = useWidgetStore()
 
   const locale = computed(() => {
-    const lang = widgetStore.config.language || 'tr'
+    const lang = widgetStore.config.language || 'en'
     const localeMap = {
       tr: 'tr-TR',
       en: 'en-US',
-      de: 'de-DE',
-      fr: 'fr-FR',
-      es: 'es-ES',
       ru: 'ru-RU',
-      ar: 'ar-SA'
+      el: 'el-GR',
+      de: 'de-DE',
+      es: 'es-ES',
+      it: 'it-IT',
+      fr: 'fr-FR',
+      ro: 'ro-RO',
+      bg: 'bg-BG',
+      pt: 'pt-PT',
+      da: 'da-DK',
+      zh: 'zh-CN',
+      ar: 'ar-SA',
+      fa: 'fa-IR',
+      he: 'he-IL',
+      sq: 'sq-AL',
+      uk: 'uk-UA',
+      pl: 'pl-PL',
+      az: 'az-AZ'
     }
-    return localeMap[lang] || 'tr-TR'
+    return localeMap[lang] || 'en-US'
   })
 
   /**
@@ -29,9 +42,12 @@ export function useFormatters() {
    * @param {string} currency - Currency code (defaults to search currency)
    */
   function formatCurrency(amount, currency = null) {
-    const curr = currency || widgetStore.searchResults?.search?.currency ||
-                 widgetStore.selectedOption?.pricing?.currency ||
-                 widgetStore.booking?.pricing?.currency || 'TRY'
+    const curr =
+      currency ||
+      widgetStore.searchResults?.search?.currency ||
+      widgetStore.selectedOption?.pricing?.currency ||
+      widgetStore.booking?.pricing?.currency ||
+      'TRY'
 
     return new Intl.NumberFormat(locale.value, {
       style: 'currency',

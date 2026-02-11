@@ -14,8 +14,8 @@ const bankAccounts = computed(() => widgetStore.bankAccounts)
 const bankTransferDescription = computed(() => {
   const desc = widgetStore.bankTransferDescription
   if (!desc) return ''
-  const lang = widgetStore.config.language || 'tr'
-  return desc[lang] || desc.tr || desc.en || ''
+  const lang = widgetStore.config.language || 'en'
+  return desc[lang] || desc.en || desc.tr || ''
 })
 const isLoading = computed(() => widgetStore.isLoading)
 const selectedOption = computed(() => widgetStore.selectedOption)
