@@ -5,6 +5,7 @@ import { emitToAll } from '#core/socket.js'
 import { getEmailSettings, getSESClient } from '#helpers/mail/transporter.js'
 import { renderEmailTemplate, htmlToText } from '#helpers/emailTemplates.js'
 import { NotFoundError } from '#core/errors.js'
+import { parsePagination } from '#services/queryBuilder.js'
 
 // Lazy-loaded AWS SDK modules
 let _s3Client = null
@@ -177,7 +178,12 @@ export const handleWebhook = async body => {
 /**
  * List inbox emails with filters and pagination
  */
-export const list = async ({ status, starred, search, page = 1, limit = 30 }) => {
+export const list = async ({ status, starred, search, page: rawPage, limit: rawLimit }) => {
+  const { page, limit, skip } = parsePagination(
+    { page: rawPage, limit: rawLimit },
+    { defaultLimit: 30 }
+  )
+
   const query = {}
 
   // Status filter
@@ -204,8 +210,6 @@ export const list = async ({ status, starred, search, page = 1, limit = 30 }) =>
     ]
   }
 
-  const skip = (page - 1) * limit
-
   const [items, total] = await Promise.all([
     InboxEmail.find(query)
       .sort({ receivedAt: -1 })
@@ -219,8 +223,8 @@ export const list = async ({ status, starred, search, page = 1, limit = 30 }) =>
   return {
     items,
     pagination: {
-      page: Number(page),
-      limit: Number(limit),
+      page,
+      limit,
       total,
       pages: Math.ceil(total / limit)
     }

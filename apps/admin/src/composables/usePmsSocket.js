@@ -47,7 +47,10 @@ export function usePmsSocket(hotelId, callbacks = {}) {
 
     const room = `hotel:${hId}`
 
-    if (currentRoom && currentRoom !== room) {
+    // Already in this room - skip duplicate registration
+    if (currentRoom === room) return
+
+    if (currentRoom) {
       leaveRoom()
     }
 

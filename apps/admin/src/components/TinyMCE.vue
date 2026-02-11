@@ -36,16 +36,25 @@ const emit = defineEmits(['update:modelValue'])
 
 const editorId = ref(`tinymce-editor-${Math.random().toString(36).substr(2, 9)}`)
 let editorInstance = null
+let pendingInterval = null
 
 const loadTinyMceScript = () => {
   return new Promise((resolve, reject) => {
     if (window.tinymce) return resolve()
     // Check if script tag already exists
     if (document.querySelector('script[src*="tinymce"]')) {
-      const check = setInterval(() => {
+      let attempts = 0
+      const maxAttempts = 200 // 10 seconds at 50ms intervals
+      pendingInterval = setInterval(() => {
+        attempts++
         if (window.tinymce) {
-          clearInterval(check)
+          clearInterval(pendingInterval)
+          pendingInterval = null
           resolve()
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pendingInterval)
+          pendingInterval = null
+          reject(new Error('TinyMCE script load timeout'))
         }
       }, 50)
       return
@@ -142,6 +151,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (pendingInterval) {
+    clearInterval(pendingInterval)
+    pendingInterval = null
+  }
   if (editorInstance) {
     editorInstance.remove()
     editorInstance = null

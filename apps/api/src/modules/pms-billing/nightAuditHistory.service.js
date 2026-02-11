@@ -4,6 +4,7 @@
  */
 
 import { asyncHandler } from '#helpers'
+import { parsePagination } from '#services/queryBuilder.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import NightAudit from './nightAudit.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
@@ -15,7 +16,7 @@ import * as reportService from './nightAuditReports.service.js'
  */
 export const getAuditHistory = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { page = 1, limit = 20 } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   const audits = await NightAudit.getHistory(hotelId, { page, limit })
 
@@ -29,8 +30,8 @@ export const getAuditHistory = asyncHandler(async (req, res) => {
     data: {
       audits,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         totalPages: Math.ceil(total / limit)
       }

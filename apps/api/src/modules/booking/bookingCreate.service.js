@@ -18,6 +18,7 @@ import { BadRequestError, NotFoundError } from '#core/errors.js'
 import logger from '#core/logger.js'
 import { getPartnerId, getSourceInfo } from '#services/helpers.js'
 import { sanitizeGuest, sanitizeRoomGuests } from './helpers.js'
+import { DEFAULT_GUEST_FIRST_NAME, DEFAULT_GUEST_LAST_NAME } from '#constants/defaults.js'
 
 /**
  * Create booking
@@ -260,8 +261,8 @@ export const createBooking = asyncHandler(async (req, res) => {
   }
   if (!leadGuest) {
     leadGuest = {
-      firstName: contact.firstName || 'Misafir',
-      lastName: contact.lastName || '-',
+      firstName: contact.firstName || DEFAULT_GUEST_FIRST_NAME,
+      lastName: contact.lastName || DEFAULT_GUEST_LAST_NAME,
       type: 'adult',
       isLead: true
     }
@@ -627,8 +628,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   }
   if (!leadGuest) {
     leadGuest = {
-      firstName: contact.firstName || 'Misafir',
-      lastName: contact.lastName || '-',
+      firstName: contact.firstName || DEFAULT_GUEST_FIRST_NAME,
+      lastName: contact.lastName || DEFAULT_GUEST_LAST_NAME,
       type: 'adult',
       isLead: true
     }

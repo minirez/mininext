@@ -5,6 +5,7 @@
 
 import mongoose from 'mongoose'
 import { asyncHandler, withTransaction, escapeRegex } from '#helpers'
+import { parsePagination } from '#services/queryBuilder.js'
 import Booking from '#modules/booking/booking.model.js'
 import Room from '#modules/pms-housekeeping/room.model.js'
 import RoomType from '#modules/planning/roomType.model.js'
@@ -16,7 +17,8 @@ import Guest from '#modules/pms-guest/guest.model.js'
 // Get all reservations for a hotel
 export const getReservations = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { status, startDate, endDate, search, page = 1, limit = 20 } = req.query
+  const { status, startDate, endDate, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   const query = { hotel: hotelId }
 
@@ -46,14 +48,8 @@ export const getReservations = asyncHandler(async (req, res) => {
     ]
   }
 
-  const skip = (page - 1) * limit
-
   const [reservations, total] = await Promise.all([
-    Booking.find(query)
-      .sort({ checkIn: 1, createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean(),
+    Booking.find(query).sort({ checkIn: 1, createdAt: -1 }).skip(skip).limit(limit).lean(),
     Booking.countDocuments(query)
   ])
 
@@ -61,8 +57,8 @@ export const getReservations = asyncHandler(async (req, res) => {
     success: true,
     data: reservations,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       total,
       totalPages: Math.ceil(total / limit)
     }

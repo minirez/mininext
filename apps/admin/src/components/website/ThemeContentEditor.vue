@@ -243,7 +243,7 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div
               v-for="(location, index) in getLocationsSection().items || []"
-              :key="index"
+              :key="location._uid || 'loc-' + index"
               class="group relative"
             >
               <!-- Location Photo with Upload -->
@@ -317,7 +317,7 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div
               v-for="(location, index) in getLocationsSection().items || []"
-              :key="index"
+              :key="location._uid || 'loc-' + index"
               class="group relative"
             >
               <!-- Location Photo with Upload -->
@@ -412,7 +412,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
             v-for="(campaign, index) in getCampaignsArray()"
-            :key="index"
+            :key="campaign._uid || 'camp-' + index"
             class="p-4 bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600"
           >
             <!-- Campaign Photo with Upload -->
@@ -519,7 +519,7 @@
         <div class="space-y-4">
           <div
             v-for="(route, index) in getRoutesSection().items || []"
-            :key="index"
+            :key="route._uid || 'route-' + index"
             class="p-4 bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600"
           >
             <div class="grid grid-cols-4 gap-4">
@@ -816,7 +816,7 @@
             <div class="flex flex-wrap gap-2">
               <div
                 v-for="(id, index) in getProductIds()"
-                :key="index"
+                :key="id || 'prod-' + index"
                 class="flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm"
               >
                 <span>{{ id }}</span>
@@ -947,7 +947,7 @@
         <div class="space-y-4">
           <div
             v-for="(section, index) in localContent.sections || []"
-            :key="index"
+            :key="section._uid || 'sec-' + index"
             class="p-4 bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600"
           >
             <div class="flex items-center justify-between mb-3">
@@ -1030,6 +1030,9 @@ import tourService from '@/services/tourService'
 
 const { t } = useI18n()
 
+let _uidCounter = 0
+const uid = () => `_${Date.now().toString(36)}_${(++_uidCounter).toString(36)}`
+
 const props = defineProps({
   modelValue: {
     type: Object,
@@ -1071,12 +1074,16 @@ watch(
   { immediate: true }
 )
 
-// Watch for local changes and emit
+// Watch for local changes and emit (debounced to prevent excessive parent re-renders)
+let debounceTimer = null
 watch(
   localContent,
   newValue => {
-    emit('update:modelValue', newValue)
-    emit('update', newValue)
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      emit('update:modelValue', newValue)
+      emit('update', newValue)
+    }, 300)
   },
   { deep: true }
 )
@@ -1376,6 +1383,7 @@ const addLocation = () => {
   // For bedbank theme, use different structure
   if (props.themeType === 'bedbank') {
     section.items.push({
+      _uid: uid(),
       bbLocationId: null,
       bbLocationName: '',
       photo: {},
@@ -1383,6 +1391,7 @@ const addLocation = () => {
     })
   } else {
     section.items.push({
+      _uid: uid(),
       city: '',
       country: '',
       photo: {},
@@ -1525,6 +1534,7 @@ const getCampaignsArray = () => {
 
 const addCampaign = () => {
   const newCampaign = {
+    _uid: uid(),
     photo: {},
     title: [
       { lang: 'en', value: '' },
@@ -1740,6 +1750,7 @@ const addRoute = () => {
   if (!section.items) section.items = []
   if (section.items.length >= 5) return // Max 5 routes
   section.items.push({
+    _uid: uid(),
     departure: '',
     arrival: '',
     departureDate: new Date().toISOString().split('T')[0],
@@ -1760,6 +1771,7 @@ const addBedbankSection = () => {
   }
   if (localContent.value.sections.length >= 5) return
   localContent.value.sections.push({
+    _uid: uid(),
     title: [
       { lang: 'en', value: '' },
       { lang: 'tr', value: '' }

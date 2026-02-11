@@ -18,6 +18,7 @@ import { asyncHandler } from '#helpers'
 import { deleteHotelFile } from '#helpers/hotelUpload.js'
 import logger from '#core/logger.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
+import { parsePagination } from '#services/queryBuilder.js'
 import { generateAmenitiesFromProfile } from './amenityMapping.js'
 
 // Re-export from other service files for backwards compatibility
@@ -37,7 +38,8 @@ export const getHotels = asyncHandler(async (req, res) => {
     throw new BadRequestError('PARTNER_REQUIRED')
   }
 
-  const { status, stars, city, search, page = 1, limit = 20 } = req.query
+  const { status, stars, city, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter
   const filter = { partner: partnerId }
@@ -61,13 +63,12 @@ export const getHotels = asyncHandler(async (req, res) => {
     ]
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await Hotel.countDocuments(filter)
 
   const hotels = await Hotel.find(filter)
     .sort({ displayOrder: 1, createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
     .select('-__v')
 
   res.json({
@@ -75,10 +76,10 @@ export const getHotels = asyncHandler(async (req, res) => {
     data: {
       items: hotels,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })

@@ -49,8 +49,8 @@ router.get(
       status,
       starred,
       search,
-      page: Number(page) || 1,
-      limit: Number(limit) || 30
+      page,
+      limit
     })
     res.json({ success: true, data: result })
   })

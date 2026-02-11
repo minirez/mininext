@@ -4,6 +4,7 @@ import User from '../user/user.model.js'
 import { NotFoundError, ConflictError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { getPartnerId } from '#services/helpers.js'
+import { parsePagination } from '#services/queryBuilder.js'
 import { sendWelcomeEmail } from '#helpers/mail.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
@@ -87,7 +88,8 @@ export const createAgency = asyncHandler(async (req, res) => {
 
 // Get all agencies
 export const getAgencies = asyncHandler(async (req, res) => {
-  const { partner, status, search, page = 1, limit = 20 } = req.query
+  const { partner, status, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter
   const filter = {}
@@ -109,21 +111,20 @@ export const getAgencies = asyncHandler(async (req, res) => {
   }
 
   // Pagination
-  const skip = (page - 1) * limit
   const total = await Agency.countDocuments(filter)
   const agencies = await Agency.find(filter)
     .populate('partner', 'companyName email status')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
 
   res.json({
     success: true,
     data: {
       agencies,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         pages: Math.ceil(total / limit)
       }
@@ -255,7 +256,8 @@ export const deactivateAgency = asyncHandler(async (req, res) => {
 
 // Get agency users
 export const getAgencyUsers = asyncHandler(async (req, res) => {
-  const { status, search, role, page = 1, limit = 20 } = req.query
+  const { status, search, role } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
   const agencyId = req.params.id
 
   // Get agency and verify ownership
@@ -288,9 +290,8 @@ export const getAgencyUsers = asyncHandler(async (req, res) => {
   }
 
   // Pagination
-  const skip = (page - 1) * limit
   const total = await User.countDocuments(filter)
-  const users = await User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit))
+  const users = await User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit)
 
   res.json({
     success: true,
@@ -298,8 +299,8 @@ export const getAgencyUsers = asyncHandler(async (req, res) => {
       agency,
       users,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         pages: Math.ceil(total / limit)
       }

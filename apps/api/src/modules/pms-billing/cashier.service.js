@@ -3,7 +3,8 @@
  * Handles cashier/POS operations
  */
 
-import { asyncHandler, escapeRegex, sanitizePagination } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
+import { parsePagination } from '#services/queryBuilder.js'
 import Transaction, {
   TRANSACTION_TYPES,
   TRANSACTION_CATEGORIES,
@@ -19,6 +20,7 @@ import Hotel from '#modules/hotel/hotel.model.js'
 import PmsSettings from '#modules/pms-settings/settings.model.js'
 import { getExchangeRates, convertCurrency } from '#services/currencyService.js'
 
+import { DEFAULT_CASHIER_NAME } from '#constants/defaults.js'
 import { emitToRoom } from '#core/socket.js'
 
 const emitTransactionUpdate = (hotelId, action, data) => {
@@ -44,7 +46,8 @@ export const getActiveShift = asyncHandler(async (req, res) => {
 // Get all shifts with filters
 export const getShifts = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { date, status, page = 1, limit = 20 } = req.query
+  const { date, status } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   const query = { hotel: hotelId }
 
@@ -60,13 +63,11 @@ export const getShifts = asyncHandler(async (req, res) => {
     query.openedAt = { $gte: startOfDay, $lt: endOfDay }
   }
 
-  const skip = (page - 1) * limit
-
   const [shifts, total] = await Promise.all([
     CashRegister.find(query)
       .sort({ openedAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .populate('cashier', 'name email')
       .populate('closedBy', 'name email')
       .lean(),
@@ -77,8 +78,8 @@ export const getShifts = asyncHandler(async (req, res) => {
     success: true,
     data: shifts,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       total,
       totalPages: Math.ceil(total / limit)
     }
@@ -164,7 +165,11 @@ export const openShift = asyncHandler(async (req, res) => {
     registerId,
     cashier: req.user?._id,
     cashierName:
-      req.user?.fullName || req.user?.firstName || req.user?.name || req.user?.email || 'Kasiyer',
+      req.user?.fullName ||
+      req.user?.firstName ||
+      req.user?.name ||
+      req.user?.email ||
+      DEFAULT_CASHIER_NAME,
     // Legacy single-currency (backward compatibility)
     openingBalance: {
       cash: openingCash
@@ -363,7 +368,8 @@ export const getDailySummary = asyncHandler(async (req, res) => {
 // Get transactions
 export const getTransactions = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { type, status, currency, startDate, endDate, search, page = 1, limit = 50 } = req.query
+  const { type, status, currency, startDate, endDate, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   const query = { hotel: hotelId }
 
@@ -399,13 +405,11 @@ export const getTransactions = asyncHandler(async (req, res) => {
     ]
   }
 
-  const skip = (page - 1) * limit
-
   const [transactions, total] = await Promise.all([
     Transaction.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .populate('stay', 'stayNumber')
       .populate('guest', 'firstName lastName')
       .populate('room', 'roomNumber')
@@ -417,8 +421,8 @@ export const getTransactions = asyncHandler(async (req, res) => {
     success: true,
     data: transactions,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       total,
       totalPages: Math.ceil(total / limit)
     }

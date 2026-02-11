@@ -8,6 +8,7 @@ import Market from '../planning/market.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import logger from '#core/logger.js'
+import { parsePagination } from '#services/queryBuilder.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
 
 /**
@@ -15,7 +16,8 @@ import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
  */
 export const getAvailableBases = asyncHandler(async (req, res) => {
   const partnerId = getPartnerId(req)
-  const { city, stars, search, page = 1, limit = 20 } = req.query
+  const { city, stars, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   if (!partnerId) {
     throw new BadRequestError('PARTNER_REQUIRED')
@@ -49,14 +51,13 @@ export const getAvailableBases = asyncHandler(async (req, res) => {
     ]
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await Hotel.countDocuments(filter)
 
   const hotels = await Hotel.find(filter)
     .populate('location.city', 'name countryCode')
     .sort({ stars: -1, name: 1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
     .select('name stars type category address location images logo')
 
   res.json({
@@ -64,10 +65,10 @@ export const getAvailableBases = asyncHandler(async (req, res) => {
     data: {
       items: hotels,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })

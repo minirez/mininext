@@ -11,6 +11,7 @@ import Market from '../planning/market.model.js'
 import Booking from '../booking/booking.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
+import { GUEST_PLACEHOLDER_NAME } from '#constants/defaults.js'
 
 /**
  * Find market for hotel by country code
@@ -200,7 +201,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     totalInfants,
     leadGuest: rooms[0]?.guests?.find(g => g.isLead) ||
       rooms[0]?.guests?.[0] || {
-        firstName: contact.firstName || 'Guest',
+        firstName: contact.firstName || GUEST_PLACEHOLDER_NAME,
         lastName: contact.lastName || '',
         isLead: true
       },

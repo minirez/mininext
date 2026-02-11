@@ -3,13 +3,15 @@ import SubscriptionInvoice from './subscriptionInvoice.model.js'
 import Partner from '#modules/partner/partner.model.js'
 import PlatformSettings from '#modules/platform-settings/platformSettings.model.js'
 import { asyncHandler } from '#helpers'
+import { parsePagination } from '#services/queryBuilder.js'
 import { NotFoundError, ValidationError } from '#core/errors.js'
 import { SUBSCRIPTION_PLANS } from '#constants/subscriptionPlans.js'
 import PDFDocument from 'pdfkit'
 
 // Fatura Listesi
 export const getInvoices = asyncHandler(async (req, res) => {
-  const { partnerId, status, startDate, endDate, page = 1, limit = 20 } = req.query
+  const { partnerId, status, startDate, endDate } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   const query = {}
   if (partnerId) query.partner = partnerId
@@ -23,7 +25,7 @@ export const getInvoices = asyncHandler(async (req, res) => {
   const invoices = await SubscriptionInvoice.find(query)
     .populate('partner', 'companyName email code')
     .sort({ invoiceDate: -1 })
-    .skip((page - 1) * limit)
+    .skip(skip)
     .limit(limit)
 
   const total = await SubscriptionInvoice.countDocuments(query)
@@ -32,7 +34,7 @@ export const getInvoices = asyncHandler(async (req, res) => {
     success: true,
     data: {
       invoices,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) }
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) }
     }
   })
 })
@@ -66,7 +68,8 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
 
   // Abonelik dönemi (purchase'tan al)
   const startDate = purchaseData.period?.startDate || new Date()
-  const endDate = purchaseData.period?.endDate || new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000)
+  const endDate =
+    purchaseData.period?.endDate || new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000)
 
   const invoice = await SubscriptionInvoice.create({
     invoiceNumber,
@@ -154,9 +157,11 @@ export const generatePDF = asyncHandler(async (req, res) => {
   // Header
   doc.fontSize(24).font('Helvetica-Bold').text('FATURA / INVOICE', { align: 'center' })
   doc.moveDown(0.5)
-  doc.fontSize(12).font('Helvetica').text(`Fatura No: ${invoice.invoiceNumber}`, { align: 'center' })
   doc
-    .text(`Tarih: ${invoice.invoiceDate.toLocaleDateString('tr-TR')}`, { align: 'center' })
+    .fontSize(12)
+    .font('Helvetica')
+    .text(`Fatura No: ${invoice.invoiceNumber}`, { align: 'center' })
+  doc.text(`Tarih: ${invoice.invoiceDate.toLocaleDateString('tr-TR')}`, { align: 'center' })
   doc.moveDown(2)
 
   // Satıcı ve Alıcı Bilgileri (yan yana)
@@ -216,7 +221,10 @@ export const generatePDF = asyncHandler(async (req, res) => {
   doc.text('Toplam', 490, tableTop)
 
   // Çizgi
-  doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke()
+  doc
+    .moveTo(50, tableTop + 15)
+    .lineTo(550, tableTop + 15)
+    .stroke()
 
   // Kalemler
   let y = tableTop + 25
@@ -232,7 +240,10 @@ export const generatePDF = asyncHandler(async (req, res) => {
   }
 
   // Alt Çizgi
-  doc.moveTo(50, y + 5).lineTo(550, y + 5).stroke()
+  doc
+    .moveTo(50, y + 5)
+    .lineTo(550, y + 5)
+    .stroke()
 
   // Toplamlar (Sağ alt)
   y += 20
@@ -258,7 +269,9 @@ export const generatePDF = asyncHandler(async (req, res) => {
     doc.fillColor('green').text('ODENDI / PAID', 400, y)
     doc.fillColor('black')
     if (invoice.paidAt) {
-      doc.fontSize(9).text(`Odeme Tarihi: ${invoice.paidAt.toLocaleDateString('tr-TR')}`, 400, y + 15)
+      doc
+        .fontSize(9)
+        .text(`Odeme Tarihi: ${invoice.paidAt.toLocaleDateString('tr-TR')}`, 400, y + 15)
     }
     if (invoice.paymentReference) {
       doc.text(`Referans: ${invoice.paymentReference}`, 400, y + 28)
@@ -381,11 +394,11 @@ export const getStats = asyncHandler(async (req, res) => {
 // Partner'ın faturalarını getir
 export const getPartnerInvoices = asyncHandler(async (req, res) => {
   const { partnerId } = req.params
-  const { page = 1, limit = 10 } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 10 })
 
   const invoices = await SubscriptionInvoice.find({ partner: partnerId })
     .sort({ invoiceDate: -1 })
-    .skip((page - 1) * limit)
+    .skip(skip)
     .limit(limit)
 
   const total = await SubscriptionInvoice.countDocuments({ partner: partnerId })
@@ -394,7 +407,7 @@ export const getPartnerInvoices = asyncHandler(async (req, res) => {
     success: true,
     data: {
       invoices,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) }
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) }
     }
   })
 })

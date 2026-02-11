@@ -4,6 +4,8 @@
  * Split from booking.service.js for better maintainability
  */
 
+import { DEFAULT_GUEST_FIRST_NAME, DEFAULT_GUEST_LAST_NAME } from '#constants/defaults.js'
+
 /**
  * Sanitize guest data before saving
  */
@@ -12,8 +14,8 @@ export const sanitizeGuest = guest => {
   const sanitized = {
     type: guest.type || 'adult',
     title: guest.title || 'mr',
-    firstName: guest.firstName?.trim() || 'Misafir',
-    lastName: guest.lastName?.trim() || '-',
+    firstName: guest.firstName?.trim() || DEFAULT_GUEST_FIRST_NAME,
+    lastName: guest.lastName?.trim() || DEFAULT_GUEST_LAST_NAME,
     nationality: guest.nationality || '',
     isLead: guest.isLead || false
   }

@@ -13,13 +13,15 @@ import {
   downloadRoomTemplateImages
 } from '#helpers/imageDownloader.js'
 import logger from '#core/logger.js'
+import { parsePagination } from '#services/queryBuilder.js'
 import { generateAmenitiesFromProfile } from './amenityMapping.js'
 
 /**
  * Get all base hotels (SuperAdmin only)
  */
 export const getBaseHotels = asyncHandler(async (req, res) => {
-  const { status, stars, city, search, page = 1, limit = 20 } = req.query
+  const { status, stars, city, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter
   const filter = { hotelType: 'base' }
@@ -43,14 +45,13 @@ export const getBaseHotels = asyncHandler(async (req, res) => {
     ]
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await Hotel.countDocuments(filter)
 
   const hotels = await Hotel.find(filter)
     .populate('location.city', 'name countryCode')
     .sort({ stars: -1, name: 1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
     .select('-__v')
     .lean()
 
@@ -88,10 +89,10 @@ export const getBaseHotels = asyncHandler(async (req, res) => {
     data: {
       items: hotelsWithLinkedCount,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })
@@ -374,7 +375,9 @@ export const updateBaseHotel = asyncHandler(async (req, res) => {
     const generatedAmenities = generateAmenitiesFromProfile(hotel.profile)
     if (generatedAmenities.length > 0) {
       hotel.amenities = generatedAmenities
-      logger.info(`Auto-generated amenities for base hotel ${hotel._id}: ${generatedAmenities.join(', ')}`)
+      logger.info(
+        `Auto-generated amenities for base hotel ${hotel._id}: ${generatedAmenities.join(', ')}`
+      )
     }
   }
 

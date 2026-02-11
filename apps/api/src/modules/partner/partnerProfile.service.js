@@ -5,6 +5,7 @@ import Agency from '../agency/agency.model.js'
 import { NotFoundError, ConflictError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { sendWelcomeEmail, sendActivationEmail } from '#helpers/mail.js'
+import { parsePagination } from '#services/queryBuilder.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
 
@@ -61,7 +62,8 @@ export const createPartner = asyncHandler(async (req, res) => {
 
 // Get all partners
 export const getPartners = asyncHandler(async (req, res) => {
-  const { status, search, page = 1, limit = 20 } = req.query
+  const { status, search } = req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter
   const filter = {}
@@ -76,20 +78,16 @@ export const getPartners = asyncHandler(async (req, res) => {
   }
 
   // Pagination
-  const skip = (page - 1) * limit
   const total = await Partner.countDocuments(filter)
-  const partners = await Partner.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(parseInt(limit))
+  const partners = await Partner.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit)
 
   res.json({
     success: true,
     data: {
       partners,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         pages: Math.ceil(total / limit)
       }

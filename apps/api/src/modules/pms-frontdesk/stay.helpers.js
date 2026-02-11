@@ -4,6 +4,7 @@
  */
 
 import Guest from '#modules/pms-guest/guest.model.js'
+import { DEFAULT_GUEST_DISPLAY_NAME } from '#constants/defaults.js'
 
 // Pagination validation constants
 export const MAX_PAGE_LIMIT = 100
@@ -150,13 +151,13 @@ export const mapBookingPricingToStay = booking => {
  * @returns {string} Display name
  */
 export const buildGuestDisplayName = guestData => {
-  if (!guestData) return 'Misafir'
+  if (!guestData) return DEFAULT_GUEST_DISPLAY_NAME
 
   const parts = []
   if (guestData.firstName) parts.push(guestData.firstName)
   if (guestData.lastName) parts.push(guestData.lastName)
 
-  return parts.length > 0 ? parts.join(' ') : 'Misafir'
+  return parts.length > 0 ? parts.join(' ') : DEFAULT_GUEST_DISPLAY_NAME
 }
 
 export default {

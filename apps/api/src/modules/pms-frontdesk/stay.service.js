@@ -11,13 +11,16 @@ import CashRegister from '#modules/pms-billing/cashRegister.model.js'
 import { asyncHandler, withTransaction } from '#helpers'
 import { BadRequestError, NotFoundError, ConflictError } from '#core/errors.js'
 import logger from '#core/logger.js'
+import {
+  GUEST_PLACEHOLDER_NAME,
+  DEFAULT_GUEST_FIRST_NAME,
+  DEFAULT_GUEST_LAST_NAME,
+  DEFAULT_GUEST_DISPLAY_NAME
+} from '#constants/defaults.js'
 
 // Import helper functions from modular file
-import {
-  findOrCreateGuestProfile,
-  findOrCreateGuestProfileForCheckIn,
-  sanitizePagination
-} from './stay.helpers.js'
+import { findOrCreateGuestProfile, findOrCreateGuestProfileForCheckIn } from './stay.helpers.js'
+import { parsePagination } from '#services/queryBuilder.js'
 
 import { emitToRoom } from '#core/socket.js'
 import { broadcastNotification } from '#modules/notification/notification.service.js'
@@ -38,11 +41,11 @@ const emitStayUpdate = (hotelId, event, data) => {
   })
 }
 const getGuestDisplayName = guest => {
-  if (!guest) return 'Misafir'
+  if (!guest) return DEFAULT_GUEST_DISPLAY_NAME
   const parts = []
   if (guest.firstName) parts.push(guest.firstName)
   if (guest.lastName) parts.push(guest.lastName)
-  return parts.length > 0 ? parts.join(' ') : 'Misafir'
+  return parts.length > 0 ? parts.join(' ') : DEFAULT_GUEST_DISPLAY_NAME
 }
 
 /**
@@ -116,10 +119,8 @@ const distributedLock = {
 
 export const getStays = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
-  const { status, from, to, room, limit: queryLimit = 50, page: queryPage = 1 } = req.query
-
-  // Sanitize pagination parameters
-  const { limit, page } = sanitizePagination(queryLimit, queryPage)
+  const { status, from, to, room } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   const filter = {
     hotel: hotelId
@@ -133,8 +134,6 @@ export const getStays = asyncHandler(async (req, res) => {
     if (from) filter.checkInDate.$gte = new Date(from)
     if (to) filter.checkInDate.$lte = new Date(to)
   }
-
-  const skip = (page - 1) * limit
 
   const [stays, total] = await Promise.all([
     Stay.find(filter)
@@ -608,7 +607,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
 
       // For multi-room bookings, prefer the room's own lead guest
       const roomLead = roomGuests.find(g => g.isLead)
-      const hasRoomLead = roomLead?.firstName && roomLead.firstName !== 'Guest'
+      const hasRoomLead = roomLead?.firstName && roomLead.firstName !== GUEST_PLACEHOLDER_NAME
 
       if (hasRoomLead) {
         // Use room's own lead guest as main guest
@@ -630,17 +629,17 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
             (g.firstName === roomLead.firstName && g.lastName === roomLead.lastName)
           )
             continue
-          if (g.firstName && g.firstName !== 'Guest') {
+          if (g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME) {
             guestList.push({
               firstName: g.firstName,
-              lastName: g.lastName || '-',
+              lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,
               type: g.type || 'adult',
               nationality: g.nationality,
               isMainGuest: false
             })
           }
         }
-      } else if (lead?.firstName && lead.firstName !== 'Guest') {
+      } else if (lead?.firstName && lead.firstName !== GUEST_PLACEHOLDER_NAME) {
         // Fallback to booking leadGuest (single-room or no room lead)
         guestList = [
           {
@@ -655,10 +654,10 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         ]
         for (const g of roomGuests) {
           if (g.isLead || (g.firstName === lead.firstName && g.lastName === lead.lastName)) continue
-          if (g.firstName && g.firstName !== 'Guest') {
+          if (g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME) {
             guestList.push({
               firstName: g.firstName,
-              lastName: g.lastName || '-',
+              lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,
               type: g.type || 'adult',
               nationality: g.nationality,
               isMainGuest: false
@@ -668,10 +667,10 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       } else if (roomGuests.length > 0) {
         // No usable lead at all, use room guests
         guestList = roomGuests
-          .filter(g => g.firstName && g.firstName !== 'Guest')
+          .filter(g => g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME)
           .map((g, i) => ({
             firstName: g.firstName,
-            lastName: g.lastName || '-',
+            lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,
             type: g.type || 'adult',
             nationality: g.nationality,
             isMainGuest: g.isLead || i === 0
@@ -682,8 +681,8 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       if (!guestList || guestList.length === 0) {
         guestList = [
           {
-            firstName: lead?.firstName || 'Misafir',
-            lastName: lead?.lastName || '-',
+            firstName: lead?.firstName || DEFAULT_GUEST_FIRST_NAME,
+            lastName: lead?.lastName || DEFAULT_GUEST_LAST_NAME,
             isMainGuest: true
           }
         ]
@@ -1791,8 +1790,8 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
       if (stayCount >= totalRooms) {
         await Booking.findByIdAndUpdate(stay.booking, { status: 'checked_in' })
       }
-    } catch {
-      // Non-critical - booking status update failed
+    } catch (err) {
+      logger.warn('[CheckIn] Booking status update failed:', err.message)
     }
   }
 
@@ -1822,8 +1821,8 @@ export const checkInFromStay = asyncHandler(async (req, res) => {
         })
       }
     }
-  } catch {
-    // Non-critical - guest history update failed
+  } catch (err) {
+    logger.warn('[CheckIn] Guest history update failed:', err.message)
   }
 
   const populatedStay = await Stay.findById(stay._id)

@@ -1,6 +1,7 @@
 import AuditLog from './audit.model.js'
 import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
+import { parsePagination } from '#services/queryBuilder.js'
 
 /**
  * Get all audit logs with filtering and pagination
@@ -17,10 +18,9 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     documentId,
     startDate,
     endDate,
-    search,
-    page = 1,
-    limit = 50
+    search
   } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   // Build filter
   const filter = {}
@@ -55,24 +55,19 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
   }
 
   // Pagination
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await AuditLog.countDocuments(filter)
 
-  const logs = await AuditLog.find(filter)
-    .sort({ timestamp: -1 })
-    .skip(skip)
-    .limit(parseInt(limit))
-    .lean()
+  const logs = await AuditLog.find(filter).sort({ timestamp: -1 }).skip(skip).limit(limit).lean()
 
   res.json({
     success: true,
     data: {
       logs,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })
@@ -99,7 +94,7 @@ export const getAuditLog = asyncHandler(async (req, res) => {
  */
 export const getDocumentHistory = asyncHandler(async (req, res) => {
   const { collection, documentId } = req.params
-  const { page = 1, limit = 50 } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   if (!collection || !documentId) {
     throw new BadRequestError('MISSING_COLLECTION_OR_DOCUMENT_ID')
@@ -110,24 +105,19 @@ export const getDocumentHistory = asyncHandler(async (req, res) => {
     'target.documentId': documentId
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await AuditLog.countDocuments(filter)
 
-  const history = await AuditLog.find(filter)
-    .sort({ timestamp: -1 })
-    .skip(skip)
-    .limit(parseInt(limit))
-    .lean()
+  const history = await AuditLog.find(filter).sort({ timestamp: -1 }).skip(skip).limit(limit).lean()
 
   res.json({
     success: true,
     data: {
       history,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })
@@ -138,7 +128,7 @@ export const getDocumentHistory = asyncHandler(async (req, res) => {
  */
 export const getUserActivity = asyncHandler(async (req, res) => {
   const { userId } = req.params
-  const { page = 1, limit = 50 } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   if (!userId) {
     throw new BadRequestError('MISSING_USER_ID')
@@ -146,13 +136,12 @@ export const getUserActivity = asyncHandler(async (req, res) => {
 
   const filter = { 'actor.userId': userId }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await AuditLog.countDocuments(filter)
 
   const activity = await AuditLog.find(filter)
     .sort({ timestamp: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
     .lean()
 
   res.json({
@@ -160,10 +149,10 @@ export const getUserActivity = asyncHandler(async (req, res) => {
     data: {
       activity,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })
@@ -174,7 +163,7 @@ export const getUserActivity = asyncHandler(async (req, res) => {
  */
 export const getPartnerActivity = asyncHandler(async (req, res) => {
   const { partnerId } = req.params
-  const { page = 1, limit = 50 } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50 })
 
   if (!partnerId) {
     throw new BadRequestError('MISSING_PARTNER_ID')
@@ -182,13 +171,12 @@ export const getPartnerActivity = asyncHandler(async (req, res) => {
 
   const filter = { 'actor.partnerId': partnerId }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
   const total = await AuditLog.countDocuments(filter)
 
   const activity = await AuditLog.find(filter)
     .sort({ timestamp: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
     .lean()
 
   res.json({
@@ -196,10 +184,10 @@ export const getPartnerActivity = asyncHandler(async (req, res) => {
     data: {
       activity,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   })

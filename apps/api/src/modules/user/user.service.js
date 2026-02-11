@@ -9,6 +9,7 @@ import { generate2FASecret, generateQRCode, verify2FAToken } from '#helpers/twoF
 import { send2FASetupEmail, sendActivationEmail, sendWelcomeEmail } from '#helpers/mail.js'
 import config from '#config'
 import logger from '#core/logger.js'
+import { parsePagination } from '#services/queryBuilder.js'
 
 // ============================================
 // User CRUD
@@ -139,18 +140,9 @@ export const createUser = asyncHandler(async (req, res) => {
 
 // Get all users
 export const getUsers = asyncHandler(async (req, res) => {
-  const {
-    accountType,
-    accountId,
-    status,
-    search,
-    role,
-    pmsRole,
-    pmsDepartment,
-    pmsAccess,
-    page = 1,
-    limit = 20
-  } = req.query
+  const { accountType, accountId, status, search, role, pmsRole, pmsDepartment, pmsAccess } =
+    req.query
+  const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter based on user permissions
   const filter = {}
@@ -182,21 +174,20 @@ export const getUsers = asyncHandler(async (req, res) => {
   if (pmsAccess === 'true') filter.pmsRole = { $ne: null }
 
   // Pagination
-  const skip = (page - 1) * limit
   const total = await User.countDocuments(filter)
   const users = await User.find(filter)
     .populate('accountId')
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit))
+    .limit(limit)
 
   res.json({
     success: true,
     data: {
       users,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
         pages: Math.ceil(total / limit)
       }

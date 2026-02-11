@@ -3,6 +3,7 @@ import logger from '#core/logger.js'
 import Booking from '#modules/booking/booking.model.js'
 import ChannelConnection from './channelConnection.model.js'
 import * as reselivaClient from './reseliva.client.js'
+import { GUEST_PLACEHOLDER_NAME } from '#constants/defaults.js'
 
 /**
  * Generate a unique booking number
@@ -61,7 +62,7 @@ function mapRoomToBooking(connection, roomData) {
   for (let i = 0; i < roomData.totalPax; i++) {
     room.guests.push({
       type: 'adult',
-      firstName: 'Guest',
+      firstName: GUEST_PLACEHOLDER_NAME,
       lastName: `${i + 1}`,
       isLead: i === 0
     })
@@ -129,7 +130,7 @@ async function createChannelBooking(connection, resData) {
     totalInfants: 0,
     leadGuest: {
       type: 'adult',
-      firstName: resData.firstName || 'Guest',
+      firstName: resData.firstName || GUEST_PLACEHOLDER_NAME,
       lastName: resData.lastName || 'Unknown',
       nationality: resData.nationality || '',
       isLead: true

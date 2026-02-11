@@ -3,13 +3,8 @@
  * API handlers for guest management
  */
 
-import {
-  asyncHandler,
-  escapeRegex,
-  sanitizeSort,
-  sanitizePagination,
-  isValidObjectId
-} from '#helpers'
+import { asyncHandler, escapeRegex, sanitizeSort, isValidObjectId } from '#helpers'
+import { parsePagination } from '#services/queryBuilder.js'
 import Guest, { VIP_LEVELS, ID_TYPES } from './guest.model.js'
 import Stay from '#modules/pms-frontdesk/stay.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
@@ -36,13 +31,10 @@ export const getGuests = asyncHandler(async (req, res) => {
     search,
     vipLevel,
     isBlacklisted,
-    page: queryPage = 1,
-    limit: queryLimit = 20,
     sort: querySort = '-statistics.lastStayDate'
   } = req.query
 
-  // Sanitize pagination and sort parameters
-  const { limit, page } = sanitizePagination(queryLimit, queryPage)
+  const { page, limit, skip } = parsePagination(req.query)
   const sort = sanitizeSort(querySort, GUEST_SORT_FIELDS, '-statistics.lastStayDate')
 
   const query = { hotel: hotelId, isActive: true }
@@ -70,8 +62,6 @@ export const getGuests = asyncHandler(async (req, res) => {
       { idNumber: { $regex: escapedSearch, $options: 'i' } }
     ]
   }
-
-  const skip = (page - 1) * limit
 
   const [guests, total] = await Promise.all([
     Guest.find(query).sort(sort).skip(skip).limit(limit).lean(),
@@ -465,7 +455,7 @@ export const updateTags = asyncHandler(async (req, res) => {
 // Get guest stay history
 export const getStayHistory = asyncHandler(async (req, res) => {
   const { hotelId, guestId } = req.params
-  const { page = 1, limit = 10 } = req.query
+  const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 10 })
 
   const guest = await Guest.findOne({
     _id: guestId,
@@ -480,8 +470,6 @@ export const getStayHistory = asyncHandler(async (req, res) => {
   }
 
   // Get full stay history from Stay collection
-  const skip = (page - 1) * limit
-
   const [stays, total] = await Promise.all([
     Stay.find({
       hotel: hotelId,
@@ -491,7 +479,7 @@ export const getStayHistory = asyncHandler(async (req, res) => {
       .populate('roomType', 'code name')
       .sort({ checkInDate: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .lean(),
     Stay.countDocuments({
       hotel: hotelId,
@@ -503,8 +491,8 @@ export const getStayHistory = asyncHandler(async (req, res) => {
     success: true,
     data: stays,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       total,
       totalPages: Math.ceil(total / limit)
     }

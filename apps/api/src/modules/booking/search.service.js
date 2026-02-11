@@ -12,6 +12,7 @@ import Market from '../planning/market.model.js'
 import pricingService from '#services/pricingService.js'
 import { getEffectiveChildAgeGroups } from '#services/pricing/multipliers.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
+import logger from '#core/logger.js'
 import { getPartnerId } from '#services/helpers.js'
 
 // ==================== MULTI-HOTEL SEARCH ====================
@@ -229,9 +230,8 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
             if (priceResult.availability?.isAvailable) {
               availableRoomCount++
               // Use channel-specific price (NOT hotelCost!)
-              const price = salesChannel === 'b2b'
-                ? priceResult.pricing.b2bPrice
-                : priceResult.pricing.b2cPrice
+              const price =
+                salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
               if (cheapestPrice === null || price < cheapestPrice) {
                 cheapestPrice = price
@@ -316,7 +316,16 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     throw new BadRequestError('PARTNER_CONTEXT_REQUIRED')
   }
 
-  const { hotelId, checkIn, checkOut, adults = 2, children = [], countryCode, currency, salesChannel = 'b2c' } = req.body
+  const {
+    hotelId,
+    checkIn,
+    checkOut,
+    adults = 2,
+    children = [],
+    countryCode,
+    currency,
+    salesChannel = 'b2c'
+  } = req.body
 
   // Validate required fields
   if (!hotelId || !checkIn || !checkOut) {
@@ -440,9 +449,10 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     // Check infant capacity
     if (infantCount > maxInfants) {
       roomResult.capacityExceeded = true
-      roomResult.capacityMessage = maxInfants === 0
-        ? 'Bu oda bebek kabul etmemektedir'
-        : `Max ${maxInfants} bebek kabul edilmektedir`
+      roomResult.capacityMessage =
+        maxInfants === 0
+          ? 'Bu oda bebek kabul etmemektedir'
+          : `Max ${maxInfants} bebek kabul edilmektedir`
       results.push(roomResult)
       continue
     }
@@ -450,9 +460,10 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     // Check if room accepts children
     if (childCount > maxChildren) {
       roomResult.capacityExceeded = true
-      roomResult.capacityMessage = maxChildren === 0
-        ? 'Bu oda çocuk kabul etmemektedir'
-        : `Max ${maxChildren} çocuk kabul edilmektedir`
+      roomResult.capacityMessage =
+        maxChildren === 0
+          ? 'Bu oda çocuk kabul etmemektedir'
+          : `Max ${maxChildren} çocuk kabul edilmektedir`
       results.push(roomResult)
       continue
     }
@@ -480,9 +491,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         })
 
         // Determine display price based on sales channel
-        const channelPrice = salesChannel === 'b2b'
-          ? priceResult.pricing.b2bPrice
-          : priceResult.pricing.b2cPrice
+        const channelPrice =
+          salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
         // Build option data
         const optionData = {
@@ -515,21 +525,25 @@ export const searchAvailability = asyncHandler(async (req, res) => {
             })) || [],
           dailyBreakdown: priceResult.dailyBreakdown,
           nights,
-          nonRefundable: priceResult.nonRefundable?.enabled ? {
-            enabled: true,
-            discountPercent: priceResult.nonRefundable.discountPercent,
-            pricing: {
-              finalTotal: salesChannel === 'b2b'
-                ? priceResult.nonRefundable.pricing.b2bPrice
-                : priceResult.nonRefundable.pricing.b2cPrice,
-              avgPerNight: (salesChannel === 'b2b'
-                ? priceResult.nonRefundable.pricing.b2bPrice
-                : priceResult.nonRefundable.pricing.b2cPrice) / nights,
-              hotelCost: priceResult.nonRefundable.pricing.hotelCost,
-              b2bPrice: priceResult.nonRefundable.pricing.b2bPrice
-            },
-            savings: priceResult.nonRefundable.savings
-          } : { enabled: false }
+          nonRefundable: priceResult.nonRefundable?.enabled
+            ? {
+                enabled: true,
+                discountPercent: priceResult.nonRefundable.discountPercent,
+                pricing: {
+                  finalTotal:
+                    salesChannel === 'b2b'
+                      ? priceResult.nonRefundable.pricing.b2bPrice
+                      : priceResult.nonRefundable.pricing.b2cPrice,
+                  avgPerNight:
+                    (salesChannel === 'b2b'
+                      ? priceResult.nonRefundable.pricing.b2bPrice
+                      : priceResult.nonRefundable.pricing.b2cPrice) / nights,
+                  hotelCost: priceResult.nonRefundable.pricing.hotelCost,
+                  b2bPrice: priceResult.nonRefundable.pricing.b2bPrice
+                },
+                savings: priceResult.nonRefundable.savings
+              }
+            : { enabled: false }
         }
 
         if (priceResult.availability?.isAvailable) {
@@ -542,8 +556,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
             unavailableReason: priceResult.availability?.issues?.[0]?.type || 'no_allotment'
           })
         }
-      } catch {
-        // Pricing error - silently continue
+      } catch (err) {
+        logger.warn('[Search] Pricing calculation failed for room type:', err.message)
       }
     }
 
@@ -695,9 +709,10 @@ export const getPriceQuote = asyncHandler(async (req, res) => {
         availability: {
           isAvailable: false,
           capacityExceeded: true,
-          capacityMessage: maxInfants === 0
-            ? 'Bu oda bebek kabul etmemektedir'
-            : `Max ${maxInfants} bebek kabul edilmektedir`
+          capacityMessage:
+            maxInfants === 0
+              ? 'Bu oda bebek kabul etmemektedir'
+              : `Max ${maxInfants} bebek kabul edilmektedir`
         }
       }
     })
@@ -716,9 +731,10 @@ export const getPriceQuote = asyncHandler(async (req, res) => {
         availability: {
           isAvailable: false,
           capacityExceeded: true,
-          capacityMessage: maxChildren === 0
-            ? 'Bu oda çocuk kabul etmemektedir'
-            : `Max ${maxChildren} çocuk kabul edilmektedir`
+          capacityMessage:
+            maxChildren === 0
+              ? 'Bu oda çocuk kabul etmemektedir'
+              : `Max ${maxChildren} çocuk kabul edilmektedir`
         }
       }
     })

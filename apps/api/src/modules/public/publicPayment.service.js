@@ -11,6 +11,7 @@ import Payment from '../booking/payment.model.js'
 import paymentGateway from '#services/paymentGateway.js'
 import { convertCurrency } from '#services/currencyService.js'
 import logger from '#core/logger.js'
+import { DEFAULT_GUEST_DISPLAY_NAME } from '#constants/defaults.js'
 
 /**
  * Helper: Get hotel by slug or ID
@@ -89,7 +90,12 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
 
       // Check if domestic (TR) card → needs TRY conversion
       if (result.card?.country?.toLowerCase() === 'tr') {
-        logger.debug('[Public Payment] Domestic card detected, converting', amount, currencyUpper, '→ TRY')
+        logger.debug(
+          '[Public Payment] Domestic card detected, converting',
+          amount,
+          currencyUpper,
+          '→ TRY'
+        )
         const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
         currencyConversion = {
           originalCurrency: currencyUpper,
@@ -100,20 +106,21 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
         }
 
         // Re-query with TRY for correct POS & installments
-        result = await paymentGateway.queryBin(
-          bin, conversion.convertedAmount, 'try', partnerId
-        )
+        result = await paymentGateway.queryBin(bin, conversion.convertedAmount, 'try', partnerId)
         result.currencyConversion = currencyConversion
       }
     } catch (err) {
       // No POS for original currency - try TRY as fallback
-      logger.debug('[Public Payment] BIN query with', currencyUpper, 'failed, trying TRY fallback:', err.message)
+      logger.debug(
+        '[Public Payment] BIN query with',
+        currencyUpper,
+        'failed, trying TRY fallback:',
+        err.message
+      )
 
       const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
 
-      result = await paymentGateway.queryBin(
-        bin, conversion.convertedAmount, 'try', partnerId
-      )
+      result = await paymentGateway.queryBin(bin, conversion.convertedAmount, 'try', partnerId)
 
       // Only convert if domestic card, otherwise foreign card has no suitable POS
       if (result.card?.country?.toLowerCase() === 'tr') {
@@ -200,7 +207,9 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     let cardCountry = null
     try {
       const binCheck = await paymentGateway.queryBin(
-        cardBin, remainingAmount, bookingCurrency.toLowerCase(),
+        cardBin,
+        remainingAmount,
+        bookingCurrency.toLowerCase(),
         booking.partner?.toString()
       )
       cardCountry = binCheck?.card?.country?.toLowerCase() || null
@@ -208,7 +217,10 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
       // No POS for original currency - try TRY to get card info
       try {
         const tryBinCheck = await paymentGateway.queryBin(
-          cardBin, remainingAmount, 'try', booking.partner?.toString()
+          cardBin,
+          remainingAmount,
+          'try',
+          booking.partner?.toString()
         )
         cardCountry = tryBinCheck?.card?.country?.toLowerCase() || null
       } catch (err2) {
@@ -218,7 +230,11 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
 
     if (cardCountry === 'tr') {
       // Domestic card with foreign currency → convert to TRY
-      const conversion = await convertCurrency(remainingAmount, bookingCurrency.toUpperCase(), 'TRY')
+      const conversion = await convertCurrency(
+        remainingAmount,
+        bookingCurrency.toUpperCase(),
+        'TRY'
+      )
       paymentAmount = conversion.convertedAmount
       paymentCurrency = 'TRY'
       currencyConversion = {
@@ -248,7 +264,9 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
 
   // Prepare customer info
   const customerInfo = {
-    name: `${booking.leadGuest?.firstName || ''} ${booking.leadGuest?.lastName || ''}`.trim() || 'Guest',
+    name:
+      `${booking.leadGuest?.firstName || ''} ${booking.leadGuest?.lastName || ''}`.trim() ||
+      DEFAULT_GUEST_DISPLAY_NAME,
     email: booking.contact?.email,
     phone: booking.contact?.phone,
     ip: req.ip || req.connection?.remoteAddress
@@ -287,12 +305,14 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
   const formUrl = requires3D ? getPaymentFormUrl(result.transactionId, req) : null
 
   // Get BIN info for card details
-  const binInfo = await paymentGateway.queryBin(
-    card.number.slice(0, 8),
-    payment.amount,
-    payment.currency.toLowerCase(),
-    booking.partner?.toString()
-  ).catch(() => null)
+  const binInfo = await paymentGateway
+    .queryBin(
+      card.number.slice(0, 8),
+      payment.amount,
+      payment.currency.toLowerCase(),
+      booking.partner?.toString()
+    )
+    .catch(() => null)
 
   // Update payment with transaction info
   payment.cardDetails = {
@@ -345,8 +365,7 @@ export const getPaymentStatus = asyncHandler(async (req, res) => {
   }
 
   // Find booking and verify email
-  const booking = await Booking.findOne({ bookingNumber })
-    .select('contact payment pricing status')
+  const booking = await Booking.findOne({ bookingNumber }).select('contact payment pricing status')
 
   if (!booking) {
     throw new NotFoundError('BOOKING_NOT_FOUND')
@@ -412,11 +431,13 @@ export const getPaymentStatus = asyncHandler(async (req, res) => {
           type: payment.type,
           amount: payment.amount,
           currency: payment.currency,
-          cardDetails: payment.cardDetails ? {
-            lastFour: payment.cardDetails.lastFour,
-            brand: payment.cardDetails.brand,
-            installment: payment.cardDetails.installment
-          } : null,
+          cardDetails: payment.cardDetails
+            ? {
+                lastFour: payment.cardDetails.lastFour,
+                brand: payment.cardDetails.brand,
+                installment: payment.cardDetails.installment
+              }
+            : null,
           completedAt: payment.completedAt
         },
         booking: {
@@ -451,11 +472,13 @@ export const getPaymentStatus = asyncHandler(async (req, res) => {
         type: p.type,
         amount: p.amount,
         currency: p.currency,
-        cardDetails: p.cardDetails ? {
-          lastFour: p.cardDetails.lastFour,
-          brand: p.cardDetails.brand,
-          installment: p.cardDetails.installment
-        } : null,
+        cardDetails: p.cardDetails
+          ? {
+              lastFour: p.cardDetails.lastFour,
+              brand: p.cardDetails.brand,
+              installment: p.cardDetails.installment
+            }
+          : null,
         completedAt: p.completedAt,
         createdAt: p.createdAt
       }))
@@ -519,8 +542,7 @@ export const payment3DCallback = asyncHandler(async (req, res) => {
   // Find payment by transaction ID or payment ID
   let payment
   if (paymentId) {
-    payment = await Payment.findById(paymentId)
-      .populate('booking', 'bookingNumber')
+    payment = await Payment.findById(paymentId).populate('booking', 'bookingNumber')
   } else if (transactionId) {
     payment = await Payment.findOne({
       'cardDetails.gatewayTransactionId': transactionId
