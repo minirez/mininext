@@ -39,6 +39,7 @@ const config = {
   // IMPORTANT: Must be set in production!
   frontendUrl: process.env.FRONTEND_URL || process.env.ADMIN_URL || 'http://localhost:5173',
   adminUrl: process.env.ADMIN_URL || process.env.FRONTEND_URL || 'http://localhost:5173',
+  apiUrl: process.env.API_URL || process.env.API_BASE_URL || 'http://localhost:4000',
 
   // AWS - fromEmail/fromName are stored in database (PlatformSettings)
   aws: {

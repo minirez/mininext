@@ -10,6 +10,7 @@
  * All payment notification functions should be imported from here.
  */
 
+import config from '#config'
 import logger from '#core/logger.js'
 import notificationService from '#services/notificationService.js'
 import ShortUrl from '../shortUrl/shortUrl.model.js'
@@ -39,8 +40,11 @@ export async function sendPaymentNotification(payment, booking, eventType) {
     if (!notificationType) return
 
     // Format amount
-    const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[payment.currency] || payment.currency
-    const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.amount)
+    const currencySymbol =
+      { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[payment.currency] || payment.currency
+    const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+      payment.amount
+    )
 
     await notificationService.send({
       type: notificationType,
@@ -50,9 +54,12 @@ export async function sendPaymentNotification(payment, booking, eventType) {
         phone: booking.leadGuest.phone
       },
       data: {
-        subject: eventType === 'completed' ? 'Ödemeniz Alındı' :
-                 eventType === 'failed' ? 'Ödeme Başarısız' :
-                 'İade İşleminiz Tamamlandı',
+        subject:
+          eventType === 'completed'
+            ? 'Ödemeniz Alındı'
+            : eventType === 'failed'
+              ? 'Ödeme Başarısız'
+              : 'İade İşleminiz Tamamlandı',
         CUSTOMER_NAME: `${booking.leadGuest.firstName} ${booking.leadGuest.lastName}`,
         BOOKING_NUMBER: booking.bookingNumber,
         AMOUNT: `${currencySymbol}${formattedAmount}`,
@@ -63,7 +70,9 @@ export async function sendPaymentNotification(payment, booking, eventType) {
         CHECK_IN: new Date(booking.checkIn).toLocaleDateString('tr-TR'),
         CHECK_OUT: new Date(booking.checkOut).toLocaleDateString('tr-TR'),
         // Refund specific
-        REFUND_AMOUNT: payment.refund?.amount ? `${currencySymbol}${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.refund.amount)}` : null,
+        REFUND_AMOUNT: payment.refund?.amount
+          ? `${currencySymbol}${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.refund.amount)}`
+          : null,
         REFUND_REASON: payment.refund?.reason
       },
       channels: ['email'],
@@ -98,12 +107,20 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
   const companyLogo = partner?.branding?.logo || null
 
   // Format amount and currency
-  const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(paymentLink.amount)
-  const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[paymentLink.currency] || paymentLink.currency
-  const formattedExpiry = new Date(paymentLink.expiresAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+  const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+    paymentLink.amount
+  )
+  const currencySymbol =
+    { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[paymentLink.currency] || paymentLink.currency
+  const formattedExpiry = new Date(paymentLink.expiresAt).toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  })
 
   // Site ve support bilgileri
-  const siteUrl = partner?.branding?.website || process.env.FRONTEND_URL || 'https://app.maxirez.com'
+  const siteUrl =
+    partner?.branding?.website || process.env.FRONTEND_URL || 'https://app.maxirez.com'
   const supportEmail = partner?.supportEmail || process.env.SUPPORT_EMAIL || 'destek@maxirez.com'
 
   // Logo URL - tam URL olmalı
@@ -112,8 +129,7 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
     if (companyLogo.startsWith('http')) {
       logoUrl = companyLogo
     } else {
-      const apiUrl = process.env.API_URL || 'https://api.maxirez.com'
-      logoUrl = `${apiUrl}${companyLogo}`
+      logoUrl = `${config.apiUrl}${companyLogo}`
     }
   }
 
@@ -132,7 +148,8 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
     PAY_NOW_BUTTON: 'Şimdi Öde',
     ALTERNATIVE_TEXT: 'Buton çalışmıyorsa aşağıdaki linki kullanın:',
     SECURITY_NOTE_LABEL: 'Güvenlik Notu',
-    SECURITY_NOTE: 'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.',
+    SECURITY_NOTE:
+      'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.',
     HELP_TEXT: 'Yardıma mı ihtiyacınız var? Bize ulaşın:',
     FOOTER_TEXT: 'Bu e-posta bir ödeme talebi içermektedir.',
     COMPANY_ADDRESS: '',

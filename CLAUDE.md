@@ -7,6 +7,8 @@
 - **Doğrudan axios çağrısı**: Service katmanı kullan
 - **Yeni UI component**: Önce `components/ui/` kontrol et, varsa kullan
 - **Manuel restart**: Dosya değişikliklerinde otomatik reload çalışır
+- **Uzak sunucuda sed/awk**: Production/uzak sunucularda dosya düzenlemek için `sed`, `awk` KULLANMA. Write tool ile dosyanın tamamını yaz. Düzenlemeden önce dosyayı mutlaka oku ve yedek tut
+- **UI downgrade**: Özel component'i (popover, custom select, vb.) native HTML elemanına (`<select>`, `<input>`) düşürme. Mevcut UX pattern'larını koru
 
 ---
 
@@ -115,6 +117,8 @@ import { NotFoundError } from '#core/errors.js'
 5. **Component Seçimi**: Önce UI → Common → PMS Shared sırasıyla kontrol et
 6. **E-posta Şablonları**: Tüm e-postalar Maizzle ile hazırlanmalı (`packages/emails/`)
 7. **Backend Imports**: Path aliases kullan (`#helpers`, `#core/*` vb.)
+8. **Backend Değişiklik Sonrası**: Hot-reload her zaman güvenilir çalışmayabilir. Backend dosyası değiştirdikten sonra test etmeden önce kullanıcıya PM2/nodemon restart hatırlat
+9. **UI Değişiklikleri**: Başlamadan önce mevcut tasarımın nasıl göründüğünü anla (screenshot veya mevcut kodu oku). Mevcut UX pattern'larını (popover, tag selector, avatar, vb.) açıkça değiştirilmesi söylenmedikçe koru
 
 ---
 
@@ -305,6 +309,13 @@ const url = API_URL.replace('/api', '') + path  // HATALI!
 - Mevcut kullanımları ara (pattern'ı öğren)
 - Sonra kod yaz
 
+### Oturum Sürekliliği
+
+Kullanıcı "önceki oturumdan devam et" veya "plana devam et" dediğinde:
+1. Proje kökünde `PLAN.md`, `TODO.md` veya güncel markdown dosyalarını kontrol et
+2. İlgili plan/todo belgesini oku
+3. Soru sormadan veya kodu yeniden keşfetmeden ÖNCE mevcut durumu anla
+
 ### Hata Olduğunda
 
 ```
@@ -323,6 +334,22 @@ Yeni özellik eklerken kontrol et:
 - [ ] Session/Auth entegrasyonu gerekiyor mu?
 - [ ] i18n çevirileri eklendi mi? (tr + en)
 - [ ] Mevcut helper/util var mı? (yeniden yazma)
+
+### API Endpoint Kontrol Listesi
+
+- [ ] Route adı frontend ve backend arasında birebir eşleşiyor mu?
+- [ ] Gerekli auth/context alanları dahil mi? (`companyId`, `userId`, `hotelId`)
+- [ ] Vite proxy yeni API prefix veya statik dosya yolu için yapılandırılmış mı?
+- [ ] Mongoose model şeması kontrol edildi mi? (alan adları, population path'leri)
+
+### Bug Düzeltme Protokolü
+
+Bug düzeltmeden önce şu sırayı takip et:
+1. İlgili Mongoose model şemasını oku (alan adlarını doğrula)
+2. Backend route handler'ı oku
+3. Frontend API çağrısını oku
+4. Temel neden hipotezini belirt
+5. Ancak o zaman düzeltme öner
 
 ---
 
@@ -380,6 +407,12 @@ ssh root@194.146.50.11
 - Admin: `/var/www/booking-engine/apps/admin`
 - Logs: `pm2 logs`
 
+**Uzak Sunucu Kuralları:**
+- Dosya düzenlemek için `sed`/`awk` KULLANMA → Write tool ile tamamını yaz
+- AWS işlemlerinde hedef bölgeyi kullanıcıyla DOĞRULA, varsayma (production: `us-east-1`)
+- Yıkıcı komutları (`rm -rf`, `drop`, `--force`) çalıştırmadan ÖNCE kullanıcı onayı al
+- Deploy öncesi her zaman build'in başarılı olduğunu doğrula
+
 ---
 
 ## 🧪 TEST HESABI
@@ -397,4 +430,4 @@ Email: metinweb@gmail.com
 
 ---
 
-**Son Güncelleme:** 2026-01-24 (v3)
+**Son Güncelleme:** 2026-02-11 (v4)

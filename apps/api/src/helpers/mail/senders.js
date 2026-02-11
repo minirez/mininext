@@ -5,27 +5,58 @@ import { sendEmail, sendEmailWithAttachments } from './core.js'
 import { getAdminUrl } from './transporter.js'
 
 /**
- * Get partner branding variables for email templates
- * Returns only partner-specific overrides; TEMPLATE_LABELS defaults are used for the rest
+ * Get email branding variables from PlatformSettings (base) and Partner (override)
+ * Priority: Partner fields > PlatformSettings fields > TEMPLATE_LABELS defaults
  */
-const getPartnerBranding = async (partnerId, labels) => {
+const getEmailBranding = async partnerId => {
   const result = { SITE_URL: config.adminUrl }
 
+  // 1) Load platform defaults from PlatformSettings
+  try {
+    const { default: PlatformSettings } =
+      await import('../../modules/platform-settings/platformSettings.model.js')
+    const settings = await PlatformSettings.getSettings()
+    if (settings) {
+      const companyName = settings.billing?.companyName
+      if (companyName && companyName !== 'Platform Company') result.COMPANY_NAME = companyName
+      if (settings.billing?.email) result.SUPPORT_EMAIL = settings.billing.email
+
+      const addr = settings.billing?.address
+      if (addr?.city) {
+        result.COMPANY_ADDRESS = addr.country ? `${addr.city}, ${addr.country}` : addr.city
+      }
+    }
+  } catch (error) {
+    logger.warn('Failed to load platform branding:', error.message)
+  }
+
+  // 2) Override with partner-specific branding if partnerId provided
   if (partnerId) {
     try {
       const { default: Partner } = await import('../../modules/partner/partner.model.js')
       const partner = await Partner.findById(partnerId)
-        .select('companyName branding address')
+        .select('companyName branding address email')
         .lean()
       if (partner) {
         if (partner.companyName) result.COMPANY_NAME = partner.companyName
-        if (partner.address?.city) result.COMPANY_ADDRESS = partner.address.city
+        if (partner.email) result.SUPPORT_EMAIL = partner.email
+
+        if (partner.address?.city) {
+          result.COMPANY_ADDRESS = partner.address.country
+            ? `${partner.address.city}, ${partner.address.country}`
+            : partner.address.city
+        }
+
+        if (partner.branding?.logo) {
+          result.LOGO_URL = `${config.apiUrl}${partner.branding.logo}`
+        }
+
         if (partner.branding?.extranetDomain) {
           result.SITE_URL = `https://${partner.branding.extranetDomain}`
         }
       }
     } catch (error) {
-      logger.warn('Failed to get partner branding:', error.message)
+      logger.warn('Failed to load partner branding:', error.message)
     }
   }
 
@@ -48,8 +79,8 @@ export const sendWelcomeEmail = async ({
   const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
   const subject = language === 'tr' ? "Booking Engine'e Hoş Geldiniz" : 'Welcome to Booking Engine'
 
-  // Get partner info for branding (falls back to TEMPLATE_LABELS defaults)
-  const brandingVars = await getPartnerBranding(partnerId, labels)
+  // Get branding from PlatformSettings (base) + Partner (override)
+  const brandingVars = await getEmailBranding(partnerId)
 
   const html = await renderEmailTemplate(
     'welcome',
@@ -91,7 +122,7 @@ export const send2FASetupEmail = async ({
       ? 'İki Faktörlü Doğrulama Etkinleştirildi'
       : 'Two-Factor Authentication Enabled'
 
-  const brandingVars = await getPartnerBranding(partnerId, labels)
+  const brandingVars = await getEmailBranding(partnerId)
 
   // Format backup codes as a string
   const formattedCodes = Array.isArray(backupCodes) ? backupCodes.join('\n') : backupCodes
@@ -132,7 +163,7 @@ export const sendActivationEmail = async ({
   const baseUrl = await getAdminUrl(partnerId)
   const activationUrl = `${baseUrl}/activate/${token}`
 
-  const brandingVars = await getPartnerBranding(partnerId)
+  const brandingVars = await getEmailBranding(partnerId)
   if (accountName) brandingVars.COMPANY_NAME = accountName
   if (partnerCity) brandingVars.COMPANY_ADDRESS = partnerCity
   brandingVars.SITE_URL = baseUrl
@@ -216,7 +247,7 @@ export const sendBookingConfirmation = async ({
       ? `Rezervasyon Onayı - ${bookingNumber}`
       : `Booking Confirmation - ${bookingNumber}`
 
-  const brandingVars = await getPartnerBranding(partnerId)
+  const brandingVars = await getEmailBranding(partnerId)
 
   const html = await renderEmailTemplate(
     'booking-confirmation',
@@ -276,7 +307,7 @@ export const sendBookingCancellation = async ({
       ? `Rezervasyon İptal Edildi - ${bookingNumber}`
       : `Booking Cancelled - ${bookingNumber}`
 
-  const brandingVars = await getPartnerBranding(partnerId, labels)
+  const brandingVars = await getEmailBranding(partnerId)
 
   const html = await renderEmailTemplate(
     'booking-cancelled',
@@ -321,7 +352,7 @@ export const sendPasswordResetEmail = async ({
   const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
   const subject = language === 'tr' ? 'Şifre Sıfırlama Talebi' : 'Password Reset Request'
 
-  const brandingVars = await getPartnerBranding(partnerId, labels)
+  const brandingVars = await getEmailBranding(partnerId)
 
   const html = await renderEmailTemplate(
     'password-reset',

@@ -166,7 +166,14 @@ export const updateGuestInfo = asyncHandler(async (req, res) => {
   }
 
   // Allowed fields for inline edit
-  const allowedLeadGuestFields = ['firstName', 'lastName', 'title', 'nationality', 'tcNumber', 'passportNumber']
+  const allowedLeadGuestFields = [
+    'firstName',
+    'lastName',
+    'title',
+    'nationality',
+    'tcNumber',
+    'passportNumber'
+  ]
   const allowedContactFields = ['email', 'phone', 'alternativePhone']
   const allowedBookingFields = ['guestLanguage', 'specialRequests']
 
@@ -299,19 +306,24 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
   )
 
   // Get room type name
-  const roomType = booking.rooms?.[0]?.roomTypeName?.[language] ||
+  const roomType =
+    booking.rooms?.[0]?.roomTypeName?.[language] ||
     booking.rooms?.[0]?.roomTypeName?.tr ||
-    booking.rooms?.[0]?.roomTypeCode || ''
+    booking.rooms?.[0]?.roomTypeCode ||
+    ''
 
   // Get meal plan name
-  const boardType = booking.rooms?.[0]?.mealPlanName?.[language] ||
+  const boardType =
+    booking.rooms?.[0]?.mealPlanName?.[language] ||
     booking.rooms?.[0]?.mealPlanName?.tr ||
-    booking.rooms?.[0]?.mealPlanCode || ''
+    booking.rooms?.[0]?.mealPlanCode ||
+    ''
 
   // Get hotel name
-  const hotelName = typeof hotel.name === 'object'
-    ? (hotel.name[language] || hotel.name.tr || hotel.name.en)
-    : (hotel.name || booking.hotelName || '')
+  const hotelName =
+    typeof hotel.name === 'object'
+      ? hotel.name[language] || hotel.name.tr || hotel.name.en
+      : hotel.name || booking.hotelName || ''
 
   // Build guest name
   const guestName = booking.leadGuest
@@ -372,15 +384,17 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
     LANG: language,
 
     // Site & Branding (use partner branding if available)
-    SITE_URL: partner.branding?.siteDomain
-      ? `https://${partner.branding.siteDomain}`
-      : siteUrl,
+    SITE_URL: partner.branding?.siteDomain ? `https://${partner.branding.siteDomain}` : siteUrl,
     LOGO_URL: partner.branding?.logo
-      ? `${config.apiUrl || 'https://app.maxirez.com'}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
+      ? `${config.apiUrl}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
       : `${siteUrl}/logo.png`,
     SUPPORT_EMAIL: partner.email || config.supportEmail || 'destek@maxirez.com',
     COMPANY_NAME: partner.companyName || labels.COMPANY_NAME || 'Booking Engine',
-    COMPANY_ADDRESS: partner.address ? `${partner.address.street || ''}, ${partner.address.city || ''} ${partner.address.postalCode || ''}`.trim().replace(/^,\s*|,\s*$/g, '') : (labels.COMPANY_ADDRESS || ''),
+    COMPANY_ADDRESS: partner.address
+      ? `${partner.address.street || ''}, ${partner.address.city || ''} ${partner.address.postalCode || ''}`
+          .trim()
+          .replace(/^,\s*|,\s*$/g, '')
+      : labels.COMPANY_ADDRESS || '',
 
     // Booking details
     BOOKING_NUMBER: booking.bookingNumber,
@@ -449,9 +463,10 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
       return {
         ...commonData,
         TITLE: language === 'tr' ? 'Yeni Rezervasyon Bildirimi' : 'New Booking Notification',
-        SUBTITLE: language === 'tr'
-          ? `${booking.bookingNumber} numaralı yeni rezervasyon oluşturuldu`
-          : `New booking ${booking.bookingNumber} has been created`
+        SUBTITLE:
+          language === 'tr'
+            ? `${booking.bookingNumber} numaralı yeni rezervasyon oluşturuldu`
+            : `New booking ${booking.bookingNumber} has been created`
       }
 
     default:
