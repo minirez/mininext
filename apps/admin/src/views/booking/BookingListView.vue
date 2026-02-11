@@ -546,13 +546,7 @@
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
-            class="btn-secondary px-4 py-2"
-            @click="
-              showHardDeleteModal = false
-              bookingToDelete = null
-            "
-          >
+          <button class="btn-secondary px-4 py-2" @click="closeHardDeleteModal">
             {{ $t('common.cancel') }}
           </button>
           <button class="btn-danger px-4 py-2" @click="confirmHardDelete">
@@ -568,10 +562,7 @@
       v-if="showAmendmentModal"
       :show="true"
       :booking-id="selectedBookingForAmendment?._id"
-      @close="
-        showAmendmentModal = false
-        selectedBookingForAmendment = null
-      "
+      @close="closeAmendmentModal"
       @updated="handleAmendmentComplete"
     />
 
@@ -580,10 +571,7 @@
       v-if="showPaymentModal"
       v-model="showPaymentModal"
       :booking="selectedBookingForPayment"
-      @close="
-        showPaymentModal = false
-        selectedBookingForPayment = null
-      "
+      @close="closePaymentModal"
       @updated="handlePaymentUpdated"
     />
 
@@ -591,10 +579,7 @@
     <BookingQuickViewModal
       v-model="showBookingModal"
       :booking="selectedBookingForView"
-      @close="
-        showBookingModal = false
-        selectedBookingForView = null
-      "
+      @close="closeBookingModal"
       @amend="handleAmendFromModal"
     />
   </div>
@@ -696,6 +681,23 @@ const showPaymentModal = ref(false)
 const selectedBookingForPayment = ref(null)
 const showBookingModal = ref(false)
 const selectedBookingForView = ref(null)
+
+const closeHardDeleteModal = () => {
+  showHardDeleteModal.value = false
+  bookingToDelete.value = null
+}
+const closeAmendmentModal = () => {
+  showAmendmentModal.value = false
+  selectedBookingForAmendment.value = null
+}
+const closePaymentModal = () => {
+  showPaymentModal.value = false
+  selectedBookingForPayment.value = null
+}
+const closeBookingModal = () => {
+  showBookingModal.value = false
+  selectedBookingForView.value = null
+}
 
 // View mode for DataTable
 const viewMode = ref('table')
