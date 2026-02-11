@@ -12,6 +12,7 @@ import {
   downloadHotelLogo,
   downloadRoomTemplateImages
 } from '#helpers/imageDownloader.js'
+import { deleteHotelFolder } from '#helpers/hotelUpload.js'
 import logger from '#core/logger.js'
 import { parsePagination } from '#services/queryBuilder.js'
 import { generateAmenitiesFromProfile } from './amenityMapping.js'
@@ -411,8 +412,12 @@ export const deleteBaseHotel = asyncHandler(async (req, res) => {
     throw new BadRequestError('CANNOT_DELETE_BASE_WITH_LINKED_HOTELS')
   }
 
-  // Delete images from disk (base hotels don't have partner folder)
-  // TODO: Implement base hotel image storage
+  // Delete base hotel images from disk (stored under uploads/hotels/base/{hotelId}/)
+  try {
+    deleteHotelFolder('base', id)
+  } catch (err) {
+    logger.warn(`Failed to delete base hotel images: ${err.message}`)
+  }
 
   await hotel.deleteOne()
 

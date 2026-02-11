@@ -287,7 +287,15 @@ export const deleteHotel = asyncHandler(async (req, res) => {
 
   const hotel = await verifyHotelOwnership(id, partnerId)
 
-  // TODO: Check if hotel has active bookings before deleting
+  // Check if hotel has active bookings before deleting
+  const Booking = (await import('#modules/booking/booking.model.js')).default
+  const activeBookings = await Booking.countDocuments({
+    hotel: id,
+    status: { $in: ['pending', 'confirmed', 'checked_in'] }
+  })
+  if (activeBookings > 0) {
+    throw new BadRequestError('CANNOT_DELETE_HOTEL_WITH_ACTIVE_BOOKINGS')
+  }
 
   // Delete all hotel images from disk
   if (hotel.images && hotel.images.length > 0) {

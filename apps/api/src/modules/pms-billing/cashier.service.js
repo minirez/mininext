@@ -16,6 +16,8 @@ import CashRegister, {
   SUPPORTED_CURRENCIES
 } from './cashRegister.model.js'
 import Stay from '#modules/pms-frontdesk/stay.model.js'
+import Room from '#modules/pms-housekeeping/room.model.js'
+import Guest from '#modules/pms-guest/guest.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
 import PmsSettings from '#modules/pms-settings/settings.model.js'
 import { getExchangeRates, convertCurrency } from '#services/currencyService.js'
@@ -514,6 +516,18 @@ export const createTransaction = asyncHandler(async (req, res) => {
   // NOTE: CashRegister and Stay sync is now handled automatically by Transaction post-save hooks
   // See transaction.model.js for auto-sync implementation
 
+  // Populate room/guest for socket event
+  let roomNumber = null
+  let guestName = null
+  if (transaction.room) {
+    const room = await Room.findById(transaction.room).select('roomNumber').lean()
+    roomNumber = room?.roomNumber || null
+  }
+  if (transaction.guest) {
+    const guest = await Guest.findById(transaction.guest).select('firstName lastName').lean()
+    guestName = guest ? `${guest.firstName} ${guest.lastName}`.trim() : null
+  }
+
   // Emit socket event for real-time updates
   emitTransactionUpdate(hotelId, 'created', {
     transactionId: transaction._id,
@@ -521,8 +535,8 @@ export const createTransaction = asyncHandler(async (req, res) => {
     type: transaction.type,
     amount: transaction.amount,
     paymentMethod: transaction.paymentMethod,
-    roomNumber: null, // TODO: populate if needed
-    guestName: null // TODO: populate if needed
+    roomNumber,
+    guestName
   })
 
   res.status(201).json({

@@ -14,8 +14,51 @@ const emitHousekeepingUpdate = (hotelId, data) => {
   emitToRoom(`hotel:${hotelId}`, 'housekeeping', { hotelId, timestamp: Date.now(), ...data })
 }
 
-// TODO: Integrate notification service
-const notifyHotelUsers = () => Promise.resolve()
+/**
+ * Notify hotel PMS users via in-app notification
+ */
+const notifyHotelUsers = async (
+  hotelId,
+  excludeUserId,
+  { type, title, message, reference, actionUrl }
+) => {
+  try {
+    const Hotel = (await import('#modules/hotel/hotel.model.js')).default
+    const User = (await import('#modules/user/user.model.js')).default
+    const { broadcastNotification } = await import('#modules/notification/notification.service.js')
+
+    const hotel = await Hotel.findById(hotelId).select('partner')
+    if (!hotel?.partner) return
+
+    const users = await User.find({
+      accountType: 'partner',
+      accountId: hotel.partner,
+      status: 'active',
+      _id: { $ne: excludeUserId },
+      $or: [
+        { role: 'admin' },
+        { pmsRole: { $ne: null } },
+        { pmsPermissions: { $exists: true, $ne: [] } }
+      ]
+    }).select('_id')
+
+    if (users.length === 0) return
+
+    await broadcastNotification({
+      recipientIds: users.map(u => u._id),
+      recipientModel: 'User',
+      type: `pms:${type}`,
+      title,
+      message,
+      reference,
+      hotel: hotelId,
+      partner: hotel.partner,
+      actionUrl: `/pms${actionUrl}`
+    })
+  } catch (err) {
+    logger.error('[Housekeeping Notification] Error:', err.message)
+  }
+}
 
 /**
  * Get all rooms for a hotel
