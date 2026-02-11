@@ -75,7 +75,7 @@ export const getGuests = asyncHandler(async (req, res) => {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit)
     }
   })
 })
@@ -494,7 +494,7 @@ export const getStayHistory = asyncHandler(async (req, res) => {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit)
     }
   })
 })

@@ -33,7 +33,7 @@ export const getAuditHistory = asyncHandler(async (req, res) => {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit)
       }
     }
   })

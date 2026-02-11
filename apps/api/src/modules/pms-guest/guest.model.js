@@ -489,7 +489,7 @@ guestSchema.statics.search = async function (hotelId, query, options = {}) {
       page: parseInt(page),
       limit: parseInt(limit),
       total,
-      totalPages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit)
     }
   }
 }

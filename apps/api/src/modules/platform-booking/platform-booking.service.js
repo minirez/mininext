@@ -246,7 +246,7 @@ export const listPlatformBookings = asyncHandler(async (req, res) => {
       page: pageNum,
       limit: limitNum,
       total,
-      totalPages: Math.ceil(total / limitNum)
+      pages: Math.ceil(total / limitNum)
     }
   })
 })

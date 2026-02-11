@@ -133,7 +133,9 @@
         :default-view-mode="viewMode"
         :card-title-key="'bookingNumber'"
         :empty-icon="'event_busy'"
-        :empty-text="filters.status ? $t('booking.noBookingsForStatus') : $t('booking.noBookingsDescription')"
+        :empty-text="
+          filters.status ? $t('booking.noBookingsForStatus') : $t('booking.noBookingsDescription')
+        "
         @page-change="handlePageChange"
         @sort="handleSort"
       >
@@ -167,17 +169,12 @@
                   {{ row.bookingNumber }}
                 </button>
                 <!-- Amendment indicator with popover -->
-                <div
-                  v-if="row.modifications?.length > 0"
-                  class="relative group/amend ml-1.5"
-                >
+                <div v-if="row.modifications?.length > 0" class="relative group/amend ml-1.5">
                   <span class="inline-flex items-center cursor-pointer">
                     <span class="material-icons text-sm text-amber-500">edit_note</span>
                   </span>
                   <!-- Popover -->
-                  <div
-                    class="absolute left-0 top-full mt-1 z-50 hidden group-hover/amend:block"
-                  >
+                  <div class="absolute left-0 top-full mt-1 z-50 hidden group-hover/amend:block">
                     <div
                       class="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 p-3 min-w-[280px]"
                     >
@@ -249,10 +246,14 @@
             <div class="flex flex-wrap items-center gap-1 mt-1">
               <!-- Room type & meal plan -->
               <template v-if="row.rooms?.length">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                <span
+                  class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                >
                   {{ row.rooms[0].roomTypeCode }}
                 </span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                <span
+                  class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                >
                   {{ row.rooms[0].mealPlanCode }}
                 </span>
                 <span
@@ -321,7 +322,9 @@
               </p>
             </div>
             <!-- Nights badge with moon icon -->
-            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
+            <span
+              class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium"
+            >
               <span class="material-icons text-xs">nightlight</span>
               {{ row.nights }}
             </span>
@@ -367,9 +370,21 @@
                 {{ formatPrice(row.payment?.paidAmount || 0, row.pricing.currency) }}
               </span>
               <span v-if="row.payment?.currencyConversion" class="relative group/dcc">
-                <span class="material-icons text-amber-500 dark:text-amber-400" style="font-size: 13px; vertical-align: middle;">currency_exchange</span>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/dcc:opacity-100 pointer-events-none transition-opacity shadow-lg z-50">
-                  {{ formatPrice(row.payment.currencyConversion.convertedAmount, row.payment.currencyConversion.convertedCurrency) }} olarak ödendi
+                <span
+                  class="material-icons text-amber-500 dark:text-amber-400"
+                  style="font-size: 13px; vertical-align: middle"
+                  >currency_exchange</span
+                >
+                <span
+                  class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/dcc:opacity-100 pointer-events-none transition-opacity shadow-lg z-50"
+                >
+                  {{
+                    formatPrice(
+                      row.payment.currencyConversion.convertedAmount,
+                      row.payment.currencyConversion.convertedCurrency
+                    )
+                  }}
+                  olarak ödendi
                 </span>
               </span>
               <span class="text-gray-400 dark:text-slate-500">/</span>
@@ -509,7 +524,9 @@
     <!-- Hard Delete Booking Modal (Superadmin Only) -->
     <Modal v-model="showHardDeleteModal" :title="$t('booking.deleteBookingTitle')">
       <div class="py-4">
-        <div class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 mb-4">
+        <div
+          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 mb-4"
+        >
           <span class="material-icons text-red-500 text-2xl">warning</span>
           <div>
             <p class="font-medium text-red-700 dark:text-red-400">
@@ -529,7 +546,13 @@
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button class="btn-secondary px-4 py-2" @click="showHardDeleteModal = false; bookingToDelete = null">
+          <button
+            class="btn-secondary px-4 py-2"
+            @click="
+              showHardDeleteModal = false
+              bookingToDelete = null
+            "
+          >
             {{ $t('common.cancel') }}
           </button>
           <button class="btn-danger px-4 py-2" @click="confirmHardDelete">
@@ -545,7 +568,10 @@
       v-if="showAmendmentModal"
       :show="true"
       :booking-id="selectedBookingForAmendment?._id"
-      @close="showAmendmentModal = false; selectedBookingForAmendment = null"
+      @close="
+        showAmendmentModal = false
+        selectedBookingForAmendment = null
+      "
       @updated="handleAmendmentComplete"
     />
 
@@ -554,7 +580,10 @@
       v-if="showPaymentModal"
       v-model="showPaymentModal"
       :booking="selectedBookingForPayment"
-      @close="showPaymentModal = false; selectedBookingForPayment = null"
+      @close="
+        showPaymentModal = false
+        selectedBookingForPayment = null
+      "
       @updated="handlePaymentUpdated"
     />
 
@@ -562,7 +591,10 @@
     <BookingQuickViewModal
       v-model="showBookingModal"
       :booking="selectedBookingForView"
-      @close="showBookingModal = false; selectedBookingForView = null"
+      @close="
+        showBookingModal = false
+        selectedBookingForView = null
+      "
       @amend="handleAmendFromModal"
     />
   </div>
@@ -636,9 +668,15 @@ const columns = computed(() => [
 ])
 
 // Async action composables
-const { isLoading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading, execute: executeLoad } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 const { execute: executeStats } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
-const { execute: executeAction } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeAction } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 // State
 const bookings = ref([])
@@ -794,21 +832,18 @@ const fetchBookings = async () => {
     applyDateFilter(params)
   }
 
-  await executeLoad(
-    () => bookingService.getBookings(params),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          bookings.value = response.data
-          totalPages.value = response.pagination?.totalPages || 1
-          totalItems.value = response.pagination?.total || 0
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch bookings:', error)
+  await executeLoad(() => bookingService.getBookings(params), {
+    onSuccess: response => {
+      if (response.success) {
+        bookings.value = response.data
+        totalPages.value = response.pagination?.pages || 1
+        totalItems.value = response.pagination?.total || 0
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch bookings:', error)
     }
-  )
+  })
 }
 
 // Apply date filter
@@ -844,19 +879,16 @@ const applyDateFilter = params => {
 
 // Fetch stats
 const fetchStats = async () => {
-  await executeStats(
-    () => bookingService.getBookingStats(),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          stats.value = response.data
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch stats:', error)
+  await executeStats(() => bookingService.getBookingStats(), {
+    onSuccess: response => {
+      if (response.success) {
+        stats.value = response.data
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch stats:', error)
     }
-  )
+  })
 }
 
 // Debounced search
@@ -910,7 +942,6 @@ const toggleMenu = id => {
   openMenuId.value = openMenuId.value === id ? null : id
 }
 
-
 // View booking (open modal)
 const viewBooking = booking => {
   selectedBookingForView.value = booking
@@ -932,37 +963,31 @@ const deleteDraft = booking => {
 const confirmDeleteDraft = async () => {
   if (!selectedBooking.value) return
 
-  await executeAction(
-    () => bookingService.deleteDraft(selectedBooking.value.bookingNumber),
-    {
-      onSuccess: () => {
-        showDeleteModal.value = false
-        selectedBooking.value = null
-        fetchBookings()
-        fetchStats()
-      },
-      onError: error => {
-        console.error('Failed to delete draft:', error)
-      }
+  await executeAction(() => bookingService.deleteDraft(selectedBooking.value.bookingNumber), {
+    onSuccess: () => {
+      showDeleteModal.value = false
+      selectedBooking.value = null
+      fetchBookings()
+      fetchStats()
+    },
+    onError: error => {
+      console.error('Failed to delete draft:', error)
     }
-  )
+  })
 }
 
 // Confirm booking
 const confirmBooking = async booking => {
   openMenuId.value = null
-  await executeAction(
-    () => bookingService.updateBookingStatus(booking._id, 'confirmed'),
-    {
-      onSuccess: () => {
-        fetchBookings()
-        fetchStats()
-      },
-      onError: error => {
-        console.error('Failed to confirm booking:', error)
-      }
+  await executeAction(() => bookingService.updateBookingStatus(booking._id, 'confirmed'), {
+    onSuccess: () => {
+      fetchBookings()
+      fetchStats()
+    },
+    onError: error => {
+      console.error('Failed to confirm booking:', error)
     }
-  )
+  })
 }
 
 // Cancel booking
@@ -1302,20 +1327,16 @@ const handleActionSelect = (item, row) => {
 const confirmHardDelete = async () => {
   if (!bookingToDelete.value) return
 
-  await executeAction(
-    () => bookingService.deleteBooking(bookingToDelete.value._id),
-    {
-      onSuccess: () => {
-        showHardDeleteModal.value = false
-        bookingToDelete.value = null
-        fetchBookings()
-        fetchStats()
-      },
-      onError: error => {
-        console.error('Failed to delete booking:', error)
-      }
+  await executeAction(() => bookingService.deleteBooking(bookingToDelete.value._id), {
+    onSuccess: () => {
+      showHardDeleteModal.value = false
+      bookingToDelete.value = null
+      fetchBookings()
+      fetchStats()
+    },
+    onError: error => {
+      console.error('Failed to delete booking:', error)
     }
-  )
+  })
 }
-
 </script>

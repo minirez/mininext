@@ -25,7 +25,7 @@
  * @property {number} page - Current page number
  * @property {number} limit - Items per page
  * @property {number} total - Total item count
- * @property {number} [totalPages] - Total number of pages
+ * @property {number} [pages] - Total number of pages
  */
 
 /**

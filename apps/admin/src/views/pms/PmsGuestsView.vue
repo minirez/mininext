@@ -330,7 +330,7 @@ const pagination = ref({
   page: 1,
   limit: 20,
   total: 0,
-  totalPages: 0
+  pages: 0
 })
 
 const filters = ref({

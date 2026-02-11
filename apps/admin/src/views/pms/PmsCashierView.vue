@@ -700,7 +700,7 @@
           </div>
 
           <!-- Pagination -->
-          <div v-if="shiftPagination.totalPages > 1" class="mt-4 flex items-center justify-between">
+          <div v-if="shiftPagination.pages > 1" class="mt-4 flex items-center justify-between">
             <p class="text-sm text-gray-500">
               {{ $t('cashier.totalShifts', { count: shiftPagination.total }) }}
             </p>
@@ -712,11 +712,9 @@
               >
                 <span class="material-icons text-sm">chevron_left</span>
               </button>
-              <span class="text-sm"
-                >{{ shiftPagination.page }} / {{ shiftPagination.totalPages }}</span
-              >
+              <span class="text-sm">{{ shiftPagination.page }} / {{ shiftPagination.pages }}</span>
               <button
-                :disabled="shiftPagination.page === shiftPagination.totalPages"
+                :disabled="shiftPagination.page === shiftPagination.pages"
                 class="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg disabled:opacity-50"
                 @click="changeShiftPage(shiftPagination.page + 1)"
               >
@@ -978,7 +976,7 @@ const transactionPagination = ref({
   page: 1,
   limit: 20,
   total: 0,
-  totalPages: 0
+  pages: 0
 })
 const filters = ref({
   search: '',
@@ -1032,7 +1030,7 @@ const shiftPagination = ref({
   page: 1,
   limit: 20,
   total: 0,
-  totalPages: 0
+  pages: 0
 })
 const shiftFilters = ref({
   date: '',
