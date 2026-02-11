@@ -1,32 +1,64 @@
 import express from 'express'
 import * as partnerService from './partner.service.js'
-import { protect, requireAdmin, requirePartner } from '#middleware/auth.js'
+import { protect, requireAdmin, requirePartnerOrAdmin } from '#middleware/auth.js'
 import { partnerContext } from '#middleware/partnerContext.js'
 import upload from '#helpers/upload.js'
 
 const router = express.Router()
 
-// ==================== Partner Self-Profile Routes (require partner role) ====================
-// These routes are for partners to manage their own profile
-router.get('/my/profile', protect, requirePartner, partnerService.getMyProfile)
-router.put('/my/profile', protect, requirePartner, partnerService.updateMyProfile)
-router.put('/my/admin-theme', protect, requirePartner, partnerService.updateMyAdminTheme)
+// ==================== Partner Self-Profile Routes ====================
+// Partner users manage their own profile, platform admins manage selected partner
+router.get(
+  '/my/profile',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.getMyProfile
+)
+router.put(
+  '/my/profile',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.updateMyProfile
+)
+router.put(
+  '/my/admin-theme',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.updateMyAdminTheme
+)
 router.post(
   '/my/profile/logo',
   protect,
-  requirePartner,
+  requirePartnerOrAdmin,
+  partnerContext,
   upload.single('logo'),
   partnerService.uploadMyLogo
 )
-router.delete('/my/profile/logo', protect, requirePartner, partnerService.deleteMyLogo)
+router.delete(
+  '/my/profile/logo',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.deleteMyLogo
+)
 router.post(
   '/my/profile/favicon',
   protect,
-  requirePartner,
+  requirePartnerOrAdmin,
+  partnerContext,
   upload.single('favicon'),
   partnerService.uploadMyFavicon
 )
-router.delete('/my/profile/favicon', protect, requirePartner, partnerService.deleteMyFavicon)
+router.delete(
+  '/my/profile/favicon',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.deleteMyFavicon
+)
 
 // ==================== Admin Routes (require admin role) ====================
 // All routes below require authentication and admin role

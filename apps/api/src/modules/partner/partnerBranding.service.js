@@ -41,14 +41,15 @@ const normalizeAdminThemeId = theme => {
 // Get my profile (for partner users)
 export const getMyProfile = asyncHandler(async (req, res) => {
   // Get partner ID from authenticated user
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
-  const partner = await Partner.findById(partnerId)
-    .select('companyName tradeName email phone taxOffice taxNumber address branding')
+  const partner = await Partner.findById(partnerId).select(
+    'companyName tradeName email phone taxOffice taxNumber address branding'
+  )
 
   if (!partner) {
     throw new NotFoundError('PARTNER_NOT_FOUND')
@@ -62,10 +63,10 @@ export const getMyProfile = asyncHandler(async (req, res) => {
 
 // Update my profile (for partner users - limited fields)
 export const updateMyProfile = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const partner = await Partner.findById(partnerId)
@@ -75,14 +76,7 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   }
 
   // Only allow updating specific fields (not email, branding domains, etc.)
-  const allowedFields = [
-    'companyName',
-    'tradeName',
-    'phone',
-    'taxOffice',
-    'taxNumber',
-    'address'
-  ]
+  const allowedFields = ['companyName', 'tradeName', 'phone', 'taxOffice', 'taxNumber', 'address']
 
   allowedFields.forEach(field => {
     if (req.body[field] !== undefined) {
@@ -104,9 +98,9 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
  * Route: PUT /partners/my/admin-theme
  */
 export const updateMyAdminTheme = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const theme = normalizeAdminThemeId(req.body?.theme)
@@ -158,10 +152,10 @@ export const updatePartnerAdminTheme = asyncHandler(async (req, res) => {
 
 // Upload my logo (for partner users)
 export const uploadMyLogo = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const partner = await Partner.findById(partnerId)
@@ -195,10 +189,10 @@ export const uploadMyLogo = asyncHandler(async (req, res) => {
 
 // Delete my logo (for partner users)
 export const deleteMyLogo = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const partner = await Partner.findById(partnerId)
@@ -228,10 +222,10 @@ export const deleteMyLogo = asyncHandler(async (req, res) => {
 
 // Upload my favicon (for partner users)
 export const uploadMyFavicon = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const partner = await Partner.findById(partnerId)
@@ -265,10 +259,10 @@ export const uploadMyFavicon = asyncHandler(async (req, res) => {
 
 // Delete my favicon (for partner users)
 export const deleteMyFavicon = asyncHandler(async (req, res) => {
-  const partnerId = req.user.accountType === 'partner' ? req.user.accountId : null
+  const partnerId = req.partnerId
 
   if (!partnerId) {
-    throw new BadRequestError('NOT_A_PARTNER_USER')
+    throw new BadRequestError('NO_PARTNER_SELECTED')
   }
 
   const partner = await Partner.findById(partnerId)
