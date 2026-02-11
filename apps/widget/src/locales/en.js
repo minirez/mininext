@@ -194,8 +194,18 @@ export default {
   datePicker: {
     days: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
     months: [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ],
     presets: {
       oneNight: '1 night',
@@ -210,6 +220,18 @@ export default {
       selectCheckOut: 'Select check-out date',
       canSelectNew: 'You can select new dates'
     }
+  },
+
+  bankTransfer: {
+    title: 'Bank Transfer Details',
+    bookingNumber: 'Booking No',
+    amount: 'Amount to Pay',
+    accountName: 'Account Holder',
+    copyIban: 'Copy',
+    copied: 'Copied!',
+    continue: 'Continue',
+    noAccounts: 'No bank accounts found',
+    note: 'Please include your booking number in the transfer description. You will be notified by email once your payment is confirmed.'
   },
 
   footer: {

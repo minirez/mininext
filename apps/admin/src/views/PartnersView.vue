@@ -11,7 +11,6 @@
     </ModuleNavigation>
 
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow mt-4">
-
       <div class="p-6">
         <DataTable :columns="columns" :data="partners" :loading="loading">
           <template #cell-status="{ value }">
@@ -197,28 +196,38 @@
     >
       <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Partner Type Selection -->
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-5">
+        <div
+          class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-5"
+        >
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
             {{ $t('partners.partnerType') }}
           </label>
           <div class="grid grid-cols-2 gap-4">
             <label
               class="relative flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
-              :class="form.partnerType === 'hotel'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg shadow-blue-500/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-slate-800'"
+              :class="
+                form.partnerType === 'hotel'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg shadow-blue-500/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 bg-white dark:bg-slate-800'
+              "
             >
               <input v-model="form.partnerType" type="radio" value="hotel" class="sr-only" />
               <div
                 class="w-14 h-14 rounded-full flex items-center justify-center mb-2"
-                :class="form.partnerType === 'hotel'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'"
+                :class="
+                  form.partnerType === 'hotel'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
+                "
               >
                 <span class="material-icons text-2xl">apartment</span>
               </div>
-              <span class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.types.hotel') }}</span>
-              <span class="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">{{ $t('partners.typeDesc.hotel') }}</span>
+              <span class="font-semibold text-gray-800 dark:text-white">{{
+                $t('partners.types.hotel')
+              }}</span>
+              <span class="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">{{
+                $t('partners.typeDesc.hotel')
+              }}</span>
               <div v-if="form.partnerType === 'hotel'" class="absolute top-2 right-2">
                 <span class="material-icons text-blue-500">check_circle</span>
               </div>
@@ -226,21 +235,29 @@
 
             <label
               class="relative flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
-              :class="form.partnerType === 'agency'
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 shadow-lg shadow-purple-500/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-slate-800'"
+              :class="
+                form.partnerType === 'agency'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 shadow-lg shadow-purple-500/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-slate-800'
+              "
             >
               <input v-model="form.partnerType" type="radio" value="agency" class="sr-only" />
               <div
                 class="w-14 h-14 rounded-full flex items-center justify-center mb-2"
-                :class="form.partnerType === 'agency'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'"
+                :class="
+                  form.partnerType === 'agency'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
+                "
               >
                 <span class="material-icons text-2xl">storefront</span>
               </div>
-              <span class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.types.agency') }}</span>
-              <span class="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">{{ $t('partners.typeDesc.agency') }}</span>
+              <span class="font-semibold text-gray-800 dark:text-white">{{
+                $t('partners.types.agency')
+              }}</span>
+              <span class="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">{{
+                $t('partners.typeDesc.agency')
+              }}</span>
               <div v-if="form.partnerType === 'agency'" class="absolute top-2 right-2">
                 <span class="material-icons text-purple-500">check_circle</span>
               </div>
@@ -249,10 +266,16 @@
         </div>
 
         <!-- Company Information Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
+          <div
+            class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2"
+          >
             <span class="material-icons text-gray-500 dark:text-slate-400">business</span>
-            <h3 class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.companyInfo') }}</h3>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('partners.companyInfo') }}
+            </h3>
           </div>
           <div class="p-5 space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -290,11 +313,18 @@
                     v-for="statusOption in statusOptions"
                     :key="statusOption.value"
                     class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all"
-                    :class="form.status === statusOption.value
-                      ? `border-${statusOption.color}-500 bg-${statusOption.color}-50 dark:bg-${statusOption.color}-900/20`
-                      : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'"
+                    :class="
+                      form.status === statusOption.value
+                        ? `border-${statusOption.color}-500 bg-${statusOption.color}-50 dark:bg-${statusOption.color}-900/20`
+                        : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
+                    "
                   >
-                    <input v-model="form.status" type="radio" :value="statusOption.value" class="sr-only" />
+                    <input
+                      v-model="form.status"
+                      type="radio"
+                      :value="statusOption.value"
+                      class="sr-only"
+                    />
                     <span
                       class="w-2 h-2 rounded-full"
                       :class="{
@@ -303,7 +333,9 @@
                         'bg-yellow-500': statusOption.value === 'pending'
                       }"
                     />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ statusOption.label }}</span>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                      statusOption.label
+                    }}</span>
                   </label>
                 </div>
               </div>
@@ -312,10 +344,16 @@
         </div>
 
         <!-- Contact Information Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
+          <div
+            class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2"
+          >
             <span class="material-icons text-gray-500 dark:text-slate-400">contact_mail</span>
-            <h3 class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.contactInfo') }}</h3>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('partners.contactInfo') }}
+            </h3>
           </div>
           <div class="p-5">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -332,7 +370,10 @@
                     placeholder="ornek@sirket.com"
                     required
                   />
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">email</span>
+                  <span
+                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                    >email</span
+                  >
                 </div>
               </div>
 
@@ -345,7 +386,10 @@
                     class="form-input pl-10"
                     placeholder="+90 5XX XXX XX XX"
                   />
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">phone</span>
+                  <span
+                    class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                    >phone</span
+                  >
                 </div>
               </div>
             </div>
@@ -353,10 +397,16 @@
         </div>
 
         <!-- Tax Information Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
+          <div
+            class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2"
+          >
             <span class="material-icons text-gray-500 dark:text-slate-400">receipt_long</span>
-            <h3 class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.taxInfo') }}</h3>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('partners.taxInfo') }}
+            </h3>
           </div>
           <div class="p-5">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -384,10 +434,16 @@
         </div>
 
         <!-- Address Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <div class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
+          <div
+            class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2"
+          >
             <span class="material-icons text-gray-500 dark:text-slate-400">location_on</span>
-            <h3 class="font-semibold text-gray-800 dark:text-white">{{ $t('partners.address') }}</h3>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('partners.address') }}
+            </h3>
           </div>
           <div class="p-5">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -431,6 +487,161 @@
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Payment Settings (only in edit mode) -->
+        <div
+          v-if="isEditing"
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden"
+        >
+          <div
+            class="bg-gray-50 dark:bg-slate-700/50 px-5 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center gap-2"
+          >
+            <span class="material-icons text-gray-500 dark:text-slate-400">account_balance</span>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('partners.paymentSettings.title') }}
+            </h3>
+          </div>
+          <div class="p-5 space-y-4">
+            <!-- Use Platform Bank Accounts Toggle -->
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
+                  {{ $t('partners.paymentSettings.usePlatformAccounts') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ $t('partners.paymentSettings.usePlatformAccountsHint') }}
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  v-model="form.paymentSettings.usePlatformBankAccounts"
+                  type="checkbox"
+                  class="sr-only peer"
+                />
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"
+                ></div>
+              </label>
+            </div>
+
+            <!-- Own Bank Accounts (when not using platform) -->
+            <template v-if="!form.paymentSettings.usePlatformBankAccounts">
+              <!-- Bank Transfer Enable -->
+              <div
+                class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-slate-700"
+              >
+                <div>
+                  <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {{ $t('partners.paymentSettings.bankTransferEnabled') }}
+                  </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    v-model="form.paymentSettings.bankTransferEnabled"
+                    type="checkbox"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"
+                  ></div>
+                </label>
+              </div>
+
+              <!-- Bank Accounts List -->
+              <div class="pt-3 border-t border-gray-200 dark:border-slate-700">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {{ $t('partners.paymentSettings.bankAccounts') }}
+                  </h4>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+                    @click="addPartnerBankAccount"
+                  >
+                    <span class="material-icons text-sm">add</span>
+                    {{ $t('common.add') }}
+                  </button>
+                </div>
+                <div
+                  v-if="form.paymentSettings.bankAccounts.length === 0"
+                  class="text-center py-4 text-gray-500 dark:text-slate-400 text-sm"
+                >
+                  {{ $t('platformSettings.billing.noBankAccounts') }}
+                </div>
+                <div v-else class="space-y-3">
+                  <div
+                    v-for="(account, index) in form.paymentSettings.bankAccounts"
+                    :key="index"
+                    class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg"
+                  >
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-medium text-gray-600 dark:text-slate-400"
+                        >#{{ index + 1 }}</span
+                      >
+                      <div class="flex items-center gap-2">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input v-model="account.isActive" type="checkbox" class="sr-only peer" />
+                          <div
+                            class="w-8 h-4 bg-gray-200 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-500"
+                          ></div>
+                        </label>
+                        <button
+                          type="button"
+                          class="text-red-500 hover:text-red-600"
+                          @click="form.paymentSettings.bankAccounts.splice(index, 1)"
+                        >
+                          <span class="material-icons text-sm">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <select
+                        v-model="account.bankCode"
+                        class="form-input text-sm"
+                        @change="onPartnerBankSelect(account)"
+                      >
+                        <option value="">
+                          {{ $t('platformSettings.bankAccounts.selectBank') }}
+                        </option>
+                        <option
+                          v-for="bank in partnerBankOptions"
+                          :key="bank.code"
+                          :value="bank.code"
+                        >
+                          {{ bank.name }}
+                        </option>
+                      </select>
+                      <input
+                        v-model="account.accountName"
+                        type="text"
+                        class="form-input text-sm"
+                        :placeholder="$t('platformSettings.billing.accountName')"
+                      />
+                      <input
+                        v-model="account.iban"
+                        type="text"
+                        class="form-input text-sm font-mono col-span-2"
+                        placeholder="TR00 0000 0000 0000 0000 0000 00"
+                      />
+                      <input
+                        v-model="account.swift"
+                        type="text"
+                        class="form-input text-sm"
+                        placeholder="SWIFT"
+                      />
+                      <select v-model="account.currency" class="form-input text-sm">
+                        <option value="TRY">TRY</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -587,20 +798,28 @@
           <div v-if="subscriptionStatus" class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div class="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <span class="text-gray-600 dark:text-slate-400">{{ $t('partners.subscription.currentPlan') }}:</span>
+                <span class="text-gray-600 dark:text-slate-400"
+                  >{{ $t('partners.subscription.currentPlan') }}:</span
+                >
                 <span class="ml-2 font-medium text-gray-900 dark:text-white">
                   {{ $t(`partners.subscription.plans.${subscriptionStatus?.plan || 'business'}`) }}
                 </span>
               </div>
               <div>
-                <span class="text-gray-600 dark:text-slate-400">{{ $t('partners.subscription.remainingDays') }}:</span>
+                <span class="text-gray-600 dark:text-slate-400"
+                  >{{ $t('partners.subscription.remainingDays') }}:</span
+                >
                 <span class="ml-2 font-medium text-gray-900 dark:text-white">
                   {{ subscriptionStatus.remainingDays ?? '-' }}
                 </span>
               </div>
               <div v-if="subscriptionStatus.status === 'grace_period'">
-                <span class="text-amber-600 dark:text-amber-400">{{ $t('partners.subscription.gracePeriodRemaining') }}:</span>
-                <span class="ml-2 font-medium">{{ subscriptionStatus.gracePeriodRemainingDays }}</span>
+                <span class="text-amber-600 dark:text-amber-400"
+                  >{{ $t('partners.subscription.gracePeriodRemaining') }}:</span
+                >
+                <span class="ml-2 font-medium">{{
+                  subscriptionStatus.gracePeriodRemainingDays
+                }}</span>
               </div>
             </div>
           </div>
@@ -625,7 +844,14 @@
               >
                 <input v-model="purchaseForm.plan" type="radio" :value="plan.id" class="sr-only" />
                 <div class="flex flex-col flex-1">
-                  <span class="font-medium text-sm" :class="purchaseForm.plan === plan.id ? 'text-purple-600 dark:text-purple-400' : 'text-gray-900 dark:text-white'">
+                  <span
+                    class="font-medium text-sm"
+                    :class="
+                      purchaseForm.plan === plan.id
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : 'text-gray-900 dark:text-white'
+                    "
+                  >
                     {{ plan.name }}
                   </span>
                   <span class="text-lg font-bold text-purple-600 dark:text-purple-400 mt-1">
@@ -636,16 +862,31 @@
                       <span>{{ plan.features.webDesign.maxSites }} site, SSL</span>
                     </template>
                     <template v-else-if="plan.features?.pms?.enabled">
-                      <span>PMS: {{ plan.features.pms.maxHotels === -1 ? $t('partners.subscription.unlimited') : plan.features.pms.maxHotels }} {{ $t('partners.subscription.hotels') }}</span>
+                      <span
+                        >PMS:
+                        {{
+                          plan.features.pms.maxHotels === -1
+                            ? $t('partners.subscription.unlimited')
+                            : plan.features.pms.maxHotels
+                        }}
+                        {{ $t('partners.subscription.hotels') }}</span
+                      >
                     </template>
                     <template v-else>
                       <span>{{ $t('partners.subscription.pmsDisabled') }}</span>
                     </template>
                   </div>
                 </div>
-                <span v-if="purchaseForm.plan === plan.id" class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-purple-600 rounded-full">
+                <span
+                  v-if="purchaseForm.plan === plan.id"
+                  class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-purple-600 rounded-full"
+                >
                   <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                 </span>
               </label>
@@ -663,7 +904,12 @@
               </div>
               <div>
                 <label class="form-label">{{ $t('partners.subscription.amount') }}</label>
-                <input v-model.number="purchaseForm.amount" type="number" step="0.01" class="form-input" />
+                <input
+                  v-model.number="purchaseForm.amount"
+                  type="number"
+                  step="0.01"
+                  class="form-input"
+                />
               </div>
               <div>
                 <label class="form-label">{{ $t('partners.subscription.currency') }}</label>
@@ -676,16 +922,29 @@
             </div>
 
             <!-- Info: Package starts as pending -->
-            <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div
+              class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+            >
               <div class="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                <span class="text-sm font-medium">{{ $t('partners.subscription.pendingNote') }}</span>
+                <span class="text-sm font-medium">{{
+                  $t('partners.subscription.pendingNote')
+                }}</span>
               </div>
             </div>
 
-            <button class="btn-primary mt-4" :disabled="addingPurchase || !purchaseForm.amount" @click="handleAddPurchase">
+            <button
+              class="btn-primary mt-4"
+              :disabled="addingPurchase || !purchaseForm.amount"
+              @click="handleAddPurchase"
+            >
               <span v-if="addingPurchase">{{ $t('common.loading') }}</span>
               <span v-else>{{ $t('partners.subscription.addPurchase') }}</span>
             </button>
@@ -702,43 +961,58 @@
                 :key="purchase._id"
                 class="flex items-center justify-between p-4 border rounded-lg dark:border-slate-700"
                 :class="{
-                  'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800': purchase.status === 'pending',
-                  'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800': purchase.status === 'active',
+                  'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800':
+                    purchase.status === 'pending',
+                  'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800':
+                    purchase.status === 'active',
                   'bg-gray-50 dark:bg-slate-800/50': purchase.status === 'expired',
-                  'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800': purchase.status === 'cancelled'
+                  'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800':
+                    purchase.status === 'cancelled'
                 }"
               >
                 <div class="flex items-center gap-4">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="badge" :class="{
-                        'badge-secondary': purchase.plan === 'webdesign',
-                        'badge-info': purchase.plan === 'business',
-                        'badge-primary': purchase.plan === 'professional',
-                        'badge-success': purchase.plan === 'enterprise'
-                      }">
+                      <span
+                        class="badge"
+                        :class="{
+                          'badge-secondary': purchase.plan === 'webdesign',
+                          'badge-info': purchase.plan === 'business',
+                          'badge-primary': purchase.plan === 'professional',
+                          'badge-success': purchase.plan === 'enterprise'
+                        }"
+                      >
                         {{ $t(`partners.subscription.plans.${purchase.plan}`) || purchase.plan }}
                       </span>
-                      <span class="badge" :class="{
-                        'badge-warning': purchase.status === 'pending',
-                        'badge-success': purchase.status === 'active',
-                        'badge-secondary': purchase.status === 'expired',
-                        'badge-danger': purchase.status === 'cancelled'
-                      }">
+                      <span
+                        class="badge"
+                        :class="{
+                          'badge-warning': purchase.status === 'pending',
+                          'badge-success': purchase.status === 'active',
+                          'badge-secondary': purchase.status === 'expired',
+                          'badge-danger': purchase.status === 'cancelled'
+                        }"
+                      >
                         {{ $t(`partners.subscription.purchaseStatus.${purchase.status}`) }}
                       </span>
                     </div>
                     <div class="text-sm text-gray-600 dark:text-slate-400 mt-1">
-                      {{ formatDate(purchase.period?.startDate) }} - {{ formatDate(purchase.period?.endDate) }}
+                      {{ formatDate(purchase.period?.startDate) }} -
+                      {{ formatDate(purchase.period?.endDate) }}
                     </div>
                   </div>
                   <div class="text-right">
                     <div class="font-medium text-gray-900 dark:text-white">
                       {{ formatCurrency(purchase.price?.amount, purchase.price?.currency) }}
                     </div>
-                    <div v-if="purchase.payment?.date" class="text-xs text-gray-500 dark:text-slate-400">
+                    <div
+                      v-if="purchase.payment?.date"
+                      class="text-xs text-gray-500 dark:text-slate-400"
+                    >
                       {{ $t(`partners.subscription.methods.${purchase.payment?.method}`) }}
-                      <span v-if="purchase.payment?.reference">- {{ purchase.payment.reference }}</span>
+                      <span v-if="purchase.payment?.reference"
+                        >- {{ purchase.payment.reference }}</span
+                      >
                     </div>
                     <div v-else class="text-xs text-amber-600 dark:text-amber-400 font-medium">
                       {{ $t('partners.subscription.awaitingPayment') }}
@@ -754,7 +1028,12 @@
                     @click="openMarkPaidModal(purchase)"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </button>
                   <!-- Edit Purchase Button (for pending or active) -->
@@ -765,7 +1044,12 @@
                     @click="openEditPurchaseModal(purchase)"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                   </button>
                   <!-- Download Invoice Button -->
@@ -773,10 +1057,20 @@
                     v-if="getInvoiceForPurchase(purchase._id)"
                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2"
                     :title="$t('partners.subscription.downloadInvoice')"
-                    @click="downloadInvoice(getInvoiceForPurchase(purchase._id)._id, getInvoiceForPurchase(purchase._id).invoiceNumber)"
+                    @click="
+                      downloadInvoice(
+                        getInvoiceForPurchase(purchase._id)._id,
+                        getInvoiceForPurchase(purchase._id).invoiceNumber
+                      )
+                    "
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                   </button>
                   <!-- Cancel Purchase Button (for pending or active) -->
@@ -787,7 +1081,12 @@
                     @click="confirmCancelPurchase(purchase._id)"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -952,7 +1251,12 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="form-label">{{ $t('partners.subscription.amount') }}</label>
-            <input v-model.number="editPurchaseForm.amount" type="number" step="0.01" class="form-input" />
+            <input
+              v-model.number="editPurchaseForm.amount"
+              type="number"
+              step="0.01"
+              class="form-input"
+            />
           </div>
           <div>
             <label class="form-label">{{ $t('partners.subscription.currency') }}</label>
@@ -969,8 +1273,12 @@
           <div>
             <label class="form-label">{{ $t('partners.subscription.method') }}</label>
             <select v-model="editPurchaseForm.paymentMethod" class="form-input">
-              <option value="bank_transfer">{{ $t('partners.subscription.methods.bankTransfer') }}</option>
-              <option value="credit_card">{{ $t('partners.subscription.methods.creditCard') }}</option>
+              <option value="bank_transfer">
+                {{ $t('partners.subscription.methods.bankTransfer') }}
+              </option>
+              <option value="credit_card">
+                {{ $t('partners.subscription.methods.creditCard') }}
+              </option>
               <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
               <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
             </select>
@@ -999,11 +1307,7 @@
     </Modal>
 
     <!-- Mark as Paid Modal -->
-    <Modal
-      v-model="showMarkPaidModal"
-      :title="$t('partners.subscription.markAsPaid')"
-      size="md"
-    >
+    <Modal v-model="showMarkPaidModal" :title="$t('partners.subscription.markAsPaid')" size="md">
       <div class="space-y-4">
         <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
           <p class="text-sm text-amber-800 dark:text-amber-200">
@@ -1023,8 +1327,12 @@
         <div>
           <label class="form-label">{{ $t('partners.subscription.method') }}</label>
           <select v-model="markPaidForm.paymentMethod" class="form-input">
-            <option value="bank_transfer">{{ $t('partners.subscription.methods.bankTransfer') }}</option>
-            <option value="credit_card">{{ $t('partners.subscription.methods.creditCard') }}</option>
+            <option value="bank_transfer">
+              {{ $t('partners.subscription.methods.bankTransfer') }}
+            </option>
+            <option value="credit_card">
+              {{ $t('partners.subscription.methods.creditCard') }}
+            </option>
             <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
             <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
           </select>
@@ -1032,7 +1340,12 @@
 
         <div>
           <label class="form-label">{{ $t('partners.subscription.reference') }}</label>
-          <input v-model="markPaidForm.paymentReference" type="text" class="form-input" :placeholder="$t('partners.subscription.referencePlaceholder')" />
+          <input
+            v-model="markPaidForm.paymentReference"
+            type="text"
+            class="form-input"
+            :placeholder="$t('partners.subscription.referencePlaceholder')"
+          />
         </div>
 
         <div>
@@ -1045,7 +1358,11 @@
         <button class="btn-secondary" @click="showMarkPaidModal = false">
           {{ $t('common.cancel') }}
         </button>
-        <button class="btn-success" :disabled="markingPaid || !markPaidForm.paymentDate" @click="handleMarkAsPaid">
+        <button
+          class="btn-success"
+          :disabled="markingPaid || !markPaidForm.paymentDate"
+          @click="handleMarkAsPaid"
+        >
           <span v-if="markingPaid">{{ $t('common.loading') }}</span>
           <span v-else>{{ $t('partners.subscription.confirmPayment') }}</span>
         </button>
@@ -1061,6 +1378,7 @@ import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import partnerService from '@/services/partnerService'
+import { BANKS_TR, getBankByCode } from '@booking-engine/constants'
 import { useI18n } from 'vue-i18n'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
@@ -1073,16 +1391,33 @@ const subscription = usePartnerSubscription()
 
 // Re-export subscription properties for template access
 const {
-  showSubscriptionModal, showEditPurchaseModal, showMarkPaidModal,
-  subscriptionPlans, subscriptionStatus, useCustomPmsLimit,
-  activeSubscriptionTab, subscriptionTabs, subscriptionForm,
-  purchaseForm, editPurchaseForm, markPaidForm,
-  savingSubscription, addingPurchase, updatingPurchase, markingPaid,
+  showSubscriptionModal,
+  showEditPurchaseModal,
+  showMarkPaidModal,
+  subscriptionPlans,
+  subscriptionStatus,
+  useCustomPmsLimit,
+  activeSubscriptionTab,
+  subscriptionTabs,
+  subscriptionForm,
+  purchaseForm,
+  editPurchaseForm,
+  markPaidForm,
+  savingSubscription,
+  addingPurchase,
+  updatingPurchase,
+  markingPaid,
   subscriptionStatusMap,
-  getRemainingDays, getGracePeriodDays, isPmsEnabledForRow,
-  getProvisionedHotels, getPmsLimit, getSubscriptionStatusForRow,
-  openEditPurchaseModal, openMarkPaidModal,
-  getInvoiceForPurchase, downloadInvoice
+  getRemainingDays,
+  getGracePeriodDays,
+  isPmsEnabledForRow,
+  getProvisionedHotels,
+  getPmsLimit,
+  getSubscriptionStatusForRow,
+  openEditPurchaseModal,
+  openMarkPaidModal,
+  getInvoiceForPurchase,
+  downloadInvoice
 } = subscription
 
 // Navigation items
@@ -1102,7 +1437,7 @@ const navItems = computed(() => [
   }
 ])
 
-const handleNavAction = (action) => {
+const handleNavAction = action => {
   // Handle navigation actions if needed
 }
 const { executeWithPermission } = usePermissions()
@@ -1139,6 +1474,35 @@ const formatDate = dateStr => {
   })
 }
 
+// Bank options for partner bank accounts
+const partnerBankOptions = BANKS_TR
+
+const addPartnerBankAccount = () => {
+  form.value.paymentSettings.bankAccounts.push({
+    bankCode: '',
+    bankName: '',
+    accountName: '',
+    iban: '',
+    swift: '',
+    currency: 'TRY',
+    isActive: true
+  })
+}
+
+const onPartnerBankSelect = account => {
+  const bank = getBankByCode(account.bankCode)
+  if (bank) {
+    account.bankName = bank.name
+    account.swift = bank.swift
+  }
+}
+
+const defaultPaymentSettings = () => ({
+  usePlatformBankAccounts: true,
+  bankTransferEnabled: false,
+  bankAccounts: []
+})
+
 const form = ref({
   companyName: '',
   tradeName: '',
@@ -1153,7 +1517,8 @@ const form = ref({
     postalCode: ''
   },
   status: 'active',
-  partnerType: 'agency'
+  partnerType: 'agency',
+  paymentSettings: defaultPaymentSettings()
 })
 
 const columns = [
@@ -1174,15 +1539,12 @@ const statusOptions = [
 ]
 
 const fetchPartners = async () => {
-  await executeFetch(
-    () => partnerService.getPartners(),
-    {
-      onSuccess: response => {
-        partners.value = response.data.partners || []
-      },
-      errorMessage: 'partners.fetchError'
-    }
-  )
+  await executeFetch(() => partnerService.getPartners(), {
+    onSuccess: response => {
+      partners.value = response.data.partners || []
+    },
+    errorMessage: 'partners.fetchError'
+  })
 }
 
 const openCreateModalInternal = () => {
@@ -1201,7 +1563,8 @@ const openCreateModalInternal = () => {
       postalCode: ''
     },
     status: 'active',
-    partnerType: 'agency'
+    partnerType: 'agency',
+    paymentSettings: defaultPaymentSettings()
   }
   showModal.value = true
 }
@@ -1228,13 +1591,18 @@ const openEditModal = partner => {
       postalCode: partner.address?.postalCode || ''
     },
     status: partner.status || 'active',
-    partnerType: partner.partnerType || 'agency'
+    partnerType: partner.partnerType || 'agency',
+    paymentSettings: {
+      usePlatformBankAccounts: partner.paymentSettings?.usePlatformBankAccounts ?? true,
+      bankTransferEnabled: partner.paymentSettings?.bankTransferEnabled || false,
+      bankAccounts: (partner.paymentSettings?.bankAccounts || []).map(a => ({ ...a }))
+    }
   }
   showModal.value = true
 }
 
 // Subscription modal - delegated to composable
-const openSubscriptionModal = (partner) => {
+const openSubscriptionModal = partner => {
   subscription.openSubscriptionModal(partner, selectedPartner)
 }
 
@@ -1254,7 +1622,7 @@ const handleMarkAsPaid = () => {
   subscription.handleMarkAsPaid(selectedPartner.value, fetchPartners)
 }
 
-const confirmCancelPurchase = (purchaseId) => {
+const confirmCancelPurchase = purchaseId => {
   subscription.confirmCancelPurchase(purchaseId, selectedPartner.value, fetchPartners)
 }
 
@@ -1279,17 +1647,14 @@ const confirmDelete = partner => {
 }
 
 const handleDelete = async () => {
-  await executeDelete(
-    () => partnerService.deletePartner(selectedPartner.value._id),
-    {
-      successMessage: 'partners.deleteSuccess',
-      errorMessage: 'common.deleteFailed',
-      onSuccess: () => {
-        showDeleteModal.value = false
-        fetchPartners()
-      }
+  await executeDelete(() => partnerService.deletePartner(selectedPartner.value._id), {
+    successMessage: 'partners.deleteSuccess',
+    errorMessage: 'common.deleteFailed',
+    onSuccess: () => {
+      showDeleteModal.value = false
+      fetchPartners()
     }
-  )
+  })
 }
 
 const confirmApprove = partner => {
@@ -1298,17 +1663,14 @@ const confirmApprove = partner => {
 }
 
 const handleApprove = async () => {
-  await executeApprove(
-    () => partnerService.approvePartner(selectedPartner.value._id),
-    {
-      successMessage: 'partners.approveSuccess',
-      errorMessage: 'common.operationFailed',
-      onSuccess: () => {
-        showApproveModal.value = false
-        fetchPartners()
-      }
+  await executeApprove(() => partnerService.approvePartner(selectedPartner.value._id), {
+    successMessage: 'partners.approveSuccess',
+    errorMessage: 'common.operationFailed',
+    onSuccess: () => {
+      showApproveModal.value = false
+      fetchPartners()
     }
-  )
+  })
 }
 
 const uploadDocument = async file => {
@@ -1318,31 +1680,25 @@ const uploadDocument = async file => {
   formData.append('document', file)
   formData.append('documentType', 'license')
 
-  await executeUpload(
-    () => partnerService.uploadDocument(selectedPartner.value._id, formData),
-    {
-      successMessage: 'common.uploadSuccess',
-      errorMessage: 'common.uploadFailed',
-      onSuccess: response => {
-        selectedPartner.value = response.data.partner
-      }
+  await executeUpload(() => partnerService.uploadDocument(selectedPartner.value._id, formData), {
+    successMessage: 'common.uploadSuccess',
+    errorMessage: 'common.uploadFailed',
+    onSuccess: response => {
+      selectedPartner.value = response.data.partner
     }
-  )
+  })
 }
 
 const confirmDeleteDocument = async documentId => {
   if (!confirm(t('common.confirm'))) return
 
-  await executeDelete(
-    () => partnerService.deleteDocument(selectedPartner.value._id, documentId),
-    {
-      successMessage: 'common.deleteSuccess',
-      errorMessage: 'common.deleteFailed',
-      onSuccess: response => {
-        selectedPartner.value = response.data
-      }
+  await executeDelete(() => partnerService.deleteDocument(selectedPartner.value._id, documentId), {
+    successMessage: 'common.deleteSuccess',
+    errorMessage: 'common.deleteFailed',
+    onSuccess: response => {
+      selectedPartner.value = response.data
     }
-  )
+  })
 }
 
 onMounted(() => {

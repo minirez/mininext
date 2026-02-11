@@ -240,16 +240,32 @@ const platformSettingsSchema = new mongoose.Schema(
       // Bank accounts for payment
       bankAccounts: [
         {
+          bankCode: String,
           bankName: String,
           accountName: String,
-          iban: String,
+          iban: { type: String, required: true },
           swift: String,
           currency: {
             type: String,
-            default: 'USD'
+            default: 'TRY'
+          },
+          isActive: {
+            type: Boolean,
+            default: true
           }
         }
-      ]
+      ],
+      // Description shown to customers for bank transfer
+      bankTransferDescription: {
+        type: Map,
+        of: String,
+        default: {}
+      },
+      // Enable/disable bank transfer as payment method
+      bankTransferEnabled: {
+        type: Boolean,
+        default: false
+      }
     }
   },
   {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useWidgetStore } from './stores/widget'
 import { useTranslation, setLocale } from './composables/useTranslation'
 
@@ -8,6 +8,7 @@ import SearchView from './views/SearchView.vue'
 import ResultsView from './views/ResultsView.vue'
 import BookingView from './views/BookingView.vue'
 import PaymentView from './views/PaymentView.vue'
+import BankTransferView from './views/BankTransferView.vue'
 import ConfirmationView from './views/ConfirmationView.vue'
 
 const widgetStore = useWidgetStore()
@@ -36,12 +37,30 @@ const hotelStars = computed(() => hotelInfo.value?.stars || 0)
 const showPoweredBy = computed(() => widgetStore.widgetConfig?.showPoweredBy !== false)
 const position = computed(() => widgetStore.config.position || 'bottom-right')
 
+// Language Dropdown
+const langDropdownOpen = ref(false)
+const availableLanguages = [
+  { code: 'tr', label: 'TR' },
+  { code: 'en', label: 'EN' }
+]
+const currentLang = computed(() => widgetStore.config.language || 'tr')
+
+function toggleLangDropdown() {
+  langDropdownOpen.value = !langDropdownOpen.value
+}
+
+function changeLanguage(code) {
+  widgetStore.setLanguage(code)
+  langDropdownOpen.value = false
+}
+
 // View component mapping
 const viewComponents = {
   search: SearchView,
   results: ResultsView,
   booking: BookingView,
   payment: PaymentView,
+  'bank-transfer': BankTransferView,
   confirmation: ConfirmationView
 }
 
@@ -56,7 +75,11 @@ const stepLabels = computed(() => ({
   payment: t('steps.payment'),
   confirmation: t('steps.confirmation')
 }))
-const currentStepIndex = computed(() => steps.indexOf(currentStep.value))
+// bank-transfer maps to payment step index for indicator
+const currentStepIndex = computed(() => {
+  const step = currentStep.value === 'bank-transfer' ? 'payment' : currentStep.value
+  return steps.indexOf(step)
+})
 
 // Trigger button text
 const triggerText = computed(() => {
@@ -138,22 +161,66 @@ function closeWidget() {
             </div>
           </div>
         </div>
-        <button class="widget-close" @click="closeWidget">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <div class="widget-header-actions">
+          <div class="widget-lang-selector">
+            <button class="widget-lang-btn" @click="toggleLangDropdown">
+              <span class="widget-lang-code">{{ currentLang.toUpperCase() }}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div v-if="langDropdownOpen" class="widget-lang-dropdown">
+              <button
+                v-for="lang in availableLanguages"
+                :key="lang.code"
+                :class="['widget-lang-option', { active: currentLang === lang.code }]"
+                @click="changeLanguage(lang.code)"
+              >
+                <span>{{ lang.label }}</span>
+                <svg
+                  v-if="currentLang === lang.code"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button class="widget-close" @click="closeWidget">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Step Indicator -->
@@ -219,6 +286,50 @@ function closeWidget() {
                   d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                 />
               </svg>
+            </div>
+          </div>
+        </div>
+        <div class="widget-header-actions">
+          <div class="widget-lang-selector">
+            <button class="widget-lang-btn" @click="toggleLangDropdown">
+              <span class="widget-lang-code">{{ currentLang.toUpperCase() }}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div v-if="langDropdownOpen" class="widget-lang-dropdown">
+              <button
+                v-for="lang in availableLanguages"
+                :key="lang.code"
+                :class="['widget-lang-option', { active: currentLang === lang.code }]"
+                @click="changeLanguage(lang.code)"
+              >
+                <span>{{ lang.label }}</span>
+                <svg
+                  v-if="currentLang === lang.code"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
             </div>
           </div>
         </div>

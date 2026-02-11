@@ -39,7 +39,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     contact,
     billing,
     specialRequests,
-    salesChannel = 'b2c'
+    salesChannel = 'b2c',
+    paymentMethod
   } = req.body
 
   // Validate hotel
@@ -307,6 +308,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     },
     payment: {
       status: 'pending',
+      method: paymentMethod || 'credit_card',
       dueAmount: grandTotal + tax
     },
     status: 'pending',

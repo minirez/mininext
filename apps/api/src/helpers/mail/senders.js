@@ -240,7 +240,9 @@ export const sendBookingConfirmation = async ({
   guestPhone,
   bookingUrl,
   partnerId,
-  language = 'tr'
+  language = 'tr',
+  paymentMethod,
+  bankTransferSection
 }) => {
   const subject =
     language === 'tr'
@@ -248,6 +250,7 @@ export const sendBookingConfirmation = async ({
       : `Booking Confirmation - ${bookingNumber}`
 
   const brandingVars = await getEmailBranding(partnerId)
+  const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
 
   const html = await renderEmailTemplate(
     'booking-confirmation',
@@ -272,6 +275,11 @@ export const sendBookingConfirmation = async ({
         language === 'tr'
           ? `Rezervasyonunuz onaylandı - ${bookingNumber}`
           : `Your booking is confirmed - ${bookingNumber}`,
+      BANK_TRANSFER_SECTION: bankTransferSection || '',
+      PAYMENT_METHOD:
+        paymentMethod === 'bank_transfer'
+          ? labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi'
+          : '',
       ...brandingVars
     },
     language

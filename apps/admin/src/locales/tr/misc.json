@@ -360,6 +360,21 @@
       "endpointRequired": "Paximum API endpoint gerekli",
       "credentialsRequired": "Paximum kimlik bilgileri eksik (agency, kullanıcı adı, şifre gerekli)"
     },
+    "tabs": {
+      "integrations": "Entegrasyonlar",
+      "notifications": "Bildirimler",
+      "finance": "Finans"
+    },
+    "bankAccounts": {
+      "title": "Banka Hesapları",
+      "description": "Banka havalesi ödemeler için hesap bilgileri ve açıklama metni",
+      "selectBank": "Banka Seçin",
+      "bankName": "Banka",
+      "active": "Aktif",
+      "descriptionLabel": "Havale Açıklaması",
+      "descriptionHint": "Müşterinin havale ekranında göreceği açıklama metni",
+      "descriptionPlaceholder": "Havale açıklamasına rezervasyon numaranızı yazmayı unutmayınız..."
+    },
     "billing": {
       "title": "Fatura Ayarları",
       "description": "Partner abonelik faturaları için şirket bilgileri ve vergi ayarları",

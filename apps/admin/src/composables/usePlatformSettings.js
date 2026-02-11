@@ -9,12 +9,23 @@ export function usePlatformSettings() {
   const toast = useToast()
 
   // Async actions
-  const { isLoading: loading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+  const { isLoading: loading, execute: executeLoad } = useAsyncAction({
+    showSuccessToast: false,
+    showErrorToast: false
+  })
   const { isLoading: saving, execute: executeSave } = useAsyncAction({ showErrorToast: false })
-  const { isLoading: testingEmail, execute: executeTestEmail } = useAsyncAction({ showErrorToast: false })
-  const { isLoading: testingSMS, execute: executeTestSMS } = useAsyncAction({ showErrorToast: false })
-  const { isLoading: testingPaximum, execute: executeTestPaximum } = useAsyncAction({ showErrorToast: false })
-  const { isLoading: generatingVAPID, execute: executeGenerateVAPID } = useAsyncAction({ showErrorToast: false })
+  const { isLoading: testingEmail, execute: executeTestEmail } = useAsyncAction({
+    showErrorToast: false
+  })
+  const { isLoading: testingSMS, execute: executeTestSMS } = useAsyncAction({
+    showErrorToast: false
+  })
+  const { isLoading: testingPaximum, execute: executeTestPaximum } = useAsyncAction({
+    showErrorToast: false
+  })
+  const { isLoading: generatingVAPID, execute: executeGenerateVAPID } = useAsyncAction({
+    showErrorToast: false
+  })
 
   // State
   const testEmailAddress = ref('')
@@ -74,80 +85,81 @@ export function usePlatformSettings() {
       invoicePrefix: 'INV',
       defaultTaxRate: 0,
       invoiceNotes: '',
-      bankAccounts: []
+      bankAccounts: [],
+      bankTransferDescription: {},
+      bankTransferEnabled: false
     }
   })
 
   // Load settings
   const loadSettings = async () => {
-    await executeLoad(
-      () => platformSettingsService.getSettings(),
-      {
-        onSuccess: data => {
-          // Merge with defaults
-          settings.value = {
-            aws: {
-              ses: {
-                enabled: data.aws?.ses?.enabled || false,
-                region: data.aws?.ses?.region || 'eu-west-1',
-                accessKeyId: '', // Don't show masked value
-                secretAccessKey: '', // Don't show masked value
-                fromEmail: data.aws?.ses?.fromEmail || '',
-                fromName: data.aws?.ses?.fromName || ''
-              }
-            },
-            netgsm: {
-              enabled: data.netgsm?.enabled || false,
-              usercode: '', // Don't show masked value
-              password: '', // Don't show masked value
-              msgheader: data.netgsm?.msgheader || ''
-            },
-            gemini: {
-              enabled: data.gemini?.enabled || false,
-              apiKey: '' // Don't show masked value
-            },
-            firecrawl: {
-              enabled: data.firecrawl?.enabled || false,
-              apiKey: '' // Don't show masked value
-            },
-            paximum: {
-              enabled: data.paximum?.enabled || false,
-              endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
-              agency: '', // Don't show masked value
-              user: '', // Don't show masked value
-              password: '', // Don't show masked value
-              defaultMarkup: data.paximum?.defaultMarkup ?? 10
-            },
-            webPush: {
-              enabled: data.webPush?.enabled || false,
-              publicKey: data.webPush?.publicKey || '',
-              privateKey: '', // Don't show masked value
-              contactEmail: data.webPush?.contactEmail || ''
-            },
-            billing: {
-              companyName: data.billing?.companyName || '',
-              taxNumber: data.billing?.taxNumber || '',
-              taxOffice: data.billing?.taxOffice || '',
-              email: data.billing?.email || '',
-              phone: data.billing?.phone || '',
-              address: {
-                street: data.billing?.address?.street || '',
-                city: data.billing?.address?.city || '',
-                country: data.billing?.address?.country || '',
-                postalCode: data.billing?.address?.postalCode || ''
-              },
-              invoicePrefix: data.billing?.invoicePrefix || 'INV',
-              defaultTaxRate: data.billing?.defaultTaxRate ?? 0,
-              invoiceNotes: data.billing?.invoiceNotes || '',
-              bankAccounts: data.billing?.bankAccounts || []
+    await executeLoad(() => platformSettingsService.getSettings(), {
+      onSuccess: data => {
+        // Merge with defaults
+        settings.value = {
+          aws: {
+            ses: {
+              enabled: data.aws?.ses?.enabled || false,
+              region: data.aws?.ses?.region || 'eu-west-1',
+              accessKeyId: '', // Don't show masked value
+              secretAccessKey: '', // Don't show masked value
+              fromEmail: data.aws?.ses?.fromEmail || '',
+              fromName: data.aws?.ses?.fromName || ''
             }
+          },
+          netgsm: {
+            enabled: data.netgsm?.enabled || false,
+            usercode: '', // Don't show masked value
+            password: '', // Don't show masked value
+            msgheader: data.netgsm?.msgheader || ''
+          },
+          gemini: {
+            enabled: data.gemini?.enabled || false,
+            apiKey: '' // Don't show masked value
+          },
+          firecrawl: {
+            enabled: data.firecrawl?.enabled || false,
+            apiKey: '' // Don't show masked value
+          },
+          paximum: {
+            enabled: data.paximum?.enabled || false,
+            endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
+            agency: '', // Don't show masked value
+            user: '', // Don't show masked value
+            password: '', // Don't show masked value
+            defaultMarkup: data.paximum?.defaultMarkup ?? 10
+          },
+          webPush: {
+            enabled: data.webPush?.enabled || false,
+            publicKey: data.webPush?.publicKey || '',
+            privateKey: '', // Don't show masked value
+            contactEmail: data.webPush?.contactEmail || ''
+          },
+          billing: {
+            companyName: data.billing?.companyName || '',
+            taxNumber: data.billing?.taxNumber || '',
+            taxOffice: data.billing?.taxOffice || '',
+            email: data.billing?.email || '',
+            phone: data.billing?.phone || '',
+            address: {
+              street: data.billing?.address?.street || '',
+              city: data.billing?.address?.city || '',
+              country: data.billing?.address?.country || '',
+              postalCode: data.billing?.address?.postalCode || ''
+            },
+            invoicePrefix: data.billing?.invoicePrefix || 'INV',
+            defaultTaxRate: data.billing?.defaultTaxRate ?? 0,
+            invoiceNotes: data.billing?.invoiceNotes || '',
+            bankAccounts: data.billing?.bankAccounts || [],
+            bankTransferDescription: data.billing?.bankTransferDescription || {},
+            bankTransferEnabled: data.billing?.bankTransferEnabled || false
           }
-        },
-        onError: error => {
-          toast.error(t('common.error') + ': ' + error.message)
         }
+      },
+      onError: error => {
+        toast.error(t('common.error') + ': ' + error.message)
       }
-    )
+    })
   }
 
   // Save settings
@@ -192,7 +204,9 @@ export function usePlatformSettings() {
         invoicePrefix: settings.value.billing.invoicePrefix,
         defaultTaxRate: settings.value.billing.defaultTaxRate,
         invoiceNotes: settings.value.billing.invoiceNotes,
-        bankAccounts: settings.value.billing.bankAccounts
+        bankAccounts: settings.value.billing.bankAccounts,
+        bankTransferDescription: settings.value.billing.bankTransferDescription,
+        bankTransferEnabled: settings.value.billing.bankTransferEnabled
       }
     }
 
@@ -228,45 +242,36 @@ export function usePlatformSettings() {
       update.webPush.privateKey = settings.value.webPush.privateKey
     }
 
-    await executeSave(
-      () => platformSettingsService.updateSettings(update),
-      {
-        successMessage: 'platformSettings.saved',
-        onSuccess: async () => {
-          // Reload to get updated values
-          await loadSettings()
-        },
-        onError: error => {
-          toast.error(t('common.error') + ': ' + error.message)
-        }
+    await executeSave(() => platformSettingsService.updateSettings(update), {
+      successMessage: 'platformSettings.saved',
+      onSuccess: async () => {
+        // Reload to get updated values
+        await loadSettings()
+      },
+      onError: error => {
+        toast.error(t('common.error') + ': ' + error.message)
       }
-    )
+    })
   }
 
   // Send test email
   const sendTestEmail = async () => {
-    await executeTestEmail(
-      () => platformSettingsService.testEmail(testEmailAddress.value),
-      {
-        successMessage: 'platformSettings.email.testSent',
-        onError: error => {
-          toast.error(error.response?.data?.error || error.message)
-        }
+    await executeTestEmail(() => platformSettingsService.testEmail(testEmailAddress.value), {
+      successMessage: 'platformSettings.email.testSent',
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
       }
-    )
+    })
   }
 
   // Send test SMS
   const sendTestSMS = async () => {
-    await executeTestSMS(
-      () => platformSettingsService.testSMS(testPhoneNumber.value),
-      {
-        successMessage: 'platformSettings.sms.testSent',
-        onError: error => {
-          toast.error(error.response?.data?.error || error.message)
-        }
+    await executeTestSMS(() => platformSettingsService.testSMS(testPhoneNumber.value), {
+      successMessage: 'platformSettings.sms.testSent',
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
       }
-    )
+    })
   }
 
   // Test Paximum connection with values from input boxes
@@ -283,15 +288,16 @@ export function usePlatformSettings() {
     }
 
     await executeTestPaximum(
-      () => platformSettingsService.testPaximum({
-        endpoint: paximumSettings.endpoint,
-        agency: paximumSettings.agency,
-        user: paximumSettings.user,
-        password: paximumSettings.password,
-        defaultMarkup: paximumSettings.defaultMarkup
-      }),
+      () =>
+        platformSettingsService.testPaximum({
+          endpoint: paximumSettings.endpoint,
+          agency: paximumSettings.agency,
+          user: paximumSettings.user,
+          password: paximumSettings.password,
+          defaultMarkup: paximumSettings.defaultMarkup
+        }),
       {
-        onSuccess: async (result) => {
+        onSuccess: async result => {
           toast.success(result.message || t('platformSettings.paximum.testSuccess'))
           // Reload settings to reflect saved values
           await loadSettings()
@@ -305,19 +311,16 @@ export function usePlatformSettings() {
 
   // Generate VAPID keys
   const generateVAPID = async () => {
-    await executeGenerateVAPID(
-      () => platformSettingsService.generateVAPIDKeys(),
-      {
-        successMessage: 'platformSettings.push.keysGenerated',
-        onSuccess: keys => {
-          settings.value.webPush.publicKey = keys.publicKey
-          settings.value.webPush.privateKey = keys.privateKey
-        },
-        onError: error => {
-          toast.error(error.response?.data?.error || error.message)
-        }
+    await executeGenerateVAPID(() => platformSettingsService.generateVAPIDKeys(), {
+      successMessage: 'platformSettings.push.keysGenerated',
+      onSuccess: keys => {
+        settings.value.webPush.publicKey = keys.publicKey
+        settings.value.webPush.privateKey = keys.privateKey
+      },
+      onError: error => {
+        toast.error(error.response?.data?.error || error.message)
       }
-    )
+    })
   }
 
   // Copy to clipboard
@@ -333,11 +336,13 @@ export function usePlatformSettings() {
   // Add bank account
   const addBankAccount = () => {
     settings.value.billing.bankAccounts.push({
+      bankCode: '',
       bankName: '',
       accountName: '',
       iban: '',
       swift: '',
-      currency: 'USD'
+      currency: 'TRY',
+      isActive: true
     })
   }
 

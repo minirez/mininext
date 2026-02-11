@@ -39,7 +39,8 @@ export default {
   results: {
     searching: 'Uygun odalar aranıyor...',
     noResults: 'Uygun oda bulunamadı',
-    noResultsDesc: 'Seçilen tarihlerde müsait oda bulunmamaktadır. Lütfen farklı tarihler deneyiniz.',
+    noResultsDesc:
+      'Seçilen tarihlerde müsait oda bulunmamaktadır. Lütfen farklı tarihler deneyiniz.',
     changeDates: 'Tarihleri Değiştir',
     standardRoom: 'Standart Oda',
     mealPlans: {
@@ -96,7 +97,8 @@ export default {
       mr: 'Bay',
       mrs: 'Bayan',
       specialRequestsPlaceholder: 'Varsa özel isteklerinizi yazabilirsiniz...',
-      specialRequestsHint: 'Erken giriş, geç çıkış, özel düzenleme vb. isteklerinizi belirtebilirsiniz.'
+      specialRequestsHint:
+        'Erken giriş, geç çıkış, özel düzenleme vb. isteklerinizi belirtebilirsiniz.'
     },
 
     guest: {
@@ -194,8 +196,18 @@ export default {
   datePicker: {
     days: ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'],
     months: [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık'
     ],
     presets: {
       oneNight: '1 gece',
@@ -210,6 +222,18 @@ export default {
       selectCheckOut: 'Çıkış tarihi seçin',
       canSelectNew: 'Yeni tarih seçebilirsiniz'
     }
+  },
+
+  bankTransfer: {
+    title: 'Banka Havalesi Bilgileri',
+    bookingNumber: 'Rezervasyon No',
+    amount: 'Ödenecek Tutar',
+    accountName: 'Hesap Sahibi',
+    copyIban: 'Kopyala',
+    copied: 'Kopyalandı!',
+    continue: 'Devam Et',
+    noAccounts: 'Banka hesabı bulunamadı',
+    note: 'Havale açıklamasına rezervasyon numaranızı yazmayı unutmayınız. Ödemeniz onaylandığında size e-posta ile bildirilecektir.'
   },
 
   footer: {

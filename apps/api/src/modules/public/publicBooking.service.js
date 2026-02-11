@@ -45,8 +45,17 @@ async function findMarket(hotelId, countryCode) {
  * Body: { hotelCode, checkIn, checkOut, rooms: [{ roomTypeCode, mealPlanCode, adults, children, guests }], contact, billing, specialRequests }
  */
 export const createBooking = asyncHandler(async (req, res) => {
-  const { hotelCode, checkIn, checkOut, rooms, contact, billing, specialRequests, countryCode } =
-    req.body
+  const {
+    hotelCode,
+    checkIn,
+    checkOut,
+    rooms,
+    contact,
+    billing,
+    specialRequests,
+    countryCode,
+    paymentMethod
+  } = req.body
 
   // Validate hotel (hotelCode can be slug or _id)
   const hotelQuery = { status: 'active' }
@@ -221,6 +230,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     },
     payment: {
       status: 'pending',
+      method: paymentMethod || 'credit_card',
       dueAmount: grandTotal + tax
     },
     status: 'pending',

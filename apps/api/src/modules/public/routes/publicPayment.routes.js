@@ -1,12 +1,15 @@
 /**
  * Public Payment Routes
- * Payment methods, BIN query, payment initiation, callbacks
+ * Payment methods, BIN query, payment initiation, callbacks, bank accounts
  */
 
 import express from 'express'
 import * as publicService from '../public.service.js'
 import { pricingLimiter, publicBookingLimiter } from '#middleware/rateLimiter.js'
 import { validateBody, validateQuery } from '#middleware/validation.js'
+import PlatformSettings from '#modules/platform-settings/platformSettings.model.js'
+import Partner from '#modules/partner/partner.model.js'
+import { asyncHandler } from '#helpers'
 
 const router = express.Router()
 
@@ -222,5 +225,64 @@ router.get('/hotels/:hotelCode/payment-methods', publicService.getPaymentMethods
  */
 router.get('/payment/callback', publicService.payment3DCallback)
 router.post('/payment/callback', publicService.payment3DCallback)
+
+/**
+ * @swagger
+ * /api/public/payment/bank-accounts:
+ *   get:
+ *     tags: [Public]
+ *     summary: Get bank accounts for bank transfer
+ *     description: Returns active bank accounts and description for bank transfer payment.
+ *     security: []
+ *     parameters:
+ *       - name: partnerId
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Partner ID (optional, uses platform accounts if not specified or partner uses platform accounts)
+ *     responses:
+ *       200:
+ *         description: Bank accounts list
+ */
+router.get(
+  '/payment/bank-accounts',
+  asyncHandler(async (req, res) => {
+    const { partnerId } = req.query
+
+    let bankAccounts = []
+    let bankTransferDescription = {}
+    let bankTransferEnabled = false
+
+    // Check if partner has own bank accounts
+    if (partnerId) {
+      const partner = await Partner.findById(partnerId).lean()
+      if (
+        partner?.paymentSettings &&
+        !partner.paymentSettings.usePlatformBankAccounts &&
+        partner.paymentSettings.bankAccounts?.length > 0
+      ) {
+        bankAccounts = partner.paymentSettings.bankAccounts.filter(a => a.isActive)
+        bankTransferDescription = partner.paymentSettings.bankTransferDescription || {}
+        bankTransferEnabled = partner.paymentSettings.bankTransferEnabled || false
+
+        return res.json({
+          success: true,
+          data: { bankAccounts, bankTransferDescription, bankTransferEnabled }
+        })
+      }
+    }
+
+    // Fall back to platform bank accounts
+    const settings = await PlatformSettings.getSettings()
+    bankAccounts = (settings.billing?.bankAccounts || []).filter(a => a.isActive)
+    bankTransferDescription = settings.billing?.bankTransferDescription || {}
+    bankTransferEnabled = settings.billing?.bankTransferEnabled || false
+
+    res.json({
+      success: true,
+      data: { bankAccounts, bankTransferDescription, bankTransferEnabled }
+    })
+  })
+)
 
 export default router

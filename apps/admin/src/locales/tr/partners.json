@@ -63,6 +63,13 @@
     "searchPlaceholder": "Partner ara...",
     "noSearchResults": "Arama sonucu bulunamadı",
     "showingResults": "{count} / {total} partner gösteriliyor",
+    "paymentSettings": {
+      "title": "Ödeme Ayarları",
+      "usePlatformAccounts": "Platform Banka Hesaplarını Kullan",
+      "usePlatformAccountsHint": "Kapatırsanız partner kendi banka hesaplarını tanımlayabilir",
+      "bankTransferEnabled": "Banka Havalesi Aktif",
+      "bankAccounts": "Banka Hesapları"
+    },
     "subscription": {
       "title": "Abonelik ve PMS Ayarları",
       "plan": "Paket",

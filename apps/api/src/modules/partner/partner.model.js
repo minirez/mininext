@@ -263,6 +263,40 @@ const partnerSchema = new mongoose.Schema(
       }
     },
 
+    // Ödeme Ayarları
+    paymentSettings: {
+      usePlatformBankAccounts: {
+        type: Boolean,
+        default: true
+      },
+      bankAccounts: [
+        {
+          bankCode: String,
+          bankName: String,
+          accountName: String,
+          iban: { type: String, required: true },
+          swift: String,
+          currency: {
+            type: String,
+            default: 'TRY'
+          },
+          isActive: {
+            type: Boolean,
+            default: true
+          }
+        }
+      ],
+      bankTransferDescription: {
+        type: Map,
+        of: String,
+        default: {}
+      },
+      bankTransferEnabled: {
+        type: Boolean,
+        default: false
+      }
+    },
+
     // PMS Entegrasyonu
     pmsIntegration: {
       enabled: {

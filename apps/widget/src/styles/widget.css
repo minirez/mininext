@@ -95,7 +95,9 @@
 }
 
 /* Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -103,7 +105,13 @@
 
 /* Base */
 #widget-app {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color: var(--text-primary);
@@ -166,8 +174,14 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 0.4; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
 }
 
 /* ==================== MODAL OVERLAY ==================== */
@@ -185,13 +199,23 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==================== WIDGET CONTAINER ==================== */
@@ -202,7 +226,9 @@
   max-height: 90vh;
   background: var(--bg-primary);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    var(--shadow-xl),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
   overflow: clip;
   display: flex;
   flex-direction: column;
@@ -210,8 +236,14 @@
 }
 
 @keyframes modalSlideUp {
-  from { opacity: 0; transform: translateY(30px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ==================== WIDGET HEADER ==================== */
@@ -263,6 +295,13 @@
   fill: #fbbf24;
 }
 
+/* Header Actions */
+.widget-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .widget-close {
   display: flex;
   align-items: center;
@@ -280,6 +319,80 @@
 .widget-close:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+/* Language Selector */
+.widget-lang-selector {
+  position: relative;
+}
+
+.widget-lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.widget-lang-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.widget-lang-code {
+  letter-spacing: 0.02em;
+}
+
+.widget-lang-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  min-width: 100px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: slideDown 0.15s ease-out;
+}
+
+.widget-lang-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.widget-lang-option:hover {
+  background: var(--bg-secondary);
+}
+
+.widget-lang-option.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.widget-lang-option svg {
+  color: var(--primary);
 }
 
 /* ==================== WIDGET CONTENT ==================== */
@@ -583,8 +696,14 @@ textarea.form-input {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .guest-row {
@@ -905,8 +1024,8 @@ textarea.form-input {
   align-items: center;
   gap: 16px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255,255,255,0.2);
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .summary-date {
@@ -928,7 +1047,7 @@ textarea.form-input {
 }
 
 .summary-date-divider {
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .summary-card-footer {
@@ -1025,8 +1144,12 @@ textarea.form-input {
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0); }
-  to { transform: scale(1); }
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .success-icon svg {
@@ -1121,7 +1244,9 @@ textarea.form-input {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-state {
@@ -1134,15 +1259,24 @@ textarea.form-input {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--border-radius-xs);
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ==================== SEARCH SUMMARY ==================== */
@@ -2210,6 +2344,7 @@ textarea.form-input {
 .results-view,
 .booking-view,
 .payment-view,
+.bank-transfer-view,
 .confirmation-view {
   display: flex;
   flex-direction: column;
@@ -2234,7 +2369,7 @@ textarea.form-input {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 60%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -2246,7 +2381,7 @@ textarea.form-input {
   font-size: 18px;
   font-weight: 600;
   margin: 0;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .hero-location {
@@ -2395,6 +2530,242 @@ select.form-input {
 select.form-input option {
   color: var(--text-primary);
   background-color: var(--bg-primary);
+}
+
+/* ==================== BANK TRANSFER VIEW ==================== */
+
+.bt-booking-ref {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--primary-bg, #f5f3ff);
+  border-radius: 10px;
+}
+
+.bt-booking-ref-label {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+}
+
+.bt-booking-ref-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-color, #7c3aed);
+  letter-spacing: 0.5px;
+}
+
+.bt-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-radius: 10px;
+}
+
+.dark .bt-amount {
+  background: rgba(251, 191, 36, 0.15);
+}
+
+.bt-amount-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #92400e;
+}
+
+.dark .bt-amount-label {
+  color: #fbbf24;
+}
+
+.bt-amount-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.dark .bt-amount-value {
+  color: #fbbf24;
+}
+
+.bt-description {
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border-radius: 10px;
+  border-left: 3px solid #22c55e;
+}
+
+.dark .bt-description {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.bt-description p {
+  font-size: 13px;
+  color: #166534;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.dark .bt-description p {
+  color: #86efac;
+}
+
+.bt-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.bt-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bt-account-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.dark .bt-account-card {
+  border-color: #374151;
+  background: #1f2937;
+}
+
+.bt-account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .bt-account-header {
+  background: #111827;
+  border-color: #374151;
+}
+
+.bt-bank-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dark .bt-bank-name {
+  color: #f3f4f6;
+}
+
+.bt-currency-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--primary-bg, #f5f3ff);
+  color: var(--primary-color, #7c3aed);
+}
+
+.bt-account-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bt-field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bt-field-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.dark .bt-field-value {
+  color: #f3f4f6;
+}
+
+.bt-iban-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bt-iban-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.5px;
+  flex: 1;
+  word-break: break-all;
+}
+
+.dark .bt-iban-value {
+  color: #f3f4f6;
+}
+
+.bt-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--primary-color, #7c3aed);
+  background: var(--primary-bg, #f5f3ff);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.bt-copy-btn:hover {
+  background: var(--primary-color, #7c3aed);
+  color: #fff;
+}
+
+.bt-empty {
+  text-align: center;
+  padding: 30px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.bt-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.dark .bt-note {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+}
+
+.bt-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* ==================== PAYMENT VIEW ==================== */
@@ -2737,8 +3108,12 @@ select.form-input option {
   }
 
   @keyframes mobileSlideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 
   .widget-trigger {

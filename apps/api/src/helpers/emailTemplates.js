@@ -30,7 +30,9 @@ export const TEMPLATE_VARIABLES = {
     'GUEST_NAME',
     'GUEST_EMAIL',
     'GUEST_PHONE',
-    'BOOKING_URL'
+    'BOOKING_URL',
+    'BANK_TRANSFER_SECTION',
+    'PAYMENT_METHOD'
   ],
   'booking-cancelled': [
     'BOOKING_NUMBER',
@@ -131,6 +133,19 @@ export const TEMPLATE_LABELS = {
     TOTAL_LABEL: 'Toplam',
     GUEST_INFO_TITLE: 'Misafir Bilgileri',
     VIEW_BOOKING_BUTTON: 'Rezervasyonu Görüntüle',
+
+    // Bank Transfer
+    BANK_TRANSFER_TITLE: 'Banka Havale Bilgileri',
+    BANK_TRANSFER_NOTE:
+      'Lütfen havale açıklamasına rezervasyon numaranızı yazınız. Ödemeniz onaylandığında e-posta ile bilgilendirileceksiniz.',
+    BANK_NAME_LABEL: 'Banka',
+    ACCOUNT_NAME_LABEL: 'Hesap Sahibi',
+    IBAN_LABEL: 'IBAN',
+    SWIFT_LABEL: 'Swift',
+    PAYMENT_METHOD_LABEL: 'Ödeme Yöntemi',
+    PAYMENT_METHOD_BANK_TRANSFER: 'Banka Havalesi',
+    PAYMENT_METHOD_CREDIT_CARD: 'Kredi Kartı',
+    PAYMENT_METHOD_PAY_AT_HOTEL: 'Otelde Ödeme',
 
     // Booking Cancelled
     CANCELLED_TITLE: 'Rezervasyonunuz İptal Edildi',
@@ -278,6 +293,19 @@ export const TEMPLATE_LABELS = {
     TOTAL_LABEL: 'Total',
     GUEST_INFO_TITLE: 'Guest Information',
     VIEW_BOOKING_BUTTON: 'View Booking',
+
+    // Bank Transfer
+    BANK_TRANSFER_TITLE: 'Bank Transfer Details',
+    BANK_TRANSFER_NOTE:
+      'Please include your booking number in the transfer description. You will be notified by email once your payment is confirmed.',
+    BANK_NAME_LABEL: 'Bank',
+    ACCOUNT_NAME_LABEL: 'Account Holder',
+    IBAN_LABEL: 'IBAN',
+    SWIFT_LABEL: 'Swift',
+    PAYMENT_METHOD_LABEL: 'Payment Method',
+    PAYMENT_METHOD_BANK_TRANSFER: 'Bank Transfer',
+    PAYMENT_METHOD_CREDIT_CARD: 'Credit Card',
+    PAYMENT_METHOD_PAY_AT_HOTEL: 'Pay at Hotel',
 
     // Booking Cancelled
     CANCELLED_TITLE: 'Your Booking Has Been Cancelled',

@@ -23,7 +23,7 @@ export const getSettings = asyncHandler(async (req, res) => {
  * Update platform settings
  */
 export const updateSettings = asyncHandler(async (req, res) => {
-  const { aws, netgsm, webPush, gemini, firecrawl } = req.body
+  const { aws, netgsm, webPush, gemini, firecrawl, billing } = req.body
 
   const settings = await PlatformSettings.getSettings()
 
@@ -93,6 +93,27 @@ export const updateSettings = asyncHandler(async (req, res) => {
       settings.paximum.token = null
       settings.paximum.tokenExpiresOn = null
     }
+  }
+
+  // Update Billing settings
+  if (billing !== undefined) {
+    settings.billing = settings.billing || {}
+
+    if (billing.companyName !== undefined) settings.billing.companyName = billing.companyName
+    if (billing.taxNumber !== undefined) settings.billing.taxNumber = billing.taxNumber
+    if (billing.taxOffice !== undefined) settings.billing.taxOffice = billing.taxOffice
+    if (billing.email !== undefined) settings.billing.email = billing.email
+    if (billing.phone !== undefined) settings.billing.phone = billing.phone
+    if (billing.address !== undefined) settings.billing.address = billing.address
+    if (billing.invoicePrefix !== undefined) settings.billing.invoicePrefix = billing.invoicePrefix
+    if (billing.defaultTaxRate !== undefined)
+      settings.billing.defaultTaxRate = billing.defaultTaxRate
+    if (billing.invoiceNotes !== undefined) settings.billing.invoiceNotes = billing.invoiceNotes
+    if (billing.bankAccounts !== undefined) settings.billing.bankAccounts = billing.bankAccounts
+    if (billing.bankTransferDescription !== undefined)
+      settings.billing.bankTransferDescription = billing.bankTransferDescription
+    if (billing.bankTransferEnabled !== undefined)
+      settings.billing.bankTransferEnabled = billing.bankTransferEnabled
   }
 
   await settings.save()

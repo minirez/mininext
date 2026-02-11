@@ -360,6 +360,21 @@
       "endpointRequired": "Paximum API endpoint is required",
       "credentialsRequired": "Paximum credentials are incomplete (agency, username, password required)"
     },
+    "tabs": {
+      "integrations": "Integrations",
+      "notifications": "Notifications",
+      "finance": "Finance"
+    },
+    "bankAccounts": {
+      "title": "Bank Accounts",
+      "description": "Account information and description for bank transfer payments",
+      "selectBank": "Select Bank",
+      "bankName": "Bank",
+      "active": "Active",
+      "descriptionLabel": "Transfer Description",
+      "descriptionHint": "Description text that the customer will see on the bank transfer screen",
+      "descriptionPlaceholder": "Please include your booking number in the transfer description..."
+    },
     "billing": {
       "title": "Billing Settings",
       "description": "Company information and tax settings for partner subscription invoices",

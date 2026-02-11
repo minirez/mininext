@@ -7,6 +7,8 @@ import { asyncHandler } from '#helpers'
 import { NotFoundError, ValidationError } from '#core/errors.js'
 import Booking from './booking.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
+import PlatformSettings from '#modules/platform-settings/platformSettings.model.js'
+import Partner from '#modules/partner/partner.model.js'
 import { renderEmailTemplate, TEMPLATE_LABELS } from '#helpers/emailTemplates.js'
 import { sendEmail, sendBookingConfirmation } from '#helpers/mail.js'
 import notificationService from '#services/notificationService.js'
@@ -469,8 +471,96 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
             : `New booking ${booking.bookingNumber} has been created`
       }
 
-    default:
-      return commonData
+    default: {
+      // For confirmation emails, add bank transfer info if payment method is bank_transfer
+      if (booking.payment?.method === 'bank_transfer') {
+        const bankSection = await buildBankTransferSection(booking, language)
+        return {
+          ...commonData,
+          BANK_TRANSFER_SECTION: bankSection,
+          PAYMENT_METHOD: labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi'
+        }
+      }
+      return {
+        ...commonData,
+        BANK_TRANSFER_SECTION: '',
+        PAYMENT_METHOD: ''
+      }
+    }
+  }
+}
+
+/**
+ * Build bank transfer HTML section for confirmation emails
+ */
+async function buildBankTransferSection(booking, language = 'tr') {
+  try {
+    const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
+    const partnerId = booking.partner?._id || booking.partner
+
+    let bankAccounts = []
+    let bankTransferDescription = {}
+
+    // Check partner's own bank accounts first
+    if (partnerId) {
+      const partner = await Partner.findById(partnerId).lean()
+      if (
+        partner?.paymentSettings &&
+        !partner.paymentSettings.usePlatformBankAccounts &&
+        partner.paymentSettings.bankAccounts?.length > 0
+      ) {
+        bankAccounts = partner.paymentSettings.bankAccounts.filter(a => a.isActive)
+        bankTransferDescription = partner.paymentSettings.bankTransferDescription || {}
+      }
+    }
+
+    // Fallback to platform bank accounts
+    if (bankAccounts.length === 0) {
+      const settings = await PlatformSettings.getSettings()
+      bankAccounts = (settings.billing?.bankAccounts || []).filter(a => a.isActive)
+      bankTransferDescription = settings.billing?.bankTransferDescription || {}
+    }
+
+    if (bankAccounts.length === 0) return ''
+
+    // Get description in the correct language
+    const description =
+      bankTransferDescription instanceof Map
+        ? bankTransferDescription.get(language) || bankTransferDescription.get('tr') || ''
+        : bankTransferDescription[language] || bankTransferDescription.tr || ''
+
+    // Build bank accounts HTML rows
+    const accountRows = bankAccounts
+      .map(
+        account => `
+<tr><td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+<p style="margin:0 0 4px;font-size:13px;color:#64748b;">${labels.BANK_NAME_LABEL || 'Banka'}</p>
+<p style="margin:0;font-size:15px;font-weight:600;color:#1e293b;">${account.bankName || ''}</p>
+<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.ACCOUNT_NAME_LABEL || 'Hesap Sahibi'}</p>
+<p style="margin:0;font-size:14px;color:#1e293b;">${account.accountName || ''}</p>
+<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.IBAN_LABEL || 'IBAN'}</p>
+<p style="margin:0;font-size:14px;font-weight:600;color:#1e293b;font-family:monospace;letter-spacing:1px;">${account.iban || ''}</p>
+${account.swift ? `<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.SWIFT_LABEL || 'Swift'}</p><p style="margin:0;font-size:14px;color:#1e293b;">${account.swift}</p>` : ''}
+${account.currency && account.currency !== 'TRY' ? `<p style="margin:8px 0 0;font-size:13px;color:#64748b;">Para Birimi: <strong>${account.currency}</strong></p>` : ''}
+</td></tr>`
+      )
+      .join('')
+
+    return `
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fefce8;border:1px solid #fde68a;border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:20px;">
+<h3 style="margin:0 0 12px;font-size:16px;font-weight:700;color:#92400e;">
+<span style="display:inline-block;margin-right:8px;">🏦</span>${labels.BANK_TRANSFER_TITLE || 'Banka Havale Bilgileri'}
+</h3>
+${description ? `<p style="margin:0 0 16px;font-size:14px;color:#78350f;line-height:1.5;">${description}</p>` : ''}
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;" role="none">
+${accountRows}
+</table>
+<p style="margin:16px 0 0;font-size:13px;color:#92400e;line-height:1.5;font-style:italic;">${labels.BANK_TRANSFER_NOTE || ''}</p>
+</td></tr></table>`
+  } catch (error) {
+    logger.error('Failed to build bank transfer section:', error.message)
+    return ''
   }
 }
 

@@ -68,6 +68,11 @@ export const useWidgetStore = defineStore('widget', () => {
   const paymentMethod = ref('credit_card') // credit_card, pay_at_hotel, bank_transfer
   const paymentResult = ref(null)
 
+  // Bank Transfer State
+  const bankAccounts = ref([])
+  const bankTransferDescription = ref({})
+  const bankTransferEnabled = ref(false)
+
   // Market Detection
   const detectedMarket = ref(null)
 
@@ -320,15 +325,18 @@ export const useWidgetStore = defineStore('widget', () => {
         contact: bookingData.value.contact,
         billing: bookingData.value.billing,
         specialRequests: bookingData.value.specialRequests,
-        countryCode: searchParams.value.countryCode
+        countryCode: searchParams.value.countryCode,
+        paymentMethod: paymentMethod.value
       }
 
       const result = await widgetApi.createBooking(bookingPayload, config.value.apiUrl)
       booking.value = result
 
-      // Go to payment if credit card selected, otherwise confirmation
+      // Go to appropriate step based on payment method
       if (paymentMethod.value === 'credit_card' && widgetConfig.value?.paymentMethods?.creditCard) {
         currentStep.value = 'payment'
+      } else if (paymentMethod.value === 'bank_transfer') {
+        currentStep.value = 'bank-transfer'
       } else {
         currentStep.value = 'confirmation'
       }
@@ -399,11 +407,30 @@ export const useWidgetStore = defineStore('widget', () => {
     }
   }
 
+  async function fetchBankAccounts() {
+    try {
+      const data = await widgetApi.getBankAccounts(config.value.partnerId, config.value.apiUrl)
+      bankAccounts.value = data.bankAccounts || []
+      bankTransferDescription.value = data.bankTransferDescription || {}
+      bankTransferEnabled.value = data.bankTransferEnabled || false
+    } catch (err) {
+      console.error('[Widget] Failed to fetch bank accounts:', err)
+    }
+  }
+
   function goBack() {
-    const stepOrder = ['search', 'results', 'booking', 'payment', 'confirmation']
+    const stepOrder = ['search', 'results', 'booking', 'bank-transfer', 'payment', 'confirmation']
     const currentIndex = stepOrder.indexOf(currentStep.value)
     if (currentIndex > 0) {
       currentStep.value = stepOrder[currentIndex - 1]
+    }
+  }
+
+  function setLanguage(lang) {
+    const supported = ['tr', 'en']
+    const normalized = lang?.split('-')[0]?.toLowerCase()
+    if (supported.includes(normalized) && config.value.language !== normalized) {
+      config.value.language = normalized
     }
   }
 
@@ -447,6 +474,9 @@ export const useWidgetStore = defineStore('widget', () => {
     booking,
     paymentMethod,
     paymentResult,
+    bankAccounts,
+    bankTransferDescription,
+    bankTransferEnabled,
     detectedMarket,
 
     // Computed
@@ -462,11 +492,13 @@ export const useWidgetStore = defineStore('widget', () => {
     closeWidget,
     setDates,
     setGuests,
+    setLanguage,
     search,
     selectRoom,
     createBooking,
     processPayment,
     checkPaymentStatus,
+    fetchBankAccounts,
     goBack,
     reset
   }

@@ -72,20 +72,28 @@ export const widgetApi = {
    * Search availability
    */
   async searchAvailability(hotelCode, params, apiUrl) {
-    return request(`/hotels/${hotelCode}/search`, {
-      method: 'POST',
-      body: JSON.stringify(params)
-    }, apiUrl)
+    return request(
+      `/hotels/${hotelCode}/search`,
+      {
+        method: 'POST',
+        body: JSON.stringify(params)
+      },
+      apiUrl
+    )
   },
 
   /**
    * Get price quote
    */
   async getPriceQuote(hotelCode, params, apiUrl) {
-    return request(`/hotels/${hotelCode}/price-quote`, {
-      method: 'POST',
-      body: JSON.stringify(params)
-    }, apiUrl)
+    return request(
+      `/hotels/${hotelCode}/price-quote`,
+      {
+        method: 'POST',
+        body: JSON.stringify(params)
+      },
+      apiUrl
+    )
   },
 
   /**
@@ -103,10 +111,14 @@ export const widgetApi = {
    * Create booking
    */
   async createBooking(bookingData, apiUrl) {
-    return request('/bookings', {
-      method: 'POST',
-      body: JSON.stringify(bookingData)
-    }, apiUrl)
+    return request(
+      '/bookings',
+      {
+        method: 'POST',
+        body: JSON.stringify(bookingData)
+      },
+      apiUrl
+    )
   },
 
   /**
@@ -120,10 +132,14 @@ export const widgetApi = {
    * Cancel booking
    */
   async cancelBooking(bookingNumber, email, reason, apiUrl) {
-    return request(`/bookings/${bookingNumber}/cancel`, {
-      method: 'POST',
-      body: JSON.stringify({ email, reason })
-    }, apiUrl)
+    return request(
+      `/bookings/${bookingNumber}/cancel`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, reason })
+      },
+      apiUrl
+    )
   },
 
   // Payment Methods
@@ -139,20 +155,36 @@ export const widgetApi = {
    * Query BIN for installment options
    */
   async queryBin(hotelCode, bin, amount, currency, apiUrl) {
-    return request('/payment/bin', {
-      method: 'POST',
-      body: JSON.stringify({ hotelCode, bin, amount, currency })
-    }, apiUrl)
+    return request(
+      '/payment/bin',
+      {
+        method: 'POST',
+        body: JSON.stringify({ hotelCode, bin, amount, currency })
+      },
+      apiUrl
+    )
   },
 
   /**
    * Initiate payment for booking
    */
   async initiatePayment(bookingNumber, paymentData, apiUrl) {
-    return request(`/bookings/${bookingNumber}/pay`, {
-      method: 'POST',
-      body: JSON.stringify(paymentData)
-    }, apiUrl)
+    return request(
+      `/bookings/${bookingNumber}/pay`,
+      {
+        method: 'POST',
+        body: JSON.stringify(paymentData)
+      },
+      apiUrl
+    )
+  },
+
+  /**
+   * Get bank accounts for bank transfer
+   */
+  async getBankAccounts(partnerId, apiUrl) {
+    const query = partnerId ? `?partnerId=${partnerId}` : ''
+    return request(`/payment/bank-accounts${query}`, {}, apiUrl)
   },
 
   /**

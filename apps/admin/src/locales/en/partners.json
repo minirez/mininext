@@ -63,6 +63,13 @@
     "searchPlaceholder": "Search partners...",
     "noSearchResults": "No results found",
     "showingResults": "Showing {count} of {total} partners",
+    "paymentSettings": {
+      "title": "Payment Settings",
+      "usePlatformAccounts": "Use Platform Bank Accounts",
+      "usePlatformAccountsHint": "If disabled, partner can define their own bank accounts",
+      "bankTransferEnabled": "Bank Transfer Enabled",
+      "bankAccounts": "Bank Accounts"
+    },
     "subscription": {
       "title": "Subscription & PMS Settings",
       "plan": "Plan",
