@@ -94,8 +94,7 @@ export const getPayments = asyncHandler(async (req, res) => {
   const payments = await Payment.findByBooking(bookingId)
 
   // Calculate totals (use booking-currency amount when DCC conversion was applied)
-  const getBookingAmount = (p) =>
-    p.cardDetails?.currencyConversion?.originalAmount || p.amount
+  const getBookingAmount = p => p.cardDetails?.currencyConversion?.originalAmount || p.amount
 
   const paidAmount = payments
     .filter(p => p.status === 'completed')
@@ -408,6 +407,11 @@ export const getReceipt = asyncHandler(async (req, res) => {
 
   // Stream the file
   const fileStream = fs.createReadStream(filePath)
+  fileStream.on('error', err => {
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: 'FILE_READ_ERROR' })
+    }
+  })
   fileStream.pipe(res)
 })
 
@@ -539,9 +543,5 @@ export async function updateBookingPayment(bookingId, opts = {}) {
   }
 
   // Step 6: ATOMIC update booking with calculated values
-  await Booking.findByIdAndUpdate(
-    bookingId,
-    { $set: updateData },
-    { new: true, ...opts }
-  )
+  await Booking.findByIdAndUpdate(bookingId, { $set: updateData }, { new: true, ...opts })
 }

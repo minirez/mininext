@@ -503,7 +503,7 @@ export const deleteComment = asyncHandler(async (req, res) => {
     throw new ForbiddenError('NOT_AUTHORIZED')
   }
 
-  comment.deleteOne()
+  await comment.deleteOne()
   issue.addActivity('comment_deleted', req.user._id)
 
   await issue.save()
@@ -570,7 +570,7 @@ export const deleteAttachment = asyncHandler(async (req, res) => {
     filename: attachment.originalName
   })
 
-  attachment.deleteOne()
+  await attachment.deleteOne()
   await issue.save()
 
   res.json({ success: true, message: 'Attachment deleted' })

@@ -211,7 +211,7 @@ citySchema.statics.search = function (query, countryCode = null) {
 citySchema.statics.updateDistrictCount = async function (cityId) {
   const District = mongoose.model('District')
   const count = await District.countDocuments({ city: cityId, isActive: true })
-  return this.findByIdAndUpdate(cityId, { 'meta.districtCount': count })
+  return await this.findByIdAndUpdate(cityId, { 'meta.districtCount': count })
 }
 
 export default mongoose.model('City', citySchema)

@@ -117,5 +117,10 @@ export const serveDocument = asyncHandler(async (req, res) => {
 
   // Stream file
   const fileStream = fs.createReadStream(filePath)
+  fileStream.on('error', err => {
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: 'FILE_READ_ERROR' })
+    }
+  })
   fileStream.pipe(res)
 })
