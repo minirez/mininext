@@ -87,7 +87,6 @@ server {
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
     ssl_session_timeout 1d;
-    ssl_session_cache shared:SSL:50m;
     ssl_session_tickets off;
 
     # HSTS
@@ -261,7 +260,9 @@ export const installNginxConfig = async (domain, configContent) => {
       message: 'NGINX_CONFIG_INSTALLED'
     }
   } catch (error) {
-    logger.error(`[SSL] Nginx config installation failed for ${domain}:`, error.message)
+    logger.error(
+      `[SSL] Nginx config installation failed for ${domain}: ${error.message || error.stderr || error}`
+    )
 
     // Rollback - hatali konfigurasyonu sil
     try {
