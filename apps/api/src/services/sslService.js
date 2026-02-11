@@ -25,6 +25,7 @@ export {
   // Nginx Service
   generateNginxConfig,
   installNginxConfig,
+  installTempHttpConfig,
   removeNginxConfig,
   getNginxConfig,
   // Main setup

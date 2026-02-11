@@ -79,7 +79,7 @@ const config = {
   ssl: {
     serverPublicIp: process.env.SERVER_PUBLIC_IP,
     certbotEmail: process.env.CERTBOT_EMAIL || 'admin@maxirez.com',
-    certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/certbot',
+    certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/letsencrypt',
     nginxSitesAvailable: process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available',
     nginxSitesEnabled: process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabled',
     frontendPorts: {

@@ -16,10 +16,21 @@ import logger from '../../core/logger.js'
 import { getServerIP, verifyDNS } from './dnsService.js'
 
 // Certificate Service exports
-import { requestCertificate, checkCertificate, renewCertificate, getCertConfig } from './certificateService.js'
+import {
+  requestCertificate,
+  checkCertificate,
+  renewCertificate,
+  getCertConfig
+} from './certificateService.js'
 
 // Nginx Service exports
-import { generateNginxConfig, installNginxConfig, removeNginxConfig, getNginxConfig } from './nginxService.js'
+import {
+  generateNginxConfig,
+  installNginxConfig,
+  installTempHttpConfig,
+  removeNginxConfig,
+  getNginxConfig
+} from './nginxService.js'
 
 /**
  * Tam SSL kurulum akisi
@@ -44,7 +55,19 @@ export const setupSSL = async (domain, type, partnerId) => {
       }
     }
 
-    // 2. Sertifika al
+    // 2. Gecici HTTP nginx config kur (ACME challenge icin)
+    const tempResult = await installTempHttpConfig(domain)
+    if (!tempResult.success) {
+      return {
+        success: false,
+        step: 'nginx-temp',
+        expiresAt: null,
+        message: 'NGINX_CONFIG_FAILED',
+        details: tempResult
+      }
+    }
+
+    // 3. Sertifika al
     const certResult = await requestCertificate(domain)
     if (!certResult.success) {
       return {
@@ -55,7 +78,7 @@ export const setupSSL = async (domain, type, partnerId) => {
       }
     }
 
-    // 3. Nginx konfigurasyonu olustur ve kur
+    // 4. Tam Nginx konfigurasyonu olustur ve kur (HTTPS dahil)
     const nginxConfig = generateNginxConfig(domain, type, partnerId)
     const nginxResult = await installNginxConfig(domain, nginxConfig)
     if (!nginxResult.success) {
@@ -99,6 +122,7 @@ export {
   // Nginx Service
   generateNginxConfig,
   installNginxConfig,
+  installTempHttpConfig,
   removeNginxConfig,
   getNginxConfig
 }
@@ -116,6 +140,7 @@ export default {
   // Nginx Service
   generateNginxConfig,
   installNginxConfig,
+  installTempHttpConfig,
   removeNginxConfig,
   getNginxConfig,
   // Main setup

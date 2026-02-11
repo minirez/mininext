@@ -162,6 +162,66 @@ server {
 }
 
 /**
+ * Certbot ACME challenge icin gecici HTTP-only nginx config olustur ve kur
+ * @param {string} domain - Domain adi
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export const installTempHttpConfig = async domain => {
+  const configContent = `# Temporary HTTP config for ACME challenge - ${domain}
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${domain};
+
+    location /.well-known/acme-challenge/ {
+        root ${CONFIG.certbotWebroot};
+    }
+
+    location / {
+        return 444;
+    }
+}
+`
+  const configFilename = `${domain}.conf`
+  const availablePath = path.join(CONFIG.nginxSitesAvailable, configFilename)
+  const enabledPath = path.join(CONFIG.nginxSitesEnabled, configFilename)
+
+  try {
+    await fs.writeFile(availablePath, configContent, 'utf8')
+
+    try {
+      await fs.unlink(enabledPath)
+    } catch {
+      /* ignore */
+    }
+    await fs.symlink(availablePath, enabledPath)
+
+    const { stderr } = await execAsync('nginx -t')
+    if (stderr && !stderr.includes('successful')) {
+      throw new Error(`Nginx config test failed: ${stderr}`)
+    }
+
+    await execAsync('nginx -s reload')
+    logger.info(`[SSL] Temp HTTP config installed for ${domain}`)
+
+    return { success: true, message: 'TEMP_CONFIG_INSTALLED' }
+  } catch (error) {
+    logger.error(`[SSL] Temp HTTP config failed for ${domain}:`, error.message)
+    try {
+      await fs.unlink(enabledPath)
+    } catch {
+      /* ignore */
+    }
+    try {
+      await fs.unlink(availablePath)
+    } catch {
+      /* ignore */
+    }
+    return { success: false, message: 'TEMP_CONFIG_FAILED' }
+  }
+}
+
+/**
  * Nginx konfigurasyonunu kaydet ve etkinlestir
  * @param {string} domain - Domain adi
  * @param {string} configContent - Nginx konfigurasyon icerigi
@@ -269,6 +329,7 @@ export const getNginxConfig = () => CONFIG
 export default {
   generateNginxConfig,
   installNginxConfig,
+  installTempHttpConfig,
   removeNginxConfig,
   getNginxConfig
 }
