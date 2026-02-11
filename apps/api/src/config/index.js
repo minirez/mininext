@@ -83,7 +83,7 @@ const config = {
     nginxSitesAvailable: process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available',
     nginxSitesEnabled: process.env.NGINX_SITES_ENABLED || '/etc/nginx/webs',
     frontendPorts: {
-      b2c: parseInt(process.env.B2C_FRONTEND_PORT) || 3000,
+      b2c: parseInt(process.env.B2C_FRONTEND_PORT) || 3100,
       b2b: parseInt(process.env.B2B_FRONTEND_PORT) || 3001,
       pms: parseInt(process.env.PMS_FRONTEND_PORT) || 3002
     },
