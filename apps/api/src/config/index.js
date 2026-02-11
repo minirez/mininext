@@ -81,7 +81,7 @@ const config = {
     certbotEmail: process.env.CERTBOT_EMAIL || 'admin@maxirez.com',
     certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/letsencrypt',
     nginxSitesAvailable: process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available',
-    nginxSitesEnabled: process.env.NGINX_SITES_ENABLED || '/etc/nginx/sites-enabled',
+    nginxSitesEnabled: process.env.NGINX_SITES_ENABLED || '/etc/nginx/webs',
     frontendPorts: {
       b2c: parseInt(process.env.B2C_FRONTEND_PORT) || 3000,
       b2b: parseInt(process.env.B2B_FRONTEND_PORT) || 3001,
