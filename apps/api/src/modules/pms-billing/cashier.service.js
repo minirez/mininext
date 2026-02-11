@@ -152,7 +152,7 @@ export const openShift = asyncHandler(async (req, res) => {
   }
 
   // Capture exchange rates at shift opening
-  const { rates, baseCurrency } = getExchangeRates()
+  const { rates, baseCurrency } = await getExchangeRates()
   const exchangeRatesSnapshot = {
     baseCurrency,
     rates,
@@ -472,7 +472,7 @@ export const createTransaction = asyncHandler(async (req, res) => {
   let amountInTRY = finalAmount
   if (currency !== 'TRY') {
     try {
-      const conversion = convertCurrency(Math.abs(finalAmount), currency, 'TRY')
+      const conversion = await convertCurrency(Math.abs(finalAmount), currency, 'TRY')
       exchangeRate = conversion.rate
       amountInTRY = finalAmount < 0 ? -conversion.convertedAmount : conversion.convertedAmount
     } catch (error) {
