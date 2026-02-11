@@ -176,9 +176,9 @@ export const handleWebhook = async body => {
 }
 
 /**
- * List inbox emails with filters and pagination
+ * List inbox emails with folder-based filtering and pagination
  */
-export const list = async ({ status, starred, search, page: rawPage, limit: rawLimit }) => {
+export const list = async ({ folder, status, starred, search, page: rawPage, limit: rawLimit }) => {
   const { page, limit, skip } = parsePagination(
     { page: rawPage, limit: rawLimit },
     { defaultLimit: 30 }
@@ -186,18 +186,41 @@ export const list = async ({ status, starred, search, page: rawPage, limit: rawL
 
   const query = {}
 
-  // Status filter
-  if (status === 'unread') {
-    query.status = 'unread'
-  } else if (status === 'archived') {
-    query.status = 'archived'
-  } else if (status !== 'all') {
-    query.status = { $ne: 'archived' }
-  }
-
-  // Starred filter
-  if (starred === 'true' || starred === true) {
-    query.isStarred = true
+  // Folder-based filtering
+  const activeFolder = folder || 'inbox'
+  switch (activeFolder) {
+    case 'inbox':
+      query.direction = 'inbound'
+      query.status = { $nin: ['archived', 'trash'] }
+      break
+    case 'sent':
+      query.direction = 'outbound'
+      query.status = { $ne: 'trash' }
+      break
+    case 'starred':
+      query.isStarred = true
+      query.status = { $ne: 'trash' }
+      break
+    case 'archived':
+      query.status = 'archived'
+      break
+    case 'trash':
+      query.status = 'trash'
+      break
+    case 'all':
+    default:
+      // Legacy support: status/starred params
+      if (status === 'unread') {
+        query.status = 'unread'
+      } else if (status === 'archived') {
+        query.status = 'archived'
+      } else {
+        query.status = { $ne: 'trash' }
+      }
+      if (starred === 'true' || starred === true) {
+        query.isStarred = true
+      }
+      break
   }
 
   // Search
@@ -549,6 +572,102 @@ export const getAttachment = async (emailId, attachmentIndex) => {
 
   const url = await getSignedUrl(client, command, { expiresIn: 3600 })
   return { url, filename: attachment.filename, contentType: attachment.contentType }
+}
+
+/**
+ * Move email to trash
+ */
+export const moveToTrash = async id => {
+  const email = await InboxEmail.findById(id)
+  if (!email) throw new NotFoundError('Email not found')
+
+  email.previousStatus = email.status
+  email.status = 'trash'
+  email.deletedAt = new Date()
+  await email.save()
+  return email
+}
+
+/**
+ * Restore email from trash
+ */
+export const restore = async id => {
+  const email = await InboxEmail.findById(id)
+  if (!email) throw new NotFoundError('Email not found')
+  if (email.status !== 'trash') throw new NotFoundError('Email is not in trash')
+
+  email.status = email.previousStatus || 'read'
+  email.previousStatus = undefined
+  email.deletedAt = undefined
+  await email.save()
+  return email
+}
+
+/**
+ * Permanently delete email (only from trash)
+ */
+export const permanentDelete = async id => {
+  const email = await InboxEmail.findById(id)
+  if (!email) throw new NotFoundError('Email not found')
+  if (email.status !== 'trash')
+    throw new NotFoundError('Email must be in trash to permanently delete')
+
+  // Delete from S3 (raw email + attachments)
+  try {
+    const { DeleteObjectCommand } = await import('@aws-sdk/client-s3')
+    const client = await getS3Client()
+
+    const keysToDelete = []
+    if (email.s3Key) keysToDelete.push(email.s3Key)
+    if (email.attachments?.length) {
+      email.attachments.forEach(att => {
+        if (att.s3Key) keysToDelete.push(att.s3Key)
+      })
+    }
+
+    await Promise.allSettled(
+      keysToDelete.map(key => client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key })))
+    )
+  } catch (err) {
+    logger.warn(`Failed to delete S3 objects for email ${id}:`, err.message)
+  }
+
+  await InboxEmail.findByIdAndDelete(id)
+  return { deleted: true }
+}
+
+/**
+ * Empty trash - permanently delete all trash emails
+ */
+export const emptyTrash = async () => {
+  const trashEmails = await InboxEmail.find({ status: 'trash' }).select('s3Key attachments').lean()
+
+  // Delete from S3
+  if (trashEmails.length) {
+    try {
+      const { DeleteObjectCommand } = await import('@aws-sdk/client-s3')
+      const client = await getS3Client()
+
+      const keysToDelete = []
+      trashEmails.forEach(email => {
+        if (email.s3Key) keysToDelete.push(email.s3Key)
+        email.attachments?.forEach(att => {
+          if (att.s3Key) keysToDelete.push(att.s3Key)
+        })
+      })
+
+      await Promise.allSettled(
+        keysToDelete.map(key =>
+          client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }))
+        )
+      )
+    } catch (err) {
+      logger.warn('Failed to delete S3 objects during trash empty:', err.message)
+    }
+  }
+
+  const result = await InboxEmail.deleteMany({ status: 'trash' })
+  return { deleted: result.deletedCount }
 }
 
 // ---- S3 Helpers ----

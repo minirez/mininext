@@ -20,26 +20,19 @@
             @input="debouncedSearch"
           />
         </div>
-
-        <!-- Status Filters -->
-        <div class="flex items-center gap-1">
-          <button
-            v-for="f in statusFilters"
-            :key="f.value"
-            class="px-3 py-1.5 text-sm rounded-lg transition-colors"
-            :class="
-              activeFilter === f.value
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
-                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
-            "
-            @click="setFilter(f.value)"
-          >
-            {{ f.label }}
-          </button>
-        </div>
       </div>
 
       <div class="flex items-center gap-2 ml-4">
+        <!-- Trash: Empty Trash Button -->
+        <button
+          v-if="activeFolder === 'trash' && emails.length > 0"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium"
+          @click="handleEmptyTrash"
+        >
+          <span class="material-icons text-lg">delete_sweep</span>
+          <span class="hidden sm:inline">{{ $t('mailbox.emptyTrash') }}</span>
+        </button>
+
         <!-- Stats -->
         <div
           v-if="stats"
@@ -49,7 +42,6 @@
             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
             {{ stats.unread }} {{ $t('mailbox.unread') }}
           </span>
-          <span>{{ stats.total }} {{ $t('mailbox.stats.total') }}</span>
         </div>
 
         <!-- Compose Button -->
@@ -65,10 +57,53 @@
 
     <!-- Main Content -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Email List (Left Panel) -->
+      <!-- Folder Sidebar -->
+      <div
+        class="w-52 flex-shrink-0 border-r border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 overflow-y-auto py-2"
+        :class="selectedEmail && isMobile ? 'hidden' : ''"
+      >
+        <nav class="space-y-0.5 px-2">
+          <button
+            v-for="folder in folders"
+            :key="folder.key"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group"
+            :class="
+              activeFolder === folder.key
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-medium'
+                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+            "
+            @click="setFolder(folder.key)"
+          >
+            <span
+              class="material-icons text-lg"
+              :class="
+                activeFolder === folder.key
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-400 dark:text-slate-500 group-hover:text-gray-500'
+              "
+            >
+              {{ folder.icon }}
+            </span>
+            <span class="flex-1 text-left truncate">{{ folder.label }}</span>
+            <span
+              v-if="folder.count > 0"
+              class="text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center font-medium"
+              :class="
+                folder.key === 'inbox' && folder.count > 0
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
+              "
+            >
+              {{ folder.count }}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Email List (Middle Panel) -->
       <div
         class="border-r border-gray-200 dark:border-slate-700 overflow-y-auto flex-shrink-0 bg-white dark:bg-slate-800"
-        :class="selectedEmail && isMobile ? 'hidden' : 'w-full lg:w-[380px]'"
+        :class="selectedEmail && isMobile ? 'hidden' : 'w-full lg:w-[340px]'"
       >
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-12">
@@ -80,7 +115,9 @@
           v-else-if="!emails.length"
           class="flex flex-col items-center justify-center py-16 px-4 text-center"
         >
-          <span class="material-icons text-5xl text-gray-300 dark:text-slate-600 mb-3">inbox</span>
+          <span class="material-icons text-5xl text-gray-300 dark:text-slate-600 mb-3">{{
+            emptyIcon
+          }}</span>
           <p class="text-gray-500 dark:text-slate-400 font-medium">
             {{ emptyMessage }}
           </p>
@@ -222,40 +259,68 @@
                 {{ selectedEmail.subject }}
               </h2>
               <div class="flex items-center gap-1 flex-shrink-0 ml-4">
-                <button
-                  class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
-                  :title="selectedEmail.isStarred ? $t('mailbox.unstar') : $t('mailbox.star')"
-                  @click="handleToggleStar(selectedEmail)"
-                >
-                  <span
-                    class="material-icons text-lg"
-                    :class="selectedEmail.isStarred ? 'text-yellow-500' : ''"
+                <!-- Trash folder: Restore + Permanent Delete -->
+                <template v-if="activeFolder === 'trash'">
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-gray-500 hover:text-green-600 transition-colors"
+                    :title="$t('mailbox.restore')"
+                    @click="handleRestore(selectedEmail._id)"
                   >
-                    {{ selectedEmail.isStarred ? 'star' : 'star_border' }}
-                  </span>
-                </button>
-                <button
-                  class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
-                  :title="$t('mailbox.archive')"
-                  @click="handleArchive(selectedEmail._id)"
-                >
-                  <span class="material-icons text-lg">archive</span>
-                </button>
-                <button
-                  class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
-                  :title="
-                    selectedEmail.status === 'read'
-                      ? $t('mailbox.markUnread')
-                      : $t('mailbox.markRead')
-                  "
-                  @click="handleToggleReadStatus(selectedEmail)"
-                >
-                  <span class="material-icons text-lg">
-                    {{
-                      selectedEmail.status === 'unread' ? 'mark_email_read' : 'mark_email_unread'
-                    }}
-                  </span>
-                </button>
+                    <span class="material-icons text-lg">restore</span>
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 transition-colors"
+                    :title="$t('mailbox.permanentDelete')"
+                    @click="handlePermanentDelete(selectedEmail._id)"
+                  >
+                    <span class="material-icons text-lg">delete_forever</span>
+                  </button>
+                </template>
+
+                <!-- Normal folders: Star, Archive, Read/Unread, Delete -->
+                <template v-else>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
+                    :title="selectedEmail.isStarred ? $t('mailbox.unstar') : $t('mailbox.star')"
+                    @click="handleToggleStar(selectedEmail)"
+                  >
+                    <span
+                      class="material-icons text-lg"
+                      :class="selectedEmail.isStarred ? 'text-yellow-500' : ''"
+                    >
+                      {{ selectedEmail.isStarred ? 'star' : 'star_border' }}
+                    </span>
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
+                    :title="$t('mailbox.archive')"
+                    @click="handleArchive(selectedEmail._id)"
+                  >
+                    <span class="material-icons text-lg">archive</span>
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 transition-colors"
+                    :title="
+                      selectedEmail.status === 'read'
+                        ? $t('mailbox.markUnread')
+                        : $t('mailbox.markRead')
+                    "
+                    @click="handleToggleReadStatus(selectedEmail)"
+                  >
+                    <span class="material-icons text-lg">
+                      {{
+                        selectedEmail.status === 'unread' ? 'mark_email_read' : 'mark_email_unread'
+                      }}
+                    </span>
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-600 transition-colors"
+                    :title="$t('mailbox.delete')"
+                    @click="handleMoveToTrash(selectedEmail._id)"
+                  >
+                    <span class="material-icons text-lg">delete_outline</span>
+                  </button>
+                </template>
               </div>
             </div>
 
@@ -385,9 +450,9 @@
               </div>
             </div>
 
-            <!-- Reply Box -->
+            <!-- Reply Box (not in trash) -->
             <div
-              v-if="selectedEmail.direction === 'inbound'"
+              v-if="selectedEmail.direction === 'inbound' && activeFolder !== 'trash'"
               class="mt-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden"
             >
               <div
@@ -528,10 +593,12 @@ import { useI18n } from 'vue-i18n'
 import { useSocket } from '@/composables/useSocket'
 import { useToast } from '@/composables/useToast'
 import { sanitizeHtml } from '@/utils/sanitize'
+import { useMailboxStore } from '@/stores/mailbox'
 import mailboxService from '@/services/mailboxService'
 import TinyMCE from '@/components/TinyMCE.vue'
 
 const { t } = useI18n()
+const mailboxStore = useMailboxStore()
 const { on } = useSocket()
 const { showToast } = useToast()
 
@@ -547,7 +614,7 @@ const showThread = ref(false)
 const stats = ref(null)
 const pagination = ref(null)
 const searchQuery = ref('')
-const activeFilter = ref('all')
+const activeFolder = ref('inbox')
 const replyBody = ref('')
 const replySending = ref(false)
 const showCompose = ref(false)
@@ -567,11 +634,37 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, 
 // COMPUTED
 // ============================================================================
 
-const statusFilters = computed(() => [
-  { value: 'all', label: t('mailbox.all') },
-  { value: 'unread', label: t('mailbox.unread') },
-  { value: 'starred', label: t('mailbox.starred') },
-  { value: 'archived', label: t('mailbox.archived') }
+const folders = computed(() => [
+  {
+    key: 'inbox',
+    label: t('mailbox.folders.inbox'),
+    icon: 'inbox',
+    count: stats.value?.unread || 0
+  },
+  {
+    key: 'sent',
+    label: t('mailbox.folders.sent'),
+    icon: 'send',
+    count: stats.value?.sent || 0
+  },
+  {
+    key: 'starred',
+    label: t('mailbox.folders.starred'),
+    icon: 'star',
+    count: stats.value?.starred || 0
+  },
+  {
+    key: 'archived',
+    label: t('mailbox.folders.archive'),
+    icon: 'archive',
+    count: 0
+  },
+  {
+    key: 'trash',
+    label: t('mailbox.folders.trash'),
+    icon: 'delete',
+    count: stats.value?.trash || 0
+  }
 ])
 
 const sanitizedHtml = computed(() => {
@@ -579,15 +672,24 @@ const sanitizedHtml = computed(() => {
   return sanitizeHtml(selectedEmail.value.htmlBody)
 })
 
+const emptyIcon = computed(() => {
+  const icons = {
+    inbox: 'inbox',
+    sent: 'send',
+    starred: 'star_border',
+    archived: 'archive',
+    trash: 'delete_outline'
+  }
+  return icons[activeFolder.value] || 'inbox'
+})
+
 const emptyMessage = computed(() => {
   if (searchQuery.value) return t('mailbox.empty.search')
-  if (activeFilter.value === 'starred') return t('mailbox.empty.starred')
-  if (activeFilter.value === 'archived') return t('mailbox.empty.archived')
-  return t('mailbox.empty.inbox')
+  const key = activeFolder.value === 'archived' ? 'archived' : activeFolder.value
+  return t(`mailbox.empty.${key}`) || t('mailbox.empty.inbox')
 })
 
 const hasReplyContent = computed(() => {
-  // Strip HTML tags and check if there's actual text
   const text = replyBody.value.replace(/<[^>]*>/g, '').trim()
   return text.length > 0
 })
@@ -614,13 +716,10 @@ const fetchEmails = async (append = false) => {
   loading.value = !append
   try {
     const params = {
+      folder: activeFolder.value,
       page: append ? (pagination.value?.page || 0) + 1 : 1,
       limit: 30
     }
-
-    if (activeFilter.value === 'unread') params.status = 'unread'
-    else if (activeFilter.value === 'archived') params.status = 'archived'
-    else if (activeFilter.value === 'starred') params.starred = true
 
     if (searchQuery.value) params.search = searchQuery.value
 
@@ -645,6 +744,7 @@ const fetchStats = async () => {
     const response = await mailboxService.getEmailStats()
     if (response.success) {
       stats.value = response.data
+      mailboxStore.setUnreadCount(response.data.unread || 0)
     }
   } catch (error) {
     console.error('Failed to fetch stats:', error)
@@ -662,6 +762,10 @@ const selectEmail = async email => {
       // Update list item status
       const idx = emails.value.findIndex(e => e._id === email._id)
       if (idx !== -1) {
+        if (emails.value[idx].status === 'unread') {
+          mailboxStore.decrementUnread()
+          if (stats.value) stats.value.unread = Math.max(0, (stats.value.unread || 0) - 1)
+        }
         emails.value[idx].status = 'read'
       }
 
@@ -695,9 +799,10 @@ const loadMore = () => {
   fetchEmails(true)
 }
 
-const setFilter = filter => {
-  activeFilter.value = filter
+const setFolder = folder => {
+  activeFolder.value = folder
   selectedEmail.value = null
+  searchQuery.value = ''
   fetchEmails()
 }
 
@@ -717,6 +822,7 @@ const handleToggleStar = async email => {
       if (selectedEmail.value?._id === email._id) {
         selectedEmail.value.isStarred = response.data.isStarred
       }
+      fetchStats()
     }
   } catch (error) {
     console.error('Failed to toggle star:', error)
@@ -740,10 +846,12 @@ const handleToggleReadStatus = async email => {
     if (email.status === 'unread') {
       await mailboxService.markAsRead(email._id)
       email.status = 'read'
+      mailboxStore.decrementUnread()
       showToast(t('mailbox.markedAsRead'), 'info')
     } else {
       await mailboxService.markAsUnread(email._id)
       email.status = 'unread'
+      mailboxStore.handleNewEmail()
       showToast(t('mailbox.markedAsUnread'), 'info')
     }
     const idx = emails.value.findIndex(e => e._id === email._id)
@@ -753,6 +861,56 @@ const handleToggleReadStatus = async email => {
     fetchStats()
   } catch (error) {
     console.error('Failed to toggle read status:', error)
+  }
+}
+
+const handleMoveToTrash = async id => {
+  try {
+    await mailboxService.moveToTrash(id)
+    showToast(t('mailbox.emailDeleted'), 'success')
+    emails.value = emails.value.filter(e => e._id !== id)
+    selectedEmail.value = null
+    fetchStats()
+  } catch (error) {
+    console.error('Failed to move to trash:', error)
+  }
+}
+
+const handleRestore = async id => {
+  try {
+    await mailboxService.restoreEmail(id)
+    showToast(t('mailbox.emailRestored'), 'success')
+    emails.value = emails.value.filter(e => e._id !== id)
+    selectedEmail.value = null
+    fetchStats()
+  } catch (error) {
+    console.error('Failed to restore email:', error)
+  }
+}
+
+const handlePermanentDelete = async id => {
+  if (!confirm(t('mailbox.confirmPermanentDelete'))) return
+  try {
+    await mailboxService.permanentDelete(id)
+    showToast(t('mailbox.emailPermanentlyDeleted'), 'success')
+    emails.value = emails.value.filter(e => e._id !== id)
+    selectedEmail.value = null
+    fetchStats()
+  } catch (error) {
+    console.error('Failed to permanently delete:', error)
+  }
+}
+
+const handleEmptyTrash = async () => {
+  if (!confirm(t('mailbox.confirmEmptyTrash'))) return
+  try {
+    await mailboxService.emptyTrash()
+    showToast(t('mailbox.trashEmptied'), 'success')
+    emails.value = []
+    selectedEmail.value = null
+    fetchStats()
+  } catch (error) {
+    console.error('Failed to empty trash:', error)
   }
 }
 
@@ -914,7 +1072,10 @@ onMounted(() => {
 
   unsubscribeSocket = on('mailbox:new', data => {
     if (data?.email) {
-      emails.value.unshift(data.email)
+      // Only add to list if we're on inbox folder
+      if (activeFolder.value === 'inbox') {
+        emails.value.unshift(data.email)
+      }
       if (stats.value) {
         stats.value.unread = (stats.value.unread || 0) + 1
         stats.value.total = (stats.value.total || 0) + 1

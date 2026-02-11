@@ -44,8 +44,9 @@ router.use(protect, requirePlatformAdmin)
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { status, starred, search, page, limit } = req.query
+    const { folder, status, starred, search, page, limit } = req.query
     const result = await mailboxService.list({
+      folder,
       status,
       starred,
       search,
@@ -102,6 +103,18 @@ router.post(
 )
 
 /**
+ * DELETE /trash — Empty trash (permanently delete all trash emails)
+ * Must be before /:id routes to avoid param conflict
+ */
+router.delete(
+  '/trash',
+  asyncHandler(async (req, res) => {
+    const result = await mailboxService.emptyTrash()
+    res.json({ success: true, data: result })
+  })
+)
+
+/**
  * POST /compose — Compose new email
  */
 router.post(
@@ -154,6 +167,39 @@ router.patch(
   asyncHandler(async (req, res) => {
     const email = await mailboxService.archive(req.params.id)
     res.json({ success: true, data: email })
+  })
+)
+
+/**
+ * PATCH /:id/trash — Move email to trash
+ */
+router.patch(
+  '/:id/trash',
+  asyncHandler(async (req, res) => {
+    const email = await mailboxService.moveToTrash(req.params.id)
+    res.json({ success: true, data: email })
+  })
+)
+
+/**
+ * PATCH /:id/restore — Restore email from trash
+ */
+router.patch(
+  '/:id/restore',
+  asyncHandler(async (req, res) => {
+    const email = await mailboxService.restore(req.params.id)
+    res.json({ success: true, data: email })
+  })
+)
+
+/**
+ * DELETE /:id — Permanently delete email (must be in trash)
+ */
+router.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const result = await mailboxService.permanentDelete(req.params.id)
+    res.json({ success: true, data: result })
   })
 )
 

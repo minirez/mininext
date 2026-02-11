@@ -85,6 +85,38 @@ export const archiveEmail = async id => {
   return response.data
 }
 
+/**
+ * Move email to trash
+ */
+export const moveToTrash = async id => {
+  const response = await api.patch(`/mailbox/${id}/trash`)
+  return response.data
+}
+
+/**
+ * Restore email from trash
+ */
+export const restoreEmail = async id => {
+  const response = await api.patch(`/mailbox/${id}/restore`)
+  return response.data
+}
+
+/**
+ * Permanently delete email
+ */
+export const permanentDelete = async id => {
+  const response = await api.delete(`/mailbox/${id}`)
+  return response.data
+}
+
+/**
+ * Empty trash
+ */
+export const emptyTrash = async () => {
+  const response = await api.delete('/mailbox/trash')
+  return response.data
+}
+
 export default {
   getEmails,
   getEmailStats,
@@ -95,5 +127,9 @@ export default {
   markAsRead,
   markAsUnread,
   toggleStar,
-  archiveEmail
+  archiveEmail,
+  moveToTrash,
+  restoreEmail,
+  permanentDelete,
+  emptyTrash
 }

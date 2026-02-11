@@ -16,20 +16,23 @@ const isDev = import.meta.env.DEV
 // Stores initialized lazily to avoid Pinia initialization issues during HMR
 let authStore = null
 let notificationStore = null
+let mailboxStore = null
 
 const getStores = async () => {
   if (!authStore) {
     const { useAuthStore } = await import('@/stores/auth')
     const { useNotificationStore } = await import('@/stores/notification')
+    const { useMailboxStore } = await import('@/stores/mailbox')
     authStore = useAuthStore()
     notificationStore = useNotificationStore()
+    mailboxStore = useMailboxStore()
   }
-  return { authStore, notificationStore }
+  return { authStore, notificationStore, mailboxStore }
 }
 
 // Initialize notifications when user is authenticated
 const initNotifications = async () => {
-  const { authStore, notificationStore } = await getStores()
+  const { authStore, notificationStore, mailboxStore } = await getStores()
   const { authenticate, on } = useSocket()
 
   // Only handle authenticated users
@@ -52,10 +55,18 @@ const initNotifications = async () => {
 
   // Fetch initial unread count
   await notificationStore.init()
+
+  // Initialize mailbox store (platform admin only)
+  if (authStore.isPlatformAdmin) {
+    on('mailbox:new', () => {
+      mailboxStore.handleNewEmail()
+    })
+    await mailboxStore.init()
+  }
 }
 
 onMounted(async () => {
-  const { authStore, notificationStore } = await getStores()
+  const { authStore, notificationStore, mailboxStore } = await getStores()
 
   // Watch for auth changes
   watch(
@@ -65,6 +76,7 @@ onMounted(async () => {
         initNotifications()
       } else {
         notificationStore.clearNotifications()
+        mailboxStore.setUnreadCount(0)
       }
     }
   )

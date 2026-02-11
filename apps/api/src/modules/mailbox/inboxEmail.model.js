@@ -59,7 +59,7 @@ const inboxEmailSchema = new mongoose.Schema(
     // Status
     status: {
       type: String,
-      enum: ['unread', 'read', 'replied', 'archived'],
+      enum: ['unread', 'read', 'replied', 'archived', 'trash'],
       default: 'unread',
       index: true
     },
@@ -67,6 +67,10 @@ const inboxEmailSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+
+    // Trash support
+    previousStatus: String,
+    deletedAt: Date,
 
     // SES verdicts (spam, virus, spf, dkim, dmarc)
     verdicts: {
@@ -103,6 +107,7 @@ inboxEmailSchema.index({ threadId: 1, receivedAt: 1 })
 inboxEmailSchema.index({ 'from.address': 1 })
 inboxEmailSchema.index({ isStarred: 1, receivedAt: -1 })
 inboxEmailSchema.index({ direction: 1, receivedAt: -1 })
+inboxEmailSchema.index({ status: 1, deletedAt: -1 })
 
 // Get unread count
 inboxEmailSchema.statics.getUnreadCount = async function () {
@@ -111,12 +116,14 @@ inboxEmailSchema.statics.getUnreadCount = async function () {
 
 // Get stats
 inboxEmailSchema.statics.getStats = async function () {
-  const [unread, total, starred] = await Promise.all([
+  const [unread, total, starred, trash, sent] = await Promise.all([
     this.countDocuments({ status: 'unread', direction: 'inbound' }),
-    this.countDocuments({ direction: 'inbound' }),
-    this.countDocuments({ isStarred: true })
+    this.countDocuments({ status: { $ne: 'trash' }, direction: 'inbound' }),
+    this.countDocuments({ isStarred: true, status: { $ne: 'trash' } }),
+    this.countDocuments({ status: 'trash' }),
+    this.countDocuments({ direction: 'outbound', status: { $ne: 'trash' } })
   ])
-  return { unread, total, starred }
+  return { unread, total, starred, trash, sent }
 }
 
 // Generate snippet from text/html body

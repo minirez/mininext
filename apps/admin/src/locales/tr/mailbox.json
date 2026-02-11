@@ -51,6 +51,23 @@
     "emailArchived": "E-posta arşivlendi",
     "markedAsRead": "Okundu olarak işaretlendi",
     "markedAsUnread": "Okunmadı olarak işaretlendi",
+    "folders": {
+      "inbox": "Gelen Kutusu",
+      "sent": "Gönderilen",
+      "starred": "Yıldızlı",
+      "archive": "Arşiv",
+      "trash": "Çöp Kutusu"
+    },
+    "restore": "Geri Al",
+    "permanentDelete": "Kalıcı Sil",
+    "emptyTrash": "Çöp Kutusunu Boşalt",
+    "confirmDelete": "Bu e-postayı çöp kutusuna taşımak istediğinize emin misiniz?",
+    "confirmPermanentDelete": "Bu e-posta kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+    "confirmEmptyTrash": "Çöp kutusundaki tüm e-postalar kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+    "emailDeleted": "E-posta çöp kutusuna taşındı",
+    "emailRestored": "E-posta geri alındı",
+    "emailPermanentlyDeleted": "E-posta kalıcı olarak silindi",
+    "trashEmptied": "Çöp kutusu boşaltıldı",
     "stats": {
       "total": "Toplam",
       "unread": "Okunmamış",
@@ -67,8 +84,10 @@
     },
     "empty": {
       "inbox": "Gelen kutunuz boş",
+      "sent": "Gönderilen e-posta yok",
       "starred": "Yıldızlı e-posta yok",
       "archived": "Arşivlenmiş e-posta yok",
+      "trash": "Çöp kutusu boş",
       "search": "Aramanızla eşleşen e-posta bulunamadı"
     }
   }

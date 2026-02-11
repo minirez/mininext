@@ -54,11 +54,28 @@
           :title="!uiStore.sidebarExpanded ? item.label : ''"
           @click="emit('navigate')"
         >
-          <span class="material-icons flex-shrink-0">{{ item.icon }}</span>
+          <!-- Icon with badge dot (collapsed mode) -->
+          <span class="relative flex-shrink-0">
+            <span class="material-icons">{{ item.icon }}</span>
+            <span
+              v-if="item.badge && !uiStore.sidebarExpanded"
+              class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5 leading-none"
+            >
+              {{ item.badge > 99 ? '99+' : item.badge }}
+            </span>
+          </span>
 
           <!-- Label (only when expanded) -->
-          <span v-if="uiStore.sidebarExpanded" class="ml-3 text-sm font-medium truncate">
+          <span v-if="uiStore.sidebarExpanded" class="ml-3 text-sm font-medium truncate flex-1">
             {{ item.label }}
+          </span>
+
+          <!-- Badge (expanded mode) -->
+          <span
+            v-if="item.badge && uiStore.sidebarExpanded"
+            class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none ml-auto flex-shrink-0"
+          >
+            {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
 
           <!-- Tooltip (only when collapsed) -->
@@ -130,6 +147,7 @@ import { useUIStore } from '@/stores/ui'
 import { usePartnerStore } from '@/stores/partner'
 import { usePmsStore } from '@/stores/pms'
 import { useSiteSettingsStore } from '@/stores/siteSettings'
+import { useMailboxStore } from '@/stores/mailbox'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -139,6 +157,7 @@ const uiStore = useUIStore()
 const partnerStore = usePartnerStore()
 const pmsStore = usePmsStore()
 const siteSettingsStore = useSiteSettingsStore()
+const mailboxStore = useMailboxStore()
 const { t } = useI18n()
 
 // Fetch site settings if not loaded (for favicon)
@@ -385,7 +404,8 @@ const mainSection = computed(() => {
       name: 'mailbox',
       to: '/admin/mailbox',
       icon: 'inbox',
-      label: t('nav.mailbox')
+      label: t('nav.mailbox'),
+      badge: mailboxStore.unreadCount
     })
     items.push({
       name: 'issues',

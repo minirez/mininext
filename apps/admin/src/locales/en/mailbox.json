@@ -51,6 +51,23 @@
     "emailArchived": "Email archived",
     "markedAsRead": "Marked as read",
     "markedAsUnread": "Marked as unread",
+    "folders": {
+      "inbox": "Inbox",
+      "sent": "Sent",
+      "starred": "Starred",
+      "archive": "Archive",
+      "trash": "Trash"
+    },
+    "restore": "Restore",
+    "permanentDelete": "Delete Permanently",
+    "emptyTrash": "Empty Trash",
+    "confirmDelete": "Are you sure you want to move this email to trash?",
+    "confirmPermanentDelete": "This email will be permanently deleted. This action cannot be undone.",
+    "confirmEmptyTrash": "All emails in trash will be permanently deleted. This action cannot be undone.",
+    "emailDeleted": "Email moved to trash",
+    "emailRestored": "Email restored",
+    "emailPermanentlyDeleted": "Email permanently deleted",
+    "trashEmptied": "Trash emptied",
     "stats": {
       "total": "Total",
       "unread": "Unread",
@@ -67,8 +84,10 @@
     },
     "empty": {
       "inbox": "Your inbox is empty",
+      "sent": "No sent emails",
       "starred": "No starred emails",
       "archived": "No archived emails",
+      "trash": "Trash is empty",
       "search": "No emails matching your search"
     }
   }
