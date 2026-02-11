@@ -62,19 +62,17 @@ export const getEmailSettings = async (partnerId = null) => {
     logger.warn('Failed to load email settings from database, falling back to env:', error.message)
   }
 
-  // Fall back to environment variables (fromEmail/fromName must be set in PlatformSettings)
+  // Fall back to environment variables
   if (config.aws?.ses?.accessKeyId && config.aws?.ses?.secretAccessKey) {
-    logger.warn(
-      'Using AWS credentials from env but fromEmail/fromName must be configured in Platform Settings'
-    )
+    logger.warn('Using AWS credentials from env (PlatformSettings not available)')
     return {
       enabled: true,
       source: 'env',
       region: config.aws.ses.region,
       accessKeyId: config.aws.ses.accessKeyId,
       secretAccessKey: config.aws.ses.secretAccessKey,
-      fromEmail: 'noreply@example.com', // Placeholder - must be set in PlatformSettings
-      fromName: 'Booking Engine'
+      fromEmail: process.env.SES_FROM_EMAIL || 'noreply@maxirez.com',
+      fromName: process.env.SES_FROM_NAME || 'MaxiRez'
     }
   }
 
@@ -125,7 +123,7 @@ export const clearEmailCache = () => {
  * Get admin panel URL for a partner
  * Uses partner's custom extranetDomain if set, otherwise falls back to platform default
  */
-export const getAdminUrl = async (partnerId) => {
+export const getAdminUrl = async partnerId => {
   if (partnerId) {
     try {
       const { default: Partner } = await import('../../modules/partner/partner.model.js')
