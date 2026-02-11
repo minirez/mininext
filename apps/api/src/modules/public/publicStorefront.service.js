@@ -254,7 +254,9 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
   if (!requestedPathRaw && req.headers.referer) {
     try {
       requestedPathRaw = new URL(req.headers.referer).pathname
-    } catch (e) {}
+    } catch {
+      // Invalid referer URL - ignore and use default path
+    }
   }
   const requestedPath = normalizePath(requestedPathRaw || '/')
 

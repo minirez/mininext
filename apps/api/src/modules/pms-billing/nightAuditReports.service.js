@@ -7,6 +7,7 @@ import PDFDocument from 'pdfkit'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import { DEFAULT_CASHIER_NAME } from '#constants/defaults.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -848,7 +849,7 @@ export const getReportData = async (hotelId, auditId, reportType) => {
         totalCard,
         totalTransactions: totalCash + totalCard,
         shifts: shifts.map(s => ({
-          cashierName: s.cashierName || 'Kasiyer',
+          cashierName: s.cashierName || DEFAULT_CASHIER_NAME,
           shiftNumber: s.shiftNumber || 'SFT-001',
           openedAt: s.openedAt,
           closedAt: s.closedAt,

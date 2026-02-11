@@ -8,6 +8,7 @@ import Hotel from '../hotel/hotel.model.js'
 import RoomType from '../planning/roomType.model.js'
 import MealPlan from '../planning/mealPlan.model.js'
 import { NotFoundError } from '#core/errors.js'
+import logger from '#core/logger.js'
 
 /**
  * List hotels with filters
@@ -133,7 +134,9 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
   }
 
   const hotel = await Hotel.findOne(hotelQuery)
-    .select('slug name description stars type category amenities images address contact policies childAgeGroups partner')
+    .select(
+      'slug name description stars type category amenities images address contact policies childAgeGroups partner'
+    )
     .lean()
 
   if (!hotel) {
@@ -142,7 +145,9 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
 
   // If partner was specified, log for debugging
   if (partnerId && hotel.partner?.toString() !== partnerId) {
-    console.warn(`Hotel ${hotelCode} partner mismatch. Expected: ${partnerId}, Got: ${hotel.partner}`)
+    logger.warn(
+      `Hotel ${hotelCode} partner mismatch. Expected: ${partnerId}, Got: ${hotel.partner}`
+    )
   }
 
   res.json({

@@ -7,6 +7,7 @@ import { createInvoice } from '#modules/subscriptionInvoice/subscriptionInvoice.
 import { convertCurrency } from '#services/currencyService.js'
 import PDFDocument from 'pdfkit'
 import axios from 'axios'
+import logger from '#core/logger.js'
 
 // Payment service URL
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:7043'
@@ -50,7 +51,10 @@ export const getMySubscription = asyncHandler(async (req, res) => {
       cancelledAt: p.cancelledAt,
       cancellationReason: p.cancellationReason
     }))
-    .sort((a, b) => new Date(b.createdAt || b.period?.startDate) - new Date(a.createdAt || a.period?.startDate))
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt || b.period?.startDate) - new Date(a.createdAt || a.period?.startDate)
+    )
 
   res.json({
     success: true,
@@ -143,7 +147,10 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   // Header
   doc.fontSize(24).font('Helvetica-Bold').text('FATURA / INVOICE', { align: 'center' })
   doc.moveDown(0.5)
-  doc.fontSize(12).font('Helvetica').text(`Fatura No: ${invoice.invoiceNumber}`, { align: 'center' })
+  doc
+    .fontSize(12)
+    .font('Helvetica')
+    .text(`Fatura No: ${invoice.invoiceNumber}`, { align: 'center' })
   doc.text(`Tarih: ${invoice.invoiceDate.toLocaleDateString('tr-TR')}`, { align: 'center' })
   doc.moveDown(2)
 
@@ -204,7 +211,10 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   doc.text('Toplam', 490, tableTop)
 
   // Line
-  doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke()
+  doc
+    .moveTo(50, tableTop + 15)
+    .lineTo(550, tableTop + 15)
+    .stroke()
 
   // Items
   let y = tableTop + 25
@@ -220,7 +230,10 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   }
 
   // Bottom Line
-  doc.moveTo(50, y + 5).lineTo(550, y + 5).stroke()
+  doc
+    .moveTo(50, y + 5)
+    .lineTo(550, y + 5)
+    .stroke()
 
   // Totals (Bottom right)
   y += 20
@@ -246,7 +259,9 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
     doc.fillColor('green').text('ODENDI / PAID', 400, y)
     doc.fillColor('black')
     if (invoice.paidAt) {
-      doc.fontSize(9).text(`Odeme Tarihi: ${invoice.paidAt.toLocaleDateString('tr-TR')}`, 400, y + 15)
+      doc
+        .fontSize(9)
+        .text(`Odeme Tarihi: ${invoice.paidAt.toLocaleDateString('tr-TR')}`, 400, y + 15)
     }
     if (invoice.paymentReference) {
       doc.text(`Referans: ${invoice.paymentReference}`, 400, y + 28)
@@ -273,7 +288,9 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   }
 
   // Footer
-  doc.fontSize(8).font('Helvetica')
+  doc
+    .fontSize(8)
+    .font('Helvetica')
     .text('Bu fatura elektronik ortamda olusturulmustur.', 50, 780, { align: 'center' })
   doc.text('This invoice was generated electronically.', 50, 792, { align: 'center' })
 
@@ -313,7 +330,7 @@ export const querySubscriptionBin = asyncHandler(async (req, res) => {
       },
       {
         headers: {
-          'Authorization': req.headers.authorization,
+          Authorization: req.headers.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -381,7 +398,7 @@ export const initiatePurchase = asyncHandler(async (req, res) => {
       },
       {
         headers: {
-          'Authorization': req.headers.authorization,
+          Authorization: req.headers.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -390,20 +407,27 @@ export const initiatePurchase = asyncHandler(async (req, res) => {
     // If Turkish card and currency is not TRY, convert to TRY
     // BIN response format: { success: true, card: { country: 'tr' }, pos: {...}, installments: [...] }
     const cardCountry = binResponse.data?.card?.country?.toLowerCase()
-    console.log(`[Subscription Purchase] BIN query result - card country: ${cardCountry}`)
+    logger.info(`[Subscription Purchase] BIN query result - card country: ${cardCountry}`)
 
     if (cardCountry === 'tr' && currency !== 'try') {
-      console.log(`[Subscription Purchase] Turkish card detected, converting ${currency.toUpperCase()} to TRY`)
+      logger.info(
+        `[Subscription Purchase] Turkish card detected, converting ${currency.toUpperCase()} to TRY`
+      )
 
       const conversionResult = await convertCurrency(amount, currency.toUpperCase(), 'TRY')
       amount = conversionResult.convertedAmount
       currency = 'try'
       exchangeRate = conversionResult.rate
 
-      console.log(`[Subscription Purchase] Converted: ${originalAmount} ${originalCurrency.toUpperCase()} -> ${amount} TRY (rate: ${exchangeRate})`)
+      logger.info(
+        `[Subscription Purchase] Converted: ${originalAmount} ${originalCurrency.toUpperCase()} -> ${amount} TRY (rate: ${exchangeRate})`
+      )
     }
   } catch (binError) {
-    console.error('[Subscription Purchase] BIN query failed, proceeding with original currency:', binError.message)
+    logger.error(
+      '[Subscription Purchase] BIN query failed, proceeding with original currency:',
+      binError.message
+    )
     // Continue with original currency if BIN query fails
   }
 
@@ -451,7 +475,7 @@ export const initiatePurchase = asyncHandler(async (req, res) => {
       },
       {
         headers: {
-          'Authorization': req.headers.authorization,
+          Authorization: req.headers.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -529,9 +553,7 @@ export const payPendingPurchase = asyncHandler(async (req, res) => {
   }
 
   // Find the pending purchase
-  const purchase = partner.subscription?.purchases?.find(
-    p => p._id.toString() === purchaseId
-  )
+  const purchase = partner.subscription?.purchases?.find(p => p._id.toString() === purchaseId)
 
   if (!purchase) {
     throw new NotFoundError('PURCHASE_NOT_FOUND')
@@ -565,7 +587,7 @@ export const payPendingPurchase = asyncHandler(async (req, res) => {
       },
       {
         headers: {
-          'Authorization': req.headers.authorization,
+          Authorization: req.headers.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -574,20 +596,27 @@ export const payPendingPurchase = asyncHandler(async (req, res) => {
     // If Turkish card and currency is not TRY, convert to TRY
     // BIN response format: { success: true, card: { country: 'tr' }, pos: {...}, installments: [...] }
     const cardCountry = binResponse.data?.card?.country?.toLowerCase()
-    console.log(`[Subscription Payment] BIN query result - card country: ${cardCountry}`)
+    logger.info(`[Subscription Payment] BIN query result - card country: ${cardCountry}`)
 
     if (cardCountry === 'tr' && currency !== 'try') {
-      console.log(`[Subscription Payment] Turkish card detected, converting ${currency.toUpperCase()} to TRY`)
+      logger.info(
+        `[Subscription Payment] Turkish card detected, converting ${currency.toUpperCase()} to TRY`
+      )
 
       const conversionResult = await convertCurrency(amount, currency.toUpperCase(), 'TRY')
       amount = conversionResult.convertedAmount
       currency = 'try'
       exchangeRate = conversionResult.rate
 
-      console.log(`[Subscription Payment] Converted: ${originalAmount} ${originalCurrency.toUpperCase()} -> ${amount} TRY (rate: ${exchangeRate})`)
+      logger.info(
+        `[Subscription Payment] Converted: ${originalAmount} ${originalCurrency.toUpperCase()} -> ${amount} TRY (rate: ${exchangeRate})`
+      )
     }
   } catch (binError) {
-    console.error('[Subscription Payment] BIN query failed, proceeding with original currency:', binError.message)
+    logger.error(
+      '[Subscription Payment] BIN query failed, proceeding with original currency:',
+      binError.message
+    )
     // Continue with original currency if BIN query fails
   }
 
@@ -615,7 +644,7 @@ export const payPendingPurchase = asyncHandler(async (req, res) => {
       },
       {
         headers: {
-          'Authorization': req.headers.authorization,
+          Authorization: req.headers.authorization,
           'Content-Type': 'application/json'
         }
       }
@@ -665,7 +694,7 @@ export const payPendingPurchase = asyncHandler(async (req, res) => {
 export const paymentCallback = asyncHandler(async (req, res) => {
   const { transactionId, success, message, externalId } = req.body
 
-  console.log('[Subscription Callback] Received:', { transactionId, success, message, externalId })
+  logger.info('[Subscription Callback] Received:', { transactionId, success, message, externalId })
 
   // Parse externalId: subscription-{partnerId}-{purchaseId}
   let partnerId = null
@@ -690,18 +719,20 @@ export const paymentCallback = asyncHandler(async (req, res) => {
   }
 
   if (!partner) {
-    console.error('[Subscription Callback] Partner not found:', { transactionId, partnerId, externalId })
+    logger.error('[Subscription Callback] Partner not found:', {
+      transactionId,
+      partnerId,
+      externalId
+    })
     throw new NotFoundError('PURCHASE_NOT_FOUND')
   }
 
-  console.log('[Subscription Callback] Found partner:', partner._id)
+  logger.info('[Subscription Callback] Found partner:', partner._id)
 
   // Find the purchase - prioritize purchaseId from externalId
   let purchase = null
   if (purchaseId) {
-    purchase = partner.subscription.purchases.find(
-      p => p._id.toString() === purchaseId
-    )
+    purchase = partner.subscription.purchases.find(p => p._id.toString() === purchaseId)
   }
 
   // Fallback: find by transactionId or pending status
@@ -712,7 +743,7 @@ export const paymentCallback = asyncHandler(async (req, res) => {
   }
 
   if (!purchase) {
-    console.error('[Subscription Callback] Purchase not found:', {
+    logger.error('[Subscription Callback] Purchase not found:', {
       purchaseId,
       transactionId,
       purchases: partner.subscription?.purchases?.map(p => ({ id: p._id, status: p.status }))
@@ -720,7 +751,11 @@ export const paymentCallback = asyncHandler(async (req, res) => {
     throw new NotFoundError('PURCHASE_NOT_FOUND')
   }
 
-  console.log('[Subscription Callback] Found purchase:', { purchaseId: purchase._id, status: purchase.status, plan: purchase.plan })
+  logger.info('[Subscription Callback] Found purchase:', {
+    purchaseId: purchase._id,
+    status: purchase.status,
+    plan: purchase.plan
+  })
 
   if (success) {
     // Mark as paid
@@ -746,13 +781,16 @@ export const paymentCallback = asyncHandler(async (req, res) => {
 
     await partner.save()
 
-    console.log('[Subscription Callback] Payment successful, subscription activated for partner:', partner._id)
+    logger.info(
+      '[Subscription Callback] Payment successful, subscription activated for partner:',
+      partner._id
+    )
 
     // Create invoice
     try {
       await createInvoice(partner, purchase)
     } catch (invoiceError) {
-      console.error('Failed to create invoice:', invoiceError)
+      logger.error('Failed to create invoice:', invoiceError)
       // Don't fail the callback if invoice creation fails
     }
 

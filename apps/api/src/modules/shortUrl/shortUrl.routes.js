@@ -1,5 +1,6 @@
 import express from 'express'
 import ShortUrl from './shortUrl.model.js'
+import logger from '#core/logger.js'
 
 const router = express.Router()
 
@@ -41,7 +42,7 @@ router.get('/:code', async (req, res) => {
     // Yönlendir
     res.redirect(302, shortUrl.originalUrl)
   } catch (error) {
-    console.error('ShortUrl resolve error:', error.message)
+    logger.error('ShortUrl resolve error:', error.message)
     res.status(500).send('Bir hata oluştu')
   }
 })

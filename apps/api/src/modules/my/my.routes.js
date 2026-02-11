@@ -1,23 +1,28 @@
 import express from 'express'
 import * as myService from './my.service.js'
 import { protect } from '#middleware/auth.js'
+import logger from '#core/logger.js'
 
 const router = express.Router()
 
 // Payment callback (called by payment service - NO AUTH required)
 // This must be before the protect middleware
-router.post('/subscription/payment-callback', (req, res, next) => {
-  // Verify webhook key for security
-  const webhookKey = req.headers['x-api-key'] || req.headers['x-webhook-key']
-  const expectedKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+router.post(
+  '/subscription/payment-callback',
+  (req, res, next) => {
+    // Verify webhook key for security
+    const webhookKey = req.headers['x-api-key'] || req.headers['x-webhook-key']
+    const expectedKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
 
-  if (webhookKey !== expectedKey) {
-    console.error('[Subscription Callback] Invalid webhook key')
-    return res.status(401).json({ success: false, error: 'Invalid webhook key' })
-  }
+    if (webhookKey !== expectedKey) {
+      logger.error('[Subscription Callback] Invalid webhook key')
+      return res.status(401).json({ success: false, error: 'Invalid webhook key' })
+    }
 
-  next()
-}, myService.paymentCallback)
+    next()
+  },
+  myService.paymentCallback
+)
 
 // All other routes require authentication
 router.use(protect)
