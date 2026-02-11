@@ -122,7 +122,10 @@ import { useAsyncAction } from '@/composables/useAsyncAction'
 const { t } = useI18n()
 
 // Async action composable
-const { isLoading: loading, execute: executeSubmit } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loading, execute: executeSubmit } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 const email = ref('')
 const success = ref(false)
@@ -131,16 +134,13 @@ const errorMessage = ref('')
 const handleSubmit = async () => {
   errorMessage.value = ''
 
-  await executeSubmit(
-    () => authService.forgotPassword(email.value),
-    {
-      onSuccess: () => {
-        success.value = true
-      },
-      onError: error => {
-        errorMessage.value = error.response?.data?.message || t('auth.forgotPasswordError')
-      }
+  await executeSubmit(() => authService.forgotPassword(email.value), {
+    onSuccess: () => {
+      success.value = true
+    },
+    onError: () => {
+      errorMessage.value = t('auth.forgotPasswordError')
     }
-  )
+  })
 }
 </script>
