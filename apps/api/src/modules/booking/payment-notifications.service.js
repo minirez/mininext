@@ -40,12 +40,71 @@ export async function sendPaymentNotification(payment, booking, eventType) {
     const notificationType = notificationTypes[eventType]
     if (!notificationType) return
 
+    // Load partner for branding
+    let partner = null
+    const partnerId = booking.partner?._id || booking.partner
+    if (partnerId) {
+      try {
+        const { default: Partner } = await import('../partner/partner.model.js')
+        partner = await Partner.findById(partnerId)
+          .select('companyName email address branding')
+          .lean()
+      } catch (err) {
+        logger.warn('[PaymentNotification] Failed to load partner:', err.message)
+      }
+    }
+
+    // Branding variables (partner override → platform defaults)
+    const companyName = partner?.companyName || process.env.PLATFORM_NAME || 'MaxiRez'
+    const supportEmail = partner?.email || process.env.SUPPORT_EMAIL || 'destek@maxirez.com'
+    const siteUrl = partner?.branding?.siteDomain
+      ? `https://${partner.branding.siteDomain}`
+      : process.env.FRONTEND_URL || 'https://app.maxirez.com'
+
+    let logoUrl = ''
+    if (partner?.branding?.logo) {
+      logoUrl = partner.branding.logo.startsWith('http')
+        ? partner.branding.logo
+        : `${config.apiUrl}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
+    }
+
+    const companyAddress = partner?.address
+      ? `${partner.address.street || ''}, ${partner.address.city || ''} ${partner.address.postalCode || ''}`
+          .trim()
+          .replace(/^,\s*|,\s*$/g, '')
+      : ''
+
     // Format amount
     const currencySymbol =
       { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[payment.currency] || payment.currency
     const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
       payment.amount
     )
+
+    // Payment type display
+    const paymentTypeLabels = {
+      credit_card: 'Kredi Kartı',
+      bank_transfer: 'Banka Havalesi',
+      pay_at_hotel: 'Otelde Ödeme'
+    }
+
+    // Refund reason section HTML (only for refund)
+    let refundReasonSection = ''
+    if (eventType === 'refunded' && payment.refund?.reason) {
+      refundReasonSection = `
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fefce8;border-radius:12px;border-left:4px solid #eab308;margin-bottom:24px;" role="none">
+<tr><td style="padding:16px 20px;">
+<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#854d0e;text-transform:uppercase;letter-spacing:0.5px;">İade Nedeni</p>
+<p style="margin:0;font-size:14px;color:#92400e;">${payment.refund.reason}</p>
+</td></tr>
+</table>`
+    }
+
+    const subjects = {
+      completed: `Ödemeniz Alındı - ${companyName}`,
+      failed: `Ödeme Başarısız - ${companyName}`,
+      refunded: `İade İşleminiz Tamamlandı - ${companyName}`
+    }
 
     await notificationService.send({
       type: notificationType,
@@ -57,17 +116,22 @@ export async function sendPaymentNotification(payment, booking, eventType) {
         phone: booking.contact?.phone || booking.leadGuest?.phone
       },
       data: {
-        subject:
-          eventType === 'completed'
-            ? 'Ödemeniz Alındı'
-            : eventType === 'failed'
-              ? 'Ödeme Başarısız'
-              : 'İade İşleminiz Tamamlandı',
-        CUSTOMER_NAME: `${booking.leadGuest.firstName} ${booking.leadGuest.lastName}`,
+        subject: subjects[eventType],
+        // Branding (partner override)
+        COMPANY_NAME: companyName,
+        SUPPORT_EMAIL: supportEmail,
+        SITE_URL: siteUrl,
+        COMPANY_ADDRESS: companyAddress,
+        ...(logoUrl && { LOGO_URL: logoUrl }),
+        // Payment data
+        CUSTOMER_NAME:
+          `${booking.leadGuest?.firstName || ''} ${booking.leadGuest?.lastName || ''}`.trim() ||
+          'Misafir',
         BOOKING_NUMBER: booking.bookingNumber,
         AMOUNT: `${currencySymbol}${formattedAmount}`,
         CURRENCY: payment.currency,
         PAYMENT_TYPE: payment.type,
+        PAYMENT_TYPE_DISPLAY: paymentTypeLabels[payment.type] || payment.type,
         PAYMENT_DATE: new Date().toLocaleDateString('tr-TR'),
         HOTEL_NAME: booking.hotelName,
         CHECK_IN: new Date(booking.checkIn).toLocaleDateString('tr-TR'),
@@ -75,11 +139,13 @@ export async function sendPaymentNotification(payment, booking, eventType) {
         // Refund specific
         REFUND_AMOUNT: payment.refund?.amount
           ? `${currencySymbol}${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(payment.refund.amount)}`
-          : null,
-        REFUND_REASON: payment.refund?.reason
+          : formattedAmount
+            ? `${currencySymbol}${formattedAmount}`
+            : '',
+        REFUND_REASON_SECTION: refundReasonSection
       },
       channels: ['email'],
-      partnerId: booking.partner,
+      partnerId,
       relatedTo: { model: 'Payment', id: payment._id }
     })
 

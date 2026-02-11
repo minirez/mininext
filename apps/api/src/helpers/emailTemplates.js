@@ -91,6 +91,26 @@ export const TEMPLATE_VARIABLES = {
     'COMPANY_NAME',
     'COMPANY_LOGO'
   ],
+  'payment-completed': [
+    'CUSTOMER_NAME',
+    'BOOKING_NUMBER',
+    'AMOUNT',
+    'HOTEL_NAME',
+    'CHECK_IN',
+    'CHECK_OUT',
+    'PAYMENT_TYPE_DISPLAY',
+    'PAYMENT_DATE'
+  ],
+  'payment-failed': ['CUSTOMER_NAME', 'BOOKING_NUMBER', 'AMOUNT', 'HOTEL_NAME', 'PAYMENT_DATE'],
+  'payment-refunded': [
+    'CUSTOMER_NAME',
+    'BOOKING_NUMBER',
+    'AMOUNT',
+    'REFUND_AMOUNT',
+    'REFUND_REASON_SECTION',
+    'HOTEL_NAME',
+    'PAYMENT_DATE'
+  ],
   'email-reply': ['REPLY_BODY', 'ORIGINAL_FROM', 'ORIGINAL_DATE', 'ORIGINAL_BODY', 'SUBJECT'],
   'new-partner-notification': [
     'PARTNER_NAME',
@@ -251,6 +271,47 @@ export const TEMPLATE_LABELS = {
     SECURITY_NOTE:
       'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.',
 
+    // Payment Completed
+    PAYMENT_COMPLETED_TITLE: 'Ödemeniz Alındı',
+    PAYMENT_COMPLETED_SUBTITLE: 'Ödemeniz başarıyla gerçekleştirildi.',
+    PAYMENT_COMPLETED_PREVIEW: 'Ödemeniz başarıyla alınmıştır.',
+    PAYMENT_COMPLETED_GREETING: 'Merhaba',
+    PAYMENT_COMPLETED_MESSAGE:
+      'Ödemeniz başarıyla gerçekleştirilmiştir. Aşağıda ödeme detaylarınızı bulabilirsiniz.',
+    PAYMENT_COMPLETED_NOTE:
+      'Ödemeniz başarıyla işleme alınmıştır. Rezervasyon onayınız ayrıca e-posta ile gönderilecektir.',
+    PAYMENT_AMOUNT_LABEL: 'Ödenen Tutar',
+    PAYMENT_DETAILS_TITLE: 'Ödeme Detayları',
+    PAYMENT_DATE_LABEL: 'Ödeme Tarihi',
+    PAYMENT_METHOD_LABEL: 'Ödeme Yöntemi',
+
+    // Payment Failed
+    PAYMENT_FAILED_TITLE: 'Ödeme Başarısız',
+    PAYMENT_FAILED_SUBTITLE: 'Ödemeniz gerçekleştirilemedi.',
+    PAYMENT_FAILED_PREVIEW: 'Ödemeniz başarısız oldu.',
+    PAYMENT_FAILED_GREETING: 'Merhaba',
+    PAYMENT_FAILED_MESSAGE:
+      'Maalesef ödemeniz gerçekleştirilemedi. Lütfen aşağıdaki önerileri inceleyerek tekrar deneyin.',
+    PAYMENT_FAILED_NOTE:
+      'Ödemeniz gerçekleştirilemediği için rezervasyonunuz henüz onaylanmamıştır. Lütfen en kısa sürede tekrar deneyin.',
+    PAYMENT_FAILED_TIPS_TITLE: 'Ne yapabilirsiniz?',
+    PAYMENT_FAILED_TIP_1:
+      '• Kart bilgilerinizi kontrol edin (kart numarası, son kullanma tarihi, CVV)',
+    PAYMENT_FAILED_TIP_2: '• Kartınızda yeterli bakiye olduğundan emin olun',
+    PAYMENT_FAILED_TIP_3: '• Farklı bir kart ile tekrar deneyin veya bankanızla iletişime geçin',
+
+    // Payment Refunded
+    PAYMENT_REFUNDED_TITLE: 'İade İşleminiz Tamamlandı',
+    PAYMENT_REFUNDED_SUBTITLE: 'İade tutarı kartınıza yansıyacaktır.',
+    PAYMENT_REFUNDED_PREVIEW: 'İade işleminiz tamamlanmıştır.',
+    PAYMENT_REFUNDED_GREETING: 'Merhaba',
+    PAYMENT_REFUNDED_MESSAGE:
+      'İade talebiniz işleme alınmıştır. Aşağıda iade detaylarınızı bulabilirsiniz.',
+    PAYMENT_REFUNDED_NOTE:
+      'İade tutarı, bankanıza bağlı olarak 5-10 iş günü içinde kartınıza yansıyacaktır.',
+    REFUND_AMOUNT_LABEL: 'İade Tutarı',
+    REFUND_REASON_LABEL: 'İade Nedeni',
+
     // New Partner Notification
     NEW_PARTNER_TITLE: 'Yeni Partner Başvurusu',
     NEW_PARTNER_SUBTITLE: 'Yeni bir partner başvurusu alındı.',
@@ -409,6 +470,46 @@ export const TEMPLATE_LABELS = {
     SECURITY_NOTE_LABEL: 'Security Note',
     SECURITY_NOTE:
       'This payment is secured with 3D Secure. Your card details are transmitted encrypted.',
+
+    // Payment Completed
+    PAYMENT_COMPLETED_TITLE: 'Payment Received',
+    PAYMENT_COMPLETED_SUBTITLE: 'Your payment has been successfully processed.',
+    PAYMENT_COMPLETED_PREVIEW: 'Your payment has been received.',
+    PAYMENT_COMPLETED_GREETING: 'Hello',
+    PAYMENT_COMPLETED_MESSAGE:
+      'Your payment has been successfully processed. Below you can find your payment details.',
+    PAYMENT_COMPLETED_NOTE:
+      'Your payment has been processed successfully. Your booking confirmation will be sent separately.',
+    PAYMENT_AMOUNT_LABEL: 'Amount Paid',
+    PAYMENT_DETAILS_TITLE: 'Payment Details',
+    PAYMENT_DATE_LABEL: 'Payment Date',
+    PAYMENT_METHOD_LABEL: 'Payment Method',
+
+    // Payment Failed
+    PAYMENT_FAILED_TITLE: 'Payment Failed',
+    PAYMENT_FAILED_SUBTITLE: 'Your payment could not be processed.',
+    PAYMENT_FAILED_PREVIEW: 'Your payment has failed.',
+    PAYMENT_FAILED_GREETING: 'Hello',
+    PAYMENT_FAILED_MESSAGE:
+      'Unfortunately, your payment could not be processed. Please review the suggestions below and try again.',
+    PAYMENT_FAILED_NOTE:
+      'Your reservation has not been confirmed as the payment was unsuccessful. Please try again as soon as possible.',
+    PAYMENT_FAILED_TIPS_TITLE: 'What can you do?',
+    PAYMENT_FAILED_TIP_1: '• Check your card details (card number, expiry date, CVV)',
+    PAYMENT_FAILED_TIP_2: '• Make sure you have sufficient balance on your card',
+    PAYMENT_FAILED_TIP_3: '• Try a different card or contact your bank',
+
+    // Payment Refunded
+    PAYMENT_REFUNDED_TITLE: 'Refund Completed',
+    PAYMENT_REFUNDED_SUBTITLE: 'The refund amount will be credited to your card.',
+    PAYMENT_REFUNDED_PREVIEW: 'Your refund has been processed.',
+    PAYMENT_REFUNDED_GREETING: 'Hello',
+    PAYMENT_REFUNDED_MESSAGE:
+      'Your refund request has been processed. Below you can find the refund details.',
+    PAYMENT_REFUNDED_NOTE:
+      'The refund amount will be credited to your card within 5-10 business days, depending on your bank.',
+    REFUND_AMOUNT_LABEL: 'Refund Amount',
+    REFUND_REASON_LABEL: 'Refund Reason',
 
     // New Partner Notification
     NEW_PARTNER_TITLE: 'New Partner Application',
