@@ -96,8 +96,6 @@ import { ref, computed, onMounted } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
 import { useDomainBranding } from '@/composables/useDomainBranding'
-import { getFileUrl } from '@/utils/imageUrl'
-import api from '@/services/api'
 import aaLogo from '@/assets/aa-logo.jpeg'
 
 const uiStore = useUIStore()
@@ -109,14 +107,15 @@ const toggleTheme = () => uiStore.toggleDarkMode()
 // Partner branding from custom domain
 const partnerBranding = ref(null)
 const partnerLogoUrl = computed(() => {
-  if (!partnerBranding.value?.logo) return null
-  return getFileUrl(partnerBranding.value.logo)
+  const logo = partnerBranding.value?.logo
+  if (!logo) return null
+  if (logo.startsWith('http')) return logo
+  return `${window.location.origin}${logo}`
 })
 
 // Detect if we're on a custom partner domain
 const isCustomDomain = () => {
   const hostname = window.location.hostname
-  // Platform domains - not a custom partner domain
   const platformDomains = ['localhost', 'maxirez.com', 'minirez.com', 'adviceal.com']
   return !platformDomains.some(d => hostname === d || hostname.endsWith('.' + d))
 }
@@ -125,9 +124,9 @@ onMounted(async () => {
   if (!isCustomDomain()) return
 
   try {
-    const { data } = await api.get('/api/public/resolve-domain', {
-      params: { domain: window.location.hostname }
-    })
+    // Use relative URL - nginx proxies /api to backend (no CORS issues)
+    const res = await fetch(`/api/public/resolve-domain?domain=${window.location.hostname}`)
+    const data = await res.json()
     if (data.success && data.data) {
       partnerBranding.value = data.data
     }
