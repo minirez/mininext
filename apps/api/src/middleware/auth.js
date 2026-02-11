@@ -3,7 +3,7 @@ import config from '../config/index.js'
 import User from '../modules/user/user.model.js'
 import Partner from '../modules/partner/partner.model.js'
 import Agency from '../modules/agency/agency.model.js'
-import { UnauthorizedError } from '../core/errors.js'
+import { UnauthorizedError, ForbiddenError } from '../core/errors.js'
 
 // Protect middleware - Require authentication
 export const protect = async (req, res, next) => {
@@ -132,7 +132,7 @@ export const requirePlatformUser = requirePlatformAdmin
 // Require partner user (accountType: 'partner')
 export const requirePartner = (req, res, next) => {
   if (req.user.accountType !== 'partner') {
-    throw new UnauthorizedError('FORBIDDEN')
+    throw new ForbiddenError('FORBIDDEN')
   }
   next()
 }

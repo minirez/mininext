@@ -18,7 +18,10 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+    <div
+      v-else-if="error"
+      class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+    >
       <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
     </div>
 
@@ -90,6 +93,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import partnerService from '@/services/partnerService'
 import Spinner from '@/components/ui/feedback/Spinner.vue'
 import CompanyTab from '@/components/companyProfile/CompanyTab.vue'
@@ -99,6 +103,9 @@ import BrandingTab from '@/components/companyProfile/BrandingTab.vue'
 
 const { t } = useI18n()
 const toast = useToast()
+const authStore = useAuthStore()
+
+const isPartnerUser = computed(() => authStore.accountType === 'partner')
 
 // State
 const loading = ref(true)
@@ -150,6 +157,15 @@ const tabs = computed(() => [
 
 // Fetch profile data
 const fetchProfile = async () => {
+  if (!isPartnerUser.value) {
+    loading.value = false
+    error.value = t(
+      'companyProfile.messages.adminNotAllowed',
+      'Bu sayfa sadece partner kullanıcıları içindir. Partner ayarlarını yönetmek için Partnerler sayfasını kullanın.'
+    )
+    return
+  }
+
   loading.value = true
   error.value = null
 
