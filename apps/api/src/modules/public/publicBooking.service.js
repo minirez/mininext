@@ -12,6 +12,7 @@ import Booking from '../booking/booking.model.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import { GUEST_PLACEHOLDER_NAME } from '#constants/defaults.js'
+import logger from '#core/logger.js'
 
 /**
  * Find market for hotel by country code
@@ -256,6 +257,22 @@ export const createBooking = asyncHandler(async (req, res) => {
       dates,
       rooms: 1
     })
+  }
+
+  // Send automatic booking emails (non-blocking)
+  // For credit_card: emails are sent after payment completes (via webhook)
+  // For pay_at_hotel and bank_transfer: send immediately
+  if (paymentMethod !== 'credit_card') {
+    try {
+      const { sendAutomaticBookingEmails } = await import('../booking/email.service.js')
+      // Don't await - fire and forget to not delay the response
+      sendAutomaticBookingEmails(booking._id, {
+        trigger: 'creation',
+        language: req.headers['accept-language']?.split('-')[0]?.split(',')[0] || 'en'
+      }).catch(err => logger.error('[PublicBooking] Auto email failed:', err.message))
+    } catch (err) {
+      logger.error('[PublicBooking] Failed to import email service:', err.message)
+    }
   }
 
   res.status(201).json({

@@ -102,7 +102,7 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
       }
 
   // Wrap payment update + booking sync in transaction for consistency
-  const { payment, alreadyProcessed } = await withTransaction(async (session) => {
+  const { payment, alreadyProcessed } = await withTransaction(async session => {
     const opts = session ? { session } : {}
 
     // ATOMIC: Find and lock payment in single operation to prevent race conditions
@@ -139,7 +139,10 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
     return res.json({ success: true, message: 'Already processed' })
   }
 
-  logger.info('[Payment Webhook] Payment updated:', { paymentId: payment._id, status: payment.status })
+  logger.info('[Payment Webhook] Payment updated:', {
+    paymentId: payment._id,
+    status: payment.status
+  })
 
   // Fetch booking for notifications
   const booking = await Booking.findById(payment.booking)
@@ -157,6 +160,18 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
       await sendPaymentNotification(payment, booking, success ? 'completed' : 'failed')
     } catch (notifyError) {
       logger.error('[Payment Webhook] Failed to send notification:', notifyError.message)
+    }
+
+    // Send automatic booking confirmation emails on successful payment
+    if (success) {
+      try {
+        const { sendAutomaticBookingEmails } = await import('./email.service.js')
+        sendAutomaticBookingEmails(booking._id, {
+          trigger: 'payment_completed'
+        }).catch(err => logger.error('[Payment Webhook] Auto email failed:', err.message))
+      } catch (emailErr) {
+        logger.error('[Payment Webhook] Failed to import email service:', emailErr.message)
+      }
     }
   }
 

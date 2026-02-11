@@ -9,6 +9,7 @@ import Booking from './booking.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
 import PlatformSettings from '#modules/platform-settings/platformSettings.model.js'
 import Partner from '#modules/partner/partner.model.js'
+import User from '#modules/user/user.model.js'
 import { renderEmailTemplate, TEMPLATE_LABELS } from '#helpers/emailTemplates.js'
 import { sendEmail, sendBookingConfirmation } from '#helpers/mail.js'
 import notificationService from '#services/notificationService.js'
@@ -614,8 +615,170 @@ function getDefaultRecipient(type, booking) {
   }
 }
 
+/**
+ * Send automatic booking emails after booking creation or payment completion
+ * Sends: 1) Confirmation to customer  2) Notification to partner members
+ *
+ * @param {string} bookingId - Booking document ID
+ * @param {Object} options
+ * @param {string} options.trigger - 'creation' | 'payment_completed'
+ * @param {string} options.language - Language code (default: 'en')
+ */
+export async function sendAutomaticBookingEmails(bookingId, options = {}) {
+  const { trigger = 'creation', language: langOverride } = options
+
+  try {
+    // Load booking with hotel and partner
+    const booking = await Booking.findById(bookingId)
+      .populate('hotel', 'name address contact policies')
+      .populate('partner', 'companyName email address branding')
+      .lean()
+
+    if (!booking) {
+      logger.error('[AutoEmail] Booking not found:', bookingId)
+      return
+    }
+
+    const language = langOverride || booking.guestLanguage || 'en'
+
+    // 1) Send confirmation email to CUSTOMER
+    const customerEmail = booking.contact?.email
+    if (customerEmail) {
+      try {
+        const templateData = await buildEmailTemplateData(booking, 'confirmation', language)
+        const templateName = getTemplateName('confirmation')
+        const subject = getEmailSubject('confirmation', booking, language)
+        const html = await renderEmailTemplate(templateName, templateData, language)
+
+        await sendEmail({
+          to: customerEmail,
+          subject,
+          html,
+          partnerId: booking.partner?._id || booking.partner,
+          type: 'booking-confirmation',
+          metadata: {
+            bookingId: booking._id,
+            bookingNumber: booking.bookingNumber,
+            trigger,
+            automatic: true
+          }
+        })
+
+        logger.info('[AutoEmail] Customer confirmation sent:', {
+          bookingNumber: booking.bookingNumber,
+          to: customerEmail,
+          trigger
+        })
+      } catch (err) {
+        logger.error('[AutoEmail] Failed to send customer email:', err.message)
+      }
+    }
+
+    // 2) Send notification to PARTNER MEMBERS
+    const partnerId = booking.partner?._id || booking.partner
+    if (partnerId) {
+      try {
+        // Find active partner users
+        const partnerUsers = await User.find({
+          accountType: 'partner',
+          accountId: partnerId,
+          status: 'active'
+        })
+          .select('email firstName lastName')
+          .lean()
+
+        if (partnerUsers.length > 0) {
+          const partnerEmails = partnerUsers.map(u => u.email).filter(Boolean)
+
+          if (partnerEmails.length > 0) {
+            const templateData = await buildEmailTemplateData(
+              booking,
+              'hotel_notification',
+              language
+            )
+            const templateName = getTemplateName('hotel_notification')
+            const subject = getEmailSubject('hotel_notification', booking, language)
+            const html = await renderEmailTemplate(templateName, templateData, language)
+
+            // Send to all partner members
+            for (const email of partnerEmails) {
+              try {
+                await sendEmail({
+                  to: email,
+                  subject,
+                  html,
+                  partnerId,
+                  type: 'booking-hotel-notification',
+                  metadata: {
+                    bookingId: booking._id,
+                    bookingNumber: booking.bookingNumber,
+                    trigger,
+                    automatic: true
+                  }
+                })
+              } catch (memberErr) {
+                logger.error('[AutoEmail] Failed to send to partner member:', {
+                  email,
+                  error: memberErr.message
+                })
+              }
+            }
+
+            logger.info('[AutoEmail] Partner notification sent:', {
+              bookingNumber: booking.bookingNumber,
+              recipients: partnerEmails.length,
+              trigger
+            })
+          }
+        }
+
+        // Also send to hotel contact email if available
+        const hotelEmail = booking.hotel?.contact?.email
+        if (hotelEmail && !partnerUsers.some(u => u.email === hotelEmail)) {
+          try {
+            const templateData = await buildEmailTemplateData(
+              booking,
+              'hotel_notification',
+              language
+            )
+            const templateName = getTemplateName('hotel_notification')
+            const subject = getEmailSubject('hotel_notification', booking, language)
+            const html = await renderEmailTemplate(templateName, templateData, language)
+
+            await sendEmail({
+              to: hotelEmail,
+              subject,
+              html,
+              partnerId,
+              type: 'booking-hotel-notification',
+              metadata: {
+                bookingId: booking._id,
+                bookingNumber: booking.bookingNumber,
+                trigger,
+                automatic: true
+              }
+            })
+
+            logger.info('[AutoEmail] Hotel contact notification sent:', {
+              bookingNumber: booking.bookingNumber,
+              to: hotelEmail
+            })
+          } catch (hotelErr) {
+            logger.error('[AutoEmail] Failed to send to hotel contact:', hotelErr.message)
+          }
+        }
+      } catch (err) {
+        logger.error('[AutoEmail] Failed to send partner notifications:', err.message)
+      }
+    }
+  } catch (error) {
+    logger.error('[AutoEmail] Unexpected error:', error.message)
+  }
+}
+
 export default {
   previewBookingEmail,
   sendBookingEmail,
-  updateGuestInfo
+  updateGuestInfo,
+  sendAutomaticBookingEmails
 }

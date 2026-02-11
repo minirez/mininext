@@ -24,7 +24,8 @@ import ShortUrl from '../shortUrl/shortUrl.model.js'
  * @param {string} eventType - 'completed' | 'failed' | 'refunded'
  */
 export async function sendPaymentNotification(payment, booking, eventType) {
-  if (!booking?.leadGuest?.email) {
+  const recipientEmail = booking?.contact?.email || booking?.leadGuest?.email
+  if (!recipientEmail) {
     logger.warn('[PaymentNotification] No email for notification:', { bookingId: booking?._id })
     return
   }
@@ -49,9 +50,11 @@ export async function sendPaymentNotification(payment, booking, eventType) {
     await notificationService.send({
       type: notificationType,
       recipient: {
-        email: booking.leadGuest.email,
-        name: `${booking.leadGuest.firstName} ${booking.leadGuest.lastName}`,
-        phone: booking.leadGuest.phone
+        email: recipientEmail,
+        name:
+          `${booking.leadGuest?.firstName || ''} ${booking.leadGuest?.lastName || ''}`.trim() ||
+          'Guest',
+        phone: booking.contact?.phone || booking.leadGuest?.phone
       },
       data: {
         subject:
@@ -83,7 +86,7 @@ export async function sendPaymentNotification(payment, booking, eventType) {
     logger.info('[PaymentNotification] Sent:', {
       type: notificationType,
       paymentId: payment._id,
-      email: booking.leadGuest.email
+      email: recipientEmail
     })
   } catch (error) {
     logger.error('[PaymentNotification] Failed:', error.message)
