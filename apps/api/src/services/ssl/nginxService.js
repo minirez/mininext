@@ -41,28 +41,15 @@ const CONFIG = {
  * @returns {string} Nginx konfigurasyon icerigi
  */
 export const generateNginxConfig = (domain, type, partnerId) => {
-  const frontendPort = CONFIG.frontendPorts[type]
   const certPath = path.join(CONFIG.certDir, domain)
 
-  // Domain tipine gore upstream ve location ayarlari
-  const upstreamName = `${domain.replace(/\./g, '_')}_upstream`
-
-  return `# Auto-generated config for ${domain} (${type})
-# Partner ID: ${partnerId}
-# Generated: ${new Date().toISOString()}
-
-upstream ${upstreamName} {
-    server 127.0.0.1:${frontendPort};
-    keepalive 64;
-}
-
-# HTTP -> HTTPS redirect
+  // Ortak bloklar
+  const httpBlock = `# HTTP -> HTTPS redirect
 server {
     listen 80;
     listen [::]:80;
     server_name ${domain};
 
-    # Let's Encrypt challenge
     location /.well-known/acme-challenge/ {
         root ${CONFIG.certbotWebroot};
     }
@@ -70,45 +57,33 @@ server {
     location / {
         return 301 https://$host$request_uri;
     }
-}
+}`
 
-# HTTPS server
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name ${domain};
-
-    # SSL certificates
+  const sslBlock = `    # SSL certificates
     ssl_certificate ${certPath}/fullchain.pem;
     ssl_certificate_key ${certPath}/privkey.pem;
 
-    # SSL settings (Mozilla Modern configuration)
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
     ssl_session_timeout 1d;
     ssl_session_tickets off;
 
-    # HSTS
     add_header Strict-Transport-Security "max-age=63072000" always;
-
-    # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Gzip
     gzip on;
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml application/atom+xml image/svg+xml;
 
-    # Logging
     access_log /var/log/nginx/${domain}.access.log;
-    error_log /var/log/nginx/${domain}.error.log;
+    error_log /var/log/nginx/${domain}.error.log;`
 
-    # API proxy
+  const apiBlock = `    # API proxy
     location /api {
         proxy_pass ${CONFIG.apiBackend};
         proxy_http_version 1.1;
@@ -139,10 +114,74 @@ server {
 
     # Static files
     location /uploads {
-        alias /var/www/mini/booking-engine/uploads;
+        alias /var/www/booking-engine/uploads;
         expires 30d;
         add_header Cache-Control "public, immutable";
+    }`
+
+  // B2B (admin panel) - statik dist dosyalardan serve eder (app.maxirez.com gibi)
+  if (type === 'b2b') {
+    const adminDist = CONFIG.adminDistPath
+    return `# Auto-generated config for ${domain} (${type})
+# Partner ID: ${partnerId}
+# Generated: ${new Date().toISOString()}
+
+${httpBlock}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${domain};
+
+${sslBlock}
+
+${apiBlock}
+
+    # Frontend (SPA - static dist)
+    location / {
+        root ${adminDist};
+        index index.html;
+        try_files $uri $uri/ /index.html;
+
+        location = /index.html {
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Pragma "no-cache";
+        }
+
+        location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     }
+}
+`
+  }
+
+  // B2C ve PMS - upstream proxy
+  const frontendPort = CONFIG.frontendPorts[type]
+  const upstreamName = `${domain.replace(/\./g, '_')}_upstream`
+
+  return `# Auto-generated config for ${domain} (${type})
+# Partner ID: ${partnerId}
+# Generated: ${new Date().toISOString()}
+
+upstream ${upstreamName} {
+    server 127.0.0.1:${frontendPort};
+    keepalive 64;
+}
+
+${httpBlock}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${domain};
+
+${sslBlock}
+
+${apiBlock}
 
     # Frontend
     location / {

@@ -87,7 +87,8 @@ const config = {
       b2b: parseInt(process.env.B2B_FRONTEND_PORT) || 3001,
       pms: parseInt(process.env.PMS_FRONTEND_PORT) || 3002
     },
-    apiBackend: process.env.API_BACKEND_URL || 'http://localhost:4000'
+    apiBackend: process.env.API_BACKEND_URL || 'http://localhost:4000',
+    adminDistPath: process.env.ADMIN_DIST_PATH || '/var/www/booking-engine/apps/admin/dist'
   },
 
   // Storefront API Key - For server-to-server auth from storefront frontends (site3 etc.)
