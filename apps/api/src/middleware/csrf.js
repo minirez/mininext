@@ -27,6 +27,7 @@ const EXEMPT_PATHS = [
   '/api/docs',
   '/api/exchange',
   '/api/mailbox',
+  '/api/email-logs/ses-webhook',
   '/health'
 ]
 
