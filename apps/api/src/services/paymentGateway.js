@@ -9,7 +9,7 @@ import logger from '../core/logger.js'
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1:7043'
 
 // API Key for internal service authentication
-const API_KEY = process.env.PAYMENT_API_KEY || 'internal-service-key'
+const API_KEY = process.env.PAYMENT_API_KEY || 'pws-internal-api-key-2026'
 
 // Request configuration
 const DEFAULT_TIMEOUT = 30000 // 30 seconds
@@ -20,7 +20,7 @@ const RETRY_DELAY = 1000 // 1 second
  * Sleep for specified milliseconds
  * @param {number} ms - Milliseconds to sleep
  */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
  * Check if error is retryable
@@ -48,7 +48,13 @@ function isRetryableError(error) {
  * @param {number} options.retries - Number of retries
  * @returns {Promise<Object>}
  */
-async function makeRequest(method, endpoint, data = null, token = null, { timeout = DEFAULT_TIMEOUT, retries = MAX_RETRIES } = {}) {
+async function makeRequest(
+  method,
+  endpoint,
+  data = null,
+  token = null,
+  { timeout = DEFAULT_TIMEOUT, retries = MAX_RETRIES } = {}
+) {
   const url = `${PAYMENT_SERVICE_URL}/api${endpoint}`
 
   const headers = {
@@ -158,12 +164,17 @@ async function makeRequest(method, endpoint, data = null, token = null, { timeou
  * @returns {Promise<Object>} - { success, pos, card, installments }
  */
 export async function queryBin(bin, amount, currency, partnerId = null, token = null) {
-  return makeRequest('POST', '/bin', {
-    bin,
-    amount,
-    currency: currency.toLowerCase(),
-    partnerId
-  }, token)
+  return makeRequest(
+    'POST',
+    '/bin',
+    {
+      bin,
+      amount,
+      currency: currency.toLowerCase(),
+      partnerId
+    },
+    token
+  )
 }
 
 /**

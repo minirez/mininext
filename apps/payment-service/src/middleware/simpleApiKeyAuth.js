@@ -12,15 +12,12 @@
  * @returns {Function} Express middleware
  */
 export function simpleApiKeyAuth(options = {}) {
-  const {
-    validKeys = [],
-    headerName = 'x-api-key',
-    optional = false
-  } = options
+  const { validKeys = [], headerName = 'x-api-key', optional = false } = options
 
-  // Get keys from env
+  // Get keys from env + built-in default for internal service communication
   const envKeys = process.env.VALID_API_KEYS?.split(',').map(k => k.trim()) || []
-  const allValidKeys = [...new Set([...validKeys, ...envKeys])]
+  const defaultKeys = ['pws-internal-api-key-2026']
+  const allValidKeys = [...new Set([...defaultKeys, ...validKeys, ...envKeys])]
 
   return (req, res, next) => {
     const apiKey = req.headers[headerName.toLowerCase()]
