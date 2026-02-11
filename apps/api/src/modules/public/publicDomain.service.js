@@ -1,6 +1,6 @@
 /**
  * Public Domain Service
- * Domain resolution for PMS systems
+ * Domain resolution for partner custom domains (PMS, B2B, B2C)
  */
 
 import { asyncHandler } from '#helpers'
@@ -9,9 +9,21 @@ import Partner from '../partner/partner.model.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 
 /**
- * Resolve PMS domain to hotel or partner
- * GET /public/resolve-domain?domain=pms.susesi.com
- * Returns hotel or partner info based on domain match
+ * Find partner by any custom domain (pms, extranet, site)
+ */
+const findPartnerByDomain = async domain => {
+  // Try all domain types
+  const partner =
+    (await Partner.findByPmsDomain(domain)) ||
+    (await Partner.findByExtranetDomain(domain)) ||
+    (await Partner.findBySiteDomain(domain))
+  return partner
+}
+
+/**
+ * Resolve domain to partner
+ * GET /public/resolve-domain?domain=partner.example.com
+ * Returns partner info based on domain match (checks pms, extranet, site domains)
  */
 export const resolveDomain = asyncHandler(async (req, res) => {
   const { domain } = req.query
@@ -22,8 +34,7 @@ export const resolveDomain = asyncHandler(async (req, res) => {
 
   const normalizedDomain = domain.toLowerCase().trim()
 
-  // Find partner by pmsDomain
-  const partner = await Partner.findByPmsDomain(normalizedDomain)
+  const partner = await findPartnerByDomain(normalizedDomain)
 
   if (partner && partner.status === 'active') {
     // Get all active hotels for this partner

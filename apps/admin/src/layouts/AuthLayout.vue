@@ -19,15 +19,36 @@
     <div class="relative z-10 w-full max-w-md px-6">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <div
-          class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
-        >
-          <img :src="aaLogo" alt="AdviceAl Logo" class="w-24 h-24 object-contain" />
-        </div>
-        <h1 class="text-3xl font-bold text-white">{{ $t(branding.config.portalTitle) }}</h1>
-        <p class="mt-2" :class="branding.config.textMuted">
-          {{ $t(branding.config.portalSubtitle) }}
-        </p>
+        <!-- Partner logo (custom domain) -->
+        <template v-if="partnerBranding">
+          <div
+            v-if="partnerBranding.logo"
+            class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
+          >
+            <img
+              :src="partnerLogoUrl"
+              :alt="partnerBranding.partnerName"
+              class="w-24 h-24 object-contain"
+            />
+          </div>
+          <h1 class="text-3xl font-bold text-white">{{ partnerBranding.partnerName }}</h1>
+          <p class="mt-2" :class="branding.config.textMuted">
+            {{ $t(branding.config.portalSubtitle) }}
+          </p>
+        </template>
+
+        <!-- Default logo (platform domain) -->
+        <template v-else>
+          <div
+            class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
+          >
+            <img :src="aaLogo" alt="AdviceAl Logo" class="w-24 h-24 object-contain" />
+          </div>
+          <h1 class="text-3xl font-bold text-white">{{ $t(branding.config.portalTitle) }}</h1>
+          <p class="mt-2" :class="branding.config.textMuted">
+            {{ $t(branding.config.portalSubtitle) }}
+          </p>
+        </template>
       </div>
 
       <!-- Auth Form Container -->
@@ -39,7 +60,10 @@
 
       <!-- Footer -->
       <div class="text-center mt-8">
-        <p class="text-sm" :class="branding.config.textMuted">
+        <p v-if="partnerBranding" class="text-sm" :class="branding.config.textMuted">
+          © {{ new Date().getFullYear() }} {{ partnerBranding.partnerName }}
+        </p>
+        <p v-else class="text-sm" :class="branding.config.textMuted">
           © {{ new Date().getFullYear() }}
           <a
             href="https://adviceal.com"
@@ -68,10 +92,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
 import { useDomainBranding } from '@/composables/useDomainBranding'
+import { getFileUrl } from '@/utils/imageUrl'
+import api from '@/services/api'
 import aaLogo from '@/assets/aa-logo.jpeg'
 
 const uiStore = useUIStore()
@@ -79,6 +105,36 @@ const branding = useDomainBranding()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
+
+// Partner branding from custom domain
+const partnerBranding = ref(null)
+const partnerLogoUrl = computed(() => {
+  if (!partnerBranding.value?.logo) return null
+  return getFileUrl(partnerBranding.value.logo)
+})
+
+// Detect if we're on a custom partner domain
+const isCustomDomain = () => {
+  const hostname = window.location.hostname
+  // Platform domains - not a custom partner domain
+  const platformDomains = ['localhost', 'maxirez.com', 'minirez.com', 'adviceal.com']
+  return !platformDomains.some(d => hostname === d || hostname.endsWith('.' + d))
+}
+
+onMounted(async () => {
+  if (!isCustomDomain()) return
+
+  try {
+    const { data } = await api.get('/api/public/resolve-domain', {
+      params: { domain: window.location.hostname }
+    })
+    if (data.success && data.data) {
+      partnerBranding.value = data.data
+    }
+  } catch {
+    // Not a partner domain or API unavailable - use default branding
+  }
+})
 </script>
 
 <style scoped>
