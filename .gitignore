@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# Claude Context Snapshot
+PROJECT_CONTEXT.md
+
 # Build outputs
 dist/
 build/
@@ -20,6 +23,7 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 
 # IDE
 .vscode/
