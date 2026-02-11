@@ -41,6 +41,7 @@
   "DUPLICATE_EMAIL": "This email is already in use",
   "DUPLICATE_SITEDOMAIN": "This site domain is already in use",
   "DUPLICATE_EXTRANETDOMAIN": "This extranet domain is already in use",
+  "DOMAIN_ALREADY_IN_USE": "This domain is already in use by another partner",
 
   "INVALID_STATUS": "Invalid status",
   "COMPANY_NAME_MIN_LENGTH": "Company name must be at least 2 characters",

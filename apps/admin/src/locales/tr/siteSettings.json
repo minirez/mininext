@@ -104,7 +104,8 @@
       "sslSetupFailed": "SSL kurulumu başarısız oldu.",
       "sslDnsFailed": "DNS doğrulama başarısız. Lütfen A kaydınızı kontrol edin.",
       "sslCertFailed": "SSL sertifikası alınamadı. Lütfen daha sonra tekrar deneyin.",
-      "sslNginxFailed": "Nginx yapılandırması başarısız oldu. Sistem yöneticisiyle iletişime geçin."
+      "sslNginxFailed": "Nginx yapılandırması başarısız oldu. Sistem yöneticisiyle iletişime geçin.",
+      "domainAlreadyInUse": "Bu domain zaten başka bir partner tarafından kullanılıyor."
     },
     "general": {
       "logo": "Logo",

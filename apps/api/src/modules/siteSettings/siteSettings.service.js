@@ -1,6 +1,6 @@
 import SiteSettings from './siteSettings.model.js'
 import Partner from '../partner/partner.model.js'
-import { NotFoundError, BadRequestError } from '#core/errors.js'
+import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { getSiteFileUrl, deleteSiteFile } from '#helpers/siteUpload.js'
 import logger from '#core/logger.js'
@@ -77,38 +77,71 @@ export const updateSetup = asyncHandler(async (req, res) => {
 
   const { b2cDomain, b2bDomain, pmsDomain } = req.body
 
+  // Clean domain: trim, lowercase, empty string -> null (sparse index uyumu)
+  const cleanDomain = d => (d && d.trim() ? d.trim().toLowerCase() : null)
+
+  // Domain benzersizlik kontrolü (Partner branding unique sparse index)
+  const domainChecks = [
+    { value: b2cDomain, field: 'branding.siteDomain' },
+    { value: b2bDomain, field: 'branding.extranetDomain' },
+    { value: pmsDomain, field: 'branding.pmsDomain' }
+  ]
+
+  for (const { value, field } of domainChecks) {
+    if (value === undefined) continue
+    const clean = cleanDomain(value)
+    if (!clean) continue
+    const existing = await Partner.findOne({
+      [field]: clean,
+      _id: { $ne: partnerId }
+    })
+    if (existing) {
+      throw new ConflictError(req.t('DOMAIN_ALREADY_IN_USE'))
+    }
+  }
+
   if (b2cDomain !== undefined) {
+    const clean = cleanDomain(b2cDomain)
     // Reset SSL status when domain changes
-    if (b2cDomain !== settings.setup.b2cDomain) {
+    if (clean !== settings.setup.b2cDomain) {
       settings.setup.b2cSslStatus = 'none'
     }
-    settings.setup.b2cDomain = b2cDomain
+    settings.setup.b2cDomain = clean || ''
   }
 
   if (b2bDomain !== undefined) {
-    if (b2bDomain !== settings.setup.b2bDomain) {
+    const clean = cleanDomain(b2bDomain)
+    if (clean !== settings.setup.b2bDomain) {
       settings.setup.b2bSslStatus = 'none'
     }
-    settings.setup.b2bDomain = b2bDomain
+    settings.setup.b2bDomain = clean || ''
   }
 
   if (pmsDomain !== undefined) {
-    if (pmsDomain !== settings.setup.pmsDomain) {
+    const clean = cleanDomain(pmsDomain)
+    if (clean !== settings.setup.pmsDomain) {
       settings.setup.pmsSslStatus = 'none'
     }
-    settings.setup.pmsDomain = pmsDomain
+    settings.setup.pmsDomain = clean || ''
   }
 
   await settings.save()
 
-  // Also update partner branding domains
+  // Also update partner branding domains (null for empty - sparse index uyumu)
   const updateFields = {}
-  if (b2cDomain !== undefined) updateFields['branding.siteDomain'] = b2cDomain
-  if (b2bDomain !== undefined) updateFields['branding.extranetDomain'] = b2bDomain
-  if (pmsDomain !== undefined) updateFields['branding.pmsDomain'] = pmsDomain
+  if (b2cDomain !== undefined) updateFields['branding.siteDomain'] = cleanDomain(b2cDomain)
+  if (b2bDomain !== undefined) updateFields['branding.extranetDomain'] = cleanDomain(b2bDomain)
+  if (pmsDomain !== undefined) updateFields['branding.pmsDomain'] = cleanDomain(pmsDomain)
 
   if (Object.keys(updateFields).length > 0) {
-    await Partner.findByIdAndUpdate(partnerId, updateFields)
+    try {
+      await Partner.findByIdAndUpdate(partnerId, updateFields)
+    } catch (err) {
+      if (err.code === 11000) {
+        throw new ConflictError(req.t('DOMAIN_ALREADY_IN_USE'))
+      }
+      throw err
+    }
   }
 
   res.json({

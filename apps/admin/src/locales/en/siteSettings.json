@@ -104,7 +104,8 @@
       "sslSetupFailed": "SSL setup failed.",
       "sslDnsFailed": "DNS verification failed. Please check your A record.",
       "sslCertFailed": "Failed to obtain SSL certificate. Please try again later.",
-      "sslNginxFailed": "Nginx configuration failed. Please contact system administrator."
+      "sslNginxFailed": "Nginx configuration failed. Please contact system administrator.",
+      "domainAlreadyInUse": "This domain is already in use by another partner."
     },
     "general": {
       "logo": "Logo",

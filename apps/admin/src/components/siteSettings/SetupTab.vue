@@ -259,8 +259,8 @@
         </div>
       </div>
 
-      <!-- PMS Domain -->
-      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6">
+      <!-- PMS Domain (agency dışı partnerler için) -->
+      <div v-if="partnerType !== 'agency'" class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center">
           <span class="material-icons text-indigo-600 mr-2">hotel</span>
           {{ $t('siteSettings.setup.pmsDomain') }}
@@ -445,7 +445,8 @@ const toast = useToast()
 
 const props = defineProps({
   settings: Object,
-  saving: Boolean
+  saving: Boolean,
+  partnerType: String
 })
 
 const emit = defineEmits(['save', 'request-ssl', 'update:settings'])
@@ -514,8 +515,9 @@ const handleVerifyDns = async type => {
   dnsResult[type] = null
 
   try {
-    // First save the domain
-    await siteSettingsService.updateSetup(form.value)
+    // First save only the relevant domain
+    const domainFieldMap = { b2c: 'b2cDomain', b2b: 'b2bDomain', pms: 'pmsDomain' }
+    await siteSettingsService.updateSetup({ [domainFieldMap[type]]: domain })
 
     // Then verify DNS
     const result = await siteSettingsService.verifyDns(type, domain)

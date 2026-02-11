@@ -35,6 +35,7 @@
         <div v-show="activeTab === 'setup'">
           <SetupTab
             :settings="settings?.setup"
+            :partner-type="currentPartner?.partnerType"
             :saving="saving"
             @save="handleSetupSave"
             @request-ssl="handleSslRequest"
@@ -102,19 +103,16 @@ const tabs = computed(() => [
 ])
 
 const fetchSettings = async () => {
-  await executeFetch(
-    () => siteSettingsService.getSiteSettings(),
-    {
-      errorMessage: 'siteSettings.fetchError',
-      onSuccess: response => {
-        settings.value = response.data
-      }
+  await executeFetch(() => siteSettingsService.getSiteSettings(), {
+    errorMessage: 'siteSettings.fetchError',
+    onSuccess: response => {
+      settings.value = response.data
     }
-  )
+  })
 }
 
 // React to partner changes - reload settings when partner is switched
-usePartnerContext({
+const { currentPartner } = usePartnerContext({
   onPartnerChange: partner => {
     if (partner) {
       fetchSettings()
@@ -125,15 +123,12 @@ usePartnerContext({
 
 // Setup handlers
 const handleSetupSave = async data => {
-  await executeSave(
-    () => siteSettingsService.updateSetup(data),
-    {
-      successMessage: 'siteSettings.setupSaved',
-      onSuccess: response => {
-        settings.value.setup = response.data
-      }
+  await executeSave(() => siteSettingsService.updateSetup(data), {
+    successMessage: 'siteSettings.setupSaved',
+    onSuccess: response => {
+      settings.value.setup = response.data
     }
-  )
+  })
 }
 
 const handleSslRequest = async ({ type, formData }) => {
@@ -158,89 +153,68 @@ const handleSslRequest = async ({ type, formData }) => {
 
 // General handlers
 const handleGeneralSave = async data => {
-  await executeSave(
-    () => siteSettingsService.updateGeneral(data),
-    {
-      successMessage: 'siteSettings.generalSaved',
-      onSuccess: response => {
-        settings.value.general = response.data
-      }
+  await executeSave(() => siteSettingsService.updateGeneral(data), {
+    successMessage: 'siteSettings.generalSaved',
+    onSuccess: response => {
+      settings.value.general = response.data
     }
-  )
+  })
 }
 
 // Homepage handlers
 const handleHomepageSave = async data => {
-  await executeSave(
-    () => siteSettingsService.updateHomepage(data),
-    {
-      successMessage: 'siteSettings.homepageSaved',
-      onSuccess: response => {
-        settings.value.homepage = response.data
-      }
+  await executeSave(() => siteSettingsService.updateHomepage(data), {
+    successMessage: 'siteSettings.homepageSaved',
+    onSuccess: response => {
+      settings.value.homepage = response.data
     }
-  )
+  })
 }
 
 const handleAddSlider = async data => {
-  await executeSave(
-    () => siteSettingsService.addSliderItem(data),
-    {
-      successMessage: 'siteSettings.sliderAdded',
-      onSuccess: response => {
-        settings.value.homepage.slider = response.data
-      }
+  await executeSave(() => siteSettingsService.addSliderItem(data), {
+    successMessage: 'siteSettings.sliderAdded',
+    onSuccess: response => {
+      settings.value.homepage.slider = response.data
     }
-  )
+  })
 }
 
 const handleUpdateSlider = async ({ sliderId, data }) => {
-  await executeSave(
-    () => siteSettingsService.updateSliderItem(sliderId, data),
-    {
-      successMessage: 'siteSettings.sliderUpdated',
-      onSuccess: response => {
-        settings.value.homepage.slider = response.data
-      }
+  await executeSave(() => siteSettingsService.updateSliderItem(sliderId, data), {
+    successMessage: 'siteSettings.sliderUpdated',
+    onSuccess: response => {
+      settings.value.homepage.slider = response.data
     }
-  )
+  })
 }
 
 const handleDeleteSlider = async sliderId => {
-  await executeSave(
-    () => siteSettingsService.deleteSliderItem(sliderId),
-    {
-      successMessage: 'siteSettings.sliderDeleted',
-      onSuccess: response => {
-        settings.value.homepage.slider = response.data
-      }
+  await executeSave(() => siteSettingsService.deleteSliderItem(sliderId), {
+    successMessage: 'siteSettings.sliderDeleted',
+    onSuccess: response => {
+      settings.value.homepage.slider = response.data
     }
-  )
+  })
 }
 
 // Contact handlers
 const handleContactSave = async data => {
-  await executeSave(
-    () => siteSettingsService.updateContact(data),
-    {
-      successMessage: 'siteSettings.contactSaved',
-      onSuccess: response => {
-        settings.value.contact = response.data
-      }
+  await executeSave(() => siteSettingsService.updateContact(data), {
+    successMessage: 'siteSettings.contactSaved',
+    onSuccess: response => {
+      settings.value.contact = response.data
     }
-  )
+  })
 }
 
 // Tracking handlers
 const handleTrackingSave = async data => {
-  await executeSave(
-    () => siteSettingsService.updateTracking(data),
-    {
-      successMessage: 'siteSettings.trackingSaved',
-      onSuccess: response => {
-        settings.value.tracking = response.data
-      }
+  await executeSave(() => siteSettingsService.updateTracking(data), {
+    successMessage: 'siteSettings.trackingSaved',
+    onSuccess: response => {
+      settings.value.tracking = response.data
     }
-  )
+  })
 }
 </script>

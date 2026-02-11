@@ -41,6 +41,7 @@
   "DUPLICATE_EMAIL": "Bu email adresi zaten kullanılıyor",
   "DUPLICATE_SITEDOMAIN": "Bu site domain'i zaten kullanılıyor",
   "DUPLICATE_EXTRANETDOMAIN": "Bu extranet domain'i zaten kullanılıyor",
+  "DOMAIN_ALREADY_IN_USE": "Bu domain zaten başka bir partner tarafından kullanılıyor",
 
   "INVALID_STATUS": "Geçersiz durum",
   "COMPANY_NAME_MIN_LENGTH": "Şirket adı en az 2 karakter olmalıdır",
