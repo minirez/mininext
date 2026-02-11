@@ -191,6 +191,27 @@ const countrySchema = new Schema(
 )
 
 // ========================
+// Booking Schema (read-only)
+// ========================
+const bookingSchema = new Schema(
+  {
+    id: Number,
+    account: Number,
+    customer: Schema.Types.Mixed,
+    products: [Schema.Types.Mixed],
+    status: [Schema.Types.Mixed],
+    payments: [Schema.Types.Mixed],
+    partner: Number,
+    channel: String,
+    commission: Number,
+    market: Schema.Types.Mixed,
+    specialRequests: String,
+    created: Schema.Types.Mixed
+  },
+  { strict: false, collection: 'bookings' }
+)
+
+// ========================
 // Exported getters
 // ========================
 export function LegacyAccount() {
@@ -219,6 +240,10 @@ export function LegacyCity() {
 
 export function LegacyCountry() {
   return getModel('LegacyCountry', countrySchema, 'countries')
+}
+
+export function LegacyBooking() {
+  return getModel('LegacyBooking', bookingSchema, 'bookings')
 }
 
 /**

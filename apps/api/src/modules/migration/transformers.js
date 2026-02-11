@@ -208,6 +208,65 @@ export function convertOccupancyAdjustments(room) {
 }
 
 /**
+ * Parse legacy date format (YYYYMMDD number) to Date object
+ * @param {number} num - Date as number (e.g. 20200815)
+ * @returns {Date|null}
+ */
+export function parseLegacyDate(num) {
+  if (!num) return null
+  const str = String(num)
+  if (str.length !== 8) return null
+  const year = parseInt(str.substring(0, 4))
+  const month = parseInt(str.substring(4, 6)) - 1 // 0-indexed
+  const day = parseInt(str.substring(6, 8))
+  const date = new Date(year, month, day)
+  if (isNaN(date.getTime())) return null
+  return date
+}
+
+/**
+ * Parse legacy status array to new status string
+ * @param {Array} statusArr - Legacy status array [{type, user, date}]
+ * @returns {string} - 'confirmed'|'completed'|'cancelled'
+ */
+export function parseLegacyStatus(statusArr) {
+  if (!Array.isArray(statusArr) || !statusArr.length) return 'confirmed'
+  const last = statusArr[statusArr.length - 1]
+  const type = (last?.type || '').toLowerCase()
+  if (type === 'cancelled' || type === 'cancel') return 'cancelled'
+  if (type === 'completed' || type === 'complete') return 'completed'
+  // 'initialize', 'confirmed', 'pending' etc → confirmed
+  return 'confirmed'
+}
+
+/**
+ * Parse full name string into firstName/lastName
+ * @param {string} str - Full name (e.g. "John Doe")
+ * @returns {{ firstName: string, lastName: string }}
+ */
+export function parseGuestName(str) {
+  if (!str || typeof str !== 'string') return { firstName: 'Guest', lastName: '-' }
+  const parts = str.trim().split(/\s+/)
+  if (parts.length === 1) return { firstName: parts[0], lastName: '-' }
+  const lastName = parts.pop()
+  return { firstName: parts.join(' '), lastName }
+}
+
+/**
+ * Map legacy guest type string to new guest type/title
+ * @param {string} str - e.g. "adult-male", "adult-female", "child"
+ * @returns {{ type: string, title: string }}
+ */
+export function mapLegacyGuestType(str) {
+  if (!str) return { type: 'adult', title: 'mr' }
+  const lower = str.toLowerCase()
+  if (lower.includes('child')) return { type: 'child', title: 'mr' }
+  if (lower.includes('infant') || lower.includes('baby')) return { type: 'infant', title: 'mr' }
+  if (lower.includes('female') || lower.includes('woman')) return { type: 'adult', title: 'mrs' }
+  return { type: 'adult', title: 'mr' }
+}
+
+/**
  * Resolve legacy city/country IDs to names
  * @param {Object} legacyLocation - Legacy location data
  * @param {Function} LegacyCity - City model getter

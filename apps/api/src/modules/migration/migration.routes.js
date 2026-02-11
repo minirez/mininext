@@ -21,6 +21,10 @@ router.get('/accounts/:accountId/hotels/:hotelId/preview', service.previewHotel)
 // Migration execution
 router.post('/migrate', service.migrate)
 
+// Reservation migration
+router.get('/accounts/:accountId/reservations', service.getAccountReservations)
+router.post('/migrate-reservations', service.migrateReservations)
+
 // History
 router.get('/history', service.getHistory)
 

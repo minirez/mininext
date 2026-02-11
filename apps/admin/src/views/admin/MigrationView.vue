@@ -235,6 +235,12 @@
                 <span>{{ hotel.roomCount }} {{ $t('migration.hotels.rooms') }}</span>
                 <span>{{ hotel.mealPlanCount }} {{ $t('migration.hotels.mealPlans') }}</span>
                 <span>{{ hotel.photoCount }} {{ $t('migration.hotels.photos') }}</span>
+                <span
+                  v-if="getHotelReservationCount(hotel.id)"
+                  class="text-orange-600 dark:text-orange-400 font-medium"
+                >
+                  {{ getHotelReservationCount(hotel.id) }} {{ $t('migration.hotels.reservations') }}
+                </span>
               </div>
             </div>
 
@@ -282,6 +288,20 @@
                 class="w-4 h-4 text-purple-600 rounded"
               />
               {{ $t('migration.hotels.includeMealPlans') }}
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
+              <input
+                v-model="migrationOptions.includeReservations"
+                type="checkbox"
+                class="w-4 h-4 text-orange-600 rounded"
+              />
+              {{ $t('migration.hotels.includeReservations') }}
+              <span
+                v-if="totalReservationCount"
+                class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded text-xs font-medium"
+              >
+                {{ totalReservationCount }}
+              </span>
             </label>
           </div>
         </div>
@@ -339,6 +359,15 @@
             <p class="text-2xl font-bold text-amber-600">{{ totalPhotoCount }}</p>
             <p class="text-sm text-gray-500 dark:text-slate-400">
               {{ $t('migration.hotels.photos') }}
+            </p>
+          </div>
+          <div
+            v-if="migrationOptions.includeReservations && totalReservationCount"
+            class="text-center p-4 bg-gray-50 dark:bg-slate-700 rounded-lg"
+          >
+            <p class="text-2xl font-bold text-orange-600">{{ totalReservationCount }}</p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">
+              {{ $t('migration.hotels.reservations') }}
             </p>
           </div>
         </div>
@@ -521,6 +550,31 @@
               </div>
             </div>
           </div>
+
+          <!-- Reservation progress -->
+          <div v-if="progress.currentHotel.reservation" class="flex items-center gap-3">
+            <span class="material-icons text-sm text-orange-600 dark:text-orange-400"
+              >event_note</span
+            >
+            <div class="flex-1">
+              <div
+                class="flex items-center justify-between text-xs text-gray-600 dark:text-slate-400 mb-1"
+              >
+                <span>{{ $t('migration.migrate.progress.migratingReservations') }}</span>
+                <span
+                  >{{ progress.currentHotel.reservation.current }}/{{
+                    progress.currentHotel.reservation.total
+                  }}</span
+                >
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-1.5">
+                <div
+                  class="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
+                  :style="{ width: reservationPercent + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Hotel list with status -->
@@ -638,6 +692,15 @@
             </p>
             <p class="text-xs text-gray-500">{{ $t('migration.migrate.totalPhotos') }}</p>
           </div>
+          <div
+            v-if="migrationResult.summary?.totalReservations"
+            class="text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg"
+          >
+            <p class="text-xl font-bold text-orange-600">
+              {{ migrationResult.summary?.migratedReservations || 0 }}
+            </p>
+            <p class="text-xs text-gray-500">{{ $t('migration.migrate.migratedReservations') }}</p>
+          </div>
         </div>
 
         <!-- Per-hotel results -->
@@ -668,6 +731,10 @@
                   }}
                   &middot; {{ $t('migration.hotels.photos') }}:
                   {{ hotel.photos?.downloaded || 0 }}/{{ hotel.photos?.total || 0 }}
+                  <template v-if="hotel.reservations?.total">
+                    &middot; {{ $t('migration.hotels.reservations') }}:
+                    {{ hotel.reservations?.migrated || 0 }}/{{ hotel.reservations?.total || 0 }}
+                  </template>
                 </p>
               </div>
               <span
@@ -864,8 +931,22 @@ const selectedHotels = ref([])
 const migrationOptions = ref({
   includePhotos: true,
   includeRooms: true,
-  includeMealPlans: true
+  includeMealPlans: true,
+  includeReservations: false
 })
+
+// Reservation data
+const reservationSummary = ref(null)
+const loadingReservations = ref(false)
+const reservationProgress = ref({
+  totalHotels: 0,
+  completedHotels: 0,
+  currentHotel: null,
+  totalMigrated: 0,
+  totalFailed: 0
+})
+const reservationMigrating = ref(false)
+const reservationResult = ref(null)
 
 // Step 3: Migration
 const migrating = ref(false)
@@ -920,6 +1001,14 @@ const totalPhotoCount = computed(() =>
   selectedHotelDetails.value.reduce((sum, h) => sum + (h.photoCount || 0), 0)
 )
 
+const totalReservationCount = computed(() => {
+  if (!reservationSummary.value) return 0
+  return selectedHotels.value.reduce((sum, hotelId) => {
+    const entry = reservationSummary.value.hotelBreakdown?.find(h => h.id === hotelId)
+    return sum + (entry?.count || 0)
+  }, 0)
+})
+
 const overallPercent = computed(() => {
   if (!progress.value.totalHotels) return 0
   return Math.round((progress.value.completedHotels / progress.value.totalHotels) * 100)
@@ -947,6 +1036,12 @@ const marketPercent = computed(() => {
   const m = progress.value.currentHotel?.market
   if (!m || !m.total) return 0
   return Math.round((m.current / m.total) * 100)
+})
+
+const reservationPercent = computed(() => {
+  const r = progress.value.currentHotel?.reservation
+  if (!r || !r.total) return 0
+  return Math.round((r.current / r.total) * 100)
 })
 
 // Methods
@@ -990,13 +1085,35 @@ async function fetchAccountHotels() {
   if (!selectedAccount.value) return
   loadingHotels.value = true
   try {
-    const res = await migrationService.getAccountHotels(selectedAccount.value.id)
-    accountHotels.value = res.data
+    const [hotelsRes] = await Promise.all([
+      migrationService.getAccountHotels(selectedAccount.value.id),
+      fetchReservationSummary()
+    ])
+    accountHotels.value = hotelsRes.data
     selectedHotels.value = []
   } catch {
     accountHotels.value = []
   } finally {
     loadingHotels.value = false
+  }
+}
+
+function getHotelReservationCount(hotelId) {
+  if (!reservationSummary.value) return 0
+  const entry = reservationSummary.value.hotelBreakdown?.find(h => h.id === hotelId)
+  return entry?.count || 0
+}
+
+async function fetchReservationSummary() {
+  if (!selectedAccount.value) return
+  loadingReservations.value = true
+  try {
+    const res = await migrationService.getAccountReservations(selectedAccount.value.id)
+    reservationSummary.value = res.data
+  } catch {
+    reservationSummary.value = null
+  } finally {
+    loadingReservations.value = false
   }
 }
 
@@ -1125,6 +1242,12 @@ function setupSocketListeners(opId) {
   handlers.complete = on(`migration:complete`, async data => {
     if (data.operationId !== opId) return
     progress.value.currentHotel = null
+
+    // If reservation migration is enabled, start it after hotel migration completes
+    if (migrationOptions.value.includeReservations && selectedHotels.value.length) {
+      await startReservationMigration(opId)
+    }
+
     migrating.value = false
 
     // Fetch full history record for the result view
@@ -1132,6 +1255,14 @@ function setupSocketListeners(opId) {
       const res = await migrationService.getHistory()
       const historyItem = res.data?.find(h => h._id === data.historyId)
       if (historyItem) {
+        // Merge reservation result if exists
+        if (reservationResult.value) {
+          historyItem.summary = {
+            ...historyItem.summary,
+            totalReservations: reservationResult.value.totalReservations || 0,
+            migratedReservations: reservationResult.value.migratedReservations || 0
+          }
+        }
         migrationResult.value = historyItem
       } else {
         migrationResult.value = { status: data.status, summary: data.summary, hotels: [] }
@@ -1143,12 +1274,92 @@ function setupSocketListeners(opId) {
     cleanupSocket()
   })
 
+  // Reservation socket handlers
+  const isResOp = data =>
+    data.operationId === opId || data.operationId === reservationProgress.value.operationId
+
+  handlers.reservationStarted = on(`migration:reservation:started`, data => {
+    if (!isResOp(data)) return
+    reservationMigrating.value = true
+  })
+
+  handlers.reservationHotelStart = on(`migration:reservation:hotel:start`, data => {
+    if (!isResOp(data)) return
+    const idx = data.hotelIndex
+    if (progress.value.hotels[idx]) {
+      progress.value.hotels[idx].status = 'processing'
+    }
+    progress.value.currentHotel = {
+      name: data.hotelName || `Hotel ${idx + 1}`,
+      reservation: { current: 0, total: data.totalBookings }
+    }
+  })
+
+  handlers.reservationHotelProgress = on(`migration:reservation:hotel:progress`, data => {
+    if (!isResOp(data)) return
+    if (progress.value.currentHotel) {
+      progress.value.currentHotel.reservation = {
+        current: data.current,
+        total: data.total,
+        migrated: data.migrated
+      }
+    }
+  })
+
+  handlers.reservationHotelComplete = on(`migration:reservation:hotel:complete`, data => {
+    if (!isResOp(data)) return
+    const idx = data.hotelIndex
+    if (progress.value.hotels[idx]) {
+      progress.value.hotels[idx].status = 'success'
+      progress.value.hotels[idx].reservationStats = data.stats
+    }
+    progress.value.currentHotel = null
+    scrollToBottom()
+  })
+
+  handlers.reservationComplete = on(`migration:reservation:complete`, data => {
+    if (!isResOp(data)) return
+    reservationMigrating.value = false
+    reservationResult.value = data
+  })
+
   socketHandlers.value = handlers
+}
+
+async function startReservationMigration(opId) {
+  try {
+    reservationMigrating.value = true
+    const payload = {
+      partnerId: selectedPartnerId.value,
+      accountId: selectedAccount.value.id,
+      legacyHotelIds: selectedHotels.value
+    }
+    const res = await migrationService.migrateReservations(payload)
+    // The reservation migration uses the same socket room via its own operationId
+    // but we re-use the existing socket listeners that are already set up
+    const resOpId = res.data?.operationId
+    if (resOpId && resOpId !== opId) {
+      join(resOpId)
+      // Update handler filters to also accept the new operationId
+      reservationProgress.value.operationId = resOpId
+    }
+  } catch (err) {
+    reservationMigrating.value = false
+    reservationResult.value = {
+      totalReservations: 0,
+      migratedReservations: 0,
+      failedReservations: 0,
+      error: err.message
+    }
+  }
 }
 
 function cleanupSocket() {
   if (operationId.value) {
     leave(operationId.value)
+  }
+  if (reservationProgress.value.operationId) {
+    leave(reservationProgress.value.operationId)
   }
   // Unsubscribe handlers (each `on` returns an unsubscribe function)
   Object.values(socketHandlers.value).forEach(unsub => {
@@ -1217,6 +1428,15 @@ function goBackForNewMigration() {
   migrationResult.value = null
   operationId.value = null
   progress.value = { totalHotels: 0, completedHotels: 0, currentHotel: null, hotels: [] }
+  reservationMigrating.value = false
+  reservationResult.value = null
+  reservationProgress.value = {
+    totalHotels: 0,
+    completedHotels: 0,
+    currentHotel: null,
+    totalMigrated: 0,
+    totalFailed: 0
+  }
   selectedHotels.value = []
   currentStep.value = 1
 }
@@ -1232,6 +1452,16 @@ function resetWizard() {
   migrationResult.value = null
   operationId.value = null
   progress.value = { totalHotels: 0, completedHotels: 0, currentHotel: null, hotels: [] }
+  reservationSummary.value = null
+  reservationMigrating.value = false
+  reservationResult.value = null
+  reservationProgress.value = {
+    totalHotels: 0,
+    completedHotels: 0,
+    currentHotel: null,
+    totalMigrated: 0,
+    totalFailed: 0
+  }
   fetchHistory()
 }
 

@@ -490,7 +490,7 @@ const bookingSchema = new mongoose.Schema(
     source: {
       type: {
         type: String,
-        enum: ['b2c', 'b2b', 'admin', 'api', 'channel', 'paximum', 'pms'],
+        enum: ['b2c', 'b2b', 'admin', 'api', 'channel', 'paximum', 'pms', 'migration'],
         default: 'b2c'
       },
       channel: { type: String }, // Booking source channel name

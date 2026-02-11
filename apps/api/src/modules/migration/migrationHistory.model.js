@@ -30,6 +30,11 @@ const hotelResultSchema = new mongoose.Schema(
       downloaded: { type: Number, default: 0 },
       failed: { type: Number, default: 0 }
     },
+    reservations: {
+      total: { type: Number, default: 0 },
+      migrated: { type: Number, default: 0 },
+      failed: { type: Number, default: 0 }
+    },
     errors: [String],
     duration: Number // ms
   },
@@ -64,7 +69,9 @@ const migrationHistorySchema = new mongoose.Schema(
       migratedHotels: { type: Number, default: 0 },
       failedHotels: { type: Number, default: 0 },
       totalPhotos: { type: Number, default: 0 },
-      downloadedPhotos: { type: Number, default: 0 }
+      downloadedPhotos: { type: Number, default: 0 },
+      totalReservations: { type: Number, default: 0 },
+      migratedReservations: { type: Number, default: 0 }
     }
   },
   {

@@ -73,6 +73,32 @@ const migrate = async data => {
   }
 }
 
+const getAccountReservations = async (accountId, params = {}) => {
+  try {
+    const response = await apiClient.get(`${BASE}/accounts/${accountId}/reservations`, { params })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Get reservations failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const migrateReservations = async data => {
+  try {
+    const response = await apiClient.post(`${BASE}/migrate-reservations`, data, { timeout: 600000 })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Reservation migration failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 const getHistory = async (params = {}) => {
   try {
     const response = await apiClient.get(`${BASE}/history`, { params })
@@ -91,5 +117,7 @@ export default {
   getAccountHotels,
   previewHotel,
   migrate,
+  getAccountReservations,
+  migrateReservations,
   getHistory
 }

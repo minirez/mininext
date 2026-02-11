@@ -9,6 +9,7 @@ import MealPlan from '#modules/planning/mealPlan.model.js'
 import Market from '#modules/planning/market.model.js'
 import MigrationHistory from './migrationHistory.model.js'
 import { createLegacyConnection, disconnectLegacy, getLegacyStatus } from './legacyDb.js'
+import Booking from '#modules/booking/booking.model.js'
 import {
   LegacyAccount,
   LegacyHotel,
@@ -17,6 +18,7 @@ import {
   LegacyMarket,
   LegacyCity,
   LegacyCountry,
+  LegacyBooking,
   clearModelCache
 } from './legacyModels.js'
 import {
@@ -28,7 +30,11 @@ import {
   getIncludedMeals,
   buildOldPhotoUrl,
   convertOccupancyAdjustments,
-  resolveLocation
+  resolveLocation,
+  parseLegacyDate,
+  parseLegacyStatus,
+  parseGuestName,
+  mapLegacyGuestType
 } from './transformers.js'
 import { downloadImage } from '#helpers/imageDownloader.js'
 
@@ -841,4 +847,492 @@ async function cleanupPreviousMigration(legacyHotelId) {
   )
 
   logger.info(`[Migration] Cleanup complete for legacy hotel ${legacyHotelId}`)
+}
+
+/**
+ * GET /accounts/:accountId/reservations - Get reservation summary for a legacy account
+ */
+export const getAccountReservations = asyncHandler(async (req, res) => {
+  await ensureConnected()
+
+  const accountId = Number(req.params.accountId)
+
+  const bookings = await LegacyBooking()
+    .find({ account: accountId })
+    .select('id products status')
+    .lean()
+
+  // Hotel-based breakdown
+  const hotelBreakdown = {}
+  const statusBreakdown = {}
+
+  for (const booking of bookings) {
+    // Status
+    const lastStatus =
+      Array.isArray(booking.status) && booking.status.length
+        ? (booking.status[booking.status.length - 1]?.type || 'unknown').toLowerCase()
+        : 'unknown'
+    statusBreakdown[lastStatus] = (statusBreakdown[lastStatus] || 0) + 1
+
+    // Products → hotel breakdown
+    if (Array.isArray(booking.products)) {
+      for (const product of booking.products) {
+        const hotelId = product?.hotel?.id
+        if (hotelId) {
+          if (!hotelBreakdown[hotelId]) {
+            hotelBreakdown[hotelId] = {
+              id: hotelId,
+              name: product.hotel.name || `Hotel #${hotelId}`,
+              count: 0
+            }
+          }
+          hotelBreakdown[hotelId].count++
+        }
+      }
+    }
+  }
+
+  // Check which hotels have been migrated
+  const legacyHotelIds = Object.keys(hotelBreakdown).map(Number)
+  const migratedHotels = await Hotel.find({
+    'source.type': 'migration',
+    'source.legacyId': { $in: legacyHotelIds }
+  })
+    .select('source.legacyId')
+    .lean()
+
+  const migratedSet = new Set(migratedHotels.map(h => h.source.legacyId))
+
+  let migratable = 0
+  let nonMigratable = 0
+
+  for (const hotelId of legacyHotelIds) {
+    const count = hotelBreakdown[hotelId].count
+    if (migratedSet.has(hotelId)) {
+      hotelBreakdown[hotelId].migrated = true
+      migratable += count
+    } else {
+      hotelBreakdown[hotelId].migrated = false
+      nonMigratable += count
+    }
+  }
+
+  res.json({
+    success: true,
+    data: {
+      total: bookings.length,
+      migratable,
+      nonMigratable,
+      hotelBreakdown: Object.values(hotelBreakdown),
+      statusBreakdown
+    }
+  })
+})
+
+/**
+ * POST /migrate-reservations - Start reservation migration
+ */
+export const migrateReservations = asyncHandler(async (req, res) => {
+  await ensureConnected()
+
+  const { partnerId, accountId, legacyHotelIds, statusFilter } = req.body
+
+  if (!partnerId) throw new BadRequestError('partnerId is required')
+  if (!accountId) throw new BadRequestError('accountId is required')
+  if (!legacyHotelIds?.length) throw new BadRequestError('At least one hotel must be selected')
+
+  // Verify mappings exist for all hotels
+  const hotelMappings = await Hotel.find({
+    'source.type': 'migration',
+    'source.legacyId': { $in: legacyHotelIds }
+  })
+    .select('_id name source.legacyId')
+    .lean()
+
+  const mappedIds = new Set(hotelMappings.map(h => h.source.legacyId))
+  const unmappedIds = legacyHotelIds.filter(id => !mappedIds.has(id))
+
+  if (unmappedIds.length) {
+    throw new BadRequestError(
+      `Hotels not yet migrated: ${unmappedIds.join(', ')}. Migrate hotels first.`
+    )
+  }
+
+  const operationId = crypto.randomUUID()
+  res.json({ success: true, data: { operationId } })
+
+  // Run in background
+  runReservationMigration(
+    operationId,
+    req.user._id,
+    partnerId,
+    accountId,
+    legacyHotelIds,
+    statusFilter
+  )
+})
+
+/**
+ * Run reservation migration in background
+ */
+async function runReservationMigration(
+  operationId,
+  userId,
+  partnerId,
+  accountId,
+  legacyHotelIds,
+  statusFilter
+) {
+  const emit = (event, data) => {
+    emitToRoom(operationId, `migration:${event}`, { operationId, timestamp: Date.now(), ...data })
+  }
+
+  emit('reservation:started', { totalHotels: legacyHotelIds.length })
+
+  let totalMigrated = 0
+  let totalFailed = 0
+  let totalReservations = 0
+  const hotelResults = []
+
+  for (let i = 0; i < legacyHotelIds.length; i++) {
+    const legacyHotelId = legacyHotelIds[i]
+
+    try {
+      const result = await migrateHotelReservations(
+        legacyHotelId,
+        partnerId,
+        accountId,
+        statusFilter,
+        emit,
+        i
+      )
+      hotelResults.push(result)
+      totalMigrated += result.migrated
+      totalFailed += result.failed
+      totalReservations += result.total
+    } catch (err) {
+      logger.error(
+        `[Migration] Reservation migration failed for hotel ${legacyHotelId}:`,
+        err.message
+      )
+      hotelResults.push({
+        legacyHotelId,
+        total: 0,
+        migrated: 0,
+        failed: 0,
+        errors: [err.message]
+      })
+    }
+  }
+
+  // Update or create migration history
+  const latestHistory = await MigrationHistory.findOne({
+    partner: partnerId,
+    legacyAccountId: accountId,
+    status: { $in: ['completed', 'partial'] }
+  }).sort({ createdAt: -1 })
+
+  if (latestHistory) {
+    // Update hotel results with reservation counts
+    for (const hr of hotelResults) {
+      const existing = latestHistory.hotels.find(h => h.legacyHotelId === hr.legacyHotelId)
+      if (existing) {
+        existing.reservations = { total: hr.total, migrated: hr.migrated, failed: hr.failed }
+      }
+    }
+    latestHistory.summary.totalReservations = totalReservations
+    latestHistory.summary.migratedReservations = totalMigrated
+    await latestHistory.save()
+  }
+
+  emit('reservation:complete', {
+    totalReservations,
+    migratedReservations: totalMigrated,
+    failedReservations: totalFailed,
+    hotelResults
+  })
+}
+
+/**
+ * Migrate reservations for a single hotel
+ */
+async function migrateHotelReservations(
+  legacyHotelId,
+  partnerId,
+  accountId,
+  statusFilter,
+  emit,
+  hotelIndex
+) {
+  // Find new hotel mapping
+  const newHotel = await Hotel.findOne({
+    'source.type': 'migration',
+    'source.legacyId': legacyHotelId
+  }).lean()
+
+  if (!newHotel) throw new Error(`Hotel mapping not found for legacy ID ${legacyHotelId}`)
+
+  // Build room type and meal plan mappings
+  const [roomTypes, mealPlans] = await Promise.all([
+    RoomType.find({ hotel: newHotel._id }).lean(),
+    MealPlan.find({ hotel: newHotel._id }).lean()
+  ])
+
+  // Build legacy room ID → new RoomType mapping via code matching
+  // Since rooms were migrated with legacyId not stored, we match by code/name
+  const legacyRooms = await LegacyRoom().find({ hotel: legacyHotelId }).lean()
+  const legacyPlans = await LegacyPricePlan().find({ hotel: legacyHotelId }).lean()
+
+  // Map: legacy room id → new RoomType
+  const roomMap = new Map()
+  for (const lr of legacyRooms) {
+    const legacyCode = (lr.code || `RM${lr.id}`).toUpperCase().substring(0, 10)
+    const match = roomTypes.find(
+      rt => rt.code === legacyCode || rt.code.startsWith(legacyCode.substring(0, 8))
+    )
+    if (match) roomMap.set(lr.id, match)
+  }
+
+  // Map: legacy priceplan id → new MealPlan
+  const mealPlanMap = new Map()
+  for (const lp of legacyPlans) {
+    const mappedCode = mapMealPlanCode(lp.code)
+    const match = mealPlans.find(mp => mp.code === mappedCode)
+    if (match) mealPlanMap.set(lp.id, match)
+  }
+
+  // Clean up previously migrated reservations for this hotel
+  await Booking.deleteMany({
+    hotel: newHotel._id,
+    'source.type': 'migration'
+  })
+
+  // Fetch legacy bookings that have products for this hotel
+  const query = { account: accountId, 'products.hotel.id': legacyHotelId }
+  const legacyBookings = await LegacyBooking().find(query).lean()
+
+  // Filter by status if specified
+  let filtered = legacyBookings
+  if (statusFilter?.length) {
+    filtered = legacyBookings.filter(b => {
+      if (!Array.isArray(b.status) || !b.status.length) return false
+      const lastType = (b.status[b.status.length - 1]?.type || '').toLowerCase()
+      return statusFilter.includes(lastType)
+    })
+  }
+
+  const result = {
+    legacyHotelId,
+    hotelName: newHotel.name,
+    total: 0,
+    migrated: 0,
+    failed: 0,
+    errors: []
+  }
+
+  emit('reservation:hotel:start', {
+    hotelIndex,
+    hotelName: newHotel.name,
+    totalBookings: filtered.length
+  })
+
+  // Process each booking
+  let processedCount = 0
+
+  for (const legacyBooking of filtered) {
+    // Each product for this hotel becomes a separate Booking doc
+    const relevantProducts = (legacyBooking.products || []).filter(
+      p => p?.hotel?.id === legacyHotelId
+    )
+
+    for (const product of relevantProducts) {
+      result.total++
+
+      try {
+        await createBookingFromLegacy(
+          legacyBooking,
+          product,
+          newHotel,
+          partnerId,
+          roomMap,
+          mealPlanMap
+        )
+        result.migrated++
+      } catch (err) {
+        result.failed++
+        result.errors.push(`Booking #${legacyBooking.id}: ${err.message}`)
+        logger.warn(`[Migration] Reservation ${legacyBooking.id} failed: ${err.message}`)
+      }
+    }
+
+    processedCount++
+    if (processedCount % 10 === 0 || processedCount === filtered.length) {
+      emit('reservation:hotel:progress', {
+        hotelIndex,
+        current: processedCount,
+        total: filtered.length,
+        migrated: result.migrated
+      })
+    }
+  }
+
+  emit('reservation:hotel:complete', {
+    hotelIndex,
+    hotelName: newHotel.name,
+    stats: { total: result.total, migrated: result.migrated, failed: result.failed }
+  })
+
+  return result
+}
+
+/**
+ * Create a new Booking document from a legacy booking + product
+ */
+async function createBookingFromLegacy(
+  legacyBooking,
+  product,
+  newHotel,
+  partnerId,
+  roomMap,
+  mealPlanMap
+) {
+  const checkIn = parseLegacyDate(product.checkIn)
+  const checkOut = parseLegacyDate(product.checkOut)
+  if (!checkIn || !checkOut) throw new Error('Invalid dates')
+
+  const status = parseLegacyStatus(legacyBooking.status)
+  const currency = mapCurrency(product.currency)
+  const price = Number(product.price) || 0
+
+  // Resolve room type
+  const roomTypeDoc = roomMap.get(product.room?.id)
+  const mealPlanDoc = mealPlanMap.get(product.pricePlan?.id)
+
+  // If no room mapping found, use first available room type as fallback
+  const finalRoomType = roomTypeDoc || (await RoomType.findOne({ hotel: newHotel._id }).lean())
+  const finalMealPlan = mealPlanDoc || (await MealPlan.findOne({ hotel: newHotel._id }).lean())
+
+  if (!finalRoomType) throw new Error('No room type mapping found')
+  if (!finalMealPlan) throw new Error('No meal plan mapping found')
+
+  // Parse guests
+  const guests = []
+  if (Array.isArray(product.guests)) {
+    for (const g of product.guests) {
+      const { firstName, lastName } = parseGuestName(g?.name)
+      const { type: guestType, title } = mapLegacyGuestType(g?.type)
+      guests.push({ type: guestType, title, firstName, lastName, isLead: guests.length === 0 })
+    }
+  }
+
+  // If no guests, create from customer name
+  if (!guests.length && legacyBooking.customer?.name) {
+    const { firstName, lastName } = parseGuestName(legacyBooking.customer.name)
+    guests.push({ type: 'adult', title: 'mr', firstName, lastName, isLead: true })
+  }
+
+  // Fallback if still no guests
+  if (!guests.length) {
+    guests.push({ type: 'adult', title: 'mr', firstName: 'Guest', lastName: '-', isLead: true })
+  }
+
+  const leadGuest = guests.find(g => g.isLead) || guests[0]
+  const totalAdults = guests.filter(g => g.type === 'adult').length || 1
+  const totalChildren = guests.filter(g => g.type === 'child').length
+  const totalInfants = guests.filter(g => g.type === 'infant').length
+
+  // Nights
+  const nights = Math.max(1, Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)))
+
+  // Generate booking number
+  const bookingNumber = await Booking.generateBookingNumber(partnerId, 'booking')
+
+  // Build room booking
+  const roomBooking = {
+    roomType: finalRoomType._id,
+    roomTypeCode: finalRoomType.code,
+    roomTypeName: finalRoomType.name || {},
+    mealPlan: finalMealPlan._id,
+    mealPlanCode: finalMealPlan.code,
+    mealPlanName: finalMealPlan.name || {},
+    guests,
+    pricing: {
+      currency,
+      originalTotal: price,
+      discount: Number(product.discount) || 0,
+      finalTotal: price - (Number(product.discount) || 0),
+      avgPerNight: nights > 0 ? Math.round((price / nights) * 100) / 100 : price
+    }
+  }
+
+  // Build billing info from customer
+  let billing
+  if (legacyBooking.customer?.billing) {
+    const b = legacyBooking.customer.billing
+    billing = {
+      companyName: b.companyName || '',
+      taxNumber: b.taxNumber || '',
+      taxOffice: b.taxOffice || '',
+      address: b.address || ''
+    }
+  }
+
+  // Legacy payments → metadata
+  const legacyPayments = legacyBooking.payments || []
+
+  const booking = new Booking({
+    bookingNumber,
+    partner: partnerId,
+    hotel: newHotel._id,
+    hotelCode: newHotel.code || '',
+    hotelName: newHotel.name,
+    checkIn,
+    checkOut,
+    nights,
+    rooms: [roomBooking],
+    totalRooms: 1,
+    totalAdults,
+    totalChildren,
+    totalInfants,
+    leadGuest,
+    contact: {
+      email: legacyBooking.customer?.email || '',
+      phone: legacyBooking.customer?.phone || '',
+      countryCode: legacyBooking.customer?.country || ''
+    },
+    billing,
+    pricing: {
+      currency,
+      subtotal: price,
+      totalDiscount: Number(product.discount) || 0,
+      grandTotal: price - (Number(product.discount) || 0)
+    },
+    payment: {
+      status: status === 'completed' ? 'paid' : 'pending',
+      method: 'cash',
+      paidAmount: status === 'completed' ? price : 0
+    },
+    status,
+    specialRequests: legacyBooking.specialRequests || '',
+    source: {
+      type: 'migration',
+      channel: legacyBooking.channel || 'legacy'
+    },
+    confirmedAt: status === 'confirmed' || status === 'completed' ? checkIn : undefined,
+    completedAt: status === 'completed' ? checkOut : undefined,
+    metadata: {
+      legacyBookingId: legacyBooking.id,
+      legacyAccountId: legacyBooking.account,
+      legacyPayments: legacyPayments.length ? legacyPayments : undefined,
+      legacyRoomId: product.room?.id,
+      legacyRoomName: product.room?.name,
+      legacyPricePlanId: product.pricePlan?.id,
+      legacyPricePlanName: product.pricePlan?.name,
+      unmappedRoom: !roomMap.get(product.room?.id) ? true : undefined,
+      unmappedMealPlan: !mealPlanMap.get(product.pricePlan?.id) ? true : undefined
+    }
+  })
+
+  await booking.save()
+  return booking
 }
