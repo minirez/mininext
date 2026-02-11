@@ -1,60 +1,107 @@
-<!doctype html>
-<html lang="%% LANG %%" xmlns:v="urn:schemas-microsoft-com:vml">
+<!DOCTYPE html>
+<html lang="%% LANG %%">
 <head>
 <meta charset="utf-8">
-<meta name="x-apple-disable-message-reformatting">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
 <meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
 <!--[if mso]> <noscript><xml><o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office"><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-<style>td,th,div,p,a,h1,h2,h3,h4,h5,h6{font-family:"Segoe UI",sans-serif;mso-line-height-rule:exactly;}
-</style>
+<style>td,th,div,p,a,h1,h2,h3,h4,h5,h6{font-family:"Segoe UI",sans-serif;mso-line-height-rule:exactly;}</style>
 <![endif]-->
 <title>%% TITLE %%</title>
-<style>
-@media (max-width:600px){.sm-w-full{width:100%!important;}.sm-px-4{padding-left:16px!important;padding-right:16px!important;}.sm-py-8{padding-top:32px!important;padding-bottom:32px!important;}}
-</style>
 </head>
-<body style="word-break:break-word;-webkit-font-smoothing:antialiased;"><div style="mso-hide:all;"> %% PREVIEW_TEXT %% &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; </div><div role="article" aria-roledescription="email" aria-label="%% TITLE %%" lang="%% LANG %%" style="font-size:16px;font-size:1rem;">
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" class="sm-px-4 sm-py-8" style="padding:48px 16px">
-<table style="max-width:600px;" cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center"> <a href="%% SITE_URL %%"> <img src="%% LOGO_URL %%" alt="%% COMPANY_NAME %%" width="180" style="max-width:180px;height:auto;border:0;"></a>
-</td></tr></table>
-<table class="sm-w-full" style="max-width:600px" cellpadding="0" cellspacing="0" role="presentation"><tr><td class="sm-px-4">
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center"><div> <img src="https://cdn-icons-png.flaticon.com/512/1828/1828843.png" alt="Cancelled" width="48" height="48" style="display:block;"></div>
-</td></tr></table><h1> %% TITLE %% </h1><p> %% SUBTITLE %% </p>
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td>
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="width:40%;">%% BOOKING_NUMBER_LABEL %%
-</td><td>%% BOOKING_NUMBER %%
-</td></tr><tr><td>%% HOTEL_LABEL %%
-</td><td>%% HOTEL_NAME %%
-</td></tr><tr><td>%% DATES_LABEL %%
-</td><td>%% CHECKIN_DATE %% - %% CHECKOUT_DATE %%
-</td></tr><tr><td>%% CANCELLED_AT_LABEL %%
-</td><td>%% CANCELLED_AT %%
-</td></tr></table>
-</td></tr></table>
-<table cellpadding="0" cellspacing="0" role="presentation" if="%% CANCELLATION_REASON %%"><tr><td><h3>%% REASON_TITLE %%</h3><p>%% CANCELLATION_REASON %%</p>
-</td></tr></table>
-<table cellpadding="0" cellspacing="0" role="presentation" if="%% REFUND_AMOUNT %%"><tr><td><h3>%% REFUND_TITLE %%</h3>
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td>%% ORIGINAL_AMOUNT_LABEL %%
-</td><td align="right">%% ORIGINAL_AMOUNT %%
-</td></tr><tr><td>%% CANCELLATION_FEE_LABEL %%
-</td><td align="right">-%% CANCELLATION_FEE %%
-</td></tr><tr><td colspan="2"><div style="height:1px;">&nbsp;</div>
-</td></tr><tr><td>%% REFUND_AMOUNT_LABEL %%
-</td><td align="right">%% REFUND_AMOUNT %%
-</td></tr></table><p>%% REFUND_NOTE %%</p>
-</td></tr></table>
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center">
-<table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="mso-padding-alt:12px 32px;"> <a href="%% NEW_BOOKING_URL %%" style="mso-text-raise:3px;"> %% NEW_BOOKING_BUTTON %% </a>
-</td></tr></table>
-</td></tr></table><p> %% HELP_TEXT %%<br> <a href="mailto:%% SUPPORT_EMAIL %%">%% SUPPORT_EMAIL %%</a></p>
-</td></tr></table>
-<table style="max-width:600px;" cellpadding="0" cellspacing="0" role="presentation"><tr><td><p> %% FOOTER_TEXT %% </p>
-</td></tr><tr><td><p> %% COMPANY_NAME %%<br> %% COMPANY_ADDRESS %% </p>
-</td></tr><tr><td><p> <a href="%% UNSUBSCRIBE_URL %%">%% UNSUBSCRIBE_TEXT %%</a></p>
-</td></tr></table>
-</td></tr></table></div>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<div style="display:none;max-height:0;overflow:hidden;">%% PREVIEW_TEXT %%</div>
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 20px;" role="none">
+<tr><td align="center">
+<!-- Logo -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;margin-bottom:24px;" role="none">
+<tr><td align="center">
+<a href="%% SITE_URL %%" style="text-decoration:none;">
+<img src="%% LOGO_URL %%" alt="%% COMPANY_NAME %%" width="180" style="max-width:180px;height:auto;border:0;">
+</a>
+</td></tr>
+</table>
+<!-- Main Card -->
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.1);" role="none">
+<!-- Header Banner -->
+<tr><td style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);padding:32px 40px;border-radius:16px 16px 0 0;text-align:center;">
+<div style="width:64px;height:64px;background-color:rgba(255,255,255,0.2);border-radius:50%;margin:0 auto 16px;line-height:64px;text-align:center;">
+<img src="https://cdn-icons-png.flaticon.com/512/1828/1828843.png" alt="Cancelled" width="36" height="36" style="display:inline-block;vertical-align:middle;">
+</div>
+<h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">%% TITLE %%</h1>
+<p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:15px;">%% SUBTITLE %%</p>
+</td></tr>
+<!-- Body -->
+<tr><td style="padding:32px 40px;">
+<!-- Booking Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:24px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;" role="none">
+<tr>
+<td style="padding:10px 0;color:#64748b;width:40%;border-bottom:1px solid #e2e8f0;">%% BOOKING_NUMBER_LABEL %%</td>
+<td style="padding:10px 0;color:#2563eb;font-weight:700;border-bottom:1px solid #e2e8f0;">%% BOOKING_NUMBER %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% HOTEL_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% HOTEL_NAME %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% DATES_LABEL %%</td>
+<td style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% CHECKIN_DATE %% - %% CHECKOUT_DATE %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;">%% CANCELLED_AT_LABEL %%</td>
+<td style="padding:10px 0;color:#dc2626;font-weight:600;">%% CANCELLED_AT %%</td>
+</tr>
+</table>
+</td></tr>
+</table>
+<!-- Cancellation Reason (optional) -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-radius:12px;border-left:4px solid #ef4444;margin-bottom:24px;" role="none">
+<tr><td style="padding:16px 20px;">
+<h3 style="margin:0 0 8px;font-size:13px;font-weight:600;color:#991b1b;text-transform:uppercase;letter-spacing:0.5px;">%% REASON_TITLE %%</h3>
+<p style="margin:0;color:#7f1d1d;font-size:14px;">%% CANCELLATION_REASON %%</p>
+</td></tr>
+</table>
+<!-- Refund Info (optional) -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-bottom:24px;" role="none">
+<tr><td style="padding:24px;">
+<h3 style="margin:0 0 16px;font-size:14px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">%% REFUND_TITLE %%</h3>
+<table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;" role="none">
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% ORIGINAL_AMOUNT_LABEL %%</td>
+<td align="right" style="padding:10px 0;color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">%% ORIGINAL_AMOUNT %%</td>
+</tr>
+<tr>
+<td style="padding:10px 0;color:#64748b;border-bottom:1px solid #e2e8f0;">%% CANCELLATION_FEE_LABEL %%</td>
+<td align="right" style="padding:10px 0;color:#dc2626;font-weight:600;border-bottom:1px solid #e2e8f0;">-%% CANCELLATION_FEE %%</td>
+</tr>
+<tr>
+<td style="padding:14px 0;color:#1e293b;font-size:16px;font-weight:700;">%% REFUND_AMOUNT_LABEL %%</td>
+<td align="right" style="padding:14px 0;color:#16a34a;font-size:20px;font-weight:700;">%% REFUND_AMOUNT %%</td>
+</tr>
+</table>
+<p style="margin:12px 0 0;font-size:13px;color:#64748b;text-align:center;">%% REFUND_NOTE %%</p>
+</td></tr>
+</table>
+<!-- CTA Button -->
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr><td align="center" style="padding:8px 0;">
+<a href="%% NEW_BOOKING_URL %%" style="display:inline-block;background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:10px;font-size:15px;font-weight:600;box-shadow:0 4px 14px rgba(79,70,229,0.3);">%% NEW_BOOKING_BUTTON %%</a>
+</td></tr>
+</table>
+</td></tr>
+<!-- Footer -->
+<tr><td style="padding:24px 40px;background-color:#f8fafc;border-radius:0 0 16px 16px;border-top:1px solid #e2e8f0;">
+<p style="margin:0 0 8px;text-align:center;color:#64748b;font-size:13px;">%% HELP_TEXT %%</p>
+<p style="margin:0 0 12px;text-align:center;">
+<a href="mailto:%% SUPPORT_EMAIL %%" style="color:#2563eb;font-size:13px;text-decoration:none;">%% SUPPORT_EMAIL %%</a>
+</p>
+<p style="margin:0;text-align:center;color:#94a3b8;font-size:12px;">%% FOOTER_TEXT %%</p>
+<p style="margin:12px 0 0;text-align:center;color:#94a3b8;font-size:12px;">%% COMPANY_NAME %% &middot; %% COMPANY_ADDRESS %%</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
 </body>
 </html>
