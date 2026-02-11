@@ -32,16 +32,34 @@ const emailLogSchema = new mongoose.Schema(
       index: true
     },
 
+    // HTML content (excluded from list queries)
+    html: {
+      type: String,
+      select: false
+    },
+
     // Status
     status: {
       type: String,
-      enum: ['pending', 'sent', 'failed', 'bounced', 'complained'],
+      enum: ['pending', 'sent', 'delivered', 'opened', 'failed', 'bounced', 'complained'],
       default: 'pending',
       index: true
     },
 
     // AWS SES response
-    messageId: String,
+    messageId: {
+      type: String,
+      index: { sparse: true }
+    },
+
+    // SES event history
+    sesEvents: [
+      {
+        eventType: { type: String, enum: ['Delivery', 'Bounce', 'Complaint', 'Open'] },
+        timestamp: Date,
+        detail: mongoose.Schema.Types.Mixed
+      }
+    ],
     source: {
       type: String,
       enum: ['platform-db', 'partner', 'env', 'dev-mode'],
@@ -81,7 +99,11 @@ const emailLogSchema = new mongoose.Schema(
 
     // Timestamps
     sentAt: Date,
-    failedAt: Date
+    failedAt: Date,
+    deliveredAt: Date,
+    openedAt: Date,
+    bouncedAt: Date,
+    complainedAt: Date
   },
   {
     timestamps: true

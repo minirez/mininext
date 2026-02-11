@@ -6,7 +6,21 @@ import { asyncHandler } from '#helpers'
 
 const router = express.Router()
 
-// All routes require authentication
+// ==========================================
+// PUBLIC ROUTES (no auth required)
+// ==========================================
+
+// AWS SES webhook (SNS notifications for delivery/bounce/complaint/open tracking)
+// SNS sends body as text/plain, so we need text parser
+router.post(
+  '/ses-webhook',
+  express.text({ type: ['text/plain', 'application/json'] }),
+  asyncHandler(emailLogService.handleSESWebhook)
+)
+
+// ==========================================
+// PROTECTED ROUTES
+// ==========================================
 router.use(protect)
 
 // Get email logs (platform: all, partner: own)
@@ -19,6 +33,10 @@ router.get('/stats', requirePermission('settings', 'view'), asyncHandler(emailLo
 router.get('/:id', requirePermission('settings', 'view'), asyncHandler(emailLogService.getById))
 
 // Retry failed email (platform only)
-router.post('/:id/retry', requirePermission('settings', 'edit'), asyncHandler(emailLogService.retry))
+router.post(
+  '/:id/retry',
+  requirePermission('settings', 'edit'),
+  asyncHandler(emailLogService.retry)
+)
 
 export default router

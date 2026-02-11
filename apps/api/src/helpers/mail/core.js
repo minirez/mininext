@@ -49,6 +49,7 @@ export const sendEmail = async ({
     emailLog = await EmailLog.create({
       to: Array.isArray(to) ? to.join(', ') : to,
       subject,
+      html,
       type,
       status: 'pending',
       partnerId: partnerId || null,
@@ -147,6 +148,11 @@ export const sendEmail = async ({
         Data: text,
         Charset: 'UTF-8'
       }
+    }
+
+    // Add Configuration Set for delivery/bounce/complaint tracking
+    if (config.aws.ses.configurationSetName) {
+      params.ConfigurationSetName = config.aws.ses.configurationSetName
     }
 
     const { SendEmailCommand } = await getSESCommands()

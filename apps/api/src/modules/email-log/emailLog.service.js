@@ -20,6 +20,7 @@ class EmailLogService extends BaseEntityService {
     // Bind custom methods
     this.getStats = this.getStats.bind(this)
     this.retry = this.retry.bind(this)
+    this.handleSESWebhook = this.handleSESWebhook.bind(this)
   }
 
   /**
@@ -78,10 +79,11 @@ class EmailLogService extends BaseEntityService {
   }
 
   /**
-   * Override getById: access control for partner users
+   * Override getById: access control for partner users, includes HTML content
    */
   async getById(req, res) {
     const log = await EmailLog.findById(req.params.id)
+      .select('+html')
       .populate('partnerId', 'companyName')
       .populate('userId', 'name email')
 
@@ -96,6 +98,132 @@ class EmailLogService extends BaseEntityService {
     }
 
     sendSuccess(res, log)
+  }
+
+  /**
+   * Handle AWS SES webhook (SNS notifications)
+   * Processes: SubscriptionConfirmation, Delivery, Bounce, Complaint, Open events
+   */
+  async handleSESWebhook(req, res) {
+    try {
+      // SNS sends as text/plain, parse the body
+      let body = req.body
+      if (typeof body === 'string') {
+        body = JSON.parse(body)
+      }
+
+      // Handle SNS SubscriptionConfirmation
+      if (body.Type === 'SubscriptionConfirmation') {
+        const subscribeUrl = body.SubscribeURL
+        if (subscribeUrl) {
+          logger.info('[SES Webhook] Confirming SNS subscription...')
+          const response = await fetch(subscribeUrl)
+          if (response.ok) {
+            logger.info('[SES Webhook] SNS subscription confirmed successfully')
+          } else {
+            logger.error('[SES Webhook] Failed to confirm SNS subscription')
+          }
+        }
+        return res.status(200).json({ success: true, message: 'Subscription confirmed' })
+      }
+
+      // Handle SNS Notification
+      if (body.Type === 'Notification') {
+        let message = body.Message
+        if (typeof message === 'string') {
+          message = JSON.parse(message)
+        }
+
+        const eventType = message.eventType || message.notificationType
+        const mail = message.mail
+
+        if (!mail?.messageId) {
+          logger.warn('[SES Webhook] No messageId found in notification')
+          return res.status(200).json({ success: true })
+        }
+
+        // Find the email log by SES messageId
+        const emailLog = await EmailLog.findOne({ messageId: mail.messageId })
+        if (!emailLog) {
+          logger.warn(`[SES Webhook] No email log found for messageId: ${mail.messageId}`)
+          return res.status(200).json({ success: true })
+        }
+
+        const now = new Date()
+        const update = {
+          $push: {
+            sesEvents: {
+              eventType,
+              timestamp: now,
+              detail: {}
+            }
+          }
+        }
+
+        switch (eventType) {
+          case 'Delivery': {
+            const delivery = message.delivery
+            update.$set = { status: 'delivered', deliveredAt: now }
+            update.$push.sesEvents.detail = {
+              recipients: delivery?.recipients,
+              processingTimeMillis: delivery?.processingTimeMillis,
+              smtpResponse: delivery?.smtpResponse
+            }
+            // Only update if current status allows progression
+            if (['bounced', 'complained'].includes(emailLog.status)) {
+              delete update.$set // Don't downgrade from bounced/complained
+            }
+            break
+          }
+
+          case 'Bounce': {
+            const bounce = message.bounce
+            update.$set = { status: 'bounced', bouncedAt: now }
+            update.$push.sesEvents.detail = {
+              bounceType: bounce?.bounceType,
+              bounceSubType: bounce?.bounceSubType,
+              bouncedRecipients: bounce?.bouncedRecipients?.map(r => r.emailAddress)
+            }
+            break
+          }
+
+          case 'Complaint': {
+            const complaint = message.complaint
+            update.$set = { status: 'complained', complainedAt: now }
+            update.$push.sesEvents.detail = {
+              complaintFeedbackType: complaint?.complaintFeedbackType,
+              complainedRecipients: complaint?.complainedRecipients?.map(r => r.emailAddress)
+            }
+            break
+          }
+
+          case 'Open': {
+            update.$push.sesEvents.detail = {
+              ipAddress: message.open?.ipAddress,
+              userAgent: message.open?.userAgent
+            }
+            // Only update to opened if not bounced/complained
+            if (!['bounced', 'complained'].includes(emailLog.status)) {
+              update.$set = { status: 'opened', openedAt: now }
+            }
+            break
+          }
+
+          default:
+            logger.warn(`[SES Webhook] Unknown event type: ${eventType}`)
+            return res.status(200).json({ success: true })
+        }
+
+        await EmailLog.findByIdAndUpdate(emailLog._id, update)
+        logger.info(`[SES Webhook] Processed ${eventType} event for messageId: ${mail.messageId}`)
+      }
+
+      res.status(200).json({ success: true })
+    } catch (error) {
+      logger.error('[SES Webhook] Error processing webhook:', error.message)
+      // Always return 200 to prevent SNS retries on parse errors
+      res.status(200).json({ success: true })
+    }
   }
 
   /**
