@@ -107,10 +107,7 @@
               <button
                 v-if="filters.search"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                @click="
-                  filters.search = ''
-                  fetchHotels()
-                "
+                @click="clearFilter('search')"
               >
                 <span class="material-icons text-lg">close</span>
               </button>
@@ -210,13 +207,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
           >
             {{ $t(`hotels.statuses.${filters.status}`) }}
-            <button
-              class="ml-1 hover:text-purple-900"
-              @click="
-                filters.status = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-purple-900" @click="clearFilter('status')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -225,13 +216,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
           >
             {{ filters.stars }} {{ $t('hotels.stars') }}
-            <button
-              class="ml-1 hover:text-yellow-900"
-              @click="
-                filters.stars = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-yellow-900" @click="clearFilter('stars')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -240,13 +225,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
           >
             {{ $t(`hotels.types.${filters.type}`) }}
-            <button
-              class="ml-1 hover:text-blue-900"
-              @click="
-                filters.type = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-blue-900" @click="clearFilter('type')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -255,13 +234,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
           >
             {{ filters.city }}
-            <button
-              class="ml-1 hover:text-green-900"
-              @click="
-                filters.city = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-green-900" @click="clearFilter('city')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -270,13 +243,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
           >
             {{ $t(`hotels.categories.${filters.category}`) }}
-            <button
-              class="ml-1 hover:text-indigo-900"
-              @click="
-                filters.category = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-indigo-900" @click="clearFilter('category')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -285,13 +252,7 @@
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
           >
             {{ filters.featured === 'true' ? $t('hotels.featuredOnly') : $t('hotels.notFeatured') }}
-            <button
-              class="ml-1 hover:text-orange-900"
-              @click="
-                filters.featured = ''
-                fetchHotels()
-              "
-            >
+            <button class="ml-1 hover:text-orange-900" @click="clearFilter('featured')">
               <span class="material-icons text-sm">close</span>
             </button>
           </span>
@@ -773,6 +734,11 @@ const toggleFeatured = async hotel => {
       toast.error(error.response?.data?.message || t('common.operationFailed'))
     }
   })
+}
+
+const clearFilter = key => {
+  filters[key] = ''
+  fetchHotels()
 }
 
 const confirmDelete = hotel => {
