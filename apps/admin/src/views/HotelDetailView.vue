@@ -131,24 +131,18 @@
         </div>
       </div>
 
-      <!-- For linked hotels: Show display-only component + editable policies/widget -->
-      <div v-if="isLinkedHotel" class="space-y-6">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
-          <div class="p-6">
+      <!-- For linked hotels: 3 tabs (Hotel Data, Policies, Widget) -->
+      <div v-if="isLinkedHotel" class="bg-white dark:bg-slate-800 rounded-lg shadow">
+        <FormTabs v-model="linkedActiveTab" :tabs="linkedTabs" />
+        <div class="p-6">
+          <div v-show="linkedActiveTab === 'data'">
             <HotelDataDisplay :hotel="hotel" />
           </div>
-        </div>
-
-        <!-- Editable tabs for linked hotels (policies + widget) -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
-          <FormTabs v-model="linkedActiveTab" :tabs="linkedTabs" />
-          <div class="p-6">
-            <div v-show="linkedActiveTab === 'policies'">
-              <HotelPolicies ref="policiesFormRef" :hotel="hotel" :saving="saving" />
-            </div>
-            <div v-show="linkedActiveTab === 'widget'">
-              <HotelWidgetSettings ref="widgetFormRef" :hotel="hotel" :saving="saving" />
-            </div>
+          <div v-show="linkedActiveTab === 'policies'">
+            <HotelPolicies ref="policiesFormRef" :hotel="hotel" :saving="saving" />
+          </div>
+          <div v-show="linkedActiveTab === 'widget'">
+            <HotelWidgetSettings ref="widgetFormRef" :hotel="hotel" :saving="saving" />
           </div>
         </div>
       </div>
@@ -425,7 +419,7 @@ const { isLoading: unlinking, execute: executeUnlink } = useAsyncAction({ showEr
 
 const hotel = ref(getEmptyHotel())
 const activeTab = ref('basic')
-const linkedActiveTab = ref('policies')
+const linkedActiveTab = ref('data')
 
 // Top form fields (status, featured, displayOrder)
 const form = ref({
@@ -571,8 +565,9 @@ const tabs = computed(() => [
   { id: 'widget', label: t('hotels.tabs.widget'), icon: 'widgets', requiresSave: true }
 ])
 
-// Tabs for linked hotels (only policies + widget)
+// Tabs for linked hotels (data + policies + widget)
 const linkedTabs = computed(() => [
+  { id: 'data', label: t('hotels.tabs.hotelData'), icon: 'info' },
   { id: 'policies', label: t('hotels.tabs.policies'), icon: 'policy' },
   { id: 'widget', label: t('hotels.tabs.widget'), icon: 'widgets' }
 ])
