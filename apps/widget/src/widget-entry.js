@@ -182,6 +182,14 @@ export async function createWidget(config = {}) {
   // Expose to window
   window.MaxiResWidget = widgetApi
 
+  // Inject custom CSS from widget config (after store is initialized)
+  const customCss = widgetStore.widgetConfig?.customCss
+  if (customCss) {
+    const customStyleEl = document.createElement('style')
+    customStyleEl.textContent = customCss
+    shadowRoot.appendChild(customStyleEl)
+  }
+
   console.log('[MaxiResWidget] Initialized for', hotelCode)
   return widgetApi
 }

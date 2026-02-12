@@ -30,9 +30,21 @@ const isLoading = computed(() => widgetStore.isLoading)
 const errorMessage = computed(() => widgetStore.error)
 const hotelInfo = computed(() => widgetStore.hotelInfo)
 
-// Min date is today
+// Booking rules: min/max advance days
+const widgetConfig = computed(() => widgetStore.widgetConfig)
+
 const minDate = computed(() => {
   const today = new Date()
+  const days = widgetConfig.value?.minAdvanceBookingDays || 0
+  if (days > 0) today.setDate(today.getDate() + days)
+  return today.toISOString().split('T')[0]
+})
+
+const maxDate = computed(() => {
+  const days = widgetConfig.value?.maxAdvanceBookingDays
+  if (!days) return null
+  const today = new Date()
+  today.setDate(today.getDate() + days)
   return today.toISOString().split('T')[0]
 })
 
@@ -76,9 +88,10 @@ async function search() {
 // Set default dates if not set
 onMounted(() => {
   if (!checkIn.value) {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    checkIn.value = tomorrow.toISOString().split('T')[0]
+    const minDays = widgetConfig.value?.minAdvanceBookingDays || 0
+    const start = new Date()
+    start.setDate(start.getDate() + Math.max(minDays, 1))
+    checkIn.value = start.toISOString().split('T')[0]
   }
   if (!checkOut.value) {
     const checkout = new Date(checkIn.value)
@@ -146,6 +159,7 @@ onMounted(() => {
           :check-in="checkIn"
           :check-out="checkOut"
           :min-date="minDate"
+          :max-date="maxDate"
           @update:check-in="val => (checkIn = val)"
           @update:check-out="val => (checkOut = val)"
         />

@@ -52,6 +52,7 @@ function initGuests() {
       title: '',
       firstName: i === 0 ? contact.value.firstName || '' : '',
       lastName: i === 0 ? contact.value.lastName || '' : '',
+      nationality: '',
       isLead: i === 0
     })
   }
@@ -62,6 +63,8 @@ function initGuests() {
       title: '',
       firstName: '',
       lastName: '',
+      nationality: '',
+      birthDate: '',
       age: childAge
     })
   }
@@ -104,12 +107,21 @@ function validateForm() {
   }
 
   // Validate guests
+  const requireNationality = widgetConfig.value?.guestOptions?.requireNationality
+  const requireBirthDate = widgetConfig.value?.guestOptions?.requireBirthDate
+
   roomGuests.value.forEach((guest, index) => {
     if (!guest.firstName?.trim()) {
       errors.value[`guest_${index}_firstName`] = t('booking.errors.firstNameRequired')
     }
     if (!guest.lastName?.trim()) {
       errors.value[`guest_${index}_lastName`] = t('booking.errors.lastNameRequired')
+    }
+    if (requireNationality && !guest.nationality?.trim()) {
+      errors.value[`guest_${index}_nationality`] = t('booking.errors.nationalityRequired')
+    }
+    if (requireBirthDate && guest.type === 'child' && !guest.birthDate) {
+      errors.value[`guest_${index}_birthDate`] = t('booking.errors.birthDateRequired')
     }
   })
 
@@ -131,7 +143,9 @@ async function submit() {
     firstName: g.firstName,
     lastName: g.lastName,
     age: g.age,
-    isLead: g.isLead || false
+    isLead: g.isLead || false,
+    ...(g.nationality ? { nationality: g.nationality } : {}),
+    ...(g.birthDate ? { birthDate: g.birthDate } : {})
   }))
 
   // Create booking
@@ -392,6 +406,48 @@ onMounted(() => {
               />
               <span v-if="errors[`guest_${index}_lastName`]" class="form-error">{{
                 errors[`guest_${index}_lastName`]
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Nationality & Birth Date -->
+          <div
+            v-if="
+              widgetConfig?.guestOptions?.requireNationality ||
+              (widgetConfig?.guestOptions?.requireBirthDate && guest.type === 'child')
+            "
+            class="form-row"
+          >
+            <div v-if="widgetConfig?.guestOptions?.requireNationality" class="form-group">
+              <label class="form-label">
+                {{ t('booking.form.nationality') }} {{ t('common.required') }}
+              </label>
+              <input
+                v-model="guest.nationality"
+                type="text"
+                class="form-input"
+                :class="{ error: errors[`guest_${index}_nationality`] }"
+                :placeholder="t('booking.form.nationalityPlaceholder')"
+              />
+              <span v-if="errors[`guest_${index}_nationality`]" class="form-error">{{
+                errors[`guest_${index}_nationality`]
+              }}</span>
+            </div>
+            <div
+              v-if="widgetConfig?.guestOptions?.requireBirthDate && guest.type === 'child'"
+              class="form-group"
+            >
+              <label class="form-label">
+                {{ t('booking.form.birthDate') }} {{ t('common.required') }}
+              </label>
+              <input
+                v-model="guest.birthDate"
+                type="date"
+                class="form-input"
+                :class="{ error: errors[`guest_${index}_birthDate`] }"
+              />
+              <span v-if="errors[`guest_${index}_birthDate`]" class="form-error">{{
+                errors[`guest_${index}_birthDate`]
               }}</span>
             </div>
           </div>

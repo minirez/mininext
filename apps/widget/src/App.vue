@@ -50,7 +50,21 @@ const hotelLogo = computed(() => {
 })
 const hotelStars = computed(() => hotelInfo.value?.stars || 0)
 const showPoweredBy = computed(() => widgetStore.widgetConfig?.showPoweredBy !== false)
-const position = computed(() => widgetStore.config.position || 'bottom-right')
+const position = computed(
+  () => widgetStore.widgetConfig?.triggerPosition || widgetStore.config.position || 'bottom-right'
+)
+const widgetConfig = computed(() => widgetStore.widgetConfig)
+
+// WhatsApp
+const whatsappEnabled = computed(
+  () => widgetConfig.value?.whatsapp?.enabled && widgetConfig.value?.whatsapp?.number
+)
+const whatsappUrl = computed(() => {
+  const number = widgetConfig.value?.whatsapp?.number?.replace(/\D/g, '')
+  const lang = widgetStore.config.language || 'tr'
+  const msg = widgetConfig.value?.whatsapp?.message?.[lang] || ''
+  return `https://wa.me/${number}${msg ? '?text=' + encodeURIComponent(msg) : ''}`
+})
 
 // Language Dropdown
 const langDropdownOpen = ref(false)
@@ -153,6 +167,21 @@ function closeWidget() {
     </svg>
     {{ triggerText }}
   </button>
+
+  <!-- WhatsApp Floating Button -->
+  <a
+    v-if="mode === 'floating' && !isOpen && whatsappEnabled"
+    :href="whatsappUrl"
+    target="_blank"
+    rel="noopener noreferrer"
+    :class="['widget-whatsapp', { left: position.includes('left') }]"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
+      <path
+        d="M16.004 0h-.008C7.174 0 0 7.176 0 16c0 3.5 1.128 6.744 3.046 9.378L1.054 31.29l6.118-1.958A15.9 15.9 0 0 0 16.004 32C24.826 32 32 24.822 32 16S24.826 0 16.004 0zm9.302 22.602c-.388 1.092-1.938 1.998-3.156 2.264-.834.178-1.924.32-5.594-1.202-4.694-1.944-7.712-6.696-7.946-7.006-.226-.31-1.846-2.46-1.846-4.692 0-2.232 1.168-3.33 1.584-3.786.388-.424.916-.612 1.226-.612.15 0 .284.008.404.014.418.018.628.042.904.7.346.82 1.186 2.898 1.29 3.11.104.212.2.49.064.8-.128.31-.24.502-.452.77-.212.268-.436.474-.648.764-.192.252-.408.522-.168.96.24.434 1.068 1.762 2.294 2.854 1.578 1.404 2.862 1.852 3.332 2.046.34.14.746.104 1-.162.32-.336.716-.894 1.118-1.446.286-.394.646-.444 1.02-.302.378.136 2.392 1.128 2.802 1.334.41.206.684.31.784.478.098.168.098.968-.292 2.06z"
+      />
+    </svg>
+  </a>
 
   <!-- Widget Modal/Container (no Teleport for Shadow DOM compatibility) -->
   <div v-if="mode === 'floating' && isOpen" class="widget-overlay">

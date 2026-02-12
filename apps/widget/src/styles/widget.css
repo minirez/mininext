@@ -161,6 +161,47 @@
   left: 24px;
 }
 
+/* ==================== WHATSAPP BUTTON ==================== */
+.widget-whatsapp {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  z-index: 9997;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #25d366;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+  transition: var(--transition);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-decoration: none;
+}
+
+.widget-whatsapp svg {
+  width: 26px;
+  height: 26px;
+}
+
+.widget-whatsapp:hover {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.5);
+}
+
+.widget-whatsapp:active {
+  transform: translateY(-1px) scale(0.96);
+}
+
+.widget-whatsapp.left {
+  right: auto;
+  left: 24px;
+}
+
 /* Pulse animation for trigger */
 .widget-trigger::before {
   content: '';
@@ -3128,6 +3169,18 @@ select.form-input option {
   }
 
   .widget-trigger.left {
+    left: 16px;
+  }
+
+  .widget-whatsapp {
+    bottom: 76px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .widget-whatsapp.left {
+    right: auto;
     left: 16px;
   }
 

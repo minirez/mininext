@@ -95,6 +95,10 @@ export default {
       selectTitle: 'Select',
       mr: 'Mr',
       mrs: 'Mrs',
+      nationality: 'Nationality',
+      nationalityPlaceholder: 'Select nationality',
+      birthDate: 'Date of Birth',
+      birthDatePlaceholder: 'DD/MM/YYYY',
       specialRequestsPlaceholder: 'Enter any special requests here...',
       specialRequestsHint: 'Early check-in, late check-out, special arrangements, etc.'
     },
@@ -125,7 +129,10 @@ export default {
       lastNameRequired: 'Last name is required',
       emailInvalid: 'Please enter a valid email address',
       phoneRequired: 'Phone number is required',
-      phoneInvalid: 'Please enter a valid phone number'
+      phoneInvalid: 'Please enter a valid phone number',
+      nationalityRequired: 'Nationality is required',
+      birthDateRequired: 'Date of birth is required',
+      birthDateInvalid: 'Please enter a valid date of birth'
     }
   },
 

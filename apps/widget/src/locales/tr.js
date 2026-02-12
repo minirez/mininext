@@ -96,6 +96,10 @@ export default {
       selectTitle: 'Seçiniz',
       mr: 'Bay',
       mrs: 'Bayan',
+      nationality: 'Uyruk',
+      nationalityPlaceholder: 'Uyruk seçiniz',
+      birthDate: 'Doğum Tarihi',
+      birthDatePlaceholder: 'GG.AA.YYYY',
       specialRequestsPlaceholder: 'Varsa özel isteklerinizi yazabilirsiniz...',
       specialRequestsHint:
         'Erken giriş, geç çıkış, özel düzenleme vb. isteklerinizi belirtebilirsiniz.'
@@ -127,7 +131,10 @@ export default {
       lastNameRequired: 'Soyad gerekli',
       emailInvalid: 'Geçerli bir e-posta adresi giriniz',
       phoneRequired: 'Telefon numarası gerekli',
-      phoneInvalid: 'Geçerli bir telefon numarası giriniz'
+      phoneInvalid: 'Geçerli bir telefon numarası giriniz',
+      nationalityRequired: 'Uyruk gerekli',
+      birthDateRequired: 'Doğum tarihi gerekli',
+      birthDateInvalid: 'Geçerli bir doğum tarihi giriniz'
     }
   },
 
