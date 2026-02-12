@@ -38,7 +38,20 @@ export const changeRoom = asyncHandler(async (req, res) => {
     throw new NotFoundError('Yeni oda bulunamadi')
   }
 
-  if (!newRoom.isAvailableForCheckIn()) {
+  // Check if the room has an active stay (more reliable than status alone)
+  const existingStay = await Stay.findOne({
+    hotel: hotelId,
+    room: newRoomId,
+    status: { $in: [STAY_STATUS.CHECKED_IN, STAY_STATUS.RESERVED] }
+  })
+
+  if (existingStay) {
+    throw new BadRequestError('Yeni oda musait degil - aktif konaklama var')
+  }
+
+  // Allow rooms that are vacant_clean, inspected, or occupied-but-no-active-stay (stale status)
+  const allowedStatuses = [ROOM_STATUS.VACANT_CLEAN, ROOM_STATUS.INSPECTED, ROOM_STATUS.OCCUPIED]
+  if (!allowedStatuses.includes(newRoom.status)) {
     throw new BadRequestError('Yeni oda musait degil')
   }
 
@@ -51,7 +64,7 @@ export const changeRoom = asyncHandler(async (req, res) => {
     const newRoomUpdate = await Room.findOneAndUpdate(
       {
         _id: newRoomId,
-        status: { $in: [ROOM_STATUS.VACANT_CLEAN, ROOM_STATUS.INSPECTED] }
+        status: { $in: [ROOM_STATUS.VACANT_CLEAN, ROOM_STATUS.INSPECTED, ROOM_STATUS.OCCUPIED] }
       },
       {
         $set: {

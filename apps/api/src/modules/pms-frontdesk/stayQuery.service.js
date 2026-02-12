@@ -239,7 +239,11 @@ export const getFrontDeskStats = asyncHandler(async (req, res) => {
 })
 
 /**
- * Get available rooms for check-in
+ * Get available rooms for check-in or room change
+ * A room is available if:
+ * 1. Status is vacant_clean or inspected, OR
+ * 2. Status is occupied but has no active stay (stale status from incomplete checkout)
+ * AND no overlapping stay exists for the given date range.
  */
 export const getAvailableRooms = asyncHandler(async (req, res) => {
   const { hotelId } = req.params
@@ -247,20 +251,45 @@ export const getAvailableRooms = asyncHandler(async (req, res) => {
 
   const filter = {
     hotel: hotelId,
-    isActive: true,
-    status: { $in: [ROOM_STATUS.VACANT_CLEAN, ROOM_STATUS.INSPECTED] }
+    isActive: true
   }
 
   if (roomType) {
     filter.roomType = roomType
   }
 
-  const rooms = await Room.find(filter)
+  // Get all active rooms (not filtering by status yet)
+  const allRooms = await Room.find(filter)
     .populate('roomType', 'name code occupancy')
     .sort({ floor: 1, roomNumber: 1 })
 
+  // Find rooms that have active stays (checked_in or reserved overlapping the date range)
+  const stayFilter = {
+    hotel: hotelId,
+    status: { $in: [STAY_STATUS.CHECKED_IN, STAY_STATUS.RESERVED] }
+  }
+
+  // If date range provided, check overlap; otherwise just find currently active stays
+  if (checkIn && checkOut) {
+    stayFilter.checkInDate = { $lt: new Date(checkOut) }
+    stayFilter.checkOutDate = { $gt: new Date(checkIn) }
+  }
+
+  const activeStays = await Stay.find(stayFilter).select('room').lean()
+  const occupiedRoomIds = new Set(activeStays.map(s => s.room.toString()))
+
+  // Filter: rooms without active stays + status allows check-in (or stale occupied with no stay)
+  const availableRooms = allRooms.filter(room => {
+    if (occupiedRoomIds.has(room._id.toString())) return false
+
+    // Room has no active stay - available regardless of status
+    // (handles stale 'occupied' status from incomplete checkouts)
+    const allowedStatuses = [ROOM_STATUS.VACANT_CLEAN, ROOM_STATUS.INSPECTED, ROOM_STATUS.OCCUPIED]
+    return allowedStatuses.includes(room.status)
+  })
+
   res.json({
     success: true,
-    data: rooms
+    data: availableRooms
   })
 })
