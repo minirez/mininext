@@ -119,6 +119,9 @@ export default {
       bankTransferDesc: 'Pay via bank transfer',
       bankTransferDiscountDesc: 'Pay via bank transfer ({discount} off)',
       prepayment: 'Prepayment',
+      selectAmount: 'Payment Amount',
+      payFull: 'Pay Full Amount',
+      payPrepayment: 'Prepayment ({percent})',
       prepaymentAmount: 'Prepayment: {amount} ({percent})',
       remainingAmount: 'Remaining: {amount}',
       remainingAtCheckin: 'Due at check-in',
@@ -151,6 +154,8 @@ export default {
     amount: 'Amount',
     exchangeRate: 'Exchange Rate',
     amountToPay: 'Amount to Pay',
+    payingPrepayment: 'Prepayment',
+    payingFull: 'Total Amount',
 
     card: {
       holder: 'Cardholder Name',

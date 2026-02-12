@@ -232,7 +232,14 @@ export const createBooking = asyncHandler(async (req, res) => {
     payment: {
       status: 'pending',
       method: paymentMethod || 'credit_card',
-      dueAmount: grandTotal + tax
+      dueAmount: grandTotal + tax,
+      ...(market.paymentTerms?.prepaymentRequired && {
+        paymentTerms: {
+          prepaymentRequired: true,
+          prepaymentPercentage: market.paymentTerms.prepaymentPercentage || 30,
+          remainingPayment: market.paymentTerms.remainingPayment || null
+        }
+      })
     },
     status: 'pending',
     source: {

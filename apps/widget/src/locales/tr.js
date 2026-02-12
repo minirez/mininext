@@ -121,6 +121,9 @@ export default {
       bankTransferDesc: 'Havale/EFT ile ödeyin',
       bankTransferDiscountDesc: 'Havale/EFT ile ödeyin ({discount} indirim)',
       prepayment: 'Ön Ödeme',
+      selectAmount: 'Ödeme Tutarı',
+      payFull: 'Tümünü Öde',
+      payPrepayment: 'Ön Ödeme ({percent})',
       prepaymentAmount: 'Ön Ödeme: {amount} ({percent})',
       remainingAmount: 'Kalan: {amount}',
       remainingAtCheckin: 'Giriş sırasında ödenecek',
@@ -153,6 +156,8 @@ export default {
     amount: 'Tutar',
     exchangeRate: 'Kur',
     amountToPay: 'Ödenecek Tutar',
+    payingPrepayment: 'Ön Ödeme',
+    payingFull: 'Toplam Tutar',
 
     card: {
       holder: 'Kart Üzerindeki İsim',

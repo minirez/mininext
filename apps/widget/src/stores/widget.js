@@ -67,6 +67,7 @@ export const useWidgetStore = defineStore('widget', () => {
   // Payment State
   const paymentMethod = ref('credit_card') // credit_card, pay_at_checkin, bank_transfer
   const paymentResult = ref(null)
+  const selectedPaymentType = ref('full') // 'full' | 'prepayment'
 
   // Payment Terms (from market)
   const paymentTerms = ref(null)
@@ -179,6 +180,20 @@ export const useWidgetStore = defineStore('widget', () => {
     const checkIn = new Date(searchParams.value.checkIn)
     const checkOut = new Date(searchParams.value.checkOut)
     return Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
+  })
+
+  // Amount to charge based on prepayment selection
+  const paymentAmountToCharge = computed(() => {
+    const grandTotal = booking.value?.pricing?.grandTotal || 0
+    if (
+      selectedPaymentType.value === 'prepayment' &&
+      paymentTerms.value?.prepaymentRequired &&
+      paymentMethod.value === 'credit_card'
+    ) {
+      const pct = paymentTerms.value.prepaymentPercentage || 30
+      return Math.round((grandTotal * pct) / 100)
+    }
+    return grandTotal
   })
 
   // Actions
@@ -381,7 +396,8 @@ export const useWidgetStore = defineStore('widget', () => {
           email: bookingData.value.contact.email,
           card: cardData.card,
           posId: cardData.posId,
-          installment: cardData.installment
+          installment: cardData.installment,
+          amount: paymentAmountToCharge.value
         },
         config.value.apiUrl
       )
@@ -481,6 +497,7 @@ export const useWidgetStore = defineStore('widget', () => {
     selectedOption.value = null
     booking.value = null
     paymentResult.value = null
+    selectedPaymentType.value = 'full'
     error.value = null
     bookingData.value = {
       rooms: [],
@@ -513,6 +530,7 @@ export const useWidgetStore = defineStore('widget', () => {
     booking,
     paymentMethod,
     paymentResult,
+    selectedPaymentType,
     paymentTerms,
     bankTransferDiscount,
     bankAccounts,
@@ -523,6 +541,7 @@ export const useWidgetStore = defineStore('widget', () => {
     // Computed
     effectiveTheme,
     nights,
+    paymentAmountToCharge,
 
     // Helpers
     resolveAssetUrl,

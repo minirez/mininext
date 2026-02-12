@@ -1544,6 +1544,94 @@ textarea.form-input {
   opacity: 0.8;
 }
 
+/* Payment Amount Selection (prepayment vs full) */
+.payment-amount-selection {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-amount-selection-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.payment-amount-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--border-radius-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-primary);
+}
+
+.payment-amount-option:hover {
+  border-color: var(--primary);
+  background: var(--bg-secondary);
+}
+
+.payment-amount-option.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.payment-amount-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.payment-amount-option.selected .payment-amount-radio {
+  border-color: var(--primary);
+}
+
+.payment-amount-radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  transition: var(--transition);
+}
+
+.payment-amount-option.selected .payment-amount-radio-dot {
+  background: var(--primary);
+}
+
+.payment-amount-info {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-amount-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.payment-amount-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dark .payment-amount-option.selected {
+  background: rgba(99, 102, 241, 0.1);
+}
+
 .payment-info-prepayment {
   background: #eff6ff;
   border: 1px solid #bfdbfe;

@@ -70,6 +70,10 @@ const mealPlanName = computed(() => resolveName(selectedOption.value?.mealPlan?.
 const contact = ref({ ...widgetStore.bookingData.contact })
 const specialRequests = ref(widgetStore.bookingData.specialRequests || '')
 const selectedPaymentMethod = ref(widgetStore.paymentMethod)
+const selectedPaymentType = ref(
+  widgetStore.selectedPaymentType ||
+    (paymentTerms.value?.prepaymentRequired ? 'prepayment' : 'full')
+)
 
 // Guest data
 const roomGuests = ref([])
@@ -168,6 +172,7 @@ async function submit() {
   widgetStore.bookingData.contact = { ...contact.value }
   widgetStore.bookingData.specialRequests = specialRequests.value
   widgetStore.paymentMethod = selectedPaymentMethod.value
+  widgetStore.selectedPaymentType = selectedPaymentType.value
 
   // Set guests data
   widgetStore.bookingData.rooms[0].guests = roomGuests.value.map(g => ({
@@ -705,6 +710,49 @@ onMounted(() => {
           </label>
         </div>
 
+        <!-- Ödeme Tutarı Seçimi (Prepayment) -->
+        <div
+          v-if="
+            paymentTerms?.prepaymentRequired &&
+            selectedPaymentMethod === 'credit_card' &&
+            prepaymentAmount > 0 &&
+            prepaymentAmount < totalAmount
+          "
+          class="payment-amount-selection"
+        >
+          <div class="payment-amount-selection-title">{{ t('booking.payment.selectAmount') }}</div>
+          <label
+            class="payment-amount-option"
+            :class="{ selected: selectedPaymentType === 'prepayment' }"
+          >
+            <input v-model="selectedPaymentType" type="radio" value="prepayment" class="sr-only" />
+            <span class="payment-amount-radio">
+              <span class="payment-amount-radio-dot"></span>
+            </span>
+            <div class="payment-amount-info">
+              <span class="payment-amount-label">{{
+                t('booking.payment.payPrepayment', {
+                  percent: '%' + paymentTerms.prepaymentPercentage
+                })
+              }}</span>
+              <span class="payment-amount-value">{{ formatCurrency(prepaymentAmount) }}</span>
+            </div>
+          </label>
+          <label
+            class="payment-amount-option"
+            :class="{ selected: selectedPaymentType === 'full' }"
+          >
+            <input v-model="selectedPaymentType" type="radio" value="full" class="sr-only" />
+            <span class="payment-amount-radio">
+              <span class="payment-amount-radio-dot"></span>
+            </span>
+            <div class="payment-amount-info">
+              <span class="payment-amount-label">{{ t('booking.payment.payFull') }}</span>
+              <span class="payment-amount-value">{{ formatCurrency(totalAmount) }}</span>
+            </div>
+          </label>
+        </div>
+
         <!-- Havale İndirimi Bilgisi -->
         <div
           v-if="selectedPaymentMethod === 'bank_transfer' && bankTransferDiscount > 0"
@@ -735,9 +783,12 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Ön Ödeme Bilgisi -->
+        <!-- Ön Ödeme Bilgisi (kredi kartı dışı veya prepayment seçili) -->
         <div
-          v-if="paymentTerms?.prepaymentRequired"
+          v-if="
+            paymentTerms?.prepaymentRequired &&
+            (selectedPaymentMethod !== 'credit_card' || selectedPaymentType === 'prepayment')
+          "
           class="payment-info-box payment-info-prepayment"
         >
           <svg

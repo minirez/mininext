@@ -151,7 +151,7 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
  */
 export const initiateBookingPayment = asyncHandler(async (req, res) => {
   const { bookingNumber } = req.params
-  const { email, posId, installment, card } = req.body
+  const { email, posId, installment, card, amount: requestedAmount } = req.body
 
   // Validate card
   if (!card || !card.holder || !card.number || !card.expiry || !card.cvv) {
@@ -165,7 +165,7 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
   // Find booking by number and verify email
   const booking = await Booking.findOne({ bookingNumber })
     .populate('hotel', 'partner widgetConfig')
-    .select('partner hotel contact pricing payment status leadGuest')
+    .select('partner hotel contact pricing payment status leadGuest market')
 
   if (!booking) {
     throw new NotFoundError('BOOKING_NOT_FOUND')
@@ -195,9 +195,26 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     throw new BadRequestError('Bu rezervasyon için ödeme yapılmış')
   }
 
+  // Handle partial payment (prepayment) if amount is specified
+  let payableAmount = remainingAmount
+  if (requestedAmount && requestedAmount > 0) {
+    if (requestedAmount > remainingAmount) {
+      throw new BadRequestError('Ödeme tutarı kalan bakiyeyi aşamaz')
+    }
+    // Validate minimum prepayment if booking has payment terms
+    const pt = booking.payment?.paymentTerms
+    if (pt?.prepaymentRequired && pt?.prepaymentPercentage) {
+      const minPrepayment = Math.round((grandTotal * pt.prepaymentPercentage) / 100)
+      if (requestedAmount < minPrepayment && requestedAmount < remainingAmount) {
+        throw new BadRequestError(`Minimum ön ödeme tutarı: ${minPrepayment}`)
+      }
+    }
+    payableAmount = requestedAmount
+  }
+
   // Check if domestic (TR) card needs currency conversion
   const bookingCurrency = booking.pricing?.currency || 'TRY'
-  let paymentAmount = remainingAmount
+  let paymentAmount = payableAmount
   let paymentCurrency = bookingCurrency
   let currencyConversion = null
 
@@ -208,7 +225,7 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     try {
       const binCheck = await paymentGateway.queryBin(
         cardBin,
-        remainingAmount,
+        payableAmount,
         bookingCurrency.toLowerCase(),
         booking.partner?.toString()
       )
@@ -218,7 +235,7 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
       try {
         const tryBinCheck = await paymentGateway.queryBin(
           cardBin,
-          remainingAmount,
+          payableAmount,
           'try',
           booking.partner?.toString()
         )
@@ -230,16 +247,12 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
 
     if (cardCountry === 'tr') {
       // Domestic card with foreign currency → convert to TRY
-      const conversion = await convertCurrency(
-        remainingAmount,
-        bookingCurrency.toUpperCase(),
-        'TRY'
-      )
+      const conversion = await convertCurrency(payableAmount, bookingCurrency.toUpperCase(), 'TRY')
       paymentAmount = conversion.convertedAmount
       paymentCurrency = 'TRY'
       currencyConversion = {
         originalCurrency: bookingCurrency.toUpperCase(),
-        originalAmount: remainingAmount,
+        originalAmount: payableAmount,
         convertedCurrency: 'TRY',
         convertedAmount: conversion.convertedAmount,
         exchangeRate: conversion.rate

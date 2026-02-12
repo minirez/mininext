@@ -399,7 +399,16 @@ const bookingSchema = new mongoose.Schema(
         }
       ],
       paidAmount: { type: Number, default: 0 },
-      dueAmount: { type: Number }
+      dueAmount: { type: Number },
+      // Prepayment terms from market (for partial payment support)
+      paymentTerms: {
+        prepaymentRequired: { type: Boolean },
+        prepaymentPercentage: { type: Number },
+        remainingPayment: {
+          type: { type: String },
+          days: { type: Number }
+        }
+      }
     },
 
     // Booking status
