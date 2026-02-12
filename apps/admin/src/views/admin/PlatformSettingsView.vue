@@ -808,6 +808,7 @@
                 v-model="settings.billing.bankTransferDescription"
                 type="textarea"
                 :rows="3"
+                :languages="B2C_LANGUAGES"
                 :placeholder="$t('platformSettings.bankAccounts.descriptionPlaceholder')"
               />
             </div>
@@ -1107,6 +1108,7 @@ import { useExchangeRates } from '@/composables/useExchangeRates'
 import Tabs from '@/components/ui/navigation/Tabs.vue'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 import BankAccountManager from '@/components/common/BankAccountManager.vue'
+import { B2C_LANGUAGES } from '@/constants/languages'
 
 const { t } = useI18n()
 
