@@ -345,7 +345,23 @@ export const useWidgetStore = defineStore('widget', () => {
     currentStep.value = 'booking'
   }
 
+  function navigateAfterBooking() {
+    if (paymentMethod.value === 'credit_card' && widgetConfig.value?.paymentMethods?.creditCard) {
+      currentStep.value = 'payment'
+    } else if (paymentMethod.value === 'bank_transfer') {
+      currentStep.value = 'bank-transfer'
+    } else {
+      currentStep.value = 'confirmation'
+    }
+  }
+
   async function createBooking() {
+    // If booking already exists (user went back and re-submitted), just navigate
+    if (booking.value?.bookingNumber) {
+      navigateAfterBooking()
+      return
+    }
+
     try {
       isLoading.value = true
       error.value = null
@@ -365,14 +381,7 @@ export const useWidgetStore = defineStore('widget', () => {
       const result = await widgetApi.createBooking(bookingPayload, config.value.apiUrl)
       booking.value = result
 
-      // Go to appropriate step based on payment method
-      if (paymentMethod.value === 'credit_card' && widgetConfig.value?.paymentMethods?.creditCard) {
-        currentStep.value = 'payment'
-      } else if (paymentMethod.value === 'bank_transfer') {
-        currentStep.value = 'bank-transfer'
-      } else {
-        currentStep.value = 'confirmation'
-      }
+      navigateAfterBooking()
     } catch (err) {
       error.value = err.message
     } finally {
@@ -453,7 +462,12 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   function goBack() {
-    const stepOrder = ['search', 'results', 'booking', 'bank-transfer', 'payment', 'confirmation']
+    // Payment and bank-transfer should always go back to booking
+    if (currentStep.value === 'payment' || currentStep.value === 'bank-transfer') {
+      currentStep.value = 'booking'
+      return
+    }
+    const stepOrder = ['search', 'results', 'booking']
     const currentIndex = stepOrder.indexOf(currentStep.value)
     if (currentIndex > 0) {
       currentStep.value = stepOrder[currentIndex - 1]
