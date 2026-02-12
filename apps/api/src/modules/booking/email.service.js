@@ -498,6 +498,7 @@ async function buildBankTransferSection(booking, language = 'tr') {
   try {
     const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
     const partnerId = booking.partner?._id || booking.partner
+    const bookingCurrency = booking.pricing?.currency || 'TRY'
 
     let bankAccounts = []
     let bankTransferDescription = {}
@@ -524,26 +525,32 @@ async function buildBankTransferSection(booking, language = 'tr') {
 
     if (bankAccounts.length === 0) return ''
 
+    // Filter by booking currency - show only matching currency accounts
+    const filtered = bankAccounts.filter(a => a.currency === bookingCurrency)
+    if (filtered.length > 0) {
+      bankAccounts = filtered
+    }
+
     // Get description in the correct language
     const description =
       bankTransferDescription instanceof Map
         ? bankTransferDescription.get(language) || bankTransferDescription.get('tr') || ''
         : bankTransferDescription[language] || bankTransferDescription.tr || ''
 
-    // Build bank accounts HTML rows
+    // Build compact table rows
     const accountRows = bankAccounts
       .map(
         account => `
-<tr><td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;">
-<p style="margin:0 0 4px;font-size:13px;color:#64748b;">${labels.BANK_NAME_LABEL || 'Banka'}</p>
-<p style="margin:0;font-size:15px;font-weight:600;color:#1e293b;">${account.bankName || ''}</p>
-<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.ACCOUNT_NAME_LABEL || 'Hesap Sahibi'}</p>
-<p style="margin:0;font-size:14px;color:#1e293b;">${account.accountName || ''}</p>
-<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.IBAN_LABEL || 'IBAN'}</p>
-<p style="margin:0;font-size:14px;font-weight:600;color:#1e293b;font-family:monospace;letter-spacing:1px;">${account.iban || ''}</p>
-${account.swift ? `<p style="margin:8px 0 4px;font-size:13px;color:#64748b;">${labels.SWIFT_LABEL || 'Swift'}</p><p style="margin:0;font-size:14px;color:#1e293b;">${account.swift}</p>` : ''}
-${account.currency && account.currency !== 'TRY' ? `<p style="margin:8px 0 0;font-size:13px;color:#64748b;">Para Birimi: <strong>${account.currency}</strong></p>` : ''}
-</td></tr>`
+<tr style="border-bottom:1px solid #f1f5f9;">
+<td style="padding:10px 14px;vertical-align:middle;">
+<p style="margin:0;font-size:14px;font-weight:600;color:#1e293b;">${account.bankName || ''}</p>
+<p style="margin:2px 0 0;font-size:12px;color:#64748b;">${account.accountName || ''}</p>
+</td>
+<td style="padding:10px 14px;vertical-align:middle;text-align:right;">
+<p style="margin:0;font-size:13px;font-weight:600;color:#1e293b;font-family:monospace;letter-spacing:0.5px;">${account.iban || ''}</p>
+${account.swift ? `<p style="margin:2px 0 0;font-size:11px;color:#94a3b8;">SWIFT: ${account.swift}</p>` : ''}
+</td>
+</tr>`
       )
       .join('')
 
@@ -554,7 +561,7 @@ ${account.currency && account.currency !== 'TRY' ? `<p style="margin:8px 0 0;fon
 <span style="display:inline-block;margin-right:8px;">🏦</span>${labels.BANK_TRANSFER_TITLE || 'Banka Havale Bilgileri'}
 </h3>
 ${description ? `<p style="margin:0 0 16px;font-size:14px;color:#78350f;line-height:1.5;">${description}</p>` : ''}
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;" role="none">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;" role="none">
 ${accountRows}
 </table>
 <p style="margin:16px 0 0;font-size:13px;color:#92400e;line-height:1.5;font-style:italic;">${labels.BANK_TRANSFER_NOTE || ''}</p>

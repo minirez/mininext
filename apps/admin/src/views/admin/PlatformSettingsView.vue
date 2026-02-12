@@ -4,8 +4,21 @@
     <input type="text" name="prevent_autofill" style="display: none" tabindex="-1" />
     <input type="password" name="prevent_autofill_pass" style="display: none" tabindex="-1" />
 
-    <!-- Save Button -->
-    <div class="flex justify-end">
+    <!-- Save Button + Status Indicator -->
+    <div class="flex items-center justify-between">
+      <div v-if="isDirty" class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+        <span class="material-icons text-sm">warning</span>
+        <span class="text-sm font-medium">{{ $t('platformSettings.unsavedChanges') }}</span>
+      </div>
+      <div
+        v-else-if="lastSaveTime"
+        class="flex items-center gap-2 text-green-600 dark:text-green-400"
+      >
+        <span class="material-icons text-sm">cloud_done</span>
+        <span class="text-sm">{{ $t('platformSettings.saved') }}</span>
+      </div>
+      <div v-else></div>
+
       <button
         :disabled="saving"
         class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
@@ -1097,17 +1110,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Leave Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showLeaveConfirm"
+      type="warning"
+      :title="$t('platformSettings.leaveConfirm.title')"
+      :message="$t('platformSettings.leaveConfirm.message')"
+      :confirm-text="$t('platformSettings.leaveConfirm.leave')"
+      :cancel-text="$t('platformSettings.leaveConfirm.stay')"
+      @confirm="confirmLeave"
+      @cancel="cancelLeave"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onBeforeRouteLeave } from 'vue-router'
 import { usePlatformSettings } from '@/composables/usePlatformSettings'
 import { useExchangeRates } from '@/composables/useExchangeRates'
 import Tabs from '@/components/ui/navigation/Tabs.vue'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 import BankAccountManager from '@/components/common/BankAccountManager.vue'
+import ConfirmDialog from '@/components/ui/feedback/ConfirmDialog.vue'
 import { B2C_LANGUAGES } from '@/constants/languages'
 
 const { t } = useI18n()
@@ -1128,6 +1155,8 @@ const tabs = [
 // Platform settings composable
 const {
   settings,
+  isDirty,
+  lastSaveTime,
   testEmailAddress,
   testPhoneNumber,
   loading,
@@ -1164,8 +1193,43 @@ const {
   saveManualRate
 } = useExchangeRates()
 
+// Navigation guard - warn on unsaved changes
+const showLeaveConfirm = ref(false)
+let resolveNavigation = null
+
+onBeforeRouteLeave(() => {
+  if (!isDirty.value) return true
+  return new Promise(resolve => {
+    resolveNavigation = resolve
+    showLeaveConfirm.value = true
+  })
+})
+
+const confirmLeave = () => {
+  showLeaveConfirm.value = false
+  resolveNavigation?.(true)
+}
+
+const cancelLeave = () => {
+  showLeaveConfirm.value = false
+  resolveNavigation?.(false)
+}
+
+// Browser beforeunload guard
+const handleBeforeUnload = e => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
 onMounted(() => {
   loadSettings()
   loadExchangeRates()
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 </script>

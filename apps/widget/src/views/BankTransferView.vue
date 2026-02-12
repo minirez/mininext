@@ -10,7 +10,16 @@ const { formatCurrency } = useFormatters()
 const { t } = useTranslation()
 
 const booking = computed(() => widgetStore.booking)
-const bankAccounts = computed(() => widgetStore.bankAccounts)
+const bookingCurrency = computed(
+  () =>
+    widgetStore.selectedOption?.pricing?.currency || widgetStore.booking?.pricing?.currency || 'TRY'
+)
+const bankAccounts = computed(() => {
+  const all = widgetStore.bankAccounts || []
+  const currency = bookingCurrency.value
+  const filtered = all.filter(a => a.currency === currency)
+  return filtered.length > 0 ? filtered : all
+})
 const bankTransferDescription = computed(() => {
   const desc = widgetStore.bankTransferDescription
   if (!desc) return ''
@@ -79,65 +88,57 @@ onMounted(() => {
       <span class="spinner"></span>
     </div>
 
-    <!-- Bank Accounts -->
-    <div v-else-if="bankAccounts.length > 0" class="bt-accounts">
-      <div v-for="(account, index) in bankAccounts" :key="index" class="bt-account-card">
-        <div class="bt-account-header">
-          <span class="bt-bank-name">{{ account.bankName }}</span>
-          <span class="bt-currency-badge">{{ account.currency }}</span>
-        </div>
-        <div class="bt-account-body">
-          <div class="bt-field">
-            <span class="bt-field-label">{{ t('bankTransfer.accountName') }}</span>
-            <span class="bt-field-value">{{ account.accountName }}</span>
-          </div>
-          <div class="bt-field">
-            <span class="bt-field-label">IBAN</span>
-            <div class="bt-iban-row">
-              <span class="bt-iban-value">{{ account.iban }}</span>
-              <button class="bt-copy-btn" @click="copyIban(account.iban, index)">
-                <template v-if="copiedIndex === index">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  {{ t('bankTransfer.copied') }}
-                </template>
-                <template v-else>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  {{ t('bankTransfer.copyIban') }}
-                </template>
-              </button>
-            </div>
-          </div>
-          <div v-if="account.swift" class="bt-field">
-            <span class="bt-field-label">SWIFT</span>
-            <span class="bt-field-value">{{ account.swift }}</span>
-          </div>
-        </div>
-      </div>
+    <!-- Bank Accounts Table -->
+    <div v-else-if="bankAccounts.length > 0" class="bt-table-wrap">
+      <table class="bt-table">
+        <tbody>
+          <tr v-for="(account, index) in bankAccounts" :key="index" class="bt-table-row">
+            <td class="bt-table-cell">
+              <span class="bt-cell-bank">{{ account.bankName }}</span>
+              <span class="bt-cell-name">{{ account.accountName }}</span>
+            </td>
+            <td class="bt-table-cell bt-cell-iban-col">
+              <div class="bt-iban-row">
+                <span class="bt-iban-value">{{ account.iban }}</span>
+                <button class="bt-copy-btn" @click="copyIban(account.iban, index)">
+                  <template v-if="copiedIndex === index">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </template>
+                  <template v-else>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </template>
+                </button>
+              </div>
+              <span v-if="account.swift" class="bt-cell-swift">SWIFT: {{ account.swift }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- No accounts -->

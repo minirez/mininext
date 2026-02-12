@@ -300,7 +300,15 @@
   "platformSettings": {
     "title": "Platform Settings",
     "description": "Manage platform-wide notification and API settings",
-    "saved": "Settings saved successfully",
+    "saved": "Saved",
+    "savedToast": "Settings saved successfully",
+    "unsavedChanges": "You have unsaved changes",
+    "leaveConfirm": {
+      "title": "Unsaved Changes",
+      "message": "You have unsaved changes. If you leave this page, your changes will be lost.",
+      "leave": "Leave Page",
+      "stay": "Stay on Page"
+    },
     "email": {
       "title": "Email Settings (AWS SES)",
       "description": "Configure email delivery via Amazon SES",

@@ -375,7 +375,8 @@ export const useWidgetStore = defineStore('widget', () => {
         billing: bookingData.value.billing,
         specialRequests: bookingData.value.specialRequests,
         countryCode: searchParams.value.countryCode,
-        paymentMethod: paymentMethod.value
+        paymentMethod: paymentMethod.value,
+        guestLanguage: config.value.language || 'en'
       }
 
       const result = await widgetApi.createBooking(bookingPayload, config.value.apiUrl)

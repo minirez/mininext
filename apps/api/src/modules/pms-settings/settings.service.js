@@ -824,6 +824,7 @@ export const verifyHotelDomainDns = asyncHandler(async (req, res) => {
     message: result.message,
     data: {
       verified: result.success,
+      cnameTarget: result.cnameTarget,
       serverIP: result.serverIP,
       domainIP: result.domainIP
     }

@@ -58,8 +58,8 @@
       <div
         class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono"
       >
-        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: A</div>
-        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ serverIP || '...' }}</div>
+        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: CNAME</div>
+        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ cnameTarget || '...' }}</div>
       </div>
     </div>
 
@@ -118,6 +118,7 @@ const verifying = reactive({ b2c: false, b2b: false })
 const dnsVerified = reactive({ b2c: false, b2b: false })
 const dnsResult = reactive({ b2c: null, b2b: null })
 const settingUpSsl = reactive({ b2c: false, b2b: false })
+const cnameTarget = ref(null)
 const serverIP = ref(null)
 
 watch(
@@ -156,11 +157,15 @@ const handleVerifyDns = async type => {
     dnsResult[type] = {
       success: result.success,
       message: result.message,
+      cnameTarget: result.data?.cnameTarget,
       serverIP: result.data?.serverIP,
       domainIP: result.data?.domainIP
     }
 
-    // Save server IP for display
+    // Save CNAME target and server IP for display
+    if (result.data?.cnameTarget) {
+      cnameTarget.value = result.data.cnameTarget
+    }
     if (result.data?.serverIP) {
       serverIP.value = result.data.serverIP
     }

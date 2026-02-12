@@ -9,6 +9,8 @@ import RoomType from '../planning/roomType.model.js'
 import MealPlan from '../planning/mealPlan.model.js'
 import Market from '../planning/market.model.js'
 import Booking from '../booking/booking.model.js'
+import Payment from '../booking/payment.model.js'
+import { updateBookingPayment } from '../booking/payment.service.js'
 import pricingService from '#services/pricingService.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import { GUEST_PLACEHOLDER_NAME } from '#constants/defaults.js'
@@ -55,7 +57,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     billing,
     specialRequests,
     countryCode,
-    paymentMethod
+    paymentMethod,
+    guestLanguage
   } = req.body
 
   // Validate hotel (hotelCode can be slug or _id)
@@ -248,7 +251,8 @@ export const createBooking = asyncHandler(async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.headers['user-agent']
     },
-    specialRequests
+    specialRequests,
+    ...(guestLanguage && { guestLanguage })
   })
 
   await booking.save()
@@ -266,6 +270,25 @@ export const createBooking = asyncHandler(async (req, res) => {
     })
   }
 
+  // Create pending Payment record for non-card methods (bank_transfer, pay_at_checkin)
+  // For credit_card: Payment record is created via widget PaymentView → 3D Secure → webhook
+  if (paymentMethod === 'bank_transfer' || paymentMethod === 'pay_at_checkin') {
+    try {
+      const pendingPayment = new Payment({
+        partner: hotel.partner,
+        booking: booking._id,
+        type: paymentMethod,
+        amount: grandTotal + tax,
+        currency: market.currency,
+        status: 'pending'
+      })
+      await pendingPayment.save()
+      await updateBookingPayment(booking._id)
+    } catch (paymentErr) {
+      logger.error('[PublicBooking] Failed to create pending payment:', paymentErr.message)
+    }
+  }
+
   // Send automatic booking emails (non-blocking)
   // For credit_card: emails are sent after payment completes (via webhook)
   // For pay_at_hotel and bank_transfer: send immediately
@@ -274,8 +297,7 @@ export const createBooking = asyncHandler(async (req, res) => {
       const { sendAutomaticBookingEmails } = await import('../booking/email.service.js')
       // Don't await - fire and forget to not delay the response
       sendAutomaticBookingEmails(booking._id, {
-        trigger: 'creation',
-        language: req.headers['accept-language']?.split('-')[0]?.split(',')[0] || 'en'
+        trigger: 'creation'
       }).catch(err => logger.error('[PublicBooking] Auto email failed:', err.message))
     } catch (err) {
       logger.error('[PublicBooking] Failed to import email service:', err.message)

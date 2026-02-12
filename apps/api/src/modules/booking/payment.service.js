@@ -281,6 +281,22 @@ export const confirmPayment = asyncHandler(async (req, res) => {
   await payment.confirm(req.user._id)
   await updateBookingPayment(bookingId)
 
+  // Send notification and automatic emails (non-blocking)
+  try {
+    const booking = await Booking.findById(bookingId)
+    if (booking) {
+      const { sendPaymentNotification } = await import('./payment-notifications.service.js')
+      await sendPaymentNotification(payment, booking, 'completed')
+
+      const { sendAutomaticBookingEmails } = await import('./email.service.js')
+      sendAutomaticBookingEmails(booking._id, {
+        trigger: 'payment_completed'
+      }).catch(err => logger.error('[confirmPayment] Auto email failed:', err.message))
+    }
+  } catch (notifyErr) {
+    logger.error('[confirmPayment] Notification failed:', notifyErr.message)
+  }
+
   res.json({
     success: true,
     data: payment,

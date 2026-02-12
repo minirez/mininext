@@ -244,7 +244,7 @@ const currencies = ref([])
 
 // Tabs configuration - computed to support i18n reactivity
 const tabs = computed(() => [
-  { id: 'domain', label: t('pms.settings.tabs.domain'), icon: 'dns' },
+  { id: 'domain', label: t('settings.tabs.domain'), icon: 'dns' },
   { id: 'general', label: t('settings.tabs.general'), icon: 'settings' },
   { id: 'frontDesk', label: t('settings.tabs.frontDesk'), icon: 'desk' },
   { id: 'roomTypes', label: t('settings.tabs.roomTypes'), icon: 'bed' },

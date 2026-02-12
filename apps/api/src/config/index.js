@@ -78,6 +78,7 @@ const config = {
   // SSL/Nginx Configuration
   ssl: {
     serverPublicIp: process.env.SERVER_PUBLIC_IP,
+    cnameTarget: process.env.CNAME_TARGET || 'app.maxirez.com',
     certbotEmail: process.env.CERTBOT_EMAIL || 'admin@maxirez.com',
     certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/letsencrypt',
     nginxSitesAvailable: process.env.NGINX_SITES_AVAILABLE || '/etc/nginx/sites-available',

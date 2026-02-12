@@ -393,6 +393,14 @@
               </span>
             </div>
             <div class="flex items-center gap-2 mt-1">
+              <span
+                class="material-icons"
+                style="font-size: 13px"
+                :class="paymentMethodStyle(row.payment?.method)"
+                :title="$t(`payment.type.${row.payment?.method || 'credit_card'}`)"
+              >
+                {{ paymentMethodIcon(row.payment?.method) }}
+              </span>
               <PaymentStatusBadge :status="row.payment?.status || 'pending'" />
               <span
                 class="material-icons text-xs text-gray-400 group-hover:text-purple-500 transition-colors"
@@ -1196,6 +1204,30 @@ const getRoomChildren = room => {
     return room.guests.filter(g => g.type === 'child' || g.type === 'infant').length
   }
   return 0
+}
+
+// Payment method icon
+const paymentMethodIcon = method => {
+  const icons = {
+    credit_card: 'credit_card',
+    bank_transfer: 'account_balance',
+    cash: 'payments',
+    agency_credit: 'business',
+    pay_at_checkin: 'hotel'
+  }
+  return icons[method] || 'payment'
+}
+
+// Payment method style
+const paymentMethodStyle = method => {
+  const styles = {
+    credit_card: 'text-blue-500 dark:text-blue-400',
+    bank_transfer: 'text-green-600 dark:text-green-400',
+    cash: 'text-emerald-500 dark:text-emerald-400',
+    agency_credit: 'text-purple-500 dark:text-purple-400',
+    pay_at_checkin: 'text-orange-500 dark:text-orange-400'
+  }
+  return styles[method] || 'text-gray-400'
 }
 
 // Get sales channel from booking (salesChannel field or searchCriteria.channel)

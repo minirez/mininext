@@ -132,9 +132,14 @@
             }}</span>
             {{ dnsResult.message }}
           </div>
-          <div v-if="!dnsResult.success && dnsResult.serverIP" class="mt-2 text-xs">
+          <div
+            v-if="!dnsResult.success && (dnsResult.cnameTarget || dnsResult.serverIP)"
+            class="mt-2 text-xs"
+          >
             {{ $t('siteSettings.setup.pointDomainTo') }}:
-            <code class="bg-gray-200 dark:bg-slate-700 px-1 rounded">{{ dnsResult.serverIP }}</code>
+            <code class="bg-gray-200 dark:bg-slate-700 px-1 rounded">{{
+              dnsResult.cnameTarget || dnsResult.serverIP
+            }}</code>
           </div>
         </div>
       </div>

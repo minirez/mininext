@@ -5,8 +5,8 @@
         type="pms"
         icon="hotel"
         icon-color="text-indigo-600"
-        :title="$t('pms.settings.domain.title')"
-        :description="$t('pms.settings.domain.description')"
+        :title="$t('settings.domain.title')"
+        :description="$t('settings.domain.description')"
         placeholder="pms.example.com"
         v-model:domain="domainValue"
         :ssl-status="domainData.pmsSslStatus"
@@ -35,8 +35,8 @@
       <div
         class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono"
       >
-        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: A</div>
-        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ serverIP || '...' }}</div>
+        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: CNAME</div>
+        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ cnameTarget || '...' }}</div>
       </div>
     </div>
 
@@ -76,6 +76,7 @@ const verifying = ref(false)
 const settingUpSsl = ref(false)
 const dnsVerified = ref(false)
 const dnsResult = ref(null)
+const cnameTarget = ref(null)
 const serverIP = ref(null)
 
 const domainData = ref({
@@ -115,13 +116,13 @@ const saveDomain = async () => {
     if (res.success) {
       domainData.value = res.data
       originalDomain.value = res.data.pmsDomain || ''
-      toast.success(t('pms.settings.domain.saved'))
+      toast.success(t('settings.domain.saved'))
       // Reset DNS state
       dnsVerified.value = false
       dnsResult.value = null
     }
   } catch (error) {
-    const msg = error.response?.data?.message || t('pms.settings.domain.saveError')
+    const msg = error.response?.data?.message || t('settings.domain.saveError')
     toast.error(msg)
   } finally {
     saving.value = false
@@ -150,10 +151,14 @@ const handleVerifyDns = async () => {
     dnsResult.value = {
       success: result.success,
       message: result.message,
+      cnameTarget: result.data?.cnameTarget,
       serverIP: result.data?.serverIP,
       domainIP: result.data?.domainIP
     }
 
+    if (result.data?.cnameTarget) {
+      cnameTarget.value = result.data.cnameTarget
+    }
     if (result.data?.serverIP) {
       serverIP.value = result.data.serverIP
     }

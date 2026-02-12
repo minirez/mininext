@@ -40,7 +40,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     billing,
     specialRequests,
     salesChannel = 'b2c',
-    paymentMethod
+    paymentMethod,
+    guestLanguage
   } = req.body
 
   // Validate hotel
@@ -313,7 +314,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     },
     status: 'pending',
     source: getSourceInfo(req),
-    specialRequests
+    specialRequests,
+    ...(guestLanguage && { guestLanguage })
   })
 
   await booking.save()
@@ -387,7 +389,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     specialRequests,
     salesChannel = 'b2c',
     sendEmail = true,
-    sendSms = false
+    sendSms = false,
+    guestLanguage
   } = req.body
 
   // Validate hotel
@@ -681,7 +684,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     },
     status: 'pending',
     source: getSourceInfo(req),
-    specialRequests
+    specialRequests,
+    ...(guestLanguage && { guestLanguage })
   })
 
   // Get partner info for payment link

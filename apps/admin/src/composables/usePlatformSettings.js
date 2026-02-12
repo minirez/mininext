@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import { useAsyncAction } from '@/composables/useAsyncAction'
@@ -7,6 +7,11 @@ import platformSettingsService from '@/services/platformSettingsService'
 export function usePlatformSettings() {
   const { t } = useI18n()
   const toast = useToast()
+
+  // Dirty tracking
+  const isDirty = ref(false)
+  const lastSaveTime = ref(null)
+  let watchStarted = false
 
   // Async actions
   const { isLoading: loading, execute: executeLoad } = useAsyncAction({
@@ -95,7 +100,7 @@ export function usePlatformSettings() {
   const loadSettings = async () => {
     await executeLoad(() => platformSettingsService.getSettings(), {
       onSuccess: data => {
-        // Merge with defaults
+        // Merge with defaults - will reset isDirty after nextTick
         settings.value = {
           aws: {
             ses: {
@@ -155,6 +160,21 @@ export function usePlatformSettings() {
             bankTransferEnabled: data.billing?.bankTransferEnabled || false
           }
         }
+
+        // Start dirty tracking after initial load
+        nextTick(() => {
+          isDirty.value = false
+          if (!watchStarted) {
+            watchStarted = true
+            watch(
+              settings,
+              () => {
+                isDirty.value = true
+              },
+              { deep: true }
+            )
+          }
+        })
       },
       onError: error => {
         toast.error(t('common.error') + ': ' + error.message)
@@ -243,8 +263,10 @@ export function usePlatformSettings() {
     }
 
     await executeSave(() => platformSettingsService.updateSettings(update), {
-      successMessage: 'platformSettings.saved',
+      successMessage: 'platformSettings.savedToast',
       onSuccess: async () => {
+        isDirty.value = false
+        lastSaveTime.value = new Date()
         // Reload to get updated values
         await loadSettings()
       },
@@ -354,6 +376,8 @@ export function usePlatformSettings() {
   return {
     // State
     settings,
+    isDirty,
+    lastSaveTime,
     testEmailAddress,
     testPhoneNumber,
     loading,

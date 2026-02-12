@@ -149,6 +149,43 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
 
   if (success) {
     logger.info('[Payment Webhook] Payment completed successfully')
+
+    // After successful credit card payment, create pending Payment for remaining amount
+    // (e.g. 30% CC prepayment → 70% remaining bank_transfer)
+    if (booking?.payment?.paymentTerms?.prepaymentRequired) {
+      try {
+        const remaining = (booking.pricing?.grandTotal || 0) - (payment.amount || 0)
+        const remainingType = booking.payment.paymentTerms.remainingPayment?.type
+
+        if (remaining > 0 && remainingType) {
+          const existingRemaining = await Payment.findOne({
+            booking: booking._id,
+            type: remainingType,
+            status: 'pending'
+          })
+
+          if (!existingRemaining) {
+            const remainingPayment = new Payment({
+              partner: booking.partner,
+              booking: booking._id,
+              type: remainingType,
+              amount: remaining,
+              currency: booking.pricing?.currency || 'TRY',
+              status: 'pending',
+              notes: 'Auto-created: remaining after prepayment'
+            })
+            await remainingPayment.save()
+            logger.info('[Payment Webhook] Created remaining payment:', {
+              bookingId: booking._id,
+              type: remainingType,
+              amount: remaining
+            })
+          }
+        }
+      } catch (remainErr) {
+        logger.error('[Payment Webhook] Failed to create remaining payment:', remainErr.message)
+      }
+    }
   } else {
     logger.info('[Payment Webhook] Payment marked as failed')
   }

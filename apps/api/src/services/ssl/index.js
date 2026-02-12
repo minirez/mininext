@@ -5,7 +5,7 @@
  *
  * Flow:
  * 1. Domain girilir
- * 2. DNS A kaydi dogrulanir (sunucu IP'sine yonlendirme kontrolu)
+ * 2. DNS CNAME kaydi dogrulanir (app.maxirez.com'a yonlendirme kontrolu)
  * 3. Let's Encrypt ile SSL sertifikasi alinir
  * 4. Nginx konfigurasyonu olusturulur ve yuklenir
  */
@@ -13,7 +13,7 @@
 import logger from '../../core/logger.js'
 
 // DNS Service exports
-import { getServerIP, verifyDNS } from './dnsService.js'
+import { getServerIP, getCnameTarget, verifyDNS } from './dnsService.js'
 
 // Certificate Service exports
 import {
@@ -113,6 +113,7 @@ export const setupSSL = async (domain, type, partnerId) => {
 export {
   // DNS Service
   getServerIP,
+  getCnameTarget,
   verifyDNS,
   // Certificate Service
   requestCertificate,
@@ -131,6 +132,7 @@ export {
 export default {
   // DNS Service
   getServerIP,
+  getCnameTarget,
   verifyDNS,
   // Certificate Service
   requestCertificate,

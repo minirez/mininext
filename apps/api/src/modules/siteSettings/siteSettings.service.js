@@ -432,7 +432,7 @@ export const requestSsl = asyncHandler(async (req, res) => {
   })
 })
 
-// Verify DNS A record for a domain
+// Verify DNS CNAME record for a domain
 export const verifyDns = asyncHandler(async (req, res) => {
   const partnerId = getPartnerId(req)
   const { type, domain } = req.body // 'b2c', 'b2b', or 'pms'
@@ -457,6 +457,7 @@ export const verifyDns = asyncHandler(async (req, res) => {
     message: req.t(result.message),
     data: {
       verified: result.success,
+      cnameTarget: result.cnameTarget,
       serverIP: result.serverIP,
       domainIP: result.domainIP
     }
