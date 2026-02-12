@@ -814,135 +814,7 @@
 
             <!-- Accounts List -->
             <div class="pt-4 border-t border-gray-200 dark:border-slate-700">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-700 dark:text-slate-300">
-                  {{ $t('platformSettings.billing.bankAccounts') }}
-                </h3>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-                  @click="addBankAccount"
-                >
-                  <span class="material-icons text-sm">add</span>
-                  {{ $t('common.add') }}
-                </button>
-              </div>
-              <div
-                v-if="settings.billing.bankAccounts.length === 0"
-                class="text-center py-6 text-gray-500 dark:text-slate-400"
-              >
-                {{ $t('platformSettings.billing.noBankAccounts') }}
-              </div>
-              <div v-else class="space-y-4">
-                <div
-                  v-for="(account, index) in settings.billing.bankAccounts"
-                  :key="index"
-                  class="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg"
-                >
-                  <div class="flex items-start justify-between mb-3">
-                    <span class="text-sm font-medium text-gray-700 dark:text-slate-300">
-                      {{ $t('platformSettings.billing.bankAccount') }} #{{ index + 1 }}
-                    </span>
-                    <div class="flex items-center gap-2">
-                      <label class="relative inline-flex items-center cursor-pointer">
-                        <input v-model="account.isActive" type="checkbox" class="sr-only peer" />
-                        <div
-                          class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500 peer-checked:bg-teal-500"
-                        ></div>
-                        <span class="ml-1 text-xs text-gray-500 dark:text-slate-400">{{
-                          $t('platformSettings.bankAccounts.active')
-                        }}</span>
-                      </label>
-                      <button
-                        type="button"
-                        class="text-red-500 hover:text-red-600 p-1"
-                        @click="removeBankAccount(index)"
-                      >
-                        <span class="material-icons text-sm">delete</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        class="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1"
-                      >
-                        {{ $t('platformSettings.bankAccounts.bankName') }}
-                      </label>
-                      <select
-                        v-model="account.bankCode"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                        @change="onBankSelect(account)"
-                      >
-                        <option value="">
-                          {{ $t('platformSettings.bankAccounts.selectBank') }}
-                        </option>
-                        <option v-for="bank in bankOptions" :key="bank.code" :value="bank.code">
-                          {{ bank.name }}
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        class="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1"
-                      >
-                        {{ $t('platformSettings.billing.accountName') }}
-                      </label>
-                      <input
-                        v-model="account.accountName"
-                        type="text"
-                        :placeholder="$t('platformSettings.billing.accountNamePlaceholder')"
-                        autocomplete="off"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div class="md:col-span-2">
-                      <label
-                        class="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1"
-                      >
-                        IBAN
-                      </label>
-                      <input
-                        v-model="account.iban"
-                        type="text"
-                        placeholder="TR00 0000 0000 0000 0000 0000 00"
-                        autocomplete="off"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        class="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1"
-                      >
-                        SWIFT/BIC
-                      </label>
-                      <input
-                        v-model="account.swift"
-                        type="text"
-                        placeholder="TGBATRIS"
-                        autocomplete="off"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        class="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1"
-                      >
-                        {{ $t('platformSettings.billing.currency') }}
-                      </label>
-                      <select
-                        v-model="account.currency"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="TRY">TRY</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <BankAccountManager v-model="settings.billing.bankAccounts" />
             </div>
           </div>
         </div>
@@ -1234,7 +1106,7 @@ import { usePlatformSettings } from '@/composables/usePlatformSettings'
 import { useExchangeRates } from '@/composables/useExchangeRates'
 import Tabs from '@/components/ui/navigation/Tabs.vue'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
-import { BANKS_TR } from '@booking-engine/constants'
+import BankAccountManager from '@/components/common/BankAccountManager.vue'
 
 const { t } = useI18n()
 
@@ -1250,17 +1122,6 @@ const tabs = [
   },
   { value: 'finance', label: t('platformSettings.tabs.finance'), icon: 'account_balance' }
 ]
-
-// Bank options
-const bankOptions = BANKS_TR
-
-function onBankSelect(account) {
-  const bank = BANKS_TR.find(b => b.code === account.bankCode)
-  if (bank) {
-    account.bankName = bank.name
-    account.swift = bank.swift || account.swift
-  }
-}
 
 // Platform settings composable
 const {
@@ -1279,9 +1140,7 @@ const {
   sendTestSMS,
   testPaximumConnection,
   generateVAPID,
-  copyToClipboard,
-  addBankAccount,
-  removeBankAccount
+  copyToClipboard
 } = usePlatformSettings()
 
 // Exchange rates composable

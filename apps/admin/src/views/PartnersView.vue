@@ -551,95 +551,7 @@
 
               <!-- Bank Accounts List -->
               <div class="pt-3 border-t border-gray-200 dark:border-slate-700">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-sm font-medium text-gray-700 dark:text-slate-300">
-                    {{ $t('partners.paymentSettings.bankAccounts') }}
-                  </h4>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-                    @click="addPartnerBankAccount"
-                  >
-                    <span class="material-icons text-sm">add</span>
-                    {{ $t('common.add') }}
-                  </button>
-                </div>
-                <div
-                  v-if="form.paymentSettings.bankAccounts.length === 0"
-                  class="text-center py-4 text-gray-500 dark:text-slate-400 text-sm"
-                >
-                  {{ $t('platformSettings.billing.noBankAccounts') }}
-                </div>
-                <div v-else class="space-y-3">
-                  <div
-                    v-for="(account, index) in form.paymentSettings.bankAccounts"
-                    :key="index"
-                    class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg"
-                  >
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-xs font-medium text-gray-600 dark:text-slate-400"
-                        >#{{ index + 1 }}</span
-                      >
-                      <div class="flex items-center gap-2">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input v-model="account.isActive" type="checkbox" class="sr-only peer" />
-                          <div
-                            class="w-8 h-4 bg-gray-200 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-500"
-                          ></div>
-                        </label>
-                        <button
-                          type="button"
-                          class="text-red-500 hover:text-red-600"
-                          @click="form.paymentSettings.bankAccounts.splice(index, 1)"
-                        >
-                          <span class="material-icons text-sm">delete</span>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                      <select
-                        v-model="account.bankCode"
-                        class="form-input text-sm"
-                        @change="onPartnerBankSelect(account)"
-                      >
-                        <option value="">
-                          {{ $t('platformSettings.bankAccounts.selectBank') }}
-                        </option>
-                        <option
-                          v-for="bank in partnerBankOptions"
-                          :key="bank.code"
-                          :value="bank.code"
-                        >
-                          {{ bank.name }}
-                        </option>
-                      </select>
-                      <input
-                        v-model="account.accountName"
-                        type="text"
-                        class="form-input text-sm"
-                        :placeholder="$t('platformSettings.billing.accountName')"
-                      />
-                      <input
-                        v-model="account.iban"
-                        type="text"
-                        class="form-input text-sm font-mono col-span-2"
-                        placeholder="TR00 0000 0000 0000 0000 0000 00"
-                      />
-                      <input
-                        v-model="account.swift"
-                        type="text"
-                        class="form-input text-sm"
-                        placeholder="SWIFT"
-                      />
-                      <select v-model="account.currency" class="form-input text-sm">
-                        <option value="TRY">TRY</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
+                <BankAccountManager v-model="form.paymentSettings.bankAccounts" />
               </div>
             </template>
           </div>
@@ -1377,8 +1289,8 @@ import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import DocumentUpload from '@/components/DocumentUpload.vue'
+import BankAccountManager from '@/components/common/BankAccountManager.vue'
 import partnerService from '@/services/partnerService'
-import { BANKS_TR, getBankByCode } from '@booking-engine/constants'
 import { useI18n } from 'vue-i18n'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
@@ -1472,29 +1384,6 @@ const formatDate = dateStr => {
     month: 'short',
     day: 'numeric'
   })
-}
-
-// Bank options for partner bank accounts
-const partnerBankOptions = BANKS_TR
-
-const addPartnerBankAccount = () => {
-  form.value.paymentSettings.bankAccounts.push({
-    bankCode: '',
-    bankName: '',
-    accountName: '',
-    iban: '',
-    swift: '',
-    currency: 'TRY',
-    isActive: true
-  })
-}
-
-const onPartnerBankSelect = account => {
-  const bank = getBankByCode(account.bankCode)
-  if (bank) {
-    account.bankName = bank.name
-    account.swift = bank.swift
-  }
 }
 
 const defaultPaymentSettings = () => ({
