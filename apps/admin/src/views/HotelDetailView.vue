@@ -131,10 +131,25 @@
         </div>
       </div>
 
-      <!-- For linked hotels: Show display-only component -->
-      <div v-if="isLinkedHotel" class="bg-white dark:bg-slate-800 rounded-lg shadow">
-        <div class="p-6">
-          <HotelDataDisplay :hotel="hotel" />
+      <!-- For linked hotels: Show display-only component + editable policies/widget -->
+      <div v-if="isLinkedHotel" class="space-y-6">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+          <div class="p-6">
+            <HotelDataDisplay :hotel="hotel" />
+          </div>
+        </div>
+
+        <!-- Editable tabs for linked hotels (policies + widget) -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+          <FormTabs v-model="linkedActiveTab" :tabs="linkedTabs" />
+          <div class="p-6">
+            <div v-show="linkedActiveTab === 'policies'">
+              <HotelPolicies ref="policiesFormRef" :hotel="hotel" :saving="saving" />
+            </div>
+            <div v-show="linkedActiveTab === 'widget'">
+              <HotelWidgetSettings ref="widgetFormRef" :hotel="hotel" :saving="saving" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -401,12 +416,16 @@ function getEmptyHotel() {
 }
 
 // Async action composables
-const { isLoading: loading, execute: executeFetch } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loading, execute: executeFetch } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 const { isLoading: saving, execute: executeSave } = useAsyncAction({ showErrorToast: false })
 const { isLoading: unlinking, execute: executeUnlink } = useAsyncAction({ showErrorToast: false })
 
 const hotel = ref(getEmptyHotel())
 const activeTab = ref('basic')
+const linkedActiveTab = ref('policies')
 
 // Top form fields (status, featured, displayOrder)
 const form = ref({
@@ -501,9 +520,13 @@ const validateAllForms = () => {
 
 // Collect all form data
 const collectFormData = () => {
-  // For linked hotels, only collect status/featured/displayOrder
+  // For linked hotels, collect status/featured/displayOrder + policies + widgetConfig
   if (isLinkedHotel.value) {
+    const policiesData = policiesFormRef.value?.getFormData?.() || {}
+    const widgetData = widgetFormRef.value?.getFormData?.() || {}
     return {
+      ...policiesData,
+      ...widgetData,
       status: form.value.status,
       featured: form.value.featured,
       displayOrder: form.value.displayOrder
@@ -546,6 +569,12 @@ const tabs = computed(() => [
   { id: 'policies', label: t('hotels.tabs.policies'), icon: 'policy', requiresSave: false },
   { id: 'seo', label: t('hotels.tabs.seo'), icon: 'search', requiresSave: false },
   { id: 'widget', label: t('hotels.tabs.widget'), icon: 'widgets', requiresSave: true }
+])
+
+// Tabs for linked hotels (only policies + widget)
+const linkedTabs = computed(() => [
+  { id: 'policies', label: t('hotels.tabs.policies'), icon: 'policy' },
+  { id: 'widget', label: t('hotels.tabs.widget'), icon: 'widgets' }
 ])
 
 // Add disabled flag for new hotels
@@ -600,180 +629,180 @@ const handleUnlink = async () => {
     return
   }
 
-  await executeUnlink(
-    () => hotelService.unlinkFromBase(hotel.value._id),
-    {
-      successMessage: 'hotels.hotelBase.unlinkSuccess',
-      onSuccess: async () => {
-        await fetchHotel()
-      },
-      onError: () => {
-        toast.error(t('common.operationFailed'))
-      }
+  await executeUnlink(() => hotelService.unlinkFromBase(hotel.value._id), {
+    successMessage: 'hotels.hotelBase.unlinkSuccess',
+    onSuccess: async () => {
+      await fetchHotel()
+    },
+    onError: () => {
+      toast.error(t('common.operationFailed'))
     }
-  )
+  })
 }
 
 const fetchHotel = async () => {
   if (isNew.value) return
 
-  await executeFetch(
-    () => hotelService.getHotel(route.params.id),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          const emptyHotel = getEmptyHotel()
-          const data = response.data
+  await executeFetch(() => hotelService.getHotel(route.params.id), {
+    onSuccess: response => {
+      if (response.success) {
+        const emptyHotel = getEmptyHotel()
+        const data = response.data
 
-          hotel.value = {
-            ...emptyHotel,
-            ...data,
-            hotelType: data.hotelType || 'partner',
-            hotelBase: data.hotelBase || null,
-            name: data.name || '',
-            description: { ...emptyHotel.description, ...data.description },
-            visibility: { ...emptyHotel.visibility, ...data.visibility },
-            address: {
-              ...emptyHotel.address,
-              ...data.address,
-              coordinates: { ...emptyHotel.address.coordinates, ...data.address?.coordinates }
+        hotel.value = {
+          ...emptyHotel,
+          ...data,
+          hotelType: data.hotelType || 'partner',
+          hotelBase: data.hotelBase || null,
+          name: data.name || '',
+          description: { ...emptyHotel.description, ...data.description },
+          visibility: { ...emptyHotel.visibility, ...data.visibility },
+          address: {
+            ...emptyHotel.address,
+            ...data.address,
+            coordinates: { ...emptyHotel.address.coordinates, ...data.address?.coordinates }
+          },
+          contact: {
+            ...emptyHotel.contact,
+            ...data.contact,
+            socialMedia: { ...emptyHotel.contact.socialMedia, ...data.contact?.socialMedia }
+          },
+          policies: {
+            ...emptyHotel.policies,
+            ...data.policies,
+            useBaseDefaults: data.policies?.useBaseDefaults ?? true,
+            childPolicy: { ...emptyHotel.policies.childPolicy, ...data.policies?.childPolicy },
+            petPolicy: { ...emptyHotel.policies.petPolicy, ...data.policies?.petPolicy },
+            additionalInfo: {
+              ...emptyHotel.policies.additionalInfo,
+              ...data.policies?.additionalInfo
             },
-            contact: {
-              ...emptyHotel.contact,
-              ...data.contact,
-              socialMedia: { ...emptyHotel.contact.socialMedia, ...data.contact?.socialMedia }
-            },
-            policies: {
-              ...emptyHotel.policies,
-              ...data.policies,
-              useBaseDefaults: data.policies?.useBaseDefaults ?? true,
-              childPolicy: { ...emptyHotel.policies.childPolicy, ...data.policies?.childPolicy },
-              petPolicy: { ...emptyHotel.policies.petPolicy, ...data.policies?.petPolicy },
-              additionalInfo: {
-                ...emptyHotel.policies.additionalInfo,
-                ...data.policies?.additionalInfo
-              },
-              cancellationRules: data.policies?.cancellationRules || [],
-              freeCancellation: {
-                ...emptyHotel.policies.freeCancellation,
-                ...data.policies?.freeCancellation
+            cancellationRules: data.policies?.cancellationRules || [],
+            freeCancellation: {
+              ...emptyHotel.policies.freeCancellation,
+              ...data.policies?.freeCancellation
+            }
+          },
+          seo: {
+            title: { ...emptyHotel.seo.title, ...data.seo?.title },
+            description: { ...emptyHotel.seo.description, ...data.seo?.description },
+            keywords: { ...emptyHotel.seo.keywords, ...data.seo?.keywords }
+          },
+          roomConfig: { ...emptyHotel.roomConfig, ...data.roomConfig },
+          pricingSettings: { ...emptyHotel.pricingSettings, ...data.pricingSettings },
+          profile: {
+            overview: {
+              ...emptyHotel.profile.overview,
+              ...data.profile?.overview,
+              content: {
+                ...emptyHotel.profile.overview.content,
+                ...data.profile?.overview?.content
               }
             },
-            seo: {
-              title: { ...emptyHotel.seo.title, ...data.seo?.title },
-              description: { ...emptyHotel.seo.description, ...data.seo?.description },
-              keywords: { ...emptyHotel.seo.keywords, ...data.seo?.keywords }
-            },
-            roomConfig: { ...emptyHotel.roomConfig, ...data.roomConfig },
-            pricingSettings: { ...emptyHotel.pricingSettings, ...data.pricingSettings },
-            profile: {
-              overview: {
-                ...emptyHotel.profile.overview,
-                ...data.profile?.overview,
-                content: { ...emptyHotel.profile.overview.content, ...data.profile?.overview?.content }
-              },
-              facilities: {
-                ...emptyHotel.profile.facilities,
-                ...data.profile?.facilities,
-                content: {
-                  ...emptyHotel.profile.facilities.content,
-                  ...data.profile?.facilities?.content
-                }
-              },
-              dining: {
-                ...emptyHotel.profile.dining,
-                ...data.profile?.dining,
-                content: { ...emptyHotel.profile.dining.content, ...data.profile?.dining?.content }
-              },
-              sportsEntertainment: {
-                ...emptyHotel.profile.sportsEntertainment,
-                ...data.profile?.sportsEntertainment,
-                content: {
-                  ...emptyHotel.profile.sportsEntertainment.content,
-                  ...data.profile?.sportsEntertainment?.content
-                }
-              },
-              spaWellness: {
-                ...emptyHotel.profile.spaWellness,
-                ...data.profile?.spaWellness,
-                content: {
-                  ...emptyHotel.profile.spaWellness.content,
-                  ...data.profile?.spaWellness?.content
-                },
-                spaDetails: {
-                  ...emptyHotel.profile.spaWellness.spaDetails,
-                  ...data.profile?.spaWellness?.spaDetails
-                }
-              },
-              familyKids: {
-                ...emptyHotel.profile.familyKids,
-                ...data.profile?.familyKids,
-                content: {
-                  ...emptyHotel.profile.familyKids.content,
-                  ...data.profile?.familyKids?.content
-                },
-                kidsClubAges: {
-                  ...emptyHotel.profile.familyKids.kidsClubAges,
-                  ...data.profile?.familyKids?.kidsClubAges
-                }
-              },
-              beachPool: {
-                ...emptyHotel.profile.beachPool,
-                ...data.profile?.beachPool,
-                content: {
-                  ...emptyHotel.profile.beachPool.content,
-                  ...data.profile?.beachPool?.content
-                },
-                beachDetails: {
-                  ...emptyHotel.profile.beachPool.beachDetails,
-                  ...data.profile?.beachPool?.beachDetails
-                }
-              },
-              honeymoon: {
-                ...emptyHotel.profile.honeymoon,
-                ...data.profile?.honeymoon,
-                content: {
-                  ...emptyHotel.profile.honeymoon.content,
-                  ...data.profile?.honeymoon?.content
-                }
-              },
-              importantInfo: {
-                ...emptyHotel.profile.importantInfo,
-                ...data.profile?.importantInfo,
-                content: {
-                  ...emptyHotel.profile.importantInfo.content,
-                  ...data.profile?.importantInfo?.content
-                }
-              },
-              location: {
-                ...emptyHotel.profile.location,
-                ...data.profile?.location,
-                content: { ...emptyHotel.profile.location.content, ...data.profile?.location?.content },
-                distances: data.profile?.location?.distances || []
+            facilities: {
+              ...emptyHotel.profile.facilities,
+              ...data.profile?.facilities,
+              content: {
+                ...emptyHotel.profile.facilities.content,
+                ...data.profile?.facilities?.content
               }
+            },
+            dining: {
+              ...emptyHotel.profile.dining,
+              ...data.profile?.dining,
+              content: { ...emptyHotel.profile.dining.content, ...data.profile?.dining?.content }
+            },
+            sportsEntertainment: {
+              ...emptyHotel.profile.sportsEntertainment,
+              ...data.profile?.sportsEntertainment,
+              content: {
+                ...emptyHotel.profile.sportsEntertainment.content,
+                ...data.profile?.sportsEntertainment?.content
+              }
+            },
+            spaWellness: {
+              ...emptyHotel.profile.spaWellness,
+              ...data.profile?.spaWellness,
+              content: {
+                ...emptyHotel.profile.spaWellness.content,
+                ...data.profile?.spaWellness?.content
+              },
+              spaDetails: {
+                ...emptyHotel.profile.spaWellness.spaDetails,
+                ...data.profile?.spaWellness?.spaDetails
+              }
+            },
+            familyKids: {
+              ...emptyHotel.profile.familyKids,
+              ...data.profile?.familyKids,
+              content: {
+                ...emptyHotel.profile.familyKids.content,
+                ...data.profile?.familyKids?.content
+              },
+              kidsClubAges: {
+                ...emptyHotel.profile.familyKids.kidsClubAges,
+                ...data.profile?.familyKids?.kidsClubAges
+              }
+            },
+            beachPool: {
+              ...emptyHotel.profile.beachPool,
+              ...data.profile?.beachPool,
+              content: {
+                ...emptyHotel.profile.beachPool.content,
+                ...data.profile?.beachPool?.content
+              },
+              beachDetails: {
+                ...emptyHotel.profile.beachPool.beachDetails,
+                ...data.profile?.beachPool?.beachDetails
+              }
+            },
+            honeymoon: {
+              ...emptyHotel.profile.honeymoon,
+              ...data.profile?.honeymoon,
+              content: {
+                ...emptyHotel.profile.honeymoon.content,
+                ...data.profile?.honeymoon?.content
+              }
+            },
+            importantInfo: {
+              ...emptyHotel.profile.importantInfo,
+              ...data.profile?.importantInfo,
+              content: {
+                ...emptyHotel.profile.importantInfo.content,
+                ...data.profile?.importantInfo?.content
+              }
+            },
+            location: {
+              ...emptyHotel.profile.location,
+              ...data.profile?.location,
+              content: {
+                ...emptyHotel.profile.location.content,
+                ...data.profile?.location?.content
+              },
+              distances: data.profile?.location?.distances || []
             }
           }
-
-          // Update top form with hotel data
-          form.value = {
-            status: data.status || 'draft',
-            featured: data.featured || false,
-            displayOrder: data.displayOrder || 0
-          }
-
-          // Clear all validation errors when data is loaded
-          clearAllTabErrors()
-
-          // Set page title with hotel name
-          uiStore.setPageTitleSuffix(hotel.value.name)
         }
-      },
-      onError: error => {
-        toast.error(error.response?.data?.message || t('hotels.fetchError'))
-        router.push('/hotels')
+
+        // Update top form with hotel data
+        form.value = {
+          status: data.status || 'draft',
+          featured: data.featured || false,
+          displayOrder: data.displayOrder || 0
+        }
+
+        // Clear all validation errors when data is loaded
+        clearAllTabErrors()
+
+        // Set page title with hotel name
+        uiStore.setPageTitleSuffix(hotel.value.name)
       }
+    },
+    onError: error => {
+      toast.error(error.response?.data?.message || t('hotels.fetchError'))
+      router.push('/hotels')
     }
-  )
+  })
 }
 
 const handleSave = async () => {

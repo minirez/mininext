@@ -211,7 +211,8 @@ export const updateHotel = asyncHandler(async (req, res) => {
       'seo',
       'policies', // Only useBaseDefaults and overrides
       'featured',
-      'displayOrder'
+      'displayOrder',
+      'widgetConfig'
     ]
   } else {
     // Partner hotels: all fields can be updated
