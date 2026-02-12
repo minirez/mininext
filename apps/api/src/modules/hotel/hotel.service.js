@@ -236,7 +236,8 @@ export const updateHotel = asyncHandler(async (req, res) => {
       'tags',
       'featured',
       'displayOrder',
-      'childAgeGroups'
+      'childAgeGroups',
+      'widgetConfig'
     ]
   }
 
