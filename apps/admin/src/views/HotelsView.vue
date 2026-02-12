@@ -83,11 +83,7 @@
             <span class="hidden sm:inline">{{ $t('hotels.export') }}</span>
           </button>
           <!-- Add Hotel -->
-          <button
-            type="button"
-            class="btn-primary flex items-center"
-            @click="goToAddHotel"
-          >
+          <button type="button" class="btn-primary flex items-center" @click="goToAddHotel">
             <span class="material-icons text-lg mr-2">add</span>
             {{ $t('hotels.addHotel') }}
           </button>
@@ -111,7 +107,10 @@
               <button
                 v-if="filters.search"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                @click="filters.search = ''; fetchHotels()"
+                @click="
+                  filters.search = ''
+                  fetchHotels()
+                "
               >
                 <span class="material-icons text-lg">close</span>
               </button>
@@ -213,7 +212,10 @@
             {{ $t(`hotels.statuses.${filters.status}`) }}
             <button
               class="ml-1 hover:text-purple-900"
-              @click="filters.status = ''; fetchHotels()"
+              @click="
+                filters.status = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -225,7 +227,10 @@
             {{ filters.stars }} {{ $t('hotels.stars') }}
             <button
               class="ml-1 hover:text-yellow-900"
-              @click="filters.stars = ''; fetchHotels()"
+              @click="
+                filters.stars = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -237,7 +242,10 @@
             {{ $t(`hotels.types.${filters.type}`) }}
             <button
               class="ml-1 hover:text-blue-900"
-              @click="filters.type = ''; fetchHotels()"
+              @click="
+                filters.type = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -249,7 +257,10 @@
             {{ filters.city }}
             <button
               class="ml-1 hover:text-green-900"
-              @click="filters.city = ''; fetchHotels()"
+              @click="
+                filters.city = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -261,7 +272,10 @@
             {{ $t(`hotels.categories.${filters.category}`) }}
             <button
               class="ml-1 hover:text-indigo-900"
-              @click="filters.category = ''; fetchHotels()"
+              @click="
+                filters.category = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -273,7 +287,10 @@
             {{ filters.featured === 'true' ? $t('hotels.featuredOnly') : $t('hotels.notFeatured') }}
             <button
               class="ml-1 hover:text-orange-900"
-              @click="filters.featured = ''; fetchHotels()"
+              @click="
+                filters.featured = ''
+                fetchHotels()
+              "
             >
               <span class="material-icons text-sm">close</span>
             </button>
@@ -301,7 +318,9 @@
           card-title-key="name"
           empty-icon="hotel"
           :empty-text="activeFilterCount > 0 ? $t('hotels.noResults') : $t('hotels.noHotels')"
-          :row-class="row => selectedHotels.includes(row._id) ? 'bg-purple-50 dark:bg-purple-900/10' : ''"
+          :row-class="
+            row => (selectedHotels.includes(row._id) ? 'bg-purple-50 dark:bg-purple-900/10' : '')
+          "
           @page-change="handlePageChange"
         >
           <template #header-checkbox>
@@ -362,10 +381,7 @@
                     <span class="material-icons text-sm mr-0.5">star</span>
                     {{ $t('hotels.featured') }}
                   </span>
-                  <span
-                    v-if="row.totalRooms"
-                    class="text-xs text-gray-500 dark:text-slate-400"
-                  >
+                  <span v-if="row.totalRooms" class="text-xs text-gray-500 dark:text-slate-400">
                     {{ row.totalRooms }} {{ $t('hotels.rooms') }}
                   </span>
                 </div>
@@ -386,7 +402,8 @@
                 v-for="n in 5 - row.stars"
                 :key="'e' + n"
                 class="material-icons text-sm text-gray-300 dark:text-slate-600"
-              >star</span>
+                >star</span
+              >
             </div>
           </template>
 
@@ -421,14 +438,9 @@
                 :title="row.featured ? $t('hotels.removeFeatured') : $t('hotels.makeFeatured')"
                 @click="toggleFeatured(row)"
               >
-                <span class="material-icons text-lg">{{ row.featured ? 'star' : 'star_border' }}</span>
-              </button>
-              <button
-                class="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                :title="$t('hotels.widgetSettings')"
-                @click="openWidgetModal(row)"
-              >
-                <span class="material-icons text-lg">code</span>
+                <span class="material-icons text-lg">{{
+                  row.featured ? 'star' : 'star_border'
+                }}</span>
               </button>
               <router-link
                 :to="`/hotels/${row._id}`"
@@ -447,7 +459,9 @@
                 :title="row.status === 'active' ? $t('common.deactivate') : $t('common.activate')"
                 @click="toggleStatus(row)"
               >
-                <span class="material-icons text-lg">{{ row.status === 'active' ? 'pause_circle' : 'play_circle' }}</span>
+                <span class="material-icons text-lg">{{
+                  row.status === 'active' ? 'pause_circle' : 'play_circle'
+                }}</span>
               </button>
               <button
                 class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -460,7 +474,11 @@
           </template>
 
           <template #empty-action>
-            <button v-if="activeFilterCount > 0" class="btn-secondary mt-4" @click="clearAllFilters">
+            <button
+              v-if="activeFilterCount > 0"
+              class="btn-secondary mt-4"
+              @click="clearAllFilters"
+            >
               {{ $t('hotels.clearFilters') }}
             </button>
             <button
@@ -510,13 +528,6 @@
         </button>
       </template>
     </Modal>
-
-    <!-- Widget Settings Modal -->
-    <HotelWidgetModal
-      v-model="showWidgetModal"
-      :hotel="selectedWidgetHotel"
-      @saved="onWidgetSaved"
-    />
   </div>
 </template>
 
@@ -526,7 +537,6 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
-import HotelWidgetModal from '@/components/hotels/HotelWidgetModal.vue'
 import hotelService from '@/services/hotelService'
 import { usePartnerContext } from '@/composables/usePartnerContext'
 import { useListView } from '@/composables/useListView'
@@ -549,9 +559,7 @@ const cities = ref([])
 const sortBy = ref('')
 const showDeleteModal = ref(false)
 const showBulkDeleteModal = ref(false)
-const showWidgetModal = ref(false)
 const selectedHotel = ref(null)
-const selectedWidgetHotel = ref(null)
 
 const stats = reactive({
   total: 0,
@@ -623,8 +631,14 @@ const {
 
 // Use async action for delete operations
 const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
-const { execute: executeFetchCities } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
-const { execute: executeFetchStats } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { execute: executeFetchCities } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
+const { execute: executeFetchStats } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 const { execute: executeToggleStatus } = useAsyncAction({ showErrorToast: false })
 const { execute: executeToggleFeatured } = useAsyncAction({ showErrorToast: false })
 
@@ -679,40 +693,34 @@ const activeFilterCount = computed(() => {
 
 // Fetch cities for filter dropdown
 const fetchCities = async () => {
-  await executeFetchCities(
-    () => hotelService.getCities(),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          cities.value = response.data || []
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch cities:', error)
+  await executeFetchCities(() => hotelService.getCities(), {
+    onSuccess: response => {
+      if (response.success) {
+        cities.value = response.data || []
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch cities:', error)
     }
-  )
+  })
 }
 
 // Fetch stats separately
 const fetchStats = async () => {
-  await executeFetchStats(
-    () => hotelService.getHotels({ limit: 1 }),
-    {
-      onSuccess: response => {
-        if (response.success && response.data.stats) {
-          stats.total = response.data.stats.total || 0
-          stats.active = response.data.stats.active || 0
-          stats.inactive = response.data.stats.inactive || 0
-          stats.draft = response.data.stats.draft || 0
-          stats.featured = response.data.stats.featured || 0
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch stats:', error)
+  await executeFetchStats(() => hotelService.getHotels({ limit: 1 }), {
+    onSuccess: response => {
+      if (response.success && response.data.stats) {
+        stats.total = response.data.stats.total || 0
+        stats.active = response.data.stats.active || 0
+        stats.inactive = response.data.stats.inactive || 0
+        stats.draft = response.data.stats.draft || 0
+        stats.featured = response.data.stats.featured || 0
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch stats:', error)
     }
-  )
+  })
 }
 
 const getHotelName = hotel => {
@@ -737,49 +745,34 @@ const getHotelImage = hotel => {
 
 const toggleStatus = async hotel => {
   const newStatus = hotel.status === 'active' ? 'inactive' : 'active'
-  await executeToggleStatus(
-    () => hotelService.updateHotelStatus(hotel._id, newStatus),
-    {
-      successMessage: 'hotels.statusUpdated',
-      onSuccess: response => {
-        if (response.success) {
-          hotel.status = newStatus
-          fetchStats()
-        }
-      },
-      onError: error => {
-        toast.error(error.response?.data?.message || t('common.operationFailed'))
+  await executeToggleStatus(() => hotelService.updateHotelStatus(hotel._id, newStatus), {
+    successMessage: 'hotels.statusUpdated',
+    onSuccess: response => {
+      if (response.success) {
+        hotel.status = newStatus
+        fetchStats()
       }
+    },
+    onError: error => {
+      toast.error(error.response?.data?.message || t('common.operationFailed'))
     }
-  )
+  })
 }
 
 const toggleFeatured = async hotel => {
   const newFeatured = !hotel.featured
-  await executeToggleFeatured(
-    () => hotelService.toggleFeatured(hotel._id, newFeatured),
-    {
-      successMessage: newFeatured ? 'hotels.markedFeatured' : 'hotels.unmarkedFeatured',
-      onSuccess: response => {
-        if (response.success) {
-          hotel.featured = newFeatured
-          fetchStats()
-        }
-      },
-      onError: error => {
-        toast.error(error.response?.data?.message || t('common.operationFailed'))
+  await executeToggleFeatured(() => hotelService.toggleFeatured(hotel._id, newFeatured), {
+    successMessage: newFeatured ? 'hotels.markedFeatured' : 'hotels.unmarkedFeatured',
+    onSuccess: response => {
+      if (response.success) {
+        hotel.featured = newFeatured
+        fetchStats()
       }
+    },
+    onError: error => {
+      toast.error(error.response?.data?.message || t('common.operationFailed'))
     }
-  )
-}
-
-const openWidgetModal = hotel => {
-  selectedWidgetHotel.value = hotel
-  showWidgetModal.value = true
-}
-
-const onWidgetSaved = () => {
-  showWidgetModal.value = false
+  })
 }
 
 const confirmDelete = hotel => {
@@ -788,18 +781,15 @@ const confirmDelete = hotel => {
 }
 
 const handleDelete = async () => {
-  await executeDelete(
-    () => hotelService.deleteHotel(selectedHotel.value._id),
-    {
-      successMessage: 'hotels.deleteSuccess',
-      errorMessage: 'common.deleteFailed',
-      onSuccess: () => {
-        showDeleteModal.value = false
-        fetchHotels()
-        fetchStats()
-      }
+  await executeDelete(() => hotelService.deleteHotel(selectedHotel.value._id), {
+    successMessage: 'hotels.deleteSuccess',
+    errorMessage: 'common.deleteFailed',
+    onSuccess: () => {
+      showDeleteModal.value = false
+      fetchHotels()
+      fetchStats()
     }
-  )
+  })
 }
 
 const clearAllFilters = () => {
@@ -818,28 +808,22 @@ const clearAllFilters = () => {
 // Bulk actions
 const bulkActivate = async () => {
   showBulkMenu.value = false
-  await executeBulkAction(
-    hotelId => hotelService.updateHotelStatus(hotelId, 'active'),
-    {
-      successMessage: 'hotels.bulkActivateSuccess',
-      errorMessage: 'common.operationFailed',
-      clearOnSuccess: true
-    }
-  )
+  await executeBulkAction(hotelId => hotelService.updateHotelStatus(hotelId, 'active'), {
+    successMessage: 'hotels.bulkActivateSuccess',
+    errorMessage: 'common.operationFailed',
+    clearOnSuccess: true
+  })
   fetchHotels()
   fetchStats()
 }
 
 const bulkDeactivate = async () => {
   showBulkMenu.value = false
-  await executeBulkAction(
-    hotelId => hotelService.updateHotelStatus(hotelId, 'inactive'),
-    {
-      successMessage: 'hotels.bulkDeactivateSuccess',
-      errorMessage: 'common.operationFailed',
-      clearOnSuccess: true
-    }
-  )
+  await executeBulkAction(hotelId => hotelService.updateHotelStatus(hotelId, 'inactive'), {
+    successMessage: 'hotels.bulkDeactivateSuccess',
+    errorMessage: 'common.operationFailed',
+    clearOnSuccess: true
+  })
   fetchHotels()
   fetchStats()
 }
@@ -850,14 +834,11 @@ const confirmBulkDelete = () => {
 }
 
 const handleBulkDelete = async () => {
-  await executeBulkAction(
-    hotelId => hotelService.deleteHotel(hotelId),
-    {
-      successMessage: 'hotels.bulkDeleteSuccess',
-      errorMessage: 'common.deleteFailed',
-      clearOnSuccess: true
-    }
-  )
+  await executeBulkAction(hotelId => hotelService.deleteHotel(hotelId), {
+    successMessage: 'hotels.bulkDeleteSuccess',
+    errorMessage: 'common.deleteFailed',
+    clearOnSuccess: true
+  })
   showBulkDeleteModal.value = false
   fetchHotels()
   fetchStats()
