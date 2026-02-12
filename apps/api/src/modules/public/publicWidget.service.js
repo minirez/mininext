@@ -6,6 +6,7 @@
 import { asyncHandler } from '#helpers'
 import { NotFoundError } from '#core/errors.js'
 import Hotel from '#modules/hotel/hotel.model.js'
+import Market from '#modules/planning/market.model.js'
 
 // Country to currency mapping
 const COUNTRY_CURRENCY_MAP = {
@@ -85,13 +86,15 @@ const DEFAULT_MARKET = { currency: 'EUR', locale: 'en-US' }
  */
 export const detectMarket = asyncHandler(async (req, res) => {
   // Get IP address
-  const ip = req.ip ||
+  const ip =
+    req.ip ||
     req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
     req.connection.remoteAddress ||
     '127.0.0.1'
 
   // For local/private IPs, default to Turkey
-  const isLocalIP = ip === '127.0.0.1' ||
+  const isLocalIP =
+    ip === '127.0.0.1' ||
     ip === '::1' ||
     ip.startsWith('192.168.') ||
     ip.startsWith('10.') ||
@@ -185,6 +188,19 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
   // Get main image
   const mainImage = hotel.images?.find(img => img.isMain) || hotel.images?.[0]
 
+  // Get default market's payment methods (source of truth for B2C payment options)
+  const defaultMarket = await Market.findOne({
+    hotel: hotel._id,
+    isDefault: true,
+    status: 'active'
+  })
+    .select('paymentMethods')
+    .lean()
+
+  // Merge: market settings take precedence, widget config as fallback
+  const marketPM = defaultMarket?.paymentMethods
+  const widgetPM = hotel.widgetConfig?.paymentMethods
+
   // Build widget config with defaults
   const widgetConfig = {
     enabled: hotel.widgetConfig?.enabled ?? true,
@@ -199,9 +215,13 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
       message: hotel.widgetConfig?.whatsapp?.message || null
     },
     paymentMethods: {
-      creditCard: hotel.widgetConfig?.paymentMethods?.creditCard ?? true,
-      payAtHotel: hotel.widgetConfig?.paymentMethods?.payAtHotel ?? true,
-      bankTransfer: hotel.widgetConfig?.paymentMethods?.bankTransfer ?? false
+      creditCard: marketPM
+        ? (marketPM.creditCard?.enabled ?? true)
+        : (widgetPM?.creditCard ?? true),
+      payAtHotel: widgetPM?.payAtHotel ?? true,
+      bankTransfer: marketPM
+        ? (marketPM.bankTransfer?.enabled ?? false)
+        : (widgetPM?.bankTransfer ?? false)
     },
     guestOptions: {
       requireNationality: hotel.widgetConfig?.guestOptions?.requireNationality ?? true,

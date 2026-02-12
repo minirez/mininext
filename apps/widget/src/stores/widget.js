@@ -65,7 +65,7 @@ export const useWidgetStore = defineStore('widget', () => {
   const booking = ref(null)
 
   // Payment State
-  const paymentMethod = ref('credit_card') // credit_card, pay_at_hotel, bank_transfer
+  const paymentMethod = ref('credit_card') // credit_card, pay_at_checkin, bank_transfer
   const paymentResult = ref(null)
 
   // Bank Transfer State

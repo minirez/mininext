@@ -5,6 +5,7 @@ import { useFormatters } from '../composables/useFormatters'
 import { useTranslation } from '../composables/useTranslation'
 import ViewHeader from '../components/ViewHeader.vue'
 import PhoneInput from '../components/PhoneInput.vue'
+import { countries } from '../data/countries'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateMedium } = useFormatters()
@@ -162,7 +163,7 @@ onMounted(() => {
   if (paymentMethods.value.creditCard) {
     selectedPaymentMethod.value = 'credit_card'
   } else if (paymentMethods.value.payAtHotel) {
-    selectedPaymentMethod.value = 'pay_at_hotel'
+    selectedPaymentMethod.value = 'pay_at_checkin'
   }
 
   // Initialize guest list from search params
@@ -422,13 +423,16 @@ onMounted(() => {
               <label class="form-label">
                 {{ t('booking.form.nationality') }} {{ t('common.required') }}
               </label>
-              <input
+              <select
                 v-model="guest.nationality"
-                type="text"
                 class="form-input"
                 :class="{ error: errors[`guest_${index}_nationality`] }"
-                :placeholder="t('booking.form.nationalityPlaceholder')"
-              />
+              >
+                <option value="">{{ t('booking.form.nationalityPlaceholder') }}</option>
+                <option v-for="c in countries" :key="c.code" :value="c.code">
+                  {{ c.flag }} {{ c.name }}
+                </option>
+              </select>
               <span v-if="errors[`guest_${index}_nationality`]" class="form-error">{{
                 errors[`guest_${index}_nationality`]
               }}</span>
@@ -560,12 +564,12 @@ onMounted(() => {
           <label
             v-if="paymentMethods.payAtHotel"
             class="payment-method"
-            :class="{ selected: selectedPaymentMethod === 'pay_at_hotel' }"
+            :class="{ selected: selectedPaymentMethod === 'pay_at_checkin' }"
           >
             <input
               v-model="selectedPaymentMethod"
               type="radio"
-              value="pay_at_hotel"
+              value="pay_at_checkin"
               class="sr-only"
             />
             <div class="payment-method-icon">

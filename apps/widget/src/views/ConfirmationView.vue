@@ -74,7 +74,7 @@ function closeWidget() {
         <template v-if="isPaid">
           {{ t('confirmation.messages.paid') }}
         </template>
-        <template v-else-if="paymentMethod === 'pay_at_hotel'">
+        <template v-else-if="paymentMethod === 'pay_at_checkin'">
           {{ t('confirmation.messages.payAtHotel') }}
         </template>
         <template v-else>
