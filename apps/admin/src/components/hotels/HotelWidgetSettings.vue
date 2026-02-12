@@ -80,8 +80,9 @@
           <label class="form-label">{{ $t('hotels.widget.triggerText') }}</label>
           <MultiLangInput
             v-model="form.triggerText"
+            :languages="B2C_LANGUAGES"
             :placeholder="$t('hotels.widget.triggerTextPlaceholder')"
-            :help-text="$t('hotels.widget.triggerTextHelp')"
+            :help="$t('hotels.widget.triggerTextHelp')"
           />
         </div>
       </div>
@@ -116,8 +117,9 @@
             <label class="form-label">{{ $t('hotels.widget.whatsapp.message') }}</label>
             <MultiLangInput
               v-model="form.whatsapp.message"
+              :languages="B2C_LANGUAGES"
+              type="textarea"
               :placeholder="$t('hotels.widget.whatsapp.messagePlaceholder')"
-              :multiline="true"
             />
           </div>
         </div>
@@ -334,7 +336,9 @@
         </p>
 
         <div class="relative">
-          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">{{ embedCode }}</pre>
+          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">{{
+            embedCode
+          }}</pre>
           <button
             type="button"
             class="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 rounded text-white transition-colors"
@@ -344,7 +348,9 @@
           </button>
         </div>
 
-        <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div
+          class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+        >
           <div class="flex items-start gap-2">
             <span class="material-icons text-blue-500 mt-0.5">info</span>
             <div class="text-sm text-blue-700 dark:text-blue-400">
@@ -364,6 +370,7 @@ import { useToast } from 'vue-toastification'
 import Toggle from '@/components/ui/form/Toggle.vue'
 import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
+import { B2C_LANGUAGES } from '@/constants/languages'
 
 const props = defineProps({
   hotel: {
@@ -425,7 +432,7 @@ const modeDescription = computed(() => {
 const partnerId = computed(() => {
   const p = props.hotel?.partner
   if (!p) return ''
-  return typeof p === 'object' ? (p._id || p.id || '') : p
+  return typeof p === 'object' ? p._id || p.id || '' : p
 })
 
 // Generate embed code
