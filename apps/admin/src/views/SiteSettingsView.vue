@@ -39,6 +39,11 @@
             :saving="saving"
             @save="handleSetupSave"
             @request-ssl="handleSslRequest"
+            @update:settings="
+              val => {
+                if (settings) settings.setup = val
+              }
+            "
           />
         </div>
 

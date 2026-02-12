@@ -857,6 +857,15 @@ const hotelSchema = new mongoose.Schema(
       customCss: { type: String, trim: true }
     },
 
+    // PMS Domain (per-hotel)
+    pmsDomain: { type: String, lowercase: true, trim: true },
+    pmsSslStatus: {
+      type: String,
+      enum: ['pending', 'active', 'failed', 'none'],
+      default: 'none'
+    },
+    pmsSslExpiresAt: Date,
+
     // Display settings
     featured: { type: Boolean, default: false },
     displayOrder: { type: Number, default: 0 },
@@ -911,6 +920,7 @@ hotelSchema.index({ featured: 1 })
 hotelSchema.index({ category: 1 })
 hotelSchema.index({ 'visibility.b2c': 1 })
 hotelSchema.index({ 'visibility.b2b': 1 })
+hotelSchema.index({ pmsDomain: 1 }, { unique: true, sparse: true })
 
 // Virtual - Room types
 hotelSchema.virtual('roomTypes', {
@@ -1041,6 +1051,10 @@ hotelSchema.statics.findB2C = function (partnerId) {
     status: 'active',
     'visibility.b2c': true
   })
+}
+
+hotelSchema.statics.findByPmsDomain = function (domain) {
+  return this.findOne({ pmsDomain: domain.toLowerCase() })
 }
 
 hotelSchema.statics.findB2B = function (partnerId) {

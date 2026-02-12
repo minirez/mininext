@@ -80,6 +80,23 @@ router.post(
 )
 
 // ===========================================
+// HOTEL DOMAIN (PMS per-hotel)
+// ===========================================
+
+router.get('/hotels/:hotelId/domain', hotelMiddleware, settingsService.getHotelDomain)
+router.put('/hotels/:hotelId/domain', hotelMiddleware, settingsService.updateHotelDomain)
+router.post(
+  '/hotels/:hotelId/domain/verify-dns',
+  hotelMiddleware,
+  settingsService.verifyHotelDomainDns
+)
+router.post(
+  '/hotels/:hotelId/domain/setup-ssl',
+  hotelMiddleware,
+  settingsService.setupHotelDomainSsl
+)
+
+// ===========================================
 // AGENCY ROUTES (delegated to agency module)
 // Partner-level, no hotel context needed
 // ===========================================

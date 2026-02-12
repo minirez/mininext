@@ -1,6 +1,9 @@
 import { asyncHandler } from '#helpers'
+import { ConflictError } from '#core/errors.js'
 import PmsSettings from './settings.model.js'
 import Hotel from '#modules/hotel/hotel.model.js'
+import sslService from '#services/sslService.js'
+import logger from '#core/logger.js'
 
 /**
  * PMS Settings Service
@@ -731,4 +734,155 @@ export const getCurrencies = asyncHandler(async (req, res) => {
     success: true,
     data: currencies
   })
+})
+
+// ==========================================
+// HOTEL DOMAIN (PMS per-hotel)
+// ==========================================
+
+/**
+ * Otel domain bilgisini getir
+ */
+export const getHotelDomain = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+
+  const hotel = await Hotel.findById(hotelId).select('pmsDomain pmsSslStatus pmsSslExpiresAt')
+  if (!hotel) {
+    return res.status(404).json({ success: false, message: 'Otel bulunamadı' })
+  }
+
+  res.json({
+    success: true,
+    data: {
+      pmsDomain: hotel.pmsDomain || '',
+      pmsSslStatus: hotel.pmsSslStatus || 'none',
+      pmsSslExpiresAt: hotel.pmsSslExpiresAt || null
+    }
+  })
+})
+
+/**
+ * Otel domain güncelle
+ */
+export const updateHotelDomain = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+  const { pmsDomain } = req.body
+
+  const hotel = await Hotel.findById(hotelId)
+  if (!hotel) {
+    return res.status(404).json({ success: false, message: 'Otel bulunamadı' })
+  }
+
+  const clean = pmsDomain && pmsDomain.trim() ? pmsDomain.trim().toLowerCase() : null
+
+  // Uniqueness check
+  if (clean) {
+    const existing = await Hotel.findOne({ pmsDomain: clean, _id: { $ne: hotelId } })
+    if (existing) {
+      throw new ConflictError('Bu domain zaten başka bir otelde kullanılıyor')
+    }
+  }
+
+  // Reset SSL if domain changed
+  if (clean !== hotel.pmsDomain) {
+    hotel.pmsSslStatus = 'none'
+    hotel.pmsSslExpiresAt = null
+  }
+
+  hotel.pmsDomain = clean || undefined
+  await hotel.save()
+
+  res.json({
+    success: true,
+    data: {
+      pmsDomain: hotel.pmsDomain || '',
+      pmsSslStatus: hotel.pmsSslStatus || 'none',
+      pmsSslExpiresAt: hotel.pmsSslExpiresAt || null
+    }
+  })
+})
+
+/**
+ * Otel domain DNS doğrula
+ */
+export const verifyHotelDomainDns = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+
+  const hotel = await Hotel.findById(hotelId)
+  if (!hotel) {
+    return res.status(404).json({ success: false, message: 'Otel bulunamadı' })
+  }
+
+  if (!hotel.pmsDomain) {
+    return res.status(400).json({ success: false, message: 'Domain tanımlı değil' })
+  }
+
+  const result = await sslService.verifyDNS(hotel.pmsDomain)
+
+  res.json({
+    success: result.success,
+    message: result.message,
+    data: {
+      verified: result.success,
+      serverIP: result.serverIP,
+      domainIP: result.domainIP
+    }
+  })
+})
+
+/**
+ * Otel domain SSL kurulumu
+ */
+export const setupHotelDomainSsl = asyncHandler(async (req, res) => {
+  const { hotelId } = req.params
+
+  const hotel = await Hotel.findById(hotelId)
+  if (!hotel) {
+    return res.status(404).json({ success: false, message: 'Otel bulunamadı' })
+  }
+
+  if (!hotel.pmsDomain) {
+    return res.status(400).json({ success: false, message: 'Domain tanımlı değil' })
+  }
+
+  // Set pending
+  hotel.pmsSslStatus = 'pending'
+  await hotel.save()
+
+  logger.info(`[SSL] Starting hotel PMS SSL setup for ${hotel.pmsDomain} (hotel: ${hotelId})`)
+
+  const result = await sslService.setupSSL(hotel.pmsDomain, 'pms', hotel.partner.toString())
+
+  if (result.success) {
+    hotel.pmsSslStatus = 'active'
+    hotel.pmsSslExpiresAt = result.expiresAt
+    await hotel.save()
+
+    logger.info(`[SSL] Hotel PMS SSL setup completed for ${hotel.pmsDomain}`)
+
+    res.json({
+      success: true,
+      message: 'SSL kurulumu tamamlandı',
+      data: {
+        pmsDomain: hotel.pmsDomain,
+        pmsSslStatus: 'active',
+        pmsSslExpiresAt: result.expiresAt
+      }
+    })
+  } else {
+    hotel.pmsSslStatus = 'failed'
+    await hotel.save()
+
+    logger.error(`[SSL] Hotel PMS SSL setup failed for ${hotel.pmsDomain}: ${result.message}`)
+
+    res.status(400).json({
+      success: false,
+      message: result.message,
+      data: {
+        pmsDomain: hotel.pmsDomain,
+        pmsSslStatus: 'failed',
+        step: result.step
+      }
+    })
+  }
 })

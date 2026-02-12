@@ -129,6 +129,11 @@ onMounted(async () => {
     const data = await res.json()
     if (data.success && data.data) {
       partnerBranding.value = data.data
+
+      // If this is a per-hotel PMS domain, store for auto-select after login
+      if (data.data.pmsHotel) {
+        localStorage.setItem('pmsAutoSelectHotel', JSON.stringify(data.data.pmsHotel))
+      }
     }
   } catch {
     // Not a partner domain or API unavailable - use default branding

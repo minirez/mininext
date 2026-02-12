@@ -189,6 +189,22 @@ const handleClickOutside = event => {
 
 const autoSelectIfSingle = async () => {
   if (pmsStore.hasSelectedHotel) return
+
+  // Check for PMS domain auto-select (per-hotel domain login)
+  const autoSelectData = localStorage.getItem('pmsAutoSelectHotel')
+  if (autoSelectData) {
+    try {
+      const pmsHotel = JSON.parse(autoSelectData)
+      localStorage.removeItem('pmsAutoSelectHotel')
+      if (pmsHotel?.id && pmsHotel?.name) {
+        pmsStore.setHotel({ _id: pmsHotel.id, name: pmsHotel.name })
+        return
+      }
+    } catch {
+      localStorage.removeItem('pmsAutoSelectHotel')
+    }
+  }
+
   try {
     const response = await hotelService.getHotels({ limit: 2 })
     if (response.success) {

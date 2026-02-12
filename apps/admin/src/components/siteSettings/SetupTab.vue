@@ -41,26 +41,7 @@
         @setup-ssl="handleSetupSsl('b2b')"
       />
 
-      <!-- PMS Domain (agency dışı partnerler için) -->
-      <DomainCard
-        v-if="partnerType !== 'agency'"
-        type="pms"
-        icon="hotel"
-        icon-color="text-indigo-600"
-        :title="$t('siteSettings.setup.pmsDomain')"
-        :description="$t('siteSettings.setup.pmsDescription')"
-        placeholder="pms.example.com"
-        v-model:domain="form.pmsDomain"
-        :ssl-status="settings?.pmsSslStatus"
-        :ssl-expires="settings?.pmsSslExpiresAt"
-        :verifying="verifying.pms"
-        :setting-up-ssl="settingUpSsl.pms"
-        :dns-verified="dnsVerified.pms"
-        :dns-result="dnsResult.pms"
-        :saving="saving"
-        @verify-dns="handleVerifyDns('pms')"
-        @setup-ssl="handleSetupSsl('pms')"
-      />
+      <!-- PMS Domain moved to PMS Settings per-hotel -->
     </div>
 
     <!-- DNS Instructions -->
@@ -129,15 +110,14 @@ const emit = defineEmits(['save', 'request-ssl', 'update:settings'])
 
 const form = ref({
   b2cDomain: '',
-  b2bDomain: '',
-  pmsDomain: ''
+  b2bDomain: ''
 })
 
 // DNS verification state
-const verifying = reactive({ b2c: false, b2b: false, pms: false })
-const dnsVerified = reactive({ b2c: false, b2b: false, pms: false })
-const dnsResult = reactive({ b2c: null, b2b: null, pms: null })
-const settingUpSsl = reactive({ b2c: false, b2b: false, pms: false })
+const verifying = reactive({ b2c: false, b2b: false })
+const dnsVerified = reactive({ b2c: false, b2b: false })
+const dnsResult = reactive({ b2c: null, b2b: null })
+const settingUpSsl = reactive({ b2c: false, b2b: false })
 const serverIP = ref(null)
 
 watch(
@@ -146,8 +126,7 @@ watch(
     if (newSettings) {
       form.value = {
         b2cDomain: newSettings.b2cDomain || '',
-        b2bDomain: newSettings.b2bDomain || '',
-        pmsDomain: newSettings.pmsDomain || ''
+        b2bDomain: newSettings.b2bDomain || ''
       }
     }
   },
@@ -155,7 +134,7 @@ watch(
 )
 
 const handleVerifyDns = async type => {
-  const domainMap = { b2c: 'b2cDomain', b2b: 'b2bDomain', pms: 'pmsDomain' }
+  const domainMap = { b2c: 'b2cDomain', b2b: 'b2bDomain' }
   const domain = form.value[domainMap[type]]
 
   if (!domain) {

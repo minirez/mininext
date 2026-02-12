@@ -979,6 +979,7 @@
     "resetSuccess": "Ayarlar sıfırlandı",
     "resetError": "Ayarlar sıfırlanırken hata oluştu",
     "tabs": {
+      "domain": "Domain",
       "general": "Genel",
       "frontDesk": "Resepsiyon",
       "roomTypes": "Oda Tipleri",
@@ -994,6 +995,12 @@
       "guests": "Misafir",
       "kbs": "KBS",
       "users": "Kullanıcılar"
+    },
+    "domain": {
+      "title": "PMS Domain",
+      "description": "Bu otel için özel PMS domain tanımlayın. Domain üzerinden doğrudan bu otelin PMS paneline erişilebilir.",
+      "saved": "Domain kaydedildi",
+      "saveError": "Domain kaydedilirken hata oluştu"
     },
     "roomTypes": {
       "title": "Oda Tipleri",

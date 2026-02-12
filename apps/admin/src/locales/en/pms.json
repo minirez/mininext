@@ -980,6 +980,7 @@
     "resetSuccess": "Settings reset",
     "resetError": "Error resetting settings",
     "tabs": {
+      "domain": "Domain",
       "general": "General",
       "frontDesk": "Front Desk",
       "roomTypes": "Room Types",
@@ -995,6 +996,12 @@
       "guests": "Guests",
       "kbs": "KBS",
       "users": "Users"
+    },
+    "domain": {
+      "title": "PMS Domain",
+      "description": "Define a custom PMS domain for this hotel. Users can access this hotel's PMS panel directly through this domain.",
+      "saved": "Domain saved",
+      "saveError": "Error saving domain"
     },
     "roomTypes": {
       "title": "Room Types",

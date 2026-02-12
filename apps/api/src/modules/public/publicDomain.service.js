@@ -23,7 +23,8 @@ const findPartnerByDomain = async domain => {
 /**
  * Resolve domain to partner
  * GET /public/resolve-domain?domain=partner.example.com
- * Returns partner info based on domain match (checks pms, extranet, site domains)
+ * Returns partner info based on domain match
+ * First checks hotel-level PMS domains, then partner-level domains
  */
 export const resolveDomain = asyncHandler(async (req, res) => {
   const { domain } = req.query
@@ -34,6 +35,46 @@ export const resolveDomain = asyncHandler(async (req, res) => {
 
   const normalizedDomain = domain.toLowerCase().trim()
 
+  // 1. Check hotel-level PMS domain first
+  const hotel = await Hotel.findByPmsDomain(normalizedDomain)
+  if (hotel) {
+    const partner = await Partner.findById(hotel.partner)
+    if (partner && partner.status === 'active') {
+      // Get all active hotels for this partner
+      const hotels = await Hotel.find({
+        partner: partner._id,
+        status: 'active'
+      })
+        .select('_id name slug logo stars')
+        .limit(50)
+
+      return res.json({
+        success: true,
+        data: {
+          partnerId: partner._id,
+          partnerName: partner.companyName,
+          code: partner.code,
+          logo: partner.branding?.logo,
+          pmsHotel: {
+            id: hotel._id,
+            name: hotel.name,
+            slug: hotel.slug,
+            logo: hotel.logo,
+            stars: hotel.stars
+          },
+          hotels: hotels.map(h => ({
+            id: h._id,
+            name: h.name,
+            slug: h.slug,
+            logo: h.logo,
+            stars: h.stars
+          }))
+        }
+      })
+    }
+  }
+
+  // 2. Try partner-level domains (extranet, site, pms)
   const partner = await findPartnerByDomain(normalizedDomain)
 
   if (partner && partner.status === 'active') {

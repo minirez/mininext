@@ -97,6 +97,30 @@ export const getNextReceiptNumber = async hotelId => {
   return response.data
 }
 
+// ==========================================
+// HOTEL DOMAIN (PMS per-hotel)
+// ==========================================
+
+export const getHotelDomain = async hotelId => {
+  const response = await apiClient.get(`${BASE}/hotels/${hotelId}/domain`)
+  return response.data
+}
+
+export const updateHotelDomain = async (hotelId, pmsDomain) => {
+  const response = await apiClient.put(`${BASE}/hotels/${hotelId}/domain`, { pmsDomain })
+  return response.data
+}
+
+export const verifyHotelDomainDns = async hotelId => {
+  const response = await apiClient.post(`${BASE}/hotels/${hotelId}/domain/verify-dns`)
+  return response.data
+}
+
+export const setupHotelDomainSsl = async hotelId => {
+  const response = await apiClient.post(`${BASE}/hotels/${hotelId}/domain/setup-ssl`)
+  return response.data
+}
+
 export const SETTINGS_SECTIONS = {
   GENERAL: 'general',
   FRONT_DESK: 'frontDesk',
@@ -173,6 +197,10 @@ export default {
   resetSettings,
   getNextInvoiceNumber,
   getNextReceiptNumber,
+  getHotelDomain,
+  updateHotelDomain,
+  verifyHotelDomainDns,
+  setupHotelDomainSsl,
   SETTINGS_SECTIONS,
   DATE_FORMATS,
   TIME_FORMATS,

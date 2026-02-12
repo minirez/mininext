@@ -119,8 +119,8 @@ server {
         add_header Cache-Control "public, immutable";
     }`
 
-  // B2B (admin panel) - statik dist dosyalardan serve eder (app.maxirez.com gibi)
-  if (type === 'b2b') {
+  // B2B ve PMS (admin panel) - statik dist dosyalardan serve eder (app.maxirez.com gibi)
+  if (type === 'b2b' || type === 'pms') {
     const adminDist = CONFIG.adminDistPath
     return `# Auto-generated config for ${domain} (${type})
 # Partner ID: ${partnerId}

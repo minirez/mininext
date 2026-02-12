@@ -61,6 +61,9 @@
 
         <!-- Tab Content -->
         <div class="p-6">
+          <!-- Domain Settings -->
+          <DomainSettings v-if="activeTab === 'domain'" :hotel-id="hotelId" />
+
           <!-- General Settings -->
           <GeneralSettings
             v-if="activeTab === 'general'"
@@ -206,6 +209,7 @@ import ExchangeSettings from '@/components/pms/settings/ExchangeSettings.vue'
 import AgencySettings from '@/components/pms/settings/AgencySettings.vue'
 import RoomTypesSettings from '@/components/pms/settings/RoomTypesSettings.vue'
 import MealPlansSettings from '@/components/pms/settings/MealPlansSettings.vue'
+import DomainSettings from '@/components/pms/settings/DomainSettings.vue'
 import { usePmsStore } from '@/stores/pms'
 
 const toast = useToast()
@@ -219,7 +223,7 @@ const saving = ref(false)
 const hasChanges = ref(false)
 const showResetModal = ref(false)
 const resetSection = ref(null)
-const activeTab = ref('general')
+const activeTab = ref('domain')
 
 const settings = ref({
   general: {},
@@ -240,6 +244,7 @@ const currencies = ref([])
 
 // Tabs configuration - computed to support i18n reactivity
 const tabs = computed(() => [
+  { id: 'domain', label: t('pms.settings.tabs.domain'), icon: 'dns' },
   { id: 'general', label: t('settings.tabs.general'), icon: 'settings' },
   { id: 'frontDesk', label: t('settings.tabs.frontDesk'), icon: 'desk' },
   { id: 'roomTypes', label: t('settings.tabs.roomTypes'), icon: 'bed' },
