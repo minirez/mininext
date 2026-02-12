@@ -48,7 +48,7 @@ export const getMyProfile = asyncHandler(async (req, res) => {
   }
 
   const partner = await Partner.findById(partnerId).select(
-    'companyName tradeName email phone taxOffice taxNumber address branding'
+    'companyName tradeName email phone taxOffice taxNumber address branding paymentSettings'
   )
 
   if (!partner) {
@@ -76,7 +76,15 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   }
 
   // Only allow updating specific fields (not email, branding domains, etc.)
-  const allowedFields = ['companyName', 'tradeName', 'phone', 'taxOffice', 'taxNumber', 'address']
+  const allowedFields = [
+    'companyName',
+    'tradeName',
+    'phone',
+    'taxOffice',
+    'taxNumber',
+    'address',
+    'paymentSettings'
+  ]
 
   allowedFields.forEach(field => {
     if (req.body[field] !== undefined) {

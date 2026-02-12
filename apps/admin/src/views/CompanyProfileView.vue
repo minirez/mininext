@@ -84,6 +84,14 @@
           @upload-favicon="handleUploadFavicon"
           @delete-favicon="handleDeleteFavicon"
         />
+
+        <!-- Bank Accounts Tab -->
+        <BankAccountsTab
+          v-else-if="activeTab === 'bankAccounts'"
+          v-model="formData"
+          :saving="saving"
+          @save="handleSave"
+        />
       </div>
     </div>
   </div>
@@ -99,6 +107,7 @@ import CompanyTab from '@/components/companyProfile/CompanyTab.vue'
 import TaxTab from '@/components/companyProfile/TaxTab.vue'
 import AddressTab from '@/components/companyProfile/AddressTab.vue'
 import BrandingTab from '@/components/companyProfile/BrandingTab.vue'
+import BankAccountsTab from '@/components/companyProfile/BankAccountsTab.vue'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -124,6 +133,10 @@ const formData = ref({
   branding: {
     logo: null,
     favicon: null
+  },
+  paymentSettings: {
+    bankTransferEnabled: false,
+    bankAccounts: []
   }
 })
 
@@ -148,6 +161,11 @@ const tabs = computed(() => [
     key: 'branding',
     label: t('companyProfile.tabs.branding'),
     icon: 'palette'
+  },
+  {
+    key: 'bankAccounts',
+    label: t('companyProfile.tabs.bankAccounts'),
+    icon: 'account_balance'
   }
 ])
 
@@ -175,6 +193,10 @@ const fetchProfile = async () => {
         branding: {
           logo: data.branding?.logo || null,
           favicon: data.branding?.favicon || null
+        },
+        paymentSettings: {
+          bankTransferEnabled: data.paymentSettings?.bankTransferEnabled ?? false,
+          bankAccounts: data.paymentSettings?.bankAccounts || []
         }
       }
     }
@@ -197,7 +219,8 @@ const handleSave = async () => {
       phone: formData.value.phone,
       taxOffice: formData.value.taxOffice,
       taxNumber: formData.value.taxNumber,
-      address: formData.value.address
+      address: formData.value.address,
+      paymentSettings: formData.value.paymentSettings
     })
 
     if (response.success) {

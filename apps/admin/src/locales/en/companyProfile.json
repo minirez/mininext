@@ -6,7 +6,8 @@
       "company": "Company Info",
       "tax": "Tax Information",
       "address": "Address",
-      "branding": "Logo & Favicon"
+      "branding": "Logo & Favicon",
+      "bankAccounts": "Bank Accounts"
     },
     "fields": {
       "companyName": "Company Name",
@@ -35,6 +36,7 @@
       "faviconDeleted": "Favicon deleted",
       "fetchError": "Failed to load company information"
     },
-    "taxInfoNote": "Tax information will be used in invoices and official documents."
+    "taxInfoNote": "Tax information will be used in invoices and official documents.",
+    "bankAccountsDescription": "Add your bank account details to receive payments via bank transfer"
   }
 }

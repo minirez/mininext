@@ -6,7 +6,8 @@
       "company": "Şirket Bilgileri",
       "tax": "Vergi Bilgileri",
       "address": "Adres",
-      "branding": "Logo & Favicon"
+      "branding": "Logo & Favicon",
+      "bankAccounts": "Banka Hesapları"
     },
     "fields": {
       "companyName": "Şirket Adı",
@@ -35,6 +36,7 @@
       "faviconDeleted": "Favicon silindi",
       "fetchError": "Şirket bilgileri yüklenemedi"
     },
-    "taxInfoNote": "Vergi bilgileri fatura ve resmi belgelerinizde kullanılacaktır."
+    "taxInfoNote": "Vergi bilgileri fatura ve resmi belgelerinizde kullanılacaktır.",
+    "bankAccountsDescription": "Banka havalesi ile ödeme almak için hesap bilgilerinizi ekleyin"
   }
 }
