@@ -118,7 +118,16 @@ export default {
       payAtHotel: 'Otelde Ödeme',
       payAtHotelDesc: 'Giriş sırasında ödeyin',
       bankTransfer: 'Banka Transferi',
-      bankTransferDesc: 'Havale/EFT ile ödeyin'
+      bankTransferDesc: 'Havale/EFT ile ödeyin',
+      bankTransferDiscountDesc: 'Havale/EFT ile ödeyin ({discount} indirim)',
+      prepayment: 'Ön Ödeme',
+      prepaymentAmount: 'Ön Ödeme: {amount} ({percent})',
+      remainingAmount: 'Kalan: {amount}',
+      remainingAtCheckin: 'Giriş sırasında ödenecek',
+      remainingBeforeCheckin: 'Girişten {days} gün önce ödenecek',
+      remainingAfterBooking: 'Rezervasyondan {days} gün sonra ödenecek',
+      bankTransferDiscount: 'Havale ile {discount} indirim',
+      discountedTotal: 'İndirimli Toplam: {amount}'
     },
 
     submit: {

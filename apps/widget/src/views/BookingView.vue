@@ -19,6 +19,38 @@ const isLoading = computed(() => widgetStore.isLoading)
 const errorMessage = computed(() => widgetStore.error)
 const widgetConfig = computed(() => widgetStore.widgetConfig)
 const paymentMethods = computed(() => widgetConfig.value?.paymentMethods || {})
+const paymentTerms = computed(() => widgetStore.paymentTerms)
+const bankTransferDiscount = computed(() => widgetStore.bankTransferDiscount)
+
+// Ön ödeme hesaplamaları
+const totalAmount = computed(() => selectedOption.value?.pricing?.finalTotal || 0)
+
+const prepaymentAmount = computed(() => {
+  if (!paymentTerms.value?.prepaymentRequired) return 0
+  return Math.round((totalAmount.value * (paymentTerms.value.prepaymentPercentage || 30)) / 100)
+})
+
+const remainingAmount = computed(() => {
+  if (!paymentTerms.value?.prepaymentRequired) return totalAmount.value
+  return totalAmount.value - prepaymentAmount.value
+})
+
+const remainingPaymentText = computed(() => {
+  if (!paymentTerms.value?.remainingPayment) return ''
+  const rp = paymentTerms.value.remainingPayment
+  if (rp.type === 'at_checkin') return t('booking.payment.remainingAtCheckin')
+  if (rp.type === 'days_before_checkin')
+    return t('booking.payment.remainingBeforeCheckin', { days: rp.days })
+  if (rp.type === 'days_after_booking')
+    return t('booking.payment.remainingAfterBooking', { days: rp.days })
+  return ''
+})
+
+// Havale indirimi hesaplamaları
+const bankTransferDiscountedTotal = computed(() => {
+  if (!bankTransferDiscount.value || bankTransferDiscount.value <= 0) return totalAmount.value
+  return Math.round(totalAmount.value * (1 - bankTransferDiscount.value / 100))
+})
 
 // Resolve multilang name objects
 function resolveName(name) {
@@ -638,7 +670,22 @@ onMounted(() => {
             </div>
             <div class="payment-method-info">
               <span class="payment-method-name">{{ t('booking.payment.bankTransfer') }}</span>
-              <span class="payment-method-desc">{{ t('booking.payment.bankTransferDesc') }}</span>
+              <span class="payment-method-desc">
+                {{
+                  bankTransferDiscount > 0
+                    ? t('booking.payment.bankTransferDiscountDesc', {
+                        discount: '%' + bankTransferDiscount
+                      })
+                    : t('booking.payment.bankTransferDesc')
+                }}
+              </span>
+              <span v-if="bankTransferDiscount > 0" class="payment-discount-badge">
+                {{
+                  t('booking.payment.bankTransferDiscount', {
+                    discount: '%' + bankTransferDiscount
+                  })
+                }}
+              </span>
             </div>
             <div class="payment-method-check">
               <svg
@@ -656,6 +703,72 @@ onMounted(() => {
               </svg>
             </div>
           </label>
+        </div>
+
+        <!-- Havale İndirimi Bilgisi -->
+        <div
+          v-if="selectedPaymentMethod === 'bank_transfer' && bankTransferDiscount > 0"
+          class="payment-info-box payment-info-discount"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+            ></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <div class="payment-info-content">
+            <span class="payment-info-highlight">{{
+              t('booking.payment.discountedTotal', {
+                amount: formatCurrency(bankTransferDiscountedTotal)
+              })
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Ön Ödeme Bilgisi -->
+        <div
+          v-if="paymentTerms?.prepaymentRequired"
+          class="payment-info-box payment-info-prepayment"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div class="payment-info-content">
+            <span class="payment-info-highlight">{{
+              t('booking.payment.prepaymentAmount', {
+                amount: formatCurrency(prepaymentAmount),
+                percent: '%' + paymentTerms.prepaymentPercentage
+              })
+            }}</span>
+            <span class="payment-info-detail">{{
+              t('booking.payment.remainingAmount', { amount: formatCurrency(remainingAmount) })
+            }}</span>
+            <span v-if="remainingPaymentText" class="payment-info-detail">{{
+              remainingPaymentText
+            }}</span>
+          </div>
         </div>
       </div>
 

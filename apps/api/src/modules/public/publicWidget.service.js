@@ -249,6 +249,7 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
         image: mainImage?.url || null,
         stars: hotel.stars,
         type: hotel.type,
+        partnerId: hotel.partner?._id || null,
         address: {
           city: hotel.address?.city,
           country: hotel.address?.country,

@@ -116,7 +116,16 @@ export default {
       payAtHotel: 'Pay at Hotel',
       payAtHotelDesc: 'Pay upon check-in',
       bankTransfer: 'Bank Transfer',
-      bankTransferDesc: 'Pay via bank transfer'
+      bankTransferDesc: 'Pay via bank transfer',
+      bankTransferDiscountDesc: 'Pay via bank transfer ({discount} off)',
+      prepayment: 'Prepayment',
+      prepaymentAmount: 'Prepayment: {amount} ({percent})',
+      remainingAmount: 'Remaining: {amount}',
+      remainingAtCheckin: 'Due at check-in',
+      remainingBeforeCheckin: 'Due {days} days before check-in',
+      remainingAfterBooking: 'Due {days} days after booking',
+      bankTransferDiscount: '{discount} off with bank transfer',
+      discountedTotal: 'Discounted Total: {amount}'
     },
 
     submit: {

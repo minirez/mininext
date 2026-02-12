@@ -97,9 +97,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     hotelQuery.slug = hotelCode.toLowerCase()
   }
 
-  const hotel = await Hotel.findOne(hotelQuery)
-    .select('_id slug name childAgeGroups')
-    .lean()
+  const hotel = await Hotel.findOne(hotelQuery).select('_id slug name childAgeGroups').lean()
 
   if (!hotel) {
     throw new NotFoundError('HOTEL_NOT_FOUND')
@@ -141,9 +139,10 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     // Check if room accepts children
     if (children.length > maxChildren) {
       roomResult.capacityExceeded = true
-      roomResult.capacityMessage = maxChildren === 0
-        ? 'Bu oda çocuk kabul etmemektedir'
-        : `Max ${maxChildren} çocuk kabul edilmektedir`
+      roomResult.capacityMessage =
+        maxChildren === 0
+          ? 'Bu oda çocuk kabul etmemektedir'
+          : `Max ${maxChildren} çocuk kabul edilmektedir`
       results.push(roomResult)
       continue
     }
@@ -228,7 +227,9 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         adults,
         children,
         market: market.code,
-        currency: market.currency
+        currency: market.currency,
+        paymentTerms: market.paymentTerms || null,
+        bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0
       },
       results
     }

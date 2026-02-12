@@ -68,6 +68,10 @@ export const useWidgetStore = defineStore('widget', () => {
   const paymentMethod = ref('credit_card') // credit_card, pay_at_checkin, bank_transfer
   const paymentResult = ref(null)
 
+  // Payment Terms (from market)
+  const paymentTerms = ref(null)
+  const bankTransferDiscount = ref(0)
+
   // Bank Transfer State
   const bankAccounts = ref([])
   const bankTransferDescription = ref({})
@@ -197,6 +201,11 @@ export const useWidgetStore = defineStore('widget', () => {
       hotelInfo.value = hotelData.hotel
       widgetConfig.value = hotelData.config
 
+      // Partner ID'yi API'den al (embed kodda yoksa)
+      if (hotelData.hotel.partnerId && !config.value.partnerId) {
+        config.value.partnerId = hotelData.hotel.partnerId
+      }
+
       // Apply market detection (only if not restored)
       if (marketData) {
         detectedMarket.value = marketData
@@ -286,6 +295,15 @@ export const useWidgetStore = defineStore('widget', () => {
       )
 
       searchResults.value = results
+
+      // Pazar ödeme koşullarını kaydet
+      if (results.search?.paymentTerms) {
+        paymentTerms.value = results.search.paymentTerms
+      }
+      if (results.search?.bankTransferDiscount) {
+        bankTransferDiscount.value = results.search.bankTransferDiscount
+      }
+
       currentStep.value = 'results'
     } catch (err) {
       error.value = err.message
@@ -495,6 +513,8 @@ export const useWidgetStore = defineStore('widget', () => {
     booking,
     paymentMethod,
     paymentResult,
+    paymentTerms,
+    bankTransferDiscount,
     bankAccounts,
     bankTransferDescription,
     bankTransferEnabled,
