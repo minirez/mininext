@@ -23,9 +23,11 @@
           <span
             v-if="partnerStore.selectedPartner"
             class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
-            :class="partnerStore.selectedPartner.partnerType === 'hotel'
-              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+            :class="
+              partnerStore.selectedPartner.partnerType === 'hotel'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            "
           >
             {{ $t(`partners.types.${partnerStore.selectedPartner.partnerType || 'agency'}`) }}
           </span>
@@ -155,9 +157,11 @@
                   <span class="font-medium truncate">{{ partner.companyName }}</span>
                   <span
                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0"
-                    :class="partner.partnerType === 'hotel'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+                    :class="
+                      partner.partnerType === 'hotel'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    "
                   >
                     {{ $t(`partners.types.${partner.partnerType || 'agency'}`) }}
                   </span>
@@ -209,10 +213,14 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerStore } from '@/stores/partner'
+import { usePmsStore } from '@/stores/pms'
+import { useHotelStore } from '@/stores/hotel'
 import apiClient from '@/services/api'
 
 const authStore = useAuthStore()
 const partnerStore = usePartnerStore()
+const pmsStore = usePmsStore()
+const hotelStore = useHotelStore()
 
 const isOpen = ref(false)
 const dropdownRef = ref(null)
@@ -274,13 +282,23 @@ const clearSearch = () => {
 }
 
 const selectPartner = partner => {
+  const previousPartnerId = partnerStore.selectedPartner?._id
   partnerStore.selectPartner(partner)
+
+  // Partner değiştiğinde PMS otel seçimini ve hotel store'u sıfırla
+  if (partner._id !== previousPartnerId) {
+    pmsStore.clearHotel()
+    hotelStore.clearHotel()
+  }
+
   isOpen.value = false
   searchQuery.value = ''
 }
 
 const clearSelection = () => {
   partnerStore.clearSelectedPartner()
+  pmsStore.clearHotel()
+  hotelStore.clearHotel()
   isOpen.value = false
   searchQuery.value = ''
 }
