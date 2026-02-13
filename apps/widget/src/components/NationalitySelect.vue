@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTranslation } from '../composables/useTranslation'
-import { nationalities, codeToFlag } from '../data/nationalities'
+import { nationalities, getFlagUrl } from '../data/nationalities'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -84,7 +84,7 @@ onUnmounted(() => {
       @click.stop="toggle"
     >
       <template v-if="selected">
-        <span class="nat-flag">{{ codeToFlag(selected.code) }}</span>
+        <img class="nat-flag" :src="getFlagUrl(selected.code)" :alt="selected.code" />
         <span class="nat-name">{{ getName(selected) }}</span>
       </template>
       <span v-else class="nat-placeholder">{{
@@ -142,7 +142,7 @@ onUnmounted(() => {
           :class="{ active: c.code === modelValue }"
           @click="select(c)"
         >
-          <span class="nat-flag">{{ codeToFlag(c.code) }}</span>
+          <img class="nat-flag" :src="getFlagUrl(c.code)" :alt="c.code" />
           <span class="nat-option-name">{{ getName(c) }}</span>
           <svg
             v-if="c.code === modelValue"

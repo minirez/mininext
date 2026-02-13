@@ -3660,8 +3660,10 @@ select.form-input option {
 }
 
 .nat-select-trigger .nat-flag {
-  font-size: 18px;
-  line-height: 1;
+  width: 22px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
   flex-shrink: 0;
 }
 
@@ -3771,8 +3773,10 @@ select.form-input option {
 }
 
 .nat-option .nat-flag {
-  font-size: 16px;
-  line-height: 1;
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
   flex-shrink: 0;
 }
 

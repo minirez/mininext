@@ -1,17 +1,12 @@
 /**
  * Full country list for nationality selection
- * Uses emoji flags generated from country code
+ * Uses flag images from flagcdn.com for cross-platform support
  */
 
-// Convert ISO 3166-1 alpha-2 code to flag emoji
-export function codeToFlag(code) {
+// Get flag image URL from country code (works on all platforms including Windows)
+export function getFlagUrl(code) {
   if (!code || code.length !== 2) return ''
-  return String.fromCodePoint(
-    ...code
-      .toUpperCase()
-      .split('')
-      .map(c => 0x1f1e6 + c.charCodeAt(0) - 65)
-  )
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`
 }
 
 export const nationalities = [
