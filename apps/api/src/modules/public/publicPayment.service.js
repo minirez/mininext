@@ -89,12 +89,20 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
       result = await paymentGateway.queryBin(bin, amount, currencyLower, partnerId)
 
       // Check if domestic (TR) card → needs TRY conversion
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      // Card is likely domestic if:
+      // - country is explicitly 'tr'
+      // - card info is unreliable (unknown bank = BIN not recognized by PayTR/iyzico)
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         logger.debug(
           '[Public Payment] Domestic card detected, converting',
           amount,
           currencyUpper,
-          '→ TRY'
+          '→ TRY',
+          `(country: ${cardCountry}, bank: ${result.card?.bank})`
         )
         const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
         currencyConversion = {
@@ -122,8 +130,12 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
 
       result = await paymentGateway.queryBin(bin, conversion.convertedAmount, 'try', partnerId)
 
-      // Only convert if domestic card, otherwise foreign card has no suitable POS
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      // Convert if domestic card or unreliable card info
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         currencyConversion = {
           originalCurrency: currencyUpper,
           originalAmount: amount,
@@ -222,6 +234,7 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     // Check card country via BIN query (try original currency, fallback to TRY)
     const cardBin = card.number.replace(/\s/g, '').slice(0, 8)
     let cardCountry = null
+    let hasReliableBankInfo = false
     try {
       const binCheck = await paymentGateway.queryBin(
         cardBin,
@@ -230,6 +243,7 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
         booking.partner?.toString()
       )
       cardCountry = binCheck?.card?.country?.toLowerCase() || null
+      hasReliableBankInfo = !!(binCheck?.card?.bankCode && binCheck?.card?.bank !== 'Unknown')
     } catch (err) {
       // No POS for original currency - try TRY to get card info
       try {
@@ -240,12 +254,18 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
           booking.partner?.toString()
         )
         cardCountry = tryBinCheck?.card?.country?.toLowerCase() || null
+        hasReliableBankInfo = !!(
+          tryBinCheck?.card?.bankCode && tryBinCheck?.card?.bank !== 'Unknown'
+        )
       } catch (err2) {
         logger.debug('[Public Payment] BIN check for payment failed:', err2.message)
       }
     }
 
-    if (cardCountry === 'tr') {
+    // Card is likely domestic if country is 'tr' or card info is unreliable
+    const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+    if (isLikelyDomestic) {
       // Domestic card with foreign currency → convert to TRY
       const conversion = await convertCurrency(payableAmount, bookingCurrency.toUpperCase(), 'TRY')
       paymentAmount = conversion.convertedAmount

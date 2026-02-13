@@ -75,7 +75,12 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
         token
       )
 
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      // Card is likely domestic if country is 'tr' or card info is unreliable
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
         currencyConversion = {
           originalCurrency: currencyUpper,
@@ -104,7 +109,11 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
         token
       )
 
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         currencyConversion = {
           originalCurrency: currencyUpper,
           originalAmount: amount,
@@ -177,7 +186,11 @@ export const queryCardBin = asyncHandler(async (req, res) => {
         token
       )
 
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         const conversion = await convertCurrency(payment.amount, currencyUpper, 'TRY')
         currencyConversion = {
           originalCurrency: currencyUpper,
@@ -206,7 +219,11 @@ export const queryCardBin = asyncHandler(async (req, res) => {
         token
       )
 
-      if (result.card?.country?.toLowerCase() === 'tr') {
+      const cardCountry = result.card?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = result.card?.bankCode && result.card?.bank !== 'Unknown'
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
         currencyConversion = {
           originalCurrency: currencyUpper,
           originalAmount: payment.amount,
@@ -285,6 +302,7 @@ export const processCardPayment = asyncHandler(async (req, res) => {
     // Check card country via BIN query
     const cardBin = card.number.replace(/\s/g, '').slice(0, 8)
     let cardCountry = null
+    let hasReliableBankInfo = false
     try {
       const binCheck = await paymentGateway.queryBin(
         cardBin,
@@ -294,6 +312,7 @@ export const processCardPayment = asyncHandler(async (req, res) => {
         token
       )
       cardCountry = binCheck?.card?.country?.toLowerCase() || null
+      hasReliableBankInfo = !!(binCheck?.card?.bankCode && binCheck?.card?.bank !== 'Unknown')
     } catch (err) {
       // No POS for original currency - try TRY to get card info
       try {
@@ -305,12 +324,18 @@ export const processCardPayment = asyncHandler(async (req, res) => {
           token
         )
         cardCountry = tryBinCheck?.card?.country?.toLowerCase() || null
+        hasReliableBankInfo = !!(
+          tryBinCheck?.card?.bankCode && tryBinCheck?.card?.bank !== 'Unknown'
+        )
       } catch (err2) {
         logger.debug('[B2B Payment] BIN check for DCC failed:', err2.message)
       }
     }
 
-    if (cardCountry === 'tr') {
+    // Card is likely domestic if country is 'tr' or card info is unreliable
+    const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+    if (isLikelyDomestic) {
       // Domestic card with foreign currency → convert to TRY
       const conversion = await convertCurrency(payment.amount, currencyUpper, 'TRY')
       paymentAmount = conversion.convertedAmount
