@@ -29,6 +29,9 @@ const CONFIG = {
   // API backend
   apiBackend: appConfig.ssl.apiBackend,
 
+  // Admin dist path (SPA static serving)
+  adminDistPath: appConfig.ssl.adminDistPath,
+
   // Sertifika dizini
   certDir: '/etc/letsencrypt/live'
 }
