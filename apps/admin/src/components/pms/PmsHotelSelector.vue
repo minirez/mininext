@@ -130,8 +130,12 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import hotelService from '@/services/hotelService'
 import { usePmsStore } from '@/stores/pms'
+import { useAuthStore } from '@/stores/auth'
+import { usePartnerStore } from '@/stores/partner'
 
 const pmsStore = usePmsStore()
+const authStore = useAuthStore()
+const partnerStore = usePartnerStore()
 
 const isOpen = ref(false)
 const dropdownRef = ref(null)
@@ -220,6 +224,13 @@ const autoSelectIfSingle = async () => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+
+  // currentPartnerId'yi ayarla (partner kullanıcılar için veya henüz set edilmediyse)
+  const partnerId = partnerStore.selectedPartner?._id || authStore.user?.partner
+  if (partnerId && !pmsStore.currentPartnerId) {
+    pmsStore.switchPartner(partnerId)
+  }
+
   autoSelectIfSingle()
 })
 

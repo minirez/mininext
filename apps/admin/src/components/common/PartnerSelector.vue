@@ -285,9 +285,9 @@ const selectPartner = partner => {
   const previousPartnerId = partnerStore.selectedPartner?._id
   partnerStore.selectPartner(partner)
 
-  // Partner değiştiğinde PMS otel seçimini ve hotel store'u sıfırla
+  // Partner değiştiğinde PMS otelini o partnerin son seçimiyle yükle, hotel store'u sıfırla
   if (partner._id !== previousPartnerId) {
-    pmsStore.clearHotel()
+    pmsStore.switchPartner(partner._id)
     hotelStore.clearHotel()
   }
 
@@ -297,7 +297,7 @@ const selectPartner = partner => {
 
 const clearSelection = () => {
   partnerStore.clearSelectedPartner()
-  pmsStore.clearHotel()
+  pmsStore.switchPartner(null)
   hotelStore.clearHotel()
   isOpen.value = false
   searchQuery.value = ''
