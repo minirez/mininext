@@ -144,6 +144,9 @@ importers:
       '@booking-engine/constants':
         specifier: workspace:*
         version: link:../../packages/constants
+      '@booking-engine/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@booking-engine/validation':
         specifier: workspace:*
         version: link:../../packages/validation
@@ -198,6 +201,9 @@ importers:
       nanoid:
         specifier: ^5.1.6
         version: 5.1.6
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
       pdfkit:
         specifier: ^0.17.2
         version: 0.17.2
@@ -219,6 +225,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@4.22.1)
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
       winston:
         specifier: ^3.11.0
         version: 3.19.0
