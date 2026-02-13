@@ -12,10 +12,7 @@
       </div>
 
       <!-- Market Selector Tabs -->
-      <div
-        v-if="markets.length > 0"
-        class="flex bg-gray-100 dark:bg-slate-700 rounded-xl p-1 ml-4"
-      >
+      <div v-if="markets.length > 0" class="flex bg-gray-100 dark:bg-slate-700 rounded-xl p-1 ml-4">
         <button
           v-for="market in markets"
           :key="market._id"
@@ -95,6 +92,16 @@
         <span class="hidden sm:inline">{{ $t('planning.pricing.priceQuery') || 'Sorgula' }}</span>
       </button>
 
+      <!-- Forecast Button -->
+      <button
+        class="flex items-center gap-2 px-4 py-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-lg hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors"
+        :title="$t('planning.pricing.forecast.button')"
+        @click="$emit('openForecast')"
+      >
+        <span class="material-icons text-lg">bar_chart</span>
+        <span class="hidden sm:inline">{{ $t('planning.pricing.forecast.button') }}</span>
+      </button>
+
       <!-- Contract Import Button -->
       <button
         class="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
@@ -127,6 +134,7 @@ defineEmits([
   'update:viewMode',
   'update:showSeasonPanel',
   'openPriceQuery',
+  'openForecast',
   'openContractImport',
   'openBulkModal'
 ])

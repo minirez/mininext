@@ -70,18 +70,25 @@
           {{ formattedPrice }}
         </div>
 
-        <!-- Allotment - Always show, color changes based on level -->
-        <div class="flex items-center gap-0.5 mt-0.5">
-          <span
-            v-if="(rate.allotment ?? 0) <= 5"
-            class="material-icons text-[10px]"
-            :class="allotmentTextColor"
+        <!-- Allotment with mini progress bar -->
+        <div class="flex flex-col items-center mt-0.5 w-full px-0.5">
+          <div class="flex items-center gap-0.5">
+            <span v-if="availableRooms <= 0" class="material-icons text-[8px] text-red-500"
+              >error</span
+            >
+            <span class="text-[7px] sm:text-[9px] font-semibold" :class="allotmentTextColor"
+              >{{ availableRooms }}/{{ rate.allotment ?? 0 }}</span
+            >
+          </div>
+          <div
+            class="w-full h-[3px] bg-gray-200 dark:bg-slate-600 rounded-full mt-0.5 overflow-hidden"
           >
-            {{ (rate.allotment ?? 0) === 0 ? 'error' : 'warning' }}
-          </span>
-          <span class="text-[8px] sm:text-[10px] font-medium" :class="allotmentTextColor">
-            {{ rate.allotment ?? 0 }}
-          </span>
+            <div
+              class="h-full rounded-full transition-all"
+              :class="allotmentBarColor"
+              :style="{ width: `${allotmentPercentage}%` }"
+            />
+          </div>
         </div>
 
         <!-- Restrictions Icons (NO STOP text, just CTA/CTD/MinStay/SingleStop) -->
@@ -323,6 +330,7 @@ const props = defineProps({
   roomTypeId: { type: String, required: true },
   mealPlanId: { type: String, required: true },
   roomType: { type: Object, default: null }, // Full room type object for multiplier detection
+  bookedCount: { type: Number, default: 0 },
   currency: { type: String, default: 'EUR' },
   isSelected: { type: Boolean, default: false },
   isPast: { type: Boolean, default: false },
@@ -480,14 +488,24 @@ const formattedPrice = computed(() => {
   return props.rate.pricePerNight?.toLocaleString() || '-'
 })
 
-// allotmentPercentage and allotmentBarColor removed - were unused
+const availableRooms = computed(() => Math.max(0, (props.rate?.allotment ?? 0) - props.bookedCount))
+
+const allotmentPercentage = computed(() => {
+  const total = props.rate?.allotment ?? 0
+  return total === 0 ? 0 : Math.round((availableRooms.value / total) * 100)
+})
+
+const allotmentBarColor = computed(() => {
+  if (availableRooms.value <= 0) return 'bg-red-500'
+  if (allotmentPercentage.value < 30) return 'bg-red-500'
+  if (allotmentPercentage.value <= 60) return 'bg-amber-500'
+  return 'bg-green-500'
+})
 
 const allotmentTextColor = computed(() => {
-  const allotment = props.rate?.allotment ?? 0
-
-  if (allotment === 0) return 'text-red-500 font-bold'
-  if (allotment <= 2) return 'text-red-500 font-semibold'
-  if (allotment <= 5) return 'text-amber-600 dark:text-amber-400'
+  if (availableRooms.value === 0) return 'text-red-500 font-bold'
+  if (availableRooms.value <= 2) return 'text-red-500 font-semibold'
+  if (availableRooms.value <= 5) return 'text-amber-600 dark:text-amber-400'
   return 'text-gray-500 dark:text-slate-400'
 })
 

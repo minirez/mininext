@@ -167,7 +167,15 @@ export function useCalendarLogic(props, emit) {
     return `${formatDateStr(first)} - ${formatDateStr(last)}`
   })
 
-  // Allotment stats
+  // Helper: get available rooms for a rate considering occupancy
+  const getAvailableRooms = (rateInfo, roomTypeId, date) => {
+    const total = rateInfo?.allotment ?? 0
+    const key = `${date}_${roomTypeId}`
+    const booked = props.occupancy?.[key] || 0
+    return Math.max(0, total - booked)
+  }
+
+  // Allotment stats (occupancy-aware)
   const allotmentStats = computed(() => {
     const stats = { critical: 0, low: 0, normal: 0, stopSale: 0, totalCells: 0 }
 
@@ -183,12 +191,13 @@ export function useCalendarLogic(props, emit) {
 
           if (rateInfo) {
             stats.totalCells++
+            const available = getAvailableRooms(rateInfo, rt._id, date)
 
             if (rateInfo.stopSale) {
               stats.stopSale++
-            } else if (rateInfo.allotment === 0) {
+            } else if (available === 0) {
               stats.critical++
-            } else if (rateInfo.allotment <= 3) {
+            } else if (available <= 3) {
               stats.low++
             } else {
               stats.normal++
@@ -224,11 +233,12 @@ export function useCalendarLogic(props, emit) {
           const rateInfo = getRateForCell(rt._id, mp._id, date)
 
           if (rateInfo) {
+            const available = getAvailableRooms(rateInfo, rt._id, date)
             if (rateInfo.stopSale) {
               detail.stopSale++
-            } else if (rateInfo.allotment === 0) {
+            } else if (available === 0) {
               detail.critical++
-            } else if (rateInfo.allotment <= 3) {
+            } else if (available <= 3) {
               detail.low++
             }
           }
@@ -343,15 +353,10 @@ export function useCalendarLogic(props, emit) {
             const rateInfo = getRateForCell(rt._id, mp._id, date)
 
             if (rateInfo) {
+              const available = getAvailableRooms(rateInfo, rt._id, date)
               let matches = false
-              if (level === 'critical' && !rateInfo.stopSale && rateInfo.allotment === 0)
-                matches = true
-              if (
-                level === 'low' &&
-                !rateInfo.stopSale &&
-                rateInfo.allotment > 0 &&
-                rateInfo.allotment <= 3
-              )
+              if (level === 'critical' && !rateInfo.stopSale && available === 0) matches = true
+              if (level === 'low' && !rateInfo.stopSale && available > 0 && available <= 3)
                 matches = true
               if (level === 'stopSale' && rateInfo.stopSale) matches = true
 

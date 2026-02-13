@@ -119,6 +119,7 @@
                 :meal-plan-id="mealPlan._id"
                 :room-type="roomType"
                 :currency="currency"
+                :booked-count="getBookedCount(roomType._id, day.date)"
                 :is-selected="isCellSelected(roomType._id, mealPlan._id, day.date)"
                 :is-past="day.isPast"
                 :inline-edit-mode="inlineEditMode"
@@ -156,6 +157,7 @@ const props = defineProps({
   daysInMonth: { type: Number, default: 31 },
   currency: { type: String, default: 'EUR' },
   selectedCells: { type: Array, default: () => [] },
+  occupancy: { type: Object, default: () => ({}) },
   inlineEditMode: { type: Boolean, default: false },
   inlineEditPrices: { type: Object, default: () => ({}) },
   allowEditCalculated: { type: Boolean, default: false },
@@ -177,6 +179,11 @@ defineEmits([
 ])
 
 const { locale } = useI18n()
+
+const getBookedCount = (roomTypeId, date) => {
+  const key = `${date}_${roomTypeId}`
+  return props.occupancy?.[key] || 0
+}
 
 const getRoomTypeName = roomType => {
   return roomType.name?.[locale.value] || roomType.name?.tr || roomType.name?.en || roomType.code

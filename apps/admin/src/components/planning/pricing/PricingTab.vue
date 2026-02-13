@@ -10,6 +10,7 @@
       @update:view-mode="viewMode = $event"
       @update:show-season-panel="showSeasonPanel = $event"
       @open-price-query="showPriceQueryModal = true"
+      @open-forecast="showForecastModal = true"
       @open-contract-import="showContractImport = true"
       @open-bulk-modal="openBulkModal"
     />
@@ -39,7 +40,10 @@
       :get-season-name="getSeasonName"
       :format-season-dates="formatSeasonDates"
       :get-month-short-name="getMonthShortName"
-      @add-season="showSeasonForm = true; editingSeason = null"
+      @add-season="
+        showSeasonForm = true
+        editingSeason = null
+      "
       @edit-season="editSeason"
       @delete-season="confirmDeleteSeason"
       @update:timeline-year="timelineYear = $event"
@@ -70,6 +74,7 @@
           :market="selectedMarket"
           :rates="rates"
           :overrides="overrides"
+          :occupancy="occupancy"
           :loading="loadingRates"
           :initial-month="currentMonth"
           :current-seasons="currentMonthSeasons"
@@ -185,6 +190,15 @@
       @imported="handleContractImported"
     />
 
+    <!-- Forecast Modal -->
+    <ForecastModal
+      v-model="showForecastModal"
+      :hotel-id="hotel._id"
+      :hotel-name="hotel.name?.tr || hotel.name?.en || hotel.code"
+      :room-types="filteredRoomTypes"
+      :initial-month="currentMonth"
+    />
+
     <!-- Period Edit Modal -->
     <Modal
       v-model="showPeriodEditModal"
@@ -269,13 +283,8 @@ import AIPricingAssistant from './AIPricingAssistant.vue'
 import PriceQueryModal from './PriceQueryModal.vue'
 import PeriodEditForm from './PeriodEditForm.vue'
 import ContractImportWizard from './ContractImportWizard.vue'
-import {
-  PricingTopBar,
-  SeasonPanel,
-  PeriodFilters,
-  PeriodList,
-  usePricingTab
-} from './pricing-tab'
+import ForecastModal from './ForecastModal.vue'
+import { PricingTopBar, SeasonPanel, PeriodFilters, PeriodList, usePricingTab } from './pricing-tab'
 
 const props = defineProps({
   hotel: { type: Object, required: true },
@@ -288,6 +297,7 @@ const {
   // State
   rates,
   overrides,
+  occupancy,
   seasons,
   markets,
   loadingRates,
@@ -307,6 +317,7 @@ const {
   bulkEditCells,
   showBulkEditModal,
   showPriceQueryModal,
+  showForecastModal,
   showPeriodEditModal,
   showContractImport,
   editingPeriod,

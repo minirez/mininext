@@ -202,6 +202,16 @@ export const bulkUpdateByDates = async (hotelId, cells, updateFields, marketId) 
   }
 }
 
+export const getForecast = async (hotelId, params = {}) => {
+  try {
+    const response = await apiClient.get(`${BASE_URL}/hotels/${hotelId}/rates/forecast`, { params })
+    return response.data
+  } catch (error) {
+    apiLogger.error('Planning Service: Get forecast failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
 export default {
   getRates,
   getRatesCalendar,
@@ -216,5 +226,6 @@ export default {
   quickUpdateRate,
   toggleStopSale,
   updateAllotment,
-  bulkUpdateByDates
+  bulkUpdateByDates,
+  getForecast
 }

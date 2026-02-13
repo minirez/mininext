@@ -4,6 +4,7 @@
  * Split from planning.service.js for better maintainability
  */
 
+import mongoose from 'mongoose'
 import Rate from './rate.model.js'
 import Market from './market.model.js'
 import AuditLog from '../audit/audit.model.js'
@@ -12,6 +13,7 @@ import { asyncHandler } from '#helpers'
 import logger from '#core/logger.js'
 import { getPartnerId, verifyHotelOwnership, getAuditActor } from '#services/helpers.js'
 import { queueChannelSync } from '#modules/channel-manager/channelSync.helper.js'
+import { calculateOccupancyFromBookings, syncRateSoldFields } from '#services/pricing/occupancy.js'
 
 // ==================== RATES ====================
 
@@ -75,17 +77,28 @@ export const getRatesCalendar = asyncHandler(async (req, res) => {
     throw new BadRequestError('DATE_RANGE_REQUIRED')
   }
 
-  const rates = await Rate.findInRange(hotelId, startDate, endDate, {
-    roomType,
-    mealPlan,
-    market
-  })
+  const [rates, occupancyMap] = await Promise.all([
+    Rate.findInRange(hotelId, startDate, endDate, { roomType, mealPlan, market }),
+    calculateOccupancyFromBookings(hotelId, startDate, endDate)
+  ])
+
+  // Sync Rate.sold in background (fire-and-forget)
+  syncRateSoldFields(hotelId, startDate, endDate, occupancyMap).catch(err =>
+    logger.error('Rate sold sync error:', err.message)
+  )
+
+  // Serialize occupancy map for frontend
+  const occupancy = {}
+  for (const [key, count] of occupancyMap) {
+    occupancy[key] = count
+  }
 
   res.json({
     success: true,
     data: {
       rates,
-      overrides: []
+      overrides: [],
+      occupancy
     }
   })
 })
@@ -619,4 +632,76 @@ export const bulkUpdateByDates = asyncHandler(async (req, res) => {
       total: ratesToUpsert.length
     }
   })
+})
+
+// ==================== FORECAST ====================
+
+export const getForecast = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  const { hotelId } = req.params
+
+  if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
+  await verifyHotelOwnership(hotelId, partnerId)
+
+  const { startDate, endDate, roomType } = req.query
+  if (!startDate || !endDate) throw new BadRequestError('DATE_RANGE_REQUIRED')
+
+  const occupancyMap = await calculateOccupancyFromBookings(hotelId, startDate, endDate)
+
+  const matchQuery = {
+    hotel: new mongoose.Types.ObjectId(hotelId),
+    date: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    status: 'active'
+  }
+  if (roomType) matchQuery.roomType = new mongoose.Types.ObjectId(roomType)
+
+  const rates = await Rate.find(matchQuery)
+    .populate('roomType', '_id name code')
+    .sort('date roomType')
+    .lean()
+
+  const daily = rates.map(rate => {
+    const dateStr = rate.date.toISOString().slice(0, 10)
+    const rtId = (rate.roomType?._id || rate.roomType).toString()
+    const key = `${dateStr}_${rtId}`
+    const booked = occupancyMap.get(key) || 0
+    const total = rate.allotment ?? 0
+    const available = Math.max(0, total - booked)
+
+    return {
+      date: dateStr,
+      roomType: rate.roomType,
+      totalAllotment: total,
+      booked,
+      available,
+      occupancyPercent: total > 0 ? Math.round((booked / total) * 1000) / 10 : 0,
+      stopSale: rate.stopSale || false
+    }
+  })
+
+  // Summary per room type
+  const summaryMap = {}
+  for (const row of daily) {
+    const rtId = (row.roomType?._id || row.roomType).toString()
+    if (!summaryMap[rtId]) {
+      summaryMap[rtId] = { roomType: row.roomType, totalAllotment: 0, totalBooked: 0, days: 0 }
+    }
+    summaryMap[rtId].totalAllotment += row.totalAllotment
+    summaryMap[rtId].totalBooked += row.booked
+    summaryMap[rtId].days++
+  }
+
+  const summary = Object.values(summaryMap).map(s => ({
+    ...s,
+    available: s.totalAllotment - s.totalBooked,
+    avgOccupancy:
+      s.totalAllotment > 0 ? Math.round((s.totalBooked / s.totalAllotment) * 1000) / 10 : 0
+  }))
+
+  // Sync Rate.sold in background
+  syncRateSoldFields(hotelId, startDate, endDate, occupancyMap).catch(err =>
+    logger.error('Rate sold sync error:', err.message)
+  )
+
+  res.json({ success: true, data: { daily, summary } })
 })

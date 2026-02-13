@@ -133,6 +133,7 @@
       :days-in-month="daysInMonth"
       :currency="currency"
       :selected-cells="selectedCells"
+      :occupancy="occupancy"
       :inline-edit-mode="inlineEditMode"
       :inline-edit-prices="inlineEditPrices"
       :allow-edit-calculated="inlineAllowEditCalculated"
@@ -213,6 +214,7 @@ const props = defineProps({
   market: { type: Object, default: null },
   rates: { type: Array, default: () => [] },
   overrides: { type: Array, default: () => [] },
+  occupancy: { type: Object, default: () => ({}) },
   loading: { type: Boolean, default: false },
   initialMonth: { type: Object, default: null },
   currentSeasons: { type: Array, default: () => [] },

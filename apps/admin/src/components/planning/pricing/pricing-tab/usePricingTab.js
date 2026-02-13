@@ -22,6 +22,7 @@ export function usePricingTab(props) {
   // Data
   const rates = ref([])
   const overrides = ref([])
+  const occupancy = ref({})
   const seasons = ref([])
   const roomTypes = ref([])
   const mealPlans = ref([])
@@ -54,6 +55,7 @@ export function usePricingTab(props) {
   const bulkEditCells = ref([])
   const showBulkEditModal = ref(false)
   const showPriceQueryModal = ref(false)
+  const showForecastModal = ref(false)
   const showPeriodEditModal = ref(false)
   const showContractImport = ref(false)
   const editingPeriod = ref(null)
@@ -375,9 +377,11 @@ export function usePricingTab(props) {
         if (Array.isArray(response.data)) {
           rates.value = response.data
           overrides.value = []
+          occupancy.value = {}
         } else if (response.data && typeof response.data === 'object') {
           rates.value = response.data.rates || []
           overrides.value = response.data.overrides || []
+          occupancy.value = response.data.occupancy || {}
         }
         calendarKey.value++
       }
@@ -673,6 +677,7 @@ export function usePricingTab(props) {
     // State
     rates,
     overrides,
+    occupancy,
     seasons,
     roomTypes,
     mealPlans,
@@ -697,6 +702,7 @@ export function usePricingTab(props) {
     bulkEditCells,
     showBulkEditModal,
     showPriceQueryModal,
+    showForecastModal,
     showPeriodEditModal,
     showContractImport,
     editingPeriod,
