@@ -77,7 +77,7 @@ const verifying = ref(false)
 const settingUpSsl = ref(false)
 const dnsVerified = ref(false)
 const dnsResult = ref(null)
-const cnameTarget = ref(null)
+const cnameTarget = ref('app.minirez.com')
 const serverIP = ref(null)
 
 const domainData = ref({

@@ -120,7 +120,7 @@ const verifying = reactive({ b2c: false, b2b: false })
 const dnsVerified = reactive({ b2c: false, b2b: false })
 const dnsResult = reactive({ b2c: null, b2b: null })
 const settingUpSsl = reactive({ b2c: false, b2b: false })
-const cnameTarget = ref(null)
+const cnameTarget = ref('app.maxirez.com')
 const serverIP = ref(null)
 
 watch(
