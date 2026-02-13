@@ -5,7 +5,7 @@ import { useFormatters } from '../composables/useFormatters'
 import { useTranslation } from '../composables/useTranslation'
 import ViewHeader from '../components/ViewHeader.vue'
 import PhoneInput from '../components/PhoneInput.vue'
-import { countries } from '../data/countries'
+import NationalitySelect from '../components/NationalitySelect.vue'
 
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateMedium } = useFormatters()
@@ -476,16 +476,10 @@ onMounted(() => {
               <label class="form-label">
                 {{ t('booking.form.nationality') }} {{ t('common.required') }}
               </label>
-              <select
+              <NationalitySelect
                 v-model="guest.nationality"
-                class="form-input"
-                :class="{ error: errors[`guest_${index}_nationality`] }"
-              >
-                <option value="">{{ t('booking.form.nationalityPlaceholder') }}</option>
-                <option v-for="c in countries" :key="c.code" :value="c.code">
-                  {{ c.flag }} {{ c.name }}
-                </option>
-              </select>
+                :error="errors[`guest_${index}_nationality`]"
+              />
               <span v-if="errors[`guest_${index}_nationality`]" class="form-error">{{
                 errors[`guest_${index}_nationality`]
               }}</span>

@@ -3645,6 +3645,156 @@ select.form-input option {
   flex-basis: 100%;
 }
 
+/* ==================== NATIONALITY SELECT ==================== */
+.nat-select-wrapper {
+  position: relative;
+}
+
+.nat-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.nat-select-trigger .nat-flag {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.nat-select-trigger .nat-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nat-placeholder {
+  flex: 1;
+  color: var(--text-placeholder);
+}
+
+.nat-chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+
+.nat-chevron.open {
+  transform: rotate(180deg);
+}
+
+.nat-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-xs);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.nat-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nat-search-box svg {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.nat-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.nat-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.nat-list {
+  max-height: 200px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nat-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.nat-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.nat-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.nat-option:hover {
+  background: var(--bg-secondary);
+}
+
+.nat-option.active {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.nat-option .nat-flag {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.nat-option-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nat-check {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.nat-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 /* ==================== CARD BRAND ICON (SVG) ==================== */
 .card-brand-icon {
   display: flex;
