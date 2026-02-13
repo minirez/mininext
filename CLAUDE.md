@@ -395,17 +395,36 @@ WebFetch URL: https://app.maxirez.com/api/debug/issues?status=open&key=dab1e4a01
 
 ## 🖥️ SUNUCU ERİŞİMİ
 
-Production sunucusuna SSH erişimi:
+### Production Sunucusu (Docker)
+
+```bash
+ssh root@85.31.238.34
+# Şifre: CwQGE8NDAUU6eaH9siDg
+```
+
+**Mimari:** Docker Compose (`/var/www/docker-compose.yml`)
+- `maxirez-booking-api` - API servisi (Dockerfile.api)
+- `maxirez-payment-service` - Ödeme servisi (Dockerfile.payment)
+- `minirez-mongodb` - MongoDB (mongo:7, replicaSet=rs0)
+
+**Önemli Dizinler:**
+- Proje kökü: `/var/www/booking-engine`
+- Docker compose: `/var/www/docker-compose.yml`
+- Container logları: `docker logs maxirez-booking-api --tail 50`
+
+**Deploy Komutu:**
+```bash
+cd /var/www/booking-engine && git pull origin main && \
+cd /var/www && docker compose build booking-api payment-service && \
+docker compose up -d booking-api payment-service
+```
+
+### Eski Sunucu (PM2 - Artık Kullanılmıyor)
 
 ```bash
 ssh root@194.146.50.11
 # Şifre: Mk21093LoPsal
 ```
-
-**Önemli Dizinler:**
-- API: `/var/www/booking-engine/apps/api`
-- Admin: `/var/www/booking-engine/apps/admin`
-- Logs: `pm2 logs`
 
 **Uzak Sunucu Kuralları:**
 - Dosya düzenlemek için `sed`/`awk` KULLANMA → Write tool ile tamamını yaz
@@ -430,4 +449,4 @@ Email: metinweb@gmail.com
 
 ---
 
-**Son Güncelleme:** 2026-02-11 (v4)
+**Son Güncelleme:** 2026-02-13 (v5)

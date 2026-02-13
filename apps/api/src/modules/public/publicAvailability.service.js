@@ -229,7 +229,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         market: market.code,
         currency: market.currency,
         paymentTerms: market.paymentTerms || null,
-        bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0
+        bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0,
+        bankTransferReleaseDays: market.paymentMethods?.bankTransfer?.releaseDays ?? 3
       },
       results
     }

@@ -221,7 +221,9 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
       payAtHotel: widgetPM?.payAtHotel ?? true,
       bankTransfer: marketPM
         ? (marketPM.bankTransfer?.enabled ?? false)
-        : (widgetPM?.bankTransfer ?? false)
+        : (widgetPM?.bankTransfer ?? false),
+      bankTransferReleaseDays: marketPM?.bankTransfer?.releaseDays ?? 3,
+      bankTransferDiscount: marketPM?.bankTransfer?.discountRate ?? 0
     },
     guestOptions: {
       requireNationality: hotel.widgetConfig?.guestOptions?.requireNationality ?? true,

@@ -21,6 +21,22 @@ const widgetConfig = computed(() => widgetStore.widgetConfig)
 const paymentMethods = computed(() => widgetConfig.value?.paymentMethods || {})
 const paymentTerms = computed(() => widgetStore.paymentTerms)
 const bankTransferDiscount = computed(() => widgetStore.bankTransferDiscount)
+const bankTransferReleaseDays = computed(() => widgetStore.bankTransferReleaseDays)
+
+// Banka havalesi: check-in'e releaseDays'den az kaldıysa gizle
+const isBankTransferAvailable = computed(() => {
+  if (!paymentMethods.value.bankTransfer) return false
+  const release = bankTransferReleaseDays.value || 0
+  if (release <= 0) return true
+  const checkIn = searchParams.value?.checkIn
+  if (!checkIn) return true
+  const checkInDate = new Date(checkIn)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  checkInDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((checkInDate - today) / (1000 * 60 * 60 * 24))
+  return diffDays >= release
+})
 
 // Ön ödeme hesaplamaları
 const totalAmount = computed(() => selectedOption.value?.pricing?.finalTotal || 0)
@@ -647,7 +663,7 @@ onMounted(() => {
           </label>
 
           <label
-            v-if="paymentMethods.bankTransfer"
+            v-if="isBankTransferAvailable"
             class="payment-method"
             :class="{ selected: selectedPaymentMethod === 'bank_transfer' }"
           >

@@ -72,6 +72,7 @@ export const useWidgetStore = defineStore('widget', () => {
   // Payment Terms (from market)
   const paymentTerms = ref(null)
   const bankTransferDiscount = ref(0)
+  const bankTransferReleaseDays = ref(3)
 
   // Bank Transfer State
   const bankAccounts = ref([])
@@ -318,6 +319,9 @@ export const useWidgetStore = defineStore('widget', () => {
       if (results.search?.bankTransferDiscount) {
         bankTransferDiscount.value = results.search.bankTransferDiscount
       }
+      if (results.search?.bankTransferReleaseDays != null) {
+        bankTransferReleaseDays.value = results.search.bankTransferReleaseDays
+      }
 
       currentStep.value = 'results'
     } catch (err) {
@@ -548,6 +552,7 @@ export const useWidgetStore = defineStore('widget', () => {
     selectedPaymentType,
     paymentTerms,
     bankTransferDiscount,
+    bankTransferReleaseDays,
     bankAccounts,
     bankTransferDescription,
     bankTransferEnabled,
