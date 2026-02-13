@@ -14,9 +14,14 @@
         <span class="material-icons text-lg">{{ icon }}</span>
       </span>
 
+      <!-- Slot Mode: custom content passed via default slot (not for select which uses slot for options) -->
+      <div v-if="$slots.default && type !== 'select'">
+        <slot></slot>
+      </div>
+
       <!-- Input -->
       <input
-        v-if="type !== 'textarea' && type !== 'select'"
+        v-else-if="type !== 'textarea' && type !== 'select'"
         ref="inputRef"
         :type="type"
         :value="modelValue"
