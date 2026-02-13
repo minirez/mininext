@@ -27,7 +27,10 @@ export function useAgenciesView() {
   const { isLoading: deleting, execute: executeDelete } = useAsyncAction()
   const { isLoading: approving, execute: executeApprove } = useAsyncAction()
   const { isLoading: uploading, execute: executeUpload } = useAsyncAction()
-  const { execute: executeFetchHotels } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+  const { execute: executeFetchHotels } = useAsyncAction({
+    showSuccessToast: false,
+    showErrorToast: false
+  })
 
   // State
   const agencies = ref([])
@@ -173,20 +176,20 @@ export function useAgenciesView() {
   }
 
   // Country/Hotel selection
-  const addCountry = (code) => {
+  const addCountry = code => {
     if (code && !form.value.salesRestrictions.allowedCountries.includes(code)) {
       form.value.salesRestrictions.allowedCountries.push(code)
     }
     selectedCountryToAdd.value = ''
   }
 
-  const removeCountry = (code) => {
+  const removeCountry = code => {
     form.value.salesRestrictions.allowedCountries =
       form.value.salesRestrictions.allowedCountries.filter(c => c !== code)
   }
 
   // Payment method toggle
-  const togglePaymentMethod = (method) => {
+  const togglePaymentMethod = method => {
     const index = form.value.paymentSettings.allowedMethods.indexOf(method)
     if (index === -1) {
       form.value.paymentSettings.allowedMethods.push(method)
@@ -197,33 +200,27 @@ export function useAgenciesView() {
 
   // API calls
   const fetchAgencies = async () => {
-    await executeFetch(
-      () => agencyService.getAgencies(),
-      {
-        errorMessage: 'common.loadFailed',
-        onSuccess: response => {
-          agencies.value = Array.isArray(response.data)
-            ? response.data
-            : response.data.agencies || response.data.items || []
-        }
+    await executeFetch(() => agencyService.getAgencies(), {
+      errorMessage: 'common.loadFailed',
+      onSuccess: response => {
+        agencies.value = Array.isArray(response.data)
+          ? response.data
+          : response.data.agencies || response.data.items || []
       }
-    )
+    })
   }
 
   const fetchHotels = async () => {
-    await executeFetchHotels(
-      () => hotelService.getHotels({ limit: 1000 }),
-      {
-        onSuccess: response => {
-          if (response.success) {
-            hotels.value = response.data.items || response.data.hotels || []
-          }
-        },
-        onError: error => {
-          console.error('Failed to fetch hotels', error)
+    await executeFetchHotels(() => hotelService.getHotels({ limit: 1000 }), {
+      onSuccess: response => {
+        if (response.success) {
+          hotels.value = response.data.items || response.data.hotels || []
         }
+      },
+      onError: error => {
+        console.error('Failed to fetch hotels', error)
       }
-    )
+    })
   }
 
   const openCreateModal = () => {
@@ -235,7 +232,7 @@ export function useAgenciesView() {
     showModal.value = true
   }
 
-  const openEditModal = (agency) => {
+  const openEditModal = agency => {
     isEditing.value = true
     selectedAgency.value = agency
     activeTab.value = 'basic'
@@ -301,82 +298,70 @@ export function useAgenciesView() {
     })
   }
 
-  const confirmDelete = (agency) => {
+  const confirmDelete = agency => {
     selectedAgency.value = agency
     showDeleteModal.value = true
   }
 
   const deleteAgency = async () => {
-    await executeDelete(
-      () => agencyService.deleteAgency(selectedAgency.value._id),
-      {
-        successMessage: 'agencies.deleteSuccess',
-        errorMessage: 'common.deleteFailed',
-        onSuccess: () => {
-          showDeleteModal.value = false
-          fetchAgencies()
-        }
+    await executeDelete(() => agencyService.deleteAgency(selectedAgency.value._id), {
+      successMessage: 'agencies.deleteSuccess',
+      errorMessage: 'common.deleteFailed',
+      onSuccess: () => {
+        showDeleteModal.value = false
+        fetchAgencies()
       }
-    )
+    })
   }
 
-  const confirmApprove = (agency) => {
+  const confirmApprove = agency => {
     selectedAgency.value = agency
     showApproveModal.value = true
   }
 
   const approveAgency = async () => {
-    await executeApprove(
-      () => agencyService.approveAgency(selectedAgency.value._id),
-      {
-        successMessage: 'agencies.approveSuccess',
-        errorMessage: 'common.operationFailed',
-        onSuccess: () => {
-          showApproveModal.value = false
-          fetchAgencies()
-        }
+    await executeApprove(() => agencyService.approveAgency(selectedAgency.value._id), {
+      successMessage: 'agencies.approveSuccess',
+      errorMessage: 'common.operationFailed',
+      onSuccess: () => {
+        showApproveModal.value = false
+        fetchAgencies()
       }
-    )
+    })
   }
 
-  const goToUsers = (agency) => {
-    router.push({ name: 'agency-users', params: { agencyId: agency._id } })
+  const goToUsers = agency => {
+    router.push({ name: 'agency-users', params: { id: agency._id } })
   }
 
-  const uploadDocument = async (file) => {
+  const uploadDocument = async file => {
     if (!selectedAgency.value) return
 
     const formData = new FormData()
     formData.append('document', file)
     formData.append('documentType', 'license')
 
-    await executeUpload(
-      () => agencyService.uploadDocument(selectedAgency.value._id, formData),
-      {
-        successMessage: 'common.uploadSuccess',
-        errorMessage: 'common.uploadFailed',
-        onSuccess: async () => {
-          const response = await agencyService.getAgency(selectedAgency.value._id)
-          if (response.success) selectedAgency.value = response.data
-        }
+    await executeUpload(() => agencyService.uploadDocument(selectedAgency.value._id, formData), {
+      successMessage: 'common.uploadSuccess',
+      errorMessage: 'common.uploadFailed',
+      onSuccess: async () => {
+        const response = await agencyService.getAgency(selectedAgency.value._id)
+        if (response.success) selectedAgency.value = response.data
       }
-    )
+    })
   }
 
-  const confirmDeleteDocument = async (documentId) => {
+  const confirmDeleteDocument = async documentId => {
     if (!selectedAgency.value) return
 
-    await executeDelete(
-      () => agencyService.deleteDocument(selectedAgency.value._id, documentId),
-      {
-        successMessage: 'common.deleteSuccess',
-        errorMessage: 'common.deleteFailed',
-        onSuccess: async () => {
-          const response = await agencyService.getAgency(selectedAgency.value._id)
-          if (response.success) selectedAgency.value = response.data
-        }
+    await executeDelete(() => agencyService.deleteDocument(selectedAgency.value._id, documentId), {
+      successMessage: 'common.deleteSuccess',
+      errorMessage: 'common.deleteFailed',
+      onSuccess: async () => {
+        const response = await agencyService.getAgency(selectedAgency.value._id)
+        if (response.success) selectedAgency.value = response.data
       }
-    )
+    })
   }
 
   // Setup partner context
