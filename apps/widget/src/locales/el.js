@@ -74,7 +74,9 @@ export default {
       parking: 'Πάρκινγκ',
       kitchen: 'Κουζίνα',
       kitchenette: 'Μικρή κουζίνα'
-    }
+    },
+    staleResults: 'Οι τιμές μπορεί να έχουν αλλάξει από την τελευταία αναζήτησή σας.',
+    refreshPrices: 'Ανανέωση'
   },
 
   booking: {

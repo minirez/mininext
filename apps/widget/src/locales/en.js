@@ -73,7 +73,9 @@ export default {
       parking: 'Parking',
       kitchen: 'Kitchen',
       kitchenette: 'Kitchenette'
-    }
+    },
+    staleResults: 'Prices may have changed since your last search.',
+    refreshPrices: 'Refresh'
   },
 
   booking: {

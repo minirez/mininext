@@ -73,7 +73,9 @@ export default {
       parking: 'Парковка',
       kitchen: 'Кухня',
       kitchenette: 'Міні-кухня'
-    }
+    },
+    staleResults: 'Ціни могли змінитися з моменту вашого останнього пошуку.',
+    refreshPrices: 'Оновити'
   },
 
   booking: {

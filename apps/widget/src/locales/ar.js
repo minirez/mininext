@@ -73,7 +73,9 @@ export default {
       parking: 'موقف سيارات',
       kitchen: 'مطبخ',
       kitchenette: 'مطبخ صغير'
-    }
+    },
+    staleResults: 'ربما تغيرت الأسعار منذ آخر بحث لك.',
+    refreshPrices: 'تحديث'
   },
 
   booking: {

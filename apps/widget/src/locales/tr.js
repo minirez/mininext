@@ -74,7 +74,9 @@ export default {
       parking: 'Otopark',
       kitchen: 'Mutfak',
       kitchenette: 'Mini Mutfak'
-    }
+    },
+    staleResults: 'Son aramanızdan bu yana fiyatlar değişmiş olabilir.',
+    refreshPrices: 'Yenile'
   },
 
   booking: {

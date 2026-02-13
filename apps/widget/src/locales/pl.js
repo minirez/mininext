@@ -73,7 +73,9 @@ export default {
       parking: 'Parking',
       kitchen: 'Kuchnia',
       kitchenette: 'Aneks kuchenny'
-    }
+    },
+    staleResults: 'Ceny mogły ulec zmianie od ostatniego wyszukiwania.',
+    refreshPrices: 'Odśwież'
   },
 
   booking: {

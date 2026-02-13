@@ -74,7 +74,9 @@ export default {
       parking: 'Parkinq',
       kitchen: 'Mətbəx',
       kitchenette: 'Mini Mətbəx'
-    }
+    },
+    staleResults: 'Son axtarışınızdan bəri qiymətlər dəyişmiş ola bilər.',
+    refreshPrices: 'Yenilə'
   },
 
   booking: {

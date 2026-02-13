@@ -73,7 +73,9 @@ export default {
       parking: 'חניה',
       kitchen: 'מטבח',
       kitchenette: 'מטבחון'
-    }
+    },
+    staleResults: 'המחירים עשויים להשתנות מאז החיפוש האחרון שלך.',
+    refreshPrices: 'רענן'
   },
 
   booking: {

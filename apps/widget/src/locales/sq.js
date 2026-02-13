@@ -74,7 +74,9 @@ export default {
       parking: 'Parking',
       kitchen: 'Kuzhinë',
       kitchenette: 'Kuzhinë e vogël'
-    }
+    },
+    staleResults: 'Çmimet mund të kenë ndryshuar që nga kërkimi juaj i fundit.',
+    refreshPrices: 'Rifresko'
   },
 
   booking: {

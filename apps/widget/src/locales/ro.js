@@ -74,7 +74,9 @@ export default {
       parking: 'Parcare',
       kitchen: 'Bucătărie',
       kitchenette: 'Chicineta'
-    }
+    },
+    staleResults: 'Prețurile se pot fi schimbat de la ultima căutare.',
+    refreshPrices: 'Actualizează'
   },
 
   booking: {

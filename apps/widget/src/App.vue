@@ -151,6 +151,7 @@ function closeWidget() {
     :class="['widget-trigger', { left: position.includes('left') }]"
     @click="openWidget"
   >
+    <span v-if="widgetStore.hasActiveSession" class="widget-trigger-badge"></span>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"

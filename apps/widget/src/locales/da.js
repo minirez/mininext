@@ -73,7 +73,9 @@ export default {
       parking: 'Parkering',
       kitchen: 'Køkken',
       kitchenette: 'Tekøkken'
-    }
+    },
+    staleResults: 'Priserne kan have ændret sig siden din sidste søgning.',
+    refreshPrices: 'Opdater'
   },
 
   booking: {

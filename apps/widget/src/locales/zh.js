@@ -73,7 +73,9 @@ export default {
       parking: '停车场',
       kitchen: '厨房',
       kitchenette: '简易厨房'
-    }
+    },
+    staleResults: '价格可能自您上次搜索以来已发生变化。',
+    refreshPrices: '刷新'
   },
 
   booking: {

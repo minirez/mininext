@@ -83,8 +83,12 @@ export const useWidgetStore = defineStore('widget', () => {
   const detectedMarket = ref(null)
 
   // State Persistence
-  const STATE_TTL = 30 * 60 * 1000 // 30 minutes
+  const STATE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+  const STALE_THRESHOLD = 60 * 60 * 1000 // 1 hour - results considered stale after this
   let saveTimer = null
+
+  // Stale results flag
+  const resultsStale = ref(false)
 
   function getStorageKey() {
     return `maxirez_widget_${config.value.hotelCode}`
@@ -104,9 +108,9 @@ export const useWidgetStore = defineStore('widget', () => {
         booking: booking.value,
         savedAt: Date.now()
       }
-      sessionStorage.setItem(getStorageKey(), JSON.stringify(state))
+      localStorage.setItem(getStorageKey(), JSON.stringify(state))
     } catch (e) {
-      // sessionStorage full or unavailable
+      // localStorage full or unavailable
     }
   }
 
@@ -115,16 +119,29 @@ export const useWidgetStore = defineStore('widget', () => {
     saveTimer = setTimeout(saveState, 300)
   }
 
+  function migrateFromSessionStorage() {
+    try {
+      const key = getStorageKey()
+      const raw = sessionStorage.getItem(key)
+      if (raw) {
+        localStorage.setItem(key, raw)
+        sessionStorage.removeItem(key)
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   function restoreState() {
     try {
-      const raw = sessionStorage.getItem(getStorageKey())
+      const raw = localStorage.getItem(getStorageKey())
       if (!raw) return false
 
       const saved = JSON.parse(raw)
 
       // Expire after TTL
       if (Date.now() - saved.savedAt > STATE_TTL) {
-        sessionStorage.removeItem(getStorageKey())
+        localStorage.removeItem(getStorageKey())
         return false
       }
 
@@ -138,19 +155,49 @@ export const useWidgetStore = defineStore('widget', () => {
       if (saved.paymentMethod) paymentMethod.value = saved.paymentMethod
       if (saved.booking) booking.value = saved.booking
 
+      // Mark results as stale if saved more than 1 hour ago
+      if (saved.searchResults && Date.now() - saved.savedAt > STALE_THRESHOLD) {
+        resultsStale.value = true
+      }
+
       return true
     } catch (e) {
       return false
     }
   }
 
+  function validateRestoredState() {
+    const step = currentStep.value
+
+    // Payment/bank-transfer without a booking → go to booking
+    if ((step === 'payment' || step === 'bank-transfer') && !booking.value?.bookingNumber) {
+      currentStep.value = 'booking'
+    }
+
+    // Booking without selectedRoom → go to results or search
+    if (step === 'booking' && !selectedRoom.value) {
+      currentStep.value = searchResults.value ? 'results' : 'search'
+    }
+
+    // Results without searchResults → go to search
+    if (step === 'results' && !searchResults.value) {
+      currentStep.value = 'search'
+    }
+  }
+
   function clearSavedState() {
     try {
-      sessionStorage.removeItem(getStorageKey())
+      localStorage.removeItem(getStorageKey())
     } catch (e) {
       // ignore
     }
   }
+
+  // Computed: active session indicator for trigger badge
+  const hasActiveSession = computed(() => {
+    const step = currentStep.value
+    return step !== 'search' && step !== 'confirmation'
+  })
 
   // Resolve relative asset URLs (uploads, images) to absolute API URLs
   function resolveAssetUrl(path) {
@@ -201,8 +248,14 @@ export const useWidgetStore = defineStore('widget', () => {
   async function initialize(cfg) {
     config.value = { ...config.value, ...cfg }
 
+    // Migrate from old sessionStorage to localStorage
+    migrateFromSessionStorage()
+
     // Restore saved state before API calls
     const restored = restoreState()
+    if (restored) {
+      validateRestoredState()
+    }
 
     try {
       isLoading.value = true
@@ -264,17 +317,11 @@ export const useWidgetStore = defineStore('widget', () => {
 
   function closeWidget() {
     isOpen.value = false
-    // Reset to search if not in confirmation
-    if (currentStep.value !== 'confirmation') {
-      // Keep search params but reset results
-      currentStep.value = 'search'
-      searchResults.value = null
-      selectedRoom.value = null
-      selectedOption.value = null
-    } else {
-      // Confirmation done, clear saved state
+    // Only clear state when closing from confirmation (booking flow complete)
+    if (currentStep.value === 'confirmation') {
       clearSavedState()
     }
+    // Otherwise keep current step and data so user can resume
   }
 
   function setDates(checkIn, checkOut) {
@@ -311,6 +358,7 @@ export const useWidgetStore = defineStore('widget', () => {
       )
 
       searchResults.value = results
+      resultsStale.value = false
 
       // Pazar ödeme koşullarını kaydet
       if (results.search?.paymentTerms) {
@@ -562,6 +610,8 @@ export const useWidgetStore = defineStore('widget', () => {
     effectiveTheme,
     nights,
     paymentAmountToCharge,
+    hasActiveSession,
+    resultsStale,
 
     // Helpers
     resolveAssetUrl,

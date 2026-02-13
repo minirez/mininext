@@ -74,7 +74,9 @@ export default {
       parking: 'پارکینگ',
       kitchen: 'آشپزخانه',
       kitchenette: 'آشپزخانه کوچک'
-    }
+    },
+    staleResults: 'قیمت‌ها ممکن است از آخرین جستجوی شما تغییر کرده باشند.',
+    refreshPrices: 'بروزرسانی'
   },
 
   booking: {

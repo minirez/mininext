@@ -74,7 +74,9 @@ export default {
       parking: 'Parcheggio',
       kitchen: 'Cucina',
       kitchenette: 'Angolo cottura'
-    }
+    },
+    staleResults: 'I prezzi potrebbero essere cambiati dalla tua ultima ricerca.',
+    refreshPrices: 'Aggiorna'
   },
 
   booking: {

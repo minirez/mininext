@@ -73,7 +73,9 @@ export default {
       parking: 'Паркинг',
       kitchen: 'Кухня',
       kitchenette: 'Кухненски бокс'
-    }
+    },
+    staleResults: 'Цените може да са се променили от последното ви търсене.',
+    refreshPrices: 'Обнови'
   },
 
   booking: {

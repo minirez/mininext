@@ -15,6 +15,11 @@ const nights = computed(() => widgetStore.nights)
 const isLoading = computed(() => widgetStore.isLoading)
 const errorMessage = computed(() => widgetStore.error)
 const widgetConfig = computed(() => widgetStore.widgetConfig)
+const resultsStale = computed(() => widgetStore.resultsStale)
+
+function refreshResults() {
+  widgetStore.search()
+}
 
 // Lightbox state
 const lightboxOpen = ref(false)
@@ -267,6 +272,27 @@ function prevImage() {
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
       <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Stale Results Banner -->
+    <div v-if="resultsStale && !isLoading" class="stale-results-banner">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ t('results.staleResults') }}</span>
+      <button @click="refreshResults">{{ t('results.refreshPrices') }}</button>
     </div>
 
     <!-- Loading State -->
