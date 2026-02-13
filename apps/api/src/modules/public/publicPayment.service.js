@@ -8,6 +8,7 @@ import { BadRequestError, NotFoundError } from '#core/errors.js'
 import Hotel from '../hotel/hotel.model.js'
 import Booking from '../booking/booking.model.js'
 import Payment from '../booking/payment.model.js'
+import Market from '#modules/planning/market.model.js'
 import paymentGateway from '#services/paymentGateway.js'
 import { convertCurrency } from '#services/currencyService.js'
 import logger from '#core/logger.js'
@@ -25,6 +26,30 @@ async function getHotelByCode(hotelCode) {
     query.slug = hotelCode.toLowerCase()
   }
   return Hotel.findOne(query).select('_id partner widgetConfig').lean()
+}
+
+/**
+ * Helper: Check if credit card payments are enabled for a hotel
+ * Uses same market-aware logic as widget-config endpoint:
+ * Market paymentMethods take precedence, widgetConfig as fallback
+ * @private
+ */
+async function isCreditCardEnabled(hotel) {
+  // Check default market first (same logic as publicWidget.service.js)
+  const defaultMarket = await Market.findOne({
+    hotel: hotel._id,
+    isDefault: true,
+    status: 'active'
+  })
+    .select('paymentMethods')
+    .lean()
+
+  if (defaultMarket?.paymentMethods) {
+    return defaultMarket.paymentMethods.creditCard?.enabled ?? true
+  }
+
+  // Fallback to widgetConfig
+  return hotel.widgetConfig?.paymentMethods?.creditCard ?? true
 }
 
 /**
@@ -68,8 +93,9 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
     throw new NotFoundError('HOTEL_NOT_FOUND')
   }
 
-  // Check if credit card payments are enabled
-  if (hotel.widgetConfig?.paymentMethods?.creditCard === false) {
+  // Check if credit card payments are enabled (market-aware)
+  const ccEnabled = await isCreditCardEnabled(hotel)
+  if (!ccEnabled) {
     throw new BadRequestError('CREDIT_CARD_PAYMENT_DISABLED')
   }
 
@@ -193,9 +219,12 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     throw new BadRequestError('Bu rezervasyon için ödeme yapılamaz')
   }
 
-  // Check if credit card payments are enabled for this hotel
-  if (booking.hotel?.widgetConfig?.paymentMethods?.creditCard === false) {
-    throw new BadRequestError('CREDIT_CARD_PAYMENT_DISABLED')
+  // Check if credit card payments are enabled for this hotel (market-aware)
+  if (booking.hotel) {
+    const ccEnabled = await isCreditCardEnabled(booking.hotel)
+    if (!ccEnabled) {
+      throw new BadRequestError('CREDIT_CARD_PAYMENT_DISABLED')
+    }
   }
 
   // Calculate remaining amount
