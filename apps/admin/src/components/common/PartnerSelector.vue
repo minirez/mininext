@@ -211,12 +211,15 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerStore } from '@/stores/partner'
 import { usePmsStore } from '@/stores/pms'
 import { useHotelStore } from '@/stores/hotel'
 import apiClient from '@/services/api'
 
+const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const partnerStore = usePartnerStore()
 const pmsStore = usePmsStore()
@@ -298,9 +301,15 @@ const selectPartner = partner => {
 const clearSelection = () => {
   partnerStore.clearSelectedPartner()
   pmsStore.switchPartner(null)
+  pmsStore.exitPmsMode()
   hotelStore.clearHotel()
   isOpen.value = false
   searchQuery.value = ''
+
+  // PMS'deyse veya partner gerektiren bir sayfadaysa dashboard'a yönlendir
+  if (route.path !== '/dashboard') {
+    router.push('/dashboard')
+  }
 }
 
 // Close dropdown when clicking outside

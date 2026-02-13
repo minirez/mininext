@@ -231,6 +231,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { useHotelStore } from '@/stores/hotel'
 import { usePmsStore } from '@/stores/pms'
+import { usePartnerStore } from '@/stores/partner'
 import PartnerSelector from '@/components/common/PartnerSelector.vue'
 import HotelSelector from '@/components/common/HotelSelector.vue'
 import PmsHotelSelector from '@/components/pms/PmsHotelSelector.vue'
@@ -270,6 +271,7 @@ const authStore = useAuthStore()
 const uiStore = useUIStore()
 const hotelStore = useHotelStore()
 const pmsStore = usePmsStore()
+const partnerStore = usePartnerStore()
 
 // User avatar URL using shared utility
 const userAvatarUrl = computed(() => getAvatarUrl(authStore.user))
@@ -282,8 +284,8 @@ const showPmsLink = computed(() => {
   if (isPmsRoute.value) return false
   const user = authStore.user
   if (!user) return false
-  // Platform admins always see PMS link
-  if (authStore.isPlatformAdmin) return true
+  // Platform admins: PMS link only when a partner is selected (PMS requires partner context)
+  if (authStore.isPlatformAdmin) return partnerStore.hasSelectedPartner
   // Partner users with PMS permission
   if (user.accountType === 'partner') {
     const permissions = user.permissions || []
