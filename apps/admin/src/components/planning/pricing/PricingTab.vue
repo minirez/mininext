@@ -41,8 +41,10 @@
       :format-season-dates="formatSeasonDates"
       :get-month-short-name="getMonthShortName"
       @add-season="
-        showSeasonForm = true
-        editingSeason = null
+        () => {
+          showSeasonForm = true
+          editingSeason = null
+        }
       "
       @edit-season="editSeason"
       @delete-season="confirmDeleteSeason"
