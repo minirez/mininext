@@ -184,18 +184,9 @@ export const getUsers = asyncHandler(async (req, res) => {
   if (pmsDepartment) filter.pmsDepartment = pmsDepartment
   if (pmsAccess === 'true') filter.pmsRole = { $ne: null }
 
-  // PMS hotel filter - show users assigned to this hotel OR with empty pmsHotels (backward compat)
+  // PMS hotel filter - show only users assigned to this specific hotel
   if (hotelId) {
-    const hotelFilter = {
-      $or: [{ pmsHotels: hotelId }, { pmsHotels: { $size: 0 } }, { pmsHotels: { $exists: false } }]
-    }
-    // If there's already a $or (from search), wrap both in $and
-    if (filter.$or) {
-      filter.$and = [{ $or: filter.$or }, hotelFilter]
-      delete filter.$or
-    } else {
-      Object.assign(filter, hotelFilter)
-    }
+    filter.pmsHotels = hotelId
   }
 
   // Pagination

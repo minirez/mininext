@@ -271,7 +271,7 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
-    // PMS otel atamalar─▒ - bo┼č array = t├╝m otellerde g├Âr├╝n├╝r (geriye uyumlu)
+    // PMS otel atamaları - kullanıcının erişebildiği oteller
     pmsHotels: [
       {
         type: mongoose.Schema.Types.ObjectId,
