@@ -288,7 +288,9 @@ const handleLogin = async () => {
         if (result.forcePasswordChange) {
           router.push({ name: 'force-password-change' })
         } else {
-          const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+          const pmsAutoSelect = localStorage.getItem('pmsAutoSelectHotel')
+          const defaultPath = pmsAutoSelect ? '/pms/dashboard' : '/dashboard'
+          const redirectPath = router.currentRoute.value.query.redirect || defaultPath
           router.push(redirectPath)
         }
       }
@@ -316,7 +318,9 @@ const handle2FAVerification = async () => {
         if (result.forcePasswordChange) {
           router.push({ name: 'force-password-change' })
         } else {
-          const redirectPath = router.currentRoute.value.query.redirect || '/dashboard'
+          const pmsAutoSelect = localStorage.getItem('pmsAutoSelectHotel')
+          const defaultPath = pmsAutoSelect ? '/pms/dashboard' : '/dashboard'
+          const redirectPath = router.currentRoute.value.query.redirect || defaultPath
           router.push(redirectPath)
         }
       }
