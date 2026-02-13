@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { countries } from '../data/countries'
+import { countries, getFlagUrl } from '../data/countries'
 
 const props = defineProps({
   modelValue: {
@@ -26,13 +26,25 @@ const emit = defineEmits(['update:modelValue'])
 // Refs
 const inputRef = ref(null)
 const wrapperRef = ref(null)
+const searchRef = ref(null)
 const showDropdown = ref(false)
+const searchQuery = ref('')
 
 // Selected country
 const selectedCountryCode = ref(props.country)
 
 const selectedCountry = computed(() => {
   return countries.find(c => c.code === selectedCountryCode.value) || countries[0]
+})
+
+// Filtered countries for search
+const filteredCountries = computed(() => {
+  if (!searchQuery.value) return countries
+  const q = searchQuery.value.toLowerCase()
+  return countries.filter(
+    c =>
+      c.name.toLowerCase().includes(q) || c.dialCode.includes(q) || c.code.toLowerCase().includes(q)
+  )
 })
 
 // Internal value (sadece rakamlar)
@@ -65,7 +77,7 @@ function formatPhone(value, country) {
     return formatted
   }
 
-  if (country.code === 'US') {
+  if (country.code === 'US' || (country.code === 'CA' && country.dialCode === '+1')) {
     if (digits.length > 0) formatted += '(' + digits.substr(0, 3)
     if (digits.length > 3) formatted += ') ' + digits.substr(3, 3)
     if (digits.length > 6) formatted += '-' + digits.substr(6, 4)
@@ -88,12 +100,17 @@ function formatPhone(value, country) {
 // Toggle dropdown
 function toggleDropdown() {
   showDropdown.value = !showDropdown.value
+  if (showDropdown.value) {
+    searchQuery.value = ''
+    nextTick(() => searchRef.value?.focus())
+  }
 }
 
 // Select country
 function selectCountry(country) {
   selectedCountryCode.value = country.code
   showDropdown.value = false
+  searchQuery.value = ''
 
   // Mevcut deger varsa yeni ulke koduyla emit et
   if (rawValue.value) {
@@ -101,6 +118,11 @@ function selectCountry(country) {
   }
 
   nextTick(() => inputRef.value?.focus())
+}
+
+// Select first filtered country on Enter
+function selectFirst() {
+  if (filteredCountries.value.length > 0) selectCountry(filteredCountries.value[0])
 }
 
 // Input handler
@@ -236,7 +258,7 @@ onUnmounted(() => {
       :class="{ open: showDropdown }"
       @click.stop="toggleDropdown"
     >
-      <span class="phone-flag">{{ selectedCountry.flag }}</span>
+      <img class="phone-flag" :src="getFlagUrl(selectedCountry.code)" :alt="selectedCountry.code" />
       <span class="phone-dial-code">{{ selectedCountry.dialCode }}</span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -270,18 +292,46 @@ onUnmounted(() => {
 
     <!-- Dropdown -->
     <div v-if="showDropdown" class="phone-dropdown" @click.stop>
-      <button
-        v-for="c in countries"
-        :key="c.code"
-        type="button"
-        class="phone-dropdown-item"
-        :class="{ active: c.code === selectedCountryCode }"
-        @click="selectCountry(c)"
-      >
-        <span class="phone-flag">{{ c.flag }}</span>
-        <span class="phone-country-name">{{ c.name }}</span>
-        <span class="phone-country-dial">{{ c.dialCode }}</span>
-      </button>
+      <div class="phone-search-box">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          ref="searchRef"
+          v-model="searchQuery"
+          type="text"
+          class="phone-search-input"
+          autocomplete="off"
+          @keydown.enter.prevent="selectFirst"
+          @keydown.esc="showDropdown = false"
+        />
+      </div>
+      <div class="phone-dropdown-list">
+        <button
+          v-for="c in filteredCountries"
+          :key="c.code"
+          type="button"
+          class="phone-dropdown-item"
+          :class="{ active: c.code === selectedCountryCode }"
+          @click="selectCountry(c)"
+        >
+          <img class="phone-flag" :src="getFlagUrl(c.code)" :alt="c.code" />
+          <span class="phone-country-name">{{ c.name }}</span>
+          <span class="phone-country-dial">{{ c.dialCode }}</span>
+        </button>
+        <div v-if="filteredCountries.length === 0" class="phone-dropdown-empty">-</div>
+      </div>
     </div>
 
     <!-- Error Message -->

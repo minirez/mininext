@@ -3440,7 +3440,8 @@ select.form-input option {
   }
 
   .phone-flag {
-    font-size: 16px;
+    width: 18px;
+    height: 13px;
   }
 
   .phone-dial-code {
@@ -3563,8 +3564,11 @@ select.form-input option {
 }
 
 .phone-flag {
-  font-size: 18px;
-  line-height: 1;
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .phone-dial-code {
@@ -3586,23 +3590,63 @@ select.form-input option {
   right: 0;
   z-index: 100;
   margin-top: 4px;
-  max-height: 200px;
-  overflow-y: auto;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-xs);
   box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.phone-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.phone-search-box svg {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.phone-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.phone-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.phone-dropdown-list {
+  max-height: 200px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
 }
 
-.phone-dropdown::-webkit-scrollbar {
+.phone-dropdown-list::-webkit-scrollbar {
   width: 5px;
 }
 
-.phone-dropdown::-webkit-scrollbar-thumb {
+.phone-dropdown-list::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
+}
+
+.phone-dropdown-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
 }
 
 .phone-dropdown-item {
