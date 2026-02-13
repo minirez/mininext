@@ -38,6 +38,7 @@ import paymentLinkRoutes from './routes/paymentLink.routes.js'
 import commissionRoutes from './routes/commission.routes.js'
 
 const app = express()
+app.set('trust proxy', true) // Nginx arkasında gerçek client IP'si için
 const PORT = process.env.PORT || 7043
 const SERVICE_NAME = process.env.SERVICE_NAME || 'payment-service'
 

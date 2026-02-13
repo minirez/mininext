@@ -7,14 +7,22 @@
         <div class="absolute inset-0 bg-black/50" @click.self="cancelPayment"></div>
 
         <!-- Modal Content -->
-        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden">
+        <div
+          class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+        >
           <!-- Header -->
-          <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+          <div
+            class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700"
+          >
             <div class="flex items-center gap-3">
               <span class="material-icons text-yellow-600 dark:text-yellow-400">security</span>
               <div>
-                <p class="font-medium text-gray-900 dark:text-white">{{ $t('payment.card.3dSecure') }}</p>
-                <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('payment.card.3dSecureInfo') }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">
+                  {{ $t('payment.card.3dSecure') }}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-slate-400">
+                  {{ $t('payment.card.3dSecureInfo') }}
+                </p>
               </div>
             </div>
             <button
@@ -35,7 +43,10 @@
               allow="payment"
               @load="onIframeLoad"
             ></iframe>
-            <div v-if="iframeLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-800/80">
+            <div
+              v-if="iframeLoading"
+              class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-800/80"
+            >
               <span class="material-icons text-4xl text-purple-500 animate-spin">refresh</span>
             </div>
           </div>
@@ -62,10 +73,20 @@
           <div>
             <p class="text-sm text-purple-600 dark:text-purple-300">{{ $t('payment.amount') }}</p>
             <p class="text-2xl font-bold text-purple-700 dark:text-purple-200">
-              {{ formatPrice(amount, currency) }}
+              {{ formatPrice(effectiveAmount, effectiveCurrency) }}
+            </p>
+            <!-- DCC conversion notice -->
+            <p v-if="dccConversion" class="text-xs text-purple-500 dark:text-purple-400 mt-1">
+              {{ formatPrice(dccConversion.originalAmount, dccConversion.originalCurrency) }}
+              &rarr;
+              {{ formatPrice(dccConversion.convertedAmount, dccConversion.convertedCurrency) }} ({{
+                $t('payment.card.exchangeRate')
+              }}: {{ dccConversion.exchangeRate.toFixed(4) }})
             </p>
           </div>
-          <span class="material-icons text-5xl text-purple-300 dark:text-purple-700">credit_card</span>
+          <span class="material-icons text-5xl text-purple-300 dark:text-purple-700"
+            >credit_card</span
+          >
         </div>
       </div>
 
@@ -86,7 +107,9 @@
             @input="onCardNumberInput"
             required
           />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400">credit_card</span>
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400"
+            >credit_card</span
+          >
           <!-- Card Logo -->
           <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
             <img
@@ -96,7 +119,9 @@
               class="h-6 w-auto"
               @error="onCardLogoError"
             />
-            <span v-if="queryingBin" class="material-icons text-gray-400 animate-spin text-sm">refresh</span>
+            <span v-if="queryingBin" class="material-icons text-gray-400 animate-spin text-sm"
+              >refresh</span
+            >
           </div>
         </div>
         <!-- BIN Info -->
@@ -104,7 +129,10 @@
           <div class="flex items-center gap-2 text-gray-600 dark:text-slate-400">
             <span class="material-icons text-sm">account_balance</span>
             <span>{{ binInfo.bankName }}</span>
-            <span v-if="binInfo.cardFamily" class="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs">
+            <span
+              v-if="binInfo.cardFamily"
+              class="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-700 rounded text-xs"
+            >
               {{ binInfo.cardFamily }}
             </span>
           </div>
@@ -164,14 +192,16 @@
               class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               @click="showCvv = !showCvv"
             >
-              <span class="material-icons text-sm">{{ showCvv ? 'visibility_off' : 'visibility' }}</span>
+              <span class="material-icons text-sm">{{
+                showCvv ? 'visibility_off' : 'visibility'
+              }}</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Installments -->
-      <div v-if="installmentOptions.length > 1">
+      <!-- Installments (hide when DCC conversion is active - no installments for currency-converted payments) -->
+      <div v-if="installmentOptions.length > 1 && !dccConversion">
         <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
           {{ $t('payment.card.installment') }}
         </label>
@@ -181,34 +211,49 @@
             :key="opt.count"
             type="button"
             class="p-3 rounded-lg border-2 text-center transition-all"
-            :class="form.installment === opt.count
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-200 dark:border-slate-700 hover:border-gray-300'"
+            :class="
+              form.installment === opt.count
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                : 'border-gray-200 dark:border-slate-700 hover:border-gray-300'
+            "
             @click="form.installment = opt.count"
           >
             <p class="font-medium text-gray-900 dark:text-white">
-              {{ opt.count === 1 ? $t('payment.card.singlePayment') : opt.count + ' ' + $t('payment.card.installments') }}
+              {{
+                opt.count === 1
+                  ? $t('payment.card.singlePayment')
+                  : opt.count + ' ' + $t('payment.card.installments')
+              }}
             </p>
             <p class="text-sm text-gray-500 dark:text-slate-400">
-              {{ formatPrice(opt.monthlyAmount, currency) }}/{{ $t('payment.card.month') }}
+              {{ formatPrice(opt.monthlyAmount, effectiveCurrency) }}/{{ $t('payment.card.month') }}
             </p>
-            <p v-if="opt.totalAmount > amount" class="text-xs text-orange-600 dark:text-orange-400">
-              {{ $t('payment.card.total') }}: {{ formatPrice(opt.totalAmount, currency) }}
+            <p
+              v-if="opt.totalAmount > effectiveAmount"
+              class="text-xs text-orange-600 dark:text-orange-400"
+            >
+              {{ $t('payment.card.total') }}: {{ formatPrice(opt.totalAmount, effectiveCurrency) }}
             </p>
           </button>
         </div>
       </div>
 
       <!-- Error Message -->
-      <div v-if="errorMessage" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+      <div
+        v-if="errorMessage"
+        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+      >
         <div class="flex items-center gap-2 text-red-700 dark:text-red-300">
           <span class="material-icons">error</span>
           <p>{{ errorMessage }}</p>
         </div>
       </div>
 
-      <!-- Submit Section -->
-      <div v-if="showSubmitButton" class="pt-4 border-t border-gray-100 dark:border-slate-700">
+      <!-- Submit Section (only show when card is valid) -->
+      <div
+        v-if="showSubmitButton && isValid"
+        class="pt-4 border-t border-gray-100 dark:border-slate-700"
+      >
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
             <span class="material-icons text-green-500">lock</span>
@@ -227,7 +272,8 @@
           </span>
           <span v-else class="flex items-center justify-center">
             <span class="material-icons mr-2">payment</span>
-            {{ submitButtonText || $t('payment.card.pay') }} {{ formatPrice(selectedTotal, currency) }}
+            {{ submitButtonText || $t('payment.card.pay') }}
+            {{ formatPrice(selectedTotal, effectiveCurrency) }}
           </span>
         </button>
       </div>
@@ -281,10 +327,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'success',       // { transactionId, status, booking, payment }
-  'error',         // { message, code }
-  'cancel',        // 3D iptal edildi
-  'processing',    // true/false - İşlem başladı/bitti
+  'success', // { transactionId, status, booking, payment }
+  'error', // { message, code }
+  'cancel', // 3D iptal edildi
+  'processing', // true/false - İşlem başladı/bitti
   'request-payment' // inline modda: { cardData, installment } - Parent booking/payment oluşturmalı
 ])
 
@@ -308,7 +354,14 @@ const errorMessage = ref('')
 const queryingBin = ref(false)
 const binInfo = ref(null)
 const cardBrand = ref('')
-const installmentOptions = ref([{ count: 1, monthlyAmount: props.amount, totalAmount: props.amount }])
+const dccConversion = ref(null) // DCC: currency conversion info from BIN query
+const installmentOptions = ref([
+  { count: 1, monthlyAmount: props.amount, totalAmount: props.amount }
+])
+
+// DCC: effective amount/currency (converted if TR card + foreign currency)
+const effectiveAmount = computed(() => dccConversion.value?.convertedAmount || props.amount)
+const effectiveCurrency = computed(() => dccConversion.value?.convertedCurrency || props.currency)
 
 // 3D Secure
 const showPaymentIframe = ref(false)
@@ -335,7 +388,7 @@ const isValid = computed(() => {
 
 const selectedTotal = computed(() => {
   const opt = installmentOptions.value.find(o => o.count === form.value.installment)
-  return opt?.totalAmount || props.amount
+  return opt?.totalAmount || effectiveAmount.value
 })
 
 // Methods
@@ -360,17 +413,26 @@ const formatCardNumber = value => {
   return parts.length ? parts.join(' ') : v
 }
 
+const lastQueriedBin = ref('')
+
 const onCardNumberInput = async e => {
   form.value.cardNumber = formatCardNumber(e.target.value)
 
-  // Query BIN when 6+ digits
   const cleanNumber = form.value.cardNumber.replace(/\s/g, '')
-  if (cleanNumber.length >= 6 && cleanNumber.length <= 8) {
-    await queryBin(cleanNumber.slice(0, 8))
+  const bin = cleanNumber.slice(0, 8)
+
+  if (cleanNumber.length >= 6 && bin !== lastQueriedBin.value) {
+    // Query BIN when 6+ digits and BIN changed (works for both typing and autocomplete)
+    lastQueriedBin.value = bin
+    await queryBin(bin)
   } else if (cleanNumber.length < 6) {
     binInfo.value = null
     cardBrand.value = ''
-    installmentOptions.value = [{ count: 1, monthlyAmount: props.amount, totalAmount: props.amount }]
+    dccConversion.value = null
+    lastQueriedBin.value = ''
+    installmentOptions.value = [
+      { count: 1, monthlyAmount: props.amount, totalAmount: props.amount }
+    ]
   }
 }
 
@@ -391,17 +453,27 @@ const queryBin = async bin => {
       const data = result.data
       if (data.card) {
         binInfo.value = {
-          bankName: data.card.bankName,
-          cardFamily: data.card.cardFamily,
+          bankName: data.card.bankName || data.card.bank,
+          cardFamily: data.card.cardFamily || data.card.family,
           brand: data.card.brand
         }
         cardBrand.value = data.card.brand
       }
+      // DCC: check if currency conversion was applied
+      if (data.currencyConversion) {
+        dccConversion.value = data.currencyConversion
+        // DCC active: force single payment (no installments for currency-converted payments)
+        form.value.installment = 1
+      } else {
+        dccConversion.value = null
+      }
       if (data.installments?.length > 0) {
         installmentOptions.value = data.installments.map(inst => ({
           count: inst.count,
-          monthlyAmount: inst.monthlyAmount,
-          totalAmount: inst.totalAmount
+          monthlyAmount:
+            inst.monthlyAmount ||
+            (inst.amount ? Math.round((inst.amount / inst.count) * 100) / 100 : null),
+          totalAmount: inst.totalAmount || inst.amount
         }))
       }
     }
@@ -605,6 +677,8 @@ const resetForm = () => {
   errorMessage.value = ''
   binInfo.value = null
   cardBrand.value = ''
+  dccConversion.value = null
+  lastQueriedBin.value = ''
   installmentOptions.value = [{ count: 1, monthlyAmount: props.amount, totalAmount: props.amount }]
 }
 
@@ -651,25 +725,37 @@ onUnmounted(() => {
 })
 
 // Watch for amount changes
-watch(() => props.amount, newAmount => {
-  installmentOptions.value = [{ count: 1, monthlyAmount: newAmount, totalAmount: newAmount }]
-})
+watch(
+  () => props.amount,
+  newAmount => {
+    installmentOptions.value = [{ count: 1, monthlyAmount: newAmount, totalAmount: newAmount }]
+  }
+)
 
 // Watch for customer name changes
-watch(() => props.customerName, newName => {
-  if (newName && !form.value.cardHolder) {
-    form.value.cardHolder = newName.toUpperCase()
+watch(
+  () => props.customerName,
+  newName => {
+    if (newName && !form.value.cardHolder) {
+      form.value.cardHolder = newName.toUpperCase()
+    }
   }
-})
+)
 
 // Watch for prop changes (bookingId/paymentId)
-watch(() => props.bookingId, newVal => {
-  internalBookingId.value = newVal
-})
+watch(
+  () => props.bookingId,
+  newVal => {
+    internalBookingId.value = newVal
+  }
+)
 
-watch(() => props.paymentId, newVal => {
-  internalPaymentId.value = newVal
-})
+watch(
+  () => props.paymentId,
+  newVal => {
+    internalPaymentId.value = newVal
+  }
+)
 
 // Expose methods and state for parent
 defineExpose({

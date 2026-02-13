@@ -15,12 +15,38 @@ const posClient = axios.create({
   }
 })
 
-// Add auth token to requests
-posClient.interceptors.request.use(config => {
+// Add auth token and partner context to requests
+posClient.interceptors.request.use(async config => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Add partner context - partner ID as header and body param
+  try {
+    const { useAuthStore } = await import('@/stores/auth')
+    const { usePartnerStore } = await import('@/stores/partner')
+    const authStore = useAuthStore()
+    const partnerStore = usePartnerStore()
+
+    let partnerId = null
+    if (authStore.isPlatformAdmin && partnerStore.hasSelectedPartner) {
+      partnerId = partnerStore.selectedPartner?._id
+    } else if (authStore.user?.accountType === 'partner') {
+      partnerId = authStore.user.accountId
+    }
+
+    if (partnerId) {
+      config.headers['X-Partner-Id'] = partnerId
+      // POST/PUT: inject partnerId into body if not already set
+      if (config.data && typeof config.data === 'object' && !config.data.partnerId) {
+        config.data.partnerId = partnerId
+      }
+    }
+  } catch (e) {
+    // Store not ready yet, skip partner context
+  }
+
   return config
 })
 

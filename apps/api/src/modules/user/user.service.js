@@ -28,6 +28,7 @@ export const createUser = asyncHandler(async (req, res) => {
     pmsRole,
     pmsDepartment,
     pmsPermissions,
+    pmsHotels,
     position,
     phone
   } = req.body
@@ -94,6 +95,7 @@ export const createUser = asyncHandler(async (req, res) => {
     pmsRole: pmsRole || undefined,
     pmsDepartment: pmsDepartment || undefined,
     pmsPermissions: pmsPermissions || [],
+    pmsHotels: pmsHotels || [],
     position: position || undefined,
     phone: phone || undefined,
     status: password ? 'active' : 'pending',
@@ -140,8 +142,17 @@ export const createUser = asyncHandler(async (req, res) => {
 
 // Get all users
 export const getUsers = asyncHandler(async (req, res) => {
-  const { accountType, accountId, status, search, role, pmsRole, pmsDepartment, pmsAccess } =
-    req.query
+  const {
+    accountType,
+    accountId,
+    status,
+    search,
+    role,
+    pmsRole,
+    pmsDepartment,
+    pmsAccess,
+    hotelId
+  } = req.query
   const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter based on user permissions
@@ -172,6 +183,20 @@ export const getUsers = asyncHandler(async (req, res) => {
   if (pmsRole) filter.pmsRole = pmsRole
   if (pmsDepartment) filter.pmsDepartment = pmsDepartment
   if (pmsAccess === 'true') filter.pmsRole = { $ne: null }
+
+  // PMS hotel filter - show users assigned to this hotel OR with empty pmsHotels (backward compat)
+  if (hotelId) {
+    const hotelFilter = {
+      $or: [{ pmsHotels: hotelId }, { pmsHotels: { $size: 0 } }, { pmsHotels: { $exists: false } }]
+    }
+    // If there's already a $or (from search), wrap both in $and
+    if (filter.$or) {
+      filter.$and = [{ $or: filter.$or }, hotelFilter]
+      delete filter.$or
+    } else {
+      Object.assign(filter, hotelFilter)
+    }
+  }
 
   // Pagination
   const total = await User.countDocuments(filter)
@@ -251,6 +276,7 @@ export const updateUser = asyncHandler(async (req, res) => {
     'pmsRole',
     'pmsDepartment',
     'pmsPermissions',
+    'pmsHotels',
     'position',
     'language'
   ]

@@ -7,6 +7,7 @@ import express from 'express'
 import { protect, requireAdmin } from '#middleware/auth.js'
 import { partnerContext } from '#middleware/partnerContext.js'
 import paymentRoutes from './payment.routes.js'
+import * as paymentService from './payment.service.js'
 
 // Import sub-route modules
 import paymentHelperRoutes from './routes/bookingPayment.routes.js'
@@ -20,7 +21,7 @@ import emailRoutes from './routes/bookingEmail.routes.js'
 const router = express.Router()
 
 // ==================== PUBLIC ROUTES (no auth) ====================
-// Payment webhook and BIN query
+// Payment webhook only (no auth - called by payment-service)
 router.use('/', paymentHelperRoutes)
 
 // ==================== PROTECTED ROUTES ====================
@@ -28,6 +29,9 @@ router.use('/', paymentHelperRoutes)
 router.use(protect)
 router.use(requireAdmin)
 router.use(partnerContext)
+
+// BIN query (requires auth - uses req.user for partner detection)
+router.post('/query-bin', paymentService.queryBinByPartner)
 
 // Mount sub-routers
 router.use('/', searchRoutes) // Helper routes, stats, search, price-quote

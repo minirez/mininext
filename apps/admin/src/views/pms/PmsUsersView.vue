@@ -491,7 +491,8 @@ const fetchUsers = async () => {
   loading.value = true
   try {
     const params = {
-      pmsAccess: 'true'
+      pmsAccess: 'true',
+      hotelId: pmsStore.hotelId
     }
 
     if (filters.value.department) params.pmsDepartment = filters.value.department

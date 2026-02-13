@@ -779,7 +779,8 @@
       "cancel3D": "İptal Et ve Geri Dön",
       "success": "Ödeme başarıyla tamamlandı",
       "failed": "Ödeme başarısız oldu",
-      "fillAllFields": "Lütfen tüm kart bilgilerini doldurun"
+      "fillAllFields": "Lütfen tüm kart bilgilerini doldurun",
+      "exchangeRate": "Kur"
     },
     "payAtCheckin": {
       "info": "Ödeme check-in sırasında alınacak olarak işaretlenecektir."

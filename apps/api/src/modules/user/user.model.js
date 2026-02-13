@@ -271,6 +271,14 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    // PMS otel atamalar─▒ - bo┼č array = t├╝m otellerde g├Âr├╝n├╝r (geriye uyumlu)
+    pmsHotels: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Hotel'
+      }
+    ],
+
     position: {
       type: String,
       trim: true

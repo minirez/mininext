@@ -3,20 +3,20 @@
  * Public customer-facing payment page for payment links
  */
 
-import { Router } from 'express';
-import axios from 'axios';
-import https from 'https';
-import PaymentService from '../services/PaymentService.js';
+import { Router } from 'express'
+import axios from 'axios'
+import https from 'https'
+import PaymentService from '../services/PaymentService.js'
 
-const router = Router();
+const router = Router()
 
 // API Base URL (main booking-engine API)
-const API_BASE_URL = process.env.MAIN_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = process.env.MAIN_API_URL || 'http://localhost:4000/api'
 
 // HTTPS agent for self-signed certificates in development
 const httpsAgent = new https.Agent({
   rejectUnauthorized: process.env.NODE_ENV === 'production'
-});
+})
 
 /**
  * GET /pay-link/:token
@@ -24,24 +24,24 @@ const httpsAgent = new https.Agent({
  */
 router.get('/:token', async (req, res) => {
   try {
-    const { token } = req.params;
+    const { token } = req.params
 
     // Fetch payment link from main API
-    const response = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent });
-    const paymentLink = response.data.data;
+    const response = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent })
+    const paymentLink = response.data.data
 
     // Check status
     if (['cancelled', 'expired', 'paid'].includes(paymentLink.status)) {
-      return res.send(renderStatusPage(paymentLink));
+      return res.send(renderStatusPage(paymentLink))
     }
 
     // Render payment form
-    res.send(renderPaymentForm(paymentLink, token));
+    res.send(renderPaymentForm(paymentLink, token))
   } catch (error) {
-    console.error('Payment link fetch error:', error.message);
-    res.status(404).send(renderErrorPage('Ödeme linki bulunamadı veya geçersiz.'));
+    console.error('Payment link fetch error:', error.message)
+    res.status(404).send(renderErrorPage('Ödeme linki bulunamadı veya geçersiz.'))
   }
-});
+})
 
 /**
  * POST /pay-link/:token/bin
@@ -49,25 +49,25 @@ router.get('/:token', async (req, res) => {
  */
 router.post('/:token/bin', async (req, res) => {
   try {
-    const { token } = req.params;
-    const { bin } = req.body;
+    const { token } = req.params
+    const { bin } = req.body
 
     if (!bin || bin.length < 6) {
       return res.status(400).json({
         status: false,
         error: 'Geçersiz BIN numarası'
-      });
+      })
     }
 
     // Fetch payment link to get amount and currency
-    const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent });
-    const paymentLink = linkResponse.data.data;
+    const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent })
+    const paymentLink = linkResponse.data.data
 
     if (['cancelled', 'expired', 'paid'].includes(paymentLink.status)) {
       return res.status(400).json({
         status: false,
         error: 'Bu ödeme linki artık kullanılamaz'
-      });
+      })
     }
 
     // Query BIN using PaymentService (platform-level, no partnerId needed for now)
@@ -76,23 +76,23 @@ router.post('/:token/bin', async (req, res) => {
       bin,
       paymentLink.amount,
       paymentLink.currency.toLowerCase()
-    );
+    )
 
     if (!result.success) {
-      return res.status(400).json(result);
+      return res.status(400).json(result)
     }
 
     // Filter installments based on payment link max count
-    let installments = result.installments || [];
+    let installments = result.installments || []
     if (paymentLink.installment?.enabled && paymentLink.installment?.maxCount) {
-      installments = installments.filter(i => i.count <= paymentLink.installment.maxCount);
+      installments = installments.filter(i => i.count <= paymentLink.installment.maxCount)
     } else if (!paymentLink.installment?.enabled) {
-      installments = installments.filter(i => i.count === 1);
+      installments = installments.filter(i => i.count === 1)
     }
 
     // Apply interest rates if set (rates is a Map: { 2: 1.5, 3: 2, ... })
-    const rates = paymentLink.installment?.rates || {};
-    const hasRates = Object.keys(rates).length > 0;
+    const rates = paymentLink.installment?.rates || {}
+    const hasRates = Object.keys(rates).length > 0
 
     if (hasRates) {
       installments = installments.map(inst => {
@@ -104,10 +104,10 @@ router.post('/:token/bin', async (req, res) => {
             monthlyAmount: paymentLink.amount,
             interestAmount: 0,
             interestRate: 0
-          };
+          }
         }
         // Get rate for this installment count
-        const rate = rates[inst.count] || rates[String(inst.count)] || 0;
+        const rate = rates[inst.count] || rates[String(inst.count)] || 0
         if (rate <= 0) {
           return {
             ...inst,
@@ -115,19 +115,19 @@ router.post('/:token/bin', async (req, res) => {
             monthlyAmount: Math.round((paymentLink.amount / inst.count) * 100) / 100,
             interestAmount: 0,
             interestRate: 0
-          };
+          }
         }
         // Calculate interest: amount * rate/100 * installmentCount
-        const totalInterest = paymentLink.amount * (rate / 100) * inst.count;
-        const totalAmount = paymentLink.amount + totalInterest;
+        const totalInterest = paymentLink.amount * (rate / 100) * inst.count
+        const totalAmount = paymentLink.amount + totalInterest
         return {
           ...inst,
           totalAmount: Math.round(totalAmount * 100) / 100,
           monthlyAmount: Math.round((totalAmount / inst.count) * 100) / 100,
           interestAmount: Math.round(totalInterest * 100) / 100,
           interestRate: rate
-        };
-      });
+        }
+      })
     } else {
       // No interest rates configured - just calculate monthly amounts
       installments = installments.map(inst => ({
@@ -136,7 +136,7 @@ router.post('/:token/bin', async (req, res) => {
         monthlyAmount: Math.round((paymentLink.amount / inst.count) * 100) / 100,
         interestAmount: 0,
         interestRate: 0
-      }));
+      }))
     }
 
     res.json({
@@ -144,15 +144,15 @@ router.post('/:token/bin', async (req, res) => {
       card: result.card,
       installments,
       pos: result.pos
-    });
+    })
   } catch (error) {
-    console.error('BIN query error:', error.message);
+    console.error('BIN query error:', error.message)
     res.status(500).json({
       status: false,
       error: 'BIN sorgusu başarısız oldu'
-    });
+    })
   }
-});
+})
 
 /**
  * POST /pay-link/:token/process
@@ -160,45 +160,46 @@ router.post('/:token/bin', async (req, res) => {
  */
 router.post('/:token/process', async (req, res) => {
   try {
-    const { token } = req.params;
-    const { card, installment, posId } = req.body;
+    const { token } = req.params
+    const { card, installment, posId } = req.body
 
     // Validate card
     if (!card?.holder || !card?.number || !card?.expiry || !card?.cvv) {
       return res.status(400).json({
         status: false,
         error: 'Kart bilgileri eksik'
-      });
+      })
     }
 
     // Fetch payment link
-    const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent });
-    const paymentLink = linkResponse.data.data;
+    const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent })
+    const paymentLink = linkResponse.data.data
 
     if (['cancelled', 'expired', 'paid'].includes(paymentLink.status)) {
       return res.status(400).json({
         status: false,
         error: 'Bu ödeme linki artık kullanılamaz'
-      });
+      })
     }
 
     // Validate installment
-    const selectedInstallment = parseInt(installment) || 1;
+    const selectedInstallment = parseInt(installment) || 1
     if (paymentLink.installment?.enabled) {
       if (selectedInstallment > (paymentLink.installment.maxCount || 1)) {
         return res.status(400).json({
           status: false,
           error: 'Geçersiz taksit sayısı'
-        });
+        })
       }
     } else if (selectedInstallment > 1) {
       return res.status(400).json({
         status: false,
         error: 'Bu ödeme için taksit kullanılamaz'
-      });
+      })
     }
 
     // Process payment
+    const customerIp = req.ip
     const paymentResult = await PaymentService.createPayment({
       posId,
       amount: paymentLink.amount,
@@ -213,87 +214,94 @@ router.post('/:token/process', async (req, res) => {
       customer: {
         name: paymentLink.customer.name,
         email: paymentLink.customer.email,
-        phone: paymentLink.customer.phone
+        phone: paymentLink.customer.phone,
+        ip: customerIp
       },
       externalId: `PL-${token}`
-    });
+    })
 
     // If 3D redirect needed (check both formUrl and redirectUrl)
-    const redirectUrl = paymentResult.formUrl || paymentResult.redirectUrl;
+    const redirectUrl = paymentResult.formUrl || paymentResult.redirectUrl
     if (redirectUrl) {
       return res.json({
         status: true,
         requires3D: true,
         transactionId: paymentResult.transactionId,
         redirectUrl: redirectUrl
-      });
+      })
     }
 
     // Direct payment success - update payment link status in main API
     if (paymentResult.success) {
       try {
         // Get full transaction details
-        const txDetails = await PaymentService.getTransactionDetails(paymentResult.transactionId);
+        const txDetails = await PaymentService.getTransactionDetails(paymentResult.transactionId)
 
         // Notify main API about successful payment
-        await axios.post(`${API_BASE_URL}/pay/${token}/complete`, txDetails, { httpsAgent });
+        await axios.post(`${API_BASE_URL}/pay/${token}/complete`, txDetails, { httpsAgent })
       } catch (notifyError) {
-        console.error('Failed to notify main API:', notifyError.message);
+        console.error('Failed to notify main API:', notifyError.message)
       }
     }
 
-    res.json(paymentResult);
+    res.json(paymentResult)
   } catch (error) {
-    console.error('Payment process error:', error.message);
+    console.error('Payment process error:', error.message)
     res.status(500).json({
       status: false,
       error: error.message || 'Ödeme işlemi başarısız oldu'
-    });
+    })
   }
-});
+})
 
 /**
  * POST /pay-link/:token/callback
  * 3D Secure callback for payment link
  */
 router.post('/:token/callback', async (req, res) => {
-  const { token } = req.params;
+  const { token } = req.params
 
-  console.log('[PaymentLink Callback] Token:', token);
-  console.log('[PaymentLink Callback] Body keys:', Object.keys(req.body));
+  console.log('[PaymentLink Callback] Token:', token)
+  console.log('[PaymentLink Callback] Body keys:', Object.keys(req.body))
 
   try {
     // Get transactionId from callback data or session
-    const transactionId = req.body.transactionId || req.body.orderId;
+    const transactionId = req.body.transactionId || req.body.orderId
 
-    console.log('[PaymentLink Callback] TransactionId:', transactionId);
+    console.log('[PaymentLink Callback] TransactionId:', transactionId)
 
     if (!transactionId) {
-      return res.send(renderResultPage(false, 'İşlem bilgisi bulunamadı'));
+      return res.send(renderResultPage(false, 'İşlem bilgisi bulunamadı'))
     }
 
     // Process 3D callback
-    const result = await PaymentService.processCallback(transactionId, req.body);
+    const result = await PaymentService.processCallback(transactionId, req.body)
 
-    console.log('[PaymentLink Callback] ProcessCallback result:', { success: result.success, message: result.message });
+    console.log('[PaymentLink Callback] ProcessCallback result:', {
+      success: result.success,
+      message: result.message
+    })
 
     // If successful, calculate commission and notify main API
     if (result.success) {
       try {
         // Import Transaction model to get partner info
-        const { Transaction } = await import('../models/index.js');
-        const transaction = await Transaction.findById(transactionId).populate('pos');
+        const { Transaction } = await import('../models/index.js')
+        const transaction = await Transaction.findById(transactionId).populate('pos')
 
         // Get payment link info from main API to get partnerId
-        let partnerId = transaction?.partnerId;
+        let partnerId = transaction?.partnerId
         if (!partnerId) {
           try {
-            const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent });
-            const paymentLink = linkResponse.data.data;
-            partnerId = paymentLink?.partner?._id || paymentLink?.partner;
-            console.log('[PaymentLink Callback] Got partnerId from payment link:', partnerId);
+            const linkResponse = await axios.get(`${API_BASE_URL}/pay/${token}`, { httpsAgent })
+            const paymentLink = linkResponse.data.data
+            partnerId = paymentLink?.partner?._id || paymentLink?.partner
+            console.log('[PaymentLink Callback] Got partnerId from payment link:', partnerId)
           } catch (linkError) {
-            console.log('[PaymentLink Callback] Could not get partner from payment link:', linkError.message);
+            console.log(
+              '[PaymentLink Callback] Could not get partner from payment link:',
+              linkError.message
+            )
           }
         }
 
@@ -303,57 +311,64 @@ router.post('/:token/callback', async (req, res) => {
             transaction,
             transaction.pos,
             partnerId
-          );
-          console.log('[PaymentLink Callback] Commission calculated');
+          )
+          console.log('[PaymentLink Callback] Commission calculated')
         }
 
         // Get full transaction details (now includes commission)
-        const txDetails = await PaymentService.getTransactionDetails(transactionId);
+        const txDetails = await PaymentService.getTransactionDetails(transactionId)
 
-        console.log('[PaymentLink Callback] Transaction details:', txDetails ? 'OK' : 'NULL');
-        console.log('[PaymentLink Callback] Calling main API:', `${API_BASE_URL}/pay/${token}/complete`);
+        console.log('[PaymentLink Callback] Transaction details:', txDetails ? 'OK' : 'NULL')
+        console.log(
+          '[PaymentLink Callback] Calling main API:',
+          `${API_BASE_URL}/pay/${token}/complete`
+        )
 
-        const apiResponse = await axios.post(`${API_BASE_URL}/pay/${token}/complete`, txDetails, { httpsAgent });
-        console.log('[PaymentLink Callback] Main API response:', apiResponse.data);
+        const apiResponse = await axios.post(`${API_BASE_URL}/pay/${token}/complete`, txDetails, {
+          httpsAgent
+        })
+        console.log('[PaymentLink Callback] Main API response:', apiResponse.data)
       } catch (notifyError) {
-        console.error('[PaymentLink Callback] Failed to notify main API:', notifyError.message);
+        console.error('[PaymentLink Callback] Failed to notify main API:', notifyError.message)
         if (notifyError.response) {
-          console.error('[PaymentLink Callback] API Error Response:', notifyError.response.data);
+          console.error('[PaymentLink Callback] API Error Response:', notifyError.response.data)
         }
       }
     } else {
-      console.log('[PaymentLink Callback] Payment not successful, skipping main API notification');
+      console.log('[PaymentLink Callback] Payment not successful, skipping main API notification')
     }
 
-    res.send(renderResultPage(result.success, result.message, token));
+    res.send(renderResultPage(result.success, result.message, token))
   } catch (error) {
-    console.error('[PaymentLink Callback] Error:', error.message);
-    res.send(renderResultPage(false, error.message || 'İşlem sırasında bir hata oluştu', token));
+    console.error('[PaymentLink Callback] Error:', error.message)
+    res.send(renderResultPage(false, error.message || 'İşlem sırasında bir hata oluştu', token))
   }
-});
+})
 
 /**
  * GET /pay-link/:token/result
  * Show payment result page
  */
 router.get('/:token/result', async (req, res) => {
-  const { token } = req.params;
-  const { success } = req.query;
+  const { token } = req.params
+  const { success } = req.query
 
-  const isSuccess = success === 'true';
-  const message = isSuccess ? 'Ödemeniz başarıyla tamamlandı.' : 'Ödeme işlemi başarısız oldu.';
+  const isSuccess = success === 'true'
+  const message = isSuccess ? 'Ödemeniz başarıyla tamamlandı.' : 'Ödeme işlemi başarısız oldu.'
 
-  res.send(renderResultPage(isSuccess, message, token));
-});
+  res.send(renderResultPage(isSuccess, message, token))
+})
 
 // ============================================================================
 // HTML TEMPLATES
 // ============================================================================
 
 function renderPaymentForm(paymentLink, token) {
-  const { customer, description, amount, currency, installment, partner } = paymentLink;
-  const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(amount);
-  const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[currency] || currency;
+  const { customer, description, amount, currency, installment, partner } = paymentLink
+  const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+    amount
+  )
+  const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[currency] || currency
 
   return `
 <!DOCTYPE html>
@@ -1049,17 +1064,32 @@ function renderPaymentForm(paymentLink, token) {
   </script>
 </body>
 </html>
-`;
+`
 }
 
 function renderStatusPage(paymentLink) {
   const statusMessages = {
-    paid: { icon: '✓', title: 'Ödeme Tamamlandı', message: 'Bu ödeme işlemi daha önce tamamlanmıştır.', color: '#28a745' },
-    expired: { icon: '⏰', title: 'Link Süresi Doldu', message: 'Bu ödeme linkinin süresi dolmuştur.', color: '#ffc107' },
-    cancelled: { icon: '✗', title: 'Link İptal Edildi', message: 'Bu ödeme linki iptal edilmiştir.', color: '#dc3545' }
-  };
+    paid: {
+      icon: '✓',
+      title: 'Ödeme Tamamlandı',
+      message: 'Bu ödeme işlemi daha önce tamamlanmıştır.',
+      color: '#28a745'
+    },
+    expired: {
+      icon: '⏰',
+      title: 'Link Süresi Doldu',
+      message: 'Bu ödeme linkinin süresi dolmuştur.',
+      color: '#ffc107'
+    },
+    cancelled: {
+      icon: '✗',
+      title: 'Link İptal Edildi',
+      message: 'Bu ödeme linki iptal edilmiştir.',
+      color: '#dc3545'
+    }
+  }
 
-  const status = statusMessages[paymentLink.status] || statusMessages.cancelled;
+  const status = statusMessages[paymentLink.status] || statusMessages.cancelled
 
   return `
 <!DOCTYPE html>
@@ -1111,7 +1141,7 @@ function renderStatusPage(paymentLink) {
   </div>
 </body>
 </html>
-`;
+`
 }
 
 function renderResultPage(success, message, token) {
@@ -1180,7 +1210,7 @@ function renderResultPage(success, message, token) {
   </script>
 </body>
 </html>
-`;
+`
 }
 
 function renderErrorPage(message) {
@@ -1234,7 +1264,7 @@ function renderErrorPage(message) {
   </div>
 </body>
 </html>
-`;
+`
 }
 
-export default router;
+export default router

@@ -38,7 +38,7 @@ export const secureModels = {
 // For backward compatibility display
 export const paymentModels = {
   ...secureModels,
-  'regular': {
+  regular: {
     code: 'regular',
     name: 'Direkt Odeme',
     description: '3D guvenlik dogrulamasi olmadan'
@@ -56,29 +56,160 @@ export const currencies = [
 // Fallback banks list (used if API fails)
 export const defaultBanks = [
   // Banka POS'ları
-  { code: 'garanti', name: 'Garanti BBVA', color: '#00854a', provider: 'garanti', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'akbank', name: 'Akbank', color: '#e31e24', provider: 'akbank', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', 'regular'] },
-  { code: 'ykb', name: 'Yapi Kredi', color: '#004b93', provider: 'ykb', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'isbank', name: 'Is Bankasi', color: '#004990', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', '3d_host', 'regular'] },
-  { code: 'halkbank', name: 'Halkbank', color: '#00528e', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'ziraat', name: 'Ziraat Bankasi', color: '#e30613', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'vakifbank', name: 'VakifBank', color: '#fdc600', provider: 'vakifbank', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'teb', name: 'TEB', color: '#00529b', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'qnb', name: 'QNB Finansbank', color: '#5c068c', provider: 'qnb', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'denizbank', name: 'Denizbank', color: '#003b73', provider: 'denizbank', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'ingbank', name: 'ING Bank', color: '#ff6200', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'sekerbank', name: 'Sekerbank', color: '#ed1c24', provider: 'payten', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', '3d_pay', 'regular'] },
-  { code: 'kuveytturk', name: 'Kuveyt Turk', color: '#00a651', provider: 'kuveytturk', providerSupported: true, isAggregator: false, supportedPaymentModels: ['3d', 'regular'] },
+  {
+    code: 'garanti',
+    name: 'Garanti BBVA',
+    color: '#00854a',
+    provider: 'garanti',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'akbank',
+    name: 'Akbank',
+    color: '#e31e24',
+    provider: 'akbank',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', 'regular']
+  },
+  {
+    code: 'ykb',
+    name: 'Yapi Kredi',
+    color: '#004b93',
+    provider: 'ykb',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'isbank',
+    name: 'Is Bankasi',
+    color: '#004990',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', '3d_host', 'regular']
+  },
+  {
+    code: 'halkbank',
+    name: 'Halkbank',
+    color: '#00528e',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'ziraat',
+    name: 'Ziraat Bankasi',
+    color: '#e30613',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'vakifbank',
+    name: 'VakifBank',
+    color: '#fdc600',
+    provider: 'vakifbank',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'teb',
+    name: 'TEB',
+    color: '#00529b',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'qnb',
+    name: 'QNB Finansbank',
+    color: '#5c068c',
+    provider: 'qnb',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'denizbank',
+    name: 'Denizbank',
+    color: '#003b73',
+    provider: 'denizbank',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'ingbank',
+    name: 'ING Bank',
+    color: '#ff6200',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'sekerbank',
+    name: 'Sekerbank',
+    color: '#ed1c24',
+    provider: 'payten',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', '3d_pay', 'regular']
+  },
+  {
+    code: 'kuveytturk',
+    name: 'Kuveyt Turk',
+    color: '#00a651',
+    provider: 'kuveytturk',
+    providerSupported: true,
+    isAggregator: false,
+    supportedPaymentModels: ['3d', 'regular']
+  },
   // Entegratorler (Aggregators)
-  { code: 'paytr', name: 'PayTR', color: '#2c3e50', provider: 'paytr', providerSupported: true, isAggregator: true, supportedPaymentModels: ['3d'] },
-  { code: 'iyzico', name: 'iyzico', color: '#1e64ff', provider: 'iyzico', providerSupported: true, isAggregator: true, supportedPaymentModels: ['3d', 'regular'] },
-  { code: 'sigmapay', name: 'SigmaPay', color: '#6366f1', provider: 'sigmapay', providerSupported: true, isAggregator: true, supportedPaymentModels: ['regular'] }
+  {
+    code: 'paytr',
+    name: 'PayTR',
+    color: '#2c3e50',
+    provider: 'paytr',
+    providerSupported: true,
+    isAggregator: true,
+    supportedPaymentModels: ['3d']
+  },
+  {
+    code: 'iyzico',
+    name: 'iyzico',
+    color: '#1e64ff',
+    provider: 'iyzico',
+    providerSupported: true,
+    isAggregator: true,
+    supportedPaymentModels: ['3d', 'regular']
+  },
+  {
+    code: 'sigmapay',
+    name: 'SigmaPay',
+    color: '#6366f1',
+    provider: 'sigmapay',
+    providerSupported: true,
+    isAggregator: true,
+    supportedPaymentModels: ['regular']
+  }
 ]
 
 // Provider-specific credential field configurations
 export const providerCredentials = {
   garanti: {
-    merchantId: { label: 'Uye Isyeri No (MID)', placeholder: 'Banka tarafindan verilen uye isyeri numarasi' },
+    merchantId: {
+      label: 'Uye Isyeri No (MID)',
+      placeholder: 'Banka tarafindan verilen uye isyeri numarasi'
+    },
     terminalId: { label: 'Terminal ID (TID)', placeholder: 'Banka tarafindan verilen terminal ID' },
     username: { label: 'Kullanici Adi', placeholder: 'API kullanici adi (PROVAUT)', show: false },
     password: { label: 'Provision Sifresi', placeholder: 'Provizyon sifresi' },
@@ -90,7 +221,11 @@ export const providerCredentials = {
     username: { label: 'API Kullanici Adi', placeholder: 'API kullanici adi' },
     password: { label: 'API Sifresi', placeholder: 'API sifresi' },
     secretKey: { label: 'Store Key', placeholder: '3D guvenlik anahtari (ISLEMLER_HASH_KEY)' },
-    section: { label: 'BOLUM (Sube Kodu)', placeholder: 'Opsiyonel - Girilirse 3D islemlerinde kullanilir', show: true }
+    section: {
+      label: 'BOLUM (Sube Kodu)',
+      placeholder: 'Opsiyonel - Girilirse 3D islemlerinde kullanilir',
+      show: true
+    }
   },
   ykb: {
     merchantId: { label: 'Uye Isyeri No (MID)', placeholder: 'Uye isyeri numarasi' },
@@ -101,11 +236,11 @@ export const providerCredentials = {
     posnetId: { label: 'POSNET ID', placeholder: 'POSNET entegrasyon ID', show: true }
   },
   akbank: {
-    merchantId: { label: 'Client ID', placeholder: 'EST client ID' },
-    terminalId: { label: 'Terminal ID', placeholder: 'Terminal numarasi', show: false },
-    username: { label: 'API Kullanici Adi', placeholder: 'API kullanici adi' },
-    password: { label: 'API Sifresi', placeholder: 'API sifresi' },
-    secretKey: { label: 'Store Key', placeholder: '3D guvenlik anahtari' }
+    merchantId: { label: 'Merchant Safe ID', placeholder: 'Merchant Safe ID' },
+    terminalId: { label: 'Terminal Safe ID', placeholder: 'Terminal Safe ID' },
+    username: { label: 'API Kullanici Adi', placeholder: 'API kullanici adi', show: false },
+    password: { label: 'API Sifresi', placeholder: 'API sifresi', show: false },
+    secretKey: { label: 'Secret Key', placeholder: 'HMAC Secret Key' }
   },
   vakifbank: {
     merchantId: { label: 'Uye Isyeri No', placeholder: 'Uye isyeri numarasi' },
@@ -176,7 +311,7 @@ export const ipAddressTips = {
     type: 'info',
     icon: 'support_agent',
     title: 'IP Adresi Bildirimi',
-    message: 'QNB Finansbank\'ta IP adresi sanal pos destege bildirilmelidir.'
+    message: "QNB Finansbank'ta IP adresi sanal pos destege bildirilmelidir."
   }
 }
 

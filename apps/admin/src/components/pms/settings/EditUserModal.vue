@@ -303,6 +303,7 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import adminUserService from '@/services/pms/adminUserService'
+import { usePmsStore } from '@/stores/pms'
 
 // Departman ve Rol tanımları
 const DEPARTMENTS = [
@@ -560,6 +561,7 @@ const emit = defineEmits(['update:modelValue', 'updated'])
 
 const { t } = useI18n()
 const toast = useToast()
+const pmsStore = usePmsStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -606,7 +608,8 @@ const form = ref({
   role: 'receptionist',
   position: '',
   language: 'tr',
-  isActive: true
+  isActive: true,
+  pmsHotels: []
 })
 
 // Load user data when modal opens
@@ -622,7 +625,8 @@ watch(
         role: props.user.pmsRole || 'receptionist',
         position: props.user.position || '',
         language: props.user.language || 'tr',
-        isActive: props.user.status === 'active'
+        isActive: props.user.status === 'active',
+        pmsHotels: props.user.pmsHotels || []
       }
     }
   }
@@ -670,6 +674,7 @@ const handleSubmit = async () => {
       pmsDepartment: form.value.department,
       pmsRole: form.value.role,
       pmsPermissions: DEFAULT_PERMISSIONS[form.value.role] || [],
+      pmsHotels: form.value.pmsHotels,
       position: form.value.position,
       language: form.value.language,
       status: form.value.isActive ? 'active' : 'inactive'

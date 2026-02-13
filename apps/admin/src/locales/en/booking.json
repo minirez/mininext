@@ -721,7 +721,8 @@
       "cancel3D": "Cancel and Go Back",
       "success": "Payment completed successfully",
       "failed": "Payment failed",
-      "fillAllFields": "Please fill in all card details"
+      "fillAllFields": "Please fill in all card details",
+      "exchangeRate": "Rate"
     },
     "payAtCheckin": {
       "info": "Payment will be marked as to be collected at check-in."

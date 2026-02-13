@@ -4,18 +4,18 @@
  * Note: /form and /callback routes are mounted separately as public routes
  */
 
-import { Router } from 'express';
-import https from 'https';
-import PaymentService from '../services/PaymentService.js';
-import { VirtualPos } from '../models/index.js';
-import config from '../config/index.js';
+import { Router } from 'express'
+import https from 'https'
+import PaymentService from '../services/PaymentService.js'
+import { VirtualPos } from '../models/index.js'
+import config from '../config/index.js'
 
 // HTTPS agent for self-signed certificates in development
 const httpsAgent = new https.Agent({
   rejectUnauthorized: process.env.NODE_ENV === 'production'
-});
+})
 
-const router = Router();
+const router = Router()
 
 /**
  * POST /bin
@@ -23,13 +23,13 @@ const router = Router();
  */
 router.post('/bin', async (req, res) => {
   try {
-    const { bin, amount, currency, partnerId } = req.body;
+    const { bin, amount, currency, partnerId } = req.body
 
     if (!bin || !amount || !currency) {
       return res.status(400).json({
         status: false,
         error: 'bin, amount ve currency gerekli'
-      });
+      })
     }
 
     // partnerId can be null for platform-level POS selection
@@ -38,17 +38,17 @@ router.post('/bin', async (req, res) => {
       bin,
       parseFloat(amount),
       currency.toLowerCase()
-    );
+    )
 
     if (!result.success) {
-      return res.status(400).json(result);
+      return res.status(400).json(result)
     }
 
-    res.json(result);
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * POST /pay
@@ -56,25 +56,25 @@ router.post('/bin', async (req, res) => {
  */
 router.post('/pay', async (req, res) => {
   try {
-    const { posId, amount, currency, installment, card, customer, externalId, partnerId } = req.body;
+    const { posId, amount, currency, installment, card, customer, externalId, partnerId } = req.body
 
     // Validate required fields
     if (!amount || !currency || !card) {
       return res.status(400).json({
         status: false,
         error: 'amount, currency ve card gerekli'
-      });
+      })
     }
 
     if (!card.holder || !card.number || !card.expiry || !card.cvv) {
       return res.status(400).json({
         status: false,
         error: 'Kart bilgileri eksik (holder, number, expiry, cvv)'
-      });
+      })
     }
 
     // Find POS if not specified
-    let targetPosId = posId;
+    let targetPosId = posId
     if (!targetPosId) {
       // Use BIN query to find suitable POS (partnerId can be null for platform-level)
       const binResult = await PaymentService.queryBin(
@@ -82,13 +82,19 @@ router.post('/pay', async (req, res) => {
         card.number.slice(0, 8),
         parseFloat(amount),
         currency.toLowerCase()
-      );
+      )
 
       if (!binResult.success) {
-        return res.status(400).json(binResult);
+        return res.status(400).json(binResult)
       }
 
-      targetPosId = binResult.pos.id;
+      targetPosId = binResult.pos.id
+    }
+
+    // Ensure customer IP is set (trust proxy enabled - req.ip returns real client IP)
+    const customerData = customer || {}
+    if (!customerData.ip) {
+      customerData.ip = req.ip
     }
 
     const result = await PaymentService.createPayment({
@@ -102,16 +108,16 @@ router.post('/pay', async (req, res) => {
         expiry: card.expiry,
         cvv: card.cvv
       },
-      customer: customer || {},
+      customer: customerData,
       externalId,
       partnerId: partnerId || null
-    });
+    })
 
-    res.json(result);
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /:id
@@ -119,20 +125,20 @@ router.post('/pay', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const status = await PaymentService.getTransactionStatus(req.params.id);
+    const status = await PaymentService.getTransactionStatus(req.params.id)
 
     if (!status) {
       return res.status(404).json({
         status: false,
         error: 'Transaction not found'
-      });
+      })
     }
 
-    res.json({ status: true, transaction: status });
+    res.json({ status: true, transaction: status })
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * POST /refund
@@ -140,21 +146,21 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/refund', async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    const { transactionId } = req.body
 
     if (!transactionId) {
       return res.status(400).json({
         status: false,
         error: 'transactionId gerekli'
-      });
+      })
     }
 
-    const result = await PaymentService.refundPayment(transactionId);
-    res.json({ status: true, ...result });
+    const result = await PaymentService.refundPayment(transactionId)
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * POST /cancel
@@ -162,21 +168,21 @@ router.post('/refund', async (req, res) => {
  */
 router.post('/cancel', async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    const { transactionId } = req.body
 
     if (!transactionId) {
       return res.status(400).json({
         status: false,
         error: 'transactionId gerekli'
-      });
+      })
     }
 
-    const result = await PaymentService.cancelPayment(transactionId);
-    res.json({ status: true, ...result });
+    const result = await PaymentService.cancelPayment(transactionId)
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /status/:id
@@ -184,12 +190,12 @@ router.post('/cancel', async (req, res) => {
  */
 router.get('/status/:id', async (req, res) => {
   try {
-    const result = await PaymentService.queryBankStatus(req.params.id);
-    res.json({ status: true, ...result });
+    const result = await PaymentService.queryBankStatus(req.params.id)
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * POST /pre-auth
@@ -197,20 +203,20 @@ router.get('/status/:id', async (req, res) => {
  */
 router.post('/pre-auth', async (req, res) => {
   try {
-    const { posId, amount, currency, installment, card, customer, externalId } = req.body;
+    const { posId, amount, currency, installment, card, customer, externalId } = req.body
 
     if (!posId || !amount || !currency || !card) {
       return res.status(400).json({
         status: false,
         error: 'posId, amount, currency ve card gerekli'
-      });
+      })
     }
 
     if (!card.holder || !card.number || !card.expiry || !card.cvv) {
       return res.status(400).json({
         status: false,
         error: 'Kart bilgileri eksik (holder, number, expiry, cvv)'
-      });
+      })
     }
 
     const result = await PaymentService.createPreAuth({
@@ -226,13 +232,13 @@ router.post('/pre-auth', async (req, res) => {
       },
       customer: customer || {},
       externalId
-    });
+    })
 
-    res.json({ status: true, ...result });
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * POST /post-auth
@@ -240,21 +246,21 @@ router.post('/pre-auth', async (req, res) => {
  */
 router.post('/post-auth', async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    const { transactionId } = req.body
 
     if (!transactionId) {
       return res.status(400).json({
         status: false,
         error: 'transactionId gerekli'
-      });
+      })
     }
 
-    const result = await PaymentService.createPostAuth(transactionId);
-    res.json({ status: true, ...result });
+    const result = await PaymentService.createPostAuth(transactionId)
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /capabilities/:posId
@@ -262,21 +268,21 @@ router.post('/post-auth', async (req, res) => {
  */
 router.get('/capabilities/:posId', async (req, res) => {
   try {
-    const result = await PaymentService.getPosCapabilities(req.params.posId);
-    res.json({ status: true, ...result });
+    const result = await PaymentService.getPosCapabilities(req.params.posId)
+    res.json({ status: true, ...result })
   } catch (error) {
-    res.status(400).json({ status: false, error: error.message });
+    res.status(400).json({ status: false, error: error.message })
   }
-});
+})
 
-export default router;
+export default router
 
 // ============================================================================
 // PUBLIC ROUTES (no auth required - called by browser/bank)
 // These are exported separately and mounted at root level
 // ============================================================================
 
-export const publicPaymentRoutes = Router();
+export const publicPaymentRoutes = Router()
 
 /**
  * GET /payment/:id/form
@@ -285,9 +291,9 @@ export const publicPaymentRoutes = Router();
  */
 publicPaymentRoutes.get('/:id/form', async (req, res) => {
   try {
-    const html = await PaymentService.getPaymentForm(req.params.id);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    const html = await PaymentService.getPaymentForm(req.params.id)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(html)
   } catch (error) {
     res.status(400).send(`
       <html>
@@ -297,20 +303,20 @@ publicPaymentRoutes.get('/:id/form', async (req, res) => {
           <p>${error.message}</p>
         </body>
       </html>
-    `);
+    `)
   }
-});
+})
 
 /**
  * OPTIONS /payment/:id/callback
  * CORS preflight for callback
  */
 publicPaymentRoutes.options('/:id/callback', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.status(200).end();
-});
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.status(200).end()
+})
 
 /**
  * POST /payment/:id/callback
@@ -319,49 +325,45 @@ publicPaymentRoutes.options('/:id/callback', (req, res) => {
  */
 publicPaymentRoutes.post('/:id/callback', async (req, res) => {
   // Allow all origins for callback (bank redirects here)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
   try {
-    const result = await PaymentService.processCallback(req.params.id, req.body);
+    const result = await PaymentService.processCallback(req.params.id, req.body)
 
     // Notify main API for ALL transactions (not just payment links)
     try {
-      const { Transaction } = await import('../models/index.js');
-      const transaction = await Transaction.findById(req.params.id).populate('pos');
+      const { Transaction } = await import('../models/index.js')
+      const transaction = await Transaction.findById(req.params.id).populate('pos')
 
       // Calculate commission for successful payment
       if (result.success && transaction && transaction.pos) {
-        let partnerId = transaction.partnerId;
+        let partnerId = transaction.partnerId
 
         // Calculate commission
-        await PaymentService.calculateTransactionCommission(
-          transaction,
-          transaction.pos,
-          partnerId
-        );
+        await PaymentService.calculateTransactionCommission(transaction, transaction.pos, partnerId)
       }
 
-      const txDetails = await PaymentService.getTransactionDetails(req.params.id);
-      const mainApiUrl = process.env.MAIN_API_URL || 'http://localhost:4000/api';
-      const axios = (await import('axios')).default;
+      const txDetails = await PaymentService.getTransactionDetails(req.params.id)
+      const mainApiUrl = process.env.MAIN_API_URL || 'http://localhost:4000/api'
+      const axios = (await import('axios')).default
 
       if (txDetails && transaction?.externalId) {
         // Payment Link transactions (PL-{token})
         if (transaction.externalId.startsWith('PL-')) {
-          const token = transaction.externalId.replace('PL-', '');
-          console.log('[Payment Callback] Payment link detected, notifying main API:', token);
+          const token = transaction.externalId.replace('PL-', '')
+          console.log('[Payment Callback] Payment link detected, notifying main API:', token)
 
-          await axios.post(`${mainApiUrl}/pay/${token}/complete`, txDetails, { httpsAgent });
-          console.log('[Payment Callback] Payment link webhook sent successfully');
+          await axios.post(`${mainApiUrl}/pay/${token}/complete`, txDetails, { httpsAgent })
+          console.log('[Payment Callback] Payment link webhook sent successfully')
         }
         // Subscription payments (externalId = subscription-{partnerId}-{purchaseId})
         else if (transaction.externalId.startsWith('subscription-')) {
-          console.log('[Payment Callback] Subscription payment detected, notifying main API');
-          console.log('[Payment Callback] externalId:', transaction.externalId);
+          console.log('[Payment Callback] Subscription payment detected, notifying main API')
+          console.log('[Payment Callback] externalId:', transaction.externalId)
 
-          const webhookKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret';
+          const webhookKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
           await axios.post(
             `${mainApiUrl}/my/subscription/payment-callback`,
             {
@@ -374,15 +376,15 @@ publicPaymentRoutes.post('/:id/callback', async (req, res) => {
               headers: { 'X-Api-Key': webhookKey },
               httpsAgent
             }
-          );
-          console.log('[Payment Callback] Subscription payment webhook sent successfully');
+          )
+          console.log('[Payment Callback] Subscription payment webhook sent successfully')
         }
         // Regular booking payments (externalId = payment._id)
         else {
-          console.log('[Payment Callback] Booking payment detected, notifying main API');
-          console.log('[Payment Callback] externalId:', transaction.externalId);
+          console.log('[Payment Callback] Booking payment detected, notifying main API')
+          console.log('[Payment Callback] externalId:', transaction.externalId)
 
-          const webhookKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret';
+          const webhookKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
           await axios.post(
             `${mainApiUrl}/bookings/payment-webhook`,
             {
@@ -400,28 +402,28 @@ publicPaymentRoutes.post('/:id/callback', async (req, res) => {
               cardBank: txDetails.cardBank,
               installment: txDetails.installment,
               amount: transaction.amount,
-              error: result.success ? null : (result.message || 'Payment failed')
+              error: result.success ? null : result.message || 'Payment failed'
             },
             {
               headers: { 'X-Api-Key': webhookKey },
               httpsAgent
             }
-          );
-          console.log('[Payment Callback] Booking payment webhook sent successfully');
+          )
+          console.log('[Payment Callback] Booking payment webhook sent successfully')
         }
       }
     } catch (notifyError) {
-      console.error('[Payment Callback] Failed to notify main API:', notifyError.message);
+      console.error('[Payment Callback] Failed to notify main API:', notifyError.message)
       // Don't throw - we still want to show result to user
     }
 
     // Return HTML result page
-    const statusClass = result.success ? 'success' : 'error';
-    const statusText = result.success ? 'Payment Successful' : 'Payment Failed';
-    const message = result.message || '';
+    const statusClass = result.success ? 'success' : 'error'
+    const statusText = result.success ? 'Payment Successful' : 'Payment Failed'
+    const message = result.message || ''
 
     // Get frontend URL from config
-    const frontendUrl = config.frontendUrl;
+    const frontendUrl = config.frontendUrl
 
     res.send(`
 <!DOCTYPE html>
@@ -487,7 +489,7 @@ publicPaymentRoutes.post('/:id/callback', async (req, res) => {
   </script>
 </body>
 </html>
-    `);
+    `)
   } catch (error) {
     res.status(400).send(`
       <html>
@@ -497,6 +499,6 @@ publicPaymentRoutes.post('/:id/callback', async (req, res) => {
           <p>${error.message}</p>
         </body>
       </html>
-    `);
+    `)
   }
-});
+})

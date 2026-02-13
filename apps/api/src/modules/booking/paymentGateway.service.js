@@ -3,6 +3,7 @@ import { NotFoundError, BadRequestError } from '#core/errors.js'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
 import paymentGateway from '#services/paymentGateway.js'
+import { convertCurrency } from '#services/currencyService.js'
 import logger from '#core/logger.js'
 import { updateBookingPayment } from './payment.service.js'
 
@@ -38,9 +39,10 @@ function getRequiredPartnerId(req, source = 'query') {
 export const queryBinByPartner = asyncHandler(async (req, res) => {
   const { bin, amount, currency = 'TRY' } = req.body
   // FIXED: Use accountType instead of role for platform admin check
-  const partnerId = req.user.accountType === 'platform'
-    ? req.body.partnerId || req.query.partnerId || req.partnerId
-    : req.user.accountId // Partner user uses their own accountId
+  const partnerId =
+    req.user.accountType === 'platform'
+      ? req.body.partnerId || req.query.partnerId || req.partnerId
+      : req.user.accountId // Partner user uses their own accountId
 
   // Validate BIN
   if (!bin || bin.length < 6) {
@@ -54,13 +56,68 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
 
   // Query BIN from payment gateway
   const token = req.headers.authorization?.split(' ')[1]
-  const result = await paymentGateway.queryBin(
-    bin,
-    amount,
-    currency.toLowerCase(),
-    partnerId?.toString(),
-    token
-  )
+  const currencyUpper = currency.toUpperCase()
+  const currencyLower = currency.toLowerCase()
+
+  let result
+  let currencyConversion = null
+
+  if (currencyUpper === 'TRY') {
+    result = await paymentGateway.queryBin(bin, amount, 'try', partnerId?.toString(), token)
+  } else {
+    // Foreign currency - check if domestic (TR) card needs TRY conversion
+    try {
+      result = await paymentGateway.queryBin(
+        bin,
+        amount,
+        currencyLower,
+        partnerId?.toString(),
+        token
+      )
+
+      if (result.card?.country?.toLowerCase() === 'tr') {
+        const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
+        currencyConversion = {
+          originalCurrency: currencyUpper,
+          originalAmount: amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: conversion.convertedAmount,
+          exchangeRate: conversion.rate
+        }
+        result = await paymentGateway.queryBin(
+          bin,
+          conversion.convertedAmount,
+          'try',
+          partnerId?.toString(),
+          token
+        )
+        result.currencyConversion = currencyConversion
+      }
+    } catch (err) {
+      // No POS for original currency - try TRY fallback
+      const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
+      result = await paymentGateway.queryBin(
+        bin,
+        conversion.convertedAmount,
+        'try',
+        partnerId?.toString(),
+        token
+      )
+
+      if (result.card?.country?.toLowerCase() === 'tr') {
+        currencyConversion = {
+          originalCurrency: currencyUpper,
+          originalAmount: amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: conversion.convertedAmount,
+          exchangeRate: conversion.rate
+        }
+        result.currencyConversion = currencyConversion
+      } else {
+        throw new BadRequestError('Bu para birimi için uygun ödeme yöntemi bulunamadı')
+      }
+    }
+  }
 
   res.json({
     success: true,
@@ -70,6 +127,7 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
 
 /**
  * Query card BIN for installment options (Booking-based)
+ * Includes DCC: TR cards with foreign currency are converted to TRY
  */
 export const queryCardBin = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
@@ -98,15 +156,70 @@ export const queryCardBin = asyncHandler(async (req, res) => {
     throw new BadRequestError('PAYMENT_NOT_PENDING')
   }
 
-  // Query BIN from payment gateway
+  // Query BIN from payment gateway with DCC support
   const token = req.headers.authorization?.split(' ')[1]
-  const result = await paymentGateway.queryBin(
-    bin,
-    payment.amount,
-    payment.currency.toLowerCase(),
-    partnerId?.toString(),
-    token
-  )
+  const currencyUpper = payment.currency.toUpperCase()
+  const currencyLower = payment.currency.toLowerCase()
+
+  let result
+  let currencyConversion = null
+
+  if (currencyUpper === 'TRY') {
+    result = await paymentGateway.queryBin(bin, payment.amount, 'try', partnerId?.toString(), token)
+  } else {
+    // Foreign currency - check if domestic (TR) card needs TRY conversion
+    try {
+      result = await paymentGateway.queryBin(
+        bin,
+        payment.amount,
+        currencyLower,
+        partnerId?.toString(),
+        token
+      )
+
+      if (result.card?.country?.toLowerCase() === 'tr') {
+        const conversion = await convertCurrency(payment.amount, currencyUpper, 'TRY')
+        currencyConversion = {
+          originalCurrency: currencyUpper,
+          originalAmount: payment.amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: conversion.convertedAmount,
+          exchangeRate: conversion.rate
+        }
+        result = await paymentGateway.queryBin(
+          bin,
+          conversion.convertedAmount,
+          'try',
+          partnerId?.toString(),
+          token
+        )
+        result.currencyConversion = currencyConversion
+      }
+    } catch (err) {
+      // No POS for original currency - try TRY fallback
+      const conversion = await convertCurrency(payment.amount, currencyUpper, 'TRY')
+      result = await paymentGateway.queryBin(
+        bin,
+        conversion.convertedAmount,
+        'try',
+        partnerId?.toString(),
+        token
+      )
+
+      if (result.card?.country?.toLowerCase() === 'tr') {
+        currencyConversion = {
+          originalCurrency: currencyUpper,
+          originalAmount: payment.amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: conversion.convertedAmount,
+          exchangeRate: conversion.rate
+        }
+        result.currencyConversion = currencyConversion
+      } else {
+        throw new BadRequestError('Bu para birimi için uygun ödeme yöntemi bulunamadı')
+      }
+    }
+  }
 
   res.json({
     success: true,
@@ -116,6 +229,7 @@ export const queryCardBin = asyncHandler(async (req, res) => {
 
 /**
  * Process credit card payment
+ * Includes DCC: TR cards with foreign currency are converted to TRY
  */
 export const processCardPayment = asyncHandler(async (req, res) => {
   const { id: bookingId, paymentId } = req.params
@@ -152,29 +266,93 @@ export const processCardPayment = asyncHandler(async (req, res) => {
   // Prepare customer info
   const customerInfo = customer || {}
   if (payment.booking?.leadGuest) {
-    customerInfo.name = customerInfo.name || `${payment.booking.leadGuest.firstName} ${payment.booking.leadGuest.lastName}`
+    customerInfo.name =
+      customerInfo.name ||
+      `${payment.booking.leadGuest.firstName} ${payment.booking.leadGuest.lastName}`
     customerInfo.email = customerInfo.email || payment.booking.leadGuest.email
     customerInfo.phone = customerInfo.phone || payment.booking.leadGuest.phone
   }
   customerInfo.ip = req.ip || req.connection?.remoteAddress
 
-  // Process payment through gateway
+  // DCC: Check if domestic (TR) card needs currency conversion
   const token = req.headers.authorization?.split(' ')[1]
-  const result = await paymentGateway.processPayment({
-    posId,
-    amount: payment.amount,
-    currency: payment.currency.toLowerCase(),
-    installment: installment || 1,
-    card: {
-      holder: card.holder,
-      number: card.number.replace(/\s/g, ''),
-      expiry: card.expiry,
-      cvv: card.cvv
+  const currencyUpper = payment.currency.toUpperCase()
+  let paymentAmount = payment.amount
+  let paymentCurrency = payment.currency
+  let currencyConversion = null
+
+  if (currencyUpper !== 'TRY') {
+    // Check card country via BIN query
+    const cardBin = card.number.replace(/\s/g, '').slice(0, 8)
+    let cardCountry = null
+    try {
+      const binCheck = await paymentGateway.queryBin(
+        cardBin,
+        payment.amount,
+        payment.currency.toLowerCase(),
+        partnerId?.toString(),
+        token
+      )
+      cardCountry = binCheck?.card?.country?.toLowerCase() || null
+    } catch (err) {
+      // No POS for original currency - try TRY to get card info
+      try {
+        const tryBinCheck = await paymentGateway.queryBin(
+          cardBin,
+          payment.amount,
+          'try',
+          partnerId?.toString(),
+          token
+        )
+        cardCountry = tryBinCheck?.card?.country?.toLowerCase() || null
+      } catch (err2) {
+        logger.debug('[B2B Payment] BIN check for DCC failed:', err2.message)
+      }
+    }
+
+    if (cardCountry === 'tr') {
+      // Domestic card with foreign currency → convert to TRY
+      const conversion = await convertCurrency(payment.amount, currencyUpper, 'TRY')
+      paymentAmount = conversion.convertedAmount
+      paymentCurrency = 'TRY'
+      currencyConversion = {
+        originalCurrency: currencyUpper,
+        originalAmount: payment.amount,
+        convertedCurrency: 'TRY',
+        convertedAmount: conversion.convertedAmount,
+        exchangeRate: conversion.rate
+      }
+      logger.info('[B2B Payment] DCC applied:', currencyConversion)
+
+      // Update payment record with converted amount/currency
+      payment.amount = paymentAmount
+      payment.currency = paymentCurrency
+      if (currencyConversion) {
+        payment.notes = `B2B ödeme (${currencyConversion.originalAmount} ${currencyConversion.originalCurrency} → ${paymentAmount} TRY, kur: ${currencyConversion.exchangeRate})`
+      }
+      await payment.save()
+    }
+  }
+
+  // Process payment through gateway
+  const result = await paymentGateway.processPayment(
+    {
+      posId,
+      amount: paymentAmount,
+      currency: paymentCurrency.toLowerCase(),
+      installment: installment || 1,
+      card: {
+        holder: card.holder,
+        number: card.number.replace(/\s/g, ''),
+        expiry: card.expiry,
+        cvv: card.cvv
+      },
+      customer: customerInfo,
+      externalId: payment._id.toString(),
+      partnerId: partnerId?.toString()
     },
-    customer: customerInfo,
-    externalId: payment._id.toString(),
-    partnerId: partnerId?.toString()
-  }, token)
+    token
+  )
 
   if (!result.success) {
     throw new BadRequestError(result.error || 'PAYMENT_FAILED')
@@ -185,29 +363,27 @@ export const processCardPayment = asyncHandler(async (req, res) => {
   const requires3D = result.requires3D !== false // Default to true if undefined
 
   // Determine payment form URL based on request host
-  // Development: payment.mini.com (dedicated payment domain)
-  // Production: payment.maxirez.com (dedicated payment domain)
-  const getFormUrl = (transactionId) => {
+  const getFormUrl = transactionId => {
     if (!requires3D) return null
     const host = req.get('host') || ''
-    // Always use HTTPS for payment forms (avoid mixed content)
     if (host.includes('mini.com')) {
       return `https://payment.mini.com/payment/${transactionId}/form`
     }
-    // Default to maxirez.com for production
     return `https://payment.maxirez.com/payment/${transactionId}/form`
   }
 
   const formUrl = getFormUrl(result.transactionId)
 
   // Get BIN info for card details
-  const binInfo = await paymentGateway.queryBin(
-    card.number.slice(0, 8),
-    payment.amount,
-    payment.currency.toLowerCase(),
-    partnerId?.toString(),
-    token
-  ).catch(() => null)
+  const binInfo = await paymentGateway
+    .queryBin(
+      card.number.slice(0, 8),
+      paymentAmount,
+      paymentCurrency.toLowerCase(),
+      partnerId?.toString(),
+      token
+    )
+    .catch(() => null)
 
   // Update payment with transaction info
   await payment.initCardPayment({
@@ -220,7 +396,8 @@ export const processCardPayment = asyncHandler(async (req, res) => {
     brand: binInfo?.card?.brand || null,
     cardFamily: binInfo?.card?.cardFamily || null,
     bankName: binInfo?.card?.bankName || null,
-    installment: installment || 1
+    installment: installment || 1,
+    currencyConversion: currencyConversion
   })
 
   res.json({
@@ -229,7 +406,8 @@ export const processCardPayment = asyncHandler(async (req, res) => {
       transactionId: result.transactionId,
       requires3D: requires3D,
       formUrl: formUrl,
-      status: requires3D ? 'requires_3d' : 'processing'
+      status: requires3D ? 'requires_3d' : 'processing',
+      ...(currencyConversion && { currencyConversion })
     }
   })
 })

@@ -411,6 +411,7 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import adminUserService from '@/services/pms/adminUserService'
+import { usePmsStore } from '@/stores/pms'
 
 // Departman ve Rol tanımları
 const DEPARTMENTS = [
@@ -669,6 +670,7 @@ const emit = defineEmits(['update:modelValue', 'created'])
 
 const { t } = useI18n()
 const toast = useToast()
+const pmsStore = usePmsStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -934,6 +936,7 @@ const handleSubmit = async () => {
       pmsRole: selectedRole.value,
       pmsDepartment: form.value.department,
       pmsPermissions: selectedPermissions.value,
+      pmsHotels: pmsStore.hotelId ? [pmsStore.hotelId] : [],
       position: form.value.position,
       status: form.value.isActive ? 'active' : 'inactive'
     }

@@ -41,7 +41,15 @@ const paymentSchema = new mongoose.Schema(
     // Status
     status: {
       type: String,
-      enum: ['pending', 'pre_authorized', 'completed', 'failed', 'refunded', 'cancelled', 'released'],
+      enum: [
+        'pending',
+        'pre_authorized',
+        'completed',
+        'failed',
+        'refunded',
+        'cancelled',
+        'released'
+      ],
       default: 'pending',
       index: true
     },
@@ -76,7 +84,15 @@ const paymentSchema = new mongoose.Schema(
       gatewayPosName: { type: String }, // POS display name
       gatewayStatus: {
         type: String,
-        enum: ['pending', 'processing', 'requires_3d', 'completed', 'failed', 'cancelled', 'refunded'],
+        enum: [
+          'pending',
+          'processing',
+          'requires_3d',
+          'completed',
+          'failed',
+          'cancelled',
+          'refunded'
+        ],
         default: 'pending'
       },
       gatewayResponse: { type: mongoose.Schema.Types.Mixed }, // Raw response from gateway
@@ -86,11 +102,11 @@ const paymentSchema = new mongoose.Schema(
       processedAt: { type: Date }, // When payment was processed
       // Currency conversion (DCC) - when TR card pays in foreign currency
       currencyConversion: {
-        originalCurrency: { type: String },  // Booking currency (EUR, USD)
-        originalAmount: { type: Number },    // Amount in booking currency
+        originalCurrency: { type: String }, // Booking currency (EUR, USD)
+        originalAmount: { type: Number }, // Amount in booking currency
         convertedCurrency: { type: String }, // Payment currency (TRY)
-        convertedAmount: { type: Number },   // Amount charged in TRY
-        exchangeRate: { type: Number }       // Exchange rate used
+        convertedAmount: { type: Number }, // Amount charged in TRY
+        exchangeRate: { type: Number } // Exchange rate used
       }
     },
 
@@ -123,13 +139,13 @@ const paymentSchema = new mongoose.Schema(
 
     // Commission Info (for credit card payments)
     commission: {
-      bankRate: { type: Number },        // Bank commission rate %
-      bankAmount: { type: Number },      // Bank commission amount
-      platformRate: { type: Number },    // Platform margin rate %
-      platformAmount: { type: Number },  // Platform margin amount
-      totalRate: { type: Number },       // Total commission rate %
-      totalAmount: { type: Number },     // Total commission amount
-      netAmount: { type: Number }        // Net amount after commission
+      bankRate: { type: Number }, // Bank commission rate %
+      bankAmount: { type: Number }, // Bank commission amount
+      platformRate: { type: Number }, // Platform margin rate %
+      platformAmount: { type: Number }, // Platform margin amount
+      totalRate: { type: Number }, // Total commission rate %
+      totalAmount: { type: Number }, // Total commission amount
+      netAmount: { type: Number } // Net amount after commission
     }
   },
   {
@@ -222,8 +238,10 @@ paymentSchema.statics.getPendingBankTransfers = function (partnerId) {
  * Find payment by gateway transaction ID
  */
 paymentSchema.statics.findByGatewayTransaction = function (transactionId) {
-  return this.findOne({ 'cardDetails.gatewayTransactionId': transactionId })
-    .populate('booking', 'bookingNumber confirmationNumber')
+  return this.findOne({ 'cardDetails.gatewayTransactionId': transactionId }).populate(
+    'booking',
+    'bookingNumber confirmationNumber'
+  )
 }
 
 /**
@@ -328,7 +346,10 @@ paymentSchema.methods.initCardPayment = async function (transactionData) {
     brand: transactionData.brand,
     cardFamily: transactionData.cardFamily,
     bankName: transactionData.bankName,
-    installment: transactionData.installment || 1
+    installment: transactionData.installment || 1,
+    ...(transactionData.currencyConversion && {
+      currencyConversion: transactionData.currencyConversion
+    })
   }
 
   await this.save()
@@ -411,7 +432,8 @@ paymentSchema.methods.initPreAuth = async function (transactionData) {
     isPreAuth: true,
     authorizedAt: new Date(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days default
-    captureDeadline: transactionData.captureDeadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    captureDeadline:
+      transactionData.captureDeadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   }
 
   this.cardDetails = {

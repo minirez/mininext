@@ -3,10 +3,11 @@
  * Auth handled at server level via apiKeyAuth + gatewayAuth
  */
 
-import { Router } from 'express';
-import { Transaction, VirtualPos } from '../models/index.js';
+import { Router } from 'express'
+import { Transaction, VirtualPos } from '../models/index.js'
+import * as PaymentService from '../services/PaymentService.js'
 
-const router = Router();
+const router = Router()
 
 /**
  * GET /
@@ -14,64 +15,79 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 20, status, currency, from, to, startDate, endDate, orderId, company, partnerId, pos, minAmount, maxAmount } = req.query;
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      currency,
+      from,
+      to,
+      startDate,
+      endDate,
+      orderId,
+      company,
+      partnerId,
+      pos,
+      minAmount,
+      maxAmount
+    } = req.query
 
     // Build query
-    const query = {};
+    const query = {}
 
     // Filter by partner ID (for partner view - show only their transactions)
     if (partnerId) {
-      query.partnerId = partnerId;
+      query.partnerId = partnerId
     }
 
     // Filter by specific POS
     if (pos) {
-      query.pos = pos;
+      query.pos = pos
     }
     // Filter by company (via POS) - only if pos not specified (deprecated)
     else if (company) {
-      const posList = await VirtualPos.find({ company }).select('_id');
-      const posIds = posList.map(p => p._id);
+      const posList = await VirtualPos.find({ company }).select('_id')
+      const posIds = posList.map(p => p._id)
       if (posIds.length > 0) {
-        query.pos = { $in: posIds };
+        query.pos = { $in: posIds }
       } else {
         // No POS for this company = no transactions
         return res.json({
           status: true,
           transactions: [],
           pagination: { page: 1, limit: 20, total: 0, pages: 0 }
-        });
+        })
       }
     }
 
     // Status filter
     if (status) {
-      query.status = status;
+      query.status = status
     }
 
     // Currency filter
     if (currency) {
-      query.currency = currency.toLowerCase();
+      query.currency = currency.toLowerCase()
     }
 
     // Amount range filter
     if (minAmount || maxAmount) {
-      query.amount = {};
-      if (minAmount) query.amount.$gte = parseFloat(minAmount);
-      if (maxAmount) query.amount.$lte = parseFloat(maxAmount);
+      query.amount = {}
+      if (minAmount) query.amount.$gte = parseFloat(minAmount)
+      if (maxAmount) query.amount.$lte = parseFloat(maxAmount)
     }
 
     // Date range filter (support both from/to and startDate/endDate)
-    const dateFrom = startDate || from;
-    const dateTo = endDate || to;
+    const dateFrom = startDate || from
+    const dateTo = endDate || to
     if (dateFrom || dateTo) {
-      query.createdAt = {};
-      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+      query.createdAt = {}
+      if (dateFrom) query.createdAt.$gte = new Date(dateFrom)
       if (dateTo) {
         // End of day for endDate
-        const endOfDay = new Date(dateTo);
-        endOfDay.setHours(23, 59, 59, 999);
-        query.createdAt.$lte = endOfDay;
+        const endOfDay = new Date(dateTo)
+        endOfDay.setHours(23, 59, 59, 999)
+        query.createdAt.$lte = endOfDay
       }
     }
 
@@ -80,19 +96,19 @@ router.get('/', async (req, res) => {
       query.$or = [
         { 'logs.request.OrderId': { $regex: orderId, $options: 'i' } },
         { 'logs.request.orderId': { $regex: orderId, $options: 'i' } }
-      ];
+      ]
     }
 
     // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const total = await Transaction.countDocuments(query);
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const total = await Transaction.countDocuments(query)
 
     const transactions = await Transaction.find(query)
       .populate('pos', 'name provider currency')
       .select('-card.holder -card.number -card.expiry -card.cvv')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
 
     res.json({
       status: true,
@@ -103,11 +119,11 @@ router.get('/', async (req, res) => {
         total,
         pages: Math.ceil(total / parseInt(limit))
       }
-    });
+    })
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /pos-list
@@ -115,15 +131,13 @@ router.get('/', async (req, res) => {
  */
 router.get('/pos-list', async (req, res) => {
   try {
-    const posList = await VirtualPos.find({})
-      .select('_id name provider isActive')
-      .sort({ name: 1 });
+    const posList = await VirtualPos.find({}).select('_id name provider isActive').sort({ name: 1 })
 
-    res.json({ status: true, posList });
+    res.json({ status: true, posList })
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /stats
@@ -131,16 +145,16 @@ router.get('/pos-list', async (req, res) => {
  */
 router.get('/stats', async (req, res) => {
   try {
-    const { company } = req.query;
+    const { company } = req.query
 
     // Filter by company
-    let posIds = [];
+    let posIds = []
     if (company) {
-      const posList = await VirtualPos.find({ company }).select('_id');
-      posIds = posList.map(p => p._id);
+      const posList = await VirtualPos.find({ company }).select('_id')
+      posIds = posList.map(p => p._id)
     }
 
-    const matchQuery = posIds.length > 0 ? { pos: { $in: posIds } } : {};
+    const matchQuery = posIds.length > 0 ? { pos: { $in: posIds } } : {}
 
     // Aggregation for stats
     const stats = await Transaction.aggregate([
@@ -169,11 +183,11 @@ router.get('/stats', async (req, res) => {
           totalAmount: { $sum: '$total' }
         }
       }
-    ]);
+    ])
 
     // Today's stats
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
     const todayStats = await Transaction.aggregate([
       {
@@ -189,7 +203,7 @@ router.get('/stats', async (req, res) => {
           total: { $sum: '$amount' }
         }
       }
-    ]);
+    ])
 
     res.json({
       status: true,
@@ -197,11 +211,11 @@ router.get('/stats', async (req, res) => {
         byCurrency: stats,
         today: todayStats
       }
-    });
+    })
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
 /**
  * GET /:id
@@ -209,17 +223,45 @@ router.get('/stats', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const transaction = await Transaction.findById(req.params.id)
-      .populate('pos', 'name provider currency');
+    const transaction = await Transaction.findById(req.params.id).populate(
+      'pos',
+      'name provider currency'
+    )
 
     if (!transaction) {
-      return res.status(404).json({ status: false, error: 'Transaction not found' });
+      return res.status(404).json({ status: false, error: 'Transaction not found' })
     }
 
-    res.json({ status: true, transaction });
+    res.json({ status: true, transaction })
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: error.message })
   }
-});
+})
 
-export default router;
+/**
+ * POST /:id/cancel
+ * Cancel a transaction (same day only)
+ */
+router.post('/:id/cancel', async (req, res) => {
+  try {
+    const result = await PaymentService.cancelPayment(req.params.id)
+    res.json({ status: true, ...result })
+  } catch (error) {
+    res.status(400).json({ status: false, error: error.message })
+  }
+})
+
+/**
+ * POST /:id/refund
+ * Refund a completed transaction
+ */
+router.post('/:id/refund', async (req, res) => {
+  try {
+    const result = await PaymentService.refundPayment(req.params.id)
+    res.json({ status: true, ...result })
+  } catch (error) {
+    res.status(400).json({ status: false, error: error.message })
+  }
+})
+
+export default router
