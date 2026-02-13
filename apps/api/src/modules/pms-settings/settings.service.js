@@ -784,9 +784,19 @@ export const updateHotelDomain = asyncHandler(async (req, res) => {
   }
 
   // Reset SSL if domain changed
-  if (clean !== hotel.pmsDomain) {
+  const oldDomain = hotel.pmsDomain
+  if (clean !== oldDomain) {
     hotel.pmsSslStatus = 'none'
     hotel.pmsSslExpiresAt = null
+
+    // Remove old nginx config if domain is being cleared or changed
+    if (oldDomain) {
+      sslService
+        .removeNginxConfig(oldDomain)
+        .catch(err =>
+          logger.error(`[SSL] Failed to remove nginx config for ${oldDomain}:`, err.message)
+        )
+    }
   }
 
   hotel.pmsDomain = clean || undefined

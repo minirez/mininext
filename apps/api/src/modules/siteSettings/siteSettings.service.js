@@ -102,25 +102,48 @@ export const updateSetup = asyncHandler(async (req, res) => {
 
   if (b2cDomain !== undefined) {
     const clean = cleanDomain(b2cDomain)
-    // Reset SSL status when domain changes
-    if (clean !== settings.setup.b2cDomain) {
+    const oldDomain = settings.setup.b2cDomain
+    if (clean !== oldDomain) {
       settings.setup.b2cSslStatus = 'none'
+      if (oldDomain) {
+        sslService
+          .removeNginxConfig(oldDomain)
+          .catch(err =>
+            logger.error(`[SSL] Failed to remove nginx config for ${oldDomain}:`, err.message)
+          )
+      }
     }
     settings.setup.b2cDomain = clean || ''
   }
 
   if (b2bDomain !== undefined) {
     const clean = cleanDomain(b2bDomain)
-    if (clean !== settings.setup.b2bDomain) {
+    const oldDomain = settings.setup.b2bDomain
+    if (clean !== oldDomain) {
       settings.setup.b2bSslStatus = 'none'
+      if (oldDomain) {
+        sslService
+          .removeNginxConfig(oldDomain)
+          .catch(err =>
+            logger.error(`[SSL] Failed to remove nginx config for ${oldDomain}:`, err.message)
+          )
+      }
     }
     settings.setup.b2bDomain = clean || ''
   }
 
   if (pmsDomain !== undefined) {
     const clean = cleanDomain(pmsDomain)
-    if (clean !== settings.setup.pmsDomain) {
+    const oldDomain = settings.setup.pmsDomain
+    if (clean !== oldDomain) {
       settings.setup.pmsSslStatus = 'none'
+      if (oldDomain) {
+        sslService
+          .removeNginxConfig(oldDomain)
+          .catch(err =>
+            logger.error(`[SSL] Failed to remove nginx config for ${oldDomain}:`, err.message)
+          )
+      }
     }
     settings.setup.pmsDomain = clean || ''
   }

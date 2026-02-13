@@ -18,6 +18,7 @@
         :saving="saving"
         @verify-dns="handleVerifyDns"
         @setup-ssl="handleSetupSsl"
+        @remove-domain="handleRemoveDomain"
       />
     </div>
 
@@ -211,6 +212,29 @@ const handleSetupSsl = async () => {
     toast.error(errorData?.message || errorMessage)
   } finally {
     settingUpSsl.value = false
+  }
+}
+
+// Remove domain
+const handleRemoveDomain = async () => {
+  if (!confirm(t('siteSettings.setup.deleteIdentityConfirm'))) return
+
+  saving.value = true
+  try {
+    const res = await settingsService.updateHotelDomain(props.hotelId, '')
+    if (res.success) {
+      domainData.value = res.data
+      domainValue.value = ''
+      originalDomain.value = ''
+      dnsVerified.value = false
+      dnsResult.value = null
+      toast.success(t('settings.domain.saved'))
+    }
+  } catch (error) {
+    const msg = error.response?.data?.message || t('settings.domain.saveError')
+    toast.error(msg)
+  } finally {
+    saving.value = false
   }
 }
 

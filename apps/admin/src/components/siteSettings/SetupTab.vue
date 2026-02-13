@@ -19,6 +19,7 @@
         :saving="saving"
         @verify-dns="handleVerifyDns('b2c')"
         @setup-ssl="handleSetupSsl('b2c')"
+        @remove-domain="handleRemoveDomain('b2c')"
       />
 
       <!-- B2B Domain -->
@@ -39,6 +40,7 @@
         :saving="saving"
         @verify-dns="handleVerifyDns('b2b')"
         @setup-ssl="handleSetupSsl('b2b')"
+        @remove-domain="handleRemoveDomain('b2b')"
       />
 
       <!-- PMS Domain moved to PMS Settings per-hotel -->
@@ -215,6 +217,37 @@ const handleSetupSsl = async type => {
     toast.error(errorData?.message || errorMessage)
   } finally {
     settingUpSsl[type] = false
+  }
+}
+
+const handleRemoveDomain = async type => {
+  if (!confirm(t('siteSettings.setup.deleteIdentityConfirm'))) return
+
+  const domainMap = { b2c: 'b2cDomain', b2b: 'b2bDomain' }
+  const field = domainMap[type]
+  if (!field) return
+
+  try {
+    await siteSettingsService.updateSetup({ [field]: '' })
+    form.value[field] = ''
+    dnsVerified[type] = false
+    dnsResult[type] = null
+
+    // Reset SSL status in parent
+    const sslStatusMap = { b2c: 'b2cSslStatus', b2b: 'b2bSslStatus' }
+    const sslExpiryMap = { b2c: 'b2cSslExpiresAt', b2b: 'b2bSslExpiresAt' }
+    if (props.settings) {
+      emit('update:settings', {
+        ...props.settings,
+        [sslStatusMap[type]]: 'none',
+        [sslExpiryMap[type]]: null,
+        [field]: ''
+      })
+    }
+
+    toast.success(t('siteSettings.setup.deleteIdentity'))
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('common.error'))
   }
 }
 

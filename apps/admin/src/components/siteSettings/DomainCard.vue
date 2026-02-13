@@ -11,8 +11,8 @@
       <div>
         <label class="form-label">{{ $t('siteSettings.setup.domain') }}</label>
 
-        <!-- SSL Active: clickable link -->
-        <div v-if="sslStatus === 'active' && domain" class="mt-1">
+        <!-- SSL Active: clickable link + remove button -->
+        <div v-if="sslStatus === 'active' && domain" class="mt-1 flex items-center gap-2">
           <a
             :href="'https://' + domain"
             target="_blank"
@@ -23,17 +23,33 @@
             <span class="font-medium">{{ domain }}</span>
             <span class="material-icons text-sm">open_in_new</span>
           </a>
+          <button
+            class="inline-flex items-center gap-1 px-2 py-2 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            :title="$t('siteSettings.setup.deleteIdentity')"
+            @click="$emit('remove-domain')"
+          >
+            <span class="material-icons text-sm">link_off</span>
+          </button>
         </div>
 
-        <!-- SSL not active: editable input -->
-        <input
-          v-else
-          :value="domain"
-          @input="$emit('update:domain', $event.target.value)"
-          type="text"
-          class="form-input"
-          :placeholder="placeholder"
-        />
+        <!-- SSL not active: editable input + remove button -->
+        <div v-else class="flex items-center gap-2">
+          <input
+            :value="domain"
+            @input="$emit('update:domain', $event.target.value)"
+            type="text"
+            class="form-input flex-1"
+            :placeholder="placeholder"
+          />
+          <button
+            v-if="domain"
+            class="inline-flex items-center gap-1 px-2 py-2 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0"
+            :title="$t('siteSettings.setup.deleteIdentity')"
+            @click="$emit('remove-domain')"
+          >
+            <span class="material-icons text-sm">link_off</span>
+          </button>
+        </div>
       </div>
 
       <!-- SSL Status & Actions -->
@@ -170,7 +186,7 @@ const props = defineProps({
   saving: { type: Boolean, default: false }
 })
 
-defineEmits(['update:domain', 'verify-dns', 'setup-ssl'])
+defineEmits(['update:domain', 'verify-dns', 'setup-ssl', 'remove-domain'])
 
 const sslBadgeClass = computed(() => ({
   'badge-success': props.sslStatus === 'active',
