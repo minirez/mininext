@@ -20,7 +20,8 @@
       "noAccounts": "No accounts found",
       "type": "Type",
       "hotelCount": "Hotel Count",
-      "selected": "Selected Account"
+      "selected": "Selected Account",
+      "reservations": "reservations"
     },
     "hotels": {
       "title": "Hotel Selection",

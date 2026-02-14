@@ -20,7 +20,8 @@
       "noAccounts": "Account bulunamadi",
       "type": "Tip",
       "hotelCount": "Otel Sayisi",
-      "selected": "Secili Account"
+      "selected": "Secili Account",
+      "reservations": "rezervasyon"
     },
     "hotels": {
       "title": "Otel Secimi",

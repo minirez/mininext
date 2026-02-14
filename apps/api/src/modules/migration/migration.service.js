@@ -87,16 +87,23 @@ export const getAccounts = asyncHandler(async (req, res) => {
     .sort({ companyName: 1 })
     .lean()
 
-  // Count hotels per account
+  // Count hotels and bookings per account
   const accountIds = accounts.map(a => a.id)
-  const hotelCounts = await LegacyHotel().aggregate([
-    { $match: { account: { $in: accountIds } } },
-    { $group: { _id: '$account', count: { $sum: 1 } } }
+  const [hotelCounts, bookingCounts] = await Promise.all([
+    LegacyHotel().aggregate([
+      { $match: { account: { $in: accountIds } } },
+      { $group: { _id: '$account', count: { $sum: 1 } } }
+    ]),
+    LegacyBooking().aggregate([
+      { $match: { account: { $in: accountIds } } },
+      { $group: { _id: '$account', count: { $sum: 1 } } }
+    ])
   ])
-  const countMap = Object.fromEntries(hotelCounts.map(h => [h._id, h.count]))
+  const hotelCountMap = Object.fromEntries(hotelCounts.map(h => [h._id, h.count]))
+  const bookingCountMap = Object.fromEntries(bookingCounts.map(b => [b._id, b.count]))
 
   const data = accounts
-    .filter(a => (countMap[a.id] || 0) > 0)
+    .filter(a => (hotelCountMap[a.id] || 0) > 0)
     .map(a => ({
       id: a.id,
       companyName: a.companyName || a.founder || 'N/A',
@@ -104,7 +111,8 @@ export const getAccounts = asyncHandler(async (req, res) => {
       type: a.corporateType || a.type,
       email: a.email,
       phone: a.companyPhone,
-      hotelCount: countMap[a.id] || 0
+      hotelCount: hotelCountMap[a.id] || 0,
+      bookingCount: bookingCountMap[a.id] || 0
     }))
 
   res.json({ success: true, data })

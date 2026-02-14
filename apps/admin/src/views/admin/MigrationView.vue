@@ -61,9 +61,17 @@
                   {{ account.type }} &middot; {{ account.email }}
                 </p>
               </div>
-              <span class="text-sm text-gray-500 dark:text-slate-400 whitespace-nowrap ml-2">
-                {{ account.hotelCount }} {{ $t('migration.accounts.hotels') }}
-              </span>
+              <div class="text-right whitespace-nowrap ml-2">
+                <span class="text-sm text-gray-500 dark:text-slate-400">
+                  {{ account.hotelCount }} {{ $t('migration.accounts.hotels') }}
+                </span>
+                <span
+                  v-if="account.bookingCount"
+                  class="block text-xs text-gray-400 dark:text-slate-500"
+                >
+                  {{ account.bookingCount }} {{ $t('migration.accounts.reservations') }}
+                </span>
+              </div>
             </div>
           </div>
         </div>

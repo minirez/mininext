@@ -412,12 +412,15 @@ ssh root@85.31.238.34
 - Docker compose: `/var/www/docker-compose.yml`
 - Container logları: `docker logs maxirez-booking-api --tail 50`
 
-**Deploy Komutu:**
+**Deploy Komutu (API + Admin):**
 ```bash
 cd /var/www/booking-engine && git pull origin main && \
 cd /var/www && docker compose build booking-api payment-service && \
-docker compose up -d booking-api payment-service
+docker compose up -d booking-api payment-service && \
+cd booking-engine && pnpm --filter booking-engine-admin build
 ```
+
+**Not:** Admin frontend Docker'da DEĞİL, Nginx direkt `apps/admin/dist/` serve eder. Frontend değişikliği varsa `pnpm --filter booking-engine-admin build` MUTLAKA çalıştırılmalı.
 
 ### Eski Sunucu (PM2 - Artık Kullanılmıyor)
 
