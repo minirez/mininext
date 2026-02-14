@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 import logger from '#core/logger.js'
 
-const DEFAULT_URI = 'mongodb://85.31.238.34:27017/webv2'
+const DEFAULT_URI = process.env.LEGACY_DB_URI || 'mongodb://mongodb:27017/webv2?replicaSet=rs0'
 
 let connection = null
 
