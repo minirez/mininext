@@ -52,6 +52,11 @@
             <CampaignsTab v-if="selectedHotel" :hotel="selectedHotel" @refresh="handleRefresh" />
           </div>
 
+          <!-- Promo Codes Tab -->
+          <div v-show="activeTab === 'promo-codes'">
+            <PromoCodesTab v-if="selectedHotel" :hotel="selectedHotel" @refresh="handleRefresh" />
+          </div>
+
           <!-- Pricing Tab -->
           <div v-show="activeTab === 'pricing'">
             <PricingTab
@@ -78,6 +83,7 @@ import HotelSettingsTab from '@/components/planning/settings/HotelSettingsTab.vu
 import RoomsTab from '@/components/planning/rooms/RoomsTab.vue'
 import MarketsTab from '@/components/planning/markets/MarketsTab.vue'
 import CampaignsTab from '@/components/planning/campaigns/CampaignsTab.vue'
+import PromoCodesTab from '@/components/planning/promos/PromoCodesTab.vue'
 import PricingTab from '@/components/planning/pricing/PricingTab.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 
@@ -117,6 +123,13 @@ const navItems = computed(() => [
     exact: true
   },
   {
+    name: 'promo-codes',
+    to: '/planning/promo-codes',
+    icon: 'confirmation_number',
+    label: t('planning.tabs.promoCodes'),
+    exact: true
+  },
+  {
     name: 'pricing',
     to: '/planning/pricing',
     icon: 'payments',
@@ -147,7 +160,7 @@ onUnmounted(() => {
 })
 
 // Valid tab IDs
-const validTabs = ['settings', 'rooms', 'markets', 'campaigns', 'pricing']
+const validTabs = ['settings', 'rooms', 'markets', 'campaigns', 'promo-codes', 'pricing']
 
 // Detail route names that should render via router-view
 const detailRouteNames = ['room-type-new', 'room-type-detail', 'market-new', 'market-detail']

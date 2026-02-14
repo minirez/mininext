@@ -30,6 +30,9 @@ describe('asyncHandler', () => {
     const next = jest.fn()
 
     await wrappedHandler(req, res, next)
+    // Flush microtasks: asyncHandler doesn't return the promise chain,
+    // so .catch(next) resolves as a microtask after the await
+    await Promise.resolve()
 
     expect(next).toHaveBeenCalledWith(error)
   })

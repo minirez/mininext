@@ -57,8 +57,8 @@ describe('Booking Helpers', () => {
 
       expect(result.type).toBe('adult')
       expect(result.title).toBe('mr')
-      expect(result.firstName).toBe('Guest')
-      expect(result.lastName).toBe('Guest')
+      expect(result.firstName).toBe('Misafir')
+      expect(result.lastName).toBe('-')
       expect(result.nationality).toBe('')
       expect(result.isLead).toBe(false)
     })
@@ -312,17 +312,13 @@ describe('Booking Helpers', () => {
     })
 
     it('should return "rooms" for room changes only', () => {
-      const changes = [
-        { field: 'rooms.0.roomType', from: 'room1', to: 'room2' }
-      ]
+      const changes = [{ field: 'rooms.0.roomType', from: 'room1', to: 'room2' }]
 
       expect(detectAmendmentType(changes)).toBe('rooms')
     })
 
     it('should return "guests" for guest changes only', () => {
-      const changes = [
-        { field: 'leadGuest.firstName', from: 'John', to: 'Jane' }
-      ]
+      const changes = [{ field: 'leadGuest.firstName', from: 'John', to: 'Jane' }]
 
       expect(detectAmendmentType(changes)).toBe('guests')
     })
@@ -336,9 +332,7 @@ describe('Booking Helpers', () => {
     })
 
     it('should return "pricing" for pricing changes only', () => {
-      const changes = [
-        { field: 'pricing.grandTotal', from: 300, to: 350 }
-      ]
+      const changes = [{ field: 'pricing.grandTotal', from: 300, to: 350 }]
 
       expect(detectAmendmentType(changes)).toBe('pricing')
     })
@@ -357,9 +351,7 @@ describe('Booking Helpers', () => {
     })
 
     it('should return "full" for unknown field changes', () => {
-      const changes = [
-        { field: 'unknownField', from: 'old', to: 'new' }
-      ]
+      const changes = [{ field: 'unknownField', from: 'old', to: 'new' }]
 
       expect(detectAmendmentType(changes)).toBe('full')
     })

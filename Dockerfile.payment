@@ -1,0 +1,41 @@
+# =============================================================================
+# Stage 1: Dependencies
+# =============================================================================
+FROM node:22-alpine AS deps
+
+WORKDIR /app
+
+COPY apps/payment-service/package.json ./
+
+# Production dependency'leri kur
+RUN npm install --omit=dev
+
+# =============================================================================
+# Stage 2: Production
+# =============================================================================
+FROM node:22-alpine AS runner
+
+# Non-root user olustur
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+
+WORKDIR /app
+
+# Dependencies'i kopyala
+COPY --from=deps --chown=appuser:nodejs /app/node_modules ./node_modules
+COPY --chown=appuser:nodejs apps/payment-service/package.json ./
+
+# Kaynak kodunu kopyala
+COPY --chown=appuser:nodejs apps/payment-service/src/ ./src/
+COPY --chown=appuser:nodejs apps/payment-service/scripts/ ./scripts/
+
+# Non-root user'a gec
+USER appuser
+
+EXPOSE 7043
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:7043/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+
+CMD ["node", "src/server.js"]

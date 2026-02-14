@@ -12,6 +12,7 @@ import { readdirSync, existsSync } from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
 import path from 'path'
 import logger from '#core/logger.js'
+import { validateObjectIdParams } from '#middleware/validation.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -152,7 +153,8 @@ export async function loadRoutes(app) {
       const routes = routeModule.default
 
       if (routes && typeof routes === 'function') {
-        app.use(apiPath, routes)
+        // Apply global ObjectId param validation to all routes
+        app.use(apiPath, validateObjectIdParams(), routes)
         loadedRoutes.push({ module: moduleName, path: apiPath })
       }
     } catch (error) {

@@ -9,6 +9,7 @@ import 'vue-toastification/dist/index.css'
 import App from './App.vue'
 import router from './router'
 import i18n, { initI18n } from './plugins/i18n'
+import { initSentry } from './plugins/sentry'
 
 // Initialize app with async locale loading
 async function initApp() {
@@ -16,6 +17,9 @@ async function initApp() {
   await initI18n()
 
   const app = createApp(App)
+
+  // Initialize Sentry early (before other plugins)
+  initSentry(app, router)
 
   const pinia = createPinia()
   app.use(pinia)

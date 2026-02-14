@@ -63,6 +63,12 @@ export default [
         meta: { tab: 'campaigns' }
       },
       {
+        path: 'promo-codes',
+        name: 'planning-promo-codes',
+        component: EmptyRouteView,
+        meta: { tab: 'promo-codes' }
+      },
+      {
         path: 'pricing',
         name: 'planning-pricing',
         component: EmptyRouteView,

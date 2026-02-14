@@ -66,7 +66,8 @@ const campaignSchema = new mongoose.Schema(
         'family', // Family package
         'weekend', // Weekend special
         'midweek', // Midweek special
-        'loyalty' // Loyalty/repeat guest
+        'loyalty', // Loyalty/repeat guest
+        'promo_code' // Promo code (user-entered code)
       ],
       required: [true, 'REQUIRED_TYPE']
     },

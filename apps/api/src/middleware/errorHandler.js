@@ -1,6 +1,7 @@
 import { AppError } from '../core/errors.js'
 import logger from '../core/logger.js'
 import config from '../config/index.js'
+import { captureException } from '../core/sentry.js'
 
 export const errorHandler = (err, req, res, _next) => {
   let statusCode = err.statusCode || 500
@@ -40,9 +41,28 @@ export const errorHandler = (err, req, res, _next) => {
     message = req.t(message)
   }
 
-  // Log error
+  // Log and report 5xx errors
   if (statusCode >= 500) {
     logger.error(`${err.message}\n${err.stack}`)
+
+    // Send to Sentry with request context
+    captureException(err, {
+      user: req.user
+        ? {
+            id: req.user._id?.toString(),
+            email: req.user.email,
+            accountType: req.user.accountType
+          }
+        : undefined,
+      tags: {
+        method: req.method,
+        url: req.originalUrl
+      },
+      extra: {
+        query: req.query,
+        ip: req.ip
+      }
+    })
   }
 
   // Send response

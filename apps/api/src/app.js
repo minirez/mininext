@@ -8,6 +8,10 @@ import { i18nMiddleware } from './helpers/i18n.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { auditMiddleware } from './middleware/auditMiddleware.js'
 import { csrfProtection } from './middleware/csrf.js'
+import { initSentry, sentryErrorHandler } from './core/sentry.js'
+
+// Initialize Sentry before anything else
+initSentry()
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -109,11 +113,63 @@ app.use(auditMiddleware)
 // CSRF Protection (for state-changing requests)
 app.use(csrfProtection)
 
-// Health check
-app.get('/health', (req, res) => {
+// Health check - liveness (basic: is process alive?)
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
+    timestamp: new Date().toISOString()
+  })
+})
+
+// Health check - readiness (detailed: are dependencies healthy?)
+app.get('/health/ready', async (_req, res) => {
+  const checks = {}
+  let healthy = true
+
+  // MongoDB check
+  try {
+    const mongoose = (await import('mongoose')).default
+    const state = mongoose.connection.readyState
+    checks.mongodb = {
+      status: state === 1 ? 'ok' : 'error',
+      readyState: ['disconnected', 'connected', 'connecting', 'disconnecting'][state] || 'unknown'
+    }
+    if (state !== 1) healthy = false
+  } catch {
+    checks.mongodb = { status: 'error' }
+    healthy = false
+  }
+
+  // Redis check
+  try {
+    const { isRedisConnected, getRedisClient } = await import('./core/redis.js')
+    if (isRedisConnected()) {
+      await getRedisClient().ping()
+      checks.redis = { status: 'ok' }
+    } else {
+      checks.redis = { status: 'disabled' }
+    }
+  } catch {
+    checks.redis = { status: 'error' }
+  }
+
+  // Uptime & Memory
+  const memUsage = process.memoryUsage()
+  checks.system = {
+    uptime: `${Math.floor(process.uptime())}s`,
+    memory: {
+      rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`
+    },
+    nodeVersion: process.version
+  }
+
+  res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    status: healthy ? 'ready' : 'degraded',
+    checks,
     timestamp: new Date().toISOString()
   })
 })
@@ -167,6 +223,9 @@ app.use('/l', shortUrlRoutes)
 
 // 404 handler
 app.use(notFoundHandler)
+
+// Sentry error handler (captures 5xx errors before response)
+app.use(sentryErrorHandler())
 
 // Error handler (must be last)
 app.use(errorHandler)

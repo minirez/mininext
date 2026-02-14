@@ -3,6 +3,8 @@
  * Contract parsing and import operations
  */
 
+import fs from 'fs'
+import path from 'path'
 import RoomType from './roomType.model.js'
 import MealPlan from './mealPlan.model.js'
 import Market from './market.model.js'
@@ -47,6 +49,25 @@ export const parseContract = asyncHandler(async (req, res) => {
   ])
 
   const currency = markets[0]?.currency || 'EUR'
+
+  // Save contract file to disk
+  const extMap = {
+    'application/pdf': '.pdf',
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp'
+  }
+  const ext = extMap[mimeType] || '.bin'
+  const safeFileName = (fileName || 'contract').replace(/[^a-zA-Z0-9._-]/g, '_')
+  const storedName = `${Date.now()}-${safeFileName}${safeFileName.endsWith(ext) ? '' : ext}`
+  const uploadDir = path.join('uploads', 'contracts', String(partnerId), String(hotelId))
+  const filePath = path.join(uploadDir, storedName)
+
+  fs.mkdirSync(uploadDir, { recursive: true })
+  fs.writeFileSync(filePath, Buffer.from(fileContent, 'base64'))
+
+  const fileUrl = `/${filePath}`
+  logger.info(`Contract file saved: ${fileUrl}`)
 
   logger.info(`Parsing contract for hotel ${hotelId} - file: ${fileName}, mimeType: ${mimeType}`)
   logger.info(
@@ -136,6 +157,9 @@ export const parseContract = asyncHandler(async (req, res) => {
   logger.info(
     `Contract parsed - periods: ${result.data.periods?.length || 0}, rooms: ${result.data.roomTypes?.length || 0}, prices: ${result.data.pricing?.length || 0}`
   )
+
+  result.data.fileUrl = fileUrl
+  result.data.fileName = fileName || 'contract'
 
   res.json({
     success: true,
@@ -507,7 +531,9 @@ export const importContractPricing = asyncHandler(async (req, res) => {
     },
     metadata: {
       batchId: `contract-import-${Date.now()}`,
-      notes: `Contract import: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped`
+      notes: `Contract import: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped`,
+      ...(contractData.fileUrl && { fileUrl: contractData.fileUrl }),
+      ...(contractData.fileName && { fileName: contractData.fileName })
     },
     request: { method: req.method, path: req.originalUrl },
     status: 'success'

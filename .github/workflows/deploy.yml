@@ -4,14 +4,17 @@ on:
   push:
     branches:
       - main
-      - master
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 jobs:
-  deploy:
+  # =========================================================================
+  # Quality Gate: Lint + Build verification
+  # =========================================================================
+  quality:
+    name: Lint & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
@@ -43,14 +46,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build with Turbo (Remote Cache)
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build verification (populates Turbo remote cache)
         run: pnpm turbo run build --filter=booking-engine-admin
         env:
           VITE_API_BASE_URL: https://api.maxirez.com/api
           VITE_SOCKET_URL: https://api.maxirez.com
           VITE_IMAGES_URL: https://images.maxirez.com
           VITE_PAYMENT_API_URL: https://api.maxirez.com/payment-api
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
+  # =========================================================================
+  # Deploy: SSH to server, build, restart Docker containers
+  # =========================================================================
+  deploy:
+    name: Deploy
+    needs: quality
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -64,6 +80,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           STOREFRONT_API_KEY: ${{ secrets.STOREFRONT_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -71,7 +89,7 @@ jobs:
           port: 22
           timeout: 120s
           command_timeout: 30m
-          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,GEMINI_API_KEY,FIRECRAWL_API_KEY,STOREFRONT_API_KEY
+          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,GEMINI_API_KEY,FIRECRAWL_API_KEY,STOREFRONT_API_KEY,SENTRY_DSN,VITE_SENTRY_DSN
           script: |
             export PNPM_HOME="/root/.local/share/pnpm"
             export PATH="$PNPM_HOME:$PATH"
@@ -115,6 +133,9 @@ jobs:
 
             # Storefront API Key (server-to-server auth for site3 etc.)
             STOREFRONT_API_KEY=${STOREFRONT_API_KEY}
+
+            # Sentry Error Tracking
+            SENTRY_DSN=${SENTRY_DSN}
             EOF
 
             # Create/Update .env file for Payment Service
@@ -143,11 +164,46 @@ jobs:
             SERVER_PUBLIC_IP=94.130.195.4
             EOF
 
+            # Install dependencies
             pnpm install --frozen-lockfile
-            VITE_API_BASE_URL=https://api.maxirez.com/api VITE_SOCKET_URL=https://api.maxirez.com VITE_IMAGES_URL=https://images.maxirez.com VITE_PAYMENT_API_URL=https://api.maxirez.com/payment-api pnpm turbo run build --filter=booking-engine-admin
 
-            # Restart all services with PM2
-            pm2 restart all || pm2 start ecosystem.config.cjs
-            pm2 save
+            # Build admin frontend (Nginx serves from apps/admin/dist/)
+            VITE_API_BASE_URL=https://api.maxirez.com/api \
+            VITE_SOCKET_URL=https://api.maxirez.com \
+            VITE_IMAGES_URL=https://images.maxirez.com \
+            VITE_PAYMENT_API_URL=https://api.maxirez.com/payment-api \
+            VITE_SENTRY_DSN=${VITE_SENTRY_DSN} \
+            pnpm turbo run build --filter=booking-engine-admin
+
+            # Build and restart Docker containers (API + Payment Service)
+            cd /var/www
+            docker compose build booking-api payment-service || { echo "Docker build failed"; exit 1; }
+            docker compose up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
 
             echo "Deploy completed at $(date)"
+
+      - name: Post-deploy health check
+        run: |
+          echo "Waiting 20s for containers to start..."
+          sleep 20
+
+          # Liveness check
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "Liveness check passed (HTTP $HTTP_STATUS)"
+          else
+            echo "Liveness check FAILED (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+
+          # Readiness check (MongoDB, Redis, etc.)
+          RESPONSE=$(curl -s --max-time 10 https://api.maxirez.com/health/ready || echo '{}')
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health/ready || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "Readiness check passed (HTTP $HTTP_STATUS)"
+          else
+            echo "Readiness check warning (HTTP $HTTP_STATUS) - service may still be initializing"
+            echo "Response: $RESPONSE"
+          fi
+
+          echo "All health checks completed"

@@ -30,6 +30,9 @@ export default defineConfig({
       }
     },
     alias: {
+      // Jest → Vitest compatibility (allows old tests with @jest/globals to work)
+      '@jest/globals': path.join(src, 'tests/jest-compat.js'),
+
       // Direct imports (no wildcard)
       '#config': path.join(src, 'config/index.js'),
       '#helpers': path.join(src, 'helpers/index.js'),

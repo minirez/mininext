@@ -1,12 +1,15 @@
 /**
  * @module services/cacheService
- * @description In-memory caching service with TTL support.
+ * @description Hybrid caching service with Redis primary + in-memory fallback.
+ * Uses Redis when available for distributed caching, falls back to in-memory Map.
  * Provides cache-aside pattern, statistics, and automatic cleanup.
- * In production, replace with Redis for distributed caching.
  */
 
+import { getRedisClient, isRedisConnected } from '#core/redis.js'
+import logger from '#core/logger.js'
+
 /**
- * Cache entry structure
+ * Cache entry structure (in-memory)
  * @typedef {Object} CacheEntry
  * @property {*} value - Cached value
  * @property {number} expiresAt - Expiration timestamp
@@ -23,10 +26,11 @@
  * @property {string} hitRate - Hit rate percentage
  * @property {number} size - Current cache size
  * @property {string} memoryEstimate - Estimated memory usage
+ * @property {string} backend - 'redis' or 'memory'
  */
 
-/** @type {Map<string, CacheEntry>} In-memory cache store */
-const cacheStore = new Map()
+/** @type {Map<string, CacheEntry>} In-memory cache store (fallback) */
+const memoryStore = new Map()
 
 /** @type {{hits: number, misses: number, sets: number, deletes: number}} */
 let stats = {
@@ -39,11 +43,12 @@ let stats = {
 /** @constant {number} Default TTL: 5 minutes (in ms) */
 const DEFAULT_TTL = 5 * 60 * 1000
 
+/** Cache key prefix for namespacing in Redis */
+const REDIS_CACHE_PREFIX = 'cache:'
+
 /**
  * Cache prefixes for different data types
  * @constant {Object.<string, string>}
- * @example
- * const key = `${CACHE_PREFIXES.HOTEL_INFO}${hotelId}`
  */
 export const CACHE_PREFIXES = {
   PRICE_CALCULATION: 'price:',
@@ -59,8 +64,6 @@ export const CACHE_PREFIXES = {
 /**
  * TTL values for different cache types (in milliseconds)
  * @constant {Object.<string, number>}
- * @example
- * set(key, value, CACHE_TTL.EXCHANGE_RATE) // 6 hours TTL
  */
 export const CACHE_TTL = {
   PRICE_CALCULATION: 5 * 60 * 1000, // 5 minutes
@@ -75,21 +78,15 @@ export const CACHE_TTL = {
 
 /**
  * Generate cache key from parameters
- * Keys are generated consistently by sorting object keys
  * @param {string} prefix - Cache prefix from CACHE_PREFIXES
  * @param {Object|string} params - Parameters to generate key from
  * @returns {string} Cache key
- * @example
- * generateCacheKey(CACHE_PREFIXES.HOTEL_INFO, '123') // 'hotel:123'
- * generateCacheKey(CACHE_PREFIXES.PRICE_CALCULATION, { hotelId: '123', date: '2024-01-15' })
- * // 'price:date:2024-01-15|hotelId:123'
  */
 export function generateCacheKey(prefix, params) {
   if (typeof params === 'string') {
     return `${prefix}${params}`
   }
 
-  // Sort keys for consistent key generation
   const sortedKeys = Object.keys(params).sort()
   const keyParts = sortedKeys
     .map(key => {
@@ -108,102 +105,213 @@ export function generateCacheKey(prefix, params) {
   return `${prefix}${keyParts.join('|')}`
 }
 
+// ==================== REDIS HELPERS ====================
+
 /**
- * Get value from cache
- * Returns null if key doesn't exist or has expired
- * @param {string} key - Cache key
- * @returns {*} Cached value or null if not found/expired
- * @example
- * const data = get('hotel:123')
- * if (data) {
- *   // Use cached data
- * }
+ * Try to get from Redis, returns null on failure
+ * @private
  */
-export function get(key) {
-  const entry = cacheStore.get(key)
-
-  if (!entry) {
-    stats.misses++
+async function redisGet(key) {
+  try {
+    const client = getRedisClient()
+    if (!client) return null
+    const data = await client.get(`${REDIS_CACHE_PREFIX}${key}`)
+    return data ? JSON.parse(data) : null
+  } catch {
     return null
   }
-
-  // Check if expired
-  if (Date.now() > entry.expiresAt) {
-    cacheStore.delete(key)
-    stats.misses++
-    return null
-  }
-
-  stats.hits++
-  return entry.value
 }
 
 /**
- * Set value in cache with TTL
+ * Try to set in Redis, returns false on failure
+ * @private
+ */
+async function redisSet(key, value, ttlMs) {
+  try {
+    const client = getRedisClient()
+    if (!client) return false
+    const ttlSeconds = Math.max(1, Math.ceil(ttlMs / 1000))
+    await client.setex(`${REDIS_CACHE_PREFIX}${key}`, ttlSeconds, JSON.stringify(value))
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Try to delete from Redis
+ * @private
+ */
+async function redisDel(key) {
+  try {
+    const client = getRedisClient()
+    if (!client) return false
+    await client.del(`${REDIS_CACHE_PREFIX}${key}`)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Delete Redis keys matching pattern
+ * @private
+ */
+async function redisDeleteByPattern(pattern) {
+  try {
+    const client = getRedisClient()
+    if (!client) return 0
+
+    // Use SCAN to safely find matching keys (no KEYS in production)
+    let cursor = '0'
+    let count = 0
+    const fullPattern = `${REDIS_CACHE_PREFIX}${pattern}*`
+
+    do {
+      const [newCursor, keys] = await client.scan(cursor, 'MATCH', fullPattern, 'COUNT', 100)
+      cursor = newCursor
+      if (keys.length > 0) {
+        await client.del(...keys)
+        count += keys.length
+      }
+    } while (cursor !== '0')
+
+    return count
+  } catch {
+    return 0
+  }
+}
+
+// ==================== PUBLIC API ====================
+
+/**
+ * Get value from cache (Redis first, then memory fallback)
  * @param {string} key - Cache key
- * @param {*} value - Value to cache (will be stored as-is)
- * @param {number} [ttl=300000] - Time to live in milliseconds (default: 5 minutes)
- * @returns {void}
- * @example
- * set('hotel:123', hotelData, CACHE_TTL.HOTEL_INFO)
+ * @returns {*} Cached value or null if not found/expired
+ */
+export function get(key) {
+  // Sync path: try memory first for speed
+  const memEntry = memoryStore.get(key)
+  if (memEntry && Date.now() <= memEntry.expiresAt) {
+    stats.hits++
+    return memEntry.value
+  }
+
+  // Clean up expired memory entry
+  if (memEntry) memoryStore.delete(key)
+
+  stats.misses++
+  return null
+}
+
+/**
+ * Async get - tries Redis if memory miss
+ * Use this when Redis cache is important (distributed scenarios)
+ * @param {string} key - Cache key
+ * @returns {Promise<*>} Cached value or null
+ */
+export async function getAsync(key) {
+  // Try memory first (sync, fast)
+  const memEntry = memoryStore.get(key)
+  if (memEntry && Date.now() <= memEntry.expiresAt) {
+    stats.hits++
+    return memEntry.value
+  }
+  if (memEntry) memoryStore.delete(key)
+
+  // Try Redis
+  if (isRedisConnected()) {
+    const value = await redisGet(key)
+    if (value !== null) {
+      stats.hits++
+      // Write-back to memory for faster subsequent access
+      memoryStore.set(key, {
+        value,
+        expiresAt: Date.now() + DEFAULT_TTL,
+        createdAt: Date.now()
+      })
+      return value
+    }
+  }
+
+  stats.misses++
+  return null
+}
+
+/**
+ * Set value in cache (both Redis and memory)
+ * @param {string} key - Cache key
+ * @param {*} value - Value to cache
+ * @param {number} [ttl=300000] - Time to live in milliseconds
  */
 export function set(key, value, ttl = DEFAULT_TTL) {
   stats.sets++
-  cacheStore.set(key, {
+
+  // Always set in memory (sync, fast)
+  memoryStore.set(key, {
     value,
     expiresAt: Date.now() + ttl,
     createdAt: Date.now()
   })
+
+  // Also set in Redis (async, fire-and-forget)
+  if (isRedisConnected()) {
+    redisSet(key, value, ttl).catch(() => {})
+  }
 }
 
 /**
  * Delete value from cache
  * @param {string} key - Cache key
- * @returns {void}
- * @example
- * del('hotel:123')
  */
 export function del(key) {
   stats.deletes++
-  cacheStore.delete(key)
+  memoryStore.delete(key)
+
+  if (isRedisConnected()) {
+    redisDel(key).catch(() => {})
+  }
 }
 
 /**
  * Delete all keys matching a pattern (prefix match)
  * @param {string} pattern - Pattern to match (prefix)
- * @returns {number} Number of deleted entries
- * @example
- * deleteByPattern('price:hotelId:123') // Delete all price cache for hotel 123
+ * @returns {number} Number of deleted memory entries
  */
 export function deleteByPattern(pattern) {
   let count = 0
-  for (const key of cacheStore.keys()) {
+  for (const key of memoryStore.keys()) {
     if (key.startsWith(pattern)) {
-      cacheStore.delete(key)
+      memoryStore.delete(key)
       count++
     }
   }
   stats.deletes += count
+
+  // Also clean Redis
+  if (isRedisConnected()) {
+    redisDeleteByPattern(pattern).catch(() => {})
+  }
+
   return count
 }
 
 /**
  * Clear entire cache
- * Use with caution - removes all cached data
- * @returns {void}
  */
 export function clear() {
-  const size = cacheStore.size
-  cacheStore.clear()
+  const size = memoryStore.size
+  memoryStore.clear()
   stats.deletes += size
+
+  if (isRedisConnected()) {
+    redisDeleteByPattern('').catch(() => {})
+  }
 }
 
 /**
- * Get cache statistics including hit rate and memory usage
- * @returns {CacheStats} Cache statistics
- * @example
- * const stats = getStats()
- * console.log(`Hit rate: ${stats.hitRate}, Size: ${stats.size}`)
+ * Get cache statistics
+ * @returns {CacheStats}
  */
 export function getStats() {
   const hitRate =
@@ -214,36 +322,29 @@ export function getStats() {
   return {
     ...stats,
     hitRate: `${hitRate}%`,
-    size: cacheStore.size,
-    memoryEstimate: estimateMemoryUsage()
+    size: memoryStore.size,
+    memoryEstimate: estimateMemoryUsage(),
+    backend: isRedisConnected() ? 'redis+memory' : 'memory'
   }
 }
 
 /**
- * Reset cache statistics counters to zero
- * Does not clear the cache itself
- * @returns {void}
+ * Reset cache statistics counters
  */
 export function resetStats() {
-  stats = {
-    hits: 0,
-    misses: 0,
-    sets: 0,
-    deletes: 0
-  }
+  stats = { hits: 0, misses: 0, sets: 0, deletes: 0 }
 }
 
 /**
  * Estimate memory usage (rough estimate)
  * @private
- * @returns {string} Memory usage in human readable format (B, KB, or MB)
  */
 function estimateMemoryUsage() {
   let bytes = 0
-  for (const [key, entry] of cacheStore) {
-    bytes += key.length * 2 // UTF-16
+  for (const [key, entry] of memoryStore) {
+    bytes += key.length * 2
     bytes += JSON.stringify(entry.value).length * 2
-    bytes += 16 // expiresAt and createdAt
+    bytes += 16
   }
 
   if (bytes < 1024) return `${bytes} B`
@@ -252,17 +353,16 @@ function estimateMemoryUsage() {
 }
 
 /**
- * Clean up expired entries
- * Automatically runs every 5 minutes via setInterval
+ * Clean up expired entries (memory only, Redis handles its own TTL)
  * @returns {number} Number of cleaned entries
  */
 export function cleanup() {
   const now = Date.now()
   let cleaned = 0
 
-  for (const [key, entry] of cacheStore) {
+  for (const [key, entry] of memoryStore) {
     if (now > entry.expiresAt) {
-      cacheStore.delete(key)
+      memoryStore.delete(key)
       cleaned++
     }
   }
@@ -272,24 +372,39 @@ export function cleanup() {
 
 /**
  * Get or set cached value (cache-aside pattern)
- * If value exists in cache, returns it. Otherwise, calls fetchFn and caches the result.
+ * Tries Redis first for distributed cache, then memory, then fetches
  * @param {string} key - Cache key
  * @param {Function} fetchFn - Async function to fetch value if not cached
  * @param {number} [ttl=300000] - Time to live in milliseconds
  * @returns {Promise<*>} Cached or fetched value
- * @example
- * const hotel = await getOrSet(
- *   `${CACHE_PREFIXES.HOTEL_INFO}${hotelId}`,
- *   () => Hotel.findById(hotelId),
- *   CACHE_TTL.HOTEL_INFO
- * )
  */
 export async function getOrSet(key, fetchFn, ttl = DEFAULT_TTL) {
-  const cached = get(key)
-  if (cached !== null) {
-    return cached
+  // Try memory first (fast path)
+  const memEntry = memoryStore.get(key)
+  if (memEntry && Date.now() <= memEntry.expiresAt) {
+    stats.hits++
+    return memEntry.value
+  }
+  if (memEntry) memoryStore.delete(key)
+
+  // Try Redis
+  if (isRedisConnected()) {
+    const redisValue = await redisGet(key)
+    if (redisValue !== null) {
+      stats.hits++
+      // Write-back to memory
+      memoryStore.set(key, {
+        value: redisValue,
+        expiresAt: Date.now() + ttl,
+        createdAt: Date.now()
+      })
+      return redisValue
+    }
   }
 
+  stats.misses++
+
+  // Fetch and cache
   const value = await fetchFn()
   if (value !== undefined && value !== null) {
     set(key, value, ttl)
@@ -300,13 +415,8 @@ export async function getOrSet(key, fetchFn, ttl = DEFAULT_TTL) {
 
 /**
  * Invalidate cache for specific entity
- * Clears all related cache entries when an entity is updated
  * @param {'hotel'|'rate'|'campaign'} entityType - Entity type
  * @param {string} entityId - Entity ID
- * @returns {void}
- * @example
- * // When a hotel is updated, invalidate all related caches
- * invalidateEntity('hotel', hotelId)
  */
 export function invalidateEntity(entityType, entityId) {
   const patterns = []
@@ -319,33 +429,28 @@ export function invalidateEntity(entityType, entityId) {
         `${CACHE_PREFIXES.MEAL_PLANS}${entityId}`,
         `${CACHE_PREFIXES.CAMPAIGNS}${entityId}`
       )
-      // Also invalidate all prices for this hotel
       deleteByPattern(`${CACHE_PREFIXES.PRICE_CALCULATION}hotelId:${entityId}`)
       deleteByPattern(`${CACHE_PREFIXES.AVAILABILITY}hotelId:${entityId}`)
       break
 
     case 'rate':
-      // Invalidate rate and related price calculations
       del(`${CACHE_PREFIXES.RATE}${entityId}`)
-      // We can't easily invalidate all related prices, so we rely on TTL
       break
 
     case 'campaign': {
-      // Invalidate campaigns - price will be recalculated with new campaigns
       const campaignKey = `${CACHE_PREFIXES.CAMPAIGNS}${entityId}`
       del(campaignKey)
       break
     }
 
     default:
-      // Generic invalidation
       patterns.forEach(pattern => deleteByPattern(pattern))
   }
 
   patterns.forEach(pattern => del(pattern))
 }
 
-// Run cleanup every 5 minutes
+// Run memory cleanup every 5 minutes
 setInterval(cleanup, 5 * 60 * 1000)
 
 export default {
@@ -353,6 +458,7 @@ export default {
   CACHE_TTL,
   generateCacheKey,
   get,
+  getAsync,
   set,
   del,
   deleteByPattern,

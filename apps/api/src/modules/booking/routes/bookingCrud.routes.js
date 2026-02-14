@@ -5,6 +5,7 @@
 
 import express from 'express'
 import * as bookingService from '../booking.service.js'
+import { validateBody, validateQuery, commonSchemas } from '#middleware/validation.js'
 
 const router = express.Router()
 
@@ -55,7 +56,17 @@ const router = express.Router()
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  */
-router.get('/', bookingService.listBookings)
+router.get(
+  '/',
+  validateQuery({
+    ...commonSchemas.pagination,
+    status: {
+      type: 'string',
+      enum: ['draft', 'pending', 'confirmed', 'checked_in', 'cancelled', 'completed', 'no_show']
+    }
+  }),
+  bookingService.listBookings
+)
 
 /**
  * @swagger
@@ -112,7 +123,17 @@ router.get('/', bookingService.listBookings)
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post('/', bookingService.createBooking)
+router.post(
+  '/',
+  validateBody({
+    hotelId: { type: 'objectId', required: true },
+    checkInDate: { type: 'date', required: true },
+    checkOutDate: { type: 'date', required: true },
+    rooms: { type: 'array', required: true },
+    leadGuest: { type: 'object', required: true }
+  }),
+  bookingService.createBooking
+)
 
 /**
  * @swagger
@@ -192,7 +213,17 @@ router.post('/', bookingService.createBooking)
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post('/with-payment-link', bookingService.createBookingWithPaymentLink)
+router.post(
+  '/with-payment-link',
+  validateBody({
+    hotelId: { type: 'objectId', required: true },
+    checkIn: { type: 'date', required: true },
+    checkOut: { type: 'date', required: true },
+    rooms: { type: 'array', required: true },
+    contact: { type: 'object', required: true }
+  }),
+  bookingService.createBookingWithPaymentLink
+)
 
 /**
  * @swagger

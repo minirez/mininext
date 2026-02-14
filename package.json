@@ -24,6 +24,9 @@
     "lint:fix": "turbo run lint:fix",
     "format": "prettier --write \"{apps,packages}/**/*.{js,vue,json,css,scss,md}\"",
     "format:check": "prettier --check \"{apps,packages}/**/*.{js,vue,json,css,scss,md}\"",
+    "backup": "bash scripts/backup.sh",
+    "backup:local": "bash scripts/backup.sh --local-only",
+    "backup:restore": "bash scripts/backup.sh --restore",
     "prepare": "husky"
   },
   "devDependencies": {

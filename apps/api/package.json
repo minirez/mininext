@@ -44,6 +44,7 @@
     "@booking-engine/validation": "workspace:*",
     "@google/genai": "^1.34.0",
     "@mendable/firecrawl-js": "^4.10.0",
+    "@sentry/node": "^10.38.0",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.66.5",

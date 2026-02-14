@@ -52,6 +52,9 @@ export const useAuthStore = defineStore('auth', () => {
           JSON.stringify(response.data.forcePasswordChange || false)
         )
 
+        // Set Sentry user context
+        import('@/plugins/sentry').then(({ setSentryUser }) => setSentryUser(response.data.user))
+
         // Return forcePasswordChange status along with success
         return { success: true, forcePasswordChange: response.data.forcePasswordChange || false }
       } else {
@@ -113,6 +116,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     localStorage.removeItem('forcePasswordChange')
+
+    // Clear Sentry user context
+    import('@/plugins/sentry').then(({ setSentryUser }) => setSentryUser(null))
 
     router.push({ name: 'login' })
   }

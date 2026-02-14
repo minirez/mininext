@@ -19,10 +19,13 @@
           >{{ $t('planning.campaigns.stayWindow') }} <span class="text-red-500">*</span></span
         >
       </div>
-      <DateRangePicker
+      <DateRangeDual
         :model-value="stayDateRange"
         :allow-past="true"
-        @update:model-value="$emit('update:stay-date-range', $event); validationErrors.stayDates = false"
+        @update:model-value="
+          $emit('update:stay-date-range', $event)
+          validationErrors.stayDates = false
+        "
       />
       <div class="mt-2 flex flex-wrap gap-1">
         <button
@@ -65,10 +68,13 @@
           >{{ $t('planning.campaigns.bookingWindow') }} <span class="text-red-500">*</span></span
         >
       </div>
-      <DateRangePicker
+      <DateRangeDual
         :model-value="bookingDateRange"
         :allow-past="true"
-        @update:model-value="$emit('update:booking-date-range', $event); validationErrors.bookingDates = false"
+        @update:model-value="
+          $emit('update:booking-date-range', $event)
+          validationErrors.bookingDates = false
+        "
       />
       <div class="mt-2 flex flex-wrap gap-1">
         <button
@@ -95,7 +101,7 @@
 </template>
 
 <script setup>
-import DateRangePicker from '@/components/common/DateRangePicker.vue'
+import DateRangeDual from '@/components/common/DateRangeDual.vue'
 
 defineProps({
   stayDateRange: { type: Object, required: true },

@@ -384,7 +384,7 @@ const fetchCampaigns = async () => {
   try {
     const response = await planningService.getCampaigns(props.hotel._id)
     if (response.success) {
-      campaigns.value = response.data
+      campaigns.value = response.data.filter(c => c.type !== 'promo_code')
     }
   } catch {
     toast.error(t('common.fetchError'))

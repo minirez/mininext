@@ -99,33 +99,60 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
   const hotelResults = []
   const debugInfo = []
 
+  // === BATCH FETCH: Load all markets, room types, meal plans in bulk ===
+  const hotelIds_list = hotels.map(h => h._id)
+
+  const [allMarkets, allRoomTypes, allMealPlans] = await Promise.all([
+    Market.find({ hotel: { $in: hotelIds_list }, status: 'active' })
+      .select('_id hotel name currency countries isDefault')
+      .lean(),
+    RoomType.find({ hotel: { $in: hotelIds_list }, status: 'active' })
+      .select('_id hotel code occupancy')
+      .lean(),
+    MealPlan.find({ hotel: { $in: hotelIds_list }, status: 'active' })
+      .select('_id hotel code')
+      .lean()
+  ])
+
+  // Build lookup maps by hotel ID
+  const marketsByHotel = new Map()
+  for (const m of allMarkets) {
+    const key = m.hotel.toString()
+    if (!marketsByHotel.has(key)) marketsByHotel.set(key, [])
+    marketsByHotel.get(key).push(m)
+  }
+
+  const roomTypesByHotel = new Map()
+  for (const rt of allRoomTypes) {
+    const key = rt.hotel.toString()
+    if (!roomTypesByHotel.has(key)) roomTypesByHotel.set(key, [])
+    roomTypesByHotel.get(key).push(rt)
+  }
+
+  const mealPlansByHotel = new Map()
+  for (const mp of allMealPlans) {
+    const key = mp.hotel.toString()
+    if (!mealPlansByHotel.has(key)) mealPlansByHotel.set(key, [])
+    mealPlansByHotel.get(key).push(mp)
+  }
+
   for (const hotel of hotels) {
     const hotelDebug = { hotelId: hotel._id, name: hotel.name, issues: [] }
+    const hotelKey = hotel._id.toString()
 
     try {
-      // Find market for this hotel
+      // Find market for this hotel from pre-fetched data
+      const hotelMarkets = marketsByHotel.get(hotelKey) || []
       let market = null
+
       if (countryCode) {
-        market = await Market.findOne({
-          hotel: hotel._id,
-          countries: countryCode.toUpperCase(),
-          status: 'active'
-        }).lean()
+        market = hotelMarkets.find(m => m.countries?.includes(countryCode.toUpperCase()))
       }
-
       if (!market) {
-        market = await Market.findOne({
-          hotel: hotel._id,
-          isDefault: true,
-          status: 'active'
-        }).lean()
+        market = hotelMarkets.find(m => m.isDefault)
       }
-
       if (!market) {
-        market = await Market.findOne({
-          hotel: hotel._id,
-          status: 'active'
-        }).lean()
+        market = hotelMarkets[0] || null
       }
 
       if (!market) {
@@ -137,13 +164,8 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
       hotelDebug.marketId = market._id
       hotelDebug.marketName = market.name
 
-      // Get active room types
-      const roomTypes = await RoomType.find({
-        hotel: hotel._id,
-        status: 'active'
-      })
-        .select('_id code occupancy')
-        .lean()
+      // Get active room types from pre-fetched data
+      const roomTypes = roomTypesByHotel.get(hotelKey) || []
 
       hotelDebug.roomTypeCount = roomTypes.length
 
@@ -153,13 +175,8 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
         continue
       }
 
-      // Get active meal plans
-      const mealPlans = await MealPlan.find({
-        hotel: hotel._id,
-        status: 'active'
-      })
-        .select('_id code')
-        .lean()
+      // Get active meal plans from pre-fetched data
+      const mealPlans = mealPlansByHotel.get(hotelKey) || []
 
       hotelDebug.mealPlanCount = mealPlans.length
 

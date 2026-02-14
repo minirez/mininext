@@ -20,6 +20,7 @@
       "rooms": "Odalar & Konaklama",
       "markets": "Pazarlar",
       "campaigns": "Kampanyalar",
+      "promoCodes": "Promosyon Kodları",
       "pricing": "Fiyatlandırma"
     },
     "settings": {
@@ -567,7 +568,8 @@
         "family": "Aile",
         "weekend": "Hafta Sonu",
         "midweek": "Hafta İçi",
-        "loyalty": "Sadakat"
+        "loyalty": "Sadakat",
+        "promo_code": "Promosyon Kodu"
       },
       "discountTypes": {
         "percentage": "Yüzde (%)",
@@ -595,6 +597,41 @@
       "conflictWarning": "Bu kampanya, aynı tarih aralığında ve koşullarda aktif başka kampanyalarla çakışıyor.",
       "notCombinable": "Birleştirilemez",
       "conflictResolutionHint": "Çakışmayı önlemek için tarihleri değiştirebilir veya kampanyayı 'Birleştirilebilir' yapabilirsiniz."
+    },
+    "promoCodes": {
+      "title": "Promosyon Kodları",
+      "description": "Widget'ta kullanılabilecek promosyon kodlarını yönetin",
+      "add": "Promosyon Kodu Ekle",
+      "edit": "Promosyon Kodu Düzenle",
+      "empty": "Henüz promosyon kodu tanımlanmadı",
+      "emptyHint": "Yeni bir promosyon kodu eklemek için yukarıdaki butonu kullanın",
+      "code": "Promosyon Kodu",
+      "codePlaceholder": "Örn: SUMMER25",
+      "codeHint": "Müşterilerin widget'ta gireceği kod (otomatik büyük harfe çevrilir)",
+      "name": "Ad",
+      "namePlaceholder": "Örn: Yaz Kampanyası",
+      "discount": "İndirim",
+      "discountType": "İndirim Tipi",
+      "discountValue": "İndirim Değeri",
+      "bookingWindow": "Satış Penceresi",
+      "bookingWindowHint": "Kodun geçerli olduğu satış tarihleri",
+      "stayWindow": "Konaklama Penceresi",
+      "stayWindowHint": "Kodun geçerli olduğu konaklama tarihleri",
+      "minNights": "Minimum Gece",
+      "status": "Durum",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "copied": "Kod kopyalandı",
+      "created": "Promosyon kodu oluşturuldu",
+      "updated": "Promosyon kodu güncellendi",
+      "deleted": "Promosyon kodu silindi",
+      "filterActive": "Aktif",
+      "filterInactive": "Pasif",
+      "noMatchingCodes": "Filtreye uyan promosyon kodu bulunamadı",
+      "b2c": "B2C",
+      "b2b": "B2B",
+      "nightsShort": "gece",
+      "marketsHint": "Boş bırakırsanız tüm pazarlarda geçerli olur"
     },
     "pricing": {
       "title": "Fiyatlandırma",

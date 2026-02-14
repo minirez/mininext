@@ -70,6 +70,7 @@ export const getHotels = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit)
     .select('-__v')
+    .lean()
 
   res.json({
     success: true,

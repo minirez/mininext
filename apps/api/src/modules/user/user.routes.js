@@ -3,6 +3,7 @@ import * as userService from './user.service.js'
 import { protect, requireAdmin } from '#middleware/auth.js'
 import { partnerContext } from '#middleware/partnerContext.js'
 import { requirePermission } from '#middleware/permission.js'
+import { validateBody, validateQuery, commonSchemas } from '#middleware/validation.js'
 
 const router = express.Router()
 
@@ -14,7 +15,13 @@ const router = express.Router()
 router.get('/activate/verify/:token', userService.verifyActivationToken)
 
 // Activate account (set password)
-router.post('/activate/:token', userService.activateAccount)
+router.post(
+  '/activate/:token',
+  validateBody({
+    password: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+  }),
+  userService.activateAccount
+)
 
 // ============================================
 // Protected Routes
@@ -29,13 +36,28 @@ router.use(partnerContext)
 // ============================================
 
 // Get all users
-router.get('/', requirePermission('users', 'view'), userService.getUsers)
+router.get(
+  '/',
+  requirePermission('users', 'view'),
+  validateQuery(commonSchemas.pagination),
+  userService.getUsers
+)
 
 // Get user by ID
 router.get('/:id', requirePermission('users', 'view'), userService.getUser)
 
 // Create user
-router.post('/', requirePermission('users', 'create'), userService.createUser)
+router.post(
+  '/',
+  requirePermission('users', 'create'),
+  validateBody({
+    firstName: { type: 'string', required: true, minLength: 2, maxLength: 50 },
+    lastName: { type: 'string', required: true, minLength: 2, maxLength: 50 },
+    email: { type: 'email', required: true },
+    role: { type: 'string', required: true }
+  }),
+  userService.createUser
+)
 
 // Update user
 router.put('/:id', requirePermission('users', 'edit'), userService.updateUser)
@@ -65,7 +87,11 @@ router.post(
 // ============================================
 
 // Resend activation email
-router.post('/:id/resend-activation', requirePermission('users', 'edit'), userService.resendActivation)
+router.post(
+  '/:id/resend-activation',
+  requirePermission('users', 'edit'),
+  userService.resendActivation
+)
 
 // ============================================
 // Session Routes
@@ -119,6 +145,12 @@ router.post('/:id/2fa/reset', requireAdmin, userService.resetUser2FA)
 // ============================================
 
 // Password change (admin or self)
-router.post('/:id/change-password', userService.changePassword)
+router.post(
+  '/:id/change-password',
+  validateBody({
+    newPassword: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+  }),
+  userService.changePassword
+)
 
 export default router

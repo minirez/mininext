@@ -20,6 +20,7 @@
       "rooms": "Rooms & Accommodation",
       "markets": "Markets",
       "campaigns": "Campaigns",
+      "promoCodes": "Promo Codes",
       "pricing": "Pricing"
     },
     "settings": {
@@ -567,7 +568,8 @@
         "family": "Family",
         "weekend": "Weekend",
         "midweek": "Midweek",
-        "loyalty": "Loyalty"
+        "loyalty": "Loyalty",
+        "promo_code": "Promo Code"
       },
       "discountTypes": {
         "percentage": "Percentage (%)",
@@ -595,6 +597,41 @@
       "conflictWarning": "This campaign overlaps with other active campaigns in the same date range and conditions.",
       "notCombinable": "Not Combinable",
       "conflictResolutionHint": "To avoid conflicts, you can change the dates or mark the campaign as 'Combinable'."
+    },
+    "promoCodes": {
+      "title": "Promo Codes",
+      "description": "Manage promo codes that can be used in the widget",
+      "add": "Add Promo Code",
+      "edit": "Edit Promo Code",
+      "empty": "No promo codes defined yet",
+      "emptyHint": "Use the button above to add a new promo code",
+      "code": "Promo Code",
+      "codePlaceholder": "E.g: SUMMER25",
+      "codeHint": "The code customers will enter in the widget (auto-uppercased)",
+      "name": "Name",
+      "namePlaceholder": "E.g: Summer Campaign",
+      "discount": "Discount",
+      "discountType": "Discount Type",
+      "discountValue": "Discount Value",
+      "bookingWindow": "Booking Window",
+      "bookingWindowHint": "Valid booking dates for this code",
+      "stayWindow": "Stay Window",
+      "stayWindowHint": "Valid stay dates for this code",
+      "minNights": "Minimum Nights",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "copied": "Code copied",
+      "created": "Promo code created",
+      "updated": "Promo code updated",
+      "deleted": "Promo code deleted",
+      "filterActive": "Active",
+      "filterInactive": "Inactive",
+      "noMatchingCodes": "No promo codes matching the filter",
+      "b2c": "B2C",
+      "b2b": "B2B",
+      "nightsShort": "nights",
+      "marketsHint": "Leave empty to apply to all markets"
     },
     "pricing": {
       "title": "Pricing",

@@ -1,0 +1,14 @@
+node_modules
+.turbo
+dist
+.output
+.next
+.nuxt
+*.log
+.git
+.env
+.env.*
+!.env.example
+apps/admin
+apps/widget
+uploads

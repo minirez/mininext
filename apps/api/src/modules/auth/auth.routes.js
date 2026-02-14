@@ -3,6 +3,7 @@ import * as authService from './auth.service.js'
 import { protect, requirePlatformAdmin } from '#middleware/auth.js'
 import { strictLimiter, loginLimiter, tokenRefreshLimiter } from '#middleware/rateLimiter.js'
 import { avatarUpload } from '#helpers/avatarUpload.js'
+import { validateBody } from '#middleware/validation.js'
 
 // Auth routes - handles authentication, profile, and avatar management
 
@@ -38,7 +39,16 @@ const router = express.Router()
  *       429:
  *         $ref: '#/components/responses/RateLimitError'
  */
-router.post('/login', loginLimiter, strictLimiter, authService.login)
+router.post(
+  '/login',
+  loginLimiter,
+  strictLimiter,
+  validateBody({
+    email: { type: 'email', required: true },
+    password: { type: 'string', required: true, minLength: 1 }
+  }),
+  authService.login
+)
 
 /**
  * @swagger
@@ -81,7 +91,18 @@ router.post('/login', loginLimiter, strictLimiter, authService.login)
  *       429:
  *         $ref: '#/components/responses/RateLimitError'
  */
-router.post('/register', strictLimiter, authService.register)
+router.post(
+  '/register',
+  strictLimiter,
+  validateBody({
+    companyName: { type: 'string', required: true, minLength: 2, maxLength: 200 },
+    name: { type: 'string', required: true, minLength: 2, maxLength: 100 },
+    email: { type: 'email', required: true },
+    phone: { type: 'string', required: true },
+    password: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+  }),
+  authService.register
+)
 
 /**
  * @swagger
@@ -147,7 +168,14 @@ router.post('/refresh-token', tokenRefreshLimiter, authService.refreshToken)
  *       200:
  *         description: Reset email sent (if account exists)
  */
-router.post('/forgot-password', strictLimiter, authService.forgotPassword)
+router.post(
+  '/forgot-password',
+  strictLimiter,
+  validateBody({
+    email: { type: 'email', required: true }
+  }),
+  authService.forgotPassword
+)
 
 /**
  * @swagger
@@ -178,7 +206,15 @@ router.post('/forgot-password', strictLimiter, authService.forgotPassword)
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/reset-password', strictLimiter, authService.resetPassword)
+router.post(
+  '/reset-password',
+  strictLimiter,
+  validateBody({
+    token: { type: 'string', required: true },
+    password: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+  }),
+  authService.resetPassword
+)
 
 /**
  * @swagger
@@ -290,7 +326,16 @@ router.put('/notification-preferences', protect, authService.updateNotificationP
  *       400:
  *         description: New password too short
  */
-router.put('/change-password', protect, strictLimiter, authService.changePassword)
+router.put(
+  '/change-password',
+  protect,
+  strictLimiter,
+  validateBody({
+    currentPassword: { type: 'string', required: true },
+    newPassword: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+  }),
+  authService.changePassword
+)
 
 /**
  * @swagger

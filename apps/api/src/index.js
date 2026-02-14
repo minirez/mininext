@@ -11,6 +11,8 @@ import {
   startChannelScheduler,
   stopChannelScheduler
 } from './modules/channel-manager/channelScheduler.js'
+import { initWorkers } from './workers/index.js'
+import { closeQueues } from './core/queue.js'
 
 // Connect to database
 await connectDB()
@@ -28,17 +30,21 @@ const httpServer = createServer(app)
 initSocket(httpServer)
 
 // Start server
-const server = httpServer.listen(config.port, () => {
+const server = httpServer.listen(config.port, async () => {
   logger.info(`🚀 Server running in ${config.env} mode`)
   logger.info(`📡 Listening on port ${config.port}`)
   logger.info('🔌 Socket.IO enabled')
   logger.info('🌍 CORS enabled: dynamic origin validation (multi-tenant)')
 
-  // Start exchange rate scheduler
+  // Initialize BullMQ workers and scheduled jobs
+  await initWorkers()
+  logger.info('⚡ Queue workers initialized')
+
+  // Start exchange rate scheduler (fallback for non-Redis environments)
   startExchangeScheduler()
   logger.info('💱 Exchange rate scheduler started')
 
-  // Start channel manager scheduler
+  // Start channel manager scheduler (fallback for non-Redis environments)
   startChannelScheduler()
   logger.info('📡 Channel manager scheduler started')
 })
@@ -52,6 +58,9 @@ const gracefulShutdown = async signal => {
 
   // Stop channel manager scheduler
   stopChannelScheduler()
+
+  // Close queue workers
+  await closeQueues()
 
   // Close Redis connection
   await closeRedis()

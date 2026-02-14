@@ -16,6 +16,7 @@
   "dependencies": {
     "@booking-engine/constants": "workspace:*",
     "@booking-engine/validation": "workspace:*",
+    "@sentry/vue": "^10.38.0",
     "@tiptap/extension-link": "^3.14.0",
     "@tiptap/extension-underline": "^3.14.0",
     "@tiptap/pm": "^3.14.0",

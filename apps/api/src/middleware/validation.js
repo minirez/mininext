@@ -470,6 +470,37 @@ export const commonSchemas = {
   }
 }
 
+/**
+ * Global ObjectId param validation middleware
+ * Automatically validates all route params named 'id' or ending with 'Id'
+ * Apply at router level to protect all sub-routes
+ * @returns {import('express').RequestHandler}
+ * @example
+ * // In route loader or app.js:
+ * app.use('/api', validateObjectIdParams())
+ *
+ * // Now all /:id, /:hotelId, /:bookingId params are auto-validated
+ * router.get('/:id', handler) // ← :id is validated automatically
+ */
+export function validateObjectIdParams() {
+  return (req, _res, next) => {
+    const params = req.params || {}
+    for (const [key, value] of Object.entries(params)) {
+      // Check params named 'id' or ending with 'Id' (e.g. hotelId, bookingId)
+      if ((key === 'id' || key.endsWith('Id')) && value) {
+        if (!isValidObjectId(value)) {
+          return next(
+            new BadRequestError('INVALID_ID', {
+              errors: [{ param: key, message: `Invalid ${key} format` }]
+            })
+          )
+        }
+      }
+    }
+    next()
+  }
+}
+
 export default {
   isValidObjectId,
   isValidDateString,
@@ -483,6 +514,7 @@ export default {
   validateBody,
   validateQuery,
   validateParams,
+  validateObjectIdParams,
   commonSchemas,
   VALID_CURRENCIES
 }

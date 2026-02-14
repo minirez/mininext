@@ -324,6 +324,31 @@
         </div>
       </div>
 
+      <!-- Demo Page -->
+      <div class="border-b border-gray-200 dark:border-slate-700 pb-8">
+        <div
+          class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30"
+        >
+          <div>
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
+              <span class="material-icons text-purple-500 text-lg">preview</span>
+              {{ $t('hotels.widgetModal.demoPage') }}
+            </h4>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+              {{ $t('hotels.widgetModal.demoPageDesc') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+            @click="openDemoPage"
+          >
+            <span class="material-icons text-base">open_in_new</span>
+            {{ $t('hotels.widgetModal.demoPage') }}
+          </button>
+        </div>
+      </div>
+
       <!-- Embed Code Section -->
       <div>
         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -453,6 +478,114 @@ const embedCode = computed(() => {
 
   return `<!-- MaxiRez Booking Widget -->\n<script\n  ${attrs.join('\n  ')}\n><\/script>`
 })
+
+// Open demo page in new tab
+const openDemoPage = () => {
+  const hotelName = props.hotel?.name || 'Demo Hotel'
+  const primaryColor = form.value.primaryColor || '#7c3aed'
+  const cacheBust = Date.now()
+
+  const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${hotelName} - Demo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; color: #1e293b; background: #fff; }
+    .demo-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .demo-logo { font-size: 20px; font-weight: 700; color: ${primaryColor}; }
+    .demo-nav { display: flex; gap: 24px; }
+    .demo-nav a { text-decoration: none; color: #64748b; font-size: 14px; font-weight: 500; }
+    .demo-nav a:hover { color: ${primaryColor}; }
+    .demo-hero { background: linear-gradient(135deg, ${primaryColor}dd, ${primaryColor}88), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1400&q=80') center/cover; min-height: 480px; display: flex; align-items: center; justify-content: center; text-align: center; color: #fff; padding: 60px 32px; }
+    .demo-hero h1 { font-size: 48px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .demo-hero p { font-size: 18px; opacity: 0.9; max-width: 560px; line-height: 1.6; }
+    .demo-features { padding: 80px 32px; max-width: 1100px; margin: 0 auto; }
+    .demo-features h2 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 48px; color: #0f172a; }
+    .demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .demo-card { padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; transition: all 0.2s; }
+    .demo-card:hover { border-color: ${primaryColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .demo-card-icon { width: 56px; height: 56px; border-radius: 12px; background: ${primaryColor}15; color: ${primaryColor}; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
+    .demo-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .demo-card p { font-size: 14px; color: #64748b; line-height: 1.5; }
+    .demo-cta { background: #f8fafc; padding: 64px 32px; text-align: center; }
+    .demo-cta h2 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+    .demo-cta p { color: #64748b; margin-bottom: 24px; }
+    .demo-footer { background: #0f172a; color: #94a3b8; padding: 32px; text-align: center; font-size: 13px; }
+    .demo-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #fef3c7; color: #92400e; padding: 8px 16px; text-align: center; font-size: 13px; font-weight: 500; border-bottom: 1px solid #fcd34d; }
+    .demo-banner + .demo-header { top: 35px; }
+    body { padding-top: 35px; }
+    @media (max-width: 768px) {
+      .demo-hero h1 { font-size: 28px; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .demo-nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-banner">Bu sayfa widget \u00f6nizlemesi i\u00e7in olu\u015fturulmu\u015f demo bir sayfad\u0131r</div>
+  <header class="demo-header">
+    <div class="demo-logo">${hotelName}</div>
+    <nav class="demo-nav">
+      <a href="#">Ana Sayfa</a>
+      <a href="#">Odalar</a>
+      <a href="#">Galeri</a>
+      <a href="#">Hakk\u0131m\u0131zda</a>
+      <a href="#">\u0130leti\u015fim</a>
+    </nav>
+  </header>
+  <section class="demo-hero">
+    <div>
+      <h1>${hotelName}</h1>
+      <p>Konfor ve huzurun bulu\u015ftu\u011fu e\u015fsiz bir tatil deneyimi. Unutulmaz an\u0131lar biriktirece\u011finiz \u00f6zel bir konaklama sizi bekliyor.</p>
+    </div>
+  </section>
+  <section class="demo-features">
+    <h2>Neden Bizi Tercih Etmelisiniz?</h2>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <div class="demo-card-icon">&#9733;</div>
+        <h3>Premium Konfor</h3>
+        <p>\u00d6zenle tasarlanm\u0131\u015f odalar\u0131m\u0131zda \u00fcst d\u00fczey konfor ve modern donan\u0131mlarla kendinizi evinizde hissedin.</p>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card-icon">&#9832;</div>
+        <h3>E\u015fsiz Konum</h3>
+        <p>\u015eehrin kalbinde veya do\u011fan\u0131n kuca\u011f\u0131nda, m\u00fckemmel konumumuzla t\u00fcm g\u00fczelliklere kolayca ula\u015f\u0131n.</p>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card-icon">&#9829;</div>
+        <h3>\u00d6zel Hizmet</h3>
+        <p>7/24 misafir memnuniyeti odakl\u0131 profesyonel ekibimizle fark yaratan bir hizmet anlay\u0131\u015f\u0131.</p>
+      </div>
+    </div>
+  </section>
+  <section class="demo-cta">
+    <h2>Hemen Rezervasyon Yap\u0131n</h2>
+    <p>En uygun fiyatlarla hayalinizdeki tatili \u015fimdi planlay\u0131n</p>
+  </section>
+  <footer class="demo-footer">
+    &copy; 2026 ${hotelName} &mdash; Bu bir demo sayfas\u0131d\u0131r. Widget \u00f6nizlemesi i\u00e7in olu\u015fturulmu\u015ftur.
+  </footer>
+  <script
+    src="https://widget.maxirez.com/widget.js?v=${cacheBust}"
+    data-hotel="${props.hotel?.slug || ''}"
+    data-partner="${partnerId.value}"
+    data-mode="${form.value.mode}"
+    data-theme="${form.value.theme}"
+    data-primary-color="${form.value.primaryColor}"${form.value.mode === 'floating' && form.value.triggerPosition !== 'bottom-right' ? `\n    data-position="${form.value.triggerPosition}"` : ''}
+  ><\/script>
+</body>
+</html>`
+
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 // Copy embed code to clipboard
 const copyEmbedCode = async () => {
