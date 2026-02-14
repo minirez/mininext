@@ -1,0 +1,186 @@
+{
+  "membership": {
+    "title": "Membership Management",
+    "services": {
+      "title": "Services",
+      "subtitle": "Manage platform services",
+      "newService": "New Service",
+      "editService": "Edit Service",
+      "name": "Service Name",
+      "code": "Service Code",
+      "codePlaceholder": "e.g: virtual-pos",
+      "category": "Category",
+      "billingType": "Billing Type",
+      "interval": "Period",
+      "prices": "Prices",
+      "features": "Features",
+      "featureKey": "Feature Key",
+      "featureValue": "Value",
+      "addFeature": "Add Feature",
+      "icon": "Icon",
+      "sortOrder": "Sort Order",
+      "status": "Status",
+      "archive": "Archive",
+      "archiveConfirm": "Are you sure you want to archive this service?",
+      "usedInActivePackages": "This service is used in active packages and cannot be archived.",
+      "created": "Service created",
+      "updated": "Service updated",
+      "archived": "Service archived",
+      "codeExists": "This code is already in use",
+      "stats": {
+        "total": "Total",
+        "active": "Active",
+        "inactive": "Inactive",
+        "archived": "Archived"
+      }
+    },
+    "packages": {
+      "title": "Packages",
+      "subtitle": "Manage membership packages",
+      "newPackage": "New Package",
+      "editPackage": "Edit Package",
+      "name": "Package Name",
+      "code": "Package Code",
+      "codePlaceholder": "e.g: agency-silver",
+      "targetPartnerType": "Target Partner Type",
+      "partnerTypes": {
+        "all": "All",
+        "hotel": "Hotel",
+        "agency": "Agency"
+      },
+      "interval": "Billing Period",
+      "priceMode": "Price Mode",
+      "priceModes": {
+        "auto": "Automatic (service total)",
+        "override": "Manual"
+      },
+      "prices": "Prices",
+      "trial": "Trial Period",
+      "trialEnabled": "Trial period active",
+      "trialDays": "Trial days",
+      "badge": "Badge",
+      "badgePlaceholder": "Popular, Best Value",
+      "color": "Color",
+      "isPublic": "Show in catalog",
+      "isPublicHelp": "Visible in partner self-service catalog",
+      "tabs": {
+        "basic": "Basic Info",
+        "services": "Services",
+        "pricing": "Pricing"
+      },
+      "serviceSelector": {
+        "available": "Available Services",
+        "included": "Included Services",
+        "addAll": "Add All",
+        "removeAll": "Remove All",
+        "noServices": "No services added yet",
+        "overrides": "Limit Settings"
+      },
+      "icon": "Icon",
+      "sortOrder": "Sort Order",
+      "status": "Status",
+      "archive": "Archive",
+      "archiveConfirm": "Are you sure you want to archive this package?",
+      "hasActiveAssignments": "This package has active partner assignments and cannot be archived.",
+      "created": "Package created",
+      "updated": "Package updated",
+      "archived": "Package archived",
+      "codeExists": "This code is already in use",
+      "stats": {
+        "total": "Total",
+        "active": "Active",
+        "partnersUsing": "Partners Using"
+      }
+    },
+    "assignments": {
+      "title": "Assignments",
+      "subtitle": "Manage partner package and service assignments",
+      "assignPackage": "Assign Package",
+      "addService": "Add Service",
+      "partner": "Partner",
+      "package": "Package",
+      "service": "Service",
+      "period": "Period",
+      "price": "Price",
+      "payment": "Payment",
+      "status": "Status",
+      "actions": "Actions",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "amount": "Amount",
+      "currency": "Currency",
+      "paymentMethod": "Payment Method",
+      "notes": "Notes",
+      "markAsPaid": "Mark as Paid",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "assigned": "Package assigned",
+      "serviceAdded": "Service added",
+      "serviceRemoved": "Service removed",
+      "stats": {
+        "active": "Active",
+        "pending": "Pending Payment",
+        "expiringSoon": "Expiring Soon"
+      },
+      "purchaseTypes": {
+        "package": "Package",
+        "service": "Service",
+        "legacy": "Legacy Plan"
+      }
+    },
+    "categories": {
+      "payment": "Payment",
+      "booking": "Booking",
+      "pms": "PMS",
+      "web": "Web",
+      "design": "Design",
+      "support": "Support",
+      "integration": "Integration",
+      "other": "Other"
+    },
+    "billingTypes": {
+      "one_time": "One-time",
+      "recurring": "Recurring"
+    },
+    "intervals": {
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "archived": "Archived",
+      "pending": "Pending",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "currencies": {
+      "TRY": "₺ TRY",
+      "USD": "$ USD",
+      "EUR": "€ EUR",
+      "GBP": "£ GBP"
+    },
+    "nav": {
+      "services": "Services",
+      "packages": "Packages",
+      "assignments": "Assignments"
+    },
+    "myMembership": {
+      "title": "My Membership",
+      "currentPackage": "Current Package",
+      "noPackage": "No package assigned yet",
+      "includedServices": "Included Services",
+      "subscriptionPeriod": "Subscription Period",
+      "remainingDays": "Remaining Days",
+      "daysLeft": "{count} days left",
+      "expired": "Expired",
+      "upgradePackage": "Upgrade Package",
+      "renewPackage": "Renew Package",
+      "availablePackages": "Available Packages",
+      "purchaseHistory": "Purchase History",
+      "catalog": "Catalog",
+      "purchase": "Purchase",
+      "usage": "Usage"
+    }
+  }
+}

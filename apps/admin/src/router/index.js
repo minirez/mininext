@@ -115,6 +115,35 @@ const router = createRouter({
             titleKey: 'mySubscription.title'
           }
         },
+        // My Membership (for partner users only)
+        {
+          path: 'my-membership',
+          name: 'my-membership',
+          component: () => import('../views/MyMembershipView.vue'),
+          meta: {
+            requiresPartner: true,
+            titleKey: 'membership.myMembership.title'
+          }
+        },
+        // Membership Management (platform admin)
+        {
+          path: 'membership/services',
+          name: 'membership-services',
+          component: () => import('../views/membership/ServicesView.vue'),
+          meta: { requiresPlatformAdmin: true, titleKey: 'membership.services.title' }
+        },
+        {
+          path: 'membership/packages',
+          name: 'membership-packages',
+          component: () => import('../views/membership/PackagesView.vue'),
+          meta: { requiresPlatformAdmin: true, titleKey: 'membership.packages.title' }
+        },
+        {
+          path: 'membership/assignments',
+          name: 'membership-assignments',
+          component: () => import('../views/membership/AssignmentsView.vue'),
+          meta: { requiresPlatformAdmin: true, titleKey: 'membership.assignments.title' }
+        },
         // Issues (Platform users only)
         {
           path: 'issues',

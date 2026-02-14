@@ -215,7 +215,9 @@ const currentModuleIcon = computed(() => {
     '/issues': 'bug_report',
     '/payment': 'payments',
     '/admin/migration': 'swap_horiz',
-    '/admin/reservations': 'book_online'
+    '/admin/reservations': 'book_online',
+    '/membership': 'card_membership',
+    '/my-membership': 'card_membership'
   }
 
   // Find matching route
@@ -425,6 +427,12 @@ const mainSection = computed(() => {
       icon: 'swap_horiz',
       label: t('migration.title')
     })
+    items.push({
+      name: 'membership',
+      to: '/membership/services',
+      icon: 'card_membership',
+      label: t('membership.title')
+    })
   }
 
   // Partner menu items (visible when in partner view, filtered by permissions)
@@ -492,12 +500,18 @@ const mainSection = computed(() => {
       })
     }
 
-    // Only real partner users can see their own subscription
+    // Only real partner users can see their own subscription/membership
     if (authStore.accountType === 'partner') {
+      items.push({
+        name: 'my-membership',
+        to: '/my-membership',
+        icon: 'card_membership',
+        label: t('membership.myMembership.title')
+      })
       items.push({
         name: 'my-subscription',
         to: '/my-subscription',
-        icon: 'card_membership',
+        icon: 'receipt_long',
         label: t('nav.mySubscription')
       })
     }

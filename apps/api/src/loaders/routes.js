@@ -69,6 +69,10 @@ const ROUTE_CONFIG = {
   // Channel Manager
   'channel-manager': 'channel-manager',
 
+  // Membership (platform admin)
+  'membership-service': 'membership-services',
+  'membership-package': 'membership-packages',
+
   // Migration (legacy system import)
   migration: 'migration'
 }

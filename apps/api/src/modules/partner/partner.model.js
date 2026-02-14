@@ -371,6 +371,45 @@ const partnerSchema = new mongoose.Schema(
         default: 'active'
       },
 
+      // Aktif üyelik paketi
+      currentPackage: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'MembershipPackage'
+      },
+
+      // Bireysel eklenen hizmetler (paket dışında)
+      individualServices: [
+        {
+          service: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'MembershipService',
+            required: true
+          },
+          featureOverrides: {
+            type: Map,
+            of: mongoose.Schema.Types.Mixed,
+            default: new Map()
+          },
+          billingType: {
+            type: String,
+            enum: ['one_time', 'recurring'],
+            default: 'one_time'
+          },
+          status: {
+            type: String,
+            enum: ['active', 'expired', 'cancelled'],
+            default: 'active'
+          },
+          startDate: Date,
+          endDate: Date,
+          addedAt: { type: Date, default: Date.now },
+          addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+          }
+        }
+      ],
+
       // Özel limitler (tüm paketler için geçerli override)
       customLimits: {
         pmsMaxHotels: { type: Number, default: null }, // null = paket limiti kullan
@@ -380,12 +419,33 @@ const partnerSchema = new mongoose.Schema(
       // Satın alınan paketler (yıllık)
       purchases: [
         {
-          // Paket tipi
+          // Satın alma tipi
+          purchaseType: {
+            type: String,
+            enum: ['package', 'service', 'legacy'],
+            default: 'legacy'
+          },
+
+          // Paket referansı (purchaseType === 'package' için)
+          package: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'MembershipPackage'
+          },
+
+          // Hizmet referansı (purchaseType === 'service' için)
+          service: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'MembershipService'
+          },
+
+          // Legacy paket tipi (migration backward compat)
           plan: {
             type: String,
-            enum: ['webdesign', 'business', 'professional', 'enterprise'],
-            required: true
+            enum: ['webdesign', 'business', 'professional', 'enterprise']
           },
+
+          // Legacy plan adı (migration referansı)
+          legacyPlan: String,
 
           // Paket dönemi
           period: {
@@ -490,10 +550,136 @@ partnerSchema.methods.getCurrentPurchase = function () {
   return sortedPurchases[0] || null
 }
 
-// Get current plan from active purchase
+// Get current plan from active purchase (legacy backward compat)
 partnerSchema.methods.getCurrentPlan = function () {
   const purchase = this.getCurrentPurchase()
   return purchase?.plan || 'business'
+}
+
+/**
+ * Get populated current package
+ * @returns {Promise<Object|null>}
+ */
+partnerSchema.methods.getCurrentPackage = async function () {
+  if (!this.subscription?.currentPackage) return null
+
+  if (this.populated('subscription.currentPackage')) {
+    return this.subscription.currentPackage
+  }
+
+  await this.populate({
+    path: 'subscription.currentPackage',
+    populate: { path: 'services.service' }
+  })
+
+  return this.subscription.currentPackage
+}
+
+/**
+ * Get all active services (package + individual merged)
+ * @returns {Promise<Array>} Array of { code, service, featureOverrides, source }
+ */
+partnerSchema.methods.getActiveServices = async function () {
+  const services = []
+
+  // 1. Services from current package
+  const pkg = await this.getCurrentPackage()
+  if (pkg?.services) {
+    for (const pkgSvc of pkg.services) {
+      if (pkgSvc.included && pkgSvc.service) {
+        services.push({
+          code: pkgSvc.service.code,
+          service: pkgSvc.service,
+          featureOverrides: pkgSvc.featureOverrides,
+          source: 'package'
+        })
+      }
+    }
+  }
+
+  // 2. Individual services
+  const individualSvcs = this.subscription?.individualServices || []
+  for (const indSvc of individualSvcs) {
+    if (indSvc.status === 'active') {
+      // Check if not expired
+      if (indSvc.endDate && new Date(indSvc.endDate) < new Date()) continue
+
+      // Populate if needed
+      if (!indSvc.populated?.('service')) {
+        await this.populate('subscription.individualServices.service')
+      }
+
+      if (indSvc.service) {
+        // Don't duplicate if already from package
+        const existingIdx = services.findIndex(s => s.code === indSvc.service.code)
+        if (existingIdx === -1) {
+          services.push({
+            code: indSvc.service.code,
+            service: indSvc.service,
+            featureOverrides: indSvc.featureOverrides,
+            source: 'individual'
+          })
+        }
+      }
+    }
+  }
+
+  return services
+}
+
+/**
+ * Check if partner has access to a specific service by code
+ * @param {string} code - Service code (e.g., "pms-access", "virtual-pos")
+ * @returns {Promise<boolean>}
+ */
+partnerSchema.methods.hasService = async function (code) {
+  const services = await this.getActiveServices()
+  return services.some(s => s.code === code)
+}
+
+/**
+ * Get a specific service feature value
+ * Resolution chain (high to low priority):
+ * 1. customLimits (admin override)
+ * 2. individualServices[].featureOverrides
+ * 3. package.services[].featureOverrides
+ * 4. service.features (base default)
+ *
+ * @param {string} code - Service code
+ * @param {string} key - Feature key
+ * @returns {Promise<any>}
+ */
+partnerSchema.methods.getServiceFeature = async function (code, key) {
+  // 1. Custom limits (admin override) - map known keys
+  const customLimitsMap = {
+    'pms-access.maxHotels': this.subscription?.customLimits?.pmsMaxHotels,
+    'web-design.maxSites': this.subscription?.customLimits?.webDesignMaxSites
+  }
+  const customKey = `${code}.${key}`
+  if (customLimitsMap[customKey] != null) {
+    return customLimitsMap[customKey]
+  }
+
+  // Get active services
+  const services = await this.getActiveServices()
+  const activeSvc = services.find(s => s.code === code)
+  if (!activeSvc) return undefined
+
+  // 2. Individual service feature overrides
+  const indSvc = (this.subscription?.individualServices || []).find(
+    s => s.status === 'active' && s.service?.code === code
+  )
+  if (indSvc?.featureOverrides?.get?.(key) !== undefined) {
+    return indSvc.featureOverrides.get(key)
+  }
+
+  // 3. Package service feature overrides
+  if (activeSvc.source === 'package' && activeSvc.featureOverrides?.get?.(key) !== undefined) {
+    return activeSvc.featureOverrides.get(key)
+  }
+
+  // 4. Service base features
+  return activeSvc.service?.features?.get?.(key)
 }
 
 // Get PMS hotel limit
@@ -503,7 +689,7 @@ partnerSchema.methods.getPmsLimit = function () {
   if (this.subscription?.customLimits?.pmsMaxHotels != null) {
     return this.subscription.customLimits.pmsMaxHotels
   }
-  // Fall back to plan defaults from current purchase
+  // Fall back to plan defaults from current purchase (legacy)
   const planKey = this.getCurrentPlan()
   const plan = SUBSCRIPTION_PLANS[planKey]
   return plan?.pmsMaxHotels || 0
@@ -524,7 +710,7 @@ partnerSchema.methods.isPmsEnabled = function () {
   // Custom limit === -1 (unlimited) enables PMS
   if (this.subscription?.customLimits?.pmsMaxHotels === -1) return true
 
-  // Fall back to plan defaults from current purchase
+  // Fall back to plan defaults from current purchase (legacy)
   const planKey = this.getCurrentPlan()
   const plan = SUBSCRIPTION_PLANS[planKey]
   return plan?.pmsEnabled || false

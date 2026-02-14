@@ -1,6 +1,10 @@
 /**
- * Subscription Plans Configuration
+ * @deprecated Bu dosya eski hardcoded plan sistemi için kullanılıyordu.
+ * Yeni sistemde MembershipService ve MembershipPackage modülleri kullanılmaktadır.
+ * Migration tamamlandıktan sonra tamamen kaldırılacaktır.
+ * Bkz: apps/api/src/modules/membership-service/ ve membership-package/
  *
+ * Subscription Plans Configuration
  * Paket tipleri, fiyatlar ve ozellikleri.
  * 4 paket: Web Design, Business, Professional, Enterprise
  */

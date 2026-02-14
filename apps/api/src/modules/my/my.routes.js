@@ -39,6 +39,11 @@ router.post('/subscription/purchase', myService.initiatePurchase)
 // Pay for existing pending purchase (admin-created packages)
 router.post('/subscription/purchases/:purchaseId/pay', myService.payPendingPurchase)
 
+// Membership self-service
+router.get('/membership', myService.getMyMembership)
+router.get('/membership/catalog', myService.getMembershipCatalog)
+router.post('/membership/purchase', myService.purchaseMembership)
+
 // Get my invoices (for partner users)
 router.get('/invoices', myService.getMyInvoices)
 

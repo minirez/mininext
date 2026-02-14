@@ -1,4 +1,6 @@
 import Partner from './partner.model.js'
+import MembershipPackage from '#modules/membership-package/membership-package.model.js'
+import MembershipService from '#modules/membership-service/membership-service.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { SUBSCRIPTION_PLANS, PLAN_TYPES } from '#constants/subscriptionPlans.js'
@@ -12,7 +14,9 @@ export const getAllPurchases = asyncHandler(async (req, res) => {
   // Get all partners with their subscription purchases
   const partners = await Partner.find({
     'subscription.purchases': { $exists: true, $ne: [] }
-  }).select('companyName email subscription.purchases').lean()
+  })
+    .select('companyName email subscription.purchases')
+    .lean()
 
   // Flatten purchases with partner info
   const allPurchases = []
@@ -268,7 +272,16 @@ export const updatePurchase = asyncHandler(async (req, res) => {
   }
 
   const { purchaseId } = req.params
-  const { plan, startDate, endDate, amount, currency, paymentMethod, paymentReference, paymentNotes } = req.body
+  const {
+    plan,
+    startDate,
+    endDate,
+    amount,
+    currency,
+    paymentMethod,
+    paymentReference,
+    paymentNotes
+  } = req.body
 
   const purchase = partner.subscription?.purchases?.find(p => p._id.toString() === purchaseId)
 
@@ -454,6 +467,216 @@ export const cancelPurchase = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: req.t ? req.t('PURCHASE_CANCELLED') : 'Purchase cancelled successfully',
+    data: {
+      subscription: partner.getSubscriptionStatus()
+    }
+  })
+})
+
+// ==================== NEW: Membership Package/Service Assignment ====================
+
+/**
+ * Assign a membership package to a partner
+ */
+export const assignPackage = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { packageId, startDate, endDate, amount, currency, paymentMethod, notes } = req.body
+
+  if (!packageId) throw new BadRequestError('PACKAGE_ID_REQUIRED')
+
+  const pkg = await MembershipPackage.findById(packageId).populate('services.service')
+  if (!pkg) throw new NotFoundError('PACKAGE_NOT_FOUND')
+  if (pkg.status !== 'active') throw new BadRequestError('PACKAGE_NOT_ACTIVE')
+
+  // Validate partner type compatibility
+  if (pkg.targetPartnerType !== 'all' && pkg.targetPartnerType !== partner.partnerType) {
+    throw new BadRequestError('PACKAGE_NOT_COMPATIBLE_WITH_PARTNER_TYPE')
+  }
+
+  // Initialize subscription if not exists
+  if (!partner.subscription) {
+    partner.subscription = { purchases: [] }
+  }
+  if (!partner.subscription.purchases) {
+    partner.subscription.purchases = []
+  }
+
+  // Set current package
+  partner.subscription.currentPackage = pkg._id
+
+  // Determine price
+  const purchaseCurrency = currency || partner.currency || 'TRY'
+  const purchaseAmount = amount !== undefined ? amount : pkg.getPrice(purchaseCurrency)
+
+  // Calculate period
+  const start = startDate ? new Date(startDate) : new Date()
+  let end
+  if (endDate) {
+    end = new Date(endDate)
+  } else {
+    end = new Date(start)
+    if (pkg.pricing.interval === 'yearly') {
+      end.setFullYear(end.getFullYear() + 1)
+    } else {
+      end.setMonth(end.getMonth() + 1)
+    }
+  }
+
+  // Create purchase record
+  const purchase = {
+    purchaseType: 'package',
+    package: pkg._id,
+    plan: null,
+    period: { startDate: start, endDate: end },
+    price: { amount: purchaseAmount, currency: purchaseCurrency },
+    status: 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  partner.subscription.purchases.push(purchase)
+  await partner.save()
+
+  const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+  logger.info(`Package "${pkg.code}" assigned to partner ${partner._id} (pending)`)
+
+  res.json({
+    success: true,
+    message: 'PACKAGE_ASSIGNED',
+    data: {
+      purchase: {
+        _id: addedPurchase._id,
+        purchaseType: 'package',
+        package: { _id: pkg._id, name: pkg.name, code: pkg.code },
+        period: addedPurchase.period,
+        price: addedPurchase.price,
+        status: addedPurchase.status
+      },
+      subscription: partner.getSubscriptionStatus()
+    }
+  })
+})
+
+/**
+ * Add individual service to a partner
+ */
+export const addService = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { serviceId, featureOverrides, startDate, endDate, amount, currency } = req.body
+
+  if (!serviceId) throw new BadRequestError('SERVICE_ID_REQUIRED')
+
+  const svc = await MembershipService.findById(serviceId)
+  if (!svc) throw new NotFoundError('SERVICE_NOT_FOUND')
+  if (svc.status !== 'active') throw new BadRequestError('SERVICE_NOT_ACTIVE')
+
+  // Initialize subscription
+  if (!partner.subscription) {
+    partner.subscription = { purchases: [], individualServices: [] }
+  }
+  if (!partner.subscription.individualServices) {
+    partner.subscription.individualServices = []
+  }
+  if (!partner.subscription.purchases) {
+    partner.subscription.purchases = []
+  }
+
+  // Check if already has this service individually
+  const existingIdx = partner.subscription.individualServices.findIndex(
+    s => s.service?.toString() === serviceId && s.status === 'active'
+  )
+  if (existingIdx !== -1) {
+    throw new BadRequestError('SERVICE_ALREADY_ASSIGNED')
+  }
+
+  // Add to individual services
+  const start = startDate ? new Date(startDate) : new Date()
+  let end = endDate ? new Date(endDate) : null
+
+  // For recurring services, auto-calculate end date
+  if (!end && svc.pricing.billingType === 'recurring') {
+    end = new Date(start)
+    if (svc.pricing.interval === 'yearly') {
+      end.setFullYear(end.getFullYear() + 1)
+    } else {
+      end.setMonth(end.getMonth() + 1)
+    }
+  }
+
+  partner.subscription.individualServices.push({
+    service: svc._id,
+    featureOverrides: featureOverrides ? new Map(Object.entries(featureOverrides)) : undefined,
+    billingType: svc.pricing.billingType,
+    status: 'active',
+    startDate: start,
+    endDate: end,
+    addedAt: new Date(),
+    addedBy: req.user._id
+  })
+
+  // Create purchase record
+  const purchaseCurrency = currency || partner.currency || 'TRY'
+  const purchaseAmount = amount !== undefined ? amount : svc.getPrice(purchaseCurrency)
+
+  const purchase = {
+    purchaseType: 'service',
+    service: svc._id,
+    plan: null,
+    period: {
+      startDate: start,
+      endDate: end || new Date(start.getTime() + 365 * 24 * 60 * 60 * 1000) // 1 year default for one_time
+    },
+    price: { amount: purchaseAmount, currency: purchaseCurrency },
+    status: 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  partner.subscription.purchases.push(purchase)
+  await partner.save()
+
+  logger.info(`Service "${svc.code}" added to partner ${partner._id}`)
+
+  res.json({
+    success: true,
+    message: 'SERVICE_ADDED',
+    data: {
+      service: { _id: svc._id, name: svc.name, code: svc.code },
+      subscription: partner.getSubscriptionStatus()
+    }
+  })
+})
+
+/**
+ * Remove individual service from a partner
+ */
+export const removeService = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { serviceId } = req.params
+
+  const indSvc = partner.subscription?.individualServices?.find(
+    s => s._id.toString() === serviceId || s.service?.toString() === serviceId
+  )
+
+  if (!indSvc) {
+    throw new NotFoundError('SERVICE_NOT_FOUND_ON_PARTNER')
+  }
+
+  indSvc.status = 'cancelled'
+  await partner.save()
+
+  logger.info(`Service removed from partner ${partner._id}`)
+
+  res.json({
+    success: true,
+    message: 'SERVICE_REMOVED',
     data: {
       subscription: partner.getSubscriptionStatus()
     }

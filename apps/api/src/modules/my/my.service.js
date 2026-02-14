@@ -1,4 +1,6 @@
 import Partner from '#modules/partner/partner.model.js'
+import MembershipPackage from '#modules/membership-package/membership-package.model.js'
+import MembershipService from '#modules/membership-service/membership-service.model.js'
 import SubscriptionInvoice from '#modules/subscriptionInvoice/subscriptionInvoice.model.js'
 import { asyncHandler } from '#helpers'
 import { NotFoundError, ForbiddenError, BadRequestError } from '#core/errors.js'
@@ -803,4 +805,284 @@ export const paymentCallback = asyncHandler(async (req, res) => {
 
     res.json({ success: true, message: 'Payment failure recorded' })
   }
+})
+
+// ==================== NEW: Membership Self-Service ====================
+
+/**
+ * Get my membership status (package + services + usage)
+ */
+export const getMyMembership = asyncHandler(async (req, res) => {
+  if (req.user.accountType !== 'partner') {
+    throw new ForbiddenError('PARTNER_ONLY')
+  }
+
+  const partnerId = req.user.accountId
+  const partner = await Partner.findById(partnerId)
+    .populate({
+      path: 'subscription.currentPackage',
+      populate: { path: 'services.service' }
+    })
+    .populate('subscription.individualServices.service')
+
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const subscriptionStatus = partner.getSubscriptionStatus()
+  const currentPkg = partner.subscription?.currentPackage
+
+  // Get PMS usage
+  const Hotel = (await import('#modules/hotel/hotel.model.js')).default
+  const pmsHotelsCount = await Hotel.countDocuments({
+    partner: partnerId,
+    'pms.enabled': true
+  })
+
+  // Build active services list
+  const activeServices = []
+
+  // Package services
+  if (currentPkg?.services) {
+    for (const pkgSvc of currentPkg.services) {
+      if (pkgSvc.included && pkgSvc.service) {
+        activeServices.push({
+          _id: pkgSvc.service._id,
+          name: pkgSvc.service.name,
+          code: pkgSvc.service.code,
+          category: pkgSvc.service.category,
+          icon: pkgSvc.service.icon,
+          source: 'package',
+          featureOverrides: pkgSvc.featureOverrides
+        })
+      }
+    }
+  }
+
+  // Individual services
+  const indSvcs = partner.subscription?.individualServices || []
+  for (const ind of indSvcs) {
+    if (ind.status === 'active' && ind.service) {
+      if (ind.endDate && new Date(ind.endDate) < new Date()) continue
+      if (!activeServices.some(s => s.code === ind.service.code)) {
+        activeServices.push({
+          _id: ind.service._id,
+          name: ind.service.name,
+          code: ind.service.code,
+          category: ind.service.category,
+          icon: ind.service.icon,
+          source: 'individual',
+          billingType: ind.billingType,
+          endDate: ind.endDate,
+          featureOverrides: ind.featureOverrides
+        })
+      }
+    }
+  }
+
+  res.json({
+    success: true,
+    data: {
+      // Package info
+      package: currentPkg
+        ? {
+            _id: currentPkg._id,
+            name: currentPkg.name,
+            code: currentPkg.code,
+            icon: currentPkg.icon,
+            color: currentPkg.color,
+            pricing: currentPkg.pricing
+          }
+        : null,
+
+      // Subscription status
+      status: subscriptionStatus.status,
+      startDate: subscriptionStatus.startDate,
+      endDate: subscriptionStatus.endDate,
+      remainingDays: subscriptionStatus.remainingDays,
+      gracePeriodEndDate: subscriptionStatus.gracePeriodEndDate,
+      gracePeriodRemainingDays: subscriptionStatus.gracePeriodRemainingDays,
+
+      // Active services
+      services: activeServices,
+
+      // Usage
+      usage: {
+        pmsHotels: pmsHotelsCount,
+        pmsLimit: partner.getPmsLimit()
+      },
+
+      // Purchases
+      purchases: subscriptionStatus.purchases
+    }
+  })
+})
+
+/**
+ * Get membership catalog (packages available for purchase)
+ */
+export const getMembershipCatalog = asyncHandler(async (req, res) => {
+  if (req.user.accountType !== 'partner') {
+    throw new ForbiddenError('PARTNER_ONLY')
+  }
+
+  const partnerId = req.user.accountId
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  // Get packages for this partner type
+  const packages = await MembershipPackage.findPublicCatalog(partner.partnerType)
+
+  // Get standalone services (one_time or recurring, not archived)
+  const standaloneServices = await MembershipService.find({
+    status: 'active'
+  }).sort({ sortOrder: 1 })
+
+  res.json({
+    success: true,
+    data: {
+      packages: packages.map(pkg => ({
+        _id: pkg._id,
+        name: pkg.name,
+        description: pkg.description,
+        code: pkg.code,
+        icon: pkg.icon,
+        color: pkg.color,
+        badge: pkg.badge,
+        pricing: pkg.pricing,
+        trial: pkg.trial,
+        services: pkg.services
+          .filter(s => s.included && s.service)
+          .map(s => ({
+            _id: s.service._id,
+            name: s.service.name,
+            code: s.service.code,
+            icon: s.service.icon,
+            category: s.service.category
+          }))
+      })),
+      services: standaloneServices
+    }
+  })
+})
+
+/**
+ * Purchase a membership package or service (self-service)
+ * Creates a pending purchase that can be paid via card or bank transfer
+ */
+export const purchaseMembership = asyncHandler(async (req, res) => {
+  if (req.user.accountType !== 'partner') {
+    throw new ForbiddenError('PARTNER_ONLY')
+  }
+
+  const partnerId = req.user.accountId
+  const { type, packageId, serviceId, paymentMethod } = req.body
+
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  if (!partner.subscription) {
+    partner.subscription = { purchases: [], individualServices: [] }
+  }
+  if (!partner.subscription.purchases) partner.subscription.purchases = []
+
+  const purchaseCurrency = partner.currency || 'TRY'
+
+  if (type === 'package') {
+    if (!packageId) throw new BadRequestError('PACKAGE_ID_REQUIRED')
+
+    const pkg = await MembershipPackage.findById(packageId).populate('services.service')
+    if (!pkg || pkg.status !== 'active') throw new NotFoundError('PACKAGE_NOT_FOUND')
+    if (!pkg.isPublic) throw new BadRequestError('PACKAGE_NOT_PUBLIC')
+
+    // Validate partner type
+    if (pkg.targetPartnerType !== 'all' && pkg.targetPartnerType !== partner.partnerType) {
+      throw new BadRequestError('PACKAGE_NOT_COMPATIBLE')
+    }
+
+    const amount = pkg.getPrice(purchaseCurrency)
+
+    // Calculate period
+    const startDate = new Date()
+    const endDate = new Date(startDate)
+    if (pkg.pricing.interval === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1)
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1)
+    }
+
+    partner.subscription.purchases.push({
+      purchaseType: 'package',
+      package: pkg._id,
+      period: { startDate, endDate },
+      price: { amount, currency: purchaseCurrency },
+      status: 'pending',
+      createdAt: new Date(),
+      createdBy: req.user._id
+    })
+
+    await partner.save()
+    const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+    return res.json({
+      success: true,
+      data: {
+        purchaseId: addedPurchase._id,
+        type: 'package',
+        package: { _id: pkg._id, name: pkg.name },
+        amount,
+        currency: purchaseCurrency,
+        period: { startDate, endDate }
+      }
+    })
+  }
+
+  if (type === 'service') {
+    if (!serviceId) throw new BadRequestError('SERVICE_ID_REQUIRED')
+
+    const svc = await MembershipService.findById(serviceId)
+    if (!svc || svc.status !== 'active') throw new NotFoundError('SERVICE_NOT_FOUND')
+
+    const amount = svc.getPrice(purchaseCurrency)
+
+    const startDate = new Date()
+    let endDate = null
+
+    if (svc.pricing.billingType === 'recurring') {
+      endDate = new Date(startDate)
+      if (svc.pricing.interval === 'yearly') {
+        endDate.setFullYear(endDate.getFullYear() + 1)
+      } else {
+        endDate.setMonth(endDate.getMonth() + 1)
+      }
+    }
+
+    partner.subscription.purchases.push({
+      purchaseType: 'service',
+      service: svc._id,
+      period: {
+        startDate,
+        endDate: endDate || new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000)
+      },
+      price: { amount, currency: purchaseCurrency },
+      status: 'pending',
+      createdAt: new Date(),
+      createdBy: req.user._id
+    })
+
+    await partner.save()
+    const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+    return res.json({
+      success: true,
+      data: {
+        purchaseId: addedPurchase._id,
+        type: 'service',
+        service: { _id: svc._id, name: svc.name },
+        amount,
+        currency: purchaseCurrency,
+        period: { startDate, endDate }
+      }
+    })
+  }
+
+  throw new BadRequestError('INVALID_PURCHASE_TYPE')
 })

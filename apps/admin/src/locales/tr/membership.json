@@ -1,0 +1,186 @@
+{
+  "membership": {
+    "title": "Üyelik Yönetimi",
+    "services": {
+      "title": "Hizmetler",
+      "subtitle": "Platform hizmetlerini yönetin",
+      "newService": "Yeni Hizmet",
+      "editService": "Hizmeti Düzenle",
+      "name": "Hizmet Adı",
+      "code": "Hizmet Kodu",
+      "codePlaceholder": "ornek: virtual-pos",
+      "category": "Kategori",
+      "billingType": "Faturalandırma Tipi",
+      "interval": "Periyot",
+      "prices": "Fiyatlar",
+      "features": "Özellikler",
+      "featureKey": "Özellik Anahtarı",
+      "featureValue": "Değer",
+      "addFeature": "Özellik Ekle",
+      "icon": "İkon",
+      "sortOrder": "Sıralama",
+      "status": "Durum",
+      "archive": "Arşivle",
+      "archiveConfirm": "Bu hizmeti arşivlemek istediğinize emin misiniz?",
+      "usedInActivePackages": "Bu hizmet aktif paketlerde kullanılıyor, arşivlenemez.",
+      "created": "Hizmet oluşturuldu",
+      "updated": "Hizmet güncellendi",
+      "archived": "Hizmet arşivlendi",
+      "codeExists": "Bu kod zaten kullanılıyor",
+      "stats": {
+        "total": "Toplam",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "archived": "Arşiv"
+      }
+    },
+    "packages": {
+      "title": "Paketler",
+      "subtitle": "Üyelik paketlerini yönetin",
+      "newPackage": "Yeni Paket",
+      "editPackage": "Paketi Düzenle",
+      "name": "Paket Adı",
+      "code": "Paket Kodu",
+      "codePlaceholder": "ornek: agency-silver",
+      "targetPartnerType": "Hedef Partner Tipi",
+      "partnerTypes": {
+        "all": "Tümü",
+        "hotel": "Otel",
+        "agency": "Acente"
+      },
+      "interval": "Faturalama Periyodu",
+      "priceMode": "Fiyat Modu",
+      "priceModes": {
+        "auto": "Otomatik (hizmet toplamı)",
+        "override": "Manuel"
+      },
+      "prices": "Fiyatlar",
+      "trial": "Deneme Süresi",
+      "trialEnabled": "Deneme süresi aktif",
+      "trialDays": "Deneme günü",
+      "badge": "Rozet",
+      "badgePlaceholder": "Popüler, En İyi Değer",
+      "color": "Renk",
+      "isPublic": "Katalogda göster",
+      "isPublicHelp": "Partner self-service kataloğunda görünür",
+      "tabs": {
+        "basic": "Temel Bilgiler",
+        "services": "Hizmetler",
+        "pricing": "Fiyatlandırma"
+      },
+      "serviceSelector": {
+        "available": "Mevcut Hizmetler",
+        "included": "Dahil Edilen Hizmetler",
+        "addAll": "Tümünü Ekle",
+        "removeAll": "Tümünü Kaldır",
+        "noServices": "Henüz hizmet eklenmemiş",
+        "overrides": "Limit Ayarları"
+      },
+      "icon": "İkon",
+      "sortOrder": "Sıralama",
+      "status": "Durum",
+      "archive": "Arşivle",
+      "archiveConfirm": "Bu paketi arşivlemek istediğinize emin misiniz?",
+      "hasActiveAssignments": "Bu pakete atanmış aktif partner var, arşivlenemez.",
+      "created": "Paket oluşturuldu",
+      "updated": "Paket güncellendi",
+      "archived": "Paket arşivlendi",
+      "codeExists": "Bu kod zaten kullanılıyor",
+      "stats": {
+        "total": "Toplam",
+        "active": "Aktif",
+        "partnersUsing": "Kullanan Partner"
+      }
+    },
+    "assignments": {
+      "title": "Atamalar",
+      "subtitle": "Partner paket ve hizmet atamalarını yönetin",
+      "assignPackage": "Paket Ata",
+      "addService": "Hizmet Ekle",
+      "partner": "Partner",
+      "package": "Paket",
+      "service": "Hizmet",
+      "period": "Dönem",
+      "price": "Fiyat",
+      "payment": "Ödeme",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş",
+      "amount": "Tutar",
+      "currency": "Para Birimi",
+      "paymentMethod": "Ödeme Yöntemi",
+      "notes": "Notlar",
+      "markAsPaid": "Ödendi İşaretle",
+      "cancel": "İptal Et",
+      "edit": "Düzenle",
+      "assigned": "Paket atandı",
+      "serviceAdded": "Hizmet eklendi",
+      "serviceRemoved": "Hizmet kaldırıldı",
+      "stats": {
+        "active": "Aktif",
+        "pending": "Ödeme Bekleyen",
+        "expiringSoon": "Yakında Biten"
+      },
+      "purchaseTypes": {
+        "package": "Paket",
+        "service": "Hizmet",
+        "legacy": "Eski Plan"
+      }
+    },
+    "categories": {
+      "payment": "Ödeme",
+      "booking": "Rezervasyon",
+      "pms": "PMS",
+      "web": "Web",
+      "design": "Tasarım",
+      "support": "Destek",
+      "integration": "Entegrasyon",
+      "other": "Diğer"
+    },
+    "billingTypes": {
+      "one_time": "Tek Seferlik",
+      "recurring": "Tekrarlayan"
+    },
+    "intervals": {
+      "monthly": "Aylık",
+      "yearly": "Yıllık"
+    },
+    "statuses": {
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "archived": "Arşiv",
+      "pending": "Beklemede",
+      "expired": "Süresi Dolmuş",
+      "cancelled": "İptal"
+    },
+    "currencies": {
+      "TRY": "₺ TRY",
+      "USD": "$ USD",
+      "EUR": "€ EUR",
+      "GBP": "£ GBP"
+    },
+    "nav": {
+      "services": "Hizmetler",
+      "packages": "Paketler",
+      "assignments": "Atamalar"
+    },
+    "myMembership": {
+      "title": "Üyeliğim",
+      "currentPackage": "Mevcut Paket",
+      "noPackage": "Henüz bir paket atanmamış",
+      "includedServices": "Dahil Hizmetler",
+      "subscriptionPeriod": "Abonelik Dönemi",
+      "remainingDays": "Kalan Gün",
+      "daysLeft": "{count} gün kaldı",
+      "expired": "Süresi dolmuş",
+      "upgradePackage": "Paket Yükselt",
+      "renewPackage": "Paketi Yenile",
+      "availablePackages": "Mevcut Paketler",
+      "purchaseHistory": "Satın Alma Geçmişi",
+      "catalog": "Katalog",
+      "purchase": "Satın Al",
+      "usage": "Kullanım"
+    }
+  }
+}

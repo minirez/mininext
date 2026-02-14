@@ -93,6 +93,11 @@ router.put('/:id/subscription/purchases/:purchaseId', partnerService.updatePurch
 router.post('/:id/subscription/purchases/:purchaseId/cancel', partnerService.cancelPurchase)
 router.post('/:id/subscription/purchases/:purchaseId/mark-paid', partnerService.markPurchaseAsPaid)
 
+// Membership Package/Service Assignment
+router.post('/:id/subscription/assign-package', partnerService.assignPackage)
+router.post('/:id/subscription/add-service', partnerService.addService)
+router.delete('/:id/subscription/services/:serviceId', partnerService.removeService)
+
 // Document upload
 router.post('/:id/upload', upload.single('document'), partnerService.uploadDocument)
 router.delete('/:id/documents/:documentId', partnerService.deleteDocument)
