@@ -45,10 +45,7 @@
         class="form-input w-full font-mono uppercase"
         :class="{ 'has-error': validationErrors.code }"
         :placeholder="$t('planning.promoCodes.codePlaceholder')"
-        @input="
-          form.code = form.code.toUpperCase()
-          validationErrors.code = false
-        "
+        @input="onCodeInput"
       />
       <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
         {{ $t('planning.promoCodes.codeHint') }}
@@ -350,6 +347,11 @@ const form = reactive({
 
 const stayDateRange = ref({ start: null, end: null })
 const bookingDateRange = ref({ start: null, end: null })
+
+const onCodeInput = () => {
+  form.code = form.code.toUpperCase()
+  validationErrors.code = false
+}
 
 const toggleMarket = marketId => {
   const idx = form.conditions.applicableMarkets.indexOf(marketId)
