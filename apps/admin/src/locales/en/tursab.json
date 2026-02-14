@@ -1,0 +1,49 @@
+{
+  "tursab": {
+    "title": "TURSAB Agency Directory",
+    "description": "Directory of TURSAB licensed travel agencies",
+    "stats": {
+      "total": "Total Agencies",
+      "groupA": "Group A",
+      "groupB": "Group B",
+      "groupC": "Group C"
+    },
+    "filters": {
+      "city": "City",
+      "allCities": "All Cities",
+      "district": "District",
+      "allDistricts": "All Districts",
+      "group": "Group",
+      "allGroups": "All Groups",
+      "search": "Search agency name...",
+      "clear": "Clear"
+    },
+    "table": {
+      "name": "Name",
+      "belgeNo": "License No",
+      "group": "Group",
+      "cityDistrict": "City / District",
+      "phone": "Phone",
+      "actions": "Actions"
+    },
+    "detail": {
+      "title": "Agency Details",
+      "agencyInfo": "Agency Information",
+      "unvan": "Name",
+      "ticariUnvan": "Trade Name",
+      "belgeNo": "License No",
+      "group": "Group",
+      "contact": "Contact",
+      "phone": "Phone",
+      "phone2": "Phone 2",
+      "phone3": "Phone 3",
+      "fax": "Fax",
+      "address": "Address",
+      "location": "Location",
+      "city": "City",
+      "district": "District"
+    },
+    "empty": "No agencies found",
+    "emptyDesc": "No agencies match your search criteria"
+  }
+}

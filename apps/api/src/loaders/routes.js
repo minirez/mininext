@@ -74,7 +74,10 @@ const ROUTE_CONFIG = {
   'membership-package': 'membership-packages',
 
   // Migration (legacy system import)
-  migration: 'migration'
+  migration: 'migration',
+
+  // TURSAB Agency Directory
+  'tursab-agency': 'tursab-agencies'
 }
 
 /**

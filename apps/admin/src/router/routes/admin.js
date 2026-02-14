@@ -8,6 +8,7 @@ const EmailLogsView = () => import('@/views/admin/EmailLogsView.vue')
 const MailboxView = () => import('@/views/admin/MailboxView.vue')
 const MigrationView = () => import('@/views/admin/MigrationView.vue')
 const PlatformReservationsView = () => import('@/views/admin/PlatformReservationsView.vue')
+const TursabDirectoryView = () => import('@/views/admin/TursabDirectoryView.vue')
 
 export default [
   {
@@ -103,6 +104,16 @@ export default [
       requiresPlatformAdmin: true,
       titleKey: 'platformBookings.title',
       descriptionKey: 'platformBookings.description'
+    }
+  },
+  {
+    path: 'admin/tursab-directory',
+    name: 'tursab-directory',
+    component: TursabDirectoryView,
+    meta: {
+      requiresPlatformAdmin: true,
+      titleKey: 'tursab.title',
+      descriptionKey: 'tursab.description'
     }
   }
 ]

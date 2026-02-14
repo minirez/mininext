@@ -1,0 +1,49 @@
+{
+  "tursab": {
+    "title": "TURSAB Acente Rehberi",
+    "description": "TURSAB lisanslı seyahat acenteleri rehberi",
+    "stats": {
+      "total": "Toplam Acente",
+      "groupA": "A Grubu",
+      "groupB": "B Grubu",
+      "groupC": "C Grubu"
+    },
+    "filters": {
+      "city": "İl",
+      "allCities": "Tüm İller",
+      "district": "İlçe",
+      "allDistricts": "Tüm İlçeler",
+      "group": "Grup",
+      "allGroups": "Tüm Gruplar",
+      "search": "Acente adı ara...",
+      "clear": "Temizle"
+    },
+    "table": {
+      "name": "Ünvan",
+      "belgeNo": "Belge No",
+      "group": "Grup",
+      "cityDistrict": "İl / İlçe",
+      "phone": "Telefon",
+      "actions": "İşlem"
+    },
+    "detail": {
+      "title": "Acente Detayı",
+      "agencyInfo": "Acente Bilgileri",
+      "unvan": "Ünvan",
+      "ticariUnvan": "Ticari Ünvan",
+      "belgeNo": "Belge No",
+      "group": "Grup",
+      "contact": "İletişim",
+      "phone": "Telefon",
+      "phone2": "Telefon 2",
+      "phone3": "Telefon 3",
+      "fax": "Faks",
+      "address": "Adres",
+      "location": "Konum",
+      "city": "İl",
+      "district": "İlçe"
+    },
+    "empty": "Acente bulunamadı",
+    "emptyDesc": "Arama kriterlerinize uygun acente yok"
+  }
+}

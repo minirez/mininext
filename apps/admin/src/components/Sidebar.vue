@@ -433,6 +433,12 @@ const mainSection = computed(() => {
       icon: 'card_membership',
       label: t('membership.title')
     })
+    items.push({
+      name: 'tursab-directory',
+      to: '/admin/tursab-directory',
+      icon: 'menu_book',
+      label: t('tursab.title')
+    })
   }
 
   // Partner menu items (visible when in partner view, filtered by permissions)
