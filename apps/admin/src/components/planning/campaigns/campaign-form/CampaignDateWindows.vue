@@ -22,10 +22,7 @@
       <DateRangeDual
         :model-value="stayDateRange"
         :allow-past="true"
-        @update:model-value="
-          $emit('update:stay-date-range', $event)
-          validationErrors.stayDates = false
-        "
+        @update:model-value="onStayDateChange"
       />
       <div class="mt-2 flex flex-wrap gap-1">
         <button
@@ -71,10 +68,7 @@
       <DateRangeDual
         :model-value="bookingDateRange"
         :allow-past="true"
-        @update:model-value="
-          $emit('update:booking-date-range', $event)
-          validationErrors.bookingDates = false
-        "
+        @update:model-value="onBookingDateChange"
       />
       <div class="mt-2 flex flex-wrap gap-1">
         <button
@@ -103,7 +97,7 @@
 <script setup>
 import DateRangeDual from '@/components/common/DateRangeDual.vue'
 
-defineProps({
+const props = defineProps({
   stayDateRange: { type: Object, required: true },
   bookingDateRange: { type: Object, required: true },
   stayDays: { type: Array, required: true },
@@ -112,10 +106,20 @@ defineProps({
   validationErrors: { type: Object, required: true }
 })
 
-defineEmits([
+const emit = defineEmits([
   'update:stay-date-range',
   'update:booking-date-range',
   'toggle-stay-day',
   'toggle-booking-day'
 ])
+
+const onStayDateChange = val => {
+  emit('update:stay-date-range', val)
+  props.validationErrors.stayDates = false
+}
+
+const onBookingDateChange = val => {
+  emit('update:booking-date-range', val)
+  props.validationErrors.bookingDates = false
+}
 </script>
