@@ -18,14 +18,11 @@ const __dirname = path.dirname(__filename)
 // Project root (5 levels up from this file)
 const PROJECT_ROOT = path.resolve(__dirname, '../../../../..')
 
-function parseIlIlce(ilIlce) {
-  if (!ilIlce) return { il: '', ilce: '' }
-
-  const parts = ilIlce.split('/').map(s => s.trim())
-  return {
-    il: parts[0] || '',
-    ilce: parts[1] || ''
-  }
+function parseIlce(ilIlce) {
+  if (!ilIlce) return ''
+  // Format: "ADANA - SEYHAN" or "ADANA -"
+  const parts = ilIlce.split(' - ')
+  return (parts[1] || '').trim()
 }
 
 async function importData() {
@@ -57,8 +54,6 @@ async function importData() {
     const batch = rows.slice(i, i + BATCH_SIZE)
 
     const docs = batch.map(row => {
-      const { il, ilce } = parseIlIlce(row.il_ilce)
-
       return {
         acenteId: row.acente_id,
         subeId: row.sube_id,
@@ -66,8 +61,8 @@ async function importData() {
         unvan: row.unvan || '',
         ticariUnvan: row.ticari_unvan || '',
         grup: row.grup || '',
-        il: il || row.il_adi || '',
-        ilce,
+        il: row.il_adi || '',
+        ilce: parseIlce(row.il_ilce),
         telefon: row.telefon || '',
         telefon2: row.telefon2 || '',
         telefon3: row.telefon3 || '',
