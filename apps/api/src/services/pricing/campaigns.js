@@ -327,7 +327,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
     checkOutDate,
     adults = 2,
     children = [],
-    includeCampaigns = true
+    includeCampaigns = true,
+    campaignCode = null
   } = query
 
   // Check cache first
@@ -342,7 +343,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
       checkOutDate,
       adults,
       children: JSON.stringify(children),
-      includeCampaigns
+      includeCampaigns,
+      campaignCode
     })
 
     const cached = cache.get(cacheKey)
@@ -388,9 +390,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
 
   // Get effective child age groups and max child age
   const childAgeGroups = getEffectiveChildAgeGroups(hotel, market, season)
-  const maxChildAge = childAgeGroups.length > 0
-    ? Math.max(...childAgeGroups.map(ag => ag.maxAge || 0))
-    : 12 // Default max child age if no groups defined (industry standard: 0-12 child, 13+ adult)
+  const maxChildAge =
+    childAgeGroups.length > 0 ? Math.max(...childAgeGroups.map(ag => ag.maxAge || 0)) : 12 // Default max child age if no groups defined (industry standard: 0-12 child, 13+ adult)
 
   // Separate children: those above max age should be counted as adults
   let effectiveAdults = adults
@@ -582,6 +583,19 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
       nights
     })
 
+    // If a promo code campaign is specified, include it if not already in the list
+    if (campaignCode) {
+      const Campaign = (await import('../../modules/planning/campaign.model.js')).default
+      const promoCampaign = await Campaign.findOne({
+        hotel: hotelId,
+        code: campaignCode.toUpperCase(),
+        status: 'active'
+      })
+      if (promoCampaign && !campaigns.some(c => c.code === promoCampaign.code)) {
+        campaigns.push(promoCampaign)
+      }
+    }
+
     if (campaigns.length > 0) {
       campaignResult = applyCampaigns(campaigns, dailyBreakdown, { checkInDate })
     }
@@ -747,7 +761,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
       checkOutDate,
       adults,
       children: JSON.stringify(children),
-      includeCampaigns
+      includeCampaigns,
+      campaignCode
     })
     cache.set(cacheKey, result, CACHE_TTL.PRICE_CALCULATION)
   }

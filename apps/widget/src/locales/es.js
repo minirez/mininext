@@ -238,6 +238,21 @@ export default {
     note: 'Por favor, incluya su número de reserva en la descripción de la transferencia. Se le notificará por correo electrónico cuando se confirme su pago.'
   },
 
+  promo: {
+    toggle: '¿Tienes un código promocional?',
+    placeholder: 'Ingresa el código promocional',
+    apply: 'Aplicar',
+    clear: 'Eliminar',
+    errors: {
+      INVALID_CODE: 'Código promocional no válido',
+      EXPIRED_CODE: 'Este código promocional ha expirado',
+      NOT_APPLICABLE: 'Este código promocional no aplica para las fechas seleccionadas',
+      MIN_NIGHTS: 'No se cumple la estancia mínima para esta promoción',
+      NETWORK_ERROR: 'Error de conexión, por favor intente de nuevo',
+      PROMO_CODE_REQUIRED: 'Código promocional requerido'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }

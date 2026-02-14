@@ -79,6 +79,11 @@ export const useWidgetStore = defineStore('widget', () => {
   const bankTransferDescription = ref({})
   const bankTransferEnabled = ref(false)
 
+  // Promo Code State
+  const promoCode = ref('')
+  const promoResult = ref(null) // { valid, campaign, error }
+  const promoLoading = ref(false)
+
   // Market Detection
   const detectedMarket = ref(null)
 
@@ -106,6 +111,8 @@ export const useWidgetStore = defineStore('widget', () => {
         bookingData: bookingData.value,
         paymentMethod: paymentMethod.value,
         booking: booking.value,
+        promoCode: promoCode.value,
+        promoResult: promoResult.value,
         savedAt: Date.now()
       }
       localStorage.setItem(getStorageKey(), JSON.stringify(state))
@@ -154,6 +161,8 @@ export const useWidgetStore = defineStore('widget', () => {
       if (saved.bookingData) Object.assign(bookingData.value, saved.bookingData)
       if (saved.paymentMethod) paymentMethod.value = saved.paymentMethod
       if (saved.booking) booking.value = saved.booking
+      if (saved.promoCode) promoCode.value = saved.promoCode
+      if (saved.promoResult) promoResult.value = saved.promoResult
 
       // Mark results as stale if saved more than 1 hour ago
       if (saved.searchResults && Date.now() - saved.savedAt > STALE_THRESHOLD) {
@@ -298,7 +307,9 @@ export const useWidgetStore = defineStore('widget', () => {
           selectedOption,
           bookingData,
           paymentMethod,
-          booking
+          booking,
+          promoCode,
+          promoResult
         ],
         () => debouncedSave(),
         { deep: true }
@@ -344,16 +355,23 @@ export const useWidgetStore = defineStore('widget', () => {
       isLoading.value = true
       error.value = null
 
+      const searchBody = {
+        checkIn: searchParams.value.checkIn,
+        checkOut: searchParams.value.checkOut,
+        adults: searchParams.value.adults,
+        children: searchParams.value.children,
+        countryCode: searchParams.value.countryCode,
+        currency: searchParams.value.currency
+      }
+
+      // Include promo code if validated
+      if (promoCode.value && promoResult.value?.valid) {
+        searchBody.campaignCode = promoCode.value
+      }
+
       const results = await widgetApi.searchAvailability(
         resolvedHotelCode.value,
-        {
-          checkIn: searchParams.value.checkIn,
-          checkOut: searchParams.value.checkOut,
-          adults: searchParams.value.adults,
-          children: searchParams.value.children,
-          countryCode: searchParams.value.countryCode,
-          currency: searchParams.value.currency
-        },
+        searchBody,
         config.value.apiUrl
       )
 
@@ -428,7 +446,8 @@ export const useWidgetStore = defineStore('widget', () => {
         specialRequests: bookingData.value.specialRequests,
         countryCode: searchParams.value.countryCode,
         paymentMethod: paymentMethod.value,
-        guestLanguage: config.value.language || 'en'
+        guestLanguage: config.value.language || 'en',
+        ...(promoCode.value && promoResult.value?.valid && { campaignCode: promoCode.value })
       }
 
       const result = await widgetApi.createBooking(bookingPayload, config.value.apiUrl)
@@ -514,6 +533,50 @@ export const useWidgetStore = defineStore('widget', () => {
     }
   }
 
+  async function applyPromoCode(code) {
+    if (!code?.trim()) return
+
+    try {
+      promoLoading.value = true
+      promoResult.value = null
+
+      const result = await widgetApi.validatePromoCode(
+        resolvedHotelCode.value,
+        {
+          code: code.trim(),
+          checkIn: searchParams.value.checkIn,
+          checkOut: searchParams.value.checkOut,
+          countryCode: searchParams.value.countryCode,
+          currency: searchParams.value.currency
+        },
+        config.value.apiUrl
+      )
+
+      promoCode.value = code.trim()
+      promoResult.value = result
+
+      // If valid, re-search to get updated prices
+      if (result.valid) {
+        await search()
+      }
+    } catch (err) {
+      promoResult.value = { valid: false, error: 'NETWORK_ERROR' }
+    } finally {
+      promoLoading.value = false
+    }
+  }
+
+  function clearPromoCode() {
+    const hadValidPromo = promoCode.value && promoResult.value?.valid
+    promoCode.value = ''
+    promoResult.value = null
+
+    // Re-search to remove promo discount from prices
+    if (hadValidPromo && searchResults.value) {
+      search()
+    }
+  }
+
   function goBack() {
     // Payment and bank-transfer should always go back to booking
     if (currentStep.value === 'payment' || currentStep.value === 'bank-transfer') {
@@ -565,6 +628,8 @@ export const useWidgetStore = defineStore('widget', () => {
     booking.value = null
     paymentResult.value = null
     selectedPaymentType.value = 'full'
+    promoCode.value = ''
+    promoResult.value = null
     error.value = null
     bookingData.value = {
       rooms: [],
@@ -605,6 +670,9 @@ export const useWidgetStore = defineStore('widget', () => {
     bankTransferDescription,
     bankTransferEnabled,
     detectedMarket,
+    promoCode,
+    promoResult,
+    promoLoading,
 
     // Computed
     effectiveTheme,
@@ -629,6 +697,8 @@ export const useWidgetStore = defineStore('widget', () => {
     processPayment,
     checkPaymentStatus,
     fetchBankAccounts,
+    applyPromoCode,
+    clearPromoCode,
     goBack,
     reset
   }

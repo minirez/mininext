@@ -237,6 +237,21 @@ export default {
     note: 'Zəhmət olmasa köçürmə açıqlamasında rezervasiya nömrənizi qeyd edin. Ödənişiniz təsdiqləndikdən sonra e-poçt ilə məlumatlandırılacaqsınız.'
   },
 
+  promo: {
+    toggle: 'Have a promo code?',
+    placeholder: 'Enter promo code',
+    apply: 'Apply',
+    clear: 'Remove',
+    errors: {
+      INVALID_CODE: 'Invalid promo code',
+      EXPIRED_CODE: 'This promo code has expired',
+      NOT_APPLICABLE: 'This promo code is not applicable for the selected dates',
+      MIN_NIGHTS: 'Minimum stay requirement not met for this promotion',
+      NETWORK_ERROR: 'Connection error, please try again',
+      PROMO_CODE_REQUIRED: 'Promo code is required'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }

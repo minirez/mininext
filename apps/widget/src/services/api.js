@@ -97,6 +97,20 @@ export const widgetApi = {
   },
 
   /**
+   * Validate a promo code
+   */
+  async validatePromoCode(hotelCode, params, apiUrl) {
+    return request(
+      `/hotels/${hotelCode}/apply-promo`,
+      {
+        method: 'POST',
+        body: JSON.stringify(params)
+      },
+      apiUrl
+    )
+  },
+
+  /**
    * Get active campaigns
    */
   async getCampaigns(hotelCode, checkIn, checkOut, apiUrl) {

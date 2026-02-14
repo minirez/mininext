@@ -238,6 +238,21 @@ export default {
     note: 'Bitte geben Sie Ihre Buchungsnummer im Verwendungszweck an. Sie werden per E-Mail benachrichtigt, sobald Ihre Zahlung bestätigt wurde.'
   },
 
+  promo: {
+    toggle: 'Haben Sie einen Promo-Code?',
+    placeholder: 'Promo-Code eingeben',
+    apply: 'Anwenden',
+    clear: 'Entfernen',
+    errors: {
+      INVALID_CODE: 'Ungültiger Promo-Code',
+      EXPIRED_CODE: 'Dieser Promo-Code ist abgelaufen',
+      NOT_APPLICABLE: 'Dieser Promo-Code gilt nicht für die ausgewählten Daten',
+      MIN_NIGHTS: 'Mindestaufenthalt für diese Aktion nicht erfüllt',
+      NETWORK_ERROR: 'Verbindungsfehler, bitte versuchen Sie es erneut',
+      PROMO_CODE_REQUIRED: 'Promo-Code erforderlich'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }

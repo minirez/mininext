@@ -17,7 +17,8 @@ export {
   searchAvailability,
   getPriceQuote,
   checkAvailability,
-  getActiveCampaigns
+  getActiveCampaigns,
+  applyPromoCode
 } from './publicAvailability.service.js'
 
 // Booking operations

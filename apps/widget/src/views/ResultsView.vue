@@ -17,6 +17,35 @@ const errorMessage = computed(() => widgetStore.error)
 const widgetConfig = computed(() => widgetStore.widgetConfig)
 const resultsStale = computed(() => widgetStore.resultsStale)
 
+// Promo code state
+const promoOpen = ref(false)
+const promoInput = ref('')
+const promoResult = computed(() => widgetStore.promoResult)
+const promoLoading = computed(() => widgetStore.promoLoading)
+const promoCode = computed(() => widgetStore.promoCode)
+
+// Auto-open promo section if there's already a valid code
+if (promoCode.value && promoResult.value?.valid) {
+  promoOpen.value = true
+}
+
+function handleApplyPromo() {
+  if (!promoInput.value.trim()) return
+  widgetStore.applyPromoCode(promoInput.value)
+  promoOpen.value = true
+}
+
+function handleClearPromo() {
+  promoInput.value = ''
+  widgetStore.clearPromoCode()
+}
+
+function getPromoErrorMessage(error) {
+  const key = `promo.errors.${error}`
+  const translated = t(key)
+  return translated !== key ? translated : t('promo.errors.INVALID_CODE')
+}
+
 function refreshResults() {
   widgetStore.search()
 }
@@ -293,6 +322,111 @@ function prevImage() {
       </svg>
       <span>{{ t('results.staleResults') }}</span>
       <button @click="refreshResults">{{ t('results.refreshPrices') }}</button>
+    </div>
+
+    <!-- Promo Code Section -->
+    <div class="promo-section">
+      <!-- Toggle link -->
+      <div v-if="!promoOpen && !promoCode" class="promo-toggle" @click="promoOpen = true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="20 12 20 22 4 22 4 12"></polyline>
+          <rect x="2" y="7" width="20" height="5"></rect>
+          <line x1="12" y1="22" x2="12" y2="7"></line>
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+        </svg>
+        {{ t('promo.toggle') }}
+      </div>
+
+      <!-- Promo Input -->
+      <div v-if="promoOpen && !(promoCode && promoResult?.valid)" class="promo-input-row">
+        <input
+          v-model="promoInput"
+          type="text"
+          class="form-input promo-input"
+          :placeholder="t('promo.placeholder')"
+          @keyup.enter="handleApplyPromo"
+          :disabled="promoLoading"
+        />
+        <button
+          class="btn btn-primary promo-apply-btn"
+          @click="handleApplyPromo"
+          :disabled="!promoInput.trim() || promoLoading"
+        >
+          <div v-if="promoLoading" class="spinner spinner-sm"></div>
+          <span v-else>{{ t('promo.apply') }}</span>
+        </button>
+      </div>
+
+      <!-- Promo Success -->
+      <div v-if="promoCode && promoResult?.valid" class="promo-success">
+        <div class="promo-success-info">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <span class="promo-campaign-name">{{ promoResult.campaign.name }}</span>
+            <span class="promo-discount-text">{{ promoResult.campaign.discountText }}</span>
+          </div>
+        </div>
+        <button class="promo-clear-btn" @click="handleClearPromo">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Promo Error -->
+      <div v-if="promoResult && !promoResult.valid" class="promo-error">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ getPromoErrorMessage(promoResult.error) }}</span>
+      </div>
     </div>
 
     <!-- Loading State -->

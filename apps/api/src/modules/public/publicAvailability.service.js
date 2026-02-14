@@ -64,7 +64,15 @@ async function findMarket(hotelId, countryCode, currency) {
  */
 export const searchAvailability = asyncHandler(async (req, res) => {
   const { hotelCode } = req.params
-  const { checkIn, checkOut, adults = 2, children = [], countryCode, currency } = req.body
+  const {
+    checkIn,
+    checkOut,
+    adults = 2,
+    children = [],
+    countryCode,
+    currency,
+    campaignCode
+  } = req.body
 
   // Validate required fields
   if (!checkIn || !checkOut) {
@@ -167,7 +175,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           checkOutDate: checkOut,
           adults,
           children: children.map(age => ({ age })),
-          includeCampaigns: true
+          includeCampaigns: true,
+          campaignCode: campaignCode || null
         })
 
         if (priceResult.availability?.isAvailable) {
@@ -230,7 +239,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         currency: market.currency,
         paymentTerms: market.paymentTerms || null,
         bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0,
-        bankTransferReleaseDays: market.paymentMethods?.bankTransfer?.releaseDays ?? 3
+        bankTransferReleaseDays: market.paymentMethods?.bankTransfer?.releaseDays ?? 3,
+        campaignCode: campaignCode || null
       },
       results
     }
@@ -438,6 +448,212 @@ export const checkAvailability = asyncHandler(async (req, res) => {
       checkOut,
       market: market.code,
       availability
+    }
+  })
+})
+
+/**
+ * Apply promo code to a specific room/meal plan combination
+ * POST /public/hotels/:hotelCode/apply-promo
+ * Body: { code, checkIn, checkOut, roomTypeCode, mealPlanCode, adults, children, countryCode, currency }
+ */
+export const applyPromoCode = asyncHandler(async (req, res) => {
+  const { hotelCode } = req.params
+  const {
+    code,
+    checkIn,
+    checkOut,
+    roomTypeCode,
+    mealPlanCode,
+    adults = 2,
+    children = [],
+    countryCode,
+    currency
+  } = req.body
+
+  if (!code) {
+    throw new BadRequestError('PROMO_CODE_REQUIRED')
+  }
+  if (!checkIn || !checkOut) {
+    throw new BadRequestError('CHECK_IN_OUT_REQUIRED')
+  }
+
+  // Get hotel
+  const hotelQuery = { status: 'active', 'visibility.b2c': true }
+  if (hotelCode.match(/^[0-9a-fA-F]{24}$/)) {
+    hotelQuery._id = hotelCode
+  } else {
+    hotelQuery.slug = hotelCode.toLowerCase()
+  }
+
+  const hotel = await Hotel.findOne(hotelQuery).select('_id slug name').lean()
+  if (!hotel) {
+    throw new NotFoundError('HOTEL_NOT_FOUND')
+  }
+
+  // Find market
+  const market = await findMarket(hotel._id, countryCode, currency)
+  if (!market) {
+    throw new NotFoundError('NO_MARKET_AVAILABLE')
+  }
+
+  const checkInDate = new Date(checkIn)
+  const checkOutDate = new Date(checkOut)
+  const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24))
+
+  // Find campaign by code
+  const campaign = await Campaign.findOne({
+    hotel: hotel._id,
+    code: code.toUpperCase(),
+    status: 'active'
+  })
+
+  if (!campaign) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'INVALID_CODE' }
+    })
+  }
+
+  // Check B2C visibility
+  if (campaign.visibility?.b2c === false) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'INVALID_CODE' }
+    })
+  }
+
+  // Check booking window
+  const now = new Date()
+  const nowStart = new Date(now)
+  nowStart.setHours(0, 0, 0, 0)
+  if (now < campaign.bookingWindow.startDate || nowStart > campaign.bookingWindow.endDate) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'EXPIRED_CODE' }
+    })
+  }
+
+  // Check stay window overlap
+  if (checkInDate > campaign.stayWindow.endDate || checkOutDate < campaign.stayWindow.startDate) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'NOT_APPLICABLE' }
+    })
+  }
+
+  // Check nights condition
+  if (campaign.conditions?.minNights && nights < campaign.conditions.minNights) {
+    return res.json({
+      success: true,
+      data: {
+        valid: false,
+        error: 'MIN_NIGHTS',
+        minNights: campaign.conditions.minNights
+      }
+    })
+  }
+  if (campaign.conditions?.maxNights && nights > campaign.conditions.maxNights) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'NOT_APPLICABLE' }
+    })
+  }
+
+  // Check advance booking days
+  const daysBeforeCheckIn = Math.floor((checkInDate - now) / (1000 * 60 * 60 * 24))
+  if (
+    campaign.conditions?.advanceBookingDays &&
+    daysBeforeCheckIn < campaign.conditions.advanceBookingDays
+  ) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'NOT_APPLICABLE' }
+    })
+  }
+  if (
+    campaign.conditions?.maxAdvanceBookingDays != null &&
+    daysBeforeCheckIn > campaign.conditions.maxAdvanceBookingDays
+  ) {
+    return res.json({
+      success: true,
+      data: { valid: false, error: 'NOT_APPLICABLE' }
+    })
+  }
+
+  // Check market restriction
+  if (campaign.conditions?.applicableMarkets?.length > 0) {
+    if (!campaign.conditions.applicableMarkets.some(m => m.toString() === market._id.toString())) {
+      return res.json({
+        success: true,
+        data: { valid: false, error: 'NOT_APPLICABLE' }
+      })
+    }
+  }
+
+  // Check room type restriction (if roomTypeCode provided)
+  if (roomTypeCode && campaign.conditions?.applicableRoomTypes?.length > 0) {
+    const roomType = await RoomType.findOne({
+      hotel: hotel._id,
+      code: roomTypeCode.toUpperCase(),
+      status: 'active'
+    }).lean()
+    if (
+      roomType &&
+      !campaign.conditions.applicableRoomTypes.some(rt => rt.toString() === roomType._id.toString())
+    ) {
+      return res.json({
+        success: true,
+        data: { valid: false, error: 'NOT_APPLICABLE' }
+      })
+    }
+  }
+
+  // Check meal plan restriction
+  if (mealPlanCode && campaign.conditions?.applicableMealPlans?.length > 0) {
+    const mealPlan = await MealPlan.findOne({
+      hotel: hotel._id,
+      code: mealPlanCode.toUpperCase(),
+      status: 'active'
+    }).lean()
+    if (
+      mealPlan &&
+      !campaign.conditions.applicableMealPlans.some(mp => mp.toString() === mealPlan._id.toString())
+    ) {
+      return res.json({
+        success: true,
+        data: { valid: false, error: 'NOT_APPLICABLE' }
+      })
+    }
+  }
+
+  // Build discount text
+  let discountText = ''
+  if (campaign.discount.type === 'percentage') {
+    discountText = `%${campaign.discount.value} ${campaign.discount.value > 0 ? 'indirim' : ''}`
+  } else if (campaign.discount.type === 'fixed') {
+    discountText = `${campaign.discount.value} ${market.currency} indirim`
+  } else if (campaign.discount.type === 'free_nights' && campaign.discount.freeNights) {
+    discountText = `${campaign.discount.freeNights.stayNights} gece kal ${campaign.discount.freeNights.freeNights} gece öde`
+  }
+
+  // Get localized campaign name
+  const lang = req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en'
+  const campaignName =
+    campaign.name?.[lang] || campaign.name?.en || campaign.name?.tr || campaign.code
+
+  res.json({
+    success: true,
+    data: {
+      valid: true,
+      campaign: {
+        code: campaign.code,
+        name: campaignName,
+        discountType: campaign.discount.type,
+        discountValue: campaign.discount.value,
+        freeNights: campaign.discount.freeNights,
+        discountText
+      }
     }
   })
 })

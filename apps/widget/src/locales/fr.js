@@ -238,6 +238,21 @@ export default {
     note: 'Veuillez indiquer votre numéro de réservation dans le libellé du virement. Vous serez notifié par e-mail dès que votre paiement sera confirmé.'
   },
 
+  promo: {
+    toggle: 'Avez-vous un code promo ?',
+    placeholder: 'Entrez le code promo',
+    apply: 'Appliquer',
+    clear: 'Supprimer',
+    errors: {
+      INVALID_CODE: 'Code promo invalide',
+      EXPIRED_CODE: 'Ce code promo a expiré',
+      NOT_APPLICABLE: "Ce code promo ne s'applique pas aux dates sélectionnées",
+      MIN_NIGHTS: 'Durée minimum de séjour non atteinte pour cette promotion',
+      NETWORK_ERROR: 'Erreur de connexion, veuillez réessayer',
+      PROMO_CODE_REQUIRED: 'Code promo requis'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }

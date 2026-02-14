@@ -75,4 +75,49 @@ router.post(
   publicService.getPriceQuote
 )
 
+/**
+ * @swagger
+ * /api/public/hotels/{hotelCode}/apply-promo:
+ *   post:
+ *     tags: [Public]
+ *     summary: Validate and apply a promo code
+ *     security: []
+ *     parameters:
+ *       - name: hotelCode
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [code, checkIn, checkOut]
+ *             properties:
+ *               code:
+ *                 type: string
+ *               checkIn:
+ *                 type: string
+ *                 format: date
+ *               checkOut:
+ *                 type: string
+ *                 format: date
+ */
+router.post(
+  '/hotels/:hotelCode/apply-promo',
+  pricingLimiter,
+  validateBody({
+    code: { type: 'string', required: true },
+    checkIn: { type: 'date', required: true },
+    checkOut: { type: 'date', required: true },
+    roomTypeCode: { type: 'string' },
+    mealPlanCode: { type: 'string' },
+    adults: { type: 'integer', min: 1, max: 10 },
+    children: { type: 'array' }
+  }),
+  publicService.applyPromoCode
+)
+
 export default router

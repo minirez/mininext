@@ -58,7 +58,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     specialRequests,
     countryCode,
     paymentMethod,
-    guestLanguage
+    guestLanguage,
+    campaignCode
   } = req.body
 
   // Validate hotel (hotelCode can be slug or _id)
@@ -150,7 +151,8 @@ export const createBooking = asyncHandler(async (req, res) => {
       checkOutDate: checkOut,
       adults,
       children: children.map(age => ({ age })),
-      includeCampaigns: true
+      includeCampaigns: true,
+      campaignCode: campaignCode || null
     })
 
     if (!priceResult.availability?.isAvailable) {

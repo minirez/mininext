@@ -238,6 +238,21 @@ export default {
     note: 'Inserisci il numero di prenotazione nella causale del bonifico. Riceverai una notifica via email quando il pagamento sarà confermato.'
   },
 
+  promo: {
+    toggle: 'Hai un codice promozionale?',
+    placeholder: 'Inserisci il codice promozionale',
+    apply: 'Applica',
+    clear: 'Rimuovi',
+    errors: {
+      INVALID_CODE: 'Codice promozionale non valido',
+      EXPIRED_CODE: 'Questo codice promozionale è scaduto',
+      NOT_APPLICABLE: 'Questo codice non è applicabile per le date selezionate',
+      MIN_NIGHTS: 'Soggiorno minimo non raggiunto per questa promozione',
+      NETWORK_ERROR: 'Errore di connessione, riprova',
+      PROMO_CODE_REQUIRED: 'Codice promozionale obbligatorio'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }

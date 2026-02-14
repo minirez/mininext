@@ -259,6 +259,21 @@ export default {
     note: 'Havale açıklamasına rezervasyon numaranızı yazmayı unutmayınız. Ödemeniz onaylandığında size e-posta ile bildirilecektir.'
   },
 
+  promo: {
+    toggle: 'Promosyon kodunuz var mı?',
+    placeholder: 'Promosyon kodu girin',
+    apply: 'Uygula',
+    clear: 'Kaldır',
+    errors: {
+      INVALID_CODE: 'Geçersiz promosyon kodu',
+      EXPIRED_CODE: 'Bu promosyon kodunun süresi dolmuş',
+      NOT_APPLICABLE: 'Bu promosyon kodu seçili tarihler için geçerli değil',
+      MIN_NIGHTS: 'Bu kampanya için minimum konaklama süresi karşılanmıyor',
+      NETWORK_ERROR: 'Bağlantı hatası, lütfen tekrar deneyin',
+      PROMO_CODE_REQUIRED: 'Promosyon kodu gerekli'
+    }
+  },
+
   footer: {
     poweredBy: 'Powered by'
   }
