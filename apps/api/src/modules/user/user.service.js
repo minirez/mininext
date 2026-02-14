@@ -164,6 +164,10 @@ export const getUsers = asyncHandler(async (req, res) => {
   } else if (req.user.accountType === 'agency') {
     filter.accountType = 'agency'
     filter.accountId = req.user.accountId
+  } else if (req.viewingAsPartner && req.partnerId) {
+    // Platform admin viewing as a specific partner
+    filter.accountType = 'partner'
+    filter.accountId = req.partnerId
   } else {
     if (accountType) filter.accountType = accountType
     if (accountId) filter.accountId = accountId

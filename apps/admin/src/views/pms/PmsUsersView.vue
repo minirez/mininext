@@ -490,9 +490,11 @@ const debouncedFetch = () => {
 const fetchUsers = async () => {
   loading.value = true
   try {
+    // hotelId: computed getter'dan veya selectedPmsHotel'den oku
+    const hotelId = pmsStore.hotelId || pmsStore.selectedPmsHotel?._id || null
     const params = {
       pmsAccess: 'true',
-      hotelId: pmsStore.hotelId
+      ...(hotelId ? { hotelId } : {})
     }
 
     if (filters.value.department) params.pmsDepartment = filters.value.department
