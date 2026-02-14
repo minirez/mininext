@@ -53,6 +53,10 @@ const tursabAgencySchema = new mongoose.Schema(
     adres: {
       type: String,
       trim: true
+    },
+    eposta: {
+      type: String,
+      trim: true
     }
   },
   {

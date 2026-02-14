@@ -23,6 +23,7 @@
       "belgeNo": "Belge No",
       "group": "Grup",
       "cityDistrict": "İl / İlçe",
+      "email": "E-posta",
       "phone": "Telefon",
       "actions": "İşlem"
     },
@@ -34,6 +35,7 @@
       "belgeNo": "Belge No",
       "group": "Grup",
       "contact": "İletişim",
+      "email": "E-posta",
       "phone": "Telefon",
       "phone2": "Telefon 2",
       "phone3": "Telefon 3",

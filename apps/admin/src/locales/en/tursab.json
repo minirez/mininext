@@ -23,6 +23,7 @@
       "belgeNo": "License No",
       "group": "Group",
       "cityDistrict": "City / District",
+      "email": "Email",
       "phone": "Phone",
       "actions": "Actions"
     },
@@ -34,6 +35,7 @@
       "belgeNo": "License No",
       "group": "Group",
       "contact": "Contact",
+      "email": "Email",
       "phone": "Phone",
       "phone2": "Phone 2",
       "phone3": "Phone 3",

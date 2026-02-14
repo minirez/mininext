@@ -195,6 +195,23 @@
           </div>
         </template>
 
+        <!-- Email -->
+        <template #cell-eposta="{ row }">
+          <div
+            v-if="row.eposta"
+            class="text-sm text-gray-700 dark:text-slate-300 truncate max-w-[200px]"
+          >
+            <a
+              :href="'mailto:' + row.eposta"
+              class="hover:text-purple-600 dark:hover:text-purple-400"
+              :title="row.eposta"
+            >
+              {{ row.eposta }}
+            </a>
+          </div>
+          <span v-else class="text-sm text-gray-400">-</span>
+        </template>
+
         <!-- Phone -->
         <template #cell-telefon="{ row }">
           <div class="text-sm text-gray-700 dark:text-slate-300">
@@ -273,6 +290,19 @@
             {{ $t('tursab.detail.contact') }}
           </h4>
           <div class="space-y-3">
+            <div v-if="selectedAgency.eposta">
+              <label class="text-xs text-gray-400 dark:text-slate-500">{{
+                $t('tursab.detail.email')
+              }}</label>
+              <p class="text-sm text-gray-900 dark:text-white">
+                <a
+                  :href="'mailto:' + selectedAgency.eposta"
+                  class="hover:text-purple-600 dark:hover:text-purple-400"
+                >
+                  {{ selectedAgency.eposta }}
+                </a>
+              </p>
+            </div>
             <div v-if="selectedAgency.telefon">
               <label class="text-xs text-gray-400 dark:text-slate-500">{{
                 $t('tursab.detail.phone')
@@ -380,6 +410,7 @@ const columns = computed(() => [
   { key: 'belgeNo', label: t('tursab.table.belgeNo') },
   { key: 'grup', label: t('tursab.table.group') },
   { key: 'il', label: t('tursab.table.cityDistrict') },
+  { key: 'eposta', label: t('tursab.table.email') },
   { key: 'telefon', label: t('tursab.table.phone') }
 ])
 

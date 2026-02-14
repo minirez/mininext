@@ -72,7 +72,8 @@ async function importData() {
         telefon2: row.telefon2 || '',
         telefon3: row.telefon3 || '',
         faks: row.faks || '',
-        adres: row.adres || ''
+        adres: row.adres || '',
+        eposta: row.eposta || ''
       }
     })
 
