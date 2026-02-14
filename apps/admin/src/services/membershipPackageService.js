@@ -1,7 +1,7 @@
 import api from './api'
 import { apiLogger } from '@/utils/logger'
 
-const BASE_URL = '/api/membership-packages'
+const BASE_URL = '/membership-packages'
 
 export async function getMembershipPackages(params = {}) {
   try {
@@ -86,10 +86,7 @@ export async function getMembershipPackageStats() {
 // Partner subscription assignment endpoints (admin)
 export async function assignPackageToPartner(partnerId, payload) {
   try {
-    const { data } = await api.post(
-      `/api/partners/${partnerId}/subscription/assign-package`,
-      payload
-    )
+    const { data } = await api.post(`/partners/${partnerId}/subscription/assign-package`, payload)
     return data
   } catch (error) {
     apiLogger.error('assignPackageToPartner failed:', error)
@@ -99,7 +96,7 @@ export async function assignPackageToPartner(partnerId, payload) {
 
 export async function addServiceToPartner(partnerId, payload) {
   try {
-    const { data } = await api.post(`/api/partners/${partnerId}/subscription/add-service`, payload)
+    const { data } = await api.post(`/partners/${partnerId}/subscription/add-service`, payload)
     return data
   } catch (error) {
     apiLogger.error('addServiceToPartner failed:', error)
@@ -109,9 +106,7 @@ export async function addServiceToPartner(partnerId, payload) {
 
 export async function removeServiceFromPartner(partnerId, serviceId) {
   try {
-    const { data } = await api.delete(
-      `/api/partners/${partnerId}/subscription/services/${serviceId}`
-    )
+    const { data } = await api.delete(`/partners/${partnerId}/subscription/services/${serviceId}`)
     return data
   } catch (error) {
     apiLogger.error('removeServiceFromPartner failed:', error)

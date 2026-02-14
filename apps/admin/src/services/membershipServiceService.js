@@ -1,7 +1,7 @@
 import api from './api'
 import { apiLogger } from '@/utils/logger'
 
-const BASE_URL = '/api/membership-services'
+const BASE_URL = '/membership-services'
 
 export async function getMembershipServices(params = {}) {
   try {
