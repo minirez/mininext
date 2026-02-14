@@ -206,10 +206,7 @@
         :model-value="bookingDateRange"
         :allow-past="true"
         summary-bg-class="bg-blue-50/50 dark:bg-blue-900/10"
-        @update:model-value="
-          bookingDateRange = $event
-          validationErrors.bookingDates = false
-        "
+        @update:model-value="onBookingDateChange"
       />
     </div>
 
@@ -239,10 +236,7 @@
         :model-value="stayDateRange"
         :allow-past="true"
         summary-bg-class="bg-teal-50/50 dark:bg-teal-900/10"
-        @update:model-value="
-          stayDateRange = $event
-          validationErrors.stayDates = false
-        "
+        @update:model-value="onStayDateChange"
       />
     </div>
 
@@ -351,6 +345,16 @@ const bookingDateRange = ref({ start: null, end: null })
 const onCodeInput = () => {
   form.code = form.code.toUpperCase()
   validationErrors.code = false
+}
+
+const onBookingDateChange = val => {
+  bookingDateRange.value = val
+  validationErrors.bookingDates = false
+}
+
+const onStayDateChange = val => {
+  stayDateRange.value = val
+  validationErrors.stayDates = false
 }
 
 const toggleMarket = marketId => {
