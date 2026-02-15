@@ -223,8 +223,8 @@ server {
     }
 }
 `
-  const configFilename = `${domain}.conf`
-  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
+  // Mevcut minisites dosyalari uzantisiz: inndream.com, alianstravel.com vb.
+  const configPath = path.join(CONFIG.nginxSitesDir, domain)
 
   try {
     // Config dosyasını minisites dizinine yaz (volume-mounted)
@@ -263,8 +263,8 @@ server {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export const installNginxConfig = async (domain, configContent) => {
-  const configFilename = `${domain}.conf`
-  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
+  // Mevcut minisites dosyalari uzantisiz: inndream.com, alianstravel.com vb.
+  const configPath = path.join(CONFIG.nginxSitesDir, domain)
 
   try {
     // Konfigurasyonu minisites dizinine yaz (volume-mounted)
@@ -310,8 +310,7 @@ export const installNginxConfig = async (domain, configContent) => {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export const removeNginxConfig = async domain => {
-  const configFilename = `${domain}.conf`
-  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
+  const configPath = path.join(CONFIG.nginxSitesDir, domain)
 
   try {
     // Config dosyasini sil
