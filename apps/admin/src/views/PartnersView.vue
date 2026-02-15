@@ -643,14 +643,14 @@
       </template>
     </Modal>
 
-    <!-- Subscription Drawer -->
-    <PartnerSubscriptionDrawer
+    <!-- Subscription Modal -->
+    <PartnerSubscriptionModal
       v-model="showSubscriptionDrawer"
       :partner="selectedPartner"
       @updated="fetchPartners"
     />
 
-    <!-- LEGACY MODAL REMOVED - now using PartnerSubscriptionDrawer -->
+    <!-- LEGACY MODAL REMOVED -->
     <Modal
       v-if="false"
       v-model="showSubscriptionModal"
@@ -1309,7 +1309,7 @@ import { useI18n } from 'vue-i18n'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
 import { usePartnerSubscription } from '@/composables/usePartnerSubscription'
-import PartnerSubscriptionDrawer from './partners/PartnerSubscriptionDrawer.vue'
+import PartnerSubscriptionModal from './partners/PartnerSubscriptionModal.vue'
 
 const { t } = useI18n()
 

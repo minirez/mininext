@@ -14,20 +14,28 @@
       {{ $t('partners.subscription.noPackagesAvailable') }}
     </div>
 
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div v-else class="grid grid-cols-2 gap-3">
       <div
         v-for="pkg in packages"
         :key="pkg._id"
         class="relative border rounded-xl p-4 cursor-pointer transition-all duration-200"
         :class="[
           selectedPackageId === pkg._id
-            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-2 ring-purple-500/30 scale-[1.02] shadow-lg'
+            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-2 ring-purple-500/20 shadow-md'
             : currentPackageId === pkg._id
               ? 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10'
               : 'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md'
         ]"
         @click="$emit('select', pkg._id)"
       >
+        <!-- Secili ikon -->
+        <span
+          v-if="selectedPackageId === pkg._id"
+          class="absolute top-2.5 right-2.5 text-purple-600 dark:text-purple-400"
+        >
+          <span class="material-icons text-lg">check_circle</span>
+        </span>
+
         <!-- Mevcut badge -->
         <span
           v-if="currentPackageId === pkg._id"
@@ -36,21 +44,13 @@
           {{ $t('partners.subscription.currentPackageLabel') }}
         </span>
 
-        <!-- Seçili badge -->
-        <span
-          v-if="selectedPackageId === pkg._id && selectedPackageId !== currentPackageId"
-          class="absolute -top-2 right-3 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400"
-        >
-          {{ $t('common.selected') }}
-        </span>
-
-        <!-- Paket İkon + İsim -->
-        <div class="flex items-center gap-2 mb-2">
+        <!-- Paket Ikon + Isim -->
+        <div class="flex items-center gap-2.5 mb-3">
           <div
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm"
-            :class="
-              selectedPackageId === pkg._id ? 'bg-purple-600' : 'bg-gray-400 dark:bg-slate-500'
-            "
+            class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm"
+            :style="{
+              backgroundColor: pkg.color || (selectedPackageId === pkg._id ? '#9333ea' : '#9ca3af')
+            }"
           >
             <span class="material-icons text-sm">{{ pkg.icon || 'star' }}</span>
           </div>
@@ -66,10 +66,10 @@
 
         <!-- Fiyat -->
         <div class="mt-2 pt-2 border-t border-gray-100 dark:border-slate-700">
-          <span class="text-lg font-bold text-gray-900 dark:text-white">
+          <span class="text-xl font-bold text-gray-900 dark:text-white">
             {{ getPackagePrice(pkg) }}
           </span>
-          <span class="text-xs text-gray-500 dark:text-slate-400">
+          <span class="text-xs text-gray-500 dark:text-slate-400 ml-0.5">
             /{{
               interval === 'monthly'
                 ? $t('partners.subscription.monthly')

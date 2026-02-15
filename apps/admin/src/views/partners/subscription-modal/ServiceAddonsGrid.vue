@@ -16,15 +16,15 @@
 
     <div v-else class="space-y-3">
       <div v-for="[category, catServices] in groupedServices" :key="category">
-        <!-- Kategori başlığı -->
+        <!-- Kategori basligi -->
         <div
-          class="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5"
+          class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg"
         >
           <span class="material-icons text-xs">{{ categoryIcons[category] || 'category' }}</span>
           {{ $t(`partners.subscription.category_${category}`) }}
         </div>
 
-        <!-- Hizmet kartları -->
+        <!-- Hizmet kartlari -->
         <div class="space-y-1.5">
           <div
             v-for="svc in catServices"
