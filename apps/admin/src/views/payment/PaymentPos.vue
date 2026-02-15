@@ -1591,179 +1591,149 @@ async function toggleDefault(pos, currency) {
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Modal -->
+    <!-- ============================================ -->
+    <!-- POS MODAL (her iki view'dan erişilebilir) -->
+    <!-- ============================================ -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
       <div
-        v-if="showModal"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col"
       >
+        <!-- Modal Header -->
         <div
-          class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col"
+          :class="[
+            'px-6 py-4 border-b dark:border-slate-700 flex items-center justify-between',
+            createType === 'aggregator'
+              ? 'bg-purple-50 dark:bg-purple-900/30'
+              : 'bg-gray-50 dark:bg-slate-900'
+          ]"
         >
-          <!-- Modal Header -->
-          <div
-            :class="[
-              'px-6 py-4 border-b dark:border-slate-700 flex items-center justify-between',
-              createType === 'aggregator'
-                ? 'bg-purple-50 dark:bg-purple-900/30'
-                : 'bg-gray-50 dark:bg-slate-900'
-            ]"
-          >
-            <div class="flex items-center gap-3">
-              <img
-                v-if="selectedBank"
-                :src="getBankLogo(selectedBank.code)"
-                :alt="selectedBank.name"
-                class="w-10 h-10 rounded-lg"
-                @error="$event.target.style.display = 'none'"
-              />
-              <div
-                v-else
-                :class="[
-                  'w-10 h-10 rounded-lg flex items-center justify-center',
-                  createType === 'aggregator'
-                    ? 'bg-purple-200 dark:bg-purple-900/50'
-                    : 'bg-gray-200 dark:bg-slate-700'
-                ]"
-              >
-                <span
-                  :class="[
-                    'material-icons',
-                    createType === 'aggregator'
-                      ? 'text-purple-600 dark:text-purple-400'
-                      : 'text-gray-500 dark:text-slate-400'
-                  ]"
-                >
-                  {{ createType === 'aggregator' ? 'hub' : 'account_balance' }}
-                </span>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-                  {{
-                    editingPos
-                      ? isAggregator(editingPos.bankCode)
-                        ? 'Entegrasyon Duzenle'
-                        : 'POS Duzenle'
-                      : createType === 'aggregator'
-                        ? 'Yeni Entegrasyon Ekle'
-                        : 'Yeni Banka POS Ekle'
-                  }}
-                </h3>
-                <p v-if="selectedBank" class="text-sm text-gray-500 dark:text-slate-400">
-                  {{ generatedPosName }}
-                </p>
-              </div>
-            </div>
-            <button
-              @click="showModal = false"
-              class="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          <div class="flex items-center gap-3">
+            <img
+              v-if="selectedBank"
+              :src="getBankLogo(selectedBank.code)"
+              :alt="selectedBank.name"
+              class="w-10 h-10 rounded-lg"
+              @error="$event.target.style.display = 'none'"
+            />
+            <div
+              v-else
+              :class="[
+                'w-10 h-10 rounded-lg flex items-center justify-center',
+                createType === 'aggregator'
+                  ? 'bg-purple-200 dark:bg-purple-900/50'
+                  : 'bg-gray-200 dark:bg-slate-700'
+              ]"
             >
-              <span class="material-icons text-gray-500 dark:text-slate-400">close</span>
-            </button>
-          </div>
-
-          <!-- Tabs -->
-          <div class="px-6 border-b dark:border-slate-700 bg-white dark:bg-slate-800">
-            <nav class="flex gap-1 -mb-px overflow-x-auto">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                @click="activeTab = tab.id"
+              <span
                 :class="[
-                  'px-4 py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                    : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
+                  'material-icons',
+                  createType === 'aggregator'
+                    ? 'text-purple-600 dark:text-purple-400'
+                    : 'text-gray-500 dark:text-slate-400'
                 ]"
               >
-                <span class="material-icons text-lg">{{ tab.icon }}</span>
-                {{ tab.label }}
-              </button>
-            </nav>
+                {{ createType === 'aggregator' ? 'hub' : 'account_balance' }}
+              </span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                {{
+                  editingPos
+                    ? isAggregator(editingPos.bankCode)
+                      ? 'Entegrasyon Duzenle'
+                      : 'POS Duzenle'
+                    : createType === 'aggregator'
+                      ? 'Yeni Entegrasyon Ekle'
+                      : 'Yeni Banka POS Ekle'
+                }}
+              </h3>
+              <p v-if="selectedBank" class="text-sm text-gray-500 dark:text-slate-400">
+                {{ generatedPosName }}
+              </p>
+            </div>
           </div>
+          <button
+            @click="showModal = false"
+            class="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <span class="material-icons text-gray-500 dark:text-slate-400">close</span>
+          </button>
+        </div>
 
-          <!-- Tab Content -->
-          <div class="flex-1 overflow-y-auto p-6">
-            <form @submit.prevent="handleSubmit">
-              <!-- General Tab -->
-              <div v-show="activeTab === 'general'" class="space-y-6">
-                <!-- Bank/Aggregator Selection - Only show when creating new POS -->
-                <div v-if="!editingPos">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    {{ createType === 'aggregator' ? 'Entegrasyon Secin' : 'Banka Secin' }} *
-                  </label>
-                  <div class="flex items-center gap-4">
-                    <select
-                      v-model="form.bankCode"
-                      class="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    >
-                      <option value="">
-                        -- {{ createType === 'aggregator' ? 'Entegrasyon' : 'Banka' }} Secin --
-                      </option>
-                      <option v-for="bank in modalBankOptions" :key="bank.code" :value="bank.code">
-                        {{ bank.name }}{{ !bank.providerSupported ? ' (Yakin Zamanda)' : '' }}
-                      </option>
-                    </select>
-                    <!-- Selected Bank Logo -->
-                    <img
-                      v-if="selectedBank"
-                      :src="getBankLogo(selectedBank.code)"
-                      :alt="selectedBank.name"
-                      class="w-14 h-14 rounded-xl shrink-0 object-contain"
-                      @error="$event.target.style.display = 'none'"
-                    />
-                  </div>
-                  <!-- Info when all options are used -->
-                  <p
-                    v-if="modalBankOptions.length === 0"
-                    class="text-sm text-orange-600 dark:text-orange-400 mt-2"
-                  >
-                    {{
-                      createType === 'aggregator'
-                        ? 'Tüm entegrasyonlar eklenmiş'
-                        : 'Tüm bankalar eklenmiş'
-                    }}
-                  </p>
+        <!-- Tabs -->
+        <div class="px-6 border-b dark:border-slate-700 bg-white dark:bg-slate-800">
+          <nav class="flex gap-1 -mb-px overflow-x-auto">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              @click="activeTab = tab.id"
+              :class="[
+                'px-4 py-3 text-sm font-medium border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap',
+                activeTab === tab.id
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
+              ]"
+            >
+              <span class="material-icons text-lg">{{ tab.icon }}</span>
+              {{ tab.label }}
+            </button>
+          </nav>
+        </div>
 
-                  <!-- Bank & Card Family Logos Display (only for bank POS) -->
-                  <div
-                    v-if="selectedBank && !selectedBank.isAggregator"
-                    class="mt-4 p-4 bg-gray-50 dark:bg-slate-900 rounded-xl flex items-center gap-6"
+        <!-- Tab Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <form @submit.prevent="handleSubmit">
+            <!-- General Tab -->
+            <div v-show="activeTab === 'general'" class="space-y-6">
+              <!-- Bank/Aggregator Selection - Only show when creating new POS -->
+              <div v-if="!editingPos">
+                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  {{ createType === 'aggregator' ? 'Entegrasyon Secin' : 'Banka Secin' }} *
+                </label>
+                <div class="flex items-center gap-4">
+                  <select
+                    v-model="form.bankCode"
+                    class="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
                   >
-                    <div class="flex items-center gap-3">
-                      <img
-                        :src="getBankLogo(selectedBank.code)"
-                        :alt="selectedBank.name"
-                        class="h-10 w-auto max-w-24 object-contain"
-                      />
-                      <div>
-                        <p class="font-medium text-gray-800 dark:text-white">
-                          {{ selectedBank.name }}
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">Banka</p>
-                      </div>
-                    </div>
-                    <div class="w-px h-10 bg-gray-300 dark:bg-slate-600"></div>
-                    <div v-if="selectedCardFamily" class="flex items-center gap-3">
-                      <img
-                        :src="getCardLogo(selectedCardFamily.code)"
-                        :alt="selectedCardFamily.name"
-                        class="h-10 rounded-lg"
-                      />
-                      <div>
-                        <p class="font-medium text-gray-800 dark:text-white">
-                          {{ selectedCardFamily.name }}
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">Kart Ailesi</p>
-                      </div>
-                    </div>
-                  </div>
+                    <option value="">
+                      -- {{ createType === 'aggregator' ? 'Entegrasyon' : 'Banka' }} Secin --
+                    </option>
+                    <option v-for="bank in modalBankOptions" :key="bank.code" :value="bank.code">
+                      {{ bank.name }}{{ !bank.providerSupported ? ' (Yakin Zamanda)' : '' }}
+                    </option>
+                  </select>
+                  <!-- Selected Bank Logo -->
+                  <img
+                    v-if="selectedBank"
+                    :src="getBankLogo(selectedBank.code)"
+                    :alt="selectedBank.name"
+                    class="w-14 h-14 rounded-xl shrink-0 object-contain"
+                    @error="$event.target.style.display = 'none'"
+                  />
+                </div>
+                <!-- Info when all options are used -->
+                <p
+                  v-if="modalBankOptions.length === 0"
+                  class="text-sm text-orange-600 dark:text-orange-400 mt-2"
+                >
+                  {{
+                    createType === 'aggregator'
+                      ? 'Tüm entegrasyonlar eklenmiş'
+                      : 'Tüm bankalar eklenmiş'
+                  }}
+                </p>
 
-                  <!-- Aggregator Info Display -->
-                  <div
-                    v-if="selectedBank && selectedBank.isAggregator"
-                    class="mt-4 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center gap-4"
-                  >
+                <!-- Bank & Card Family Logos Display (only for bank POS) -->
+                <div
+                  v-if="selectedBank && !selectedBank.isAggregator"
+                  class="mt-4 p-4 bg-gray-50 dark:bg-slate-900 rounded-xl flex items-center gap-6"
+                >
+                  <div class="flex items-center gap-3">
                     <img
                       :src="getBankLogo(selectedBank.code)"
                       :alt="selectedBank.name"
@@ -1773,725 +1743,736 @@ async function toggleDefault(pos, currency) {
                       <p class="font-medium text-gray-800 dark:text-white">
                         {{ selectedBank.name }}
                       </p>
-                      <p class="text-xs text-purple-600 dark:text-purple-400">
-                        Odeme Entegratoru - Tum kart ailelerini destekler
+                      <p class="text-xs text-gray-500 dark:text-slate-400">Banka</p>
+                    </div>
+                  </div>
+                  <div class="w-px h-10 bg-gray-300 dark:bg-slate-600"></div>
+                  <div v-if="selectedCardFamily" class="flex items-center gap-3">
+                    <img
+                      :src="getCardLogo(selectedCardFamily.code)"
+                      :alt="selectedCardFamily.name"
+                      class="h-10 rounded-lg"
+                    />
+                    <div>
+                      <p class="font-medium text-gray-800 dark:text-white">
+                        {{ selectedCardFamily.name }}
                       </p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400">Kart Ailesi</p>
                     </div>
                   </div>
                 </div>
 
-                <!-- Currency Multi-Select -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    Para Birimleri *
-                    <span class="text-gray-400 dark:text-slate-500 font-normal"
-                      >(Birden fazla seçilebilir)</span
+                <!-- Aggregator Info Display -->
+                <div
+                  v-if="selectedBank && selectedBank.isAggregator"
+                  class="mt-4 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex items-center gap-4"
+                >
+                  <img
+                    :src="getBankLogo(selectedBank.code)"
+                    :alt="selectedBank.name"
+                    class="h-10 w-auto max-w-24 object-contain"
+                  />
+                  <div>
+                    <p class="font-medium text-gray-800 dark:text-white">
+                      {{ selectedBank.name }}
+                    </p>
+                    <p class="text-xs text-purple-600 dark:text-purple-400">
+                      Odeme Entegratoru - Tum kart ailelerini destekler
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Currency Multi-Select -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Para Birimleri *
+                  <span class="text-gray-400 dark:text-slate-500 font-normal"
+                    >(Birden fazla seçilebilir)</span
+                  >
+                </label>
+                <div class="flex flex-wrap gap-3">
+                  <label
+                    v-for="curr in currencies"
+                    :key="curr.code"
+                    @click.prevent="toggleCurrency(curr.code)"
+                    :class="[
+                      'flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all cursor-pointer',
+                      form.currencies.includes(curr.code)
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                        : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-500'
+                    ]"
+                  >
+                    <span class="text-lg">{{ curr.symbol }}</span>
+                    <span class="font-medium text-gray-800 dark:text-white">{{
+                      curr.code.toUpperCase()
+                    }}</span>
+                    <span class="text-sm text-gray-500 dark:text-slate-400">{{ curr.name }}</span>
+                    <span
+                      v-if="form.currencies.includes(curr.code)"
+                      class="material-icons text-primary-600 dark:text-primary-400 text-lg"
+                      >check_circle</span
                     >
                   </label>
-                  <div class="flex flex-wrap gap-3">
-                    <label
-                      v-for="curr in currencies"
-                      :key="curr.code"
-                      @click.prevent="toggleCurrency(curr.code)"
-                      :class="[
-                        'flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all cursor-pointer',
-                        form.currencies.includes(curr.code)
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                          : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-500'
-                      ]"
-                    >
-                      <span class="text-lg">{{ curr.symbol }}</span>
-                      <span class="font-medium text-gray-800 dark:text-white">{{
-                        curr.code.toUpperCase()
-                      }}</span>
-                      <span class="text-sm text-gray-500 dark:text-slate-400">{{ curr.name }}</span>
-                      <span
-                        v-if="form.currencies.includes(curr.code)"
-                        class="material-icons text-primary-600 dark:text-primary-400 text-lg"
-                        >check_circle</span
-                      >
-                    </label>
-                  </div>
-                  <p
-                    v-if="form.currencies.length > 1"
-                    class="text-sm text-primary-600 dark:text-primary-400 mt-2"
-                  >
-                    Bu POS {{ form.currencies.length }} para birimini destekleyecek
-                  </p>
                 </div>
-
-                <!-- Status Row - Switches -->
-                <div class="grid grid-cols-2 gap-4">
-                  <div
-                    class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl"
-                  >
-                    <div class="flex items-center gap-3">
-                      <span
-                        class="material-icons text-lg"
-                        :class="
-                          form.status
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-gray-400 dark:text-slate-500'
-                        "
-                        >power_settings_new</span
-                      >
-                      <div>
-                        <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
-                          POS Durumu
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">
-                          {{ form.status ? 'Aktif' : 'Pasif' }}
-                        </p>
-                      </div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input v-model="form.status" type="checkbox" class="sr-only peer" />
-                      <div
-                        class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"
-                      ></div>
-                    </label>
-                  </div>
-                  <div
-                    class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl"
-                  >
-                    <div class="flex items-center gap-3">
-                      <span
-                        class="material-icons text-lg"
-                        :class="
-                          form.testMode
-                            ? 'text-yellow-600 dark:text-yellow-400'
-                            : 'text-gray-400 dark:text-slate-500'
-                        "
-                        >science</span
-                      >
-                      <div>
-                        <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
-                          Test Modu
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">
-                          {{ form.testMode ? 'Test ortami' : 'Canli ortam' }}
-                        </p>
-                      </div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input v-model="form.testMode" type="checkbox" class="sr-only peer" />
-                      <div
-                        class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"
-                      ></div>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- 3D Secure Model Selection (always active) -->
-                <div
-                  v-if="selectedBank && supported3DModels.length > 0"
-                  class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200 dark:border-green-800"
+                <p
+                  v-if="form.currencies.length > 1"
+                  class="text-sm text-primary-600 dark:text-primary-400 mt-2"
                 >
-                  <div class="flex items-center gap-3 mb-3">
-                    <span class="material-icons text-xl text-green-600 dark:text-green-400"
-                      >verified_user</span
-                    >
-                    <div>
-                      <p class="text-sm font-medium text-gray-800 dark:text-white">
-                        3D Secure Modeli
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-slate-400">
-                        Guvenli odeme icin kullanilacak 3D dogrulama yontemi
-                      </p>
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <label
-                      v-for="model in supported3DModels"
-                      :key="model.code"
-                      @click.prevent="form.paymentModel = model.code"
-                      :class="[
-                        'flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all',
-                        form.paymentModel === model.code
-                          ? 'border-green-500 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400'
-                          : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-green-300 dark:hover:border-green-600'
-                      ]"
-                    >
-                      <span
-                        :class="[
-                          'material-icons text-lg',
-                          form.paymentModel === model.code
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-gray-400 dark:text-slate-500'
-                        ]"
-                        >verified_user</span
-                      >
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate text-gray-800 dark:text-white">
-                          {{ model.name }}
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
-                          {{ model.description }}
-                        </p>
-                      </div>
-                      <span
-                        v-if="form.paymentModel === model.code"
-                        class="material-icons text-green-600 dark:text-green-400"
-                        >check_circle</span
-                      >
-                    </label>
-                  </div>
-                </div>
-
-                <!-- 3D'siz Odeme Izni Toggle (separate option) -->
-                <div
-                  v-if="selectedBank && supportsDirectPayment"
-                  class="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/30 rounded-xl border border-orange-200 dark:border-orange-800"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <span class="material-icons text-xl text-orange-600 dark:text-orange-400"
-                        >lock_open</span
-                      >
-                      <div>
-                        <p class="text-sm font-medium text-gray-800 dark:text-white">
-                          3D'siz Odeme Izni
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">
-                          Odeme linki vb. durumlarda 3D olmadan odeme alinabilir
-                        </p>
-                      </div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input
-                        v-model="form.allowDirectPayment"
-                        type="checkbox"
-                        class="sr-only peer"
-                      />
-                      <div
-                        class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"
-                      ></div>
-                    </label>
-                  </div>
-                  <p
-                    v-if="form.allowDirectPayment"
-                    class="mt-3 text-xs text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg"
-                  >
-                    <span class="material-icons text-sm align-middle mr-1">warning</span>
-                    Dikkat: 3D olmadan odeme almak guvenlik riski tasir. Sadece guvenilir musteriler
-                    ve ozel durumlar icin kullanin.
-                  </p>
-                </div>
-
-                <!-- Campaign / Plus Installment -->
-                <div
-                  v-if="selectedCardFamily"
-                  class="p-4 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-xl"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <img
-                        :src="getCardLogo(selectedCardFamily.code)"
-                        :alt="selectedCardFamily.name"
-                        class="h-10 rounded-lg"
-                        @error="$event.target.style.display = 'none'"
-                      />
-                      <div>
-                        <p class="text-sm font-medium text-gray-800 dark:text-white">
-                          {{ selectedCardFamily.name }} Kampanyasi
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">
-                          Ekstra taksit kampanyasi
-                        </p>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-sm font-medium text-gray-600 dark:text-slate-400">+</span>
-                      <input
-                        v-model.number="form.plusInstallment"
-                        type="number"
-                        min="0"
-                        max="12"
-                        step="1"
-                        class="w-16 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-center font-semibold focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                      />
-                      <span class="text-sm font-medium text-gray-600 dark:text-slate-400"
-                        >Taksit</span
-                      >
-                    </div>
-                  </div>
-                </div>
+                  Bu POS {{ form.currencies.length }} para birimini destekleyecek
+                </p>
               </div>
 
-              <!-- Credentials Tab -->
-              <div v-show="activeTab === 'credentials'" class="space-y-6">
+              <!-- Status Row - Switches -->
+              <div class="grid grid-cols-2 gap-4">
                 <div
-                  class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-3"
-                >
-                  <span class="material-icons text-yellow-600 dark:text-yellow-400">info</span>
-                  <div>
-                    <p class="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
-                      Hassas Bilgiler
-                    </p>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                      Bu bilgiler sifrelenerek saklanir. Guvenligi icin sifre alanlari
-                      kaydedildikten sonra gosterilmez.
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Provider info badge -->
-                <div
-                  v-if="selectedProvider"
-                  class="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
-                >
-                  <span class="material-icons text-base">settings</span>
-                  <span
-                    >Provider:
-                    <strong class="text-gray-700 dark:text-slate-300">{{
-                      selectedProvider
-                    }}</strong></span
-                  >
-                </div>
-
-                <!-- IP Address Tip for specific banks -->
-                <div
-                  v-if="selectedIpTip"
-                  :class="[
-                    'p-4 rounded-xl border flex items-start gap-3',
-                    selectedIpTip.type === 'warning'
-                      ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800'
-                      : 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'material-icons text-xl',
-                      selectedIpTip.type === 'warning'
-                        ? 'text-orange-600 dark:text-orange-400'
-                        : 'text-blue-600 dark:text-blue-400'
-                    ]"
-                    >{{ selectedIpTip.icon }}</span
-                  >
-                  <div>
-                    <p
-                      :class="[
-                        'text-sm font-medium',
-                        selectedIpTip.type === 'warning'
-                          ? 'text-orange-800 dark:text-orange-300'
-                          : 'text-blue-800 dark:text-blue-300'
-                      ]"
-                    >
-                      {{ selectedIpTip.title }}
-                    </p>
-                    <p
-                      :class="[
-                        'text-sm mt-1',
-                        selectedIpTip.type === 'warning'
-                          ? 'text-orange-700 dark:text-orange-400'
-                          : 'text-blue-700 dark:text-blue-400'
-                      ]"
-                    >
-                      {{ selectedIpTip.message }}
-                    </p>
-                    <div class="mt-2 flex items-center gap-2 text-xs">
-                      <span class="material-icons text-sm text-gray-500 dark:text-slate-400"
-                        >dns</span
-                      >
-                      <span
-                        class="font-mono bg-white dark:bg-slate-700 px-2 py-1 rounded border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300"
-                        >{{ serverIp }}</span
-                      >
-                      <span class="text-gray-500 dark:text-slate-400">(Sunucu IP Adresi)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <!-- Merchant ID -->
-                  <div>
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                      >{{ credentialFields.merchantId?.label || 'Merchant ID' }}</label
-                    >
-                    <input
-                      v-model="form.credentials.merchantId"
-                      type="text"
-                      autocomplete="off"
-                      :placeholder="credentialFields.merchantId?.placeholder || 'Merchant ID'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                  <!-- Terminal ID -->
-                  <div v-if="credentialFields.terminalId?.show !== false">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                      >{{ credentialFields.terminalId?.label || 'Terminal ID' }}</label
-                    >
-                    <input
-                      v-model="form.credentials.terminalId"
-                      type="text"
-                      autocomplete="off"
-                      :placeholder="credentialFields.terminalId?.placeholder || 'Terminal ID'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <!-- Username -->
-                  <div v-if="credentialFields.username?.show !== false">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                      >{{ credentialFields.username?.label || 'Kullanici Adi' }}</label
-                    >
-                    <input
-                      v-model="form.credentials.username"
-                      type="text"
-                      autocomplete="new-password"
-                      data-lpignore="true"
-                      data-form-type="other"
-                      :placeholder="credentialFields.username?.placeholder || 'Kullanici adi'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                  <!-- Password -->
-                  <div v-if="credentialFields.password?.show !== false">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                      {{ credentialFields.password?.label || 'Sifre' }}
-                      <span v-if="editingPos" class="text-gray-400 dark:text-slate-500 font-normal"
-                        >(degistirmek icin yeni deger girin)</span
-                      >
-                    </label>
-                    <input
-                      v-model="form.credentials.password"
-                      type="password"
-                      autocomplete="new-password"
-                      data-lpignore="true"
-                      data-form-type="other"
-                      :placeholder="credentialFields.password?.placeholder || 'Sifre'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                  <!-- Secret Key -->
-                  <div v-if="credentialFields.secretKey?.show !== false">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                      {{ credentialFields.secretKey?.label || 'Secret Key' }}
-                      <span v-if="editingPos" class="text-gray-400 dark:text-slate-500 font-normal"
-                        >(degistirmek icin yeni deger girin)</span
-                      >
-                    </label>
-                    <input
-                      v-model="form.credentials.secretKey"
-                      type="password"
-                      autocomplete="new-password"
-                      data-lpignore="true"
-                      data-form-type="other"
-                      :placeholder="credentialFields.secretKey?.placeholder || 'Guvenlik anahtari'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                  <!-- POSNET ID (YKB only) -->
-                  <div v-if="credentialFields.posnetId?.show === true">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                      >{{ credentialFields.posnetId?.label || 'POSNET ID' }}</label
-                    >
-                    <input
-                      v-model="form.credentials.posnetId"
-                      type="text"
-                      autocomplete="off"
-                      :placeholder="credentialFields.posnetId?.placeholder || 'POSNET ID'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                  <!-- Section/BOLUM (Payten banks - İşbank etc.) -->
-                  <div v-if="credentialFields.section?.show === true">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                      >{{ credentialFields.section?.label || 'BOLUM' }}</label
-                    >
-                    <input
-                      v-model="form.credentials.section"
-                      type="text"
-                      autocomplete="off"
-                      :placeholder="credentialFields.section?.placeholder || 'Bolum/Sube kodu'"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Installment Tab -->
-              <div v-show="activeTab === 'installment'" class="space-y-6">
-                <!-- Installment Toggle -->
-                <div
-                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-lg"
+                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl"
                 >
                   <div class="flex items-center gap-3">
-                    <span class="material-icons text-2xl text-primary-600 dark:text-primary-400"
-                      >calendar_month</span
+                    <span
+                      class="material-icons text-lg"
+                      :class="
+                        form.status
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-400 dark:text-slate-500'
+                      "
+                      >power_settings_new</span
                     >
                     <div>
-                      <p class="font-medium text-gray-800 dark:text-white">Taksitli Satis</p>
-                      <p class="text-sm text-gray-500 dark:text-slate-400">
-                        Taksitli odeme secenegi sun
+                      <p class="text-sm font-medium text-gray-700 dark:text-slate-300">
+                        POS Durumu
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400">
+                        {{ form.status ? 'Aktif' : 'Pasif' }}
                       </p>
                     </div>
                   </div>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input
-                      v-model="form.installment.enabled"
-                      type="checkbox"
-                      class="sr-only peer"
-                    />
+                    <input v-model="form.status" type="checkbox" class="sr-only peer" />
                     <div
-                      class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"
+                      class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"
                     ></div>
                   </label>
                 </div>
+                <div
+                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl"
+                >
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="material-icons text-lg"
+                      :class="
+                        form.testMode
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : 'text-gray-400 dark:text-slate-500'
+                      "
+                      >science</span
+                    >
+                    <div>
+                      <p class="text-sm font-medium text-gray-700 dark:text-slate-300">Test Modu</p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400">
+                        {{ form.testMode ? 'Test ortami' : 'Canli ortam' }}
+                      </p>
+                    </div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input v-model="form.testMode" type="checkbox" class="sr-only peer" />
+                    <div
+                      class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-yellow-300 dark:peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"
+                    ></div>
+                  </label>
+                </div>
+              </div>
 
-                <div v-if="form.installment.enabled" class="space-y-6">
-                  <!-- Basic Settings -->
-                  <div class="grid grid-cols-3 gap-4">
-                    <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                        >Minimum Taksit</label
-                      >
-                      <select
-                        v-model.number="form.installment.minCount"
-                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                      >
-                        <option v-for="n in 6" :key="n" :value="n + 1">{{ n + 1 }} Taksit</option>
-                      </select>
+              <!-- 3D Secure Model Selection (always active) -->
+              <div
+                v-if="selectedBank && supported3DModels.length > 0"
+                class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200 dark:border-green-800"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="material-icons text-xl text-green-600 dark:text-green-400"
+                    >verified_user</span
+                  >
+                  <div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-white">
+                      3D Secure Modeli
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">
+                      Guvenli odeme icin kullanilacak 3D dogrulama yontemi
+                    </p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label
+                    v-for="model in supported3DModels"
+                    :key="model.code"
+                    @click.prevent="form.paymentModel = model.code"
+                    :class="[
+                      'flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all',
+                      form.paymentModel === model.code
+                        ? 'border-green-500 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400'
+                        : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-green-300 dark:hover:border-green-600'
+                    ]"
+                  >
+                    <span
+                      :class="[
+                        'material-icons text-lg',
+                        form.paymentModel === model.code
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-400 dark:text-slate-500'
+                      ]"
+                      >verified_user</span
+                    >
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium truncate text-gray-800 dark:text-white">
+                        {{ model.name }}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400 truncate">
+                        {{ model.description }}
+                      </p>
                     </div>
+                    <span
+                      v-if="form.paymentModel === model.code"
+                      class="material-icons text-green-600 dark:text-green-400"
+                      >check_circle</span
+                    >
+                  </label>
+                </div>
+              </div>
+
+              <!-- 3D'siz Odeme Izni Toggle (separate option) -->
+              <div
+                v-if="selectedBank && supportsDirectPayment"
+                class="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/30 dark:to-amber-900/30 rounded-xl border border-orange-200 dark:border-orange-800"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="material-icons text-xl text-orange-600 dark:text-orange-400"
+                      >lock_open</span
+                    >
                     <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                        >Maksimum Taksit</label
-                      >
-                      <select
-                        v-model.number="form.installment.maxCount"
-                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                      >
-                        <option
-                          v-for="n in 12"
-                          :key="n"
-                          :value="n"
-                          :disabled="n < form.installment.minCount"
-                        >
-                          {{ n }} Taksit
-                        </option>
-                      </select>
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">
+                        3D'siz Odeme Izni
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400">
+                        Odeme linki vb. durumlarda 3D olmadan odeme alinabilir
+                      </p>
                     </div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input v-model="form.allowDirectPayment" type="checkbox" class="sr-only peer" />
+                    <div
+                      class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"
+                    ></div>
+                  </label>
+                </div>
+                <p
+                  v-if="form.allowDirectPayment"
+                  class="mt-3 text-xs text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50 p-2 rounded-lg"
+                >
+                  <span class="material-icons text-sm align-middle mr-1">warning</span>
+                  Dikkat: 3D olmadan odeme almak guvenlik riski tasir. Sadece guvenilir musteriler
+                  ve ozel durumlar icin kullanin.
+                </p>
+              </div>
+
+              <!-- Campaign / Plus Installment -->
+              <div
+                v-if="selectedCardFamily"
+                class="p-4 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-xl"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <img
+                      :src="getCardLogo(selectedCardFamily.code)"
+                      :alt="selectedCardFamily.name"
+                      class="h-10 rounded-lg"
+                      @error="$event.target.style.display = 'none'"
+                    />
                     <div>
-                      <label
-                        class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                        >Min. Tutar ({{ (form.currencies[0] || 'try').toUpperCase() }})</label
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">
+                        {{ selectedCardFamily.name }} Kampanyasi
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-slate-400">
+                        Ekstra taksit kampanyasi
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-600 dark:text-slate-400">+</span>
+                    <input
+                      v-model.number="form.plusInstallment"
+                      type="number"
+                      min="0"
+                      max="12"
+                      step="1"
+                      class="w-16 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-center font-semibold focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                    />
+                    <span class="text-sm font-medium text-gray-600 dark:text-slate-400"
+                      >Taksit</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Credentials Tab -->
+            <div v-show="activeTab === 'credentials'" class="space-y-6">
+              <div
+                class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-3"
+              >
+                <span class="material-icons text-yellow-600 dark:text-yellow-400">info</span>
+                <div>
+                  <p class="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
+                    Hassas Bilgiler
+                  </p>
+                  <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                    Bu bilgiler sifrelenerek saklanir. Guvenligi icin sifre alanlari kaydedildikten
+                    sonra gosterilmez.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Provider info badge -->
+              <div
+                v-if="selectedProvider"
+                class="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
+              >
+                <span class="material-icons text-base">settings</span>
+                <span
+                  >Provider:
+                  <strong class="text-gray-700 dark:text-slate-300">{{
+                    selectedProvider
+                  }}</strong></span
+                >
+              </div>
+
+              <!-- IP Address Tip for specific banks -->
+              <div
+                v-if="selectedIpTip"
+                :class="[
+                  'p-4 rounded-xl border flex items-start gap-3',
+                  selectedIpTip.type === 'warning'
+                    ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800'
+                    : 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'
+                ]"
+              >
+                <span
+                  :class="[
+                    'material-icons text-xl',
+                    selectedIpTip.type === 'warning'
+                      ? 'text-orange-600 dark:text-orange-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                  ]"
+                  >{{ selectedIpTip.icon }}</span
+                >
+                <div>
+                  <p
+                    :class="[
+                      'text-sm font-medium',
+                      selectedIpTip.type === 'warning'
+                        ? 'text-orange-800 dark:text-orange-300'
+                        : 'text-blue-800 dark:text-blue-300'
+                    ]"
+                  >
+                    {{ selectedIpTip.title }}
+                  </p>
+                  <p
+                    :class="[
+                      'text-sm mt-1',
+                      selectedIpTip.type === 'warning'
+                        ? 'text-orange-700 dark:text-orange-400'
+                        : 'text-blue-700 dark:text-blue-400'
+                    ]"
+                  >
+                    {{ selectedIpTip.message }}
+                  </p>
+                  <div class="mt-2 flex items-center gap-2 text-xs">
+                    <span class="material-icons text-sm text-gray-500 dark:text-slate-400"
+                      >dns</span
+                    >
+                    <span
+                      class="font-mono bg-white dark:bg-slate-700 px-2 py-1 rounded border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300"
+                      >{{ serverIp }}</span
+                    >
+                    <span class="text-gray-500 dark:text-slate-400">(Sunucu IP Adresi)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Merchant ID -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
+                    credentialFields.merchantId?.label || 'Merchant ID'
+                  }}</label>
+                  <input
+                    v-model="form.credentials.merchantId"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="credentialFields.merchantId?.placeholder || 'Merchant ID'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+                <!-- Terminal ID -->
+                <div v-if="credentialFields.terminalId?.show !== false">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
+                    credentialFields.terminalId?.label || 'Terminal ID'
+                  }}</label>
+                  <input
+                    v-model="form.credentials.terminalId"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="credentialFields.terminalId?.placeholder || 'Terminal ID'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Username -->
+                <div v-if="credentialFields.username?.show !== false">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
+                    credentialFields.username?.label || 'Kullanici Adi'
+                  }}</label>
+                  <input
+                    v-model="form.credentials.username"
+                    type="text"
+                    autocomplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    :placeholder="credentialFields.username?.placeholder || 'Kullanici adi'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+                <!-- Password -->
+                <div v-if="credentialFields.password?.show !== false">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                    {{ credentialFields.password?.label || 'Sifre' }}
+                    <span v-if="editingPos" class="text-gray-400 dark:text-slate-500 font-normal"
+                      >(degistirmek icin yeni deger girin)</span
+                    >
+                  </label>
+                  <input
+                    v-model="form.credentials.password"
+                    type="password"
+                    autocomplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    :placeholder="credentialFields.password?.placeholder || 'Sifre'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Secret Key -->
+                <div v-if="credentialFields.secretKey?.show !== false">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                    {{ credentialFields.secretKey?.label || 'Secret Key' }}
+                    <span v-if="editingPos" class="text-gray-400 dark:text-slate-500 font-normal"
+                      >(degistirmek icin yeni deger girin)</span
+                    >
+                  </label>
+                  <input
+                    v-model="form.credentials.secretKey"
+                    type="password"
+                    autocomplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    :placeholder="credentialFields.secretKey?.placeholder || 'Guvenlik anahtari'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+                <!-- POSNET ID (YKB only) -->
+                <div v-if="credentialFields.posnetId?.show === true">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
+                    credentialFields.posnetId?.label || 'POSNET ID'
+                  }}</label>
+                  <input
+                    v-model="form.credentials.posnetId"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="credentialFields.posnetId?.placeholder || 'POSNET ID'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+                <!-- Section/BOLUM (Payten banks - İşbank etc.) -->
+                <div v-if="credentialFields.section?.show === true">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
+                    credentialFields.section?.label || 'BOLUM'
+                  }}</label>
+                  <input
+                    v-model="form.credentials.section"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="credentialFields.section?.placeholder || 'Bolum/Sube kodu'"
+                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Installment Tab -->
+            <div v-show="activeTab === 'installment'" class="space-y-6">
+              <!-- Installment Toggle -->
+              <div
+                class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-lg"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="material-icons text-2xl text-primary-600 dark:text-primary-400"
+                    >calendar_month</span
+                  >
+                  <div>
+                    <p class="font-medium text-gray-800 dark:text-white">Taksitli Satis</p>
+                    <p class="text-sm text-gray-500 dark:text-slate-400">
+                      Taksitli odeme secenegi sun
+                    </p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input v-model="form.installment.enabled" type="checkbox" class="sr-only peer" />
+                  <div
+                    class="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"
+                  ></div>
+                </label>
+              </div>
+
+              <div v-if="form.installment.enabled" class="space-y-6">
+                <!-- Basic Settings -->
+                <div class="grid grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
+                      >Minimum Taksit</label
+                    >
+                    <select
+                      v-model.number="form.installment.minCount"
+                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                    >
+                      <option v-for="n in 6" :key="n" :value="n + 1">{{ n + 1 }} Taksit</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
+                      >Maksimum Taksit</label
+                    >
+                    <select
+                      v-model.number="form.installment.maxCount"
+                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                    >
+                      <option
+                        v-for="n in 12"
+                        :key="n"
+                        :value="n"
+                        :disabled="n < form.installment.minCount"
+                      >
+                        {{ n }} Taksit
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
+                      >Min. Tutar ({{ (form.currencies[0] || 'try').toUpperCase() }})</label
+                    >
+                    <input
+                      v-model.number="form.installment.minAmount"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <!-- Info about Commission Rates -->
+                <div
+                  class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-3"
+                >
+                  <span class="material-icons text-blue-600 dark:text-blue-400">info</span>
+                  <div>
+                    <p class="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                      Banka Komisyon Oranlari
+                    </p>
+                    <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                      Banka komisyon oranlarini ayarlamak icin "Komisyon Oranlari" sekmesine gidin.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Commissions Tab -->
+            <div v-show="activeTab === 'commissions'" class="space-y-6">
+              <!-- Header with Add Button -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium text-gray-800 dark:text-white">Banka Komisyon Oranlari</h4>
+                  <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                    Tarih bazli komisyon donemlerini yonetin
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="addCommissionPeriod"
+                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 text-sm"
+                >
+                  <span class="material-icons text-lg">add</span>
+                  Yeni Donem Ekle
+                </button>
+              </div>
+
+              <!-- No periods message -->
+              <div
+                v-if="form.commissionRates.length === 0"
+                class="text-center py-12 bg-gray-50 dark:bg-slate-900 rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700"
+              >
+                <span class="material-icons text-5xl text-gray-300 dark:text-slate-600 mb-3"
+                  >calendar_month</span
+                >
+                <p class="text-gray-500 dark:text-slate-400 mb-4">
+                  Henuz komisyon donemi tanimlanmamis
+                </p>
+                <button
+                  type="button"
+                  @click="addCommissionPeriod"
+                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+                >
+                  Ilk Donemi Ekle
+                </button>
+              </div>
+
+              <!-- Commission Periods -->
+              <div
+                v-for="(period, periodIndex) in form.commissionRates"
+                :key="periodIndex"
+                class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden"
+              >
+                <!-- Period Header -->
+                <div
+                  class="bg-gray-50 dark:bg-slate-900 px-4 py-3 border-b dark:border-slate-700 flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-4">
+                    <span class="material-icons text-gray-500 dark:text-slate-400">event</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-gray-700 dark:text-slate-300"
+                        >Bu tarihten itibaren:</span
                       >
                       <input
-                        v-model.number="form.installment.minAmount"
-                        type="number"
-                        min="0"
-                        step="1"
-                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                        v-model="period.startDate"
+                        type="date"
+                        class="px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
                       />
                     </div>
                   </div>
-
-                  <!-- Info about Commission Rates -->
-                  <div
-                    class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-3"
+                  <button
+                    type="button"
+                    @click="removeCommissionPeriod(periodIndex)"
+                    class="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
                   >
-                    <span class="material-icons text-blue-600 dark:text-blue-400">info</span>
-                    <div>
-                      <p class="text-sm text-blue-800 dark:text-blue-300 font-medium">
-                        Banka Komisyon Oranlari
-                      </p>
-                      <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                        Banka komisyon oranlarini ayarlamak icin "Komisyon Oranlari" sekmesine
-                        gidin.
-                      </p>
+                    <span class="material-icons text-lg">delete</span>
+                  </button>
+                </div>
+
+                <!-- Rates List -->
+                <div class="divide-y divide-gray-100 dark:divide-slate-700">
+                  <!-- Yurtdışı Kartlar -->
+                  <div
+                    class="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-900/20"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span class="material-icons text-blue-600 dark:text-blue-400 text-lg"
+                        >credit_card</span
+                      >
+                      <span class="font-medium text-gray-800 dark:text-white"
+                        >Yurtdisi Kartlar</span
+                      >
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model.number="period.foreignCardRate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
+                    </div>
+                  </div>
+
+                  <!-- Yabancı Bankalar -->
+                  <div
+                    class="flex items-center justify-between px-4 py-3 bg-orange-50 dark:bg-orange-900/20"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span class="material-icons text-orange-600 dark:text-orange-400 text-lg"
+                        >account_balance</span
+                      >
+                      <span class="font-medium text-gray-800 dark:text-white"
+                        >Yabanci Bankalar</span
+                      >
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model.number="period.foreignBankRate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
+                    </div>
+                  </div>
+
+                  <!-- Taksit Oranları -->
+                  <div
+                    v-for="rate in period.rates"
+                    :key="rate.count"
+                    class="flex items-center justify-between px-4 py-2.5"
+                    :class="rate.count === 1 ? 'bg-green-50 dark:bg-green-900/20' : ''"
+                  >
+                    <span class="font-medium text-gray-800 dark:text-white">
+                      {{ rate.count === 1 ? 'Pesin' : rate.count + ' Taksit' }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model.number="rate.rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </form>
+        </div>
 
-              <!-- Commissions Tab -->
-              <div v-show="activeTab === 'commissions'" class="space-y-6">
-                <!-- Header with Add Button -->
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h4 class="font-medium text-gray-800 dark:text-white">
-                      Banka Komisyon Oranlari
-                    </h4>
-                    <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                      Tarih bazli komisyon donemlerini yonetin
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    @click="addCommissionPeriod"
-                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 text-sm"
-                  >
-                    <span class="material-icons text-lg">add</span>
-                    Yeni Donem Ekle
-                  </button>
-                </div>
-
-                <!-- No periods message -->
-                <div
-                  v-if="form.commissionRates.length === 0"
-                  class="text-center py-12 bg-gray-50 dark:bg-slate-900 rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700"
-                >
-                  <span class="material-icons text-5xl text-gray-300 dark:text-slate-600 mb-3"
-                    >calendar_month</span
-                  >
-                  <p class="text-gray-500 dark:text-slate-400 mb-4">
-                    Henuz komisyon donemi tanimlanmamis
-                  </p>
-                  <button
-                    type="button"
-                    @click="addCommissionPeriod"
-                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
-                  >
-                    Ilk Donemi Ekle
-                  </button>
-                </div>
-
-                <!-- Commission Periods -->
-                <div
-                  v-for="(period, periodIndex) in form.commissionRates"
-                  :key="periodIndex"
-                  class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden"
-                >
-                  <!-- Period Header -->
-                  <div
-                    class="bg-gray-50 dark:bg-slate-900 px-4 py-3 border-b dark:border-slate-700 flex items-center justify-between"
-                  >
-                    <div class="flex items-center gap-4">
-                      <span class="material-icons text-gray-500 dark:text-slate-400">event</span>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-gray-700 dark:text-slate-300"
-                          >Bu tarihten itibaren:</span
-                        >
-                        <input
-                          v-model="period.startDate"
-                          type="date"
-                          class="px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      @click="removeCommissionPeriod(periodIndex)"
-                      class="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
-                    >
-                      <span class="material-icons text-lg">delete</span>
-                    </button>
-                  </div>
-
-                  <!-- Rates List -->
-                  <div class="divide-y divide-gray-100 dark:divide-slate-700">
-                    <!-- Yurtdışı Kartlar -->
-                    <div
-                      class="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-900/20"
-                    >
-                      <div class="flex items-center gap-3">
-                        <span class="material-icons text-blue-600 dark:text-blue-400 text-lg"
-                          >credit_card</span
-                        >
-                        <span class="font-medium text-gray-800 dark:text-white"
-                          >Yurtdisi Kartlar</span
-                        >
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          v-model.number="period.foreignCardRate"
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                        />
-                        <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
-                      </div>
-                    </div>
-
-                    <!-- Yabancı Bankalar -->
-                    <div
-                      class="flex items-center justify-between px-4 py-3 bg-orange-50 dark:bg-orange-900/20"
-                    >
-                      <div class="flex items-center gap-3">
-                        <span class="material-icons text-orange-600 dark:text-orange-400 text-lg"
-                          >account_balance</span
-                        >
-                        <span class="font-medium text-gray-800 dark:text-white"
-                          >Yabanci Bankalar</span
-                        >
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          v-model.number="period.foreignBankRate"
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                        />
-                        <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
-                      </div>
-                    </div>
-
-                    <!-- Taksit Oranları -->
-                    <div
-                      v-for="rate in period.rates"
-                      :key="rate.count"
-                      class="flex items-center justify-between px-4 py-2.5"
-                      :class="rate.count === 1 ? 'bg-green-50 dark:bg-green-900/20' : ''"
-                    >
-                      <span class="font-medium text-gray-800 dark:text-white">
-                        {{ rate.count === 1 ? 'Pesin' : rate.count + ' Taksit' }}
-                      </span>
-                      <div class="flex items-center gap-2">
-                        <input
-                          v-model.number="rate.rate"
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          class="w-20 px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-lg text-center text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-800 dark:text-white"
-                        />
-                        <span class="text-sm text-gray-500 dark:text-slate-400">%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          <!-- Modal Footer -->
-          <div
-            class="px-6 py-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex justify-end items-center gap-3"
+        <!-- Modal Footer -->
+        <div
+          class="px-6 py-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex justify-end items-center gap-3"
+        >
+          <button
+            type="button"
+            @click="showModal = false"
+            class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <button
-              type="button"
-              @click="showModal = false"
-              class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-            >
-              Iptal
-            </button>
-            <button
-              type="button"
-              @click="handleSubmit"
-              :disabled="saving || !form.bankCode"
-              class="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              <span v-if="saving" class="material-icons animate-spin text-sm">refresh</span>
-              <span class="material-icons text-sm" v-else>save</span>
-              {{ editingPos ? 'Guncelle' : 'Kaydet' }}
-            </button>
-          </div>
+            Iptal
+          </button>
+          <button
+            type="button"
+            @click="handleSubmit"
+            :disabled="saving || !form.bankCode"
+            class="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            <span v-if="saving" class="material-icons animate-spin text-sm">refresh</span>
+            <span class="material-icons text-sm" v-else>save</span>
+            {{ editingPos ? 'Guncelle' : 'Kaydet' }}
+          </button>
         </div>
       </div>
     </div>
