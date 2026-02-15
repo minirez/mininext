@@ -3,6 +3,10 @@
  *
  * Let's Encrypt certificate operations.
  * Handles SSL certificate request, renewal, and status checking.
+ *
+ * Docker container'dan çalışır:
+ * - certbot komutları hostExec (nsenter) ile host'ta çalıştırılır
+ * - Sertifika dosyaları volume-mounted /etc/letsencrypt/ dizininden okunur
  */
 
 import { exec } from 'child_process'
@@ -11,6 +15,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import logger from '../../core/logger.js'
 import appConfig from '../../config/index.js'
+import { hostExec } from './hostExec.js'
 
 const execAsync = promisify(exec)
 
@@ -33,13 +38,12 @@ export const requestCertificate = async domain => {
   try {
     logger.info(`[SSL] Requesting certificate for ${domain}`)
 
-    // Certbot komutu - webroot modu veya standalone
-    // Production'da webroot tercih edilir
+    // Certbot komutu - host üzerinde çalışır (nsenter ile)
     const certbotCmd = !appConfig.isDev
       ? `certbot certonly --webroot -w ${CONFIG.certbotWebroot} -d ${domain} --email ${CONFIG.certbotEmail} --agree-tos --non-interactive`
       : `certbot certonly --standalone -d ${domain} --email ${CONFIG.certbotEmail} --agree-tos --non-interactive --dry-run`
 
-    const { stdout, stderr } = await execAsync(certbotCmd, { timeout: 120000 })
+    const { stdout, stderr } = await hostExec(certbotCmd, { timeout: 120000 })
 
     logger.info(`[SSL] Certbot output for ${domain}:`, stdout)
 
@@ -47,7 +51,7 @@ export const requestCertificate = async domain => {
       logger.warn(`[SSL] Certbot stderr for ${domain}:`, stderr)
     }
 
-    // Sertifika yolunu kontrol et
+    // Sertifika yolunu kontrol et (volume-mounted dizin üzerinden)
     const certPath = path.join(CONFIG.certDir, domain)
 
     // Production'da sertifika dosyalarini kontrol et
@@ -105,6 +109,7 @@ export const requestCertificate = async domain => {
 
 /**
  * SSL sertifikasini kontrol et
+ * Sertifika dosyaları volume-mounted olduğundan container içinden okunabilir.
  * @param {string} domain - Domain adi
  * @returns {Promise<{exists: boolean, expiresAt: Date|null, daysRemaining: number|null}>}
  */
@@ -114,7 +119,7 @@ export const checkCertificate = async domain => {
   try {
     await fs.access(certPath)
 
-    // Sertifika bitis tarihini al
+    // Sertifika bitis tarihini al (container içinde openssl ile)
     const { stdout } = await execAsync(`openssl x509 -enddate -noout -in ${certPath}`)
 
     // "notAfter=Dec 31 23:59:59 2024 GMT" formatindan parse et
@@ -146,7 +151,8 @@ export const renewCertificate = async domain => {
   try {
     logger.info(`[SSL] Renewing certificate for ${domain}`)
 
-    const { stdout, stderr } = await execAsync(
+    // Host'ta certbot renew çalıştır
+    const { stdout, stderr } = await hostExec(
       `certbot renew --cert-name ${domain} --non-interactive`,
       { timeout: 120000 }
     )
@@ -156,8 +162,8 @@ export const renewCertificate = async domain => {
     // Yeni bitis tarihini al
     const certInfo = await checkCertificate(domain)
 
-    // Nginx'i yeniden yukle
-    await execAsync('nginx -s reload')
+    // Host'ta nginx'i reload et
+    await hostExec('nginx -s reload')
 
     return {
       success: true,

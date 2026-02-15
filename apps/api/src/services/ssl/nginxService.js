@@ -3,22 +3,22 @@
  *
  * Nginx configuration generation and management.
  * Handles config creation, installation, and removal.
+ *
+ * Docker container'dan çalışır:
+ * - Config dosyaları volume-mounted /etc/nginx/minisites/ dizinine yazılır
+ * - nginx -t ve nginx -s reload komutları hostExec (nsenter) ile host'ta çalıştırılır
  */
 
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 import logger from '../../core/logger.js'
 import appConfig from '../../config/index.js'
-
-const execAsync = promisify(exec)
+import { hostExec } from './hostExec.js'
 
 // Konfigurasyon (config module'den alınıyor)
 const CONFIG = {
-  // Nginx config dizini
-  nginxSitesAvailable: appConfig.ssl.nginxSitesAvailable,
-  nginxSitesEnabled: appConfig.ssl.nginxSitesEnabled,
+  // Nginx config dizini (minisites - doğrudan include edilir, symlink gerekmez)
+  nginxSitesDir: appConfig.ssl.nginxSitesDir,
 
   // Let's Encrypt
   certbotWebroot: appConfig.ssl.certbotWebroot,
@@ -224,40 +224,34 @@ server {
 }
 `
   const configFilename = `${domain}.conf`
-  const availablePath = path.join(CONFIG.nginxSitesAvailable, configFilename)
-  const enabledPath = path.join(CONFIG.nginxSitesEnabled, configFilename)
+  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
 
   try {
-    await fs.writeFile(availablePath, configContent, 'utf8')
+    // Config dosyasını minisites dizinine yaz (volume-mounted)
+    await fs.writeFile(configPath, configContent, 'utf8')
+    logger.info(`[SSL] Temp HTTP config written to ${configPath}`)
 
-    try {
-      await fs.unlink(enabledPath)
-    } catch {
-      /* ignore */
-    }
-    await fs.symlink(availablePath, enabledPath)
-
-    const { stderr } = await execAsync('nginx -t')
+    // Host'ta nginx config test et
+    const { stderr } = await hostExec('nginx -t 2>&1')
     if (stderr && !stderr.includes('successful')) {
       throw new Error(`Nginx config test failed: ${stderr}`)
     }
 
-    await execAsync('nginx -s reload')
+    // Host'ta nginx'i reload et
+    await hostExec('nginx -s reload')
     logger.info(`[SSL] Temp HTTP config installed for ${domain}`)
 
     return { success: true, message: 'TEMP_CONFIG_INSTALLED' }
   } catch (error) {
     logger.error(`[SSL] Temp HTTP config failed for ${domain}:`, error.message)
+
+    // Rollback - hatali config dosyasini sil
     try {
-      await fs.unlink(enabledPath)
+      await fs.unlink(configPath)
     } catch {
       /* ignore */
     }
-    try {
-      await fs.unlink(availablePath)
-    } catch {
-      /* ignore */
-    }
+
     return { success: false, message: 'TEMP_CONFIG_FAILED' }
   }
 }
@@ -270,31 +264,21 @@ server {
  */
 export const installNginxConfig = async (domain, configContent) => {
   const configFilename = `${domain}.conf`
-  const availablePath = path.join(CONFIG.nginxSitesAvailable, configFilename)
-  const enabledPath = path.join(CONFIG.nginxSitesEnabled, configFilename)
+  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
 
   try {
-    // Konfigurasyonu sites-available'a yaz
-    await fs.writeFile(availablePath, configContent, 'utf8')
-    logger.info(`[SSL] Nginx config written to ${availablePath}`)
+    // Konfigurasyonu minisites dizinine yaz (volume-mounted)
+    await fs.writeFile(configPath, configContent, 'utf8')
+    logger.info(`[SSL] Nginx config written to ${configPath}`)
 
-    // Symlink olustur (sites-enabled)
-    try {
-      await fs.unlink(enabledPath)
-    } catch {
-      // Dosya yoksa sorun degil
-    }
-    await fs.symlink(availablePath, enabledPath)
-    logger.info(`[SSL] Nginx config enabled: ${enabledPath}`)
-
-    // Nginx konfigurasyonunu test et
-    const { stderr: testStderr } = await execAsync('nginx -t')
+    // Host'ta nginx config test et
+    const { stderr: testStderr } = await hostExec('nginx -t 2>&1')
     if (testStderr && !testStderr.includes('successful')) {
       throw new Error(`Nginx config test failed: ${testStderr}`)
     }
 
-    // Nginx'i yeniden yukle
-    await execAsync('nginx -s reload')
+    // Host'ta nginx'i reload et
+    await hostExec('nginx -s reload')
     logger.info('[SSL] Nginx reloaded successfully')
 
     return {
@@ -308,8 +292,7 @@ export const installNginxConfig = async (domain, configContent) => {
 
     // Rollback - hatali konfigurasyonu sil
     try {
-      await fs.unlink(enabledPath)
-      await fs.unlink(availablePath)
+      await fs.unlink(configPath)
     } catch {
       // Silme hatalari yoksay
     }
@@ -328,26 +311,18 @@ export const installNginxConfig = async (domain, configContent) => {
  */
 export const removeNginxConfig = async domain => {
   const configFilename = `${domain}.conf`
-  const availablePath = path.join(CONFIG.nginxSitesAvailable, configFilename)
-  const enabledPath = path.join(CONFIG.nginxSitesEnabled, configFilename)
+  const configPath = path.join(CONFIG.nginxSitesDir, configFilename)
 
   try {
-    // Symlink'i sil
-    try {
-      await fs.unlink(enabledPath)
-    } catch {
-      // Dosya yoksa sorun degil
-    }
-
     // Config dosyasini sil
     try {
-      await fs.unlink(availablePath)
+      await fs.unlink(configPath)
     } catch {
       // Dosya yoksa sorun degil
     }
 
-    // Nginx'i yeniden yukle
-    await execAsync('nginx -s reload')
+    // Host'ta nginx'i reload et
+    await hostExec('nginx -s reload')
     logger.info(`[SSL] Nginx config removed for ${domain}`)
 
     return {
