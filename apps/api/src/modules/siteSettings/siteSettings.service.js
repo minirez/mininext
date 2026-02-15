@@ -6,6 +6,12 @@ import { getSiteFileUrl, deleteSiteFile } from '#helpers/siteUpload.js'
 import logger from '#core/logger.js'
 import sslService from '#services/sslService.js'
 import { getPartnerId } from '#services/helpers.js'
+import {
+  hostinger,
+  checkExistingRecord,
+  createAutoRecord,
+  isRootDomain
+} from '#services/dns/index.js'
 
 // Get site settings
 export const getSiteSettings = asyncHandler(async (req, res) => {
@@ -662,4 +668,202 @@ export const deleteSiteImage = asyncHandler(async (req, res) => {
     success: true,
     message: req.t('FILE_DELETED')
   })
+})
+
+// ==================== DNS Management ====================
+
+// Get DNS records for a domain
+export const getDnsRecords = asyncHandler(async (req, res) => {
+  const { domain } = req.query
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_REQUIRED')
+  }
+
+  try {
+    const records = await hostinger.getRecords(domain)
+
+    res.json({
+      success: true,
+      data: records
+    })
+  } catch (err) {
+    if (err.code === 'DOMAIN_NOT_IN_HOSTINGER') {
+      return res.status(404).json({
+        success: false,
+        error: 'DOMAIN_NOT_IN_HOSTINGER',
+        message: 'This domain is not managed by Hostinger'
+      })
+    }
+    throw err
+  }
+})
+
+// Update (add/replace) DNS records
+export const updateDnsRecords = asyncHandler(async (req, res) => {
+  const { domain, records, overwrite } = req.body
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_REQUIRED')
+  }
+  if (!records || !Array.isArray(records) || records.length === 0) {
+    throw new BadRequestError('RECORDS_REQUIRED')
+  }
+
+  const result = await hostinger.updateRecords(domain, records, overwrite || false)
+
+  res.json({
+    success: true,
+    data: result
+  })
+})
+
+// Delete DNS records
+export const deleteDnsRecords = asyncHandler(async (req, res) => {
+  const { domain, filters } = req.body
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_REQUIRED')
+  }
+  if (!filters || !Array.isArray(filters) || filters.length === 0) {
+    throw new BadRequestError('FILTERS_REQUIRED')
+  }
+
+  const result = await hostinger.deleteRecords(domain, filters)
+
+  res.json({
+    success: true,
+    data: result
+  })
+})
+
+// Create DNS record automatically (A for root domain, CNAME for subdomain)
+export const createCname = asyncHandler(async (req, res) => {
+  const { domain } = req.body
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_REQUIRED')
+  }
+
+  const { exists, notInHostinger, isRoot } = await checkExistingRecord(domain)
+
+  if (notInHostinger) {
+    return res.status(404).json({
+      success: false,
+      error: 'DOMAIN_NOT_IN_HOSTINGER',
+      message: 'This domain is not managed by Hostinger'
+    })
+  }
+
+  if (exists) {
+    return res.json({
+      success: true,
+      alreadyExists: true,
+      isRoot,
+      message: isRoot ? 'A record already exists' : 'CNAME record already exists'
+    })
+  }
+
+  const result = await createAutoRecord(domain)
+
+  res.json({
+    success: true,
+    data: result,
+    isRoot,
+    message: isRoot ? 'A record created successfully' : 'CNAME record created successfully'
+  })
+})
+
+// One-click setup: CNAME + SSL
+export const oneClickSetup = asyncHandler(async (req, res) => {
+  const partnerId = getPartnerId(req)
+  const { type } = req.body // 'b2c', 'b2b', or 'pms'
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_REQUIRED')
+  }
+
+  if (!['b2c', 'b2b', 'pms'].includes(type)) {
+    throw new BadRequestError('INVALID_TYPE')
+  }
+
+  const settings = await SiteSettings.getOrCreateForPartner(partnerId)
+
+  const domainFieldMap = { b2c: 'b2cDomain', b2b: 'b2bDomain', pms: 'pmsDomain' }
+  const statusFieldMap = { b2c: 'b2cSslStatus', b2b: 'b2bSslStatus', pms: 'pmsSslStatus' }
+  const expiryFieldMap = { b2c: 'b2cSslExpiresAt', b2b: 'b2bSslExpiresAt', pms: 'pmsSslExpiresAt' }
+
+  const domain = settings.setup[domainFieldMap[type]]
+
+  if (!domain) {
+    throw new BadRequestError('DOMAIN_NOT_SET')
+  }
+
+  logger.info(`[OneClickSetup] Starting for ${domain} (${type}, partner: ${partnerId})`)
+
+  // Step 1: DNS record (A for root, CNAME for subdomain)
+  try {
+    const { exists, notInHostinger } = await checkExistingRecord(domain)
+
+    if (notInHostinger) {
+      return res.status(400).json({
+        success: false,
+        step: 'dns',
+        message: 'This domain is not managed by Hostinger'
+      })
+    }
+
+    if (!exists) {
+      await createAutoRecord(domain)
+      logger.info(`[OneClickSetup] DNS record created for ${domain}`)
+    } else {
+      logger.info(`[OneClickSetup] DNS record already exists for ${domain}`)
+    }
+  } catch (err) {
+    logger.error(`[OneClickSetup] DNS record creation failed for ${domain}:`, err.message)
+    return res.status(400).json({
+      success: false,
+      step: 'dns',
+      message: err.message || 'DNS record creation failed'
+    })
+  }
+
+  // Step 2: SSL setup
+  settings.setup[statusFieldMap[type]] = 'pending'
+  await settings.save()
+
+  const result = await sslService.setupSSL(domain, type, partnerId.toString())
+
+  if (result.success) {
+    settings.setup[statusFieldMap[type]] = 'active'
+    settings.setup[expiryFieldMap[type]] = result.expiresAt
+    await settings.save()
+
+    logger.info(`[OneClickSetup] Completed for ${domain}`)
+
+    res.json({
+      success: true,
+      message: 'One-click setup completed',
+      data: {
+        status: 'active',
+        expiresAt: result.expiresAt,
+        setup: settings.setup
+      }
+    })
+  } else {
+    settings.setup[statusFieldMap[type]] = 'failed'
+    await settings.save()
+
+    logger.error(`[OneClickSetup] SSL failed for ${domain}: ${result.message}`)
+
+    res.status(400).json({
+      success: false,
+      step: result.step || 'ssl',
+      message: result.message || 'SSL setup failed',
+      data: {
+        status: 'failed',
+        setup: settings.setup
+      }
+    })
+  }
 })

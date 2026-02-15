@@ -19,8 +19,18 @@
         @verify-dns="handleVerifyDns"
         @setup-ssl="handleSetupSsl"
         @remove-domain="handleRemoveDomain"
+        @manage-dns="handleManageDns"
       />
     </div>
+
+    <!-- DNS Manager Drawer -->
+    <DnsManagerDrawer
+      v-model="showDnsDrawer"
+      :domain="domainValue"
+      domain-type="pms"
+      @ssl-setup-complete="handleDnsSslComplete"
+      @cname-created="handleCnameCreated"
+    />
 
     <!-- DNS Instructions -->
     <div
@@ -31,13 +41,18 @@
         {{ $t('siteSettings.setup.dnsInstructions') }}
       </h4>
       <p class="text-sm text-blue-700 dark:text-blue-400">
-        {{ $t('siteSettings.setup.dnsDescription') }}
+        {{ $t('siteSettings.setup.dnsDescriptionFull') }}
       </p>
       <div
-        class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono"
+        class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono space-y-1"
       >
-        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: CNAME</div>
-        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ cnameTarget || '...' }}</div>
+        <div class="font-semibold">{{ $t('siteSettings.setup.dnsSubdomainCase') }}:</div>
+        <div>
+          {{ $t('siteSettings.setup.dnsRecordType') }}: CNAME →
+          {{ cnameTarget || 'app.maxirez.com' }}
+        </div>
+        <div class="font-semibold mt-2">{{ $t('siteSettings.setup.dnsRootDomainCase') }}:</div>
+        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: A → 85.31.238.34</div>
       </div>
     </div>
 
@@ -62,6 +77,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import * as settingsService from '@/services/pms/settingsService'
 import DomainCard from '@/components/siteSettings/DomainCard.vue'
+import DnsManagerDrawer from '@/components/siteSettings/DnsManagerDrawer.vue'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -88,6 +104,8 @@ const domainData = ref({
 
 const domainValue = ref('')
 const originalDomain = ref('')
+
+const showDnsDrawer = ref(false)
 
 const domainChanged = computed(() => domainValue.value !== originalDomain.value)
 
@@ -236,6 +254,29 @@ const handleRemoveDomain = async () => {
   } finally {
     saving.value = false
   }
+}
+
+// DNS Manager
+const handleManageDns = () => {
+  if (!domainValue.value) {
+    toast.warning(t('siteSettings.setup.enterDomainFirst'))
+    return
+  }
+  showDnsDrawer.value = true
+}
+
+const handleDnsSslComplete = data => {
+  if (data?.setup) {
+    domainData.value = {
+      pmsDomain: data.setup.pmsDomain || domainValue.value,
+      pmsSslStatus: data.setup.pmsSslStatus || 'active',
+      pmsSslExpiresAt: data.setup.pmsSslExpiresAt
+    }
+  }
+}
+
+const handleCnameCreated = () => {
+  // CNAME created, user can now verify DNS
 }
 
 // Watch hotel change

@@ -39,4 +39,11 @@ router.post('/ssl/verify-dns', siteSettingsService.verifyDns)
 router.post('/ssl/setup', siteSettingsService.setupSsl)
 router.get('/ssl/status/:type', siteSettingsService.getSslStatus)
 
+// DNS management (Hostinger)
+router.get('/dns/records', siteSettingsService.getDnsRecords)
+router.put('/dns/records', siteSettingsService.updateDnsRecords)
+router.delete('/dns/records', siteSettingsService.deleteDnsRecords)
+router.post('/dns/auto-cname', siteSettingsService.createCname)
+router.post('/dns/one-click-setup', siteSettingsService.oneClickSetup)
+
 export default router

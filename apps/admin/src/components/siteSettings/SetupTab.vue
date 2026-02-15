@@ -20,6 +20,7 @@
         @verify-dns="handleVerifyDns('b2c')"
         @setup-ssl="handleSetupSsl('b2c')"
         @remove-domain="handleRemoveDomain('b2c')"
+        @manage-dns="handleManageDns('b2c')"
       />
 
       <!-- B2B Domain -->
@@ -41,10 +42,20 @@
         @verify-dns="handleVerifyDns('b2b')"
         @setup-ssl="handleSetupSsl('b2b')"
         @remove-domain="handleRemoveDomain('b2b')"
+        @manage-dns="handleManageDns('b2b')"
       />
 
       <!-- PMS Domain moved to PMS Settings per-hotel -->
     </div>
+
+    <!-- DNS Manager Drawer -->
+    <DnsManagerDrawer
+      v-model="showDnsDrawer"
+      :domain="dnsDrawerDomain"
+      :domain-type="dnsDrawerType"
+      @ssl-setup-complete="handleSslSetupComplete"
+      @cname-created="handleCnameCreated"
+    />
 
     <!-- DNS Instructions -->
     <div
@@ -55,13 +66,20 @@
         {{ $t('siteSettings.setup.dnsInstructions') }}
       </h4>
       <p class="text-sm text-blue-700 dark:text-blue-400">
-        {{ $t('siteSettings.setup.dnsDescription') }}
+        {{ $t('siteSettings.setup.dnsDescriptionFull') }}
       </p>
       <div
-        class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono"
+        class="mt-2 p-2 bg-blue-100 dark:bg-blue-900/40 rounded text-xs text-blue-800 dark:text-blue-300 font-mono space-y-1"
       >
-        <div>{{ $t('siteSettings.setup.dnsRecordType') }}: CNAME</div>
-        <div>{{ $t('siteSettings.setup.dnsRecordValue') }}: {{ cnameTarget || '...' }}</div>
+        <div class="font-semibold">{{ $t('siteSettings.setup.dnsSubdomainCase') }}:</div>
+        <div>
+          {{ $t('siteSettings.setup.dnsRecordType') }}: CNAME →
+          {{ cnameTarget || 'app.maxirez.com' }}
+        </div>
+        <div class="font-semibold mt-2">{{ $t('siteSettings.setup.dnsRootDomainCase') }}:</div>
+        <div>
+          {{ $t('siteSettings.setup.dnsRecordType') }}: A → {{ serverIP || '85.31.238.34' }}
+        </div>
       </div>
     </div>
 
@@ -98,6 +116,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import siteSettingsService from '@/services/siteSettingsService'
 import DomainCard from '@/components/siteSettings/DomainCard.vue'
+import DnsManagerDrawer from '@/components/siteSettings/DnsManagerDrawer.vue'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -122,6 +141,11 @@ const dnsResult = reactive({ b2c: null, b2b: null })
 const settingUpSsl = reactive({ b2c: false, b2b: false })
 const cnameTarget = ref('app.maxirez.com')
 const serverIP = ref(null)
+
+// DNS Manager Drawer state
+const showDnsDrawer = ref(false)
+const dnsDrawerDomain = ref('')
+const dnsDrawerType = ref('b2c')
 
 watch(
   () => props.settings,
@@ -249,6 +273,28 @@ const handleRemoveDomain = async type => {
   } catch (error) {
     toast.error(error.response?.data?.message || t('common.error'))
   }
+}
+
+const handleManageDns = type => {
+  const domainMap = { b2c: 'b2cDomain', b2b: 'b2bDomain' }
+  const domain = form.value[domainMap[type]]
+  if (!domain) {
+    toast.warning(t('siteSettings.setup.enterDomainFirst'))
+    return
+  }
+  dnsDrawerDomain.value = domain
+  dnsDrawerType.value = type
+  showDnsDrawer.value = true
+}
+
+const handleSslSetupComplete = data => {
+  if (data?.setup) {
+    emit('update:settings', data.setup)
+  }
+}
+
+const handleCnameCreated = () => {
+  // Refresh DNS verified state
 }
 
 const handleSave = () => {

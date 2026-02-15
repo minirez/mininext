@@ -52,6 +52,12 @@
         </div>
       </div>
 
+      <!-- DNS Manager Button -->
+      <button v-if="domain" class="btn-secondary text-sm w-full mt-2" @click="$emit('manage-dns')">
+        <span class="material-icons text-sm mr-1">dns</span>
+        {{ $t('siteSettings.dns.manageDns') }}
+      </button>
+
       <!-- SSL Status & Actions -->
       <div class="border-t border-gray-200 dark:border-slate-600 pt-4 mt-4">
         <div class="flex items-center justify-between mb-3">
@@ -186,7 +192,7 @@ const props = defineProps({
   saving: { type: Boolean, default: false }
 })
 
-defineEmits(['update:domain', 'verify-dns', 'setup-ssl', 'remove-domain'])
+defineEmits(['update:domain', 'verify-dns', 'setup-ssl', 'remove-domain', 'manage-dns'])
 
 const sslBadgeClass = computed(() => ({
   'badge-success': props.sslStatus === 'active',

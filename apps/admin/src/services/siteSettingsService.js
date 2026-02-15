@@ -222,6 +222,34 @@ const deleteImage = async (filename, type) => {
   }
 }
 
+// DNS management (Hostinger)
+const getDnsRecords = async domain => {
+  const response = await apiClient.get('/site-settings/dns/records', { params: { domain } })
+  return response.data
+}
+
+const updateDnsRecords = async (domain, records, overwrite = false) => {
+  const response = await apiClient.put('/site-settings/dns/records', { domain, records, overwrite })
+  return response.data
+}
+
+const deleteDnsRecords = async (domain, filters) => {
+  const response = await apiClient.delete('/site-settings/dns/records', {
+    data: { domain, filters }
+  })
+  return response.data
+}
+
+const createAutoCname = async domain => {
+  const response = await apiClient.post('/site-settings/dns/auto-cname', { domain })
+  return response.data
+}
+
+const oneClickSetup = async type => {
+  const response = await apiClient.post('/site-settings/dns/one-click-setup', { type })
+  return response.data
+}
+
 export default {
   getSiteSettings,
   updateSiteSettings,
@@ -238,5 +266,10 @@ export default {
   setupSsl,
   getSslStatus,
   uploadImage,
-  deleteImage
+  deleteImage,
+  getDnsRecords,
+  updateDnsRecords,
+  deleteDnsRecords,
+  createAutoCname,
+  oneClickSetup
 }

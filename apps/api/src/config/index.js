@@ -91,6 +91,11 @@ const config = {
     adminDistPath: process.env.ADMIN_DIST_PATH || '/var/www/booking-engine/apps/admin/dist'
   },
 
+  // Hostinger DNS API
+  hostinger: {
+    apiKey: process.env.HOSTINGER_API_KEY || ''
+  },
+
   // Storefront API Key - For server-to-server auth from storefront frontends (site3 etc.)
   storefrontApiKey: process.env.STOREFRONT_API_KEY || ''
 }
