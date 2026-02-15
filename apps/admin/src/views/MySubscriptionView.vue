@@ -841,10 +841,7 @@
             {{ $t('mySubscription.subscriptionActivated') }}
           </p>
           <button
-            @click="
-              showSuccessMessage = false
-              loadData()
-            "
+            @click="handleSuccessDismiss"
             class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
           >
             {{ $t('common.ok') }}
@@ -876,6 +873,12 @@ const invoices = ref([])
 const showPaymentModal = ref(false)
 const show3DModal = ref(false)
 const showSuccessMessage = ref(false)
+
+function handleSuccessDismiss() {
+  showSuccessMessage.value = false
+  loadData()
+}
+
 const selectedPlan = ref('professional')
 const selectedPendingPurchase = ref(null) // For paying admin-created pending purchases
 const processing = ref(false)
