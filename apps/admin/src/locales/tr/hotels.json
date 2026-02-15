@@ -922,6 +922,10 @@
     "tourismRegions": "Turizm Bölgeleri",
     "noRegionsSelected": "Henüz bölge seçilmedi",
     "addRegion": "Bölge Ekle",
-    "noRegionsAvailable": "Bu şehir için turizm bölgesi tanımlı değil"
+    "noRegionsAvailable": "Bu şehir için turizm bölgesi tanımlı değil",
+    "selectCountryPrompt": "Ülke Seçin",
+    "selectCountryPromptDesc": "Şehirleri ve turizm bölgelerini yönetmek için bir ülke seçin",
+    "addCity": "Şehir Ekle",
+    "editCity": "Şehir Düzenle"
   }
 }

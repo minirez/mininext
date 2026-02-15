@@ -195,7 +195,8 @@
       "category_design": "Tasarım",
       "category_support": "Destek",
       "category_integration": "Entegrasyon",
-      "category_other": "Diğer"
+      "category_other": "Diğer",
+      "pmsLimitsTitle": "PMS Limitleri"
     }
   }
 }

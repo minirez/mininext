@@ -195,7 +195,8 @@
       "category_design": "Design",
       "category_support": "Support",
       "category_integration": "Integration",
-      "category_other": "Other"
+      "category_other": "Other",
+      "pmsLimitsTitle": "PMS Limits"
     }
   }
 }

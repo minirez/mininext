@@ -925,6 +925,10 @@
     "tourismRegions": "Tourism Regions",
     "noRegionsSelected": "No regions selected yet",
     "addRegion": "Add Region",
-    "noRegionsAvailable": "No tourism regions defined for this city"
+    "noRegionsAvailable": "No tourism regions defined for this city",
+    "selectCountryPrompt": "Select Country",
+    "selectCountryPromptDesc": "Select a country to manage cities and tourism regions",
+    "addCity": "Add City",
+    "editCity": "Edit City"
   }
 }

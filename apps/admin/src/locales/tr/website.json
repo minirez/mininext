@@ -30,6 +30,23 @@
       "saveError": "Taslak kaydedilemedi",
       "discard": "Taslağı Sil"
     },
+    "presets": {
+      "title": "Şablonlar",
+      "saveCurrent": "Mevcut Durumu Şablon Olarak Kaydet",
+      "name": "Şablon adı",
+      "enterName": "Şablon adını girin",
+      "noPresets": "Kayıtlı şablon yok",
+      "confirmApply": "Bu şablonu uygulamak istiyor musunuz? Kaydedilmemiş değişiklikler kaybolacak.",
+      "applyPreset": "Şablonu Uygula",
+      "applied": "Şablon uygulandı",
+      "applyError": "Şablon uygulanamadı",
+      "saved": "Şablon kaydedildi",
+      "saveError": "Şablon kaydedilemedi",
+      "confirmDelete": "Bu şablonu silmek istediğinize emin misiniz?",
+      "deletePreset": "Şablonu Sil",
+      "deleted": "Şablon silindi",
+      "deleteError": "Şablon silinemedi"
+    },
     "aiMigration": {
       "importButton": "Veri İçe Aktar",
       "buttonLabel": "AI ile Aktar",
@@ -112,7 +129,8 @@
       "selectToEdit": "Düzenlemeye başlamak için yukarıdan bir sayfa seçin",
       "confirmDelete": "Bu sayfayı silmek istediğinizden emin misiniz?",
       "unnamed": "İsimsiz",
-      "activate": "Aktifleştir"
+      "activate": "Aktifleştir",
+      "deletePage": "Sayfayı Sil"
     },
     "customTheme": {
       "title": "Özel Tema Oluşturucu",
