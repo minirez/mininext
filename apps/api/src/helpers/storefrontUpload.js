@@ -54,15 +54,16 @@ const withPartnerMd5Lock = async (partnerId, fn) => {
   }
 }
 
-const getPartnerRootDir = (partnerId) => {
+const getPartnerRootDir = partnerId => {
   const partnerDir = path.join(storefrontDir, partnerId.toString())
   if (!fs.existsSync(partnerDir)) fs.mkdirSync(partnerDir, { recursive: true })
   return partnerDir
 }
 
-const getPartnerMd5IndexPath = (partnerId) => path.join(getPartnerRootDir(partnerId), '.md5-index.json')
+const getPartnerMd5IndexPath = partnerId =>
+  path.join(getPartnerRootDir(partnerId), '.md5-index.json')
 
-const readMd5Index = async (partnerId) => {
+const readMd5Index = async partnerId => {
   const indexPath = getPartnerMd5IndexPath(partnerId)
   try {
     if (!fs.existsSync(indexPath)) return null
@@ -83,9 +84,9 @@ const writeMd5Index = async (partnerId, index) => {
   }
 }
 
-export const md5BufferHex = (buffer) => crypto.createHash('md5').update(buffer).digest('hex')
+export const md5BufferHex = buffer => crypto.createHash('md5').update(buffer).digest('hex')
 
-export const md5FileHex = async (filePath) =>
+export const md5FileHex = async filePath =>
   new Promise((resolve, reject) => {
     const hash = crypto.createHash('md5')
     const stream = fs.createReadStream(filePath)
@@ -94,18 +95,18 @@ export const md5FileHex = async (filePath) =>
     stream.on('end', () => resolve(hash.digest('hex')))
   })
 
-const toPosixPath = (p) => String(p || '').replace(/\\/g, '/')
+const toPosixPath = p => String(p || '').replace(/\\/g, '/')
 
-const isLikelyImageFile = (filename) => {
+const isLikelyImageFile = filename => {
   const ext = path.extname(String(filename || '')).toLowerCase()
   return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico'].includes(ext)
 }
 
-const buildMd5IndexFromDisk = async (partnerId) => {
+const buildMd5IndexFromDisk = async partnerId => {
   const root = getPartnerRootDir(partnerId)
   const index = {}
 
-  const walk = async (dirAbs) => {
+  const walk = async dirAbs => {
     let entries = []
     try {
       entries = await fs.promises.readdir(dirAbs, { withFileTypes: true })
@@ -149,7 +150,9 @@ const buildMd5IndexFromDisk = async (partnerId) => {
  */
 export const getExistingStorefrontFileByMd5 = async (partnerId, md5Hex) =>
   withPartnerMd5Lock(partnerId, async () => {
-    const md5 = String(md5Hex || '').trim().toLowerCase()
+    const md5 = String(md5Hex || '')
+      .trim()
+      .toLowerCase()
     if (!md5) return null
 
     let index = await readMd5Index(partnerId)
@@ -175,7 +178,9 @@ export const getExistingStorefrontFileByMd5 = async (partnerId, md5Hex) =>
  */
 export const setStorefrontFileMd5 = async (partnerId, md5Hex, relativePath) =>
   withPartnerMd5Lock(partnerId, async () => {
-    const md5 = String(md5Hex || '').trim().toLowerCase()
+    const md5 = String(md5Hex || '')
+      .trim()
+      .toLowerCase()
     if (!md5) return
     const rel = String(relativePath || '').replace(/^\/+/, '')
     if (!rel) return
@@ -189,7 +194,7 @@ export const setStorefrontFileMd5 = async (partnerId, md5Hex, relativePath) =>
  * Normalize uploadType values (support legacy aliases).
  * Keep this centralized so admin/api/migration stay consistent.
  */
-export const normalizeStorefrontUploadType = (uploadType) => {
+export const normalizeStorefrontUploadType = uploadType => {
   const t = String(uploadType || '').trim()
   if (!t) return 'general'
 
@@ -337,7 +342,7 @@ export const storefrontUpload = multer({
   storage: storefrontStorage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 50 * 1024 * 1024 // 50MB limit (images are optimized after upload)
   }
 })
 
@@ -345,7 +350,13 @@ export const storefrontUpload = multer({
  * Get the URL path for a storefront file (relative to `/uploads`).
  * NOTE: keeps backwards-compatible signature, but supports custom-theme fields.
  */
-export const getStorefrontFileUrl = (partnerId, uploadType, filename, uploadIndex = null, opts = {}) => {
+export const getStorefrontFileUrl = (
+  partnerId,
+  uploadType,
+  filename,
+  uploadIndex = null,
+  opts = {}
+) => {
   const subPath = getStorefrontUploadSubPath({
     uploadType,
     uploadIndex: uploadIndex ?? '0',
@@ -374,7 +385,7 @@ export const deleteStorefrontFile = (partnerId, relativePath) => {
 /**
  * Delete all files in a partner's storefront directory
  */
-export const deletePartnerStorefrontFiles = (partnerId) => {
+export const deletePartnerStorefrontFiles = partnerId => {
   try {
     const partnerDir = path.join(storefrontDir, partnerId.toString())
     if (fs.existsSync(partnerDir)) {

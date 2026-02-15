@@ -7,6 +7,7 @@ import Hotel from './hotel.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { getHotelFileUrl, deleteHotelFile, ensureCorrectFolder } from '#helpers/hotelUpload.js'
+import { optimizeUpload } from '#helpers/imageOptimizer.js'
 import logger from '#core/logger.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
 
@@ -55,6 +56,11 @@ export const uploadHotelImage = asyncHandler(async (req, res) => {
 
   // Ensure file is in the correct folder (multer may have saved to wrong location)
   ensureCorrectFolder(req.file, folderIdentifier, id)
+
+  // Optimize: resize + WebP conversion
+  const optimized = await optimizeUpload(req.file.path, 'hotel')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
 
   const fileUrl = getHotelFileUrl(folderIdentifier, id, req.file.filename)
 
@@ -211,6 +217,11 @@ export const uploadHotelLogo = asyncHandler(async (req, res) => {
 
   // Ensure file is in the correct folder (multer may have saved to wrong location)
   ensureCorrectFolder(req.file, folderIdentifier, id)
+
+  // Optimize: WebP conversion (logo preset - no resize)
+  const optimized = await optimizeUpload(req.file.path, 'logo')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
 
   // Delete old logo if exists
   if (hotel.logo) {

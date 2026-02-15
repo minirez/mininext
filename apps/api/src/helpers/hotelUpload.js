@@ -55,7 +55,7 @@ export const hotelUpload = multer({
   storage: hotelStorage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit for hotel images
+    fileSize: 50 * 1024 * 1024 // 50MB limit (images are optimized after upload)
   }
 })
 
@@ -151,7 +151,7 @@ export const roomTemplateUpload = multer({
   storage: roomTemplateStorage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 50 * 1024 * 1024 // 50MB limit (images are optimized after upload)
   }
 })
 

@@ -7,6 +7,7 @@ import {
   deleteTourGalleryFile,
   deleteTourStopPhotoFile
 } from '#helpers/tourUpload.js'
+import { optimizeUpload } from '#helpers/imageOptimizer.js'
 
 const requirePartnerId = req => {
   const partnerId = req.partnerId
@@ -23,6 +24,11 @@ export const uploadGalleryImage = asyncHandler(async (req, res) => {
   const tour = await Tour.findOne({ _id: tourId, partner: partnerId })
   if (!tour) throw new NotFoundError('TOUR_NOT_FOUND')
   if (!req.file) throw new BadRequestError('NO_FILE_UPLOADED')
+
+  // Optimize: resize + WebP conversion
+  const optimized = await optimizeUpload(req.file.path, 'tour')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
 
   const url = getTourGalleryFileUrl(partnerId, tourId, req.file.filename)
   const image = {
@@ -85,6 +91,11 @@ export const uploadRouteStopPhoto = asyncHandler(async (req, res) => {
   if (stop.photo?.filename) {
     deleteTourStopPhotoFile(partnerId, tourId, stopId, stop.photo.filename)
   }
+
+  // Optimize: resize + WebP conversion
+  const optimized = await optimizeUpload(req.file.path, 'tour')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
 
   stop.photo = {
     url: getTourStopPhotoUrl(partnerId, tourId, stopId, req.file.filename),

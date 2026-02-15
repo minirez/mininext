@@ -11,6 +11,7 @@ import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import logger from '#core/logger.js'
 import { getRoomTypeFileUrl, deleteRoomTypeFile } from '#helpers/roomTypeUpload.js'
+import { optimizeUpload } from '#helpers/imageOptimizer.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
 
 const ROOM_AMENITIES_SET = new Set(ROOM_AMENITIES)
@@ -365,6 +366,11 @@ export const uploadRoomTypeImage = asyncHandler(async (req, res) => {
   })
 
   if (!roomType) throw new NotFoundError('ROOM_TYPE_NOT_FOUND')
+
+  // Optimize: resize + WebP conversion
+  const optimized = await optimizeUpload(req.file.path, 'room')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
 
   const fileUrl = getRoomTypeFileUrl(partnerId, hotelId, roomTypeId, req.file.filename)
 

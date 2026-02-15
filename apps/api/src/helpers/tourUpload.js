@@ -82,13 +82,13 @@ const stopPhotoStorage = multer.diskStorage({
 export const tourGalleryUpload = multer({
   storage: galleryStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 50 * 1024 * 1024 }
 })
 
 export const tourStopPhotoUpload = multer({
   storage: stopPhotoStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 50 * 1024 * 1024 }
 })
 
 export const getTourGalleryFileUrl = (partnerId, tourId, filename) => {

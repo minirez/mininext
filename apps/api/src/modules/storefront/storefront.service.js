@@ -27,6 +27,7 @@ import {
   getExistingStorefrontFileByMd5,
   setStorefrontFileMd5
 } from '#helpers/storefrontUpload.js'
+import { optimizeUpload } from '#helpers/imageOptimizer.js'
 import logger from '#core/logger.js'
 import {
   migrateStorefrontData,
@@ -822,6 +823,12 @@ export const uploadImage = asyncHandler(async (req, res) => {
 
   const { uploadType = 'general', uploadIndex = '0', sectionType, sectionIndex } = req.body
   const normalized = normalizeStorefrontUploadType(uploadType)
+
+  // Optimize: resize + WebP conversion (before MD5 so dedupe uses optimized hash)
+  const optimized = await optimizeUpload(req.file.path, 'storefront')
+  req.file.filename = optimized.filename
+  req.file.path = optimized.path
+
   const { filename, size } = req.file
 
   const subPath = getStorefrontUploadSubPath({

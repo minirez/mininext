@@ -63,7 +63,7 @@ export const roomTypeUpload = multer({
   storage: roomTypeStorage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit for room type images
+    fileSize: 50 * 1024 * 1024 // 50MB limit (images are optimized after upload)
   }
 })
 
