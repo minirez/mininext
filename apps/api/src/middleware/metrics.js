@@ -7,15 +7,12 @@
  *   - http_requests_total (counter)
  *   - http_active_requests (gauge)
  *   - http_response_size_bytes (histogram)
- *   - process_memory_usage_bytes (gauge)
- *   - nodejs_active_handles_total (gauge)
- *   - nodejs_eventloop_lag_seconds (histogram)
- *   - Default prom-client metrics (GC, heap, etc.)
+ *   - Default prom-client metrics (GC, heap, event loop, memory, etc.)
  */
 
 import client from 'prom-client'
 
-// ─── Collect default metrics (GC, heap stats, event loop, etc.) ───
+// ─── Collect default metrics (GC, heap stats, event loop, memory, etc.) ───
 client.collectDefaultMetrics({
   prefix: '',
   gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5]
@@ -47,59 +44,6 @@ const httpResponseSize = new client.Histogram({
   labelNames: ['method', 'route', 'status_code'],
   buckets: [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000]
 })
-
-// ─── System Metrics ───
-
-const processMemoryUsage = new client.Gauge({
-  name: 'process_memory_usage_bytes',
-  help: 'Process memory usage in bytes',
-  labelNames: ['type']
-})
-
-const nodejsEventloopLag = new client.Histogram({
-  name: 'nodejs_eventloop_lag_seconds',
-  help: 'Event loop lag in seconds',
-  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1]
-})
-
-// ─── System Metrics Collection (runs every 10s) ───
-
-let eventloopLagInterval = null
-
-function startSystemMetricsCollection() {
-  // Memory usage
-  const collectMemory = () => {
-    const mem = process.memoryUsage()
-    processMemoryUsage.set({ type: 'rss' }, mem.rss)
-    processMemoryUsage.set({ type: 'heapUsed' }, mem.heapUsed)
-    processMemoryUsage.set({ type: 'heapTotal' }, mem.heapTotal)
-  }
-
-  // Event loop lag measurement
-  const measureLag = () => {
-    const start = process.hrtime.bigint()
-    setImmediate(() => {
-      const delta = Number(process.hrtime.bigint() - start) / 1e9 // convert ns to seconds
-      nodejsEventloopLag.observe(delta)
-    })
-  }
-
-  // Collect immediately, then every 10 seconds
-  collectMemory()
-
-  eventloopLagInterval = setInterval(() => {
-    collectMemory()
-    measureLag()
-  }, 10000)
-
-  // Don't keep the process alive just for metrics
-  if (eventloopLagInterval.unref) {
-    eventloopLagInterval.unref()
-  }
-}
-
-// Start collecting system metrics
-startSystemMetricsCollection()
 
 // ─── Normalize route for labels ───
 
@@ -177,10 +121,7 @@ export function metricsMiddleware(req, res, next) {
  * Cleanup function for graceful shutdown
  */
 export function stopMetricsCollection() {
-  if (eventloopLagInterval) {
-    clearInterval(eventloopLagInterval)
-    eventloopLagInterval = null
-  }
+  client.register.clear()
 }
 
 export default metricsMiddleware
