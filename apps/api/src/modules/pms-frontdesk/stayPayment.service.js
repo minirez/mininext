@@ -66,8 +66,8 @@ export const addExtra = asyncHandler(async (req, res) => {
       [
         {
           hotel: hotelId,
-          type: TRANSACTION_TYPES.CHARGE,
-          category: TRANSACTION_CATEGORIES.EXTRAS,
+          type: TRANSACTION_TYPES.EXTRA_CHARGE,
+          category: TRANSACTION_CATEGORIES.OTHER_SERVICES,
           description: `${description} - ${stay.stayNumber}`,
           amount: totalAmount,
           currency: 'TRY',
