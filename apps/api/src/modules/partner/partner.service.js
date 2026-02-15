@@ -49,7 +49,8 @@ export {
   uploadMyLogo,
   deleteMyLogo,
   uploadMyFavicon,
-  deleteMyFavicon
+  deleteMyFavicon,
+  updatePosSettings
 } from './partnerBranding.service.js'
 
 // Subscription and billing

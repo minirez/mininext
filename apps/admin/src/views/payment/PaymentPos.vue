@@ -4,6 +4,7 @@ import { usePaymentStore } from '@/stores/payment'
 import { useAuthStore } from '@/stores/auth'
 import { usePartnerStore } from '@/stores/partner'
 import { getServerInfo } from '@/services/virtualPosService'
+import partnerService from '@/services/partnerService'
 import {
   getBankLogo,
   getCardLogo,
@@ -41,15 +42,20 @@ const createType = ref('bank') // 'bank' or 'aggregator'
 // Server info (IP, callback URL, etc.)
 const serverIp = ref('...')
 
-// Platform POS listesi (partnerId: null olanlar)
-// Partner view'da disable edilmiş POS'ları gösterme
+// POS listesi - scope-aware
 const filteredPosList = computed(() => {
   return store.posList.filter(pos => {
-    const isPlatform = pos.partnerId === null || pos.isPlatformPos === true
-    if (!isPlatform) return false
-    // Partner view: sadece aktif POS'ları göster
-    if (!isPlatformView.value) return pos.status === true
-    return true
+    if (isPlatformView.value || usePlatformPos.value) {
+      // Platform POS'ları göster
+      const isPlatform = pos.partnerId === null || pos.isPlatformPos === true
+      if (!isPlatform) return false
+      // Partner view: sadece aktif POS'ları göster
+      if (!isPlatformView.value) return pos.status === true
+      return true
+    } else {
+      // Partner'ın kendi POS'ları
+      return pos.partnerId !== null && !pos.isPlatformPos
+    }
   })
 })
 
@@ -340,6 +346,30 @@ const selectedCardFamily = computed(() => {
   return bankCardFamilies[form.value.bankCode] || null
 })
 
+// Partner view: POS tercih toggle
+const posSettingsLoading = ref(false)
+
+async function togglePosPreference(newValue) {
+  const oldValue = usePlatformPos.value
+  usePlatformPos.value = newValue
+  posSettingsLoading.value = true
+  try {
+    await partnerService.updatePosSettings({ useOwnPos: !newValue })
+    // POS listesini yeniden yükle (scope değiştiği için)
+    await store.fetchPosList()
+    if (filteredPosList.value.length > 0) {
+      activePosTab.value = filteredPosList.value[0]._id
+    } else {
+      activePosTab.value = null
+    }
+  } catch (e) {
+    usePlatformPos.value = oldValue // revert
+    console.error('POS settings update failed:', e)
+  } finally {
+    posSettingsLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await Promise.all([store.fetchPosList(), store.fetchBanks()])
 
@@ -351,7 +381,17 @@ onMounted(async () => {
     console.warn('Could not fetch server info:', e.message)
   }
 
-  // Partner view: İlk platform POS'u seç
+  // Partner view: preference'ı API'den yükle
+  if (!isPlatformView.value) {
+    try {
+      const profile = await partnerService.getMyProfile()
+      usePlatformPos.value = !profile.data?.paymentSettings?.useOwnPos
+    } catch (e) {
+      console.warn('Could not fetch POS settings:', e.message)
+    }
+  }
+
+  // İlk POS'u seç
   if (!isPlatformView.value && filteredPosList.value.length > 0) {
     activePosTab.value = filteredPosList.value[0]._id
   }
@@ -466,8 +506,6 @@ async function handleSubmit() {
     const data = {
       ...form.value,
       name: generatedPosName.value,
-      partnerId: null, // Platform POS - partnerId null
-      sharedWithPartners: true, // Platform POS'ları partnerlara açık
       credentials,
       installment: {
         ...form.value.installment,
@@ -475,6 +513,15 @@ async function handleSubmit() {
       }
     }
     delete data.plusInstallment
+
+    // Set partnerId and sharedWithPartners based on view
+    if (isPlatformView.value) {
+      data.partnerId = null
+      data.sharedWithPartners = true
+    } else {
+      // Partner view: partnerId ekleme, interceptor inject edecek
+      data.sharedWithPartners = false
+    }
 
     console.log('Saving POS data:', data)
 
@@ -580,9 +627,16 @@ async function toggleDefault(pos, currency) {
             </div>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input v-model="usePlatformPos" type="checkbox" class="sr-only peer" />
+            <input
+              :checked="usePlatformPos"
+              type="checkbox"
+              class="sr-only peer"
+              :disabled="posSettingsLoading"
+              @change="togglePosPreference($event.target.checked)"
+            />
             <div
               class="w-14 h-7 bg-gray-200 dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary-600"
+              :class="{ 'opacity-50': posSettingsLoading }"
             ></div>
           </label>
         </div>
@@ -786,20 +840,257 @@ async function toggleDefault(pos, currency) {
       </div>
 
       <!-- Kendi POS'unu Kullan (usePlatformPos = false) -->
-      <div
-        v-else
-        class="bg-gray-50 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-gray-200 dark:border-slate-700 p-12 text-center"
-      >
-        <span class="material-icons text-5xl text-gray-300 dark:text-slate-600"
-          >credit_card_off</span
+      <div v-else class="space-y-6">
+        <!-- Uyarı Banner -->
+        <div
+          class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3"
         >
-        <h3 class="mt-4 text-lg font-medium text-gray-600 dark:text-slate-400">
-          Kendi POS'unuzu Kullanın
-        </h3>
-        <p class="text-gray-500 dark:text-slate-400 mt-2">Bu özellik yakında eklenecektir.</p>
-        <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">
-          Şimdilik platform POS'larını kullanabilirsiniz.
-        </p>
+          <span class="material-icons text-amber-500 dark:text-amber-400 text-xl mt-0.5"
+            >warning</span
+          >
+          <div>
+            <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
+              Kendi POS'unuzu kullandığınızda platform POS'ları yedek olarak kullanılmaz
+            </p>
+            <p class="text-xs text-amber-600 dark:text-amber-500 mt-1">
+              Ödeme alabilmek için en az bir aktif POS tanımlanmış olmalıdır.
+            </p>
+          </div>
+        </div>
+
+        <!-- Banka POS Terminalleri -->
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <span class="material-icons text-white">account_balance</span>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white">
+                  Banka POS Terminalleri
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-slate-400">
+                  {{ filteredBankPosList.length }} terminal
+                </p>
+              </div>
+            </div>
+            <button
+              @click="openCreate('bank')"
+              class="px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 flex items-center gap-2 shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:-translate-y-0.5"
+            >
+              <span class="material-icons">add</span>
+              Banka POS Ekle
+            </button>
+          </div>
+
+          <!-- POS Kartları Grid -->
+          <div v-if="filteredBankPosList.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div
+              v-for="pos in filteredBankPosList"
+              :key="pos._id"
+              class="group bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 dark:border-slate-700 hover:border-gray-200 dark:hover:border-slate-600 hover:-translate-y-1"
+            >
+              <!-- Colored Header with Bank Info -->
+              <div
+                class="relative p-5 pb-4"
+                :style="{
+                  background: `linear-gradient(135deg, ${banks.find(b => b.code === pos.bankCode)?.color || '#6366f1'}15, ${banks.find(b => b.code === pos.bankCode)?.color || '#6366f1'}05)`
+                }"
+              >
+                <!-- Status Badge -->
+                <div class="absolute top-4 right-4">
+                  <span
+                    :class="[
+                      'px-3 py-1.5 text-xs rounded-full font-semibold shadow-sm',
+                      getStatusBadge(pos).class
+                    ]"
+                  >
+                    {{ getStatusBadge(pos).text }}
+                  </span>
+                </div>
+
+                <!-- Bank Logo & Name -->
+                <div class="flex items-center gap-4">
+                  <div class="relative">
+                    <div
+                      class="w-16 h-16 bg-white dark:bg-slate-700 rounded-2xl shadow-md flex items-center justify-center p-2 group-hover:shadow-lg transition-shadow"
+                    >
+                      <img
+                        :src="getBankLogo(pos.bankCode)"
+                        :alt="pos.name"
+                        class="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div
+                      v-if="pos.status"
+                      class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center"
+                    >
+                      <span class="material-icons text-white text-xs">check</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-gray-800 dark:text-white text-lg truncate">
+                      {{ pos.name }}
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-slate-400">
+                      {{ banks.find(b => b.code === pos.bankCode)?.name || pos.bankCode }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Family & Features -->
+              <div class="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
+                <div class="flex items-center gap-3 mb-4">
+                  <span
+                    class="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wide"
+                    >Desteklenen Kartlar</span
+                  >
+                  <div class="flex-1 h-px bg-gray-100 dark:bg-slate-700"></div>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div
+                    v-if="bankCardFamilies[pos.bankCode]"
+                    class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-600 rounded-xl border border-gray-200 dark:border-slate-600"
+                  >
+                    <img
+                      :src="getCardLogo(bankCardFamilies[pos.bankCode].code)"
+                      :alt="bankCardFamilies[pos.bankCode].name"
+                      class="h-6 object-contain"
+                      @error="$event.target.style.display = 'none'"
+                    />
+                    <span class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{
+                      bankCardFamilies[pos.bankCode].name
+                    }}</span>
+                  </div>
+
+                  <!-- Card Brand Icons -->
+                  <div class="flex items-center gap-1 ml-auto">
+                    <div
+                      v-if="pos.supportedCards?.visa !== false"
+                      class="w-8 h-5 bg-blue-600 rounded flex items-center justify-center"
+                      title="Visa"
+                    >
+                      <span class="text-white text-[8px] font-bold">VISA</span>
+                    </div>
+                    <div
+                      v-if="pos.supportedCards?.mastercard !== false"
+                      class="w-8 h-5 bg-gradient-to-r from-red-500 to-orange-500 rounded flex items-center justify-center"
+                      title="Mastercard"
+                    >
+                      <span class="text-white text-[8px] font-bold">MC</span>
+                    </div>
+                    <div
+                      v-if="pos.supportedCards?.troy !== false"
+                      class="w-8 h-5 bg-purple-600 rounded flex items-center justify-center"
+                      title="Troy"
+                    >
+                      <span class="text-white text-[8px] font-bold">TROY</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Features Row -->
+                <div
+                  class="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-slate-700"
+                >
+                  <div v-if="pos.installment?.enabled" class="flex items-center gap-2 text-sm">
+                    <span class="material-icons text-primary-500 dark:text-primary-400 text-lg"
+                      >calendar_month</span
+                    >
+                    <span class="text-gray-600 dark:text-slate-400"
+                      >{{ pos.installment.maxCount }} Taksit</span
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center gap-2 text-sm px-2 py-1 rounded-lg bg-green-100 dark:bg-green-900/50"
+                  >
+                    <span class="material-icons text-base text-green-600 dark:text-green-400"
+                      >verified_user</span
+                    >
+                    <span class="font-medium text-green-700 dark:text-green-400">
+                      {{ secureModels[pos.paymentModel]?.name || '3D Secure' }}
+                    </span>
+                  </div>
+
+                  <div
+                    v-if="pos.allowDirectPayment"
+                    class="flex items-center gap-1 text-sm px-2 py-1 rounded-lg bg-orange-100 dark:bg-orange-900/50"
+                  >
+                    <span class="material-icons text-base text-orange-600 dark:text-orange-400"
+                      >lock_open</span
+                    >
+                    <span class="font-medium text-orange-700 dark:text-orange-400">3D'siz</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Currency & Actions Footer -->
+              <div
+                class="px-5 py-3 bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-gray-400 dark:text-slate-500">Para Birimleri:</span>
+                  <div class="flex gap-1">
+                    <span
+                      v-for="curr in pos.currencies || []"
+                      :key="curr"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600"
+                    >
+                      {{ curr.toUpperCase() }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button
+                    @click="openEdit(pos)"
+                    class="p-2 text-gray-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/50 rounded-lg transition-all"
+                  >
+                    <span class="material-icons text-xl">edit</span>
+                  </button>
+                  <button
+                    @click="handleDelete(pos)"
+                    class="p-2 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-all"
+                  >
+                    <span class="material-icons text-xl">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Boş State -->
+          <div
+            v-else
+            class="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl border-2 border-dashed border-gray-200 dark:border-slate-700"
+          >
+            <div
+              class="w-20 h-20 bg-gray-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <span class="material-icons text-4xl text-gray-400 dark:text-slate-500"
+                >account_balance</span
+              >
+            </div>
+            <h4 class="text-lg font-semibold text-gray-600 dark:text-slate-400 mb-2">
+              Henüz POS Tanımlanmadı
+            </h4>
+            <p class="text-gray-500 dark:text-slate-500 mb-4">
+              Ödeme almaya başlamak için bir banka POS terminali ekleyin
+            </p>
+            <button
+              @click="openCreate('bank')"
+              class="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 flex items-center gap-2 mx-auto shadow-lg shadow-primary-500/30 transition-all"
+            >
+              <span class="material-icons">add</span>
+              İlk POS'unuzu Ekleyin
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

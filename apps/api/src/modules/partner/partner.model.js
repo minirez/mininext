@@ -269,6 +269,10 @@ const partnerSchema = new mongoose.Schema(
         type: Boolean,
         default: true
       },
+      useOwnPos: {
+        type: Boolean,
+        default: false
+      },
       bankAccounts: [
         {
           bankCode: String,

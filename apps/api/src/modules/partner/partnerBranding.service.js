@@ -38,6 +38,34 @@ const normalizeAdminThemeId = theme => {
   return ADMIN_THEME_IDS.includes(trimmed) ? trimmed : null
 }
 
+// Update POS settings (for partner users)
+export const updatePosSettings = asyncHandler(async (req, res) => {
+  const partnerId = req.partnerId
+
+  if (!partnerId) {
+    throw new BadRequestError('NO_PARTNER_SELECTED')
+  }
+
+  const partner = await Partner.findById(partnerId)
+  if (!partner) {
+    throw new NotFoundError('PARTNER_NOT_FOUND')
+  }
+
+  const { useOwnPos } = req.body
+  if (typeof useOwnPos === 'boolean') {
+    if (!partner.paymentSettings) partner.paymentSettings = {}
+    partner.paymentSettings.useOwnPos = useOwnPos
+    partner.markModified('paymentSettings')
+  }
+
+  await partner.save()
+
+  res.json({
+    success: true,
+    data: { useOwnPos: partner.paymentSettings.useOwnPos }
+  })
+})
+
 // Get my profile (for partner users)
 export const getMyProfile = asyncHandler(async (req, res) => {
   // Get partner ID from authenticated user

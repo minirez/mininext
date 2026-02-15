@@ -42,7 +42,7 @@ posClient.interceptors.request.use(async config => {
     if (partnerId) {
       config.headers['X-Partner-Id'] = partnerId
       // POST/PUT: inject partnerId into body if not already set
-      if (config.data && typeof config.data === 'object' && !config.data.partnerId) {
+      if (config.data && typeof config.data === 'object' && config.data.partnerId === undefined) {
         config.data.partnerId = partnerId
       }
     }

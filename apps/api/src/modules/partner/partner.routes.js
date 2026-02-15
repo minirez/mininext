@@ -37,6 +37,13 @@ router.post(
   upload.single('logo'),
   partnerService.uploadMyLogo
 )
+router.put(
+  '/my/pos-settings',
+  protect,
+  requirePartnerOrAdmin,
+  partnerContext,
+  partnerService.updatePosSettings
+)
 router.delete(
   '/my/profile/logo',
   protect,

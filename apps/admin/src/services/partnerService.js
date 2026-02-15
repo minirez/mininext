@@ -276,6 +276,19 @@ const updateMyProfile = async data => {
 }
 
 // Update my admin theme (for partner users)
+const updatePosSettings = async data => {
+  try {
+    const response = await apiClient.put('/partners/my/pos-settings', data)
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Update POS settings failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 const updateMyAdminTheme = async theme => {
   try {
     const response = await apiClient.put('/partners/my/admin-theme', { theme })
@@ -472,6 +485,7 @@ export default {
   getMyProfile,
   updateMyProfile,
   updateMyAdminTheme,
+  updatePosSettings,
   updatePartnerAdminTheme,
   uploadMyLogo,
   deleteMyLogo,

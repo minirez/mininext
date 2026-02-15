@@ -8,6 +8,7 @@ import { BadRequestError, NotFoundError } from '#core/errors.js'
 import Hotel from '../hotel/hotel.model.js'
 import Booking from '../booking/booking.model.js'
 import Payment from '../booking/payment.model.js'
+import Partner from '#modules/partner/partner.model.js'
 import Market from '#modules/planning/market.model.js'
 import paymentGateway from '#services/paymentGateway.js'
 import { convertCurrency } from '#services/currencyService.js'
@@ -103,16 +104,24 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
   const currencyUpper = currency.toUpperCase()
   const currencyLower = currency.toLowerCase()
 
+  // Check if partner uses own POS (no platform fallback)
+  let noFallback = false
+  if (partnerId) {
+    const partnerDoc = await Partner.findById(partnerId).select('paymentSettings.useOwnPos').lean()
+    noFallback = partnerDoc?.paymentSettings?.useOwnPos === true
+  }
+  const queryOpts = { noFallback }
+
   let result
   let currencyConversion = null
 
   if (currencyUpper === 'TRY') {
     // Already TRY, no conversion needed
-    result = await paymentGateway.queryBin(bin, amount, 'try', partnerId)
+    result = await paymentGateway.queryBin(bin, amount, 'try', partnerId, null, queryOpts)
   } else {
     // Foreign currency - try original first, check if domestic card
     try {
-      result = await paymentGateway.queryBin(bin, amount, currencyLower, partnerId)
+      result = await paymentGateway.queryBin(bin, amount, currencyLower, partnerId, null, queryOpts)
 
       // Check if domestic (TR) card → needs TRY conversion
       // Card is likely domestic if:
@@ -140,7 +149,14 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
         }
 
         // Re-query with TRY for correct POS & installments
-        result = await paymentGateway.queryBin(bin, conversion.convertedAmount, 'try', partnerId)
+        result = await paymentGateway.queryBin(
+          bin,
+          conversion.convertedAmount,
+          'try',
+          partnerId,
+          null,
+          queryOpts
+        )
         result.currencyConversion = currencyConversion
       }
     } catch (err) {
@@ -154,7 +170,14 @@ export const queryBinPublic = asyncHandler(async (req, res) => {
 
       const conversion = await convertCurrency(amount, currencyUpper, 'TRY')
 
-      result = await paymentGateway.queryBin(bin, conversion.convertedAmount, 'try', partnerId)
+      result = await paymentGateway.queryBin(
+        bin,
+        conversion.convertedAmount,
+        'try',
+        partnerId,
+        null,
+        queryOpts
+      )
 
       // Convert if domestic card or unreliable card info
       const cardCountry = result.card?.country?.toLowerCase() || ''
@@ -259,6 +282,17 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
   let paymentCurrency = bookingCurrency
   let currencyConversion = null
 
+  // Check if partner uses own POS (no platform fallback)
+  const bookingPartnerId = booking.partner?.toString()
+  let noFallbackBooking = false
+  if (bookingPartnerId) {
+    const partnerDocBooking = await Partner.findById(bookingPartnerId)
+      .select('paymentSettings.useOwnPos')
+      .lean()
+    noFallbackBooking = partnerDocBooking?.paymentSettings?.useOwnPos === true
+  }
+  const bookingQueryOpts = { noFallback: noFallbackBooking }
+
   if (bookingCurrency.toUpperCase() !== 'TRY') {
     // Check card country via BIN query (try original currency, fallback to TRY)
     const cardBin = card.number.replace(/\s/g, '').slice(0, 8)
@@ -269,7 +303,9 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
         cardBin,
         payableAmount,
         bookingCurrency.toLowerCase(),
-        booking.partner?.toString()
+        bookingPartnerId,
+        null,
+        bookingQueryOpts
       )
       cardCountry = binCheck?.card?.country?.toLowerCase() || null
       hasReliableBankInfo = !!(binCheck?.card?.bankCode && binCheck?.card?.bank !== 'Unknown')
@@ -280,7 +316,9 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
           cardBin,
           payableAmount,
           'try',
-          booking.partner?.toString()
+          bookingPartnerId,
+          null,
+          bookingQueryOpts
         )
         cardCountry = tryBinCheck?.card?.country?.toLowerCase() || null
         hasReliableBankInfo = !!(
@@ -348,7 +386,8 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
     },
     customer: customerInfo,
     externalId: payment._id.toString(),
-    partnerId: booking.partner?.toString()
+    partnerId: bookingPartnerId,
+    noFallback: noFallbackBooking
   })
 
   if (!result.success) {
@@ -372,7 +411,9 @@ export const initiateBookingPayment = asyncHandler(async (req, res) => {
       card.number.slice(0, 8),
       payment.amount,
       payment.currency.toLowerCase(),
-      booking.partner?.toString()
+      bookingPartnerId,
+      null,
+      bookingQueryOpts
     )
     .catch(() => null)
 

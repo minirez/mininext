@@ -163,7 +163,14 @@ async function makeRequest(
  * @param {string} token - Optional JWT token
  * @returns {Promise<Object>} - { success, pos, card, installments }
  */
-export async function queryBin(bin, amount, currency, partnerId = null, token = null) {
+export async function queryBin(
+  bin,
+  amount,
+  currency,
+  partnerId = null,
+  token = null,
+  options = {}
+) {
   return makeRequest(
     'POST',
     '/bin',
@@ -171,7 +178,8 @@ export async function queryBin(bin, amount, currency, partnerId = null, token = 
       bin,
       amount,
       currency: currency.toLowerCase(),
-      partnerId
+      partnerId,
+      noFallback: options.noFallback || false
     },
     token
   )

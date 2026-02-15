@@ -121,7 +121,7 @@ function getBankCommissionRate(pos, installment, cardType = 'credit') {
 /**
  * Query BIN and get installment options
  */
-export async function queryBin(partnerId, bin, amount, currency) {
+export async function queryBin(partnerId, bin, amount, currency, options = {}) {
   const binInfo = await getBinInfo(bin)
 
   if (!binInfo) {
@@ -129,7 +129,7 @@ export async function queryBin(partnerId, bin, amount, currency) {
   }
 
   // Find suitable POS for this card/currency
-  const pos = await findSuitablePos(partnerId, currency, binInfo)
+  const pos = await findSuitablePos(partnerId, currency, binInfo, options)
 
   if (!pos) {
     return { success: false, error: 'Uygun sanal pos bulunamadı' }
@@ -172,7 +172,7 @@ export async function queryBin(partnerId, bin, amount, currency) {
  *
  * partnerId: Partner'a ait POS'ları bul (null ise platform POS'ları)
  */
-async function findSuitablePos(partnerId, currency, binInfo) {
+async function findSuitablePos(partnerId, currency, binInfo, options = {}) {
   const currencyLower = currency.toLowerCase()
   const cardBankCode = binInfo?.bankCode?.toLowerCase() || ''
   const cardFamily = binInfo?.family?.toLowerCase() || ''
@@ -196,7 +196,7 @@ async function findSuitablePos(partnerId, currency, binInfo) {
   let allPos = await VirtualPos.find(query).sort({ priority: -1 }) // Higher priority first
 
   // Fallback: partner POS bulunamazsa platform POS'larini dene
-  if (!allPos.length && partnerId) {
+  if (!allPos.length && partnerId && !options.noFallback) {
     console.log(`[POS] No POS found for partner ${partnerId}, falling back to platform POS`)
     const platformQuery = {
       currencies: currencyLower,

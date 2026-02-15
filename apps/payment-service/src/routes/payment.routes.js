@@ -23,7 +23,7 @@ const router = Router()
  */
 router.post('/bin', async (req, res) => {
   try {
-    const { bin, amount, currency, partnerId } = req.body
+    const { bin, amount, currency, partnerId, noFallback } = req.body
 
     if (!bin || !amount || !currency) {
       return res.status(400).json({
@@ -37,7 +37,8 @@ router.post('/bin', async (req, res) => {
       partnerId || null,
       bin,
       parseFloat(amount),
-      currency.toLowerCase()
+      currency.toLowerCase(),
+      { noFallback: noFallback || false }
     )
 
     if (!result.success) {
@@ -56,7 +57,17 @@ router.post('/bin', async (req, res) => {
  */
 router.post('/pay', async (req, res) => {
   try {
-    const { posId, amount, currency, installment, card, customer, externalId, partnerId } = req.body
+    const {
+      posId,
+      amount,
+      currency,
+      installment,
+      card,
+      customer,
+      externalId,
+      partnerId,
+      noFallback
+    } = req.body
 
     // Validate required fields
     if (!amount || !currency || !card) {
@@ -81,7 +92,8 @@ router.post('/pay', async (req, res) => {
         partnerId || null,
         card.number.slice(0, 8),
         parseFloat(amount),
-        currency.toLowerCase()
+        currency.toLowerCase(),
+        { noFallback: noFallback || false }
       )
 
       if (!binResult.success) {
