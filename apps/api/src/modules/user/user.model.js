@@ -325,7 +325,7 @@ userSchema.pre('save', async function (next) {
   // Hash password only if modified
   if (!this.isModified('password')) return next()
 
-  this.password = await bcrypt.hash(this.password, 10)
+  this.password = await bcrypt.hash(this.password, 12)
 
   // Track password change time (for invalidating existing tokens)
   // Only set if this is not a new document (password change, not initial set)

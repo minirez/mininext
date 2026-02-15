@@ -119,14 +119,32 @@ export function sentryErrorHandler() {
         scope.setExtra('ip', req.ip)
         scope.setExtra('userAgent', req.get('User-Agent'))
 
+        // Add request ID for tracing
+        if (req.id) {
+          scope.setTag('requestId', req.id)
+        }
+
         // Don't include body for sensitive routes
         const sensitiveRoutes = [
           '/api/auth/login',
           '/api/auth/register',
-          '/api/auth/reset-password'
+          '/api/auth/reset-password',
+          '/api/payments',
+          '/api/pay',
+          '/api/public/payment',
+          '/api/bookings'
         ]
         if (!sensitiveRoutes.some(r => req.originalUrl.startsWith(r))) {
-          scope.setExtra('body', req.body)
+          // Sanitize body - remove potential sensitive fields
+          const sanitizedBody = req.body ? { ...req.body } : undefined
+          if (sanitizedBody) {
+            delete sanitizedBody.password
+            delete sanitizedBody.cardNumber
+            delete sanitizedBody.cvv
+            delete sanitizedBody.token
+            delete sanitizedBody.refreshToken
+          }
+          scope.setExtra('body', sanitizedBody)
         }
 
         Sentry.captureException(err)

@@ -15,12 +15,18 @@ export default {
     required: '*'
   },
 
+  header: {
+    language: 'Dil seçimi',
+    close: 'Kapat'
+  },
+
   steps: {
     search: 'Tarih',
     results: 'Odalar',
     booking: 'Bilgiler',
     payment: 'Ödeme',
-    confirmation: 'Onay'
+    confirmation: 'Onay',
+    progress: 'Rezervasyon adımları'
   },
 
   search: {

@@ -17,6 +17,8 @@
       type="button"
       :disabled="disabled"
       :class="triggerClasses"
+      :aria-expanded="isOpen"
+      aria-haspopup="listbox"
       @click="toggle"
       @keydown.down.prevent="openAndFocusFirst"
       @keydown.up.prevent="openAndFocusLast"
@@ -41,9 +43,10 @@
         v-if="clearable && modelValue && !disabled"
         type="button"
         class="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-600 rounded"
+        aria-label="Clear selection"
         @click.stop="clear"
       >
-        <span class="material-icons text-sm text-gray-400">close</span>
+        <span class="material-icons text-sm text-gray-400" aria-hidden="true">close</span>
       </button>
 
       <!-- Dropdown Arrow -->
@@ -71,6 +74,7 @@
               v-model="searchQuery"
               type="text"
               :placeholder="searchPlaceholder"
+              :aria-label="searchPlaceholder"
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               @keydown.down.prevent="focusNext"
               @keydown.up.prevent="focusPrev"

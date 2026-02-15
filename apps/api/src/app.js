@@ -8,7 +8,13 @@ import { i18nMiddleware } from './helpers/i18n.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { auditMiddleware } from './middleware/auditMiddleware.js'
 import { csrfProtection } from './middleware/csrf.js'
+import { requestIdMiddleware } from './middleware/requestId.js'
+import { requestTimeout } from './middleware/requestTimeout.js'
+import { metricsMiddleware } from './middleware/metrics.js'
 import { initSentry, sentryErrorHandler } from './core/sentry.js'
+
+// Import business metrics to ensure they are registered with prom-client
+import '#middleware/businessMetrics.js'
 
 // Initialize Sentry before anything else
 initSentry()
@@ -21,6 +27,12 @@ const app = express()
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
+// Request ID - must be first to track all requests
+app.use(requestIdMiddleware)
+
+// Request timeout - prevent hanging connections
+app.use(requestTimeout(30000))
+
 // Security
 app.use(
   helmet({
@@ -28,7 +40,12 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        'img-src': ["'self'", 'data:', 'http://localhost:4000', 'http://localhost:5174']
+        'img-src': [
+          "'self'",
+          'data:',
+          'https:',
+          ...(config.isDev ? ['http://localhost:4000', 'http://localhost:5174'] : [])
+        ]
       }
     }
   })
@@ -103,6 +120,9 @@ app.use((req, res, next) => {
 // Body parser (10MB limit - sufficient for most uploads, prevents DoS)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Prometheus metrics middleware (before routes, after body parser)
+app.use(metricsMiddleware)
 
 // i18n
 app.use(i18nMiddleware)
@@ -191,6 +211,10 @@ setupSwagger(app)
 // Auto-load module routes
 import { loadRoutes } from './loaders/routes.js'
 await loadRoutes(app)
+
+// Prometheus metrics endpoint (debug key protected)
+import metricsRoutes from './modules/debug/metrics.routes.js'
+app.use('/api/metrics', metricsRoutes)
 
 // Payment webhook routes (must be loaded separately - not part of booking module)
 import paymentWebhookRoutes from './modules/booking/paymentWebhook.routes.js'

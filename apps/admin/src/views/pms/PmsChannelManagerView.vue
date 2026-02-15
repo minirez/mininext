@@ -127,6 +127,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { usePmsStore } from '@/stores/pms'
+import { pmsLogger } from '@/utils/logger'
 import * as channelManagerService from '@/services/pms/channelManagerService'
 import { getRoomTypes } from '@/services/planning/roomTypeService'
 import { getMealPlans } from '@/services/planning/mealPlanService'
@@ -232,7 +233,7 @@ async function loadConnection() {
       await loadSyncStatus()
     }
   } catch (err) {
-    console.error('Failed to load connection:', err)
+    pmsLogger.error('Failed to load connection:', err)
   } finally {
     loading.value = false
   }
@@ -247,7 +248,7 @@ async function loadLocalData() {
     localRoomTypes.value = rtRes.data || []
     localMealPlans.value = mpRes.data || []
   } catch (err) {
-    console.error('Failed to load local room types / meal plans:', err)
+    pmsLogger.error('Failed to load local room types / meal plans:', err)
   }
 }
 
@@ -256,7 +257,7 @@ async function loadSyncStatus() {
     const res = await channelManagerService.getSyncStatus(hotelId.value)
     syncStatus.value = res.data?.status || null
   } catch (err) {
-    console.error('Failed to load sync status:', err)
+    pmsLogger.error('Failed to load sync status:', err)
   }
 }
 
@@ -396,7 +397,7 @@ async function loadQueueStatus() {
     const res = await channelManagerService.getPendingSyncs(hotelId.value)
     queueData.value = res.data || null
   } catch (err) {
-    console.error('Failed to load queue status:', err)
+    pmsLogger.error('Failed to load queue status:', err)
   }
 }
 
@@ -423,7 +424,7 @@ async function handleFilterLogs(filters) {
     })
     allLogs.value = res.data?.data || []
   } catch (err) {
-    console.error('Failed to load logs:', err)
+    pmsLogger.error('Failed to load logs:', err)
   }
 }
 

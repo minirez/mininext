@@ -72,7 +72,7 @@ export const CACHE_TTL = {
   ROOM_TYPES: 30 * 60 * 1000, // 30 minutes
   MEAL_PLANS: 30 * 60 * 1000, // 30 minutes
   CAMPAIGNS: 10 * 60 * 1000, // 10 minutes
-  AVAILABILITY: 1 * 60 * 1000, // 1 minute (shorter due to real-time nature)
+  AVAILABILITY: 5 * 60 * 1000, // 5 minutes (invalidated on booking/rate change events)
   RATE: 5 * 60 * 1000 // 5 minutes
 }
 

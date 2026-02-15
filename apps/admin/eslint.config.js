@@ -56,7 +56,7 @@ export default [
     rules: {
       // Error prevention
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-console': 'warn', // Warn in frontend
+      'no-console': ['warn', { allow: ['warn', 'error'] }], // Discourage console.log in frontend - use logger utility
       'no-debugger': 'error',
 
       // Best practices

@@ -59,7 +59,11 @@
                 class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors"
               >
                 <span class="material-icons text-sm">upgrade</span>
-                {{ subscription.status === 'active' ? $t('mySubscription.upgrade') : $t('mySubscription.renew') }}
+                {{
+                  subscription.status === 'active'
+                    ? $t('mySubscription.upgrade')
+                    : $t('mySubscription.renew')
+                }}
               </button>
             </div>
           </div>
@@ -107,7 +111,9 @@
                   {{ subscription.remainingDays }} {{ $t('mySubscription.days') }}
                 </template>
                 <template v-else-if="subscription.gracePeriodRemainingDays > 0">
-                  {{ subscription.gracePeriodRemainingDays }} {{ $t('mySubscription.days') }} ({{ $t('mySubscription.status.grace_period') }})
+                  {{ subscription.gracePeriodRemainingDays }} {{ $t('mySubscription.days') }} ({{
+                    $t('mySubscription.status.grace_period')
+                  }})
                 </template>
                 <template v-else>
                   {{ $t('mySubscription.status.expired') }}
@@ -142,7 +148,11 @@
                   {{ $t('mySubscription.gracePeriodWarning') }}
                 </div>
                 <div class="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  {{ $t('mySubscription.gracePeriodRemainingDays', { days: subscription.gracePeriodRemainingDays }) }}
+                  {{
+                    $t('mySubscription.gracePeriodRemainingDays', {
+                      days: subscription.gracePeriodRemainingDays
+                    })
+                  }}
                 </div>
               </div>
             </div>
@@ -184,14 +194,16 @@
               <div class="text-2xl font-bold text-gray-900 dark:text-white">
                 {{ subscription.pmsUsed || 0 }}
                 <span class="text-gray-500 dark:text-slate-400 text-lg font-normal">
-                  / {{ subscription.pmsLimit === -1 ? $t('mySubscription.pmsUnlimited') : subscription.pmsLimit }}
+                  /
+                  {{
+                    subscription.pmsLimit === -1
+                      ? $t('mySubscription.pmsUnlimited')
+                      : subscription.pmsLimit
+                  }}
                 </span>
               </div>
             </div>
-            <div
-              v-if="subscription.pmsLimit !== -1"
-              class="w-24 h-24"
-            >
+            <div v-if="subscription.pmsLimit !== -1" class="w-24 h-24">
               <div class="relative w-full h-full">
                 <svg class="w-full h-full transform -rotate-90">
                   <circle
@@ -240,7 +252,9 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Sites Limit -->
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+              <div
+                class="w-12 h-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center"
+              >
                 <span class="material-icons text-xl text-teal-500">web</span>
               </div>
               <div>
@@ -248,14 +262,20 @@
                   {{ $t('mySubscription.webDesign.maxSites') }}
                 </div>
                 <div class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ subscription.webDesignLimit === -1 ? $t('mySubscription.pmsUnlimited') : subscription.webDesignLimit }}
+                  {{
+                    subscription.webDesignLimit === -1
+                      ? $t('mySubscription.pmsUnlimited')
+                      : subscription.webDesignLimit
+                  }}
                 </div>
               </div>
             </div>
 
             <!-- SSL -->
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <div
+                class="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
+              >
                 <span class="material-icons text-xl text-green-500">lock</span>
               </div>
               <div>
@@ -270,7 +290,9 @@
 
             <!-- Custom Domain -->
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <div
+                class="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"
+              >
                 <span class="material-icons text-xl text-purple-500">dns</span>
               </div>
               <div>
@@ -296,7 +318,10 @@
           </h3>
         </div>
         <div class="p-6">
-          <div v-if="invoices.length === 0" class="text-center py-8 text-gray-500 dark:text-slate-400">
+          <div
+            v-if="invoices.length === 0"
+            class="text-center py-8 text-gray-500 dark:text-slate-400"
+          >
             {{ $t('mySubscription.noInvoices') }}
           </div>
           <div v-else class="space-y-3">
@@ -308,7 +333,11 @@
               <div class="flex items-center gap-4">
                 <div
                   class="w-10 h-10 rounded-lg flex items-center justify-center"
-                  :class="invoice.status === 'paid' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-slate-700'"
+                  :class="
+                    invoice.status === 'paid'
+                      ? 'bg-green-100 dark:bg-green-900/30'
+                      : 'bg-gray-100 dark:bg-slate-700'
+                  "
                 >
                   <span
                     class="material-icons text-lg"
@@ -361,7 +390,10 @@
           </h3>
         </div>
         <div class="p-6">
-          <div v-if="!subscription.purchases?.length" class="text-center py-8 text-gray-500 dark:text-slate-400">
+          <div
+            v-if="!subscription.purchases?.length"
+            class="text-center py-8 text-gray-500 dark:text-slate-400"
+          >
             {{ $t('mySubscription.noPurchases') }}
           </div>
           <div v-else class="space-y-3">
@@ -370,10 +402,14 @@
               :key="purchase._id"
               class="flex items-center justify-between p-4 rounded-lg border"
               :class="{
-                'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800': purchase.status === 'pending',
-                'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800': purchase.status === 'active',
-                'bg-gray-50 dark:bg-slate-700/50 border-gray-200 dark:border-slate-700': purchase.status === 'expired',
-                'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800': purchase.status === 'cancelled'
+                'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800':
+                  purchase.status === 'pending',
+                'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800':
+                  purchase.status === 'active',
+                'bg-gray-50 dark:bg-slate-700/50 border-gray-200 dark:border-slate-700':
+                  purchase.status === 'expired',
+                'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800':
+                  purchase.status === 'cancelled'
               }"
             >
               <div class="flex items-center gap-4">
@@ -401,7 +437,8 @@
                     </span>
                   </div>
                   <div class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                    {{ formatDate(purchase.period?.startDate) }} - {{ formatDate(purchase.period?.endDate) }}
+                    {{ formatDate(purchase.period?.startDate) }} -
+                    {{ formatDate(purchase.period?.endDate) }}
                   </div>
                 </div>
               </div>
@@ -411,7 +448,11 @@
                     {{ formatCurrency(purchase.price?.amount, purchase.price?.currency) }}
                   </div>
                   <div class="text-xs text-gray-500 dark:text-slate-400">
-                    {{ purchase.status === 'pending' ? $t('mySubscription.awaitingPayment') : $t(`mySubscription.paymentMethods.${purchase.payment?.method}`) }}
+                    {{
+                      purchase.status === 'pending'
+                        ? $t('mySubscription.awaitingPayment')
+                        : $t(`mySubscription.paymentMethods.${purchase.payment?.method}`)
+                    }}
                   </div>
                 </div>
                 <!-- Pay Now button for pending purchases -->
@@ -463,20 +504,18 @@
 
     <!-- Payment Modal -->
     <Teleport to="body">
-      <div
-        v-if="showPaymentModal"
-        class="fixed inset-0 z-50 flex items-center justify-center"
-      >
+      <div v-if="showPaymentModal" class="fixed inset-0 z-50 flex items-center justify-center">
         <!-- Backdrop -->
-        <div
-          class="absolute inset-0 bg-black/50"
-          @click="showPaymentModal = false"
-        ></div>
+        <div class="absolute inset-0 bg-black/50" @click="showPaymentModal = false"></div>
 
         <!-- Modal Content -->
-        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div
+          class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+        >
           <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+          <div
+            class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700"
+          >
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
               {{ $t('mySubscription.purchasePlan') }}
             </h3>
@@ -491,13 +530,19 @@
           <!-- Body -->
           <div class="p-6 space-y-6">
             <!-- Pending Purchase Info (when paying for admin-created package) -->
-            <div v-if="selectedPendingPurchase" class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+            <div
+              v-if="selectedPendingPurchase"
+              class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl"
+            >
               <div class="flex items-center gap-4">
                 <div
                   class="w-12 h-12 rounded-lg flex items-center justify-center"
                   :class="planColors[selectedPendingPurchase.plan]?.bg"
                 >
-                  <span class="material-icons text-xl" :class="planColors[selectedPendingPurchase.plan]?.text">
+                  <span
+                    class="material-icons text-xl"
+                    :class="planColors[selectedPendingPurchase.plan]?.text"
+                  >
                     {{ planColors[selectedPendingPurchase.plan]?.icon }}
                   </span>
                 </div>
@@ -506,17 +551,25 @@
                     <span class="font-semibold text-gray-900 dark:text-white">
                       {{ getPlanName(selectedPendingPurchase.plan) }}
                     </span>
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    >
                       {{ $t('mySubscription.purchaseStatus.pending') }}
                     </span>
                   </div>
                   <div class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                    {{ formatDate(selectedPendingPurchase.period?.startDate) }} - {{ formatDate(selectedPendingPurchase.period?.endDate) }}
+                    {{ formatDate(selectedPendingPurchase.period?.startDate) }} -
+                    {{ formatDate(selectedPendingPurchase.period?.endDate) }}
                   </div>
                 </div>
                 <div class="text-right">
                   <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                    {{ formatCurrency(selectedPendingPurchase.price?.amount, selectedPendingPurchase.price?.currency) }}
+                    {{
+                      formatCurrency(
+                        selectedPendingPurchase.price?.amount,
+                        selectedPendingPurchase.price?.currency
+                      )
+                    }}
                   </div>
                 </div>
               </div>
@@ -533,9 +586,11 @@
                   :key="key"
                   @click="selectedPlan = key"
                   class="p-4 border-2 rounded-xl cursor-pointer transition-all"
-                  :class="selectedPlan === key
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                    : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'"
+                  :class="
+                    selectedPlan === key
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'
+                  "
                 >
                   <div class="flex items-center gap-3 mb-2">
                     <div
@@ -552,7 +607,9 @@
                   </div>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white">
                     ${{ plan.price.yearly }}
-                    <span class="text-sm font-normal text-gray-500 dark:text-slate-400">/{{ $t('mySubscription.year') }}</span>
+                    <span class="text-sm font-normal text-gray-500 dark:text-slate-400"
+                      >/{{ $t('mySubscription.year') }}</span
+                    >
                   </p>
                   <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
                     {{ plan.description }}
@@ -592,8 +649,14 @@
                       class="w-full px-4 py-3 pr-24 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
                     />
                     <!-- Card Brand & Bank Info -->
-                    <div v-if="binInfo" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                      <span v-if="binInfo.cardFamily" class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-slate-300">
+                    <div
+                      v-if="binInfo"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2"
+                    >
+                      <span
+                        v-if="binInfo.cardFamily"
+                        class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-slate-300"
+                      >
                         {{ binInfo.cardFamily }}
                       </span>
                       <img
@@ -608,7 +671,10 @@
                     </div>
                   </div>
                   <!-- Bank Name -->
-                  <p v-if="binInfo?.bankName" class="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                  <p
+                    v-if="binInfo?.bankName"
+                    class="mt-1 text-xs text-gray-500 dark:text-slate-400"
+                  >
                     {{ binInfo.bankName }}
                   </p>
                 </div>
@@ -654,18 +720,27 @@
                   type="button"
                   @click="selectedInstallment = option.count"
                   class="p-3 border-2 rounded-lg text-center transition-all"
-                  :class="selectedInstallment === option.count
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                    : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'"
+                  :class="
+                    selectedInstallment === option.count
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-gray-200 dark:border-slate-700 hover:border-purple-300'
+                  "
                 >
                   <div class="font-semibold text-gray-900 dark:text-white">
-                    {{ option.count === 1 ? $t('mySubscription.singlePayment') : `${option.count} ${$t('mySubscription.installments')}` }}
+                    {{
+                      option.count === 1
+                        ? $t('mySubscription.singlePayment')
+                        : `${option.count} ${$t('mySubscription.installments')}`
+                    }}
                   </div>
                   <div class="text-sm text-gray-500 dark:text-slate-400">
                     {{ formatCurrency(option.amount, 'USD') }}
                     <span v-if="option.count > 1">x {{ option.count }}</span>
                   </div>
-                  <div v-if="option.totalAmount > selectedPlanPrice" class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  <div
+                    v-if="option.totalAmount > selectedPlanPrice"
+                    class="text-xs text-amber-600 dark:text-amber-400 mt-1"
+                  >
                     +{{ formatCurrency(option.totalAmount - selectedPlanPrice, 'USD') }}
                   </div>
                 </button>
@@ -685,7 +760,9 @@
           </div>
 
           <!-- Footer -->
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+          <div
+            class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50"
+          >
             <button
               @click="showPaymentModal = false"
               class="px-4 py-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
@@ -708,17 +785,16 @@
 
     <!-- 3D Secure Modal -->
     <Teleport to="body">
-      <div
-        v-if="show3DModal"
-        class="fixed inset-0 z-50 flex items-center justify-center"
-      >
+      <div v-if="show3DModal" class="fixed inset-0 z-50 flex items-center justify-center">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/50"></div>
 
         <!-- Modal Content -->
         <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg mx-4">
           <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+          <div
+            class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700"
+          >
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <span class="material-icons text-green-500">verified_user</span>
               {{ $t('mySubscription.securePayment') }}
@@ -735,7 +811,9 @@
           </div>
 
           <!-- Info -->
-          <div class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+          <div
+            class="px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50"
+          >
             <p class="text-sm text-gray-500 dark:text-slate-400 text-center">
               {{ $t('mySubscription.securePaymentInfo') }}
             </p>
@@ -746,13 +824,14 @@
 
     <!-- Success Message -->
     <Teleport to="body">
-      <div
-        v-if="showSuccessMessage"
-        class="fixed inset-0 z-50 flex items-center justify-center"
-      >
+      <div v-if="showSuccessMessage" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showSuccessMessage = false"></div>
-        <div class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center">
-          <div class="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+        <div
+          class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center"
+        >
+          <div
+            class="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center"
+          >
             <span class="material-icons text-4xl text-green-500">check_circle</span>
           </div>
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -762,7 +841,10 @@
             {{ $t('mySubscription.subscriptionActivated') }}
           </p>
           <button
-            @click="showSuccessMessage = false; loadData()"
+            @click="
+              showSuccessMessage = false
+              loadData()
+            "
             class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
           >
             {{ $t('common.ok') }}
@@ -779,6 +861,9 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import partnerService from '@/services/partnerService'
 import subscriptionInvoiceService from '@/services/subscriptionInvoiceService'
+import { createLogger } from '@/utils/logger'
+
+const logger = createLogger('Subscription')
 
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
@@ -942,7 +1027,7 @@ const loadData = async () => {
     const invoicesResponse = await subscriptionInvoiceService.getMyInvoices()
     invoices.value = invoicesResponse.data?.invoices || []
   } catch (error) {
-    console.error('Failed to load subscription:', error)
+    logger.error('Failed to load subscription:', error)
   } finally {
     loading.value = false
   }
@@ -952,7 +1037,7 @@ const downloadInvoice = async (invoiceId, invoiceNumber) => {
   try {
     await subscriptionInvoiceService.downloadMyInvoicePDF(invoiceId, invoiceNumber)
   } catch (error) {
-    console.error('Failed to download invoice:', error)
+    logger.error('Failed to download invoice:', error)
   }
 }
 
@@ -982,13 +1067,15 @@ const handleCardNumberInput = () => {
     }, 300)
   } else {
     binInfo.value = null
-    installmentOptions.value = [{ count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }]
+    installmentOptions.value = [
+      { count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }
+    ]
     selectedInstallment.value = 1
   }
 }
 
 // Query BIN for installment options
-const queryBin = async (bin) => {
+const queryBin = async bin => {
   binLoading.value = true
   try {
     const response = await partnerService.querySubscriptionBin(bin, selectedPlan.value)
@@ -1003,12 +1090,14 @@ const queryBin = async (bin) => {
           totalAmount: inst.totalAmount
         }))
       } else {
-        installmentOptions.value = [{ count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }]
+        installmentOptions.value = [
+          { count: 1, amount: selectedPlanPrice.value, totalAmount: selectedPlanPrice.value }
+        ]
       }
       selectedInstallment.value = 1
     }
   } catch (error) {
-    console.error('BIN query failed:', error)
+    logger.error('BIN query failed:', error)
     binInfo.value = null
   } finally {
     binLoading.value = false
@@ -1016,7 +1105,7 @@ const queryBin = async (bin) => {
 }
 
 // Get card brand logo
-const getCardBrandLogo = (brand) => {
+const getCardBrandLogo = brand => {
   const logos = {
     visa: 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/flags/4x3/visa.svg',
     mastercard: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
@@ -1041,14 +1130,16 @@ const formatExpiry = () => {
 }
 
 // Open payment modal for pending purchase (admin-created)
-const openPaymentForPending = (purchase) => {
+const openPaymentForPending = purchase => {
   selectedPendingPurchase.value = purchase
   selectedPlan.value = purchase.plan
   paymentError.value = ''
   card.value = { holder: '', number: '', expiry: '', cvv: '' }
   binInfo.value = null
   selectedInstallment.value = 1
-  installmentOptions.value = [{ count: 1, amount: purchase.price?.amount || 0, totalAmount: purchase.price?.amount || 0 }]
+  installmentOptions.value = [
+    { count: 1, amount: purchase.price?.amount || 0, totalAmount: purchase.price?.amount || 0 }
+  ]
   showPaymentModal.value = true
 }
 
@@ -1103,7 +1194,7 @@ const processPurchase = async () => {
       paymentError.value = response.error || t('mySubscription.paymentFailed')
     }
   } catch (error) {
-    console.error('Payment error:', error)
+    logger.error('Payment error:', error)
     paymentError.value = error.response?.data?.error || t('mySubscription.paymentFailed')
   } finally {
     processing.value = false
@@ -1111,7 +1202,7 @@ const processPurchase = async () => {
 }
 
 // Handle payment result from iframe postMessage
-const handlePaymentMessage = (event) => {
+const handlePaymentMessage = event => {
   // Accept messages from payment service
   if (event.data?.type === 'payment_result') {
     show3DModal.value = false

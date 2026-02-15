@@ -102,6 +102,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import partnerService from '@/services/partnerService'
+import { createLogger } from '@/utils/logger'
+
+const logger = createLogger('CompanyProfile')
 import Spinner from '@/components/ui/feedback/Spinner.vue'
 import CompanyTab from '@/components/companyProfile/CompanyTab.vue'
 import TaxTab from '@/components/companyProfile/TaxTab.vue'
@@ -202,7 +205,7 @@ const fetchProfile = async () => {
     }
   } catch (err) {
     error.value = t('companyProfile.messages.fetchError')
-    console.error('Failed to fetch profile:', err)
+    logger.error('Failed to fetch profile:', err)
   } finally {
     loading.value = false
   }
@@ -228,7 +231,7 @@ const handleSave = async () => {
     }
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
-    console.error('Failed to save profile:', err)
+    logger.error('Failed to save profile:', err)
   } finally {
     saving.value = false
   }
@@ -246,7 +249,7 @@ const handleUploadLogo = async file => {
     }
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
-    console.error('Failed to upload logo:', err)
+    logger.error('Failed to upload logo:', err)
   } finally {
     saving.value = false
   }
@@ -263,7 +266,7 @@ const handleDeleteLogo = async () => {
     }
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
-    console.error('Failed to delete logo:', err)
+    logger.error('Failed to delete logo:', err)
   } finally {
     saving.value = false
   }
@@ -281,7 +284,7 @@ const handleUploadFavicon = async file => {
     }
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
-    console.error('Failed to upload favicon:', err)
+    logger.error('Failed to upload favicon:', err)
   } finally {
     saving.value = false
   }
@@ -298,7 +301,7 @@ const handleDeleteFavicon = async () => {
     }
   } catch (err) {
     toast.error(err.response?.data?.error || t('common.error'))
-    console.error('Failed to delete favicon:', err)
+    logger.error('Failed to delete favicon:', err)
   } finally {
     saving.value = false
   }

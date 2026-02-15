@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import hotelService from '@/services/hotelService'
+import { storeLogger } from '@/utils/logger'
 
 const STORAGE_KEY_PREFIX = 'selected_hotel_'
 
@@ -77,7 +78,7 @@ export const useHotelStore = defineStore('hotel', () => {
         setHotel(response.data)
       }
     } catch (error) {
-      console.error('Failed to refresh hotel:', error)
+      storeLogger.error('Failed to refresh hotel:', error)
     }
   }
 

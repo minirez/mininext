@@ -4,6 +4,7 @@
  */
 import { ref } from 'vue'
 import * as api from '@/services/virtualPosService'
+import { storeLogger } from '@/utils/logger'
 
 export function usePaymentTransactions(sharedState) {
   // State
@@ -20,7 +21,7 @@ export function usePaymentTransactions(sharedState) {
       return res
     } catch (e) {
       sharedState.error.value = e.message
-      console.error('Fetch transactions failed:', e)
+      storeLogger.error('Fetch transactions failed:', e)
     } finally {
       sharedState.loading.value = false
     }
@@ -30,7 +31,7 @@ export function usePaymentTransactions(sharedState) {
     try {
       stats.value = null
     } catch (e) {
-      console.error('Fetch stats failed:', e)
+      storeLogger.error('Fetch stats failed:', e)
     }
   }
 
@@ -44,7 +45,7 @@ export function usePaymentTransactions(sharedState) {
       const res = await api.getPosList()
       return res.posList || res || []
     } catch (e) {
-      console.error('Fetch filter POS list failed:', e)
+      storeLogger.error('Fetch filter POS list failed:', e)
       return []
     }
   }

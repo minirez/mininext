@@ -1,4 +1,9 @@
 import { createServer } from 'http'
+import { validateEnv } from './config/validateEnv.js'
+
+// Validate environment variables before anything else
+validateEnv()
+
 import app from './app.js'
 import config from './config/index.js'
 import logger from './core/logger.js'
@@ -13,6 +18,7 @@ import {
 } from './modules/channel-manager/channelScheduler.js'
 import { initWorkers } from './workers/index.js'
 import { closeQueues } from './core/queue.js'
+import { stopMetricsCollection } from './middleware/metrics.js'
 
 // Connect to database
 await connectDB()
@@ -49,26 +55,47 @@ const server = httpServer.listen(config.port, async () => {
   logger.info('📡 Channel manager scheduler started')
 })
 
-// Graceful shutdown
+// Graceful shutdown with timeout
+let isShuttingDown = false
+
 const gracefulShutdown = async signal => {
+  if (isShuttingDown) return
+  isShuttingDown = true
+
   logger.info(`${signal} received, shutting down gracefully...`)
 
-  // Stop exchange scheduler
-  stopExchangeScheduler()
+  // Force exit after 30 seconds
+  const forceExitTimeout = setTimeout(() => {
+    logger.error('Graceful shutdown timed out after 30s, forcing exit')
+    process.exit(1)
+  }, 30000)
+  forceExitTimeout.unref()
 
-  // Stop channel manager scheduler
-  stopChannelScheduler()
+  try {
+    // Stop metrics collection
+    stopMetricsCollection()
 
-  // Close queue workers
-  await closeQueues()
+    // Stop exchange scheduler
+    stopExchangeScheduler()
 
-  // Close Redis connection
-  await closeRedis()
+    // Stop channel manager scheduler
+    stopChannelScheduler()
 
-  server.close(() => {
-    logger.info('Server closed')
-    process.exit(0)
-  })
+    // Close queue workers
+    await closeQueues()
+
+    // Close Redis connection
+    await closeRedis()
+
+    server.close(() => {
+      clearTimeout(forceExitTimeout)
+      logger.info('Server closed')
+      process.exit(0)
+    })
+  } catch (err) {
+    logger.error('Error during shutdown', { error: err.message })
+    process.exit(1)
+  }
 }
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))

@@ -4,6 +4,9 @@
  */
 
 import axios from 'axios'
+import { createLogger } from '@/utils/logger'
+
+const logger = createLogger('PaymentService')
 
 const PAYMENT_API = import.meta.env.VITE_PAYMENT_API_URL || 'http://localhost:7043/api'
 
@@ -56,35 +59,35 @@ posClient.interceptors.request.use(async config => {
 
 /** @deprecated Use partnerId on VirtualPos instead */
 export const getCompanies = async (params = {}) => {
-  console.warn('getCompanies is deprecated - use partnerId on POS')
+  logger.warn('getCompanies is deprecated - use partnerId on POS')
   const response = await posClient.get('/companies', { params })
   return response.data
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
 export const getCompany = async id => {
-  console.warn('getCompany is deprecated - use partnerId on POS')
+  logger.warn('getCompany is deprecated - use partnerId on POS')
   const response = await posClient.get(`/companies/${id}`)
   return response.data
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
 export const createCompany = async data => {
-  console.warn('createCompany is deprecated - use partnerId on POS')
+  logger.warn('createCompany is deprecated - use partnerId on POS')
   const response = await posClient.post('/companies', data)
   return response.data
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
 export const updateCompany = async (id, data) => {
-  console.warn('updateCompany is deprecated - use partnerId on POS')
+  logger.warn('updateCompany is deprecated - use partnerId on POS')
   const response = await posClient.put(`/companies/${id}`, data)
   return response.data
 }
 
 /** @deprecated Use partnerId on VirtualPos instead */
 export const deleteCompany = async id => {
-  console.warn('deleteCompany is deprecated - use partnerId on POS')
+  logger.warn('deleteCompany is deprecated - use partnerId on POS')
   const response = await posClient.delete(`/companies/${id}`)
   return response.data
 }
@@ -269,17 +272,17 @@ export const companyApi = {
   update: updateCompany,
   delete: deleteCompany,
   getApiKeys: async id => {
-    console.warn('companyApi.getApiKeys is deprecated')
+    logger.warn('companyApi.getApiKeys is deprecated')
     const response = await posClient.get(`/companies/${id}/api-keys`)
     return response
   },
   createApiKey: async (id, data) => {
-    console.warn('companyApi.createApiKey is deprecated')
+    logger.warn('companyApi.createApiKey is deprecated')
     const response = await posClient.post(`/companies/${id}/api-keys`, data)
     return response
   },
   deleteApiKey: async (companyId, keyId) => {
-    console.warn('companyApi.deleteApiKey is deprecated')
+    logger.warn('companyApi.deleteApiKey is deprecated')
     const response = await posClient.delete(`/companies/${companyId}/api-keys/${keyId}`)
     return response
   }

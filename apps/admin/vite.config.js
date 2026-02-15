@@ -65,8 +65,48 @@ export default defineConfig({
         // Default admin build configuration
         rollupOptions: {
           output: {
-            manualChunks: {
-              vendor: ['vue', 'vue-router', 'pinia', 'axios']
+            manualChunks(id) {
+              // Vue core
+              if (
+                id.includes('node_modules/vue/') ||
+                id.includes('node_modules/@vue/') ||
+                id.includes('node_modules/vue-router/') ||
+                id.includes('node_modules/pinia/')
+              ) {
+                return 'vue-core'
+              }
+              // HTTP layer
+              if (id.includes('node_modules/axios/')) {
+                return 'http'
+              }
+              // Rich text editor (TipTap) - heavy, lazy loaded
+              if (
+                id.includes('node_modules/@tiptap/') ||
+                id.includes('node_modules/prosemirror') ||
+                id.includes('node_modules/tiptap')
+              ) {
+                return 'editor'
+              }
+              // Maps
+              if (id.includes('node_modules/leaflet')) {
+                return 'maps'
+              }
+              // Date utilities
+              if (id.includes('node_modules/date-fns')) {
+                return 'date-utils'
+              }
+              // i18n
+              if (id.includes('node_modules/vue-i18n')) {
+                return 'i18n'
+              }
+              // Socket.io
+              if (id.includes('node_modules/socket.io')) {
+                return 'socket'
+              }
+              // All other vendor
+              if (id.includes('node_modules/')) {
+                return 'vendor'
+              }
             }
           }
         }

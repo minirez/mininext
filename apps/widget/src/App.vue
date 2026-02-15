@@ -149,6 +149,8 @@ function closeWidget() {
   <button
     v-if="mode === 'floating' && !isOpen"
     :class="['widget-trigger', { left: position.includes('left') }]"
+    :aria-label="triggerText"
+    aria-haspopup="dialog"
     @click="openWidget"
   >
     <span v-if="widgetStore.hasActiveSession" class="widget-trigger-badge"></span>
@@ -176,6 +178,7 @@ function closeWidget() {
     target="_blank"
     rel="noopener noreferrer"
     :class="['widget-whatsapp', { left: position.includes('left') }]"
+    aria-label="WhatsApp"
   >
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor">
       <path
@@ -185,7 +188,13 @@ function closeWidget() {
   </a>
 
   <!-- Widget Modal/Container (no Teleport for Shadow DOM compatibility) -->
-  <div v-if="mode === 'floating' && isOpen" class="widget-overlay">
+  <div
+    v-if="mode === 'floating' && isOpen"
+    class="widget-overlay"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="hotelName + ' - ' + t('steps.' + currentStep)"
+  >
     <div :class="['widget-container', { dark: theme === 'dark' }]">
       <!-- Header -->
       <div class="widget-header">
@@ -226,7 +235,13 @@ function closeWidget() {
         </div>
         <div class="widget-header-actions">
           <div class="widget-lang-selector">
-            <button class="widget-lang-btn" @click="toggleLangDropdown">
+            <button
+              class="widget-lang-btn"
+              @click="toggleLangDropdown"
+              :aria-expanded="langDropdownOpen"
+              aria-haspopup="listbox"
+              :aria-label="t('header.language')"
+            >
               <span class="widget-lang-code">{{ currentLang.toUpperCase() }}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -238,14 +253,22 @@ function closeWidget() {
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                aria-hidden="true"
               >
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div v-if="langDropdownOpen" class="widget-lang-dropdown">
+            <div
+              v-if="langDropdownOpen"
+              class="widget-lang-dropdown"
+              role="listbox"
+              :aria-label="t('header.language')"
+            >
               <button
                 v-for="lang in availableLanguages"
                 :key="lang.code"
+                role="option"
+                :aria-selected="currentLang === lang.code"
                 :class="['widget-lang-option', { active: currentLang === lang.code }]"
                 @click="changeLanguage(lang.code)"
               >
@@ -261,13 +284,14 @@ function closeWidget() {
                   stroke-width="2.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
+                  aria-hidden="true"
                 >
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </button>
             </div>
           </div>
-          <button class="widget-close" @click="closeWidget">
+          <button class="widget-close" @click="closeWidget" :aria-label="t('header.close')">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -278,6 +302,7 @@ function closeWidget() {
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
+              aria-hidden="true"
             >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -287,23 +312,29 @@ function closeWidget() {
       </div>
 
       <!-- Step Indicator -->
-      <div v-if="currentStep !== 'confirmation'" class="step-indicator">
+      <nav
+        v-if="currentStep !== 'confirmation'"
+        class="step-indicator"
+        :aria-label="t('steps.progress')"
+      >
         <template v-for="(step, index) in steps.slice(0, -1)" :key="step">
           <div
             v-if="index > 0"
             :class="['step-line', { completed: index <= currentStepIndex }]"
+            aria-hidden="true"
           ></div>
           <div
             :class="[
               'step-item',
               { active: index === currentStepIndex, completed: index < currentStepIndex }
             ]"
+            :aria-current="index === currentStepIndex ? 'step' : undefined"
           >
-            <div class="step-dot"></div>
+            <div class="step-dot" aria-hidden="true"></div>
             <span class="step-label">{{ stepLabels[step] }}</span>
           </div>
         </template>
-      </div>
+      </nav>
 
       <!-- Content -->
       <div class="widget-content">
@@ -354,7 +385,13 @@ function closeWidget() {
         </div>
         <div class="widget-header-actions">
           <div class="widget-lang-selector">
-            <button class="widget-lang-btn" @click="toggleLangDropdown">
+            <button
+              class="widget-lang-btn"
+              @click="toggleLangDropdown"
+              :aria-expanded="langDropdownOpen"
+              aria-haspopup="listbox"
+              :aria-label="t('header.language')"
+            >
               <span class="widget-lang-code">{{ currentLang.toUpperCase() }}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -366,14 +403,22 @@ function closeWidget() {
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                aria-hidden="true"
               >
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div v-if="langDropdownOpen" class="widget-lang-dropdown">
+            <div
+              v-if="langDropdownOpen"
+              class="widget-lang-dropdown"
+              role="listbox"
+              :aria-label="t('header.language')"
+            >
               <button
                 v-for="lang in availableLanguages"
                 :key="lang.code"
+                role="option"
+                :aria-selected="currentLang === lang.code"
                 :class="['widget-lang-option', { active: currentLang === lang.code }]"
                 @click="changeLanguage(lang.code)"
               >
@@ -389,6 +434,7 @@ function closeWidget() {
                   stroke-width="2.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
+                  aria-hidden="true"
                 >
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
@@ -397,7 +443,11 @@ function closeWidget() {
           </div>
         </div>
       </div>
-      <div v-if="currentStep !== 'confirmation'" class="step-indicator">
+      <nav
+        v-if="currentStep !== 'confirmation'"
+        class="step-indicator"
+        :aria-label="t('steps.progress')"
+      >
         <template v-for="(step, index) in steps.slice(0, -1)" :key="step">
           <div
             v-if="index > 0"
@@ -413,7 +463,7 @@ function closeWidget() {
             <span class="step-label">{{ stepLabels[step] }}</span>
           </div>
         </template>
-      </div>
+      </nav>
       <div class="widget-content">
         <component :is="currentView" />
       </div>

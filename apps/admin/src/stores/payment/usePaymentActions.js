@@ -3,6 +3,7 @@
  * Payment processing, refund, cancel, BIN lookup
  */
 import * as api from '@/services/virtualPosService'
+import { storeLogger } from '@/utils/logger'
 
 export function usePaymentActions(sharedState) {
   async function processPayment(paymentData) {
@@ -24,7 +25,7 @@ export function usePaymentActions(sharedState) {
       const res = await api.lookupBin(bin)
       return res
     } catch (e) {
-      console.error('BIN query failed:', e)
+      storeLogger.error('BIN query failed:', e)
       return null
     }
   }

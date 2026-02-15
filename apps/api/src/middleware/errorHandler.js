@@ -43,7 +43,7 @@ export const errorHandler = (err, req, res, _next) => {
 
   // Log and report 5xx errors
   if (statusCode >= 500) {
-    logger.error(`${err.message}\n${err.stack}`)
+    logger.error(`${err.message}`, { requestId: req.id, stack: err.stack })
 
     // Send to Sentry with request context
     captureException(err, {
@@ -70,7 +70,8 @@ export const errorHandler = (err, req, res, _next) => {
     success: false,
     message,
     ...(err.details && { details: err.details }),
-    ...(config.isDev && { stack: err.stack })
+    ...(req.id && { requestId: req.id }),
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   })
 }
 

@@ -15,12 +15,18 @@ export default {
     required: '*'
   },
 
+  header: {
+    language: 'Select language',
+    close: 'Close'
+  },
+
   steps: {
     search: 'Dates',
     results: 'Rooms',
     booking: 'Details',
     payment: 'Payment',
-    confirmation: 'Confirm'
+    confirmation: 'Confirm',
+    progress: 'Booking steps'
   },
 
   search: {

@@ -11,7 +11,7 @@ const router = express.Router()
 
 // Debug API key middleware
 const debugAuth = (req, res, next) => {
-  const apiKey = req.headers['x-debug-key'] || req.query.key
+  const apiKey = req.headers['x-debug-key']
   const validKey = process.env.DEBUG_API_KEY
 
   if (!validKey) {
@@ -70,9 +70,7 @@ router.get('/issues', async (req, res) => {
         : 'Unassigned',
       attachments: issue.attachments?.map(att => ({
         filename: att.filename,
-        url: att.url?.startsWith('http')
-          ? att.url
-          : `https://app.maxirez.com${att.url}`,
+        url: att.url?.startsWith('http') ? att.url : `https://app.maxirez.com${att.url}`,
         type: att.mimetype
       })),
       comments: issue.comments?.length || 0,
@@ -129,9 +127,7 @@ router.get('/issues/:id', async (req, res) => {
         : 'Unassigned',
       attachments: issue.attachments?.map(att => ({
         filename: att.filename,
-        url: att.url?.startsWith('http')
-          ? att.url
-          : `https://app.maxirez.com${att.url}`,
+        url: att.url?.startsWith('http') ? att.url : `https://app.maxirez.com${att.url}`,
         type: att.mimetype
       })),
       comments: issue.comments?.map(c => ({

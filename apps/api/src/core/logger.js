@@ -136,6 +136,7 @@ export function logRequest(req, options = {}) {
   const { duration, statusCode, error } = options
 
   const meta = {
+    requestId: req.id,
     method: req.method,
     url: req.originalUrl,
     ip: req.ip,

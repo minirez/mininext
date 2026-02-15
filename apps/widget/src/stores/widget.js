@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { widgetApi } from '../services/api'
+import { useWidgetPersistence } from '../composables/useWidgetPersistence'
 
 export const useWidgetStore = defineStore('widget', () => {
   // Configuration
@@ -87,92 +88,43 @@ export const useWidgetStore = defineStore('widget', () => {
   // Market Detection
   const detectedMarket = ref(null)
 
-  // State Persistence
-  const STATE_TTL = 24 * 60 * 60 * 1000 // 24 hours
-  const STALE_THRESHOLD = 60 * 60 * 1000 // 1 hour - results considered stale after this
-  let saveTimer = null
+  // State Persistence (extracted to composable)
+  const persistence = useWidgetPersistence(() => config.value.hotelCode)
+  const resultsStale = persistence.resultsStale
 
-  // Stale results flag
-  const resultsStale = ref(false)
-
-  function getStorageKey() {
-    return `maxirez_widget_${config.value.hotelCode}`
-  }
-
-  function saveState() {
-    if (!config.value.hotelCode) return
-    try {
-      const state = {
-        currentStep: currentStep.value,
-        searchParams: searchParams.value,
-        searchResults: searchResults.value,
-        selectedRoom: selectedRoom.value,
-        selectedOption: selectedOption.value,
-        bookingData: bookingData.value,
-        paymentMethod: paymentMethod.value,
-        booking: booking.value,
-        promoCode: promoCode.value,
-        promoResult: promoResult.value,
-        savedAt: Date.now()
-      }
-      localStorage.setItem(getStorageKey(), JSON.stringify(state))
-    } catch (e) {
-      // localStorage full or unavailable
+  function getStateSnapshot() {
+    return {
+      currentStep: currentStep.value,
+      searchParams: searchParams.value,
+      searchResults: searchResults.value,
+      selectedRoom: selectedRoom.value,
+      selectedOption: selectedOption.value,
+      bookingData: bookingData.value,
+      paymentMethod: paymentMethod.value,
+      booking: booking.value,
+      promoCode: promoCode.value,
+      promoResult: promoResult.value
     }
   }
 
-  function debouncedSave() {
-    if (saveTimer) clearTimeout(saveTimer)
-    saveTimer = setTimeout(saveState, 300)
-  }
-
-  function migrateFromSessionStorage() {
-    try {
-      const key = getStorageKey()
-      const raw = sessionStorage.getItem(key)
-      if (raw) {
-        localStorage.setItem(key, raw)
-        sessionStorage.removeItem(key)
-      }
-    } catch (e) {
-      // ignore
-    }
+  function applyRestoredState(saved) {
+    if (saved.currentStep) currentStep.value = saved.currentStep
+    if (saved.searchParams) Object.assign(searchParams.value, saved.searchParams)
+    if (saved.searchResults) searchResults.value = saved.searchResults
+    if (saved.selectedRoom) selectedRoom.value = saved.selectedRoom
+    if (saved.selectedOption) selectedOption.value = saved.selectedOption
+    if (saved.bookingData) Object.assign(bookingData.value, saved.bookingData)
+    if (saved.paymentMethod) paymentMethod.value = saved.paymentMethod
+    if (saved.booking) booking.value = saved.booking
+    if (saved.promoCode) promoCode.value = saved.promoCode
+    if (saved.promoResult) promoResult.value = saved.promoResult
   }
 
   function restoreState() {
-    try {
-      const raw = localStorage.getItem(getStorageKey())
-      if (!raw) return false
-
-      const saved = JSON.parse(raw)
-
-      // Expire after TTL
-      if (Date.now() - saved.savedAt > STATE_TTL) {
-        localStorage.removeItem(getStorageKey())
-        return false
-      }
-
-      // Restore state
-      if (saved.currentStep) currentStep.value = saved.currentStep
-      if (saved.searchParams) Object.assign(searchParams.value, saved.searchParams)
-      if (saved.searchResults) searchResults.value = saved.searchResults
-      if (saved.selectedRoom) selectedRoom.value = saved.selectedRoom
-      if (saved.selectedOption) selectedOption.value = saved.selectedOption
-      if (saved.bookingData) Object.assign(bookingData.value, saved.bookingData)
-      if (saved.paymentMethod) paymentMethod.value = saved.paymentMethod
-      if (saved.booking) booking.value = saved.booking
-      if (saved.promoCode) promoCode.value = saved.promoCode
-      if (saved.promoResult) promoResult.value = saved.promoResult
-
-      // Mark results as stale if saved more than 1 hour ago
-      if (saved.searchResults && Date.now() - saved.savedAt > STALE_THRESHOLD) {
-        resultsStale.value = true
-      }
-
-      return true
-    } catch (e) {
-      return false
-    }
+    const saved = persistence.restoreState()
+    if (!saved) return false
+    applyRestoredState(saved)
+    return true
   }
 
   function validateRestoredState() {
@@ -191,14 +143,6 @@ export const useWidgetStore = defineStore('widget', () => {
     // Results without searchResults → go to search
     if (step === 'results' && !searchResults.value) {
       currentStep.value = 'search'
-    }
-  }
-
-  function clearSavedState() {
-    try {
-      localStorage.removeItem(getStorageKey())
-    } catch (e) {
-      // ignore
     }
   }
 
@@ -258,7 +202,7 @@ export const useWidgetStore = defineStore('widget', () => {
     config.value = { ...config.value, ...cfg }
 
     // Migrate from old sessionStorage to localStorage
-    migrateFromSessionStorage()
+    persistence.migrateFromSessionStorage()
 
     // Restore saved state before API calls
     const restored = restoreState()
@@ -311,7 +255,7 @@ export const useWidgetStore = defineStore('widget', () => {
           promoCode,
           promoResult
         ],
-        () => debouncedSave(),
+        () => persistence.debouncedSave(getStateSnapshot),
         { deep: true }
       )
     } catch (err) {
@@ -330,7 +274,7 @@ export const useWidgetStore = defineStore('widget', () => {
     isOpen.value = false
     // Only clear state when closing from confirmation (booking flow complete)
     if (currentStep.value === 'confirmation') {
-      clearSavedState()
+      persistence.clearSavedState()
     }
     // Otherwise keep current step and data so user can resume
   }
@@ -620,7 +564,7 @@ export const useWidgetStore = defineStore('widget', () => {
   }
 
   function reset() {
-    clearSavedState()
+    persistence.clearSavedState()
     currentStep.value = 'search'
     searchResults.value = null
     selectedRoom.value = null

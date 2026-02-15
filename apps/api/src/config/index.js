@@ -119,7 +119,11 @@ if (insecureSecrets.includes(config.jwt.secret.toLowerCase())) {
 }
 
 if (config.jwt.secret.length < 32) {
-  console.warn('⚠️  WARNING: JWT_SECRET should be at least 32 characters for security')
+  console.warn('WARNING: JWT_SECRET should be at least 32 characters for security')
+}
+
+if (config.env === 'production' && config.jwt.secret.length < 64) {
+  console.warn('WARNING: JWT_SECRET should be at least 64 characters in production')
 }
 
 export default config

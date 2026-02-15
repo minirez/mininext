@@ -6,6 +6,7 @@ import { ref, computed } from 'vue'
 import * as tourService from '@/services/tourService'
 import { useToast } from 'vue-toastification'
 import i18n from '@/plugins/i18n'
+import { storeLogger } from '@/utils/logger'
 
 export function useTourCore(sharedState) {
   const toast = useToast()
@@ -63,7 +64,7 @@ export function useTourCore(sharedState) {
       tourStats.value = response.data
       return response.data
     } catch (err) {
-      console.error('Stats fetch error:', err)
+      storeLogger.error('Stats fetch error:', err)
     }
   }
 

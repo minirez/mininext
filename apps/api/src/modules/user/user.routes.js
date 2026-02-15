@@ -51,8 +51,7 @@ router.post(
   '/',
   requirePermission('users', 'create'),
   validateBody({
-    firstName: { type: 'string', required: true, minLength: 2, maxLength: 50 },
-    lastName: { type: 'string', required: true, minLength: 2, maxLength: 50 },
+    name: { type: 'string', required: true, minLength: 2, maxLength: 100 },
     email: { type: 'email', required: true },
     role: { type: 'string', required: true }
   }),

@@ -14,6 +14,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import bookingService from '@/services/bookingService'
 import * as storageService from '@/services/bookingStorageService'
+import { storeLogger } from '@/utils/logger'
 
 // Import modular actions
 import {
@@ -24,7 +25,7 @@ import {
 } from './booking/index.js'
 
 // Helper: Format date as YYYY-MM-DD (local timezone)
-const formatDateLocal = (date) => {
+const formatDateLocal = date => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -201,7 +202,9 @@ export const useBookingStore = defineStore('booking', () => {
 
   const totalRooms = computed(() => cart.value.length)
   const totalAdults = computed(() => cart.value.reduce((sum, item) => sum + item.adults, 0))
-  const totalChildren = computed(() => cart.value.reduce((sum, item) => sum + (item.children?.length || 0), 0))
+  const totalChildren = computed(() =>
+    cart.value.reduce((sum, item) => sum + (item.children?.length || 0), 0)
+  )
   const totalGuests = computed(() => totalAdults.value + totalChildren.value)
 
   const currency = computed(() => {
@@ -211,9 +214,15 @@ export const useBookingStore = defineStore('booking', () => {
     return searchResults.value.hotels[0]?.currency || 'TRY'
   })
 
-  const subtotal = computed(() => cart.value.reduce((sum, item) => sum + (item.pricing?.originalTotal || 0), 0))
-  const totalDiscount = computed(() => cart.value.reduce((sum, item) => sum + (item.pricing?.totalDiscount || 0), 0))
-  const grandTotal = computed(() => cart.value.reduce((sum, item) => sum + (item.pricing?.finalTotal || 0), 0))
+  const subtotal = computed(() =>
+    cart.value.reduce((sum, item) => sum + (item.pricing?.originalTotal || 0), 0)
+  )
+  const totalDiscount = computed(() =>
+    cart.value.reduce((sum, item) => sum + (item.pricing?.totalDiscount || 0), 0)
+  )
+  const grandTotal = computed(() =>
+    cart.value.reduce((sum, item) => sum + (item.pricing?.finalTotal || 0), 0)
+  )
   const avgPerNight = computed(() => (nights.value === 0 ? 0 : grandTotal.value / nights.value))
 
   const appliedCampaigns = computed(() => {
@@ -326,7 +335,7 @@ export const useBookingStore = defineStore('booking', () => {
   async function createBooking() {
     // Guard against multiple submissions
     if (loading.value.booking) {
-      console.warn('Booking creation already in progress')
+      storeLogger.warn('Booking creation already in progress')
       return null
     }
 
@@ -396,7 +405,7 @@ export const useBookingStore = defineStore('booking', () => {
   async function createBookingWithPaymentLink({ sendEmail = true, sendSms = false } = {}) {
     // Guard against multiple submissions
     if (loading.value.booking) {
-      console.warn('Booking creation already in progress')
+      storeLogger.warn('Booking creation already in progress')
       return null
     }
 
@@ -586,10 +595,10 @@ export const useBookingStore = defineStore('booking', () => {
     goBackToSearch,
 
     // Guest actions
-    updateLeadGuest: (value) => {
+    updateLeadGuest: value => {
       guests.value.leadGuest = { ...guests.value.leadGuest, ...value }
     },
-    updateRoomGuests: (value) => {
+    updateRoomGuests: value => {
       guests.value.roomGuests = value
     },
 

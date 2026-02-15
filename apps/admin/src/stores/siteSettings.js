@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import siteSettingsService from '@/services/siteSettingsService'
 import { getImageUrl } from '@/utils/imageUrl'
+import { storeLogger } from '@/utils/logger'
 
 export const useSiteSettingsStore = defineStore('siteSettings', () => {
   const settings = ref(null)
@@ -35,7 +36,7 @@ export const useSiteSettingsStore = defineStore('siteSettings', () => {
         loaded.value = true
       }
     } catch (error) {
-      console.error('Failed to fetch site settings:', error)
+      storeLogger.error('Failed to fetch site settings:', error)
     } finally {
       loading.value = false
     }

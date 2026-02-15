@@ -4,7 +4,12 @@ import logger from './logger.js'
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(config.mongodb.uri)
+    await mongoose.connect(config.mongodb.uri, {
+      maxPoolSize: 25,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000
+    })
 
     logger.info(`MongoDB connected: ${mongoose.connection.host}`)
     logger.info(`Database: ${mongoose.connection.name}`)

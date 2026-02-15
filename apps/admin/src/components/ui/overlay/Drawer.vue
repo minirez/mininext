@@ -39,9 +39,10 @@
                 v-if="closable"
                 type="button"
                 class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                aria-label="Close"
                 @click="close"
               >
-                <span class="material-icons">close</span>
+                <span class="material-icons" aria-hidden="true">close</span>
               </button>
             </div>
 

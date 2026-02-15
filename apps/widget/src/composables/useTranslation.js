@@ -1,6 +1,6 @@
 /**
  * Widget Translation Composable
- * Simple i18n for the booking widget.
+ * Simple i18n for the booking widget with lazy locale loading.
  *
  * Usage:
  *   const { t } = useTranslation()
@@ -8,37 +8,62 @@
  *   t('results.unavailable.minStay', { nights: 3 }) -> 'Minimum stay of 3 nights required'
  */
 import { ref, computed } from 'vue'
+
+// Only bundle TR and EN statically (most used), lazy-load the rest
 import tr from '../locales/tr.js'
 import en from '../locales/en.js'
-import ru from '../locales/ru.js'
-import el from '../locales/el.js'
-import de from '../locales/de.js'
-import es from '../locales/es.js'
-import it from '../locales/it.js'
-import fr from '../locales/fr.js'
-import ro from '../locales/ro.js'
-import bg from '../locales/bg.js'
-import pt from '../locales/pt.js'
-import da from '../locales/da.js'
-import zh from '../locales/zh.js'
-import ar from '../locales/ar.js'
-import fa from '../locales/fa.js'
-import he from '../locales/he.js'
-import sq from '../locales/sq.js'
-import uk from '../locales/uk.js'
-import pl from '../locales/pl.js'
-import az from '../locales/az.js'
 
-const locales = { tr, en, ru, el, de, es, it, fr, ro, bg, pt, da, zh, ar, fa, he, sq, uk, pl, az }
+const locales = { tr, en }
 const currentLocale = ref('en')
+const isLoading = ref(false)
+
+// Dynamic locale loaders - only imported when needed
+const localeLoaders = {
+  ru: () => import('../locales/ru.js'),
+  el: () => import('../locales/el.js'),
+  de: () => import('../locales/de.js'),
+  es: () => import('../locales/es.js'),
+  it: () => import('../locales/it.js'),
+  fr: () => import('../locales/fr.js'),
+  ro: () => import('../locales/ro.js'),
+  bg: () => import('../locales/bg.js'),
+  pt: () => import('../locales/pt.js'),
+  da: () => import('../locales/da.js'),
+  zh: () => import('../locales/zh.js'),
+  ar: () => import('../locales/ar.js'),
+  fa: () => import('../locales/fa.js'),
+  he: () => import('../locales/he.js'),
+  sq: () => import('../locales/sq.js'),
+  uk: () => import('../locales/uk.js'),
+  pl: () => import('../locales/pl.js'),
+  az: () => import('../locales/az.js')
+}
 
 /**
- * Set the active locale
+ * Set the active locale. Loads locale dynamically if not bundled.
  * @param {string} locale - Language code (e.g. 'en', 'de', 'fr')
  */
-export function setLocale(locale) {
+export async function setLocale(locale) {
+  // Already loaded
   if (locales[locale]) {
     currentLocale.value = locale
+    return
+  }
+
+  // Lazy load
+  const loader = localeLoaders[locale]
+  if (loader) {
+    isLoading.value = true
+    try {
+      const mod = await loader()
+      locales[locale] = mod.default
+      currentLocale.value = locale
+    } catch {
+      // Fallback to English on load failure
+      currentLocale.value = 'en'
+    } finally {
+      isLoading.value = false
+    }
   }
 }
 
@@ -56,6 +81,15 @@ export function getLocale() {
  */
 export function registerLocale(code, messages) {
   locales[code] = messages
+}
+
+/**
+ * Check if a locale is available (bundled or loadable)
+ * @param {string} code - Locale code
+ * @returns {boolean}
+ */
+export function isLocaleAvailable(code) {
+  return !!(locales[code] || localeLoaders[code])
 }
 
 /**
@@ -97,6 +131,7 @@ export function useTranslation() {
   return {
     t,
     locale,
+    isLoading,
     setLocale,
     getLocale
   }

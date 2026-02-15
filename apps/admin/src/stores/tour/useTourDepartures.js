@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import * as tourService from '@/services/tourService'
 import { useToast } from 'vue-toastification'
 import i18n from '@/plugins/i18n'
+import { storeLogger } from '@/utils/logger'
 
 export function useTourDepartures(sharedState) {
   const toast = useToast()
@@ -155,7 +156,7 @@ export function useTourDepartures(sharedState) {
       upcomingDepartures.value = response.data || []
       return response.data
     } catch (err) {
-      console.error('Upcoming departures fetch error:', err)
+      storeLogger.error('Upcoming departures fetch error:', err)
     }
   }
 

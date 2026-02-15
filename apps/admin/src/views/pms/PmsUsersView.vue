@@ -369,6 +369,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import adminUserService from '@/services/pms/adminUserService'
+import { pmsLogger } from '@/utils/logger'
 import hotelService from '@/services/hotelService'
 import DataTable from '@/components/ui/data/DataTable.vue'
 import Modal from '@/components/common/Modal.vue'
@@ -462,7 +463,7 @@ const fetchHotels = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to fetch hotels:', error.response?.data || error.message)
+    pmsLogger.error('Failed to fetch hotels:', error.response?.data || error.message)
     hotels.value = []
     toast.error(t('settings.users.errors.hotelLoadError'))
   }
@@ -513,7 +514,7 @@ const fetchUsers = async () => {
 
     users.value = data
   } catch (error) {
-    console.error('Failed to fetch users:', error)
+    pmsLogger.error('Failed to fetch users:', error)
     toast.error(t('settings.users.errors.userLoadError'))
   } finally {
     loading.value = false
@@ -606,7 +607,7 @@ const toggleUserStatus = async user => {
     )
     fetchUsers()
   } catch (error) {
-    console.error('Failed to toggle status:', error)
+    pmsLogger.error('Failed to toggle status:', error)
     toast.error(t('settings.users.errors.statusChangeError'))
   }
 }
@@ -627,7 +628,7 @@ const deleteUser = async () => {
     showDeleteModal.value = false
     fetchUsers()
   } catch (error) {
-    console.error('Failed to delete user:', error)
+    pmsLogger.error('Failed to delete user:', error)
     toast.error(t('settings.users.errors.deleteError'))
   } finally {
     deleting.value = false

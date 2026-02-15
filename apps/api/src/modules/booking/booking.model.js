@@ -643,6 +643,10 @@ bookingSchema.index({ createdAt: -1 })
 bookingSchema.index({ status: 1, expiresAt: 1 }) // For expire job
 bookingSchema.index({ partner: 1, status: 1, createdAt: -1 }) // For listing drafts
 bookingSchema.index({ 'source.agencyUserId': 1, status: 1 }) // User's drafts
+// Search indexes
+bookingSchema.index({ 'leadGuest.firstName': 1, partner: 1 })
+bookingSchema.index({ 'leadGuest.lastName': 1, partner: 1 })
+bookingSchema.index({ 'payment.status': 1, partner: 1 }) // Payment analysis queries
 
 /**
  * Generate unique booking number

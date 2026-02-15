@@ -4,6 +4,7 @@
  */
 import { ref } from 'vue'
 import * as api from '@/services/virtualPosService'
+import { storeLogger } from '@/utils/logger'
 
 export function usePaymentPos(sharedState) {
   // State
@@ -23,7 +24,7 @@ export function usePaymentPos(sharedState) {
       posList.value = res.posList || res.data?.posList || res || []
     } catch (e) {
       sharedState.error.value = e.message
-      console.error('Fetch POS list failed:', e)
+      storeLogger.error('Fetch POS list failed:', e)
     } finally {
       sharedState.loading.value = false
     }
@@ -34,7 +35,7 @@ export function usePaymentPos(sharedState) {
       const res = await api.getPaymentProviders()
       providers.value = res.providers || res.data?.providers || res || []
     } catch (e) {
-      console.error('Fetch providers failed:', e)
+      storeLogger.error('Fetch providers failed:', e)
     }
   }
 
@@ -43,7 +44,7 @@ export function usePaymentPos(sharedState) {
       const res = await api.posApi.getBanks()
       banks.value = res.data?.banks || res.banks || []
     } catch (e) {
-      console.error('Fetch banks failed:', e)
+      storeLogger.error('Fetch banks failed:', e)
       banks.value = []
     }
   }
@@ -71,7 +72,7 @@ export function usePaymentPos(sharedState) {
       await fetchPosList()
       return res
     } catch (e) {
-      console.error('Set default POS failed:', e)
+      storeLogger.error('Set default POS failed:', e)
       throw e
     }
   }
@@ -82,7 +83,7 @@ export function usePaymentPos(sharedState) {
       await fetchPosList()
       return res
     } catch (e) {
-      console.error('Unset default POS failed:', e)
+      storeLogger.error('Unset default POS failed:', e)
       throw e
     }
   }
@@ -92,7 +93,7 @@ export function usePaymentPos(sharedState) {
       const res = await api.getPos(posId)
       return res
     } catch (e) {
-      console.error('Get POS capabilities failed:', e)
+      storeLogger.error('Get POS capabilities failed:', e)
       return null
     }
   }
