@@ -9,9 +9,16 @@ import { parsePagination } from '#services/queryBuilder.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
 
-// Generate random password
+// Generate random password that meets complexity requirements (uppercase + lowercase + number)
 const generatePassword = () => {
-  return crypto.randomBytes(8).toString('hex')
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const bytes = crypto.randomBytes(12)
+  let password = ''
+  for (let i = 0; i < 12; i++) {
+    password += chars[bytes[i] % chars.length]
+  }
+  // Ensure at least one of each required type
+  return password[0].toUpperCase() + password.slice(1, 11) + String(bytes[11] % 10)
 }
 
 // Create partner
