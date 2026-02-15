@@ -56,11 +56,6 @@ const processMemoryUsage = new client.Gauge({
   labelNames: ['type']
 })
 
-const nodejsActiveHandles = new client.Gauge({
-  name: 'nodejs_active_handles_total',
-  help: 'Number of active handles in the Node.js event loop'
-})
-
 const nodejsEventloopLag = new client.Histogram({
   name: 'nodejs_eventloop_lag_seconds',
   help: 'Event loop lag in seconds',
@@ -80,14 +75,6 @@ function startSystemMetricsCollection() {
     processMemoryUsage.set({ type: 'heapTotal' }, mem.heapTotal)
   }
 
-  // Active handles
-  const collectHandles = () => {
-    // _getActiveHandles is available in Node.js
-    if (typeof process._getActiveHandles === 'function') {
-      nodejsActiveHandles.set(process._getActiveHandles().length)
-    }
-  }
-
   // Event loop lag measurement
   const measureLag = () => {
     const start = process.hrtime.bigint()
@@ -99,11 +86,9 @@ function startSystemMetricsCollection() {
 
   // Collect immediately, then every 10 seconds
   collectMemory()
-  collectHandles()
 
   eventloopLagInterval = setInterval(() => {
     collectMemory()
-    collectHandles()
     measureLag()
   }, 10000)
 
