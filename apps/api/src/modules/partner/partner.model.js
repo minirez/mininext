@@ -477,6 +477,22 @@ const partnerSchema = new mongoose.Schema(
             ref: 'SubscriptionInvoice'
           },
 
+          // Ödeme linki referansı
+          paymentLink: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PaymentLink'
+          },
+
+          // Satın alınan ek hizmetler (paket + services bir arada)
+          lineItems: [
+            {
+              type: { type: String, enum: ['package', 'service'] },
+              ref: mongoose.Schema.Types.ObjectId,
+              name: String,
+              amount: Number
+            }
+          ],
+
           // Paket durumu
           status: {
             type: String,

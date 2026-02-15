@@ -643,8 +643,16 @@
       </template>
     </Modal>
 
-    <!-- Subscription Modal -->
+    <!-- Subscription Drawer -->
+    <PartnerSubscriptionDrawer
+      v-model="showSubscriptionDrawer"
+      :partner="selectedPartner"
+      @updated="fetchPartners"
+    />
+
+    <!-- LEGACY MODAL REMOVED - now using PartnerSubscriptionDrawer -->
     <Modal
+      v-if="false"
       v-model="showSubscriptionModal"
       :title="$t('partners.subscription.title')"
       size="xl"
@@ -1130,8 +1138,9 @@
       </template>
     </Modal>
 
-    <!-- Edit Purchase Modal -->
+    <!-- Edit Purchase Modal (LEGACY - moved to drawer) -->
     <Modal
+      v-if="false"
       v-model="showEditPurchaseModal"
       :title="$t('partners.subscription.editPurchase')"
       size="lg"
@@ -1218,8 +1227,13 @@
       </template>
     </Modal>
 
-    <!-- Mark as Paid Modal -->
-    <Modal v-model="showMarkPaidModal" :title="$t('partners.subscription.markAsPaid')" size="md">
+    <!-- Mark as Paid Modal (LEGACY - moved to drawer) -->
+    <Modal
+      v-if="false"
+      v-model="showMarkPaidModal"
+      :title="$t('partners.subscription.markAsPaid')"
+      size="md"
+    >
       <div class="space-y-4">
         <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
           <p class="text-sm text-amber-800 dark:text-amber-200">
@@ -1295,6 +1309,7 @@ import { useI18n } from 'vue-i18n'
 import { useAsyncAction } from '@/composables/useAsyncAction'
 import { usePermissions } from '@/composables/usePermissions'
 import { usePartnerSubscription } from '@/composables/usePartnerSubscription'
+import PartnerSubscriptionDrawer from './partners/PartnerSubscriptionDrawer.vue'
 
 const { t } = useI18n()
 
@@ -1334,12 +1349,18 @@ const {
 
 // Navigation items
 const navItems = computed(() => [
+  { name: 'partners', to: '/partners', icon: 'business', label: t('partners.title'), exact: true },
   {
-    name: 'partners',
-    to: '/partners',
-    icon: 'business',
-    label: t('partners.title'),
-    exact: true
+    name: 'services',
+    to: '/partners/services',
+    icon: 'layers',
+    label: t('membership.nav.services')
+  },
+  {
+    name: 'packages',
+    to: '/partners/packages',
+    icon: 'inventory_2',
+    label: t('membership.nav.packages')
   },
   {
     name: 'subscriptions',
@@ -1365,6 +1386,7 @@ const partners = ref([])
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const showApproveModal = ref(false)
+const showSubscriptionDrawer = ref(false)
 const isEditing = ref(false)
 const selectedPartner = ref(null)
 
@@ -1490,9 +1512,10 @@ const openEditModal = partner => {
   showModal.value = true
 }
 
-// Subscription modal - delegated to composable
+// Subscription drawer
 const openSubscriptionModal = partner => {
-  subscription.openSubscriptionModal(partner, selectedPartner)
+  selectedPartner.value = partner
+  showSubscriptionDrawer.value = true
 }
 
 const handleSaveSubscription = () => {
@@ -1592,6 +1615,5 @@ const confirmDeleteDocument = async documentId => {
 
 onMounted(() => {
   fetchPartners()
-  subscription.loadSubscriptionPlans()
 })
 </script>

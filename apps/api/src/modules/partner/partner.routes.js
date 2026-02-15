@@ -93,6 +93,9 @@ router.put('/:id/subscription/purchases/:purchaseId', partnerService.updatePurch
 router.post('/:id/subscription/purchases/:purchaseId/cancel', partnerService.cancelPurchase)
 router.post('/:id/subscription/purchases/:purchaseId/mark-paid', partnerService.markPurchaseAsPaid)
 
+// Purchase + PaymentLink combo
+router.post('/:id/subscription/purchase-with-link', partnerService.createPurchaseWithPaymentLink)
+
 // Membership Package/Service Assignment
 router.post('/:id/subscription/assign-package', partnerService.assignPackage)
 router.post('/:id/subscription/add-service', partnerService.addService)

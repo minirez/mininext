@@ -915,5 +915,16 @@
         "note": "The widget will appear automatically when your site is live. Changes are applied instantly when saved."
       }
     }
+  },
+  "locations": {
+    "title": "Region Management",
+    "description": "Manage cities and tourism regions",
+    "hierarchicalLocation": "Hierarchical Location",
+    "hierarchicalLocationHelp": "Set hotel location by selecting country, city and tourism region",
+    "selectCityForRegions": "Select a city to view tourism regions",
+    "tourismRegions": "Tourism Regions",
+    "noRegionsSelected": "No regions selected yet",
+    "addRegion": "Add Region",
+    "noRegionsAvailable": "No tourism regions defined for this city"
   }
 }

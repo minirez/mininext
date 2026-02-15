@@ -32,10 +32,13 @@ export const getImageUrl = url => {
   // Ensure path starts with /
   const path = url.startsWith('/') ? url : `/${url}`
 
-  // Remove /uploads prefix if present (for backwards compatibility)
-  const cleanPath = path.replace(/^\/uploads/, '')
+  // Admin-uploaded files (hotel logos, images etc.) are on API server, not CDN
+  if (path.startsWith('/uploads/')) {
+    return getFileUrl(path)
+  }
 
-  return `${IMAGES_BASE_URL}${cleanPath}`
+  // CDN images (imported from external sources)
+  return `${IMAGES_BASE_URL}${path}`
 }
 
 /**

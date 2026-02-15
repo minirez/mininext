@@ -260,23 +260,24 @@ const toast = useToast()
 const categories = ['payment', 'booking', 'pms', 'web', 'design', 'support', 'integration', 'other']
 
 const navItems = computed(() => [
+  { name: 'partners', to: '/partners', icon: 'business', label: t('partners.title'), exact: true },
   {
     name: 'services',
-    to: '/membership/services',
+    to: '/partners/services',
     icon: 'layers',
     label: t('membership.nav.services')
   },
   {
     name: 'packages',
-    to: '/membership/packages',
+    to: '/partners/packages',
     icon: 'inventory_2',
     label: t('membership.nav.packages')
   },
   {
-    name: 'assignments',
-    to: '/membership/assignments',
-    icon: 'assignment',
-    label: t('membership.nav.assignments')
+    name: 'subscriptions',
+    to: '/partners/subscriptions',
+    icon: 'card_membership',
+    label: t('partners.subscriptionManagement')
   }
 ])
 

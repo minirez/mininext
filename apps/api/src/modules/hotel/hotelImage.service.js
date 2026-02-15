@@ -6,7 +6,7 @@
 import Hotel from './hotel.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
-import { getHotelFileUrl, deleteHotelFile } from '#helpers/hotelUpload.js'
+import { getHotelFileUrl, deleteHotelFile, ensureCorrectFolder } from '#helpers/hotelUpload.js'
 import logger from '#core/logger.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
 
@@ -52,6 +52,9 @@ export const uploadHotelImage = asyncHandler(async (req, res) => {
   }
 
   const { hotel, folderIdentifier } = await getHotelForImageOp(id, partnerId, req.user)
+
+  // Ensure file is in the correct folder (multer may have saved to wrong location)
+  ensureCorrectFolder(req.file, folderIdentifier, id)
 
   const fileUrl = getHotelFileUrl(folderIdentifier, id, req.file.filename)
 
@@ -205,6 +208,9 @@ export const uploadHotelLogo = asyncHandler(async (req, res) => {
   }
 
   const { hotel, folderIdentifier } = await getHotelForImageOp(id, partnerId, req.user)
+
+  // Ensure file is in the correct folder (multer may have saved to wrong location)
+  ensureCorrectFolder(req.file, folderIdentifier, id)
 
   // Delete old logo if exists
   if (hotel.logo) {

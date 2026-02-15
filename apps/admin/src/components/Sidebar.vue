@@ -216,7 +216,6 @@ const currentModuleIcon = computed(() => {
     '/payment': 'payments',
     '/admin/migration': 'swap_horiz',
     '/admin/reservations': 'book_online',
-    '/membership': 'card_membership',
     '/my-membership': 'card_membership'
   }
 
@@ -426,12 +425,6 @@ const mainSection = computed(() => {
       to: '/admin/migration',
       icon: 'swap_horiz',
       label: t('migration.title')
-    })
-    items.push({
-      name: 'membership',
-      to: '/membership/services',
-      icon: 'card_membership',
-      label: t('membership.title')
     })
     items.push({
       name: 'tursab-directory',

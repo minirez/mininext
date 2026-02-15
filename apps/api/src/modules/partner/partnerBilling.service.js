@@ -1,6 +1,8 @@
 import Partner from './partner.model.js'
 import MembershipPackage from '#modules/membership-package/membership-package.model.js'
 import MembershipService from '#modules/membership-service/membership-service.model.js'
+import PaymentLink from '#modules/paymentLink/paymentLink.model.js'
+import { sendPaymentLinkNotification } from '#modules/paymentLink/paymentLink.service.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { SUBSCRIPTION_PLANS, PLAN_TYPES } from '#constants/subscriptionPlans.js'
@@ -678,6 +680,241 @@ export const removeService = asyncHandler(async (req, res) => {
     success: true,
     message: 'SERVICE_REMOVED',
     data: {
+      subscription: partner.getSubscriptionStatus()
+    }
+  })
+})
+
+// ==================== Purchase + PaymentLink Combo ====================
+
+/**
+ * Create a purchase (package + optional services) and generate a PaymentLink
+ * POST /api/partners/:id/subscription/purchase-with-link
+ *
+ * Body: {
+ *   packageId?,        // MembershipPackage ID
+ *   serviceIds[],      // Ek hizmet ID'leri
+ *   currency,          // TRY/USD/EUR/GBP
+ *   interval,          // monthly/yearly
+ *   startDate?,        // Varsayılan: bugün
+ *   endDate?,          // Otomatik hesaplanır
+ *   amount?,           // Admin override (null = otomatik)
+ *   action             // 'send_link' | 'save_pending' | 'mark_paid'
+ *   paymentDate?,      // action=mark_paid için
+ *   paymentMethod?,    // action=mark_paid için
+ * }
+ */
+export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const {
+    packageId,
+    serviceIds = [],
+    currency = 'TRY',
+    interval = 'yearly',
+    startDate,
+    endDate,
+    amount: amountOverride,
+    action = 'send_link',
+    paymentDate,
+    paymentMethod
+  } = req.body
+
+  if (!packageId && serviceIds.length === 0) {
+    throw new BadRequestError('PACKAGE_OR_SERVICE_REQUIRED')
+  }
+
+  // Paket ve hizmetleri yükle
+  let pkg = null
+  let packageServiceCodes = []
+  if (packageId) {
+    pkg = await MembershipPackage.findById(packageId).populate('services.service')
+    if (!pkg) throw new NotFoundError('PACKAGE_NOT_FOUND')
+    if (pkg.status !== 'active') throw new BadRequestError('PACKAGE_NOT_ACTIVE')
+    packageServiceCodes = pkg.getServiceCodes()
+  }
+
+  // Ek hizmetleri yükle (pakete dahil olmayanlar)
+  const extraServices = []
+  if (serviceIds.length > 0) {
+    const services = await MembershipService.find({
+      _id: { $in: serviceIds },
+      status: 'active'
+    })
+    for (const svc of services) {
+      if (!packageServiceCodes.includes(svc.code)) {
+        extraServices.push(svc)
+      }
+    }
+  }
+
+  // Fiyat hesapla
+  let totalAmount = 0
+  const lineItems = []
+
+  if (pkg) {
+    const pkgPrice = pkg.getPrice(currency)
+    totalAmount += pkgPrice
+    lineItems.push({
+      type: 'package',
+      ref: pkg._id,
+      name: pkg.name?.tr || pkg.name?.en || pkg.code,
+      amount: pkgPrice
+    })
+  }
+
+  for (const svc of extraServices) {
+    const svcPrice = svc.getPrice(currency)
+    totalAmount += svcPrice
+    lineItems.push({
+      type: 'service',
+      ref: svc._id,
+      name: svc.name?.tr || svc.name?.en || svc.code,
+      amount: svcPrice
+    })
+  }
+
+  // Admin override
+  const finalAmount = amountOverride != null ? amountOverride : totalAmount
+
+  // Dönem hesapla
+  const start = startDate ? new Date(startDate) : new Date()
+  let end
+  if (endDate) {
+    end = new Date(endDate)
+  } else {
+    end = new Date(start)
+    if (interval === 'yearly') {
+      end.setFullYear(end.getFullYear() + 1)
+    } else {
+      end.setMonth(end.getMonth() + 1)
+    }
+  }
+
+  // Subscription init
+  if (!partner.subscription) {
+    partner.subscription = { purchases: [] }
+  }
+  if (!partner.subscription.purchases) {
+    partner.subscription.purchases = []
+  }
+
+  // Purchase oluştur
+  const purchaseData = {
+    purchaseType: pkg ? 'package' : 'service',
+    package: pkg?._id || undefined,
+    service: !pkg && extraServices.length === 1 ? extraServices[0]._id : undefined,
+    period: { startDate: start, endDate: end },
+    price: { amount: finalAmount, currency },
+    lineItems,
+    status: action === 'mark_paid' ? 'active' : 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  // mark_paid için payment bilgisi
+  if (action === 'mark_paid') {
+    purchaseData.payment = {
+      date: paymentDate ? new Date(paymentDate) : new Date(),
+      method: paymentMethod || 'bank_transfer'
+    }
+  }
+
+  partner.subscription.purchases.push(purchaseData)
+
+  // Paket atama
+  if (pkg) {
+    partner.subscription.currentPackage = pkg._id
+  }
+
+  await partner.save()
+
+  const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+  // Action'a göre işlem
+  let paymentLinkData = null
+
+  if (action === 'send_link') {
+    // PaymentLink oluştur
+    const description = pkg
+      ? `Abonelik: ${pkg.name?.tr || pkg.code}${extraServices.length > 0 ? ` + ${extraServices.length} ek hizmet` : ''}`
+      : `Hizmet: ${extraServices.map(s => s.name?.tr || s.code).join(', ')}`
+
+    const paymentLink = await PaymentLink.create({
+      partner: partner._id,
+      customer: {
+        name: partner.companyName,
+        email: partner.email
+      },
+      description,
+      amount: finalAmount,
+      currency,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdBy: req.user._id
+    })
+
+    // Purchase'a PaymentLink bağla
+    addedPurchase.paymentLink = paymentLink._id
+    await partner.save()
+
+    // Email gönder
+    try {
+      await sendPaymentLinkNotification(paymentLink, partner, {
+        email: true,
+        sms: false
+      })
+    } catch (err) {
+      logger.error(`Failed to send payment link notification: ${err.message}`)
+    }
+
+    paymentLinkData = {
+      _id: paymentLink._id,
+      token: paymentLink.token,
+      paymentUrl: paymentLink.paymentUrl,
+      expiresAt: paymentLink.expiresAt
+    }
+
+    logger.info(`Purchase + PaymentLink created for partner ${partner._id}`)
+  } else if (action === 'mark_paid') {
+    // Subscription aktifle
+    partner.subscription.status = 'active'
+    await partner.save()
+
+    // Fatura oluştur
+    try {
+      const invoice = await createInvoice(partner._id, addedPurchase, req.user._id)
+      addedPurchase.invoice = invoice._id
+      await partner.save()
+    } catch (err) {
+      logger.error(`Failed to create invoice: ${err.message}`)
+    }
+
+    logger.info(`Purchase created & marked paid for partner ${partner._id}`)
+  } else {
+    logger.info(`Pending purchase created for partner ${partner._id}`)
+  }
+
+  res.json({
+    success: true,
+    message:
+      action === 'send_link'
+        ? 'PAYMENT_LINK_SENT'
+        : action === 'mark_paid'
+          ? 'PURCHASE_MARKED_PAID'
+          : 'PURCHASE_CREATED',
+    data: {
+      purchase: {
+        _id: addedPurchase._id,
+        purchaseType: addedPurchase.purchaseType,
+        package: pkg ? { _id: pkg._id, name: pkg.name, code: pkg.code } : null,
+        services: extraServices.map(s => ({ _id: s._id, name: s.name, code: s.code })),
+        lineItems,
+        period: addedPurchase.period,
+        price: addedPurchase.price,
+        status: addedPurchase.status
+      },
+      paymentLink: paymentLinkData,
       subscription: partner.getSubscriptionStatus()
     }
   })

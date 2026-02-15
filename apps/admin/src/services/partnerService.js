@@ -232,6 +232,22 @@ const markPurchaseAsPaid = async (partnerId, purchaseId, paymentData) => {
   }
 }
 
+const createPurchaseWithPaymentLink = async (partnerId, data) => {
+  try {
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/purchase-with-link`,
+      data
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Create purchase with payment link failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // ==================== Partner Self-Profile ====================
 
 // Get my profile (for partner users)
@@ -451,6 +467,7 @@ export default {
   updatePurchase,
   cancelPurchase,
   markPurchaseAsPaid,
+  createPurchaseWithPaymentLink,
   // Partner Self-Profile
   getMyProfile,
   updateMyProfile,

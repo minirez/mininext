@@ -64,5 +64,6 @@ export {
   cancelPurchase,
   assignPackage,
   addService,
-  removeService
+  removeService,
+  createPurchaseWithPaymentLink
 } from './partnerBilling.service.js'

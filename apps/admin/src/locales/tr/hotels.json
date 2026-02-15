@@ -912,5 +912,16 @@
         "note": "Widget, siteniz yayına alındığında otomatik olarak görünecektir. Değişiklikler kaydettiğinizde anında uygulanır."
       }
     }
+  },
+  "locations": {
+    "title": "Bölge Yönetimi",
+    "description": "Şehirler ve turizm bölgelerini yönetin",
+    "hierarchicalLocation": "Hiyerarşik Lokasyon",
+    "hierarchicalLocationHelp": "Ülke, şehir ve turizm bölgesi seçerek otelin konumunu belirleyin",
+    "selectCityForRegions": "Turizm bölgelerini görmek için şehir seçin",
+    "tourismRegions": "Turizm Bölgeleri",
+    "noRegionsSelected": "Henüz bölge seçilmedi",
+    "addRegion": "Bölge Ekle",
+    "noRegionsAvailable": "Bu şehir için turizm bölgesi tanımlı değil"
   }
 }

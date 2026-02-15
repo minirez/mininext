@@ -18,6 +18,8 @@ import pmsRoutes from './routes/pms.js'
 const DashboardView = () => import('../views/DashboardView.vue')
 const PartnersView = () => import('../views/PartnersView.vue')
 const PartnerSubscriptionsView = () => import('../views/partners/SubscriptionsView.vue')
+const MembershipServicesView = () => import('../views/membership/ServicesView.vue')
+const MembershipPackagesView = () => import('../views/membership/PackagesView.vue')
 const AgenciesView = () => import('../views/AgenciesView.vue')
 const AgencyUsersView = () => import('../views/AgencyUsersView.vue')
 const ProfileView = () => import('../views/ProfileView.vue')
@@ -56,6 +58,18 @@ const router = createRouter({
           name: 'partner-subscriptions',
           component: PartnerSubscriptionsView,
           meta: { requiresPlatformAdmin: true }
+        },
+        {
+          path: 'partners/services',
+          name: 'partner-services',
+          component: MembershipServicesView,
+          meta: { requiresPlatformAdmin: true, titleKey: 'membership.services.title' }
+        },
+        {
+          path: 'partners/packages',
+          name: 'partner-packages',
+          component: MembershipPackagesView,
+          meta: { requiresPlatformAdmin: true, titleKey: 'membership.packages.title' }
         },
         {
           path: 'agencies',
@@ -124,25 +138,6 @@ const router = createRouter({
             requiresPartner: true,
             titleKey: 'membership.myMembership.title'
           }
-        },
-        // Membership Management (platform admin)
-        {
-          path: 'membership/services',
-          name: 'membership-services',
-          component: () => import('../views/membership/ServicesView.vue'),
-          meta: { requiresPlatformAdmin: true, titleKey: 'membership.services.title' }
-        },
-        {
-          path: 'membership/packages',
-          name: 'membership-packages',
-          component: () => import('../views/membership/PackagesView.vue'),
-          meta: { requiresPlatformAdmin: true, titleKey: 'membership.packages.title' }
-        },
-        {
-          path: 'membership/assignments',
-          name: 'membership-assignments',
-          component: () => import('../views/membership/AssignmentsView.vue'),
-          meta: { requiresPlatformAdmin: true, titleKey: 'membership.assignments.title' }
         },
         // Issues (Platform users only)
         {

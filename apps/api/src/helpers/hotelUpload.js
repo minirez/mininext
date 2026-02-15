@@ -15,10 +15,8 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure storage for hotel images
 const hotelStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // For platform admin users, use 'base' folder (base hotel uploads)
-    // For partners, use their partner ID
-    const partnerId =
-      req.user?.accountType === 'platform' ? 'base' : req.partnerId || req.user?.accountId || 'base'
+    // Best-guess folder for multer; ensureCorrectFolder() fixes mismatches after DB lookup
+    const partnerId = req.partnerId || req.user?.accountId || 'base'
     const hotelId = req.params?.id
 
     if (!hotelId) {
@@ -64,6 +62,35 @@ export const hotelUpload = multer({
 // Helper to get file URL
 export const getHotelFileUrl = (partnerId, hotelId, filename) => {
   return `/uploads/hotels/${partnerId}/${hotelId}/${filename}`
+}
+
+/**
+ * Ensure uploaded file is in the correct folder based on folderIdentifier.
+ * Multer decides destination before we know the hotel type,
+ * so if the folder doesn't match, move the file.
+ */
+export const ensureCorrectFolder = (file, folderIdentifier, hotelId) => {
+  const correctDir = path.join(
+    uploadsDir,
+    'hotels',
+    folderIdentifier.toString(),
+    hotelId.toString()
+  )
+  const currentDir = file.destination
+
+  if (path.resolve(currentDir) === path.resolve(correctDir)) return // already correct
+
+  if (!fs.existsSync(correctDir)) {
+    fs.mkdirSync(correctDir, { recursive: true })
+  }
+
+  const oldPath = file.path
+  const newPath = path.join(correctDir, file.filename)
+  fs.renameSync(oldPath, newPath)
+
+  // Update file object so callers see the right path
+  file.destination = correctDir
+  file.path = newPath
 }
 
 // Helper to delete file
