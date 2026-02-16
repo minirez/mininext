@@ -81,11 +81,11 @@ export const BANK_URLS = {
   qnb: {
     test: {
       api: 'https://vpostest.qnbfinansbank.com/Gateway/Default.aspx',
-      gate: 'https://vpostest.qnbfinansbank.com/Gateway/3DHost.aspx'
+      gate: 'https://vpostest.qnbfinansbank.com/Gateway/Default.aspx'
     },
     production: {
       api: 'https://vpos.qnbfinansbank.com/Gateway/Default.aspx',
-      gate: 'https://vpos.qnbfinansbank.com/Gateway/3DHost.aspx'
+      gate: 'https://vpos.qnbfinansbank.com/Gateway/Default.aspx'
     }
   },
 
@@ -242,17 +242,17 @@ export const BANK_URLS = {
       gate: 'https://pay.sigmapay.com/pay'
     }
   }
-};
+}
 
 /**
  * Get bank URLs based on testMode
  */
 export function getBankUrls(bankCode, testMode = false) {
-  const bankUrls = BANK_URLS[bankCode];
+  const bankUrls = BANK_URLS[bankCode]
   if (!bankUrls) {
-    return null;
+    return null
   }
-  return testMode ? bankUrls.test : bankUrls.production;
+  return testMode ? bankUrls.test : bankUrls.production
 }
 
-export default BANK_URLS;
+export default BANK_URLS
