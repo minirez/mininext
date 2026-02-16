@@ -46,6 +46,7 @@ export const createPartner = asyncHandler(async (req, res) => {
       email: adminUser.email,
       password: tempPassword,
       accountType: 'Partner',
+      partnerId: partner._id,
       loginUrl: partner.branding?.siteDomain
         ? `https://${partner.branding.siteDomain}/login`
         : `${config.adminUrl}/login`
@@ -70,12 +71,13 @@ export const createPartner = asyncHandler(async (req, res) => {
 
 // Get all partners
 export const getPartners = asyncHandler(async (req, res) => {
-  const { status, search } = req.query
+  const { status, search, partnerType } = req.query
   const { page, limit, skip } = parsePagination(req.query)
 
   // Build filter
   const filter = {}
   if (status) filter.status = status
+  if (partnerType) filter.partnerType = partnerType
   if (search) {
     const escapedSearch = escapeRegex(search)
     filter.$or = [

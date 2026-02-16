@@ -61,6 +61,8 @@
     "uploadedDocuments": "Yüklenen Belgeler",
     "noDocuments": "Henüz belge yüklenmemiş",
     "searchPlaceholder": "Partner ara...",
+    "allTypes": "Tüm Tipler",
+    "fetchError": "Partnerler yüklenirken hata oluştu",
     "noSearchResults": "Arama sonucu bulunamadı",
     "showingResults": "{count} / {total} partner gösteriliyor",
     "paymentSettings": {

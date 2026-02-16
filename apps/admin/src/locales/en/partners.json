@@ -61,6 +61,8 @@
     "uploadedDocuments": "Uploaded Documents",
     "noDocuments": "No documents uploaded yet",
     "searchPlaceholder": "Search partners...",
+    "allTypes": "All Types",
+    "fetchError": "Failed to load partners",
     "noSearchResults": "No results found",
     "showingResults": "Showing {count} of {total} partners",
     "paymentSettings": {
