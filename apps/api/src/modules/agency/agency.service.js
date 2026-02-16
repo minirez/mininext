@@ -8,6 +8,7 @@ import { parsePagination } from '#services/queryBuilder.js'
 import { sendWelcomeEmail } from '#helpers/mail.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
+import config from '#config'
 
 // Generate random password (must satisfy: uppercase + lowercase + number)
 const generatePassword = () => {
@@ -61,7 +62,7 @@ export const createAgency = asyncHandler(async (req, res) => {
       accountType: 'Agency',
       loginUrl: partner.branding?.extranetDomain
         ? `https://${partner.branding.extranetDomain}/login`
-        : 'https://admin.booking-engine.com/login'
+        : `${config.adminUrl}/login`
     })
     logger.info(`Welcome email sent to agency admin: ${adminUser.email}`)
   } catch (error) {

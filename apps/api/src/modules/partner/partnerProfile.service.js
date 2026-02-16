@@ -8,6 +8,7 @@ import { sendWelcomeEmail, sendActivationEmail } from '#helpers/mail.js'
 import { parsePagination } from '#services/queryBuilder.js'
 import crypto from 'crypto'
 import logger from '#core/logger.js'
+import config from '#config'
 
 // Generate random password that meets complexity requirements (uppercase + lowercase + number)
 const generatePassword = () => {
@@ -47,7 +48,7 @@ export const createPartner = asyncHandler(async (req, res) => {
       accountType: 'Partner',
       loginUrl: partner.branding?.siteDomain
         ? `https://${partner.branding.siteDomain}/login`
-        : 'https://admin.booking-engine.com/login'
+        : `${config.adminUrl}/login`
     })
     logger.info(`Welcome email sent to partner admin: ${adminUser.email}`)
   } catch (error) {

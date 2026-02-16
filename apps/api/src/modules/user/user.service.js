@@ -396,7 +396,7 @@ export const activateAccount = asyncHandler(async (req, res) => {
 
   // Send welcome email after successful activation
   try {
-    let loginUrl = config.adminUrl || 'https://admin.booking-engine.com'
+    let loginUrl = config.adminUrl
     let accountName = ''
 
     // Get account-specific info for login URL
