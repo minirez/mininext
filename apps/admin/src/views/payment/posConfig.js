@@ -250,11 +250,14 @@ export const providerCredentials = {
     secretKey: { label: 'Store Key', placeholder: '3D guvenlik anahtari' }
   },
   qnb: {
-    merchantId: { label: 'Client ID', placeholder: 'EST client ID' },
-    terminalId: { label: 'Terminal ID', placeholder: 'Terminal numarasi', show: false },
-    username: { label: 'API Kullanici Adi', placeholder: 'API kullanici adi' },
-    password: { label: 'API Sifresi', placeholder: 'API sifresi' },
-    secretKey: { label: 'Store Key', placeholder: '3D guvenlik anahtari' }
+    merchantId: {
+      label: 'Uye Isyeri No (MID)',
+      placeholder: 'QNB Finansbank uye isyeri numarasi (MerchantID)'
+    },
+    terminalId: { label: 'Terminal ID (TID)', placeholder: 'QNB Finansbank terminal numarasi' },
+    username: { label: 'Kullanici Adi (UserCode)', placeholder: 'API kullanici adi' },
+    password: { label: 'Kullanici Sifresi (UserPass)', placeholder: 'API kullanici sifresi' },
+    secretKey: { label: 'Store Key (MerchantPass)', placeholder: '3D guvenlik anahtari' }
   },
   denizbank: {
     merchantId: { label: 'Shop Code', placeholder: 'Magaza kodu' },
