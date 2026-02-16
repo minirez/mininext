@@ -38,6 +38,16 @@ const roomName = computed(
 )
 const mealPlanName = computed(() => resolveName(selectedOption.value?.mealPlan?.name))
 
+const hasDiscount = computed(
+  () => (booking.value?.pricing?.totalDiscount || selectedOption.value?.pricing?.totalDiscount) > 0
+)
+const originalTotal = computed(
+  () => booking.value?.pricing?.subtotal || selectedOption.value?.pricing?.originalTotal || 0
+)
+const campaigns = computed(
+  () => booking.value?.rooms?.[0]?.campaigns || selectedOption.value?.campaigns || []
+)
+
 function newBooking() {
   widgetStore.reset()
   widgetStore.openWidget()
@@ -208,9 +218,18 @@ function closeWidget() {
       <div class="details-footer">
         <div class="details-price">
           <span class="details-price-label">{{ t('common.total') }}</span>
-          <span class="details-price-value">{{
-            formatCurrency(booking?.pricing?.grandTotal || selectedOption?.pricing?.finalTotal || 0)
-          }}</span>
+          <div class="details-price-value">
+            <span v-if="hasDiscount" class="price-original">
+              {{ formatCurrency(originalTotal) }}
+            </span>
+            <span :class="{ 'has-discount': hasDiscount }">
+              {{
+                formatCurrency(
+                  booking?.pricing?.grandTotal || selectedOption?.pricing?.finalTotal || 0
+                )
+              }}
+            </span>
+          </div>
         </div>
         <div class="details-status" :class="isPaid ? 'paid' : 'pending'">
           <svg
@@ -237,6 +256,11 @@ function closeWidget() {
             isPaid ? t('confirmation.status.paid') : t('confirmation.status.pending')
           }}</span>
         </div>
+      </div>
+      <div v-if="campaigns?.length" class="confirmation-campaigns">
+        <span v-for="c in campaigns" :key="c.code" class="campaign-badge-v2">
+          {{ c.discountText || c.name }}
+        </span>
       </div>
     </div>
 

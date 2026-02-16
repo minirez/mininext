@@ -473,22 +473,73 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
       }
 
     default: {
+      // Build discount section HTML
+      const discountSection = buildDiscountSection(booking, locale, labels)
+
       // For confirmation emails, add bank transfer info if payment method is bank_transfer
       if (booking.payment?.method === 'bank_transfer') {
         const bankSection = await buildBankTransferSection(booking, language)
         return {
           ...commonData,
           BANK_TRANSFER_SECTION: bankSection,
-          PAYMENT_METHOD: labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi'
+          PAYMENT_METHOD: labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi',
+          DISCOUNT_SECTION: discountSection
         }
       }
       return {
         ...commonData,
         BANK_TRANSFER_SECTION: '',
-        PAYMENT_METHOD: ''
+        PAYMENT_METHOD: '',
+        DISCOUNT_SECTION: discountSection
       }
     }
   }
+}
+
+/**
+ * Build discount section HTML for confirmation emails
+ * Returns empty string if no discount applied
+ */
+function buildDiscountSection(booking, locale, labels) {
+  const totalDiscount = booking.pricing?.totalDiscount || 0
+  if (totalDiscount <= 0) return ''
+
+  const currency = booking.pricing?.currency || 'TRY'
+  const originalPrice = formatCurrency(booking.pricing?.subtotal || 0, currency, locale)
+  const discountAmount = formatCurrency(totalDiscount, currency, locale)
+
+  // Get campaign names
+  const campaignNames =
+    booking.rooms
+      ?.flatMap(r => r.campaigns || [])
+      .map(c => c.discountText || c.name)
+      .filter(Boolean)
+      .join(', ') || ''
+
+  const campaignLabel = labels.LANG === 'en' ? 'Campaign' : 'Kampanya'
+  const originalLabel = labels.LANG === 'en' ? 'Original Price' : 'Orijinal Fiyat'
+  const discountLabel = labels.LANG === 'en' ? 'Discount' : 'İndirim'
+
+  return `<tr><td style="padding:0 0 8px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="none">
+<tr>
+<td style="font-size:13px;color:#64748b;">${originalLabel}</td>
+<td align="right" style="font-size:13px;color:#94a3b8;text-decoration:line-through;">${originalPrice}</td>
+</tr>
+${
+  campaignNames
+    ? `<tr>
+<td style="font-size:13px;color:#64748b;">${campaignLabel}</td>
+<td align="right"><span style="display:inline-block;background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#ffffff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">${campaignNames}</span></td>
+</tr>`
+    : ''
+}
+<tr>
+<td style="font-size:13px;color:#64748b;">${discountLabel}</td>
+<td align="right" style="font-size:13px;color:#ef4444;font-weight:600;">-${discountAmount}</td>
+</tr>
+</table>
+</td></tr>`
 }
 
 /**

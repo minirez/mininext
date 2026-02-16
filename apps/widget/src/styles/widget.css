@@ -2428,8 +2428,40 @@ textarea.form-input {
 }
 
 /* Campaign Badge */
+.has-discount {
+  color: var(--primary);
+}
+
 .meal-campaigns {
   margin-top: 8px;
+}
+
+/* BookingView total area */
+.summary-card-total-value .price-original {
+  font-size: 13px;
+}
+
+.summary-card-total-value .has-discount {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.summary-campaigns {
+  padding: 0 16px 12px;
+}
+
+/* ConfirmationView price area */
+.details-price-value .price-original {
+  font-size: 12px;
+}
+
+.details-price-value .has-discount {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.confirmation-campaigns {
+  padding: 0 16px 12px;
 }
 
 .campaign-badge-v2 {

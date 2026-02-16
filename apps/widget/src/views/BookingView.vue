@@ -281,9 +281,19 @@ onMounted(() => {
         <div class="summary-card-total">
           <div class="summary-card-total-label">{{ t('common.total') }}</div>
           <div class="summary-card-total-value">
-            {{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}
+            <span v-if="selectedOption?.pricing?.totalDiscount > 0" class="price-original">
+              {{ formatCurrency(selectedOption?.pricing?.originalTotal || 0) }}
+            </span>
+            <span :class="{ 'has-discount': selectedOption?.pricing?.totalDiscount > 0 }">
+              {{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}
+            </span>
           </div>
         </div>
+      </div>
+      <div v-if="selectedOption?.campaigns?.length" class="summary-campaigns">
+        <span v-for="c in selectedOption.campaigns" :key="c.code" class="campaign-badge-v2">
+          {{ c.discountText || c.name }}
+        </span>
       </div>
     </div>
 

@@ -32,7 +32,8 @@ export const TEMPLATE_VARIABLES = {
     'GUEST_PHONE',
     'BOOKING_URL',
     'BANK_TRANSFER_SECTION',
-    'PAYMENT_METHOD'
+    'PAYMENT_METHOD',
+    'DISCOUNT_SECTION'
   ],
   'booking-cancelled': [
     'BOOKING_NUMBER',
