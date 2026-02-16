@@ -117,6 +117,11 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     throw new NotFoundError('NO_MARKET_AVAILABLE')
   }
 
+  // Check if market allows children
+  if (children.length > 0 && market.childrenAllowed === false) {
+    throw new BadRequestError('CHILDREN_NOT_ALLOWED')
+  }
+
   // Get active room types and meal plans
   const [roomTypes, mealPlans] = await Promise.all([
     RoomType.find({ hotel: hotel._id, status: 'active' }).sort('displayOrder').lean(),

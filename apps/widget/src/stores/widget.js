@@ -295,6 +295,11 @@ export const useWidgetStore = defineStore('widget', () => {
       return
     }
 
+    // Clear children if not allowed by market
+    if (widgetConfig.value?.childrenAllowed === false) {
+      searchParams.value.children = []
+    }
+
     try {
       isLoading.value = true
       error.value = null

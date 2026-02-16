@@ -194,7 +194,7 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
     isDefault: true,
     status: 'active'
   })
-    .select('paymentMethods')
+    .select('paymentMethods childrenAllowed')
     .lean()
 
   // Merge: market settings take precedence, widget config as fallback
@@ -237,7 +237,8 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
     minAdvanceBookingDays: hotel.widgetConfig?.minAdvanceBookingDays ?? 0,
     maxAdvanceBookingDays: hotel.widgetConfig?.maxAdvanceBookingDays ?? 365,
     maxNights: 30,
-    maxRooms: 5
+    maxRooms: 5,
+    childrenAllowed: defaultMarket?.childrenAllowed ?? true
   }
 
   res.json({

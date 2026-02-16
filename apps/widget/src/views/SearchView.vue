@@ -225,7 +225,7 @@ onMounted(() => {
           </div>
 
           <!-- Children -->
-          <div class="guest-row">
+          <div v-if="widgetConfig?.childrenAllowed !== false" class="guest-row">
             <div>
               <div class="guest-row-label">{{ t('search.childLabel') }}</div>
               <div class="guest-row-sublabel">{{ t('search.childDesc') }}</div>
@@ -242,7 +242,10 @@ onMounted(() => {
           </div>
 
           <!-- Child Ages -->
-          <div v-if="childrenCount > 0" class="child-ages-section">
+          <div
+            v-if="childrenCount > 0 && widgetConfig?.childrenAllowed !== false"
+            class="child-ages-section"
+          >
             <div class="guest-row-label">{{ t('search.childAges') }}</div>
             <div class="child-ages-grid">
               <select
