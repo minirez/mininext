@@ -32,7 +32,7 @@ export const getMarket = asyncHandler(async (req, res) => {
   if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
   await verifyHotelOwnership(hotelId, partnerId)
 
-  const market = await Market.findOne({ _id: id, hotel: hotelId, partner: partnerId })
+  const market = await Market.findOne({ _id: id, hotel: hotelId })
   if (!market) throw new NotFoundError('MARKET_NOT_FOUND')
 
   res.json({ success: true, data: market })
@@ -67,11 +67,10 @@ export const updateMarket = asyncHandler(async (req, res) => {
   if (!partnerId) throw new BadRequestError('PARTNER_REQUIRED')
   await verifyHotelOwnership(hotelId, partnerId)
 
-  const market = await Market.findOneAndUpdate(
-    { _id: id, hotel: hotelId, partner: partnerId },
-    req.body,
-    { new: true, runValidators: true }
-  )
+  const market = await Market.findOneAndUpdate({ _id: id, hotel: hotelId }, req.body, {
+    new: true,
+    runValidators: true
+  })
 
   if (!market) throw new NotFoundError('MARKET_NOT_FOUND')
 
@@ -92,7 +91,7 @@ export const deleteMarket = asyncHandler(async (req, res) => {
   const rateCount = await Rate.countDocuments({ market: id })
   if (rateCount > 0) throw new BadRequestError('MARKET_HAS_RATES')
 
-  const market = await Market.findOneAndDelete({ _id: id, hotel: hotelId, partner: partnerId })
+  const market = await Market.findOneAndDelete({ _id: id, hotel: hotelId })
   if (!market) throw new NotFoundError('MARKET_NOT_FOUND')
 
   res.json({
@@ -109,7 +108,7 @@ export const setDefaultMarket = asyncHandler(async (req, res) => {
   await verifyHotelOwnership(hotelId, partnerId)
 
   const market = await Market.findOneAndUpdate(
-    { _id: id, hotel: hotelId, partner: partnerId },
+    { _id: id, hotel: hotelId },
     { isDefault: true },
     { new: true }
   )

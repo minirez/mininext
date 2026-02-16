@@ -124,16 +124,21 @@
         <div class="mt-2 flex flex-wrap gap-1.5">
           <!-- Markets -->
           <span
-            v-for="marketId in campaign.applicableMarkets"
-            :key="marketId"
+            v-for="market in campaign.conditions?.applicableMarkets"
+            :key="market._id || market"
             class="px-1.5 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400"
           >
             <span class="material-icons text-[10px] align-middle">public</span>
-            {{ getMarketName(marketId) }}
+            {{
+              market.name?.[locale] ||
+              market.name?.tr ||
+              market.code ||
+              getMarketName(market._id || market)
+            }}
           </span>
           <!-- All Markets badge if no specific markets selected -->
           <span
-            v-if="!campaign.applicableMarkets || campaign.applicableMarkets.length === 0"
+            v-if="!campaign.conditions?.applicableMarkets?.length"
             class="px-1.5 py-0.5 text-[10px] rounded bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400"
           >
             <span class="material-icons text-[10px] align-middle">public</span>

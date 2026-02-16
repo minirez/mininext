@@ -8,8 +8,26 @@ import { useToast } from 'vue-toastification'
 import planningService from '@/services/planningService'
 
 export const SUPPORTED_LANGUAGES = [
-  'tr', 'en', 'ru', 'el', 'de', 'es', 'it', 'fr', 'ro', 'bg',
-  'pt', 'da', 'zh', 'ar', 'fa', 'he', 'sq', 'uk', 'pl', 'az'
+  'tr',
+  'en',
+  'ru',
+  'el',
+  'de',
+  'es',
+  'it',
+  'fr',
+  'ro',
+  'bg',
+  'pt',
+  'da',
+  'zh',
+  'ar',
+  'fa',
+  'he',
+  'sq',
+  'uk',
+  'pl',
+  'az'
 ]
 
 export const WEEKDAYS = {
@@ -145,7 +163,8 @@ export function useCampaignForm(props, emit) {
       conflicts.push({
         _id: campaign._id,
         code: campaign.code,
-        name: campaign.name?.[locale.value] || campaign.name?.tr || campaign.name?.en || campaign.code,
+        name:
+          campaign.name?.[locale.value] || campaign.name?.tr || campaign.name?.en || campaign.code,
         type: campaign.type,
         combinable: campaign.combinable,
         stayWindow: campaign.stayWindow,
@@ -160,7 +179,7 @@ export function useCampaignForm(props, emit) {
   const hasConflicts = computed(() => conflictingCampaigns.value.length > 0)
 
   // Format price helper
-  const formatPrice = (value) => {
+  const formatPrice = value => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'EUR',
@@ -222,7 +241,7 @@ export function useCampaignForm(props, emit) {
   }
 
   // Toggle functions
-  const toggleMarket = (id) => {
+  const toggleMarket = id => {
     const idx = form.conditions.applicableMarkets.indexOf(id)
     if (idx > -1) {
       form.conditions.applicableMarkets.splice(idx, 1)
@@ -239,7 +258,7 @@ export function useCampaignForm(props, emit) {
     }
   }
 
-  const toggleMealPlan = (id) => {
+  const toggleMealPlan = id => {
     const idx = form.conditions.applicableMealPlans.indexOf(id)
     if (idx > -1) {
       form.conditions.applicableMealPlans.splice(idx, 1)
@@ -256,7 +275,7 @@ export function useCampaignForm(props, emit) {
     }
   }
 
-  const toggleRoomType = (id) => {
+  const toggleRoomType = id => {
     const idx = form.conditions.applicableRoomTypes.indexOf(id)
     if (idx > -1) {
       form.conditions.applicableRoomTypes.splice(idx, 1)
@@ -273,13 +292,13 @@ export function useCampaignForm(props, emit) {
     }
   }
 
-  const toggleStayDay = (day) => {
+  const toggleStayDay = day => {
     const idx = form.stayDays.indexOf(day)
     if (idx > -1) form.stayDays.splice(idx, 1)
     else form.stayDays.push(day)
   }
 
-  const toggleBookingDay = (day) => {
+  const toggleBookingDay = day => {
     const idx = form.bookingDays.indexOf(day)
     if (idx > -1) form.bookingDays.splice(idx, 1)
     else form.bookingDays.push(day)
@@ -381,7 +400,7 @@ export function useCampaignForm(props, emit) {
   }
 
   // Initialize from existing campaign
-  const formatDateForInput = (date) => {
+  const formatDateForInput = date => {
     if (!date) return null
     return new Date(date).toISOString().split('T')[0]
   }
@@ -399,9 +418,26 @@ export function useCampaignForm(props, emit) {
       form.applicationType = props.campaign.applicationType || 'stay'
       form.freeNightsEnabled = props.campaign.discount?.type === 'free_nights'
       form.discount = { ...form.discount, ...props.campaign.discount }
-      form.conditions = { ...form.conditions, ...props.campaign.conditions }
+
+      // Normalize populated objects to plain IDs
+      const normalizeIds = arr => (arr || []).map(item => item._id || item)
+      form.conditions = {
+        ...form.conditions,
+        ...props.campaign.conditions,
+        applicableMarkets: normalizeIds(props.campaign.conditions?.applicableMarkets),
+        applicableMealPlans: normalizeIds(props.campaign.conditions?.applicableMealPlans),
+        applicableRoomTypes: normalizeIds(props.campaign.conditions?.applicableRoomTypes)
+      }
       form.stayDays = props.campaign.stayDays || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-      form.bookingDays = props.campaign.bookingDays || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+      form.bookingDays = props.campaign.bookingDays || [
+        'mon',
+        'tue',
+        'wed',
+        'thu',
+        'fri',
+        'sat',
+        'sun'
+      ]
 
       stayDateRange.value = {
         start: formatDateForInput(props.campaign.stayWindow?.startDate),

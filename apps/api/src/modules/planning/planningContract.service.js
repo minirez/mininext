@@ -657,7 +657,7 @@ export const deleteMarketPricingData = asyncHandler(async (req, res) => {
 
   await verifyHotelOwnership(hotelId, partnerId)
 
-  const market = await Market.findOne({ _id: marketId, hotel: hotelId, partner: partnerId })
+  const market = await Market.findOne({ _id: marketId, hotel: hotelId })
   if (!market) throw new NotFoundError('MARKET_NOT_FOUND')
 
   const ratesDeleted = await Rate.deleteMany({

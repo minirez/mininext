@@ -26,7 +26,7 @@ export const getSeasons = asyncHandler(async (req, res) => {
     throw new BadRequestError('MARKET_REQUIRED')
   }
 
-  const market = await Market.findOne({ _id: marketId, hotel: hotelId, partner: partnerId })
+  const market = await Market.findOne({ _id: marketId, hotel: hotelId })
   if (!market) {
     throw new NotFoundError('MARKET_NOT_FOUND')
   }
@@ -61,7 +61,7 @@ export const createSeason = asyncHandler(async (req, res) => {
     throw new BadRequestError('MARKET_REQUIRED')
   }
 
-  const market = await Market.findOne({ _id: marketId, hotel: hotelId, partner: partnerId })
+  const market = await Market.findOne({ _id: marketId, hotel: hotelId })
   if (!market) {
     throw new NotFoundError('MARKET_NOT_FOUND')
   }
