@@ -65,7 +65,9 @@ const resolvePartnerFromRequest = async req => {
     // If a full URL was passed, extract hostname
     try {
       if (s.includes('://')) s = new URL(s).hostname
-    } catch {}
+    } catch {
+      /* ignore invalid URL */
+    }
 
     // Strip path/query and port
     s = s.split('/')[0].split('?')[0].split('#')[0]

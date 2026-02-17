@@ -72,7 +72,9 @@ const attachB2cDomain = async (storefront, partnerId) => {
       ...(storefront.settings || {}),
       b2cDomain: settings?.setup?.b2cDomain || ''
     }
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }
 
 // ==================== CORE PROJECTIONS ====================
@@ -771,7 +773,9 @@ export const downloadAndUploadImage = asyncHandler(async (req, res) => {
       const abs = path.join(getStorefrontDiskPath(partnerId, ''), existingRelativePath)
       const stat = await fs.promises.stat(abs)
       existingSize = stat.size
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     return res.json({
       success: true,
@@ -843,14 +847,18 @@ export const uploadImage = asyncHandler(async (req, res) => {
   let md5 = null
   try {
     md5 = await md5FileHex(req.file.path)
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   if (md5) {
     const existingRelativePath = await getExistingStorefrontFileByMd5(partnerId, md5)
     if (existingRelativePath && existingRelativePath !== currentRelativePath) {
       try {
         await fs.promises.unlink(req.file.path)
-      } catch {}
+      } catch {
+        /* ignore */
+      }
 
       const existingFilename = path.basename(existingRelativePath)
       const url = getStorefrontUploadsUrlFromRelativePath(partnerId, existingRelativePath)
@@ -860,7 +868,9 @@ export const uploadImage = asyncHandler(async (req, res) => {
         const abs = path.join(getStorefrontDiskPath(partnerId, ''), existingRelativePath)
         const stat = await fs.promises.stat(abs)
         existingSize = stat.size
-      } catch {}
+      } catch {
+        /* ignore */
+      }
 
       return res.json({
         success: true,

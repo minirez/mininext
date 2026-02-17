@@ -36,9 +36,17 @@ export {
 } from './crawler.js'
 
 // Default export with main public API
+// Re-import for default export to avoid no-undef
+import { isConfigured as _isConfigured } from './client.js'
+import {
+  scrapePage as _scrapePage,
+  crawlWebsite as _crawlWebsite,
+  smartFetch as _smartFetch
+} from './crawler.js'
+
 export default {
-  isConfigured,
-  scrapePage,
-  crawlWebsite,
-  smartFetch
+  isConfigured: _isConfigured,
+  scrapePage: _scrapePage,
+  crawlWebsite: _crawlWebsite,
+  smartFetch: _smartFetch
 }

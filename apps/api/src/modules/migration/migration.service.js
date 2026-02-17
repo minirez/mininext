@@ -159,7 +159,9 @@ export const getAccountHotels = asyncHandler(async (req, res) => {
             const names = convertLangArray(city.name)
             cityName = names.tr || names.en || ''
           }
-        } catch {}
+        } catch {
+          /* ignore city lookup failure */
+        }
       }
 
       return {
