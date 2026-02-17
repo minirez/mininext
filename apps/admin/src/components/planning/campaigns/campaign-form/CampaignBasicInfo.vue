@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div class="space-y-4">
     <!-- Campaign Name (Multi-language) -->
@@ -40,7 +41,6 @@
 </template>
 
 <script setup>
-/* eslint-disable vue/no-mutating-props */
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 
 defineProps({
