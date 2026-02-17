@@ -22,6 +22,7 @@
       "included": "Included"
     },
     "status": {
+      "trial": "Trial",
       "active": "Active",
       "expired": "Expired",
       "grace_period": "Grace Period",
@@ -87,6 +88,20 @@
     "securePaymentInfo": "Your payment is protected by 3D Secure.",
     "installment": "Installment Options",
     "singlePayment": "Single Payment",
-    "installments": "Installments"
+    "installments": "Installments",
+    "subscription": "Subscription",
+    "trialPeriod": "Trial Period",
+    "trialActive": "Your trial period is active",
+    "trialRemainingDays": "{days} days remaining in your trial",
+    "noActivePlan": "No Active Plan",
+    "purchase": "Purchase",
+    "hotelsUsed": "Hotels Used",
+    "maxSites": "Max Sites",
+    "selectedItem": "Selected",
+    "payWithCard": "Pay with Card",
+    "cardDetails": "Card Details",
+    "pay": "Pay",
+    "paymentSuccessDescription": "Your subscription has been activated successfully.",
+    "gracePeriodDays": "{days} days remaining in grace period"
   }
 }

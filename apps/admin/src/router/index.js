@@ -18,8 +18,8 @@ import pmsRoutes from './routes/pms.js'
 const DashboardView = () => import('../views/DashboardView.vue')
 const PartnersView = () => import('../views/PartnersView.vue')
 const PartnerSubscriptionsView = () => import('../views/partners/SubscriptionsView.vue')
-const MembershipServicesView = () => import('../views/membership/ServicesView.vue')
-const MembershipPackagesView = () => import('../views/membership/PackagesView.vue')
+const PartnerServicesView = () => import('../views/partners/ServicesView.vue')
+const PartnerPackagesView = () => import('../views/partners/PackagesView.vue')
 const AgenciesView = () => import('../views/AgenciesView.vue')
 const AgencyUsersView = () => import('../views/AgencyUsersView.vue')
 const ProfileView = () => import('../views/ProfileView.vue')
@@ -62,14 +62,14 @@ const router = createRouter({
         {
           path: 'partners/services',
           name: 'partner-services',
-          component: MembershipServicesView,
-          meta: { requiresPlatformAdmin: true, titleKey: 'membership.services.title' }
+          component: PartnerServicesView,
+          meta: { requiresPlatformAdmin: true }
         },
         {
           path: 'partners/packages',
           name: 'partner-packages',
-          component: MembershipPackagesView,
-          meta: { requiresPlatformAdmin: true, titleKey: 'membership.packages.title' }
+          component: PartnerPackagesView,
+          meta: { requiresPlatformAdmin: true }
         },
         {
           path: 'agencies',

@@ -86,7 +86,7 @@ const subscriptionInvoiceSchema = new mongoose.Schema(
     // Ödeme Bilgileri
     paymentMethod: {
       type: String,
-      enum: ['bank_transfer', 'credit_card', 'cash', 'other']
+      enum: ['bank_transfer', 'credit_card', 'payment_link', 'cash', 'other']
     },
     paymentReference: String,
     paidAt: Date,

@@ -1,8 +1,8 @@
 /**
- * Partner Subscription Composable
- * Extracted from PartnersView.vue - handles subscription management logic
+ * Partner Subscription Composable (v2 – package / service based)
+ * Extracted from PartnersView.vue – handles subscription management logic
  */
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import partnerService from '@/services/partnerService'
 import subscriptionInvoiceService from '@/services/subscriptionInvoiceService'
@@ -14,7 +14,7 @@ export function usePartnerSubscription() {
   const showSubscriptionModal = ref(false)
   const showEditPurchaseModal = ref(false)
   const showMarkPaidModal = ref(false)
-  const subscriptionPlans = ref([])
+  const subscriptionCatalog = ref({ packages: [], services: [] })
   const subscriptionStatus = ref(null)
   const partnerInvoices = ref([])
   const useCustomPmsLimit = ref(false)
@@ -31,29 +31,28 @@ export function usePartnerSubscription() {
   ]
 
   const subscriptionForm = ref({
-    customLimits: {
-      pmsMaxHotels: null
-    },
+    customLimits: { pmsMaxHotels: null },
     notes: ''
   })
 
   const purchaseForm = ref({
-    plan: 'business',
+    type: 'package_subscription',
+    packageId: null,
+    serviceId: null,
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
       .toISOString()
       .split('T')[0],
     amount: null,
-    currency: 'USD'
+    billingPeriod: 'yearly'
   })
 
   const editPurchaseForm = ref({
     _id: null,
-    plan: 'business',
     startDate: '',
     endDate: '',
     amount: null,
-    currency: 'USD',
+    billingPeriod: 'yearly',
     paymentMethod: 'bank_transfer',
     paymentReference: '',
     paymentNotes: ''
@@ -61,9 +60,8 @@ export function usePartnerSubscription() {
 
   const markPaidForm = ref({
     _id: null,
-    plan: '',
+    label: '',
     amount: null,
-    currency: 'USD',
     paymentDate: new Date().toISOString().split('T')[0],
     paymentMethod: 'bank_transfer',
     paymentReference: '',
@@ -72,6 +70,7 @@ export function usePartnerSubscription() {
 
   // Subscription status map for badges
   const subscriptionStatusMap = {
+    trial: { variant: 'info', label: t('mySubscription.status.trial') },
     active: { variant: 'success', label: t('partners.subscription.statusActive') },
     expired: { variant: 'danger', label: t('partners.subscription.statusExpired') },
     grace_period: { variant: 'warning', label: t('partners.subscription.statusGracePeriod') },
@@ -79,103 +78,46 @@ export function usePartnerSubscription() {
     suspended: { variant: 'danger', label: t('partners.subscription.statusSuspended') }
   }
 
-  // Helper functions for list display
+  // Row helpers
   const getRemainingDays = row => {
     if (!row.subscription?.endDate) return null
-    const endDate = new Date(row.subscription.endDate)
-    const now = new Date()
-    const diff = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+    const diff = Math.ceil(
+      (new Date(row.subscription.endDate) - new Date()) / (1000 * 60 * 60 * 24)
+    )
     return Math.max(0, diff)
   }
 
   const getGracePeriodDays = row => {
     if (!row.subscription?.gracePeriodEndDate) return 0
-    const gracePeriodEnd = new Date(row.subscription.gracePeriodEndDate)
-    const now = new Date()
-    const diff = Math.ceil((gracePeriodEnd - now) / (1000 * 60 * 60 * 24))
+    const diff = Math.ceil(
+      (new Date(row.subscription.gracePeriodEndDate) - new Date()) / (1000 * 60 * 60 * 24)
+    )
     return Math.max(0, diff)
   }
 
   const isPmsEnabledForRow = row => {
-    const limit =
-      row.subscription?.customLimits?.pmsMaxHotels ??
-      row.subscription?.features?.pms?.maxHotels ??
-      0
+    const limit = row.subscription?.customLimits?.pmsMaxHotels ?? 0
     return limit > 0 || limit === -1
   }
 
-  const getProvisionedHotels = () => {
-    return 0
-  }
+  const getProvisionedHotels = () => 0
 
   const getPmsLimit = row => {
-    const limit =
-      row.subscription?.customLimits?.pmsMaxHotels ??
-      row.subscription?.features?.pms?.maxHotels ??
-      0
+    const limit = row.subscription?.customLimits?.pmsMaxHotels ?? 0
     return limit === -1 ? '∞' : limit
   }
 
   const getSubscriptionStatusForRow = row => {
-    if (!row.subscription?.startDate) return 'active'
-    if (row.subscription?.status === 'cancelled') return 'cancelled'
-    if (row.subscription?.status === 'suspended') return 'suspended'
-
-    const now = new Date()
-    const endDate = row.subscription?.endDate ? new Date(row.subscription.endDate) : null
-    const gracePeriodEnd = row.subscription?.gracePeriodEndDate
-      ? new Date(row.subscription.gracePeriodEndDate)
-      : null
-
-    if (endDate && now > endDate) {
-      if (gracePeriodEnd && now <= gracePeriodEnd) {
-        return 'grace_period'
-      }
-      return 'expired'
-    }
-
-    return 'active'
+    return row.subscription?.status || 'expired'
   }
 
-  // Load subscription plans
+  // Load catalog (packages + services)
   const loadSubscriptionPlans = async () => {
     try {
-      const response = await partnerService.getSubscriptionPlans()
-      subscriptionPlans.value = response.data || []
+      const response = await partnerService.getSubscriptionCatalog()
+      subscriptionCatalog.value = response.data || { packages: [], services: [] }
     } catch {
-      subscriptionPlans.value = [
-        {
-          id: 'webdesign',
-          name: 'Web Design',
-          description: t('partners.subscription.planDescriptions.webdesign'),
-          price: { yearly: 29 },
-          features: {
-            pms: { enabled: false, maxHotels: 0 },
-            webDesign: { enabled: true, maxSites: 1, ssl: true, customDomain: true }
-          }
-        },
-        {
-          id: 'business',
-          name: 'Business',
-          description: t('partners.subscription.planDescriptions.business'),
-          price: { yearly: 118.9 },
-          features: { pms: { enabled: false, maxHotels: 0 } }
-        },
-        {
-          id: 'professional',
-          name: 'Professional',
-          description: t('partners.subscription.planDescriptions.professional'),
-          price: { yearly: 178.8 },
-          features: { pms: { enabled: true, maxHotels: 5 } }
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          description: t('partners.subscription.planDescriptions.enterprise'),
-          price: { yearly: 298.8 },
-          features: { pms: { enabled: true, maxHotels: -1 } }
-        }
-      ]
+      subscriptionCatalog.value = { packages: [], services: [] }
     }
   }
 
@@ -186,12 +128,9 @@ export function usePartnerSubscription() {
       subscriptionStatus.value = response.data
 
       subscriptionForm.value = {
-        customLimits: {
-          pmsMaxHotels: response.data?.customLimits?.pmsMaxHotels ?? null
-        },
+        customLimits: { pmsMaxHotels: response.data?.customLimits?.pmsMaxHotels ?? null },
         notes: response.data?.notes || ''
       }
-
       useCustomPmsLimit.value = response.data?.customLimits?.pmsMaxHotels != null
       activeSubscriptionTab.value = 'purchases'
 
@@ -200,13 +139,13 @@ export function usePartnerSubscription() {
         .toISOString()
         .split('T')[0]
       purchaseForm.value = {
-        plan: response.data?.plan || 'business',
+        type: 'package_subscription',
+        packageId: null,
+        serviceId: null,
         startDate: today,
         endDate: nextYear,
-        amount:
-          subscriptionPlans.value.find(p => p.id === (response.data?.plan || 'business'))?.price
-            ?.yearly || null,
-        currency: 'USD'
+        amount: null,
+        billingPeriod: 'yearly'
       }
 
       try {
@@ -217,66 +156,51 @@ export function usePartnerSubscription() {
       }
     } catch {
       subscriptionStatus.value = null
-      subscriptionForm.value = {
-        customLimits: { pmsMaxHotels: null },
-        notes: ''
-      }
+      subscriptionForm.value = { customLimits: { pmsMaxHotels: null }, notes: '' }
       useCustomPmsLimit.value = false
       activeSubscriptionTab.value = 'purchases'
       partnerInvoices.value = []
     }
   }
 
-  // Open subscription modal for a partner
   const openSubscriptionModal = async (partner, selectedPartnerRef) => {
     selectedPartnerRef.value = partner
     showSubscriptionModal.value = true
     await loadSubscriptionData(partner._id)
   }
 
-  // Save subscription settings
   const handleSaveSubscription = async (selectedPartner, onSuccess) => {
     if (!selectedPartner) return
-
     savingSubscription.value = true
     try {
-      const data = {
-        notes: subscriptionForm.value.notes
-      }
-
-      if (useCustomPmsLimit.value) {
-        data.customLimits = {
-          pmsMaxHotels: subscriptionForm.value.customLimits.pmsMaxHotels
-        }
-      } else {
-        data.customLimits = {
-          pmsMaxHotels: null
-        }
-      }
+      const data = { notes: subscriptionForm.value.notes }
+      data.customLimits = useCustomPmsLimit.value
+        ? { pmsMaxHotels: subscriptionForm.value.customLimits.pmsMaxHotels }
+        : { pmsMaxHotels: null }
 
       const response = await partnerService.updateSubscription(selectedPartner._id, data)
       subscriptionStatus.value = response.data
       showSubscriptionModal.value = false
       onSuccess?.()
     } catch {
-      // Error handled by API client
+      // handled
     } finally {
       savingSubscription.value = false
     }
   }
 
-  // Add purchase
   const handleAddPurchase = async (selectedPartner, onSuccess) => {
     if (!selectedPartner || !purchaseForm.value.amount) return
-
     addingPurchase.value = true
     try {
       const response = await partnerService.addPurchase(selectedPartner._id, {
-        plan: purchaseForm.value.plan,
+        type: purchaseForm.value.type,
+        packageId: purchaseForm.value.packageId,
+        serviceId: purchaseForm.value.serviceId,
         startDate: purchaseForm.value.startDate,
         endDate: purchaseForm.value.endDate,
         amount: purchaseForm.value.amount,
-        currency: purchaseForm.value.currency
+        billingPeriod: purchaseForm.value.billingPeriod
       })
 
       subscriptionStatus.value = response.data.subscription
@@ -286,11 +210,13 @@ export function usePartnerSubscription() {
         .toISOString()
         .split('T')[0]
       purchaseForm.value = {
-        plan: response.data.subscription?.plan || 'business',
+        type: 'package_subscription',
+        packageId: null,
+        serviceId: null,
         startDate: today,
         endDate: nextYear,
         amount: null,
-        currency: 'USD'
+        billingPeriod: 'yearly'
       }
 
       try {
@@ -304,27 +230,24 @@ export function usePartnerSubscription() {
 
       onSuccess?.()
     } catch {
-      // Error handled by API client
+      // handled
     } finally {
       addingPurchase.value = false
     }
   }
 
-  // Open edit purchase modal
   const openEditPurchaseModal = purchase => {
     const formatDateForInput = date => {
       if (!date) return ''
-      const d = new Date(date)
-      return d.toISOString().split('T')[0]
+      return new Date(date).toISOString().split('T')[0]
     }
 
     editPurchaseForm.value = {
       _id: purchase._id,
-      plan: purchase.plan,
       startDate: formatDateForInput(purchase.period?.startDate),
       endDate: formatDateForInput(purchase.period?.endDate),
       amount: purchase.price?.amount,
-      currency: purchase.price?.currency || 'USD',
+      billingPeriod: purchase.billingPeriod || 'yearly',
       paymentMethod: purchase.payment?.method || 'bank_transfer',
       paymentReference: purchase.payment?.reference || '',
       paymentNotes: purchase.payment?.notes || ''
@@ -332,44 +255,38 @@ export function usePartnerSubscription() {
     showEditPurchaseModal.value = true
   }
 
-  // Handle update purchase
   const handleUpdatePurchase = async (selectedPartner, onSuccess) => {
     if (!selectedPartner || !editPurchaseForm.value._id) return
-
     updatingPurchase.value = true
     try {
       const response = await partnerService.updatePurchase(
         selectedPartner._id,
         editPurchaseForm.value._id,
         {
-          plan: editPurchaseForm.value.plan,
           startDate: editPurchaseForm.value.startDate,
           endDate: editPurchaseForm.value.endDate,
           amount: editPurchaseForm.value.amount,
-          currency: editPurchaseForm.value.currency,
+          billingPeriod: editPurchaseForm.value.billingPeriod,
           paymentMethod: editPurchaseForm.value.paymentMethod,
           paymentReference: editPurchaseForm.value.paymentReference,
           paymentNotes: editPurchaseForm.value.paymentNotes
         }
       )
-
       subscriptionStatus.value = response.data.subscription
       showEditPurchaseModal.value = false
       onSuccess?.()
     } catch {
-      // Error handled by API client
+      // handled
     } finally {
       updatingPurchase.value = false
     }
   }
 
-  // Open mark paid modal
   const openMarkPaidModal = purchase => {
     markPaidForm.value = {
       _id: purchase._id,
-      plan: purchase.plan,
+      label: purchase.label?.tr || purchase.label?.en || '-',
       amount: purchase.price?.amount,
-      currency: purchase.price?.currency || 'USD',
       paymentDate: new Date().toISOString().split('T')[0],
       paymentMethod: 'bank_transfer',
       paymentReference: '',
@@ -378,10 +295,8 @@ export function usePartnerSubscription() {
     showMarkPaidModal.value = true
   }
 
-  // Handle mark as paid
   const handleMarkAsPaid = async (selectedPartner, onSuccess) => {
     if (!selectedPartner || !markPaidForm.value._id || !markPaidForm.value.paymentDate) return
-
     markingPaid.value = true
     try {
       const response = await partnerService.markPurchaseAsPaid(
@@ -394,7 +309,6 @@ export function usePartnerSubscription() {
           paymentNotes: markPaidForm.value.paymentNotes
         }
       )
-
       subscriptionStatus.value = response.data.subscription
       showMarkPaidModal.value = false
 
@@ -409,47 +323,60 @@ export function usePartnerSubscription() {
 
       onSuccess?.()
     } catch {
-      // Error handled by API client
+      // handled
     } finally {
       markingPaid.value = false
     }
   }
 
-  // Cancel purchase
   const confirmCancelPurchase = async (purchaseId, selectedPartner, onSuccess) => {
     const reason = prompt(t('partners.subscription.cancelReason'))
-    if (reason === null) return
-    if (!selectedPartner) return
-
+    if (reason === null || !selectedPartner) return
     try {
       const response = await partnerService.cancelPurchase(selectedPartner._id, purchaseId, reason)
       subscriptionStatus.value = response.data.subscription
       onSuccess?.()
     } catch {
-      // Error handled by API client
+      // handled
     }
   }
 
-  // Get invoice for a specific purchase
   const getInvoiceForPurchase = purchaseId => {
     return partnerInvoices.value.find(inv => inv.purchase?.toString() === purchaseId?.toString())
   }
 
-  // Download invoice PDF
   const downloadInvoice = async (invoiceId, invoiceNumber) => {
     try {
       await subscriptionInvoiceService.downloadPDF(invoiceId, invoiceNumber)
     } catch {
-      // Error handled by service
+      // handled
+    }
+  }
+
+  const onCatalogItemChange = kind => {
+    const cat = subscriptionCatalog.value
+    if (!cat) return
+    if (kind === 'package') {
+      const pkg = cat.packages?.find(p => p._id === purchaseForm.value.packageId)
+      if (pkg) {
+        purchaseForm.value.amount = pkg.price ?? pkg.calculatedPrice ?? 0
+        purchaseForm.value.billingPeriod = pkg.billingPeriod || 'yearly'
+      }
+    } else {
+      const svc = cat.services?.find(s => s._id === purchaseForm.value.serviceId)
+      if (svc) {
+        purchaseForm.value.amount = svc.price ?? 0
+        purchaseForm.value.billingPeriod = svc.billingPeriod || 'yearly'
+      }
     }
   }
 
   return {
-    // State
     showSubscriptionModal,
     showEditPurchaseModal,
     showMarkPaidModal,
-    subscriptionPlans,
+    subscriptionCatalog,
+    subscriptionPlans: subscriptionCatalog,
     subscriptionStatus,
     partnerInvoices,
     useCustomPmsLimit,
@@ -464,16 +391,12 @@ export function usePartnerSubscription() {
     updatingPurchase,
     markingPaid,
     subscriptionStatusMap,
-
-    // Row helpers
     getRemainingDays,
     getGracePeriodDays,
     isPmsEnabledForRow,
     getProvisionedHotels,
     getPmsLimit,
     getSubscriptionStatusForRow,
-
-    // Actions
     loadSubscriptionPlans,
     loadSubscriptionData,
     openSubscriptionModal,
@@ -485,6 +408,7 @@ export function usePartnerSubscription() {
     handleMarkAsPaid,
     confirmCancelPurchase,
     getInvoiceForPurchase,
-    downloadInvoice
+    downloadInvoice,
+    onCatalogItemChange
   }
 }

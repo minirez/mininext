@@ -50,6 +50,9 @@ const ROUTE_CONFIG = {
   // Payment links
   paymentLink: 'payment-links',
 
+  // Subscription services & packages (barrel route)
+  subscriptions: 'subscriptions',
+
   // Storefront (B2C website configuration)
   storefront: 'storefronts',
 

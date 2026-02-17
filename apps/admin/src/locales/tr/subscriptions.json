@@ -1,0 +1,61 @@
+{
+  "subscriptionServices": {
+    "title": "Abonelik Servisleri",
+    "description": "Partnerlere sunulan servisleri yönetin. Servisler paketlere dahil edilebilir veya tek başına satılabilir.",
+    "create": "Servis Oluştur",
+    "edit": "Servisi Düzenle",
+    "name": "Servis Adı",
+    "namePlaceholder": "Örn: PMS Erişimi",
+    "descriptionLabel": "Açıklama",
+    "slug": "Slug",
+    "slugPlaceholder": "ornek: pms-erisimi",
+    "slugHelp": "Sadece küçük harf, rakam ve tire kullanılabilir",
+    "price": "Fiyat",
+    "billingPeriod": "Faturalama Dönemi",
+    "entitlements": "Yetkilendirmeler",
+    "maxHotels": "Maks otel",
+    "maxSites": "Maks site",
+    "customDomain": "Özel Alan Adı",
+    "sortOrder": "Sıralama",
+    "noServices": "Henüz servis oluşturulmamış",
+    "created": "Servis başarıyla oluşturuldu",
+    "updated": "Servis başarıyla güncellendi",
+    "deleted": "Servis başarıyla silindi",
+    "confirmDelete": "\"{name}\" servisini silmek istediğinize emin misiniz?",
+    "periods": {
+      "yearly": "Yıllık",
+      "monthly": "Aylık",
+      "one_time": "Tek Seferlik"
+    }
+  },
+  "subscriptionPackages": {
+    "title": "Abonelik Paketleri",
+    "description": "Servisleri bir araya getirerek paketler oluşturun. Paketler partnerlere abonelik olarak sunulur.",
+    "create": "Paket Oluştur",
+    "edit": "Paketi Düzenle",
+    "name": "Paket Adı",
+    "namePlaceholder": "Örn: Profesyonel Paket",
+    "descriptionLabel": "Açıklama",
+    "slug": "Slug",
+    "billingPeriod": "Faturalama Dönemi",
+    "selectServices": "Dahil Edilecek Servisler",
+    "includedServices": "Dahil Servisler",
+    "noServicesYet": "Henüz servis eklenmemiş",
+    "noServicesAvailable": "Mevcut servis bulunamadı",
+    "calculatedTotal": "Hesaplanan Toplam",
+    "overridePrice": "Manuel fiyat belirle",
+    "priceOverridden": "Manuel fiyat (hesaplanan: €{calculated})",
+    "trialDays": "{days} gün deneme",
+    "trialDaysLabel": "Deneme Süresi (Gün)",
+    "sortOrder": "Sıralama",
+    "noPackages": "Henüz paket oluşturulmamış",
+    "created": "Paket başarıyla oluşturuldu",
+    "updated": "Paket başarıyla güncellendi",
+    "deleted": "Paket başarıyla silindi",
+    "confirmDelete": "\"{name}\" paketini silmek istediğinize emin misiniz?",
+    "periods": {
+      "yearly": "Yıllık",
+      "monthly": "Aylık"
+    }
+  }
+}

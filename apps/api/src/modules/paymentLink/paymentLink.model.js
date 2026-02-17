@@ -82,6 +82,13 @@ const paymentLinkSchema = new mongoose.Schema(
       }
     },
 
+    // Purpose of the payment link
+    purpose: {
+      type: String,
+      enum: ['booking', 'subscription_package', 'subscription_service', 'other'],
+      default: 'booking'
+    },
+
     // Optional Booking Reference
     booking: {
       type: mongoose.Schema.Types.ObjectId,
@@ -94,6 +101,17 @@ const paymentLinkSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Payment',
       index: true
+    },
+
+    // Subscription purchase context (when purpose = subscription_package | subscription_service)
+    subscriptionContext: {
+      // Target partner (the one who will receive the subscription)
+      targetPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'Partner' },
+      // Which purchase inside partner.subscription.purchases
+      purchaseId: { type: mongoose.Schema.Types.ObjectId },
+      // Catalog reference
+      package: { type: mongoose.Schema.Types.ObjectId, ref: 'SubscriptionPackage' },
+      service: { type: mongoose.Schema.Types.ObjectId, ref: 'SubscriptionService' }
     },
 
     // Link Settings
@@ -122,33 +140,33 @@ const paymentLinkSchema = new mongoose.Schema(
       provisionNumber: { type: String },
 
       // Kart bilgileri
-      maskedCard: { type: String },        // "5401 34** **** 7890"
+      maskedCard: { type: String }, // "5401 34** **** 7890"
       lastFour: { type: String },
-      brand: { type: String },             // Visa, Mastercard, etc.
-      cardType: { type: String },          // credit, debit
-      cardFamily: { type: String },        // World, Axess, Bonus, etc.
+      brand: { type: String }, // Visa, Mastercard, etc.
+      cardType: { type: String }, // credit, debit
+      cardFamily: { type: String }, // World, Axess, Bonus, etc.
 
       // Banka bilgileri
-      cardBank: { type: String },          // Kartı veren banka
-      cardCountry: { type: String },       // Kart ülkesi (tr, us, etc.)
+      cardBank: { type: String }, // Kartı veren banka
+      cardCountry: { type: String }, // Kart ülkesi (tr, us, etc.)
 
       // POS bilgileri
       posId: { type: mongoose.Schema.Types.ObjectId, ref: 'VirtualPos' },
       posName: { type: String },
-      posBank: { type: String },           // POS bankası
+      posBank: { type: String }, // POS bankası
 
       // Taksit
       installmentCount: { type: Number, default: 1 },
 
       // Komisyon bilgileri
       commission: {
-        bankRate: { type: Number, default: 0 },       // Banka komisyon oranı %
-        bankAmount: { type: Number, default: 0 },     // Banka komisyon tutarı
-        platformRate: { type: Number, default: 0 },   // Platform komisyon oranı %
+        bankRate: { type: Number, default: 0 }, // Banka komisyon oranı %
+        bankAmount: { type: Number, default: 0 }, // Banka komisyon tutarı
+        platformRate: { type: Number, default: 0 }, // Platform komisyon oranı %
         platformAmount: { type: Number, default: 0 }, // Platform komisyon tutarı
-        totalRate: { type: Number, default: 0 },      // Toplam komisyon oranı %
-        totalAmount: { type: Number, default: 0 },    // Toplam kesinti
-        netAmount: { type: Number, default: 0 }       // Net tutar
+        totalRate: { type: Number, default: 0 }, // Toplam komisyon oranı %
+        totalAmount: { type: Number, default: 0 }, // Toplam kesinti
+        netAmount: { type: Number, default: 0 } // Net tutar
       },
 
       // Ham yanıt
@@ -348,13 +366,8 @@ paymentLinkSchema.statics.getStats = async function (partnerId = null, platformO
     {
       $facet: {
         total: [{ $count: 'count' }],
-        byStatus: [
-          { $group: { _id: '$status', count: { $sum: 1 } } }
-        ],
-        thisMonth: [
-          { $match: { createdAt: { $gte: startOfMonth } } },
-          { $count: 'count' }
-        ],
+        byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+        thisMonth: [{ $match: { createdAt: { $gte: startOfMonth } } }, { $count: 'count' }],
         paidThisMonth: [
           {
             $match: {

@@ -56,15 +56,11 @@ export {
 // Subscription and billing
 export {
   getAllPurchases,
-  getSubscriptionPlans,
+  getCatalog,
   getSubscription,
   updateSubscription,
   addPurchase,
   updatePurchase,
   markPurchaseAsPaid,
-  cancelPurchase,
-  assignPackage,
-  addService,
-  removeService,
-  createPurchaseWithPaymentLink
+  cancelPurchase
 } from './partnerBilling.service.js'

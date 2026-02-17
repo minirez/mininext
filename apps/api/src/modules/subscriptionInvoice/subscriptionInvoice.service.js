@@ -5,7 +5,6 @@ import PlatformSettings from '#modules/platform-settings/platformSettings.model.
 import { asyncHandler } from '#helpers'
 import { parsePagination } from '#services/queryBuilder.js'
 import { NotFoundError, ValidationError } from '#core/errors.js'
-import { SUBSCRIPTION_PLANS } from '#constants/subscriptionPlans.js'
 import PDFDocument from 'pdfkit'
 
 // Fatura Listesi
@@ -50,23 +49,33 @@ export const getInvoice = asyncHandler(async (req, res) => {
   res.json({ success: true, data: invoice })
 })
 
-// Fatura Oluştur (purchase eklendiğinde çağrılır) - internal function
+// Create invoice (called when a purchase is marked paid) – internal function
+// Idempotent: skips if an invoice already exists for this purchase
 export const createInvoice = async (partnerId, purchaseData, userId) => {
+  // Deduplicate – prevent double-invoice for same purchase
+  if (purchaseData._id) {
+    const existing = await SubscriptionInvoice.findOne({ purchase: purchaseData._id })
+    if (existing) return existing
+  }
+
   const partner = await Partner.findById(partnerId)
   if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
 
   const platformSettings = await PlatformSettings.getSettings()
-  const plan = SUBSCRIPTION_PLANS[purchaseData.plan] || SUBSCRIPTION_PLANS.business
+
+  // Build description from label snapshot
+  const lang = 'tr'
+  const itemLabel = purchaseData.label?.[lang] || purchaseData.label?.en || 'Subscription'
+  const periodLabel = purchaseData.billingPeriod === 'monthly' ? 'Aylık' : 'Yıllık'
+  const description = `${itemLabel} - ${periodLabel} Abonelik`
 
   const invoiceNumber = await SubscriptionInvoice.getNextInvoiceNumber()
 
-  // Vergi hesaplama
   const taxRate = platformSettings?.billing?.defaultTaxRate || 0
   const subtotal = purchaseData.price?.amount || 0
   const taxAmount = taxRate > 0 ? (subtotal * taxRate) / 100 : 0
   const total = subtotal + taxAmount
 
-  // Abonelik dönemi (purchase'tan al)
   const startDate = purchaseData.period?.startDate || new Date()
   const endDate =
     purchaseData.period?.endDate || new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000)
@@ -77,7 +86,6 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
     purchase: purchaseData._id,
     invoiceDate: purchaseData.payment?.date || new Date(),
 
-    // Satıcı (Platform)
     seller: {
       companyName: platformSettings?.billing?.companyName || 'Platform',
       taxNumber: platformSettings?.billing?.taxNumber,
@@ -87,7 +95,6 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
       phone: platformSettings?.billing?.phone
     },
 
-    // Alıcı (Partner)
     buyer: {
       companyName: partner.companyName,
       tradeName: partner.tradeName,
@@ -98,10 +105,9 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
       phone: partner.phone
     },
 
-    // Kalemler
     lineItems: [
       {
-        description: `${plan.name} Paket - Yıllık Abonelik`,
+        description,
         quantity: 1,
         unitPrice: subtotal,
         taxRate,
@@ -114,7 +120,7 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
     taxRate,
     taxAmount,
     total,
-    currency: purchaseData.price?.currency || 'USD',
+    currency: 'EUR',
 
     paymentMethod: purchaseData.payment?.method,
     paymentReference: purchaseData.payment?.reference,
@@ -122,7 +128,7 @@ export const createInvoice = async (partnerId, purchaseData, userId) => {
     status: 'paid',
 
     subscriptionPeriod: {
-      plan: purchaseData.plan,
+      plan: purchaseData.type === 'package_subscription' ? 'package' : 'service',
       startDate,
       endDate
     },

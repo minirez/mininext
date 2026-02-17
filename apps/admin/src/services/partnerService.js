@@ -122,13 +122,13 @@ const provisionHotelToPms = async (hotelId, options = {}) => {
 }
 
 // Subscription Management
-const getSubscriptionPlans = async () => {
+const getSubscriptionCatalog = async () => {
   try {
-    const response = await apiClient.get('/partners/subscription-plans')
+    const response = await apiClient.get('/partners/subscription-catalog')
     return response.data
   } catch (error) {
     apiLogger.error(
-      'Partner Service: Get subscription plans failed',
+      'Partner Service: Get subscription catalog failed',
       error.response?.data || error.message
     )
     throw error
@@ -472,7 +472,7 @@ export default {
   deleteDocument,
   getHotelPmsStatus,
   provisionHotelToPms,
-  getSubscriptionPlans,
+  getSubscriptionCatalog,
   getSubscription,
   updateSubscription,
   addPurchase,

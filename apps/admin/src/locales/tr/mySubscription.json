@@ -22,6 +22,7 @@
       "included": "Dahil"
     },
     "status": {
+      "trial": "Deneme",
       "active": "Aktif",
       "expired": "Süresi Doldu",
       "grace_period": "Ek Süre",
@@ -87,6 +88,20 @@
     "securePaymentInfo": "Ödemeniz 3D Secure ile korunmaktadır.",
     "installment": "Taksit Seçenekleri",
     "singlePayment": "Tek Çekim",
-    "installments": "Taksit"
+    "installments": "Taksit",
+    "subscription": "Abonelik",
+    "trialPeriod": "Deneme Süresi",
+    "trialActive": "Deneme süreniz devam ediyor",
+    "trialRemainingDays": "Deneme sürenizin bitmesine {days} gün kaldı",
+    "noActivePlan": "Aktif Plan Yok",
+    "purchase": "Satın Al",
+    "hotelsUsed": "Kullanılan Otel",
+    "maxSites": "Maksimum Site",
+    "selectedItem": "Seçilen",
+    "payWithCard": "Kartla Öde",
+    "cardDetails": "Kart Bilgileri",
+    "pay": "Öde",
+    "paymentSuccessDescription": "Aboneliğiniz başarıyla aktifleştirildi.",
+    "gracePeriodDays": "Ek sürenizin bitmesine {days} gün kaldı"
   }
 }

@@ -105,15 +105,8 @@
 
           <template #cell-subscription="{ row }">
             <div class="flex flex-col gap-1">
-              <span
-                class="badge"
-                :class="{
-                  'badge-info': row.subscription?.plan === 'business',
-                  'badge-primary': row.subscription?.plan === 'professional',
-                  'badge-success': row.subscription?.plan === 'enterprise'
-                }"
-              >
-                {{ $t(`partners.subscription.plans.${row.subscription?.plan || 'business'}`) }}
+              <span class="badge badge-primary">
+                {{ row.subscriptionStatus?.statusLabel || '-' }}
               </span>
               <span
                 v-if="getSubscriptionStatusForRow(row) === 'grace_period'"
@@ -691,7 +684,141 @@
       @updated="fetchPartners"
     />
 
-    <!-- Legacy modals removed - functionality moved to PartnerSubscriptionModal drawer -->
+    <!-- Edit Purchase Modal -->
+    <Modal
+      v-model="showEditPurchaseModal"
+      :title="$t('partners.subscription.editPurchase')"
+      size="lg"
+    >
+      <div class="space-y-4">
+        <!-- Period -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">{{ $t('partners.subscription.startDate') }}</label>
+            <input v-model="editPurchaseForm.startDate" type="date" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label">{{ $t('partners.subscription.endDate') }}</label>
+            <input v-model="editPurchaseForm.endDate" type="date" class="form-input" />
+          </div>
+        </div>
+
+        <!-- Price (EUR only) -->
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.amount') }} (EUR)</label>
+          <div class="relative">
+            <span
+              class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm font-medium"
+              >€</span
+            >
+            <input
+              v-model.number="editPurchaseForm.amount"
+              type="number"
+              step="0.01"
+              class="form-input pl-8"
+            />
+          </div>
+        </div>
+
+        <!-- Payment Info (optional) -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">{{ $t('partners.subscription.method') }}</label>
+            <select v-model="editPurchaseForm.paymentMethod" class="form-input">
+              <option value="bank_transfer">
+                {{ $t('partners.subscription.methods.bankTransfer') }}
+              </option>
+              <option value="credit_card">
+                {{ $t('partners.subscription.methods.creditCard') }}
+              </option>
+              <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
+              <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">{{ $t('partners.subscription.reference') }}</label>
+            <input v-model="editPurchaseForm.paymentReference" type="text" class="form-input" />
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.paymentNotes') }}</label>
+          <input v-model="editPurchaseForm.paymentNotes" type="text" class="form-input" />
+        </div>
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" @click="showEditPurchaseModal = false">
+          {{ $t('common.cancel') }}
+        </button>
+        <button class="btn-primary" :disabled="updatingPurchase" @click="handleUpdatePurchase">
+          <span v-if="updatingPurchase">{{ $t('common.loading') }}</span>
+          <span v-else>{{ $t('common.save') }}</span>
+        </button>
+      </template>
+    </Modal>
+
+    <!-- Mark as Paid Modal -->
+    <Modal v-model="showMarkPaidModal" :title="$t('partners.subscription.markAsPaid')" size="md">
+      <div class="space-y-4">
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+          <p class="text-sm text-amber-800 dark:text-amber-200">
+            {{ $t('partners.subscription.markAsPaidInfo') }}
+          </p>
+          <div class="mt-2 font-medium text-amber-900 dark:text-amber-100">
+            {{ markPaidForm.label || '-' }} – €{{ (markPaidForm.amount || 0).toFixed(2) }}
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.paymentDate') }} *</label>
+          <input v-model="markPaidForm.paymentDate" type="date" class="form-input" required />
+        </div>
+
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.method') }}</label>
+          <select v-model="markPaidForm.paymentMethod" class="form-input">
+            <option value="bank_transfer">
+              {{ $t('partners.subscription.methods.bankTransfer') }}
+            </option>
+            <option value="credit_card">
+              {{ $t('partners.subscription.methods.creditCard') }}
+            </option>
+            <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
+            <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.reference') }}</label>
+          <input
+            v-model="markPaidForm.paymentReference"
+            type="text"
+            class="form-input"
+            :placeholder="$t('partners.subscription.referencePlaceholder')"
+          />
+        </div>
+
+        <div>
+          <label class="form-label">{{ $t('partners.subscription.paymentNotes') }}</label>
+          <input v-model="markPaidForm.paymentNotes" type="text" class="form-input" />
+        </div>
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" @click="showMarkPaidModal = false">
+          {{ $t('common.cancel') }}
+        </button>
+        <button
+          class="btn-success"
+          :disabled="markingPaid || !markPaidForm.paymentDate"
+          @click="handleMarkAsPaid"
+        >
+          <span v-if="markingPaid">{{ $t('common.loading') }}</span>
+          <span v-else>{{ $t('partners.subscription.confirmPayment') }}</span>
+        </button>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -717,13 +844,34 @@ const subscription = usePartnerSubscription()
 
 // Re-export subscription properties for template access
 const {
+  showSubscriptionModal,
+  showEditPurchaseModal,
+  showMarkPaidModal,
+  subscriptionCatalog,
+  subscriptionStatus,
+  useCustomPmsLimit,
+  activeSubscriptionTab,
+  subscriptionTabs,
+  subscriptionForm,
+  purchaseForm,
+  editPurchaseForm,
+  markPaidForm,
+  savingSubscription,
+  addingPurchase,
+  updatingPurchase,
+  markingPaid,
   subscriptionStatusMap,
   getRemainingDays,
   getGracePeriodDays,
   isPmsEnabledForRow,
   getProvisionedHotels,
   getPmsLimit,
-  getSubscriptionStatusForRow
+  getSubscriptionStatusForRow,
+  openEditPurchaseModal,
+  openMarkPaidModal,
+  getInvoiceForPurchase,
+  downloadInvoice,
+  onCatalogItemChange
 } = subscription
 
 // Navigation items
@@ -754,6 +902,18 @@ const navItems = computed(() => [
     to: '/partners/subscriptions',
     icon: 'card_membership',
     label: t('partners.subscriptionManagement')
+  },
+  {
+    name: 'services',
+    to: '/partners/services',
+    icon: 'miscellaneous_services',
+    label: t('subscriptionServices.title')
+  },
+  {
+    name: 'packages',
+    to: '/partners/packages',
+    icon: 'inventory_2',
+    label: t('subscriptionPackages.title')
   }
 ])
 
@@ -790,7 +950,7 @@ const isEditing = ref(false)
 const selectedPartner = ref(null)
 
 // Helper functions for formatting
-const formatCurrency = (amount, currency = 'USD') => {
+const formatCurrency = (amount, currency = 'EUR') => {
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
     currency

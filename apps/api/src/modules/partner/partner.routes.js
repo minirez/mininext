@@ -79,7 +79,7 @@ router.get('/', partnerService.getPartners)
 
 // Static routes (must be before /:id to avoid conflicts)
 router.get('/sms-providers', partnerService.getSMSProviders)
-router.get('/subscription-plans', partnerService.getSubscriptionPlans)
+router.get('/subscription-catalog', partnerService.getCatalog)
 router.get('/subscriptions/purchases', partnerService.getAllPurchases)
 
 router.get('/:id', partnerService.getPartner)
@@ -99,14 +99,6 @@ router.post('/:id/subscription/purchases', partnerService.addPurchase)
 router.put('/:id/subscription/purchases/:purchaseId', partnerService.updatePurchase)
 router.post('/:id/subscription/purchases/:purchaseId/cancel', partnerService.cancelPurchase)
 router.post('/:id/subscription/purchases/:purchaseId/mark-paid', partnerService.markPurchaseAsPaid)
-
-// Purchase + PaymentLink combo
-router.post('/:id/subscription/purchase-with-link', partnerService.createPurchaseWithPaymentLink)
-
-// Membership Package/Service Assignment
-router.post('/:id/subscription/assign-package', partnerService.assignPackage)
-router.post('/:id/subscription/add-service', partnerService.addService)
-router.delete('/:id/subscription/services/:serviceId', partnerService.removeService)
 
 // Document upload
 router.post('/:id/upload', upload.single('document'), partnerService.uploadDocument)

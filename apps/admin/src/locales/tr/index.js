@@ -21,10 +21,8 @@ import notifications from './notifications.json'
 import mySubscription from './mySubscription.json'
 import paymentLink from './paymentLink.json'
 import mailbox from './mailbox.json'
+import subscriptions from './subscriptions.json'
 import pms from './pms.json'
-import migration from './migration.json'
-import membership from './membership.json'
-import tursab from './tursab.json'
 
 // Deep merge: adds PMS keys without overwriting existing booking-engine values
 function deepMerge(target, source) {
@@ -70,9 +68,7 @@ const base = {
   ...mySubscription,
   ...paymentLink,
   ...mailbox,
-  ...migration,
-  ...membership,
-  ...tursab
+  ...subscriptions
 }
 
 export default deepMerge(base, pms)

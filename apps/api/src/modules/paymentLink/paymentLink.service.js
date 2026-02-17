@@ -43,10 +43,7 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
     } else {
       // No partner selected: show ONLY platform-level links (partner is null or doesn't exist)
       conditions.push({
-        $or: [
-          { partner: null },
-          { partner: { $exists: false } }
-        ]
+        $or: [{ partner: null }, { partner: { $exists: false } }]
       })
     }
   }
@@ -147,7 +144,10 @@ export const getPaymentLink = asyncHandler(async (req, res) => {
   // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
     // Partner user: must match their partner
-    if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.user.accountId.toString()) {
+    if (
+      !paymentLink.partner ||
+      paymentLink.partner._id.toString() !== req.user.accountId.toString()
+    ) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
   } else {
@@ -228,7 +228,8 @@ export const createPaymentLink = asyncHandler(async (req, res) => {
   if (!amount || isNaN(amount) || amount <= 0) {
     throw new BadRequestError('INVALID_AMOUNT')
   }
-  if (amount > 1000000) { // Max 1 million - reasonable limit
+  if (amount > 1000000) {
+    // Max 1 million - reasonable limit
     throw new BadRequestError('AMOUNT_TOO_LARGE')
   }
 
@@ -509,8 +510,10 @@ export const cancelPaymentLink = asyncHandler(async (req, res) => {
  * Resend notification for payment link
  */
 export const resendNotification = asyncHandler(async (req, res) => {
-  const paymentLink = await PaymentLink.findById(req.params.id)
-    .populate('partner', 'companyName branding')
+  const paymentLink = await PaymentLink.findById(req.params.id).populate(
+    'partner',
+    'companyName branding'
+  )
 
   if (!paymentLink) {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
@@ -518,7 +521,10 @@ export const resendNotification = asyncHandler(async (req, res) => {
 
   // Check ownership - STRICT SEPARATION
   if (req.user.accountType === 'partner') {
-    if (!paymentLink.partner || paymentLink.partner._id.toString() !== req.user.accountId.toString()) {
+    if (
+      !paymentLink.partner ||
+      paymentLink.partner._id.toString() !== req.user.accountId.toString()
+    ) {
       throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
     }
   } else {
@@ -613,9 +619,10 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
       success: true,
       data: {
         status: paymentLink.status,
-        message: paymentLink.status === 'expired'
-          ? 'Bu ödeme linkinin süresi dolmuş.'
-          : 'Bu ödeme linki iptal edilmiş.'
+        message:
+          paymentLink.status === 'expired'
+            ? 'Bu ödeme linkinin süresi dolmuş.'
+            : 'Bu ödeme linki iptal edilmiş.'
       }
     })
   }
@@ -655,10 +662,12 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
       expiresAt: paymentLink.expiresAt,
       daysUntilExpiry: paymentLink.daysUntilExpiry,
       status: paymentLink.status,
-      partner: paymentLink.partner ? {
-        companyName: paymentLink.partner.companyName,
-        branding: paymentLink.partner.branding
-      } : null
+      partner: paymentLink.partner
+        ? {
+            companyName: paymentLink.partner.companyName,
+            branding: paymentLink.partner.branding
+          }
+        : null
     }
   })
 })
@@ -729,7 +738,9 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
   } else {
     // API key not configured - log warning for security awareness
     if (!apiKey) {
-      logger.warn('[completePaymentLink] No API key provided - consider configuring PAYMENT_WEBHOOK_KEY')
+      logger.warn(
+        '[completePaymentLink] No API key provided - consider configuring PAYMENT_WEBHOOK_KEY'
+      )
     }
   }
 
@@ -739,7 +750,10 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing transactionId' })
   }
 
-  logger.info('completePaymentLink called:', { token, transactionId: transactionData.transactionId })
+  logger.info('completePaymentLink called:', {
+    token,
+    transactionId: transactionData.transactionId
+  })
 
   const paymentLink = await PaymentLink.findByToken(token)
 
@@ -847,6 +861,54 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     }
   }
 
+  // ── Subscription purchase completion ──
+  if (
+    ['subscription_package', 'subscription_service'].includes(paymentLink.purpose) &&
+    paymentLink.subscriptionContext?.targetPartner
+  ) {
+    try {
+      const targetPartner = await Partner.findById(paymentLink.subscriptionContext.targetPartner)
+      if (targetPartner) {
+        const purchase = targetPartner.subscription?.purchases?.find(
+          p => p._id.toString() === paymentLink.subscriptionContext.purchaseId?.toString()
+        )
+
+        if (purchase && purchase.status === 'pending') {
+          purchase.status = 'active'
+          purchase.payment = {
+            ...(purchase.payment || {}),
+            date: new Date(),
+            method: 'payment_link',
+            reference: transactionData.transactionId,
+            transactionId: transactionData.transactionId
+          }
+          targetPartner.subscription.status = 'active'
+
+          await targetPartner.save()
+
+          // Create invoice (idempotent)
+          try {
+            const { createInvoice } =
+              await import('#modules/subscriptionInvoice/subscriptionInvoice.service.js')
+            const invoice = await createInvoice(targetPartner._id, purchase, null)
+            if (invoice && !purchase.invoice) {
+              purchase.invoice = invoice._id
+              await targetPartner.save()
+            }
+          } catch (invErr) {
+            logger.error('Failed to create subscription invoice from payment link:', invErr.message)
+          }
+
+          logger.info(
+            `Subscription purchase ${purchase._id} activated via payment link ${paymentLink.linkNumber}`
+          )
+        }
+      }
+    } catch (subErr) {
+      logger.error('Failed to complete subscription via payment link:', subErr.message)
+    }
+  }
+
   // If linked to an existing Payment record, update it ATOMICALLY
   if (paymentLink.linkedPayment) {
     try {
@@ -905,7 +967,9 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
           const { updateBookingPayment } = await import('../booking/payment.service.js')
           await updateBookingPayment(payment.booking)
         }
-        logger.info(`Linked Payment ${payment._id} completed via payment link ${paymentLink.linkNumber}`)
+        logger.info(
+          `Linked Payment ${payment._id} completed via payment link ${paymentLink.linkNumber}`
+        )
       } else {
         // Payment was already processed by another webhook
         logger.info(`Linked Payment ${paymentLink.linkedPayment} already processed, skipping`)
@@ -920,3 +984,41 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     message: 'Payment recorded successfully'
   })
 })
+
+// ===== Subscription payment-link creation (internal helper) =====
+
+/**
+ * Create a payment link for a subscription purchase (package or service).
+ * Called by my.service or admin billing when partner chooses payment-link flow.
+ */
+export const createSubscriptionPaymentLink = async ({ partner, purchase, createdBy }) => {
+  const purpose =
+    purchase.type === 'package_subscription' ? 'subscription_package' : 'subscription_service'
+  const lang = 'tr'
+  const description = purchase.label?.[lang] || purchase.label?.en || 'Subscription'
+
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+
+  const link = await PaymentLink.create({
+    partner: null, // platform-level – subscription payments are platform receipts
+    purpose,
+    customer: {
+      name: partner.companyName,
+      email: partner.email,
+      phone: partner.phone
+    },
+    description: `Abonelik: ${description}`,
+    amount: purchase.price.amount,
+    currency: 'EUR',
+    expiresAt,
+    subscriptionContext: {
+      targetPartner: partner._id,
+      purchaseId: purchase._id,
+      package: purchase.package || undefined,
+      service: purchase.service || undefined
+    },
+    createdBy
+  })
+
+  return link
+}

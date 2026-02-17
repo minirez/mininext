@@ -1,0 +1,61 @@
+{
+  "subscriptionServices": {
+    "title": "Subscription Services",
+    "description": "Manage services offered to partners. Services can be included in packages or purchased individually.",
+    "create": "Create Service",
+    "edit": "Edit Service",
+    "name": "Service Name",
+    "namePlaceholder": "E.g. PMS Access",
+    "descriptionLabel": "Description",
+    "slug": "Slug",
+    "slugPlaceholder": "e.g. pms-access",
+    "slugHelp": "Only lowercase letters, numbers, and hyphens are allowed",
+    "price": "Price",
+    "billingPeriod": "Billing Period",
+    "entitlements": "Entitlements",
+    "maxHotels": "Max hotels",
+    "maxSites": "Max sites",
+    "customDomain": "Custom Domain",
+    "sortOrder": "Sort Order",
+    "noServices": "No services created yet",
+    "created": "Service created successfully",
+    "updated": "Service updated successfully",
+    "deleted": "Service deleted successfully",
+    "confirmDelete": "Are you sure you want to delete \"{name}\"?",
+    "periods": {
+      "yearly": "Yearly",
+      "monthly": "Monthly",
+      "one_time": "One-time"
+    }
+  },
+  "subscriptionPackages": {
+    "title": "Subscription Packages",
+    "description": "Bundle services into packages offered as subscriptions to partners.",
+    "create": "Create Package",
+    "edit": "Edit Package",
+    "name": "Package Name",
+    "namePlaceholder": "E.g. Professional Package",
+    "descriptionLabel": "Description",
+    "slug": "Slug",
+    "billingPeriod": "Billing Period",
+    "selectServices": "Included Services",
+    "includedServices": "Included Services",
+    "noServicesYet": "No services added yet",
+    "noServicesAvailable": "No services available",
+    "calculatedTotal": "Calculated Total",
+    "overridePrice": "Set manual price",
+    "priceOverridden": "Manual price (calculated: €{calculated})",
+    "trialDays": "{days} day trial",
+    "trialDaysLabel": "Trial Period (Days)",
+    "sortOrder": "Sort Order",
+    "noPackages": "No packages created yet",
+    "created": "Package created successfully",
+    "updated": "Package updated successfully",
+    "deleted": "Package deleted successfully",
+    "confirmDelete": "Are you sure you want to delete \"{name}\"?",
+    "periods": {
+      "yearly": "Yearly",
+      "monthly": "Monthly"
+    }
+  }
+}

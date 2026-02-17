@@ -68,11 +68,11 @@
             <div
               class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"
             >
-              <span class="material-icons text-blue-500">attach_money</span>
+              <span class="material-icons text-blue-500">euro</span>
             </div>
             <div>
               <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                ${{ stats.totalPending.toFixed(2) }}
+                €{{ stats.totalPending.toFixed(2) }}
               </div>
               <div class="text-sm text-gray-500 dark:text-slate-400">
                 {{ $t('partnerSubscriptions.pendingAmount') }}
@@ -87,7 +87,6 @@
         class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-6"
       >
         <div class="flex flex-wrap items-center gap-4">
-          <!-- Search -->
           <div class="flex-1 min-w-[200px]">
             <input
               v-model="filters.search"
@@ -96,7 +95,6 @@
               :placeholder="$t('partnerSubscriptions.searchPlaceholder')"
             />
           </div>
-          <!-- Status Filter -->
           <select v-model="filters.status" class="form-input w-40">
             <option value="">{{ $t('partnerSubscriptions.allStatuses') }}</option>
             <option value="pending">{{ $t('partnerSubscriptions.status.pending') }}</option>
@@ -104,13 +102,10 @@
             <option value="expired">{{ $t('partnerSubscriptions.status.expired') }}</option>
             <option value="cancelled">{{ $t('partnerSubscriptions.status.cancelled') }}</option>
           </select>
-          <!-- Plan Filter -->
-          <select v-model="filters.plan" class="form-input w-40">
-            <option value="">{{ $t('partnerSubscriptions.allPlans') }}</option>
-            <option value="webdesign">Web Design</option>
-            <option value="business">Business</option>
-            <option value="professional">Professional</option>
-            <option value="enterprise">Enterprise</option>
+          <select v-model="filters.type" class="form-input w-48">
+            <option value="">{{ $t('partnerSubscriptions.allTypes') || 'All Types' }}</option>
+            <option value="package_subscription">{{ $t('subscriptionPackages.title') }}</option>
+            <option value="service_purchase">{{ $t('subscriptionServices.title') }}</option>
           </select>
         </div>
       </div>
@@ -178,9 +173,7 @@
               v-for="item in filteredPurchases"
               :key="item.purchase._id"
               class="hover:bg-gray-50 dark:hover:bg-slate-700/30"
-              :class="{
-                'bg-amber-50 dark:bg-amber-900/10': item.purchase.status === 'pending'
-              }"
+              :class="{ 'bg-amber-50 dark:bg-amber-900/10': item.purchase.status === 'pending' }"
             >
               <td class="px-4 py-3">
                 <div class="font-medium text-gray-900 dark:text-white">
@@ -193,15 +186,19 @@
               <td class="px-4 py-3">
                 <span
                   class="badge"
-                  :class="{
-                    'badge-secondary': item.purchase.plan === 'webdesign',
-                    'badge-info': item.purchase.plan === 'business',
-                    'badge-primary': item.purchase.plan === 'professional',
-                    'badge-success': item.purchase.plan === 'enterprise'
-                  }"
+                  :class="
+                    item.purchase.type === 'package_subscription' ? 'badge-primary' : 'badge-info'
+                  "
                 >
-                  {{ item.purchase.planName }}
+                  {{ item.purchase.label?.tr || item.purchase.label?.en || '-' }}
                 </span>
+                <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  {{
+                    item.purchase.type === 'package_subscription'
+                      ? $t('subscriptionPackages.title')
+                      : $t('subscriptionServices.title')
+                  }}
+                </div>
               </td>
               <td class="px-4 py-3">
                 <div class="text-sm text-gray-900 dark:text-white">
@@ -213,7 +210,7 @@
               </td>
               <td class="px-4 py-3">
                 <div class="font-medium text-gray-900 dark:text-white">
-                  {{ formatCurrency(item.purchase.price?.amount, item.purchase.price?.currency) }}
+                  €{{ (item.purchase.price?.amount || 0).toFixed(2) }}
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -243,36 +240,32 @@
               </td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-end gap-1">
-                  <!-- Mark as Paid -->
                   <button
                     v-if="item.purchase.status === 'pending'"
-                    class="p-2 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                    class="p-2 text-green-600 hover:text-green-700 dark:text-green-400"
                     :title="$t('partnerSubscriptions.markAsPaid')"
                     @click="openMarkPaidModal(item)"
                   >
                     <span class="material-icons text-xl">check_circle</span>
                   </button>
-                  <!-- Edit -->
                   <button
                     v-if="['pending', 'active'].includes(item.purchase.status)"
-                    class="p-2 text-gray-600 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"
+                    class="p-2 text-gray-600 hover:text-gray-700 dark:text-slate-400"
                     :title="$t('partnerSubscriptions.edit')"
                     @click="openEditModal(item)"
                   >
                     <span class="material-icons text-xl">edit</span>
                   </button>
-                  <!-- Cancel -->
                   <button
                     v-if="['pending', 'active'].includes(item.purchase.status)"
-                    class="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    class="p-2 text-red-600 hover:text-red-700 dark:text-red-400"
                     :title="$t('partnerSubscriptions.cancel')"
                     @click="confirmCancel(item)"
                   >
                     <span class="material-icons text-xl">cancel</span>
                   </button>
-                  <!-- View Partner -->
                   <button
-                    class="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    class="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     :title="$t('partnerSubscriptions.viewPartner')"
                     @click="goToPartner(item.partner._id)"
                   >
@@ -293,16 +286,11 @@
               {{ selectedItem.partner.companyName }}
             </div>
             <div class="text-sm text-gray-500 dark:text-slate-400">
-              {{ selectedItem.purchase.planName }} -
-              {{
-                formatCurrency(
-                  selectedItem.purchase.price?.amount,
-                  selectedItem.purchase.price?.currency
-                )
+              {{ selectedItem.purchase.label?.tr || selectedItem.purchase.label?.en }} – €{{
+                (selectedItem.purchase.price?.amount || 0).toFixed(2)
               }}
             </div>
           </div>
-
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="form-label">{{ $t('partnerSubscriptions.paymentDate') }} *</label>
@@ -317,6 +305,7 @@
                 <option value="credit_card">
                   {{ $t('partners.subscription.methods.creditCard') }}
                 </option>
+                <option value="payment_link">Payment Link</option>
                 <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
                 <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
               </select>
@@ -324,16 +313,7 @@
           </div>
           <div>
             <label class="form-label">{{ $t('partnerSubscriptions.reference') }}</label>
-            <input
-              v-model="markPaidForm.paymentReference"
-              type="text"
-              class="form-input"
-              :placeholder="$t('partners.subscription.referencePlaceholder')"
-            />
-          </div>
-          <div>
-            <label class="form-label">{{ $t('partnerSubscriptions.notes') }}</label>
-            <input v-model="markPaidForm.paymentNotes" type="text" class="form-input" />
+            <input v-model="markPaidForm.paymentReference" type="text" class="form-input" />
           </div>
         </div>
         <template #footer>
@@ -358,18 +338,10 @@
             <div class="font-medium text-gray-900 dark:text-white">
               {{ selectedItem.partner.companyName }}
             </div>
+            <div class="text-sm text-gray-500 dark:text-slate-400">
+              {{ selectedItem.purchase.label?.tr || selectedItem.purchase.label?.en }}
+            </div>
           </div>
-
-          <div>
-            <label class="form-label">{{ $t('partnerSubscriptions.plan') }}</label>
-            <select v-model="editForm.plan" class="form-input">
-              <option value="webdesign">Web Design - $29/{{ $t('common.year') }}</option>
-              <option value="business">Business - $118.9/{{ $t('common.year') }}</option>
-              <option value="professional">Professional - $178.8/{{ $t('common.year') }}</option>
-              <option value="enterprise">Enterprise - $298.8/{{ $t('common.year') }}</option>
-            </select>
-          </div>
-
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="form-label">{{ $t('partnerSubscriptions.startDate') }}</label>
@@ -380,24 +352,19 @@
               <input v-model="editForm.endDate" type="date" class="form-input" />
             </div>
           </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.amount') }}</label>
+          <div>
+            <label class="form-label">{{ $t('partnerSubscriptions.amount') }} (EUR)</label>
+            <div class="relative">
+              <span
+                class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm font-medium"
+                >€</span
+              >
               <input
                 v-model.number="editForm.amount"
                 type="number"
                 step="0.01"
-                class="form-input"
+                class="form-input pl-8"
               />
-            </div>
-            <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.currency') }}</label>
-              <select v-model="editForm.currency" class="form-input">
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="TRY">TRY</option>
-              </select>
             </div>
           </div>
         </div>
@@ -411,6 +378,17 @@
           </button>
         </template>
       </Modal>
+
+      <!-- Cancel Confirmation Dialog -->
+      <ConfirmDialog
+        v-model="showCancelDialog"
+        type="danger"
+        :title="$t('partnerSubscriptions.cancel')"
+        :message="$t('partnerSubscriptions.cancelConfirm')"
+        :confirm-text="$t('partnerSubscriptions.cancel')"
+        :cancel-text="$t('common.cancel')"
+        @confirm="handleCancelPurchase"
+      />
     </div>
   </div>
 </template>
@@ -421,6 +399,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
+import ConfirmDialog from '@/components/ui/feedback/ConfirmDialog.vue'
 import partnerService from '@/services/partnerService'
 import { useToast } from '@/composables/useToast'
 
@@ -428,42 +407,34 @@ const router = useRouter()
 const { t } = useI18n()
 const toast = useToast()
 
-// Navigation items
 const navItems = computed(() => [
   { name: 'partners', to: '/partners', icon: 'business', label: t('partners.title'), exact: true },
-  {
-    name: 'services',
-    to: '/partners/services',
-    icon: 'layers',
-    label: t('membership.nav.services')
-  },
-  {
-    name: 'packages',
-    to: '/partners/packages',
-    icon: 'inventory_2',
-    label: t('membership.nav.packages')
-  },
   {
     name: 'subscriptions',
     to: '/partners/subscriptions',
     icon: 'card_membership',
     label: t('partners.subscriptionManagement')
+  },
+  {
+    name: 'services',
+    to: '/partners/services',
+    icon: 'miscellaneous_services',
+    label: t('subscriptionServices.title')
+  },
+  {
+    name: 'packages',
+    to: '/partners/packages',
+    icon: 'inventory_2',
+    label: t('subscriptionPackages.title')
   }
 ])
 
-// State
 const loading = ref(true)
 const processing = ref(false)
 const allPurchases = ref([])
 
-// Filters
-const filters = ref({
-  search: '',
-  status: '',
-  plan: ''
-})
+const filters = ref({ search: '', status: '', type: '' })
 
-// Modals
 const showMarkPaidModal = ref(false)
 const showEditModal = ref(false)
 const selectedItem = ref(null)
@@ -475,15 +446,8 @@ const markPaidForm = ref({
   paymentNotes: ''
 })
 
-const editForm = ref({
-  plan: '',
-  startDate: '',
-  endDate: '',
-  amount: null,
-  currency: 'USD'
-})
+const editForm = ref({ startDate: '', endDate: '', amount: null })
 
-// Computed
 const stats = computed(() => {
   const pending = allPurchases.value.filter(p => p.purchase.status === 'pending')
   return {
@@ -496,33 +460,26 @@ const stats = computed(() => {
 
 const filteredPurchases = computed(() => {
   return allPurchases.value.filter(item => {
-    // Search filter
     if (filters.value.search) {
-      const search = filters.value.search.toLowerCase()
-      const matchesCompany = item.partner.companyName?.toLowerCase().includes(search)
-      const matchesEmail = item.partner.email?.toLowerCase().includes(search)
-      if (!matchesCompany && !matchesEmail) return false
+      const s = filters.value.search.toLowerCase()
+      if (
+        !item.partner.companyName?.toLowerCase().includes(s) &&
+        !item.partner.email?.toLowerCase().includes(s)
+      )
+        return false
     }
-    // Status filter
-    if (filters.value.status && item.purchase.status !== filters.value.status) {
-      return false
-    }
-    // Plan filter
-    if (filters.value.plan && item.purchase.plan !== filters.value.plan) {
-      return false
-    }
+    if (filters.value.status && item.purchase.status !== filters.value.status) return false
+    if (filters.value.type && item.purchase.type !== filters.value.type) return false
     return true
   })
 })
 
-// Methods
 const fetchAllPurchases = async () => {
   loading.value = true
   try {
     const response = await partnerService.getAllPurchases()
     allPurchases.value = response.data || []
-  } catch (error) {
-    console.error('Failed to fetch purchases:', error)
+  } catch {
     toast.error(t('partnerSubscriptions.loadError'))
   } finally {
     loading.value = false
@@ -532,14 +489,6 @@ const fetchAllPurchases = async () => {
 const formatDate = date => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('tr-TR')
-}
-
-const formatCurrency = (amount, currency = 'USD') => {
-  if (amount == null) return '-'
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency
-  }).format(amount)
 }
 
 const openMarkPaidModal = item => {
@@ -555,23 +504,17 @@ const openMarkPaidModal = item => {
 
 const openEditModal = item => {
   selectedItem.value = item
-  const formatDateForInput = date => {
-    if (!date) return ''
-    return new Date(date).toISOString().split('T')[0]
-  }
+  const fmt = d => (d ? new Date(d).toISOString().split('T')[0] : '')
   editForm.value = {
-    plan: item.purchase.plan,
-    startDate: formatDateForInput(item.purchase.period?.startDate),
-    endDate: formatDateForInput(item.purchase.period?.endDate),
-    amount: item.purchase.price?.amount,
-    currency: item.purchase.price?.currency || 'USD'
+    startDate: fmt(item.purchase.period?.startDate),
+    endDate: fmt(item.purchase.period?.endDate),
+    amount: item.purchase.price?.amount
   }
   showEditModal.value = true
 }
 
 const handleMarkAsPaid = async () => {
   if (!selectedItem.value || !markPaidForm.value.paymentDate) return
-
   processing.value = true
   try {
     await partnerService.markPurchaseAsPaid(
@@ -582,8 +525,7 @@ const handleMarkAsPaid = async () => {
     toast.success(t('partnerSubscriptions.paymentConfirmed'))
     showMarkPaidModal.value = false
     await fetchAllPurchases()
-  } catch (error) {
-    console.error('Failed to mark as paid:', error)
+  } catch {
     toast.error(t('partnerSubscriptions.paymentError'))
   } finally {
     processing.value = false
@@ -592,7 +534,6 @@ const handleMarkAsPaid = async () => {
 
 const handleUpdate = async () => {
   if (!selectedItem.value) return
-
   processing.value = true
   try {
     await partnerService.updatePurchase(
@@ -603,28 +544,36 @@ const handleUpdate = async () => {
     toast.success(t('partnerSubscriptions.updateSuccess'))
     showEditModal.value = false
     await fetchAllPurchases()
-  } catch (error) {
-    console.error('Failed to update:', error)
+  } catch {
     toast.error(t('partnerSubscriptions.updateError'))
   } finally {
     processing.value = false
   }
 }
 
-const confirmCancel = async item => {
-  if (!confirm(t('partnerSubscriptions.cancelConfirm'))) return
+const showCancelDialog = ref(false)
+const cancellingItem = ref(null)
 
+const confirmCancel = item => {
+  cancellingItem.value = item
+  showCancelDialog.value = true
+}
+
+const handleCancelPurchase = async () => {
+  if (!cancellingItem.value) return
   try {
     await partnerService.cancelPurchase(
-      item.partner._id,
-      item.purchase._id,
+      cancellingItem.value.partner._id,
+      cancellingItem.value.purchase._id,
       'Admin tarafından iptal edildi'
     )
     toast.success(t('partnerSubscriptions.cancelSuccess'))
     await fetchAllPurchases()
-  } catch (error) {
-    console.error('Failed to cancel:', error)
+  } catch {
     toast.error(t('partnerSubscriptions.cancelError'))
+  } finally {
+    showCancelDialog.value = false
+    cancellingItem.value = null
   }
 }
 
@@ -632,7 +581,5 @@ const goToPartner = partnerId => {
   router.push({ name: 'partners', query: { id: partnerId, tab: 'subscription' } })
 }
 
-onMounted(() => {
-  fetchAllPurchases()
-})
+onMounted(fetchAllPurchases)
 </script>
