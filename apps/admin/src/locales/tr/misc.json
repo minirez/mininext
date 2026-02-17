@@ -27,7 +27,8 @@
     "mailbox": "Posta Kutusu",
     "payment": "Ödeme Sistemi",
     "tours": "Turlar & Aktiviteler",
-    "platformReservations": "Rezervasyonlar"
+    "platformReservations": "Rezervasyonlar",
+    "language": "Dil"
   },
   "platformBookings": {
     "title": "Platform Rezervasyonları",
@@ -546,6 +547,7 @@
     "pendingAmount": "Bekleyen Tutar",
     "searchPlaceholder": "Partner adı veya e-posta ile ara...",
     "allStatuses": "Tüm Durumlar",
+    "allTypes": "Tüm Türler",
     "allPlans": "Tüm Paketler",
     "noPurchases": "Henüz paket bulunmuyor",
     "partner": "Partner",

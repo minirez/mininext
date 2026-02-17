@@ -70,7 +70,11 @@ const base = {
   ...notifications,
   ...mySubscription,
   ...paymentLink,
-  ...mailbox
+  ...mailbox,
+  ...subscriptions,
+  ...migration,
+  ...membership,
+  ...tursab
 }
 
 export default deepMerge(base, pms)

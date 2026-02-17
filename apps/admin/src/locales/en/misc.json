@@ -27,7 +27,8 @@
     "mailbox": "Mailbox",
     "payment": "Payment System",
     "tours": "Tours & Activities",
-    "platformReservations": "Reservations"
+    "platformReservations": "Reservations",
+    "language": "Language"
   },
   "platformBookings": {
     "title": "Platform Reservations",
@@ -573,6 +574,7 @@
     "pendingAmount": "Pending Amount",
     "searchPlaceholder": "Search by partner name or email...",
     "allStatuses": "All Statuses",
+    "allTypes": "All Types",
     "allPlans": "All Plans",
     "noPurchases": "No packages found",
     "partner": "Partner",

@@ -41,7 +41,7 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
               >
-                {{ $t('common.status') }}
+                {{ $t('common.status.label') }}
               </th>
               <th
                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
@@ -110,124 +110,90 @@
     </div>
 
     <!-- Create / Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="fixed inset-0 bg-black/50" @click="closeModal"></div>
-        <div
-          class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-slate-800 shadow-2xl p-6"
-        >
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">
-              {{ editing ? $t('subscriptionServices.edit') : $t('subscriptionServices.create') }}
-            </h2>
-            <button
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-              @click="closeModal"
+    <Modal
+      v-model="showModal"
+      :title="editing ? $t('subscriptionServices.edit') : $t('subscriptionServices.create')"
+      size="lg"
+    >
+      <form :id="formId" @submit.prevent="handleSave" class="space-y-5">
+        <!-- Name (MultiLang) -->
+        <MultiLangInput
+          v-model="form.name"
+          :label="$t('subscriptionServices.name')"
+          :placeholder="$t('subscriptionServices.namePlaceholder')"
+          show-translate
+        />
+
+        <!-- Description (MultiLang) -->
+        <MultiLangInput
+          v-model="form.description"
+          :label="$t('subscriptionServices.descriptionLabel')"
+          type="textarea"
+          :rows="3"
+          show-translate
+        />
+
+        <!-- Price (EUR only) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            {{ $t('subscriptionServices.price') }} (EUR)
+          </label>
+          <div class="relative">
+            <span
+              class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-slate-400 text-sm font-medium pointer-events-none"
+              >€</span
             >
-              <span class="material-icons">close</span>
-            </button>
+            <input
+              v-model.number="form.price"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-input pl-8"
+              required
+            />
           </div>
-
-          <form @submit.prevent="handleSave" class="space-y-5">
-            <!-- Name (MultiLang) -->
-            <MultiLangInput
-              v-model="form.name"
-              :label="$t('subscriptionServices.name')"
-              :placeholder="$t('subscriptionServices.namePlaceholder')"
-              show-translate
-            />
-
-            <!-- Description (MultiLang) -->
-            <MultiLangInput
-              v-model="form.description"
-              :label="$t('subscriptionServices.descriptionLabel')"
-              type="textarea"
-              :rows="3"
-              show-translate
-            />
-
-            <!-- Price (EUR only) -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                >{{ $t('subscriptionServices.price') }} (EUR)</label
-              >
-              <div class="relative">
-                <span
-                  class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 dark:text-slate-400 text-sm font-medium"
-                  >€</span
-                >
-                <input
-                  v-model.number="form.price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 pl-8 pr-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <!-- Billing Period -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
-                $t('subscriptionServices.billingPeriod')
-              }}</label>
-              <select
-                v-model="form.billingPeriod"
-                class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-purple-500 focus:ring-purple-500"
-              >
-                <option value="yearly">{{ $t('subscriptionServices.periods.yearly') }}</option>
-                <option value="monthly">{{ $t('subscriptionServices.periods.monthly') }}</option>
-                <option value="one_time">{{ $t('subscriptionServices.periods.one_time') }}</option>
-              </select>
-            </div>
-
-            <!-- Sort Order -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
-                $t('subscriptionServices.sortOrder')
-              }}</label>
-              <input
-                v-model.number="form.sortOrder"
-                type="number"
-                min="0"
-                class="block w-24 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm"
-              />
-            </div>
-
-            <!-- Active toggle -->
-            <div v-if="editing" class="flex items-center gap-3">
-              <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
-                <input
-                  v-model="form.isActive"
-                  type="checkbox"
-                  class="rounded border-gray-300 dark:border-slate-500 text-purple-600 focus:ring-purple-500"
-                />
-                {{ $t('common.active') }}
-              </label>
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
-              <button
-                type="button"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-                @click="closeModal"
-              >
-                {{ $t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                :disabled="saving"
-                class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
-              >
-                {{ saving ? $t('common.saving') : $t('common.save') }}
-              </button>
-            </div>
-          </form>
         </div>
-      </div>
-    </Teleport>
+
+        <!-- Billing Period -->
+        <Dropdown
+          v-model="form.billingPeriod"
+          :label="$t('subscriptionServices.billingPeriod')"
+          :options="billingPeriodOptions"
+        />
+
+        <!-- Sort Order -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            {{ $t('subscriptionServices.sortOrder') }}
+          </label>
+          <input v-model.number="form.sortOrder" type="number" min="0" class="form-input w-28" />
+        </div>
+
+        <!-- Active toggle -->
+        <Toggle
+          v-if="editing"
+          v-model="form.isActive"
+          :label="$t('common.active')"
+          color="purple"
+          checked-icon="check"
+        />
+      </form>
+
+      <template #footer>
+        <button class="btn-secondary" @click="closeModal">
+          {{ $t('common.cancel') }}
+        </button>
+        <button
+          type="submit"
+          :form="formId"
+          :disabled="saving"
+          class="btn-primary bg-purple-600 hover:bg-purple-700"
+        >
+          <span v-if="saving" class="material-icons text-sm animate-spin mr-1.5">refresh</span>
+          {{ saving ? $t('common.saving') : $t('common.save') }}
+        </button>
+      </template>
+    </Modal>
 
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog
@@ -252,11 +218,15 @@ import { useI18n } from 'vue-i18n'
 import subscriptionServiceService from '@/services/subscriptionServiceService'
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
+import Modal from '@/components/common/Modal.vue'
+import Dropdown from '@/components/ui/form/Dropdown.vue'
+import Toggle from '@/components/ui/form/Toggle.vue'
 import ConfirmDialog from '@/components/ui/feedback/ConfirmDialog.vue'
 import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
 const toast = useToast()
+const formId = 'service-form'
 
 const navItems = computed(() => [
   { name: 'partners', to: '/partners', icon: 'business', label: t('partners.title'), exact: true },
@@ -278,6 +248,12 @@ const navItems = computed(() => [
     icon: 'inventory_2',
     label: t('subscriptionPackages.title')
   }
+])
+
+const billingPeriodOptions = computed(() => [
+  { value: 'yearly', label: t('subscriptionServices.periods.yearly') },
+  { value: 'monthly', label: t('subscriptionServices.periods.monthly') },
+  { value: 'one_time', label: t('subscriptionServices.periods.one_time') }
 ])
 
 const services = ref([])
