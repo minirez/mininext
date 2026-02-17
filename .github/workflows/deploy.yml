@@ -176,9 +176,8 @@ jobs:
             pnpm turbo run build --filter=booking-engine-admin
 
             # Build and restart Docker containers (API + Payment Service)
-            cd /var/www
-            docker compose build booking-api payment-service || { echo "Docker build failed"; exit 1; }
-            docker compose up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
+            docker compose -f /var/www/docker-compose.yml build booking-api payment-service || { echo "Docker build failed"; exit 1; }
+            docker compose -f /var/www/docker-compose.yml up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
 
             echo "Deploy completed at $(date)"
 
