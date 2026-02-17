@@ -1,4 +1,3 @@
-<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div class="space-y-3">
     <!-- Calculation Settings -->

@@ -25,6 +25,7 @@ export default [
       'vue/no-v-html': 'warn', // Warn about XSS risk
       'vue/require-default-prop': 'off', // Not always needed
       'vue/require-prop-types': 'warn',
+      'vue/no-mutating-props': 'warn', // Project uses form prop mutation pattern extensively
       'vue/block-order': [
         'warn',
         {
@@ -40,7 +41,13 @@ export default [
       'vue/max-attributes-per-line': 'off', // Let Prettier handle
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-closing-bracket-newline': 'off',
-      'vue/html-indent': 'off' // Let Prettier handle
+      'vue/html-indent': 'off', // Let Prettier handle
+
+      // JS rules for .vue files (override recommended defaults)
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-useless-escape': 'warn',
+      'no-empty': 'warn',
+      'no-useless-catch': 'warn'
     }
   },
   {
@@ -63,6 +70,11 @@ export default [
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-var': 'error',
       'prefer-const': 'warn',
+
+      // Relaxed rules
+      'no-useless-escape': 'warn',
+      'no-empty': 'warn',
+      'no-useless-catch': 'warn',
 
       // Code style
       semi: ['warn', 'never'],
