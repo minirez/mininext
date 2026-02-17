@@ -564,10 +564,7 @@
           </p>
           <button
             class="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white hover:bg-purple-700"
-            @click="
-              showSuccess = false
-              loadSubscription()
-            "
+            @click="handleSuccessClose"
           >
             {{ $t('common.close') }}
           </button>
@@ -643,6 +640,11 @@ const purchaseStatusColors = {
 const formatDate = date => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('tr-TR')
+}
+
+const handleSuccessClose = () => {
+  showSuccess.value = false
+  loadSubscription()
 }
 
 const loadSubscription = async () => {
