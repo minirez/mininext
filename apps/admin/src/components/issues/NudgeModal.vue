@@ -13,7 +13,9 @@
           <label
             v-if="issue?.assignee"
             class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-            :class="{ 'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'assignee' }"
+            :class="{
+              'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'assignee'
+            }"
           >
             <input
               v-model="recipients"
@@ -22,11 +24,12 @@
               class="text-purple-600 focus:ring-purple-500"
             />
             <div class="flex items-center gap-2 flex-1">
-              <div
-                v-if="issue.assignee.avatar"
-                class="w-8 h-8 rounded-full overflow-hidden"
-              >
-                <img :src="getAvatarUrl(issue.assignee)" :alt="issue.assignee.name" class="w-full h-full object-cover" />
+              <div v-if="issue.assignee.avatar" class="w-8 h-8 rounded-full overflow-hidden">
+                <img
+                  :src="getAvatarUrl(issue.assignee)"
+                  :alt="issue.assignee.name"
+                  class="w-full h-full object-cover"
+                />
               </div>
               <div
                 v-else
@@ -35,8 +38,12 @@
                 {{ issue.assignee.name?.charAt(0)?.toUpperCase() }}
               </div>
               <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ issue.assignee.name }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('issues.nudge.assigneeOnly') }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ issue.assignee.name }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ $t('issues.nudge.assigneeOnly') }}
+                </p>
               </div>
             </div>
           </label>
@@ -44,7 +51,9 @@
           <label
             v-if="issue?.watchers?.length > 0"
             class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-            :class="{ 'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'watchers' }"
+            :class="{
+              'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'watchers'
+            }"
           >
             <input
               v-model="recipients"
@@ -54,12 +63,16 @@
             />
             <div class="flex items-center gap-2 flex-1">
               <div class="flex -space-x-2">
-                <template v-for="(watcher, i) in issue.watchers.slice(0, 3)" :key="watcher._id">
+                <template v-for="watcher in issue.watchers.slice(0, 3)" :key="watcher._id">
                   <div
                     v-if="watcher.avatar"
                     class="w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-slate-700"
                   >
-                    <img :src="getAvatarUrl(watcher)" :alt="watcher.name" class="w-full h-full object-cover" />
+                    <img
+                      :src="getAvatarUrl(watcher)"
+                      :alt="watcher.name"
+                      class="w-full h-full object-cover"
+                    />
                   </div>
                   <div
                     v-else
@@ -76,8 +89,12 @@
                 </div>
               </div>
               <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $t('issues.nudge.watchersLabel') }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ issue.watchers.length }} {{ $t('issues.nudge.people') }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ $t('issues.nudge.watchersLabel') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ issue.watchers.length }} {{ $t('issues.nudge.people') }}
+                </p>
               </div>
             </div>
           </label>
@@ -85,7 +102,9 @@
           <label
             v-if="issue?.assignee || issue?.watchers?.length > 0"
             class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-slate-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-            :class="{ 'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'all' }"
+            :class="{
+              'border-purple-500 bg-purple-50 dark:bg-purple-900/20': recipients === 'all'
+            }"
           >
             <input
               v-model="recipients"
@@ -94,12 +113,19 @@
               class="text-purple-600 focus:ring-purple-500"
             />
             <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $t('issues.nudge.allLabel') }}</p>
-              <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('issues.nudge.allDescription') }}</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ $t('issues.nudge.allLabel') }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                {{ $t('issues.nudge.allDescription') }}
+              </p>
             </div>
           </label>
 
-          <p v-if="!issue?.assignee && !issue?.watchers?.length" class="text-sm text-gray-500 dark:text-slate-400 text-center py-4">
+          <p
+            v-if="!issue?.assignee && !issue?.watchers?.length"
+            class="text-sm text-gray-500 dark:text-slate-400 text-center py-4"
+          >
             {{ $t('issues.nudge.noRecipients') }}
           </p>
         </div>
@@ -109,22 +135,21 @@
       <div>
         <label class="form-label">{{ $t('issues.nudge.channels') }}</label>
         <div class="flex flex-wrap gap-3 mt-2">
-          <label class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-600 cursor-not-allowed opacity-60">
-            <input
-              type="checkbox"
-              checked
-              disabled
-              class="text-purple-600"
-            />
+          <label
+            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-slate-600 cursor-not-allowed opacity-60"
+          >
+            <input type="checkbox" checked disabled class="text-purple-600" />
             <span class="material-icons text-lg">notifications</span>
             <span class="text-sm">{{ $t('issues.nudge.channelNotification') }}</span>
           </label>
 
           <label
             class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors"
-            :class="channels.includes('email')
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'"
+            :class="
+              channels.includes('email')
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
+            "
           >
             <input
               v-model="channels"
@@ -154,11 +179,7 @@
 
       <!-- Actions -->
       <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
-        <button
-          type="button"
-          class="btn-secondary"
-          @click="$emit('update:modelValue', false)"
-        >
+        <button type="button" class="btn-secondary" @click="$emit('update:modelValue', false)">
           {{ $t('common.cancel') }}
         </button>
         <button
@@ -169,8 +190,19 @@
         >
           <span v-if="sending" class="animate-spin">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           </span>
           <span class="material-icons text-lg" v-else>send</span>
@@ -209,20 +241,23 @@ const message = ref('')
 const sending = ref(false)
 
 // Reset when modal opens
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    // Set default recipient based on what's available
-    if (props.issue?.assignee) {
-      recipients.value = 'assignee'
-    } else if (props.issue?.watchers?.length > 0) {
-      recipients.value = 'watchers'
-    } else {
-      recipients.value = ''
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      // Set default recipient based on what's available
+      if (props.issue?.assignee) {
+        recipients.value = 'assignee'
+      } else if (props.issue?.watchers?.length > 0) {
+        recipients.value = 'watchers'
+      } else {
+        recipients.value = ''
+      }
+      channels.value = ['notification']
+      message.value = ''
     }
-    channels.value = ['notification']
-    message.value = ''
   }
-})
+)
 
 // Can send
 const canSend = computed(() => {

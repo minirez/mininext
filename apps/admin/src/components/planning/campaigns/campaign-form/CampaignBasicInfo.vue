@@ -40,6 +40,7 @@
 </template>
 
 <script setup>
+/* eslint-disable vue/no-mutating-props */
 import MultiLangInput from '@/components/common/MultiLangInput.vue'
 
 defineProps({

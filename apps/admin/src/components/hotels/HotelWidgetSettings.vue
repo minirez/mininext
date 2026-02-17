@@ -476,7 +476,7 @@ const embedCode = computed(() => {
     attrs.push(`data-position="${form.value.triggerPosition}"`)
   }
 
-  return `<!-- MaxiRez Booking Widget -->\n<script\n  ${attrs.join('\n  ')}\n><\/script>`
+  return `<!-- MaxiRez Booking Widget -->\n<script\n  ${attrs.join('\n  ')}\n><` + `/script>`
 })
 
 // Open demo page in new tab

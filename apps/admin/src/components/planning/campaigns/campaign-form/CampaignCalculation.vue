@@ -154,6 +154,7 @@
 </template>
 
 <script setup>
+/* eslint-disable vue/no-mutating-props */
 defineProps({
   form: { type: Object, required: true }
 })

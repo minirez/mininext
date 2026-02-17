@@ -333,7 +333,8 @@ const openDemoPage = () => {
   const primaryColor = form.value.primaryColor || '#7c3aed'
 
   const cacheBust = Date.now()
-  const html = `<!DOCTYPE html>
+  const html =
+    `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -446,7 +447,8 @@ const openDemoPage = () => {
     data-mode="${form.value.mode}"
     data-theme="${form.value.theme}"
     data-primary-color="${form.value.primaryColor}"${form.value.mode === 'floating' && form.value.triggerPosition !== 'bottom-right' ? `\n    data-position="${form.value.triggerPosition}"` : ''}
-  ><\/script>
+  ><` +
+    `/script>
 </body>
 </html>`
 
