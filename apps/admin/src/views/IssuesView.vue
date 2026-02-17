@@ -330,7 +330,7 @@
           <template #cell-assignees="{ row }">
             <div v-if="row.assignees?.length > 0" class="flex items-center -space-x-1">
               <div
-                v-for="(assignee, idx) in row.assignees.slice(0, 3)"
+                v-for="assignee in row.assignees.slice(0, 3)"
                 :key="assignee._id"
                 class="w-6 h-6 rounded-full bg-purple-200 dark:bg-purple-900/50 flex items-center justify-center text-xs font-medium text-purple-700 dark:text-purple-300 ring-2 ring-white dark:ring-slate-800"
                 :title="assignee.name"

@@ -47,7 +47,8 @@ export default [
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-useless-escape': 'warn',
       'no-empty': 'warn',
-      'no-useless-catch': 'warn'
+      'no-useless-catch': 'warn',
+      'vue/no-unused-vars': 'warn'
     }
   },
   {
