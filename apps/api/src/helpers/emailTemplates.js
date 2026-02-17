@@ -657,7 +657,7 @@ export const getAvailableTemplates = async () => {
     return files
       .filter(f => f.endsWith('.html') && f !== 'base.html')
       .map(f => f.replace('.html', ''))
-  } catch (error) {
+  } catch {
     return []
   }
 }

@@ -2,7 +2,7 @@
  * Pricing Validation Tests
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 import { PricingError, validatePricingResult } from '../../../services/pricing/validation.js'
 
 describe('Pricing Validation', () => {

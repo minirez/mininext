@@ -4,12 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  mockRequest,
-  mockResponse,
-  mockNext,
-  callHandler
-} from '../../../tests/helpers/testUtils.js'
+import { mockRequest, mockResponse } from '../../../tests/helpers/testUtils.js'
 
 // Mock dependencies
 vi.mock('#core/logger.js', () => ({

@@ -120,6 +120,7 @@ const buildMd5IndexFromDisk = async partnerId => {
 
       const abs = path.join(dirAbs, ent.name)
       if (ent.isDirectory()) {
+        // eslint-disable-next-line no-await-in-loop
         await walk(abs)
         continue
       }
@@ -128,6 +129,7 @@ const buildMd5IndexFromDisk = async partnerId => {
       if (!isLikelyImageFile(ent.name)) continue
 
       try {
+        // eslint-disable-next-line no-await-in-loop
         const md5 = await md5FileHex(abs)
         if (!md5) continue
         if (index[md5]) continue

@@ -105,7 +105,7 @@ const corsOptions = {
       // Production: Only allow configured origins
       // Partner domains should be added to CORS_ORIGIN env variable
       return callback(new Error('Origin not allowed by CORS'), false)
-    } catch (_e) {
+    } catch {
       return callback(new Error('Invalid origin'), false)
     }
   },
