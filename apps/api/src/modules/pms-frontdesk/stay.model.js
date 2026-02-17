@@ -654,6 +654,7 @@ staySchema.statics.getActiveStays = function (hotelId) {
   })
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
+    .populate('booking', 'leadGuest bookingNumber')
     .sort({ checkOutDate: 1 })
 }
 

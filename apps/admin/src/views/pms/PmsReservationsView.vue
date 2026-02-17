@@ -440,11 +440,19 @@ const columns = computed(() => [
   { key: 'amount', label: t('reservations.columns.amountBalance'), sortable: false }
 ])
 
+// Check if a guest name is a placeholder
+const isPlaceholderName = name => !name || name === 'Misafir' || name === 'Guest'
+
 // Helper functions for guest data
 const getMainGuestName = row => {
   const lead = row.leadGuest
-  if (lead?.firstName) {
+  if (lead?.firstName && !isPlaceholderName(lead.firstName)) {
     return `${lead.firstName} ${lead.lastName || ''}`.trim()
+  }
+  // Fallback: check room guests
+  const roomGuest = row.rooms?.[0]?.guests?.find(g => !isPlaceholderName(g.firstName))
+  if (roomGuest) {
+    return `${roomGuest.firstName} ${roomGuest.lastName || ''}`.trim()
   }
   return '-'
 }
