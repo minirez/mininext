@@ -6,17 +6,14 @@
         class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto"
       >
         <!-- Backdrop -->
-        <div
-          class="fixed inset-0 bg-black/50 backdrop-blur-sm"
-          @click="close"
-        ></div>
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="close"></div>
 
         <!-- Modal -->
-        <div
-          class="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-2xl"
-        >
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl shadow-2xl">
           <!-- Header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+          <div
+            class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-700"
+          >
             <div class="flex items-center gap-3">
               <span class="material-icons text-xl text-purple-500">confirmation_number</span>
               <div>
@@ -54,7 +51,9 @@
 
           <!-- Loading State -->
           <div v-if="loading" class="flex items-center justify-center py-16">
-            <div class="animate-spin rounded-full h-8 w-8 border-3 border-purple-500 border-t-transparent"></div>
+            <div
+              class="animate-spin rounded-full h-8 w-8 border-3 border-purple-500 border-t-transparent"
+            ></div>
           </div>
 
           <!-- Content -->
@@ -69,7 +68,10 @@
                       <p class="font-semibold text-gray-900 dark:text-white">
                         {{ bookingDetails.hotelName }}
                       </p>
-                      <p v-if="bookingDetails.hotelCode" class="text-xs text-gray-500 dark:text-slate-400">
+                      <p
+                        v-if="bookingDetails.hotelCode"
+                        class="text-xs text-gray-500 dark:text-slate-400"
+                      >
                         {{ bookingDetails.hotelCode }}
                       </p>
                     </div>
@@ -84,7 +86,9 @@
                     <span class="font-medium text-gray-700 dark:text-gray-300">
                       {{ formatDateCompact(bookingDetails.checkOut) }}
                     </span>
-                    <span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium"
+                    >
                       {{ bookingDetails.nights }} {{ $t('booking.nights') }}
                     </span>
                   </div>
@@ -93,7 +97,9 @@
                 <!-- Guest Info with Inline Edit -->
                 <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3">
                   <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide flex items-center">
+                    <h3
+                      class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide flex items-center"
+                    >
                       <span class="material-icons text-sm mr-1">person</span>
                       {{ $t('booking.guest') }}
                     </h3>
@@ -102,7 +108,9 @@
                       class="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5"
                       @click="toggleGuestEdit"
                     >
-                      <span class="material-icons text-sm">{{ isEditingGuest ? 'close' : 'edit' }}</span>
+                      <span class="material-icons text-sm">{{
+                        isEditingGuest ? 'close' : 'edit'
+                      }}</span>
                       {{ isEditingGuest ? $t('common.cancel') : $t('booking.email.edit') }}
                     </button>
                   </div>
@@ -110,9 +118,12 @@
                   <!-- View Mode -->
                   <div v-if="!isEditingGuest && bookingDetails.leadGuest">
                     <p class="font-medium text-gray-900 dark:text-white">
-                      {{ bookingDetails.leadGuest.firstName }} {{ bookingDetails.leadGuest.lastName }}
+                      {{ bookingDetails.leadGuest.firstName }}
+                      {{ bookingDetails.leadGuest.lastName }}
                     </p>
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600 dark:text-slate-300">
+                    <div
+                      class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600 dark:text-slate-300"
+                    >
                       <span v-if="bookingDetails.contact?.email" class="flex items-center gap-1">
                         <span class="material-icons text-xs">email</span>
                         {{ bookingDetails.contact.email }}
@@ -186,7 +197,9 @@
               <div class="space-y-4">
                 <!-- Rooms -->
                 <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3">
-                  <h3 class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center">
+                  <h3
+                    class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center"
+                  >
                     <span class="material-icons text-sm mr-1">king_bed</span>
                     {{ $t('booking.rooms') }}
                   </h3>
@@ -206,7 +219,9 @@
                           </p>
                         </div>
                         <div class="flex items-center gap-1">
-                          <span class="px-1 py-0.5 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                          <span
+                            class="px-1 py-0.5 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                          >
                             {{ room.roomTypeCode }}
                           </span>
                         </div>
@@ -217,26 +232,49 @@
 
                 <!-- Pricing -->
                 <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3">
-                  <h3 class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center">
+                  <h3
+                    class="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex items-center"
+                  >
                     <span class="material-icons text-sm mr-1">payments</span>
                     {{ $t('booking.pricing') }}
                   </h3>
                   <div class="space-y-1">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-600 dark:text-slate-300">{{ $t('payment.total') }}</span>
+                      <span class="text-sm text-gray-600 dark:text-slate-300">{{
+                        $t('payment.total')
+                      }}</span>
                       <span class="text-lg font-bold text-gray-900 dark:text-white">
-                        {{ formatPrice(bookingDetails.pricing?.grandTotal, bookingDetails.pricing?.currency) }}
+                        {{
+                          formatPrice(
+                            bookingDetails.pricing?.grandTotal,
+                            bookingDetails.pricing?.currency
+                          )
+                        }}
                       </span>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="text-sm text-gray-600 dark:text-slate-300">{{ $t('payment.paid') }}</span>
+                      <span class="text-sm text-gray-600 dark:text-slate-300">{{
+                        $t('payment.paid')
+                      }}</span>
                       <span class="font-medium text-green-600 dark:text-green-400">
-                        {{ formatPrice(bookingDetails.payment?.paidAmount || 0, bookingDetails.pricing?.currency) }}
+                        {{
+                          formatPrice(
+                            bookingDetails.payment?.paidAmount || 0,
+                            bookingDetails.pricing?.currency
+                          )
+                        }}
                       </span>
                     </div>
-                    <div class="flex justify-between items-center pt-1 border-t border-gray-200 dark:border-slate-600">
-                      <span class="text-sm text-gray-600 dark:text-slate-300">{{ $t('payment.remaining') }}</span>
-                      <span class="font-semibold" :class="remainingAmount > 0 ? 'text-orange-500' : 'text-green-500'">
+                    <div
+                      class="flex justify-between items-center pt-1 border-t border-gray-200 dark:border-slate-600"
+                    >
+                      <span class="text-sm text-gray-600 dark:text-slate-300">{{
+                        $t('payment.remaining')
+                      }}</span>
+                      <span
+                        class="font-semibold"
+                        :class="remainingAmount > 0 ? 'text-orange-500' : 'text-green-500'"
+                      >
                         {{ formatPrice(remainingAmount, bookingDetails.pricing?.currency) }}
                       </span>
                     </div>
@@ -247,11 +285,10 @@
           </div>
 
           <!-- Footer -->
-          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 rounded-b-xl">
-            <button
-              class="btn-secondary px-3 py-1.5 text-sm"
-              @click="close"
-            >
+          <div
+            class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 rounded-b-xl"
+          >
+            <button class="btn-secondary px-3 py-1.5 text-sm" @click="close">
               {{ $t('common.close') }}
             </button>
             <div class="flex items-center gap-2">
@@ -424,7 +461,7 @@ const saveGuestInfo = async () => {
   }
 }
 
-const handleEmailSent = (data) => {
+const handleEmailSent = () => {
   showSuccess(t('booking.email.sent'))
 }
 
@@ -447,19 +484,22 @@ const loadBookingDetails = async () => {
 }
 
 // Watch for modal open
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen && props.booking) {
-    // Reset edit state
-    isEditingGuest.value = false
-    // First show basic data from list
-    bookingDetails.value = props.booking
-    // Then load full details
-    loadBookingDetails()
-  } else {
-    bookingDetails.value = null
-    isEditingGuest.value = false
+watch(
+  () => props.modelValue,
+  isOpen => {
+    if (isOpen && props.booking) {
+      // Reset edit state
+      isEditingGuest.value = false
+      // First show basic data from list
+      bookingDetails.value = props.booking
+      // Then load full details
+      loadBookingDetails()
+    } else {
+      bookingDetails.value = null
+      isEditingGuest.value = false
+    }
   }
-})
+)
 </script>
 
 <style scoped>

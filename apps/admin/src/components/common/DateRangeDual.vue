@@ -189,7 +189,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 
 const pickerContainer = ref(null)
 const inputElement = ref(null)

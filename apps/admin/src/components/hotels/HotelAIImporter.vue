@@ -663,13 +663,13 @@ const {
   operationId,
   progress,
   elapsedTime,
-  isSocketConnected,
+  // isSocketConnected - used via startExtraction result
+  // cleanupSocketListeners - handled internally by composable
   startElapsedTimer,
   stopElapsedTimer,
   resetProgress,
   startExtraction,
-  pollForResult,
-  cleanupSocketListeners
+  pollForResult
 } = useExtractionProgress()
 
 // State

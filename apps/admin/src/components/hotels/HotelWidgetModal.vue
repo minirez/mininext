@@ -1,48 +1,87 @@
 <template>
-  <Modal :model-value="modelValue" :title="$t('hotels.widgetModal.title')" size="lg" @update:model-value="$emit('update:modelValue', $event)">
+  <Modal
+    :model-value="modelValue"
+    :title="$t('hotels.widgetModal.title')"
+    size="lg"
+    @update:model-value="$emit('update:modelValue', $event)"
+  >
     <!-- Loading -->
     <div v-if="loading" class="flex flex-col items-center justify-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-4"></div>
-      <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('hotels.widgetModal.loading') }}</p>
+      <p class="text-sm text-gray-500 dark:text-slate-400">
+        {{ $t('hotels.widgetModal.loading') }}
+      </p>
     </div>
 
     <div v-else class="space-y-6">
       <!-- Subtitle -->
-      <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('hotels.widgetModal.subtitle') }}</p>
+      <p class="text-sm text-gray-500 dark:text-slate-400">
+        {{ $t('hotels.widgetModal.subtitle') }}
+      </p>
 
       <!-- A) Widget Enabled Toggle -->
       <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
         <div>
-          <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ $t('widget.enabled') }}</h4>
-          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{{ $t('widget.enabledDescription') }}</p>
+          <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+            {{ $t('widget.enabled') }}
+          </h4>
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {{ $t('widget.enabledDescription') }}
+          </p>
         </div>
         <Toggle v-model="form.enabled" />
       </div>
 
       <!-- B) Display Mode -->
       <div>
-        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ $t('hotels.widgetModal.selectMode') }}</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+          {{ $t('hotels.widgetModal.selectMode') }}
+        </h4>
         <div class="grid grid-cols-3 gap-3">
           <button
             v-for="mode in modes"
             :key="mode.key"
             type="button"
             class="flex flex-col items-center p-4 rounded-lg border-2 transition-all text-center"
-            :class="form.mode === mode.key
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'"
+            :class="
+              form.mode === mode.key
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
+            "
             @click="form.mode = mode.key"
           >
-            <span class="material-icons text-2xl mb-2" :class="form.mode === mode.key ? 'text-purple-600' : 'text-gray-400'">{{ mode.icon }}</span>
-            <span class="text-sm font-medium" :class="form.mode === mode.key ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-slate-300'">{{ $t(`widget.modes.${mode.key}`) }}</span>
-            <span class="text-xs mt-1" :class="form.mode === mode.key ? 'text-purple-500 dark:text-purple-400' : 'text-gray-400 dark:text-slate-500'">{{ $t(`hotels.widgetModal.${mode.key}Desc`) }}</span>
+            <span
+              class="material-icons text-2xl mb-2"
+              :class="form.mode === mode.key ? 'text-purple-600' : 'text-gray-400'"
+              >{{ mode.icon }}</span
+            >
+            <span
+              class="text-sm font-medium"
+              :class="
+                form.mode === mode.key
+                  ? 'text-purple-700 dark:text-purple-300'
+                  : 'text-gray-700 dark:text-slate-300'
+              "
+              >{{ $t(`widget.modes.${mode.key}`) }}</span
+            >
+            <span
+              class="text-xs mt-1"
+              :class="
+                form.mode === mode.key
+                  ? 'text-purple-500 dark:text-purple-400'
+                  : 'text-gray-400 dark:text-slate-500'
+              "
+              >{{ $t(`hotels.widgetModal.${mode.key}Desc`) }}</span
+            >
           </button>
         </div>
       </div>
 
       <!-- C) Theme & Color -->
       <div>
-        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">{{ $t('hotels.widgetModal.themeAndColor') }}</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+          {{ $t('hotels.widgetModal.themeAndColor') }}
+        </h4>
 
         <!-- Theme Selection -->
         <div class="flex gap-2 mb-4">
@@ -51,9 +90,11 @@
             :key="theme.key"
             type="button"
             class="px-4 py-2 text-sm rounded-lg border transition-all"
-            :class="form.theme === theme.key
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-              : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:border-gray-300'"
+            :class="
+              form.theme === theme.key
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:border-gray-300'
+            "
             @click="form.theme = theme.key"
           >
             {{ $t(`widget.themes.${theme.key}`) }}
@@ -67,20 +108,33 @@
             :key="color"
             type="button"
             class="w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center"
-            :class="form.primaryColor === color ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent hover:scale-105'"
+            :class="
+              form.primaryColor === color
+                ? 'border-gray-900 dark:border-white scale-110'
+                : 'border-transparent hover:scale-105'
+            "
             :style="{ backgroundColor: color }"
             @click="form.primaryColor = color"
           >
-            <span v-if="form.primaryColor === color" class="material-icons text-white text-sm">check</span>
+            <span v-if="form.primaryColor === color" class="material-icons text-white text-sm"
+              >check</span
+            >
           </button>
 
           <!-- Custom Color -->
           <div class="flex items-center gap-2 ml-2">
-            <label class="relative w-8 h-8 rounded-full border-2 cursor-pointer overflow-hidden flex items-center justify-center"
-              :class="isCustomColor ? 'border-gray-900 dark:border-white scale-110' : 'border-gray-300 dark:border-slate-500'"
+            <label
+              class="relative w-8 h-8 rounded-full border-2 cursor-pointer overflow-hidden flex items-center justify-center"
+              :class="
+                isCustomColor
+                  ? 'border-gray-900 dark:border-white scale-110'
+                  : 'border-gray-300 dark:border-slate-500'
+              "
               :style="isCustomColor ? { backgroundColor: form.primaryColor } : {}"
             >
-              <span v-if="!isCustomColor" class="material-icons text-gray-400 text-sm">palette</span>
+              <span v-if="!isCustomColor" class="material-icons text-gray-400 text-sm"
+                >palette</span
+              >
               <span v-else class="material-icons text-white text-sm">check</span>
               <input
                 type="color"
@@ -102,7 +156,9 @@
 
       <!-- Button Position (only floating mode) -->
       <div v-if="form.mode === 'floating'">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ $t('hotels.widgetModal.buttonPosition') }}</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+          {{ $t('hotels.widgetModal.buttonPosition') }}
+        </h4>
         <select v-model="form.triggerPosition" class="form-input w-full">
           <option value="bottom-right">{{ $t('widget.positions.bottomRight') }}</option>
           <option value="bottom-left">{{ $t('widget.positions.bottomLeft') }}</option>
@@ -113,9 +169,14 @@
 
       <!-- D) Integration Code -->
       <div>
-        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">{{ $t('hotels.widgetModal.integrationCode') }}</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+          {{ $t('hotels.widgetModal.integrationCode') }}
+        </h4>
         <div class="relative">
-          <pre class="bg-gray-900 text-green-400 text-xs p-4 rounded-lg overflow-x-auto font-mono leading-relaxed">{{ embedCode }}</pre>
+          <pre
+            class="bg-gray-900 text-green-400 text-xs p-4 rounded-lg overflow-x-auto font-mono leading-relaxed"
+            >{{ embedCode }}</pre
+          >
           <button
             type="button"
             class="absolute top-2 right-2 p-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
@@ -127,18 +188,24 @@
         </div>
         <div class="mt-3 flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <span class="material-icons text-blue-500 text-lg mt-0.5">info</span>
-          <p class="text-xs text-blue-700 dark:text-blue-300">{{ $t('hotels.widgetModal.integrationNote') }}</p>
+          <p class="text-xs text-blue-700 dark:text-blue-300">
+            {{ $t('hotels.widgetModal.integrationNote') }}
+          </p>
         </div>
       </div>
 
       <!-- Demo Page -->
-      <div class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30">
+      <div
+        class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30"
+      >
         <div>
           <h4 class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
             <span class="material-icons text-purple-500 text-lg">preview</span>
             {{ $t('hotels.widgetModal.demoPage') }}
           </h4>
-          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{{ $t('hotels.widgetModal.demoPageDesc') }}</p>
+          <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {{ $t('hotels.widgetModal.demoPageDesc') }}
+          </p>
         </div>
         <button
           type="button"
@@ -174,7 +241,6 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import Toggle from '@/components/ui/form/Toggle.vue'
 import hotelService from '@/services/hotelService'
-import { useAsyncAction } from '@/composables/useAsyncAction'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -191,8 +257,14 @@ const saving = ref(false)
 const copied = ref(false)
 
 const presetColors = [
-  '#7c3aed', '#6366f1', '#3b82f6', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'
+  '#7c3aed',
+  '#6366f1',
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#ec4899',
+  '#8b5cf6'
 ]
 
 const modes = [
@@ -201,11 +273,7 @@ const modes = [
   { key: 'fullpage', icon: 'fullscreen' }
 ]
 
-const themes = [
-  { key: 'light' },
-  { key: 'dark' },
-  { key: 'auto' }
-]
+const themes = [{ key: 'light' }, { key: 'dark' }, { key: 'auto' }]
 
 const form = ref({
   enabled: false,
@@ -220,7 +288,7 @@ const isCustomColor = computed(() => !presetColors.includes(form.value.primaryCo
 const partnerId = computed(() => {
   const p = props.hotel?.partner
   if (!p) return ''
-  return typeof p === 'object' ? (p._id || p.id || '') : p
+  return typeof p === 'object' ? p._id || p.id || '' : p
 })
 
 const embedCode = computed(() => {
@@ -238,10 +306,10 @@ const embedCode = computed(() => {
     attrs.push(`data-position="${form.value.triggerPosition}"`)
   }
 
-  return `<!-- MaxiRez Booking Widget -->\n<script\n  ${attrs.join('\n  ')}\n><\/script>`
+  return `<!-- MaxiRez Booking Widget -->\n<script\n  ${attrs.join('\n  ')}\n><` + `/script>`
 })
 
-const handleColorInput = (val) => {
+const handleColorInput = val => {
   if (/^#[0-9a-fA-F]{6}$/.test(val)) {
     form.value.primaryColor = val
   }
@@ -252,7 +320,9 @@ const copyEmbedCode = async () => {
     await navigator.clipboard.writeText(embedCode.value)
     copied.value = true
     toast.success(t('common.copied'))
-    setTimeout(() => { copied.value = false }, 2000)
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
   } catch {
     toast.error(t('common.copyFailed'))
   }
@@ -261,7 +331,6 @@ const copyEmbedCode = async () => {
 const openDemoPage = () => {
   const hotelName = props.hotel?.name || 'Demo Hotel'
   const primaryColor = form.value.primaryColor || '#7c3aed'
-  const scriptTag = embedCode.value
 
   const cacheBust = Date.now()
   const html = `<!DOCTYPE html>
@@ -428,10 +497,13 @@ const save = async () => {
 }
 
 // Load config when modal opens
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    loadConfig()
-    copied.value = false
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      loadConfig()
+      copied.value = false
+    }
   }
-})
+)
 </script>

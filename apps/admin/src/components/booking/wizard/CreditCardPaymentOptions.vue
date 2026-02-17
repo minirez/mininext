@@ -55,7 +55,9 @@
             <span class="font-medium text-gray-900 dark:text-white">
               {{ $t('booking.creditCardOptions.paymentLink') }}
             </span>
-            <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">
+            <span
+              class="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full"
+            >
               {{ $t('booking.creditCardOptions.recommended') }}
             </span>
           </div>
@@ -67,7 +69,10 @@
     </div>
 
     <!-- Inline Card Form (when inline is selected) -->
-    <div v-if="modelValue === 'inline'" class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+    <div
+      v-if="modelValue === 'inline'"
+      class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden"
+    >
       <div class="p-4">
         <CreditCardPaymentForm
           ref="paymentFormRef"
@@ -89,7 +94,10 @@
     </div>
 
     <!-- Notification Options (only for payment_link) -->
-    <div v-if="modelValue === 'payment_link'" class="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+    <div
+      v-if="modelValue === 'payment_link'"
+      class="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg"
+    >
       <p class="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
         {{ $t('booking.creditCardOptions.sendVia') }}
       </p>
@@ -127,7 +135,7 @@
 import { ref } from 'vue'
 import CreditCardPaymentForm from '@/components/booking/payment/CreditCardPaymentForm.vue'
 
-const props = defineProps({
+defineProps({
   modelValue: {
     type: String,
     default: 'payment_link'
@@ -175,16 +183,16 @@ const paymentFormRef = ref(null)
 
 // Handle request-payment from CreditCardPaymentForm (inline mode)
 // This is emitted when user clicks "Pay" but booking/payment doesn't exist yet
-const handleRequestPayment = (paymentData) => {
+const handleRequestPayment = paymentData => {
   // Emit to parent (BookingLayout) to create booking + payment, then call processPayment
   emit('payment-start', paymentData)
 }
 
-const handlePaymentSuccess = (result) => {
+const handlePaymentSuccess = result => {
   emit('payment-success', result)
 }
 
-const handlePaymentError = (error) => {
+const handlePaymentError = error => {
   emit('payment-error', error.message || error)
 }
 
@@ -198,7 +206,11 @@ const handleProcessing = () => {
 
 // Called by parent after booking/payment is created
 const processPayment = async (bookingId, paymentId) => {
-  console.log('[CreditCardPaymentOptions] processPayment called', { bookingId, paymentId, hasRef: !!paymentFormRef.value })
+  console.log('[CreditCardPaymentOptions] processPayment called', {
+    bookingId,
+    paymentId,
+    hasRef: !!paymentFormRef.value
+  })
   if (paymentFormRef.value) {
     await paymentFormRef.value.processPayment(bookingId, paymentId)
   } else {

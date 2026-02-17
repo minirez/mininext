@@ -353,7 +353,6 @@ import Modal from '@/components/common/Modal.vue'
 import PhoneInput from '@/components/ui/form/PhoneInput.vue'
 import PaymentCardModal from './PaymentCardModal.vue'
 import paymentService from '@/services/paymentService'
-import paymentLinkService from '@/services/paymentLinkService'
 
 const props = defineProps({
   booking: Object,
