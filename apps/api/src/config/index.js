@@ -83,7 +83,7 @@ const config = {
     certbotWebroot: process.env.CERTBOT_WEBROOT || '/var/www/letsencrypt',
     nginxSitesDir: process.env.NGINX_SITES_DIR || '/etc/nginx/minisites',
     frontendPorts: {
-      b2c: parseInt(process.env.B2C_FRONTEND_PORT) || 3100,
+      b2c: parseInt(process.env.B2C_FRONTEND_PORT) || 3000,
       b2b: parseInt(process.env.B2B_FRONTEND_PORT) || 3001,
       pms: parseInt(process.env.PMS_FRONTEND_PORT) || 3002
     },
