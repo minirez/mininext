@@ -60,6 +60,7 @@ export const createAgency = asyncHandler(async (req, res) => {
       email: adminUser.email,
       password: tempPassword,
       accountType: 'Agency',
+      partnerId: partner._id,
       loginUrl: partner.branding?.extranetDomain
         ? `https://${partner.branding.extranetDomain}/login`
         : `${config.adminUrl}/login`

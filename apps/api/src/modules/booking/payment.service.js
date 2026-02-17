@@ -389,7 +389,7 @@ export const getReceipt = asyncHandler(async (req, res) => {
   const filename = path.basename(payment.bankTransfer.receiptUrl)
 
   // Validate filename - only allow alphanumeric, dash, underscore, dot
-  if (!/^[\w\-\.]+$/.test(filename)) {
+  if (!/^[\w\-.]+$/.test(filename)) {
     throw new BadRequestError('INVALID_FILE_NAME')
   }
 

@@ -3,7 +3,7 @@
  * Tests for payment operations (add, update, confirm, cancel, refund)
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import mongoose from 'mongoose'
 
 // Mock dependencies
@@ -42,7 +42,7 @@ const mockPayment = {
   populate: jest.fn().mockReturnThis()
 }
 
-const mockBooking = {
+const _mockBooking = {
   _id: new mongoose.Types.ObjectId(),
   partner: new mongoose.Types.ObjectId(),
   pricing: { grandTotal: 5000, currency: 'TRY' },
@@ -68,8 +68,8 @@ jest.unstable_mockModule('../../../modules/booking/booking.model.js', () => ({
 }))
 
 // Import after mocks
-const Payment = (await import('../../../modules/booking/payment.model.js')).default
-const Booking = (await import('../../../modules/booking/booking.model.js')).default
+const _Payment = (await import('../../../modules/booking/payment.model.js')).default
+const _Booking = (await import('../../../modules/booking/booking.model.js')).default
 
 describe('Payment Service', () => {
   beforeEach(() => {
@@ -82,7 +82,7 @@ describe('Payment Service', () => {
         const payment = {
           ...mockPayment,
           status: 'pending',
-          confirm: jest.fn().mockImplementation(async function(userId) {
+          confirm: jest.fn().mockImplementation(async function (_userId) {
             this.status = 'completed'
             this.completedAt = new Date()
             return this
@@ -99,7 +99,7 @@ describe('Payment Service', () => {
         const payment = {
           ...mockPayment,
           status: 'completed',
-          confirm: jest.fn().mockImplementation(async function() {
+          confirm: jest.fn().mockImplementation(async function () {
             if (this.status !== 'pending') {
               throw new Error('PAYMENT_NOT_PENDING')
             }
@@ -116,7 +116,7 @@ describe('Payment Service', () => {
           status: 'pending',
           type: 'bank_transfer',
           bankTransfer: {},
-          confirm: jest.fn().mockImplementation(async function(uid) {
+          confirm: jest.fn().mockImplementation(async function (uid) {
             this.status = 'completed'
             this.completedAt = new Date()
             this.bankTransfer.confirmedBy = uid
@@ -137,7 +137,7 @@ describe('Payment Service', () => {
         const payment = {
           ...mockPayment,
           status: 'pending',
-          cancel: jest.fn().mockImplementation(async function() {
+          cancel: jest.fn().mockImplementation(async function () {
             if (this.status !== 'pending') {
               throw new Error('PAYMENT_NOT_PENDING')
             }
@@ -155,7 +155,7 @@ describe('Payment Service', () => {
         const payment = {
           ...mockPayment,
           status: 'completed',
-          cancel: jest.fn().mockImplementation(async function() {
+          cancel: jest.fn().mockImplementation(async function () {
             if (this.status !== 'pending') {
               throw new Error('PAYMENT_NOT_PENDING')
             }
@@ -173,7 +173,7 @@ describe('Payment Service', () => {
           ...mockPayment,
           status: 'completed',
           amount: 1000,
-          processRefund: jest.fn().mockImplementation(async function(amount, reason, uid) {
+          processRefund: jest.fn().mockImplementation(async function (amount, reason, uid) {
             if (this.status !== 'completed') {
               throw new Error('PAYMENT_NOT_COMPLETED')
             }
@@ -199,7 +199,7 @@ describe('Payment Service', () => {
           ...mockPayment,
           status: 'completed',
           amount: 1000,
-          processRefund: jest.fn().mockImplementation(async function(amount, reason, uid) {
+          processRefund: jest.fn().mockImplementation(async function (amount, reason, uid) {
             if (this.status !== 'completed') {
               throw new Error('PAYMENT_NOT_COMPLETED')
             }
@@ -223,30 +223,32 @@ describe('Payment Service', () => {
           ...mockPayment,
           status: 'completed',
           amount: 1000,
-          processRefund: jest.fn().mockImplementation(async function(amount) {
+          processRefund: jest.fn().mockImplementation(async function (amount) {
             if (amount > this.amount) {
               throw new Error('REFUND_EXCEEDS_PAYMENT')
             }
           })
         }
 
-        await expect(payment.processRefund(1500, 'Too much', 'user123'))
-          .rejects.toThrow('REFUND_EXCEEDS_PAYMENT')
+        await expect(payment.processRefund(1500, 'Too much', 'user123')).rejects.toThrow(
+          'REFUND_EXCEEDS_PAYMENT'
+        )
       })
 
       it('should reject refund for non-completed payment', async () => {
         const payment = {
           ...mockPayment,
           status: 'pending',
-          processRefund: jest.fn().mockImplementation(async function() {
+          processRefund: jest.fn().mockImplementation(async function () {
             if (this.status !== 'completed') {
               throw new Error('PAYMENT_NOT_COMPLETED')
             }
           })
         }
 
-        await expect(payment.processRefund(100, 'Test', 'user123'))
-          .rejects.toThrow('PAYMENT_NOT_COMPLETED')
+        await expect(payment.processRefund(100, 'Test', 'user123')).rejects.toThrow(
+          'PAYMENT_NOT_COMPLETED'
+        )
       })
     })
   })

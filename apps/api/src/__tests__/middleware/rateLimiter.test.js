@@ -203,7 +203,8 @@ describe('Rate Limiter Middleware', () => {
     })
 
     it('should lock account after 5 failed attempts', async () => {
-      // Record 5 failed attempts
+      // Record 5 failed attempts (sequential by design)
+      // eslint-disable-next-line no-await-in-loop
       for (let i = 0; i < 4; i++) {
         await recordFailedLogin('test@example.com')
       }
@@ -216,7 +217,8 @@ describe('Rate Limiter Middleware', () => {
     })
 
     it('should return locked status for already locked account', async () => {
-      // Lock the account
+      // Lock the account (sequential by design)
+      // eslint-disable-next-line no-await-in-loop
       for (let i = 0; i < 5; i++) {
         await recordFailedLogin('test@example.com')
       }
@@ -232,7 +234,8 @@ describe('Rate Limiter Middleware', () => {
       let status = await checkLoginLockout('test@example.com')
       expect(status.isLocked).toBe(false)
 
-      // Lock the account
+      // Lock the account (sequential by design)
+      // eslint-disable-next-line no-await-in-loop
       for (let i = 0; i < 5; i++) {
         await recordFailedLogin('test@example.com')
       }

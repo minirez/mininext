@@ -3,7 +3,7 @@
  * Tests for generateTokens and login validation logic
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import jwt from 'jsonwebtoken'
 
 // Set test env before imports

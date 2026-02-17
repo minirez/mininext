@@ -77,10 +77,12 @@ export const sendWelcomeEmail = async ({
   language = 'tr'
 }) => {
   const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
-  const subject = language === 'tr' ? "Booking Engine'e Hoş Geldiniz" : 'Welcome to Booking Engine'
 
   // Get branding from PlatformSettings (base) + Partner (override)
   const brandingVars = await getEmailBranding(partnerId)
+
+  const companyName = brandingVars.COMPANY_NAME || labels.COMPANY_NAME
+  const subject = language === 'tr' ? `${companyName}'e Hoş Geldiniz` : `Welcome to ${companyName}`
 
   const html = await renderEmailTemplate(
     'welcome',

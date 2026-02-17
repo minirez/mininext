@@ -267,9 +267,8 @@ export const TEMPLATE_LABELS = {
     DESCRIPTION_LABEL: 'Açıklama',
     AMOUNT_LABEL: 'Tutar',
     EXPIRY_WARNING_LABEL: 'Bu link şu tarihe kadar geçerlidir',
-    PAY_NOW_BUTTON: 'Şimdi Öde',
     SECURITY_NOTE_LABEL: 'Güvenlik Notu',
-    SECURITY_NOTE:
+    PAYMENT_SECURITY_NOTE:
       'Ödeme işlemi 3D Secure ile güvence altındadır. Kart bilgileriniz şifreli olarak iletilir.',
 
     // Payment Completed
@@ -284,7 +283,6 @@ export const TEMPLATE_LABELS = {
     PAYMENT_AMOUNT_LABEL: 'Ödenen Tutar',
     PAYMENT_DETAILS_TITLE: 'Ödeme Detayları',
     PAYMENT_DATE_LABEL: 'Ödeme Tarihi',
-    PAYMENT_METHOD_LABEL: 'Ödeme Yöntemi',
 
     // Payment Failed
     PAYMENT_FAILED_TITLE: 'Ödeme Başarısız',
@@ -310,7 +308,6 @@ export const TEMPLATE_LABELS = {
       'İade talebiniz işleme alınmıştır. Aşağıda iade detaylarınızı bulabilirsiniz.',
     PAYMENT_REFUNDED_NOTE:
       'İade tutarı, bankanıza bağlı olarak 5-10 iş günü içinde kartınıza yansıyacaktır.',
-    REFUND_AMOUNT_LABEL: 'İade Tutarı',
     REFUND_REASON_LABEL: 'İade Nedeni',
 
     // New Partner Notification
@@ -467,9 +464,8 @@ export const TEMPLATE_LABELS = {
     DESCRIPTION_LABEL: 'Description',
     AMOUNT_LABEL: 'Amount',
     EXPIRY_WARNING_LABEL: 'This link is valid until',
-    PAY_NOW_BUTTON: 'Pay Now',
     SECURITY_NOTE_LABEL: 'Security Note',
-    SECURITY_NOTE:
+    PAYMENT_SECURITY_NOTE:
       'This payment is secured with 3D Secure. Your card details are transmitted encrypted.',
 
     // Payment Completed
@@ -484,7 +480,6 @@ export const TEMPLATE_LABELS = {
     PAYMENT_AMOUNT_LABEL: 'Amount Paid',
     PAYMENT_DETAILS_TITLE: 'Payment Details',
     PAYMENT_DATE_LABEL: 'Payment Date',
-    PAYMENT_METHOD_LABEL: 'Payment Method',
 
     // Payment Failed
     PAYMENT_FAILED_TITLE: 'Payment Failed',
@@ -509,7 +504,6 @@ export const TEMPLATE_LABELS = {
       'Your refund request has been processed. Below you can find the refund details.',
     PAYMENT_REFUNDED_NOTE:
       'The refund amount will be credited to your card within 5-10 business days, depending on your bank.',
-    REFUND_AMOUNT_LABEL: 'Refund Amount',
     REFUND_REASON_LABEL: 'Refund Reason',
 
     // New Partner Notification

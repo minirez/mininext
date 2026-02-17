@@ -3,7 +3,7 @@
  * Tests for authentication functions
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals'
+import { describe, it, expect, jest } from '@jest/globals'
 import jwt from 'jsonwebtoken'
 
 // Mock dependencies before importing auth service

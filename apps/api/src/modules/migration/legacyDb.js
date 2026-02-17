@@ -19,7 +19,9 @@ export async function createLegacyConnection(uri = DEFAULT_URI) {
   if (connection) {
     try {
       await connection.close()
-    } catch {}
+    } catch {
+      /* ignore stale connection close error */
+    }
     connection = null
   }
 

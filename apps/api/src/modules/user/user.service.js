@@ -398,11 +398,13 @@ export const activateAccount = asyncHandler(async (req, res) => {
   try {
     let loginUrl = config.adminUrl
     let accountName = ''
+    let partnerId = null
 
     // Get account-specific info for login URL
     if (user.accountType === 'partner') {
       const partner = await Partner.findById(user.accountId)
       if (partner) {
+        partnerId = partner._id
         accountName = partner.companyName
         if (partner.branding?.siteDomain) {
           loginUrl = `https://${partner.branding.siteDomain}/login`
@@ -411,6 +413,7 @@ export const activateAccount = asyncHandler(async (req, res) => {
     } else if (user.accountType === 'agency') {
       const agency = await Agency.findById(user.accountId)
       if (agency) {
+        partnerId = agency.partner
         accountName = agency.name
       }
     }
@@ -427,6 +430,7 @@ export const activateAccount = asyncHandler(async (req, res) => {
             ? 'Acente'
             : 'Platform',
       accountName,
+      partnerId,
       loginUrl
     })
     logger.info(`Welcome email sent to activated user: ${user.email}`)
