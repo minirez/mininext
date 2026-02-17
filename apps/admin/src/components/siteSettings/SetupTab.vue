@@ -275,13 +275,24 @@ const handleRemoveDomain = async type => {
   }
 }
 
-const handleManageDns = type => {
+const handleManageDns = async type => {
   const domainMap = { b2c: 'b2cDomain', b2b: 'b2bDomain' }
   const domain = form.value[domainMap[type]]
   if (!domain) {
     toast.warning(t('siteSettings.setup.enterDomainFirst'))
     return
   }
+
+  // Auto-save domain before opening DNS manager (backend needs it for one-click setup)
+  try {
+    const response = await siteSettingsService.updateSetup(form.value)
+    if (response.success) {
+      emit('update:settings', response.data)
+    }
+  } catch {
+    // Ignore save errors - domain might already be saved
+  }
+
   dnsDrawerDomain.value = domain
   dnsDrawerType.value = type
   showDnsDrawer.value = true
