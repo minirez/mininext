@@ -15,7 +15,9 @@ export {
   generateRoomCode,
   preprocessRoomContent,
   isJsonTruncated,
-  repairTruncatedJson
+  repairTruncatedJson,
+  cleanAndParseJson,
+  validatePricingCompleteness
 } from './helpers.js'
 
 // Translation exports
@@ -35,7 +37,7 @@ export { parseHotelContract } from './contractParser.js'
 
 // Lazy module cache for default export
 const _modules = {}
-const _lazyLoad = async (mod) => {
+const _lazyLoad = async mod => {
   if (!_modules[mod]) {
     _modules[mod] = await import(`./${mod}.js`)
   }
@@ -48,9 +50,15 @@ export default {
   translateText: (...args) => _lazyLoad('translation').then(m => m.translateText(...args)),
   translateFields: (...args) => _lazyLoad('translation').then(m => m.translateFields(...args)),
   batchTranslate: (...args) => _lazyLoad('translation').then(m => m.batchTranslate(...args)),
-  parsePricingCommand: (...args) => _lazyLoad('pricingParser').then(m => m.parsePricingCommand(...args)),
-  extractHotelData: (...args) => _lazyLoad('hotelExtraction').then(m => m.extractHotelData(...args)),
-  extractHotelDataFromUrl: (...args) => _lazyLoad('hotelExtraction').then(m => m.extractHotelDataFromUrl(...args)),
-  parseHotelContract: (...args) => _lazyLoad('contractParser').then(m => m.parseHotelContract(...args)),
-  get languageNames() { return import('./client.js').then(m => m.languageNames) }
+  parsePricingCommand: (...args) =>
+    _lazyLoad('pricingParser').then(m => m.parsePricingCommand(...args)),
+  extractHotelData: (...args) =>
+    _lazyLoad('hotelExtraction').then(m => m.extractHotelData(...args)),
+  extractHotelDataFromUrl: (...args) =>
+    _lazyLoad('hotelExtraction').then(m => m.extractHotelDataFromUrl(...args)),
+  parseHotelContract: (...args) =>
+    _lazyLoad('contractParser').then(m => m.parseHotelContract(...args)),
+  get languageNames() {
+    return import('./client.js').then(m => m.languageNames)
+  }
 }

@@ -1057,7 +1057,15 @@
         "andMore": "... ve {count} kayıt daha",
         "analyzeContract": "Kontratı Analiz Et",
         "startImport": "İçe Aktarmayı Başlat",
-        "invalidFileType": "Geçersiz dosya türü. PDF veya resim dosyası seçin."
+        "invalidFileType": "Geçersiz dosya türü. PDF veya resim dosyası seçin.",
+        "completeness": "Fiyat Tamamlanma Oranı",
+        "missing": "eksik",
+        "pricingTypeLabel": "Fiyatlandırma Tipi",
+        "pricingTypeUnit": "Ünite Bazlı",
+        "pricingTypeOBP": "Kişi Bazlı (OBP)",
+        "pricingTypeMultiplier": "Çarpanlı Kişi Bazlı",
+        "multiplierBadge": "Çarpanlı",
+        "aiAnalyzingMultiPass": "Yapay zeka kontratı detaylı analiz ediyor, bu işlem 30-45 saniye sürebilir"
       }
     }
   },

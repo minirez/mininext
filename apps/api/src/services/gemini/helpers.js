@@ -2,6 +2,8 @@
  * Helper functions for Gemini AI processing
  */
 
+import logger from '../../core/logger.js'
+
 /**
  * Set to track used room codes for uniqueness
  */
@@ -255,7 +257,7 @@ export const preprocessRoomContent = content => {
 
   // Room image groups section
   roomHints.push('=== ODA GÖRSELLERi (roomTemplates içinde kullan!) ===')
-  sortedGroups.forEach(([ts, imgs], i) => {
+  sortedGroups.forEach(([_ts, imgs], i) => {
     const roomName = roomList[i] || `Bilinmeyen Oda ${i + 1}`
     roomHints.push(`\nGrup ${i + 1} - ${roomName}: ${imgs.length} görsel`)
     // Show ALL images in group
@@ -381,4 +383,72 @@ export const repairTruncatedJson = jsonStr => {
   }
 
   return repaired
+}
+
+/**
+ * Clean AI response text and parse as JSON
+ * Handles markdown code blocks, truncation repair, etc.
+ */
+export const cleanAndParseJson = text => {
+  if (!text) throw new Error('Empty AI response')
+
+  let cleaned = text
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim()
+
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+  if (jsonMatch) {
+    cleaned = jsonMatch[0]
+  }
+
+  if (isJsonTruncated(cleaned)) {
+    logger.warn('AI response truncated, attempting repair')
+    cleaned = repairTruncatedJson(cleaned)
+  }
+
+  return JSON.parse(cleaned)
+}
+
+/**
+ * Validate pricing completeness - compare expected vs found entries
+ * @param {object} structure - Extracted structure (periods, roomTypes, mealPlans)
+ * @param {Array} pricing - Extracted pricing entries
+ * @returns {object} { completeness, totalExpected, totalFound, missingEntries }
+ */
+export const validatePricingCompleteness = (structure, pricing) => {
+  const periods = structure.periods || []
+  const rooms = structure.roomTypes || []
+  const meals = structure.mealPlans || []
+
+  const totalExpected = periods.length * rooms.length * meals.length
+  if (totalExpected === 0) {
+    return { completeness: 100, totalExpected: 0, totalFound: 0, missingEntries: [] }
+  }
+
+  // Build a set of found combinations
+  const foundSet = new Set()
+  for (const p of pricing) {
+    foundSet.add(`${p.periodCode}|${p.roomCode}|${p.mealPlanCode}`)
+  }
+
+  // Find missing combinations
+  const missingEntries = []
+  for (const period of periods) {
+    for (const room of rooms) {
+      const roomCode = room.contractCode || room.suggestedCode || room.contractName
+      for (const meal of meals) {
+        const mealCode = meal.contractCode || meal.suggestedCode || meal.contractName
+        const key = `${period.code}|${roomCode}|${mealCode}`
+        if (!foundSet.has(key)) {
+          missingEntries.push({ periodCode: period.code, roomCode, mealPlanCode: mealCode })
+        }
+      }
+    }
+  }
+
+  const totalFound = totalExpected - missingEntries.length
+  const completeness = totalExpected > 0 ? Math.round((totalFound / totalExpected) * 100) : 100
+
+  return { completeness, totalExpected, totalFound, missingEntries }
 }

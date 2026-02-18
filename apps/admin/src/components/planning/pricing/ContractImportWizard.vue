@@ -50,6 +50,7 @@
       :is-loading="isLoading"
       :parse-error="parseError"
       :parsed-data="parsedData"
+      :pricing-completeness="pricingCompleteness"
       :format-date="formatDate"
       :get-confidence-color="getConfidenceColor"
       @retry="currentStep = 0"
@@ -64,6 +65,7 @@
       :existing-room-types="existingRoomTypes"
       :existing-meal-plans="existingMealPlans"
       :has-o-b-p-pricing="hasOBPPricing"
+      :has-multiplier-pricing="hasMultiplierPricing"
       :obp-occupancy-range="obpOccupancyRange"
       :season-year="seasonYear"
       :season-start-date="seasonStartDate"
@@ -216,6 +218,8 @@ const {
   mealPlanMappingPercentage,
   missingPricesCount,
   hasOBPPricing,
+  hasMultiplierPricing,
+  pricingCompleteness,
   obpOccupancyRange,
 
   // Methods

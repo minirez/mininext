@@ -9,7 +9,7 @@
         {{ $t('planning.pricing.contractImport.parsing') }}
       </p>
       <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
-        {{ $t('planning.pricing.contractImport.aiAnalyzing') }}
+        {{ $t('planning.pricing.contractImport.aiAnalyzingMultiPass') }}
       </p>
     </div>
 
@@ -124,6 +124,76 @@
         </div>
       </div>
 
+      <!-- Pricing Completeness -->
+      <div
+        v-if="pricingCompleteness !== null"
+        class="rounded-xl p-4 border"
+        :class="
+          pricingCompleteness >= 95
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            : pricingCompleteness >= 70
+              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        "
+      >
+        <div class="flex items-center gap-3">
+          <span
+            class="material-icons"
+            :class="
+              pricingCompleteness >= 95
+                ? 'text-green-600 dark:text-green-400'
+                : pricingCompleteness >= 70
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-red-600 dark:text-red-400'
+            "
+          >
+            {{ pricingCompleteness >= 95 ? 'check_circle' : 'pie_chart' }}
+          </span>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900 dark:text-white">
+              {{ $t('planning.pricing.contractImport.completeness') }}
+            </p>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="flex-1 h-2 bg-gray-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="
+                    pricingCompleteness >= 95
+                      ? 'bg-green-500'
+                      : pricingCompleteness >= 70
+                        ? 'bg-amber-500'
+                        : 'bg-red-500'
+                  "
+                  :style="{ width: `${pricingCompleteness}%` }"
+                ></div>
+              </div>
+              <span
+                class="text-xs font-bold"
+                :class="
+                  pricingCompleteness >= 95
+                    ? 'text-green-600 dark:text-green-400'
+                    : pricingCompleteness >= 70
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-red-600 dark:text-red-400'
+                "
+                >%{{ pricingCompleteness }}</span
+              >
+            </div>
+            <p v-if="parsedData.validation" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {{ parsedData.validation.totalFound }} / {{ parsedData.validation.totalExpected }}
+              {{ $t('planning.pricing.contractImport.priceEntries') }}
+              <span
+                v-if="parsedData.validation.missingCount > 0"
+                class="text-amber-600 dark:text-amber-400"
+              >
+                ({{ parsedData.validation.missingCount }}
+                {{ $t('planning.pricing.contractImport.missing') }})
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Warnings -->
       <div
         v-if="parsedData.warnings?.length"
@@ -148,6 +218,7 @@ defineProps({
   isLoading: { type: Boolean, default: false },
   parseError: { type: String, default: null },
   parsedData: { type: Object, default: null },
+  pricingCompleteness: { type: Number, default: null },
   formatDate: { type: Function, required: true },
   getConfidenceColor: { type: Function, required: true }
 })

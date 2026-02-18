@@ -1057,7 +1057,15 @@
         "andMore": "... and {count} more entries",
         "analyzeContract": "Analyze Contract",
         "startImport": "Start Import",
-        "invalidFileType": "Invalid file type. Please select a PDF or image file."
+        "invalidFileType": "Invalid file type. Please select a PDF or image file.",
+        "completeness": "Price Completeness",
+        "missing": "missing",
+        "pricingTypeLabel": "Pricing Type",
+        "pricingTypeUnit": "Unit Based",
+        "pricingTypeOBP": "Per Person (OBP)",
+        "pricingTypeMultiplier": "Per Person with Multipliers",
+        "multiplierBadge": "Multiplier",
+        "aiAnalyzingMultiPass": "AI is performing detailed analysis, this may take 30-45 seconds"
       }
     }
   },

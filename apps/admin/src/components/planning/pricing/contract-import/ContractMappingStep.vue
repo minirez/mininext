@@ -6,15 +6,28 @@
     >
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
         <div>
-          <span class="text-gray-500 dark:text-gray-400">Fiyatlandırma Tipi</span>
+          <span class="text-gray-500 dark:text-gray-400">{{
+            $t('planning.pricing.contractImport.pricingTypeLabel')
+          }}</span>
           <div class="flex items-center gap-2">
             <p class="font-medium text-gray-900 dark:text-white">
-              {{ hasOBPPricing ? '👤 Kişi Bazlı' : '🏠 Ünite Bazlı' }}
+              {{
+                hasMultiplierPricing
+                  ? $t('planning.pricing.contractImport.pricingTypeMultiplier')
+                  : hasOBPPricing
+                    ? $t('planning.pricing.contractImport.pricingTypeOBP')
+                    : $t('planning.pricing.contractImport.pricingTypeUnit')
+              }}
             </p>
             <span
               v-if="hasOBPPricing"
               class="px-1.5 py-0.5 text-xs rounded bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 font-semibold"
               >OBP</span
+            >
+            <span
+              v-if="hasMultiplierPricing"
+              class="px-1.5 py-0.5 text-xs rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200 font-semibold"
+              >{{ $t('planning.pricing.contractImport.multiplierBadge') }}</span
             >
           </div>
         </div>
@@ -22,9 +35,7 @@
           <span class="text-gray-500 dark:text-gray-400">Çocuk Yaşları</span>
           <p class="font-medium text-gray-900 dark:text-white text-xs">
             {{
-              parsedData.contractInfo.childAgeRanges
-                .map(r => `${r.minAge}-${r.maxAge}`)
-                .join(', ')
+              parsedData.contractInfo.childAgeRanges.map(r => `${r.minAge}-${r.maxAge}`).join(', ')
             }}
           </p>
         </div>
@@ -137,8 +148,7 @@
               standart: {{ room.capacity.maxAdults }} kişi
               <span
                 v-if="
-                  room.capacity.maxOccupancy &&
-                  room.capacity.maxOccupancy > room.capacity.maxAdults
+                  room.capacity.maxOccupancy && room.capacity.maxOccupancy > room.capacity.maxAdults
                 "
               >
                 → max: {{ room.capacity.maxOccupancy }} kişi
@@ -292,9 +302,7 @@
               class="w-4 h-4 rounded text-amber-600"
               @change="$emit('updateOption', 'createMissingMealPlans', $event.target.checked)"
             />
-            <span class="text-sm text-gray-700 dark:text-gray-300"
-              >Eksik pansiyonları oluştur</span
-            >
+            <span class="text-sm text-gray-700 dark:text-gray-300">Eksik pansiyonları oluştur</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer">
             <input
@@ -350,6 +358,7 @@ defineProps({
   existingRoomTypes: { type: Array, required: true },
   existingMealPlans: { type: Array, required: true },
   hasOBPPricing: { type: Boolean, default: false },
+  hasMultiplierPricing: { type: Boolean, default: false },
   obpOccupancyRange: { type: String, default: '' },
   seasonYear: { type: Number, required: true },
   seasonStartDate: { type: Date, default: null },

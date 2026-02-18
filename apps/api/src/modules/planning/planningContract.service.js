@@ -155,7 +155,7 @@ export const parseContract = asyncHandler(async (req, res) => {
   result.data.existingMealPlans = mealPlans
 
   logger.info(
-    `Contract parsed - periods: ${result.data.periods?.length || 0}, rooms: ${result.data.roomTypes?.length || 0}, prices: ${result.data.pricing?.length || 0}`
+    `Contract parsed - periods: ${result.data.periods?.length || 0}, rooms: ${result.data.roomTypes?.length || 0}, prices: ${result.data.pricing?.length || 0}, completeness: ${result.data.validation?.completeness ?? 'N/A'}%`
   )
 
   result.data.fileUrl = fileUrl
@@ -184,9 +184,11 @@ export const importContractPricing = asyncHandler(async (req, res) => {
     periods,
     pricing,
     roomTypes: contractRoomTypes = [],
-    mealPlans: contractMealPlans = []
+    mealPlans: contractMealPlans = [],
+    multiplierData
   } = contractData
   const { roomMappings = {}, mealPlanMappings = {}, periodMappings = {} } = mappings || {}
+  const contractPricingType = contractData.contractInfo?.pricingType || 'unit'
 
   const {
     overwriteExisting = false,
@@ -306,6 +308,40 @@ export const importContractPricing = asyncHandler(async (req, res) => {
       mealPlans.push(newMP)
       mealPlansCreated++
       logger.info(`Created new meal plan: ${mappedCode}`)
+    }
+  }
+
+  // Apply multiplier template if contract uses per_person_multiplier pricing
+  let multipliersApplied = 0
+  if (multiplierData && contractPricingType === 'per_person_multiplier') {
+    logger.info('Applying multiplier template to room types...')
+    for (const contractRoom of contractRoomTypes) {
+      const mappedCode =
+        roomMappings[contractRoom.contractName] ||
+        contractRoom.matchedCode ||
+        contractRoom.suggestedCode
+      if (!mappedCode) continue
+
+      const existingRoom = roomTypes.find(rt => rt.code === mappedCode)
+      if (!existingRoom) continue
+
+      const updateData = {
+        pricingType: 'per_person',
+        useMultipliers: true
+      }
+      if (multiplierData.adultMultipliers) {
+        updateData['multiplierTemplate.adultMultipliers'] = multiplierData.adultMultipliers
+      }
+      if (multiplierData.childMultipliers) {
+        updateData['multiplierTemplate.childMultipliers'] = multiplierData.childMultipliers
+      }
+      if (multiplierData.roundingRule) {
+        updateData['multiplierTemplate.roundingRule'] = multiplierData.roundingRule
+      }
+
+      await RoomType.findByIdAndUpdate(existingRoom._id, updateData)
+      multipliersApplied++
+      logger.info(`Applied multiplier template to room: ${mappedCode}`)
     }
   }
 
@@ -435,8 +471,12 @@ export const importContractPricing = asyncHandler(async (req, res) => {
 
     for (const market of markets) {
       for (const dateStr of dates) {
+        // Normalize pricing type: per_person_multiplier → per_person for Rate storage
+        const effectivePricingType =
+          pricingType === 'per_person_multiplier' ? 'per_person' : pricingType || 'unit'
+
         const rateData = {
-          pricingType: pricingType || 'unit',
+          pricingType: effectivePricingType,
           currency: market.currency || 'EUR',
           allotment: allotment || defaultAllotment,
           minStay: effectiveMinStay,
@@ -452,6 +492,10 @@ export const importContractPricing = asyncHandler(async (req, res) => {
             }
           }
           rateData.pricePerNight = 0
+        } else if (pricingType === 'per_person_multiplier') {
+          // Multiplier-based OBP: store base price, multipliers live on RoomType
+          rateData.pricePerNight = pricePerNight || 0
+          rateData.extraInfant = extraInfant || 0
         } else {
           rateData.pricePerNight = pricePerNight || 0
           rateData.singleSupplement = singleSupplement || 0
@@ -625,7 +669,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
   }
 
   logger.info(
-    `Contract import completed - rooms: ${roomsCreated}/${roomsUpdated}, mealPlans: ${mealPlansCreated}, seasons: ${seasonsCreated}, rates: ${createdCount}/${updatedCount}/${skippedCount}, campaigns: ${campaignsCreated}`
+    `Contract import completed - rooms: ${roomsCreated}/${roomsUpdated}, mealPlans: ${mealPlansCreated}, seasons: ${seasonsCreated}, rates: ${createdCount}/${updatedCount}/${skippedCount}, campaigns: ${campaignsCreated}, multipliers: ${multipliersApplied}`
   )
 
   res.json({
@@ -641,7 +685,10 @@ export const importContractPricing = asyncHandler(async (req, res) => {
       ratesCreated: createdCount,
       ratesUpdated: updatedCount,
       ratesSkipped: skippedCount,
-      totalOperations: bulkOps.length
+      totalOperations: bulkOps.length,
+      multipliersApplied,
+      pricingType: contractPricingType,
+      validation: contractData.validation || null
     }
   })
 })

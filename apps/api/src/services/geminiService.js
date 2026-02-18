@@ -27,6 +27,8 @@ export {
   preprocessRoomContent,
   isJsonTruncated,
   repairTruncatedJson,
+  cleanAndParseJson,
+  validatePricingCompleteness,
   // Translation
   translateText,
   translateFields,

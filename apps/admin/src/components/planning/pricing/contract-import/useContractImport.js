@@ -110,9 +110,12 @@ export function useContractImport(props, emit) {
         )
       })
       const mealPlan = parsedData.value.mealPlans?.find(mp => {
-        const mealCodes = [mp.matchedCode, mp.contractCode, mp.suggestedCode, mp.contractName].filter(
-          Boolean
-        )
+        const mealCodes = [
+          mp.matchedCode,
+          mp.contractCode,
+          mp.suggestedCode,
+          mp.contractName
+        ].filter(Boolean)
         return mealCodes.some(
           code => p.mealPlanCode === code || p.mealPlanCode?.toLowerCase() === code?.toLowerCase()
         )
@@ -127,7 +130,9 @@ export function useContractImport(props, emit) {
   const roomMappingPercentage = computed(() => {
     const total = parsedData.value?.roomTypes?.length || 0
     if (total === 0) return 0
-    const matched = parsedData.value.roomTypes.filter(r => roomMappings.value[r.contractName]).length
+    const matched = parsedData.value.roomTypes.filter(
+      r => roomMappings.value[r.contractName]
+    ).length
     return Math.round((matched / total) * 100)
   })
 
@@ -168,9 +173,28 @@ export function useContractImport(props, emit) {
   const hasOBPPricing = computed(() => {
     if (!parsedData.value?.pricing) return false
     return (
-      parsedData.value.pricing.some(p => p.pricingType === 'per_person' || p.occupancyPricing) ||
-      parsedData.value.contractInfo?.pricingType === 'per_person'
+      parsedData.value.pricing.some(
+        p =>
+          p.pricingType === 'per_person' ||
+          p.pricingType === 'per_person_multiplier' ||
+          p.occupancyPricing
+      ) ||
+      parsedData.value.contractInfo?.pricingType === 'per_person' ||
+      parsedData.value.contractInfo?.pricingType === 'per_person_multiplier'
     )
+  })
+
+  // Check if contract uses multiplier-based OBP
+  const hasMultiplierPricing = computed(() => {
+    return (
+      parsedData.value?.contractInfo?.pricingType === 'per_person_multiplier' ||
+      parsedData.value?.multiplierData != null
+    )
+  })
+
+  // Pricing completeness from validation
+  const pricingCompleteness = computed(() => {
+    return parsedData.value?.validation?.completeness ?? null
   })
 
   // OBP occupancy range
@@ -516,6 +540,8 @@ export function useContractImport(props, emit) {
     mappedMealPlans,
     missingPricesCount,
     hasOBPPricing,
+    hasMultiplierPricing,
+    pricingCompleteness,
     obpOccupancyRange,
 
     // Methods

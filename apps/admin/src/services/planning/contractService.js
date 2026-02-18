@@ -10,14 +10,23 @@ const BASE_URL = '/planning'
 
 export const parseContract = async (hotelId, fileContent, mimeType, fileName) => {
   try {
-    const response = await apiClient.post(`${BASE_URL}/hotels/${hotelId}/contract/parse`, {
-      fileContent,
-      mimeType,
-      fileName
-    })
+    const response = await apiClient.post(
+      `${BASE_URL}/hotels/${hotelId}/contract/parse`,
+      {
+        fileContent,
+        mimeType,
+        fileName
+      },
+      {
+        timeout: 180000 // 3 minutes for multi-pass AI analysis
+      }
+    )
     return response.data
   } catch (error) {
-    apiLogger.error('Planning Service: Parse contract failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Planning Service: Parse contract failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
@@ -31,7 +40,10 @@ export const importContractPricing = async (hotelId, contractData, mappings, opt
     })
     return response.data
   } catch (error) {
-    apiLogger.error('Planning Service: Import contract failed', error.response?.data || error.message)
+    apiLogger.error(
+      'Planning Service: Import contract failed',
+      error.response?.data || error.message
+    )
     throw error
   }
 }
