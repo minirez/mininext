@@ -226,8 +226,67 @@ SADECE GEÇERLİ JSON DÖNDÜR - AÇIKLAMA YAZMA!`
 }
 
 /**
+ * Build indexed alias maps for rooms and meals to avoid code mismatch.
+ * Returns { roomAliasToCode, codeToRoomAlias, mealAliasToCode, codeToMealAlias, roomAliasRef, mealAliasRef }
+ */
+const buildAliasMaps = (rooms, meals) => {
+  const roomAliasToCode = {}
+  const codeToRoomAlias = {}
+  const mealAliasToCode = {}
+  const codeToMealAlias = {}
+
+  rooms.forEach((r, i) => {
+    const alias = `R${String(i + 1).padStart(2, '0')}`
+    const code = r.contractCode || r.suggestedCode || r.contractName
+    roomAliasToCode[alias] = code
+    codeToRoomAlias[code] = alias
+  })
+
+  meals.forEach((m, i) => {
+    const alias = `M${String(i + 1).padStart(2, '0')}`
+    const code = m.contractCode || m.suggestedCode || m.contractName
+    mealAliasToCode[alias] = code
+    codeToMealAlias[code] = alias
+  })
+
+  const roomAliasRef = rooms
+    .map((r, i) => {
+      const alias = `R${String(i + 1).padStart(2, '0')}`
+      return `${alias} = ${r.contractName}`
+    })
+    .join('\n')
+
+  const mealAliasRef = meals
+    .map((m, i) => {
+      const alias = `M${String(i + 1).padStart(2, '0')}`
+      return `${alias} = ${m.contractName}`
+    })
+    .join(', ')
+
+  return {
+    roomAliasToCode,
+    codeToRoomAlias,
+    mealAliasToCode,
+    codeToMealAlias,
+    roomAliasRef,
+    mealAliasRef
+  }
+}
+
+/**
+ * Replace alias codes (R01, M01) back to original codes in pricing entries
+ */
+const replaceAliasesInPricing = (pricing, roomAliasToCode, mealAliasToCode) => {
+  return pricing.map(p => ({
+    ...p,
+    roomCode: roomAliasToCode[p.roomCode] || p.roomCode,
+    mealPlanCode: mealAliasToCode[p.mealPlanCode] || p.mealPlanCode
+  }))
+}
+
+/**
  * PASS 2: Extract ALL room pricing in CSV format (single API call)
- * CSV is 5-6x more token-efficient than JSON, allowing all rooms in one call.
+ * Uses indexed aliases (R01, R02, M01...) to prevent code mismatch between AI output and validation.
  */
 const extractAllPricingCSV = async (client, base64Content, mimeType, structure) => {
   const pricingType = structure.contractInfo?.pricingType || 'unit'
@@ -236,17 +295,17 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
   const rooms = structure.roomTypes || []
   const meals = structure.mealPlans || []
 
+  const { roomAliasToCode, mealAliasToCode, roomAliasRef, mealAliasRef } = buildAliasMaps(
+    rooms,
+    meals
+  )
+
   const periodsRef = periods
     .map(p => `${p.code}: ${p.name} (${p.startDate} → ${p.endDate})`)
     .join('\n')
 
-  const roomCodes = rooms.map(r => r.contractCode || r.suggestedCode || r.contractName)
-  const roomsRef = rooms
-    .map(r => `${r.contractCode || r.suggestedCode || r.contractName}: ${r.contractName}`)
-    .join('\n')
-
-  const mealCodes = meals.map(m => m.contractCode || m.suggestedCode || m.contractName)
-  const mealsRef = mealCodes.join(', ')
+  const roomAliases = Object.keys(roomAliasToCode)
+  const mealAliases = Object.keys(mealAliasToCode)
 
   const roomCount = rooms.length
   const periodCount = periods.length
@@ -257,7 +316,7 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
 
   if (pricingType === 'unit') {
     csvColumns = 'ROOM|PERIOD|MEAL|PRICE|EXTRA_ADULT|EXTRA_CHILD1|EXTRA_CHILD2|EXTRA_INFANT'
-    csvExample = 'STD|P1|AI|1500|300|200|150|0'
+    csvExample = `R01|P1|M01|1500|300|200|150|0`
     pricingInstructions = `Unit (oda bazlı) fiyatlandırma:
 - PRICE: Oda/ünite gecelik fiyatı
 - EXTRA_ADULT: Ekstra yetişkin fiyatı (yoksa 0)
@@ -266,7 +325,7 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
 - EXTRA_INFANT: Bebek fiyatı (yoksa 0)`
   } else if (pricingType === 'per_person') {
     csvColumns = 'ROOM|PERIOD|MEAL|1PAX|2PAX|3PAX|4PAX|CHILD1|CHILD2|INFANT'
-    csvExample = 'STD|P1|AI|1200|1000|900|850|300|200|0'
+    csvExample = `R01|P1|M01|1200|1000|900|850|300|200|0`
     pricingInstructions = `Kişi bazlı (OBP) fiyatlandırma:
 - 1PAX: 1 yetişkin kişi başı fiyat
 - 2PAX: 2 yetişkin kişi başı fiyat
@@ -277,7 +336,7 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
 - INFANT: Bebek fiyatı (yoksa 0)`
   } else {
     csvColumns = 'ROOM|PERIOD|MEAL|BASE_PRICE|CHILD1|CHILD2|INFANT'
-    csvExample = 'STD|P1|AI|1000|300|200|0'
+    csvExample = `R01|P1|M01|1000|300|200|0`
     pricingInstructions = `Çarpanlı kişi bazlı fiyatlandırma:
 - BASE_PRICE: Baz fiyat (çarpanlar ayrı çıkarılacak)
 - CHILD1: 1. çocuk fiyatı (yoksa 0)
@@ -285,43 +344,19 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
 - INFANT: Bebek fiyatı (yoksa 0)`
   }
 
-  // Build a dynamic prompt based on available structure data
-  const roomSection =
-    roomCount > 0
-      ? `ODALAR:\n${roomsRef}`
-      : 'ODALAR: Kontrattaki TÜM oda tiplerini bul ve kısa kod kullan (STD, DLX, SUP, FAM, vb.)'
-
-  const periodSection =
-    periodCount > 0
-      ? `DÖNEMLER:\n${periodsRef}`
-      : 'DÖNEMLER: Kontrattaki TÜM fiyat dönemlerini bul ve P1, P2, P3... şeklinde kodla'
-
-  const mealSection =
-    mealCodes.length > 0
-      ? `PANSİYONLAR: ${mealsRef}`
-      : 'PANSİYONLAR: Kontrattaki pansiyon tiplerini bul (AI, UAI, FB, HB, BB, RO vb.)'
-
-  const expectLine =
-    expectedCount > 0
-      ? `TOPLAM ${expectedCount} satır bekleniyor (${roomCount} oda × ${periodCount} dönem × ${mealCount} pansiyon).`
-      : 'Kontrattaki TÜM oda × dönem × pansiyon kombinasyonları için birer satır oluştur.'
-
-  const codesLine =
-    roomCount > 0 && periodCount > 0
-      ? `6. Oda kodları: ${roomCodes.join(', ')}\n7. Dönem kodları: ${periods.map(p => p.code).join(', ')}\n8. Pansiyon kodları: ${mealsRef}`
-      : '6. Oda, dönem ve pansiyon kodlarını kontratın içinden belirle'
-
   const prompt = `Bu kontrat dökümanından TÜM oda tiplerinin TÜM dönemlerdeki fiyatlarını çıkar.
 
-${roomSection}
+ODA KODLARI (bu KISA KODLARI kullan!):
+${roomAliasRef}
 
-${periodSection}
+DÖNEMLER:
+${periodsRef}
 
-${mealSection}
+PANSİYONLAR: ${mealAliasRef}
 
 ${pricingInstructions}
 
-${expectLine}
+TOPLAM ${expectedCount} satır bekleniyor (${roomCount} oda × ${periodCount} dönem × ${mealCount} pansiyon).
 HİÇBİR FİYAT ATLAMA! Tablodaki TÜM fiyatları çıkar!
 
 CSV FORMATI (| ile ayrılmış, başlık satırı KOYMA):
@@ -332,11 +367,13 @@ ${csvExample}
 
 KURALLAR:
 1. Her satırda ROOM, PERIOD ve MEAL kodu OLMALI
-2. Sadece sayısal değerler kullan (para birimi sembolü KOYMA)
-3. Boş/bilinmeyen değer için 0 yaz
-4. Başlık satırı KOYMA, direkt verilerle başla
-5. Açıklama/yorum satırı YAZMA
-${codesLine}
+2. Oda kodu SADECE şunlardan biri olabilir: ${roomAliases.join(', ')}
+3. Dönem kodu SADECE şunlardan biri olabilir: ${periods.map(p => p.code).join(', ')}
+4. Pansiyon kodu SADECE şunlardan biri olabilir: ${mealAliases.join(', ')}
+5. Sadece sayısal değerler kullan (para birimi sembolü KOYMA)
+6. Boş/bilinmeyen değer için 0 yaz
+7. Başlık satırı KOYMA, direkt verilerle başla
+8. Açıklama/yorum satırı YAZMA
 
 SADECE CSV VERİSİ DÖNDÜR!`
 
@@ -348,7 +385,9 @@ SADECE CSV VERİSİ DÖNDÜR!`
   const maxTokens = Math.min(Math.max(16384, expectedCount * 100), 65536)
   const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, maxTokens)
 
-  const pricing = parseCSVPricing(text, pricingType)
+  const rawPricing = parseCSVPricing(text, pricingType)
+  // Replace aliases back to original codes for validation compatibility
+  const pricing = replaceAliasesInPricing(rawPricing, roomAliasToCode, mealAliasToCode)
   logger.info(`Pass 2 complete: Found ${pricing.length}/${expectedCount} price entries from CSV`)
 
   return pricing
@@ -456,6 +495,7 @@ const parseCSVPricing = (text, pricingType) => {
 
 /**
  * Retry extraction for specific missing entries (single call, CSV format)
+ * Uses the same alias system as Pass 2 for consistency
  */
 const retryMissingPricingCSV = async (
   client,
@@ -465,12 +505,31 @@ const retryMissingPricingCSV = async (
   missingEntries
 ) => {
   const pricingType = structure.contractInfo?.pricingType || 'unit'
+  const rooms = structure.roomTypes || []
+  const meals = structure.mealPlans || []
 
-  // Group missing by room for clarity
+  const { roomAliasToCode, mealAliasToCode, roomAliasRef, mealAliasRef } = buildAliasMaps(
+    rooms,
+    meals
+  )
+
+  // Build reverse lookup: original code → alias
+  const codeToRoomAlias = {}
+  for (const [alias, code] of Object.entries(roomAliasToCode)) {
+    codeToRoomAlias[code] = alias
+  }
+  const codeToMealAlias = {}
+  for (const [alias, code] of Object.entries(mealAliasToCode)) {
+    codeToMealAlias[code] = alias
+  }
+
+  // Group missing by room alias for clarity
   const missingByRoom = {}
   for (const entry of missingEntries) {
-    if (!missingByRoom[entry.roomCode]) missingByRoom[entry.roomCode] = []
-    missingByRoom[entry.roomCode].push(`${entry.periodCode}/${entry.mealPlanCode}`)
+    const roomAlias = codeToRoomAlias[entry.roomCode] || entry.roomCode
+    const mealAlias = codeToMealAlias[entry.mealPlanCode] || entry.mealPlanCode
+    if (!missingByRoom[roomAlias]) missingByRoom[roomAlias] = []
+    missingByRoom[roomAlias].push(`${entry.periodCode}/${mealAlias}`)
   }
 
   const missingDesc = Object.entries(missingByRoom)
@@ -488,6 +547,11 @@ const retryMissingPricingCSV = async (
 
   const prompt = `Bu kontrat dökümanından aşağıdaki EKSİK fiyat kayıtlarını çıkar.
 
+ODA KODLARI (bu KISA KODLARI kullan!):
+${roomAliasRef}
+
+PANSİYONLAR: ${mealAliasRef}
+
 EKSİK KAYITLAR:
 ${missingDesc}
 
@@ -496,12 +560,18 @@ TOPLAM ${missingEntries.length} satır bekleniyor.
 CSV FORMATI (| ile ayrılmış, başlık KOYMA):
 ${csvColumns}
 
-Sadece yukarıdaki eksik kombinasyonların fiyatlarını ver.
+KURALLAR:
+1. Oda kodu SADECE R01, R02, ... formatında olmalı
+2. Pansiyon kodu SADECE M01, M02, ... formatında olmalı
+3. Sadece yukarıdaki EKSİK kombinasyonların fiyatlarını ver
+4. HİÇBİR FİYAT ATLAMA!
+
 SADECE CSV VERİSİ DÖNDÜR!`
 
   logger.info(`Retry: Extracting ${missingEntries.length} missing entries...`)
   const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 8192)
-  return parseCSVPricing(text, pricingType)
+  const rawPricing = parseCSVPricing(text, pricingType)
+  return replaceAliasesInPricing(rawPricing, roomAliasToCode, mealAliasToCode)
 }
 
 /**
