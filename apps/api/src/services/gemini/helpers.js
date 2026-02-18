@@ -333,19 +333,75 @@ export const repairTruncatedJson = jsonStr => {
 
   let repaired = jsonStr.trim()
 
-  // Remove any trailing incomplete property (e.g., "name": "Some incomplete)
-  // Find last complete property
-  const lastCompleteMatch = repaired.match(
-    /^([\s\S]*"[^"]+"\s*:\s*(?:"[^"]*"|[\d.]+|true|false|null|\{[\s\S]*?\}|\[[\s\S]*?\]))\s*,?\s*"[^"]*$/m
-  )
-  if (lastCompleteMatch) {
-    repaired = lastCompleteMatch[1]
+  // Step 1: Find last valid JSON token boundary by walking backwards
+  // Remove trailing incomplete content (unclosed strings, partial keys/values)
+  // Find the last complete JSON value ending (number, string close, true, false, null, }, ])
+  let lastValidIdx = repaired.length - 1
+  let inStr = false
+  let esc = false
+
+  // Walk forward to find if we end inside a string
+  for (let i = 0; i < repaired.length; i++) {
+    if (esc) {
+      esc = false
+      continue
+    }
+    if (repaired[i] === '\\' && inStr) {
+      esc = true
+      continue
+    }
+    if (repaired[i] === '"') inStr = !inStr
   }
 
-  // Remove trailing comma if present
-  repaired = repaired.replace(/,\s*$/, '')
+  // If we ended inside a string, truncate back to before that string started
+  if (inStr) {
+    // Find the last unmatched opening quote
+    let quoteCount = 0
+    let lastOpenQuote = -1
+    let e = false
+    let s = false
+    for (let i = 0; i < repaired.length; i++) {
+      if (e) {
+        e = false
+        continue
+      }
+      if (repaired[i] === '\\' && s) {
+        e = true
+        continue
+      }
+      if (repaired[i] === '"') {
+        s = !s
+        if (s) lastOpenQuote = i
+      }
+    }
 
-  // Count unclosed brackets
+    if (lastOpenQuote > 0) {
+      // Cut before the unclosed string and its key (if it's a value)
+      // Look back for comma or colon before the key
+      let cutPoint = lastOpenQuote
+      // Check if this is a key: e.g., "key": "unfinished...
+      // Or a value in an array: [..., "unfinished...
+      // We look back for : (this is a value) or , or [ (array element) or { (first key)
+      const before = repaired.substring(0, cutPoint).trimEnd()
+      if (before.endsWith(':')) {
+        // This is a value, also remove the key
+        const keyMatch = before.match(/,?\s*"[^"]*"\s*:\s*$/)
+        if (keyMatch) {
+          cutPoint = before.length - keyMatch[0].length
+        }
+      } else if (before.endsWith(',')) {
+        cutPoint = before.length - 1
+      }
+      repaired = repaired.substring(0, cutPoint)
+    }
+  }
+
+  // Step 2: Remove trailing incomplete tokens
+  // Remove trailing comma, colon, or incomplete key/value
+  repaired = repaired.replace(/,\s*$/, '')
+  repaired = repaired.replace(/,\s*"[^"]*"\s*:\s*$/, '')
+
+  // Step 3: Count and close unclosed brackets
   let braceCount = 0
   let bracketCount = 0
   let inString = false
@@ -372,14 +428,34 @@ export const repairTruncatedJson = jsonStr => {
     }
   }
 
-  // Close unclosed brackets
-  while (bracketCount > 0) {
-    repaired += ']'
-    bracketCount--
+  // Close unclosed brackets in correct order (innermost first)
+  // Track what was opened to close in reverse order
+  const openStack = []
+  inString = false
+  escaped = false
+  for (const char of repaired) {
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (char === '\\') {
+      escaped = true
+      continue
+    }
+    if (char === '"') {
+      inString = !inString
+      continue
+    }
+    if (!inString) {
+      if (char === '{') openStack.push('}')
+      else if (char === '[') openStack.push(']')
+      else if (char === '}' || char === ']') openStack.pop()
+    }
   }
-  while (braceCount > 0) {
-    repaired += '}'
-    braceCount--
+
+  // Close remaining open brackets in reverse order
+  while (openStack.length > 0) {
+    repaired += openStack.pop()
   }
 
   return repaired

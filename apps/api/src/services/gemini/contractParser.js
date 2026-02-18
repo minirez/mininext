@@ -246,12 +246,17 @@ JSON FORMATI:
 
 SADECE GEÇERLİ JSON DÖNDÜR!`
 
-  const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 8192)
-  const result = cleanAndParseJson(text)
+  try {
+    const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 8192)
+    const result = cleanAndParseJson(text)
 
-  const pricing = result.pricing || []
-  logger.info(`Pass 2 [${roomCode}]: Found ${pricing.length}/${expectedCount} price entries`)
-  return pricing
+    const pricing = result.pricing || []
+    logger.info(`Pass 2 [${roomCode}]: Found ${pricing.length}/${expectedCount} price entries`)
+    return pricing
+  } catch (error) {
+    logger.warn(`Pass 2 [${roomCode}]: Failed to extract pricing - ${error.message}`)
+    return []
+  }
 }
 
 /**
