@@ -218,13 +218,18 @@ paymentLinkSchema.pre('save', async function (next) {
   // Generate link number if not set (globally unique, not per-partner)
   if (!this.linkNumber) {
     const year = new Date().getFullYear()
-    const count = await this.constructor.countDocuments({
-      createdAt: {
-        $gte: new Date(`${year}-01-01`),
-        $lt: new Date(`${year + 1}-01-01`)
-      }
-    })
-    this.linkNumber = `PL-${year}-${String(count + 1).padStart(6, '0')}`
+    const lastLink = await this.constructor
+      .findOne({ linkNumber: { $regex: `^PL-${year}-` } })
+      .sort({ linkNumber: -1 })
+      .select('linkNumber')
+      .lean()
+
+    let nextNum = 1
+    if (lastLink?.linkNumber) {
+      const match = lastLink.linkNumber.match(/PL-\d{4}-(\d+)/)
+      if (match) nextNum = parseInt(match[1]) + 1
+    }
+    this.linkNumber = `PL-${year}-${String(nextNum).padStart(6, '0')}`
   }
 
   next()

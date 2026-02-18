@@ -596,7 +596,11 @@ const doProcessPayment = async () => {
     }
   } catch (error) {
     console.error('[CreditCardPaymentForm] Payment failed:', error)
-    errorMessage.value = error.response?.data?.error || error.message || t('payment.card.failed')
+    errorMessage.value =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      t('payment.card.failed')
     emit('error', { message: errorMessage.value })
   } finally {
     // Only reset processing if we're not showing 3D iframe
