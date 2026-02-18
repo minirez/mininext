@@ -194,7 +194,11 @@
               v-model:send-sms="sendPaymentLinkSms"
               :amount="bookingStore.grandTotal"
               :currency="bookingStore.currency"
-              :customer-name="(bookingStore.guests.leadGuest?.firstName || '') + ' ' + (bookingStore.guests.leadGuest?.lastName || '')"
+              :customer-name="
+                (bookingStore.guests.leadGuest?.firstName || '') +
+                ' ' +
+                (bookingStore.guests.leadGuest?.lastName || '')
+              "
               :customer-email="bookingStore.guests.leadGuest?.email"
               :customer-phone="bookingStore.guests.leadGuest?.phone"
               @payment-start="handleInlinePaymentStart"
@@ -295,7 +299,11 @@
                 </button>
                 <!-- Hide create booking button when inline payment is selected (form has its own pay button) -->
                 <button
-                  v-if="!(bookingStore.payment.method === 'credit_card' && creditCardOption === 'inline')"
+                  v-if="
+                    !(
+                      bookingStore.payment.method === 'credit_card' && creditCardOption === 'inline'
+                    )
+                  "
                   :disabled="bookingStore.loading.booking"
                   class="btn-primary px-8 py-2.5"
                   @click="handleTryCreateBooking"
@@ -339,7 +347,10 @@
         </p>
 
         <!-- Payment Link Info -->
-        <div v-if="paymentLinkResult" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-4 text-left">
+        <div
+          v-if="paymentLinkResult"
+          class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mt-4 text-left"
+        >
           <div class="flex items-center mb-3">
             <span class="material-icons text-blue-500 mr-2">link</span>
             <span class="font-medium text-blue-700 dark:text-blue-400">
@@ -383,7 +394,6 @@
         </div>
       </div>
     </Modal>
-
   </div>
 </template>
 
@@ -526,13 +536,17 @@ const handleTryCreateBooking = async () => {
   // Check if this is a Paximum booking
   if (bookingStore.hasPaximumItems()) {
     result = await bookingStore.createPaximumBooking()
-  } else if (bookingStore.payment.method === 'credit_card' && creditCardOption.value === 'payment_link') {
-    // Credit card with payment link - use special flow
-    result = await bookingStore.createBookingWithPaymentLink({
+  } else if (
+    bookingStore.payment.method === 'credit_card' &&
+    creditCardOption.value === 'payment_link'
+  ) {
+    // Credit card with payment link - complete draft + create payment link
+    result = await bookingStore.completeDraft({
+      createPaymentLink: true,
       sendEmail: sendPaymentLinkEmail.value,
       sendSms: sendPaymentLinkSms.value
     })
-    if (result) {
+    if (result?.paymentLink) {
       paymentLinkResult.value = result.paymentLink
     }
   } else {
@@ -549,7 +563,7 @@ const handleTryCreateBooking = async () => {
 }
 
 // Inline payment handlers
-const handleInlinePaymentStart = async (paymentData) => {
+const handleInlinePaymentStart = async paymentData => {
   console.log('[BookingLayout] handleInlinePaymentStart called', paymentData)
   showValidation.value = true
   bookingStore.allotmentError = null
@@ -620,14 +634,15 @@ const handleInlinePaymentStart = async (paymentData) => {
     }
   } catch (error) {
     console.error('[BookingLayout] Inline payment start failed:', error)
-    bookingStore.error = error.response?.data?.message || error.message || t('booking.error.paymentFailed')
+    bookingStore.error =
+      error.response?.data?.message || error.message || t('booking.error.paymentFailed')
     if (creditCardPaymentRef.value?.resetProcessing) {
       creditCardPaymentRef.value.resetProcessing()
     }
   }
 }
 
-const handleInlinePaymentSuccess = async (result) => {
+const handleInlinePaymentSuccess = async result => {
   console.log('[BookingLayout] handleInlinePaymentSuccess called!', result)
 
   try {
@@ -652,7 +667,7 @@ const handleInlinePaymentSuccess = async (result) => {
   showValidation.value = false
 }
 
-const handleInlinePaymentError = (error) => {
+const handleInlinePaymentError = error => {
   console.error('Inline payment error:', error)
   if (error !== 'cancelled') {
     bookingStore.error = error

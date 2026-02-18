@@ -15,7 +15,7 @@
  */
 
 import { Queue, Worker } from 'bullmq'
-import { getRedisClient, isRedisConnected } from './redis.js'
+import { getRedisClient } from './redis.js'
 import logger from './logger.js'
 
 /** @type {Map<string, Queue>} Active queues */

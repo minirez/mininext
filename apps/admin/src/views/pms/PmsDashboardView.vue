@@ -677,17 +677,21 @@ const formatDate = date => {
   })
 }
 
+// Check if a guest name is a placeholder
+const isPlaceholderName = name => !name || name === 'Misafir' || name === 'Guest'
+
 // Get guest name from Stay object
 const getGuestName = stay => {
   if (stay.guests?.length > 0) {
     const mainGuest = stay.guests.find(g => g.isMainGuest) || stay.guests[0]
-    if (mainGuest?.firstName) {
+    if (mainGuest?.firstName && !isPlaceholderName(mainGuest.firstName)) {
       return `${mainGuest.firstName} ${mainGuest.lastName || ''}`.trim()
     }
   }
-  // Fallback to leadGuest (from booking)
-  if (stay.leadGuest?.firstName) {
-    return `${stay.leadGuest.firstName} ${stay.leadGuest.lastName || ''}`.trim()
+  // Fallback to leadGuest (from populated booking)
+  const lead = stay.booking?.leadGuest || stay.leadGuest
+  if (lead?.firstName && !isPlaceholderName(lead.firstName)) {
+    return `${lead.firstName} ${lead.lastName || ''}`.trim()
   }
   return t('dashboard.guest')
 }

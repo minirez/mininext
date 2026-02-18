@@ -111,9 +111,7 @@ export const createDraft = asyncHandler(async (req, res) => {
 
   // Determine sales channel from request or searchCriteria
   // searchCriteria.channel is 'B2B' or 'B2C', salesChannel is 'b2b' or 'b2c'
-  const salesChannel = req.body.salesChannel ||
-    (searchCriteria?.channel?.toLowerCase()) ||
-    'b2c'
+  const salesChannel = req.body.salesChannel || searchCriteria?.channel?.toLowerCase() || 'b2c'
 
   // Create draft
   const draft = new Booking({
@@ -404,7 +402,9 @@ export const completeDraft = asyncHandler(async (req, res) => {
 
   // Lead Guest validation
   // Convert Mongoose subdocument to plain object for validation
-  const leadGuestObj = draft.leadGuest?.toObject ? draft.leadGuest.toObject() : (draft.leadGuest || {})
+  const leadGuestObj = draft.leadGuest?.toObject
+    ? draft.leadGuest.toObject()
+    : draft.leadGuest || {}
   const leadGuestData = {
     ...leadGuestObj,
     email: draft.contact?.email,
@@ -421,7 +421,7 @@ export const completeDraft = asyncHandler(async (req, res) => {
       room.forEach((guest, guestIndex) => {
         if (roomIndex === 0 && guestIndex === 0 && guest.type === 'adult') return
         // Convert Mongoose subdocument to plain object for validation
-        const guestObj = guest?.toObject ? guest.toObject() : (guest || {})
+        const guestObj = guest?.toObject ? guest.toObject() : guest || {}
         const guestResult = validateData(guestObj, roomGuestSchema)
         if (!guestResult.valid) {
           guestResult.errors.forEach(e =>
@@ -436,7 +436,7 @@ export const completeDraft = asyncHandler(async (req, res) => {
   if (draft.invoiceDetails?.type === 'individual') {
     const individualObj = draft.invoiceDetails.individual?.toObject
       ? draft.invoiceDetails.individual.toObject()
-      : (draft.invoiceDetails.individual || {})
+      : draft.invoiceDetails.individual || {}
     const invoiceResult = validateData(individualObj, invoiceIndividualValidation)
     if (!invoiceResult.valid) {
       invoiceResult.errors.forEach(e => errors.push({ ...e, section: 'invoiceIndividual' }))
@@ -444,7 +444,7 @@ export const completeDraft = asyncHandler(async (req, res) => {
   } else if (draft.invoiceDetails?.type === 'corporate') {
     const corporateObj = draft.invoiceDetails.corporate?.toObject
       ? draft.invoiceDetails.corporate.toObject()
-      : (draft.invoiceDetails.corporate || {})
+      : draft.invoiceDetails.corporate || {}
     const invoiceResult = validateData(corporateObj, invoiceCorporateValidation)
     if (!invoiceResult.valid) {
       invoiceResult.errors.forEach(e => errors.push({ ...e, section: 'invoiceCorporate' }))
@@ -452,7 +452,7 @@ export const completeDraft = asyncHandler(async (req, res) => {
   }
 
   // Payment validation
-  const paymentObj = draft.payment?.toObject ? draft.payment.toObject() : (draft.payment || {})
+  const paymentObj = draft.payment?.toObject ? draft.payment.toObject() : draft.payment || {}
   const paymentResult = validateData(paymentObj, paymentValidationSchema)
   if (!paymentResult.valid) {
     paymentResult.errors.forEach(e => errors.push({ ...e, section: 'payment' }))
@@ -581,6 +581,8 @@ export const completeDraft = asyncHandler(async (req, res) => {
   // Create Payment record based on payment method
   // This ensures the payment appears in pending payments list
   const paymentMethod = draft.payment?.method
+  let createdPaymentLink = null
+
   if (paymentMethod && draft.pricing?.grandTotal > 0) {
     try {
       // Map booking payment method to Payment model type
@@ -614,6 +616,78 @@ export const completeDraft = asyncHandler(async (req, res) => {
           await payment.save()
         }
 
+        // Create PaymentLink if requested (credit card + payment link flow)
+        if (paymentType === 'credit_card' && req.body?.createPaymentLink) {
+          try {
+            const PaymentLink = (await import('../paymentLink/paymentLink.model.js')).default
+
+            const leadGuest = draft.leadGuest || {}
+            const contact = draft.contact || {}
+            const customerName =
+              `${leadGuest.firstName || ''} ${leadGuest.lastName || ''}`.trim() || 'Müşteri'
+            const customerEmail = contact.email || ''
+            const customerPhone = contact.phone || ''
+
+            const expiresAt = new Date()
+            expiresAt.setDate(expiresAt.getDate() + 7)
+
+            const paymentLink = new PaymentLink({
+              partner: partnerId,
+              booking: draft._id,
+              linkedPayment: payment._id,
+              customer: {
+                name: customerName,
+                email: customerEmail,
+                phone: customerPhone
+              },
+              description: `Rezervasyon Ödemesi - ${draft.bookingNumber}`,
+              amount: payment.amount,
+              currency: payment.currency,
+              installment: { enabled: true, maxCount: 12, rates: {} },
+              expiresAt,
+              createdBy: req.user?._id
+            })
+
+            await paymentLink.save()
+
+            // Store reference in payment
+            payment.cardDetails = payment.cardDetails || {}
+            payment.cardDetails.paymentLink = paymentLink._id
+            payment.cardDetails.linkSentAt = new Date()
+            await payment.save()
+
+            createdPaymentLink = paymentLink
+
+            // Send notifications if requested
+            const { sendEmail = false, sendSms = false } = req.body
+            if ((sendEmail || sendSms) && (customerEmail || customerPhone)) {
+              try {
+                const { sendPaymentLinkNotification } =
+                  await import('./payment-notifications.service.js')
+                const Partner = (await import('../partner/partner.model.js')).default
+                const partner = await Partner.findById(partnerId)
+
+                await sendPaymentLinkNotification(paymentLink, partner, {
+                  email: sendEmail && !!customerEmail,
+                  sms: sendSms && !!customerPhone
+                })
+              } catch (notifyError) {
+                logger.error(
+                  '[completeDraft] Payment link notification failed:',
+                  notifyError.message
+                )
+              }
+            }
+
+            logger.info('Payment link created for booking:', {
+              bookingNumber: draft.bookingNumber,
+              paymentLinkId: paymentLink._id
+            })
+          } catch (linkError) {
+            logger.error('Failed to create payment link:', linkError)
+          }
+        }
+
         // Update booking payment status and reference
         await updateBookingPayment(draft._id)
 
@@ -630,17 +704,23 @@ export const completeDraft = asyncHandler(async (req, res) => {
     }
   }
 
+  const responseData = {
+    bookingNumber: draft.bookingNumber,
+    _id: draft._id,
+    status: draft.status,
+    confirmedAt: draft.confirmedAt,
+    hotel: draft.hotelName,
+    checkIn: draft.checkIn,
+    checkOut: draft.checkOut,
+    pricing: draft.pricing
+  }
+
+  if (createdPaymentLink) {
+    responseData.paymentLink = createdPaymentLink
+  }
+
   res.json({
     success: true,
-    data: {
-      bookingNumber: draft.bookingNumber,
-      _id: draft._id,
-      status: draft.status,
-      confirmedAt: draft.confirmedAt,
-      hotel: draft.hotelName,
-      checkIn: draft.checkIn,
-      checkOut: draft.checkOut,
-      pricing: draft.pricing
-    }
+    data: responseData
   })
 })

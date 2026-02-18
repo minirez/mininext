@@ -352,8 +352,9 @@ export function createDraftActions(state, getters, helpers) {
 
   /**
    * Complete draft (final booking)
+   * @param {Object} [options={}] - Optional body data (e.g. { createPaymentLink, sendEmail, sendSms })
    */
-  async function completeDraft() {
+  async function completeDraft(options = {}) {
     if (!draftBookingNumber.value) {
       error.value = 'Draft bulunamadı'
       return null
@@ -367,8 +368,8 @@ export function createDraftActions(state, getters, helpers) {
       // First save current state
       await updateDraft()
 
-      // Then complete
-      const response = await bookingService.completeDraft(draftBookingNumber.value)
+      // Then complete (pass options as body data)
+      const response = await bookingService.completeDraft(draftBookingNumber.value, options)
 
       if (response.success) {
         bookingResult.value = response.data

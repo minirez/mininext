@@ -24,6 +24,10 @@ import {
   distributedLock
 } from './stay.internal.js'
 
+/** Check if a guest name is a placeholder (not a real name) */
+const isPlaceholderName = name =>
+  !name || name === GUEST_PLACEHOLDER_NAME || name === DEFAULT_GUEST_FIRST_NAME
+
 /**
  * Walk-in check-in (without reservation)
  */
@@ -290,7 +294,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
 
       // For multi-room bookings, prefer the room's own lead guest
       const roomLead = roomGuests.find(g => g.isLead)
-      const hasRoomLead = roomLead?.firstName && roomLead.firstName !== GUEST_PLACEHOLDER_NAME
+      const hasRoomLead = roomLead?.firstName && !isPlaceholderName(roomLead.firstName)
 
       if (hasRoomLead) {
         // Use room's own lead guest as main guest
@@ -312,7 +316,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
             (g.firstName === roomLead.firstName && g.lastName === roomLead.lastName)
           )
             continue
-          if (g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME) {
+          if (g.firstName && !isPlaceholderName(g.firstName)) {
             guestList.push({
               firstName: g.firstName,
               lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,
@@ -322,7 +326,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
             })
           }
         }
-      } else if (lead?.firstName && lead.firstName !== GUEST_PLACEHOLDER_NAME) {
+      } else if (lead?.firstName && !isPlaceholderName(lead.firstName)) {
         // Fallback to booking leadGuest (single-room or no room lead)
         guestList = [
           {
@@ -337,7 +341,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
         ]
         for (const g of roomGuests) {
           if (g.isLead || (g.firstName === lead.firstName && g.lastName === lead.lastName)) continue
-          if (g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME) {
+          if (g.firstName && !isPlaceholderName(g.firstName)) {
             guestList.push({
               firstName: g.firstName,
               lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,
@@ -350,7 +354,7 @@ export const checkInFromBooking = asyncHandler(async (req, res) => {
       } else if (roomGuests.length > 0) {
         // No usable lead at all, use room guests
         guestList = roomGuests
-          .filter(g => g.firstName && g.firstName !== GUEST_PLACEHOLDER_NAME)
+          .filter(g => g.firstName && !isPlaceholderName(g.firstName))
           .map((g, i) => ({
             firstName: g.firstName,
             lastName: g.lastName || DEFAULT_GUEST_LAST_NAME,

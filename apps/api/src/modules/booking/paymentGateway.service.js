@@ -71,14 +71,18 @@ export const queryBinByPartner = asyncHandler(async (req, res) => {
   let currencyConversion = null
 
   if (currencyUpper === 'TRY') {
-    result = await paymentGateway.queryBin(
-      bin,
-      amount,
-      'try',
-      partnerId?.toString(),
-      token,
-      queryOpts
-    )
+    try {
+      result = await paymentGateway.queryBin(
+        bin,
+        amount,
+        'try',
+        partnerId?.toString(),
+        token,
+        queryOpts
+      )
+    } catch (err) {
+      throw new BadRequestError(err.message || 'BIN_QUERY_FAILED')
+    }
   } else {
     // Foreign currency - check if domestic (TR) card needs TRY conversion
     try {
@@ -406,25 +410,31 @@ export const processCardPayment = asyncHandler(async (req, res) => {
   }
 
   // Process payment through gateway
-  const result = await paymentGateway.processPayment(
-    {
-      posId,
-      amount: paymentAmount,
-      currency: paymentCurrency.toLowerCase(),
-      installment: installment || 1,
-      card: {
-        holder: card.holder,
-        number: card.number.replace(/\s/g, ''),
-        expiry: card.expiry,
-        cvv: card.cvv
+  let result
+  try {
+    result = await paymentGateway.processPayment(
+      {
+        posId,
+        amount: paymentAmount,
+        currency: paymentCurrency.toLowerCase(),
+        installment: installment || 1,
+        card: {
+          holder: card.holder,
+          number: card.number.replace(/\s/g, ''),
+          expiry: card.expiry,
+          cvv: card.cvv
+        },
+        customer: customerInfo,
+        externalId: payment._id.toString(),
+        partnerId: partnerId?.toString(),
+        noFallback: noFallbackPay
       },
-      customer: customerInfo,
-      externalId: payment._id.toString(),
-      partnerId: partnerId?.toString(),
-      noFallback: noFallbackPay
-    },
-    token
-  )
+      token
+    )
+  } catch (err) {
+    // Convert payment gateway errors to proper BadRequestError
+    throw new BadRequestError(err.message || 'PAYMENT_FAILED')
+  }
 
   if (!result.success) {
     throw new BadRequestError(result.error || 'PAYMENT_FAILED')

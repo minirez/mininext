@@ -139,6 +139,7 @@ export const downloadHotelImages = async (images, hotelId) => {
     if (!img.url) continue
 
     try {
+      // eslint-disable-next-line no-await-in-loop
       const result = await downloadImage(img.url, hotelId, `gallery-${i}`)
 
       if (result.success) {
@@ -207,6 +208,7 @@ export const downloadRoomTemplateImages = async (images, hotelId, roomCode) => {
 
     try {
       // Custom download for room templates
+      // eslint-disable-next-line no-await-in-loop
       const result = await downloadImageToPath(img.url, roomDir, `room-${i}`)
 
       if (result.success) {

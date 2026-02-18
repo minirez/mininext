@@ -36,6 +36,7 @@ export const getStays = asyncHandler(async (req, res) => {
     Stay.find(filter)
       .populate('room', 'roomNumber floor')
       .populate('roomType', 'name code')
+      .populate('booking', 'leadGuest bookingNumber')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -184,6 +185,7 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   })
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
+    .populate('booking', 'leadGuest bookingNumber')
 
   // Combine both sources for expected arrivals
   const expectedArrivals = [...expectedFromBookings, ...pendingStays]
@@ -195,6 +197,7 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   })
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
+    .populate('booking', 'leadGuest bookingNumber')
 
   // Get pending check-outs (should check out today or overdue)
   const pendingCheckOuts = await Stay.find({
@@ -204,6 +207,7 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   })
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
+    .populate('booking', 'leadGuest bookingNumber')
 
   // Get today's actual check-outs
   const todayCheckOuts = await Stay.find({
@@ -212,6 +216,7 @@ export const getTodayActivity = asyncHandler(async (req, res) => {
   })
     .populate('room', 'roomNumber floor')
     .populate('roomType', 'name code')
+    .populate('booking', 'leadGuest bookingNumber')
 
   res.json({
     success: true,

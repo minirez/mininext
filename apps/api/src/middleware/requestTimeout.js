@@ -5,13 +5,14 @@
  */
 export function requestTimeout(defaultMs = 30000) {
   return (req, res, next) => {
-    // Longer timeout for file upload endpoints
+    // Longer timeout for file upload and AI processing endpoints
     const isUpload =
       req.path.includes('/upload') ||
       req.path.includes('/avatar') ||
       req.path.includes('/photos') ||
-      req.path.includes('/import')
-    const timeout = isUpload ? 120000 : defaultMs
+      req.path.includes('/import') ||
+      req.path.includes('/contract/parse')
+    const timeout = isUpload ? 180000 : defaultMs
 
     req.setTimeout(timeout)
     res.setTimeout(timeout, () => {
