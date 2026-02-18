@@ -1081,7 +1081,9 @@
         "paxLabel": "{n} Kişi",
         "multiplierLabel": "Çarpan",
         "noPriceData": "Fiyat verisi bulunamadı",
-        "priceCount": "{count} fiyat"
+        "priceCount": "{count} fiyat",
+        "personSuffix": "kişi",
+        "childSuffix": "çocuk"
       }
     }
   },

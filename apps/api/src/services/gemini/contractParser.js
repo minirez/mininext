@@ -62,52 +62,93 @@ MEVCUT SISTEM VERILERI:
 GÖREV: Aşağıdaki bilgileri JSON olarak çıkar:
 
 1. contractInfo: Otel adı, geçerlilik tarihleri, para birimi, notlar
-2. pricingType: Fiyatlandırma tipini belirle:
-   - "unit" → Ünite/oda bazlı fiyat (tek fiyat + ekstra kişi)
-   - "per_person" → Kişi bazlı (OBP) - her yetişkin sayısı için ayrı fiyat
-   - "per_person_multiplier" → Çarpanlı OBP - baz fiyat + çarpan tablosu (ör: 1 kişi: x0.8, 2 kişi: x1.0, 3 kişi: x1.3)
-3. periods: Tüm dönemler (code, name, startDate, endDate, minStay)
+2. pricingType: Fiyatlandırma tipini belirle (AŞAĞIDAKI KURALLARI DİKKATLE OKU!)
+3. periods: Tüm dönemler
 4. roomTypes: Tüm oda tipleri (kapasite dahil)
 5. mealPlans: Pansiyon tipleri
 6. childTypes: Çocuk yaş grupları
 7. earlyBookingDiscounts: EB indirimleri
 
-ÇARPANLI OBP TESPİT:
-- Bir "baz fiyat" + çarpan tablosu varsa → per_person_multiplier
-- Ör: "Baz: 100€, 1 kişi: %80, 2 kişi: %100, 3 kişi: %130"
-- Ör: "SGL: 0.8, DBL: 1.0, TRP: 1.3" gibi çarpan satırları
+═══════════════════════════════════════════
+FİYATLANDIRMA TİPİ TESPİTİ - ÇOK ÖNEMLİ!
+═══════════════════════════════════════════
+"unit" → AŞAĞIDAKILERDEN BİRİ VARSA BU unit'TİR:
+  • "ROOM RATE for 2 ADULTS" + "SINGLE ROOM" + "TRIPLE ROOM"
+  • "UNIT RATE" + kişi sayısına göre fiyat satırları
+  • "Ünite Fiyatı" veya "Oda Fiyatı"
+  • Her oda tipi için TEK BAZ FİYAT + ek kişi fark fiyatları
+  ⚠ Farklı kişi sayıları için farklı ODA TOPLAM fiyatları görmek unit'tir, OBP DEĞİLDİR!
+  ⚠ "2 AD = 600€, 3 AD = 880€" → Bu ODA TOPLAM fiyatıdır, unit'tir!
 
-PERIYOT TARİHLERİ:
+"per_person" → SADECE şu durumda:
+  • "Kişi başı" veya "per person" açıkça yazıyorsa
+  • "1 Kişi: 300€/kişi/gece, 2 Kişi: 250€/kişi/gece" (toplam = kişi_sayısı × kişi_başı_fiyat)
+  • Fiyat tablosunda KİŞİ BAŞI ifadesi varsa
+
+"per_person_multiplier" → SADECE şu durumda:
+  • Baz fiyat + çarpan/yüzde tablosu varsa
+  • Ör: "SGL: 0.8, DBL: 1.0, TRP: 1.3"
+
+═══════════════════════════════════════════
+PERIYOT TARİHLERİ
+═══════════════════════════════════════════
 - Her periyot için code (P1, P2...), name, startDate (YYYY-MM-DD), endDate (YYYY-MM-DD)
 - minStay: Minimum konaklama süresi (gece). Her periyotta farklı olabilir! Belirtilmemişse 1.
 - releaseDay: Release/stop sales gün sayısı. Her periyotta farklı olabilir! Belirtilmemişse 0.
-- ÖNEMLİ: Kontratın "minimum gece" veya "min. stay" veya "min konaklama" sütununu her periyot için ayrı oku!
-- ÖNEMLİ: Kontratın "release" veya "stop sale" veya "kapanış" sütununu her periyot için ayrı oku!
+- ÖNEMLİ: Kontratın "MINIMUM STAY" satırını her periyot için ayrı oku!
+- ÖNEMLİ: Kontratın "Release Days" satırını her periyot için ayrı oku!
+- ÖNEMLİ: Bazı odalar/bölümler için minStay ve releaseDay farklı olabilir. Eğer farklıysa en yüksek olanı al.
 
-ODA TİPLERİ EŞLEŞTİRME:
+═══════════════════════════════════════════
+ODA TİPLERİ + KAPASİTE
+═══════════════════════════════════════════
 Mevcut odalarla (${existingRoomsStr}) eşleştir:
 - Kod bazlı: "STD" → STD, "DLX" → DLX
 - İsim bazlı: "Standard Room" → STD, "Deluxe" → DLX
 - Eşleşme yoksa: isNewRoom: true, suggestedCode ile 3 harfli kod öner
 - matchedCode SADECE mevcut listeden olabilir!
 
-ODA KAPASİTESİ:
-- "Ünite Fiyatı (X Kişi)" → standardOccupancy: X
-- "X+1. Kişi: Y TL" varsa → maxAdults: X+1
-- "(2+2)" → maxAdults: 2, maxChildren: 2, maxOccupancy: 4
+KAPASİTE TESPİTİ - HER ODA İÇİN:
+- "ROOM RATE for 2 ADULTS" → standardOccupancy: 2
+- En yüksek yetişkin kombinasyonuna bak:
+  • "TRIPLE ROOM" veya "3 AD + ..." → maxAdults: 3
+  • "4 AD + ..." veya "4 PAX" satırı varsa → maxAdults: 4
+  • "5 AD + ..." veya "5 PAX" → maxAdults: 5, vb.
+- En yüksek çocuk kombinasyonuna bak:
+  • "2 AD + 2 CHD" → maxChildren: 2
+  • "2 AD + 3 CHD" → maxChildren: 3
+- Bebekler: "INF" satırı varsa → maxInfants: 1
+- maxOccupancy: listelenen EN YÜKSEK toplam kişi sayısı
+- Oda boyutu M2: "(80 M2)" → roomSize: 80 (varsa)
+- Villa/Suite UNIT RATE altında:
+  • İlk PAX satırı = standardOccupancy + 1 → standardOccupancy = ilkPAX - 1
+  • Son PAX satırı → maxOccupancy
 
-PANSİYON EŞLEŞTİRME:
-- "All Inclusive" / "Her Şey Dahil" / "AI" → AI
+═══════════════════════════════════════════
+PANSİYON EŞLEŞTİRME
+═══════════════════════════════════════════
+- "All Inclusive" / "Her Şey Dahil" / "AI" / "MAXX ALL INCLUSIVE" → AI
 - "Ultra All Inclusive" / "UAI" → UAI
 - "Full Board" / "Tam Pansiyon" → FB
 - "Half Board" / "Yarım Pansiyon" → HB
 - "Bed & Breakfast" / "Oda Kahvaltı" → BB
 - "Room Only" / "Sadece Oda" → RO
 
-EB İNDİRİMLERİ:
-- salePeriod: Satış dönemi (startDate, endDate)
-- stayPeriod: Konaklama dönemi
-- discountPercentage, paymentDueDate, isCumulative
+═══════════════════════════════════════════
+EB İNDİRİMLERİ - HEPSİNİ YAKALA!
+═══════════════════════════════════════════
+"EARLY BOOKING DISCOUNT" tablosunu ara. Her satır bir EB kampanyası:
+- "Booking Until" / "Reservation Until" → salePeriod.endDate (startDate: bugün veya kontrat başı)
+- "Accommodation Date" / "Stay Period" → stayPeriod (startDate - endDate)
+- "Discount %" → discountPercentage
+- "Payment Date" → paymentDueDate
+- "Payment %" → paymentPercentage
+- Kümülatif mi? Kontratın notlarına bak ("valid with long stay discount" → isCumulative: true)
+
+"LONG STAY DISCOUNT" tablosunu da ara → ayrı bir EB kaydı olarak ekle:
+- name: "Long Stay Discount"
+- minimumStay bilgisini conditions alanına ekle
+- discountPercentage, salePeriod, stayPeriod
 
 JSON FORMATI:
 {
@@ -135,7 +176,8 @@ JSON FORMATI:
         "maxAdults": 3,
         "maxChildren": 2,
         "maxInfants": 1,
-        "maxOccupancy": 5
+        "maxOccupancy": 5,
+        "roomSize": 80
       }
     }
   ],
@@ -158,7 +200,8 @@ JSON FORMATI:
       "discountPercentage": 20,
       "salePeriod": { "startDate": "...", "endDate": "..." },
       "stayPeriod": { "startDate": "...", "endDate": "..." },
-      "paymentDueDate": "...",
+      "paymentDueDate": "YYYY-MM-DD",
+      "paymentPercentage": 100,
       "isCumulative": false
     }
   ]
@@ -315,14 +358,18 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
   let csvColumns, csvExample, pricingInstructions
 
   if (pricingType === 'unit') {
-    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|EXTRA_ADULT|EXTRA_CHILD1|EXTRA_CHILD2|EXTRA_INFANT'
-    csvExample = `R01|P1|M01|1500|300|200|150|0`
+    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|SINGLE|EXTRA_ADULT|EXTRA_CHILD|EXTRA_INFANT'
+    csvExample = `R01|P1|M01|600|525|280|0|0`
     pricingInstructions = `Unit (oda bazlı) fiyatlandırma:
-- PRICE: Oda/ünite gecelik fiyatı
-- EXTRA_ADULT: Ekstra yetişkin fiyatı (yoksa 0)
-- EXTRA_CHILD1: 1. çocuk fiyatı (yoksa 0)
-- EXTRA_CHILD2: 2. çocuk fiyatı (yoksa 0)
-- EXTRA_INFANT: Bebek fiyatı (yoksa 0)`
+- PRICE: "ROOM RATE for 2 ADULTS" veya "UNIT RATE" (standart doluluk baz fiyatı)
+- SINGLE: "SINGLE ROOM" fiyatı (tek kişi ODA fiyatı, yoksa 0)
+- EXTRA_ADULT: Ek yetişkin başına FARK (TRIPLE - BASE hesapla, yoksa 0)
+  Örnek: 2AD=600, 3AD=880 → EXTRA_ADULT = 880-600 = 280
+  Villa notu: "each additional adult €200" → 200
+- EXTRA_CHILD: Ek çocuk başına fark (yoksa veya ücretsizse 0)
+  Örnek: 2AD=600, 2AD+1CHD=600 → çocuk ücretsiz → 0
+  Villa notu: "each child €100" → 100
+- EXTRA_INFANT: Bebek ücreti (genelde 0)`
   } else if (pricingType === 'per_person') {
     csvColumns = 'ROOM|PERIOD|MEAL|1PAX|2PAX|3PAX|4PAX|CHILD1|CHILD2|INFANT'
     csvExample = `R01|P1|M01|1200|1000|900|850|300|200|0`
@@ -425,20 +472,21 @@ const parseCSVPricing = (text, pricingType) => {
     try {
       if (pricingType === 'unit') {
         if (parts.length < 4) continue
+        const basePrice = parseFloat(parts[3]) || 0
+        const singlePrice = parseFloat(parts[4]) || 0
         const entry = {
           roomCode: parts[0],
           periodCode: parts[1],
           mealPlanCode: parts[2],
-          pricePerNight: parseFloat(parts[3]) || 0,
-          extraAdult: parseFloat(parts[4]) || 0,
+          pricePerNight: basePrice,
+          singleSupplement: singlePrice > 0 && basePrice > 0 ? basePrice - singlePrice : 0,
+          extraAdult: parseFloat(parts[5]) || 0,
           extraChild: [],
           extraInfant: parseFloat(parts[7]) || 0,
           pricingType: 'unit'
         }
-        const child1 = parseFloat(parts[5])
-        const child2 = parseFloat(parts[6])
+        const child1 = parseFloat(parts[6])
         if (child1) entry.extraChild.push(child1)
-        if (child2) entry.extraChild.push(child2)
         if (entry.pricePerNight > 0) pricing.push(entry)
       } else if (pricingType === 'per_person') {
         if (parts.length < 5) continue

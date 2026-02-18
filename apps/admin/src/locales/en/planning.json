@@ -1081,7 +1081,9 @@
         "paxLabel": "{n} Pax",
         "multiplierLabel": "Multiplier",
         "noPriceData": "No price data found",
-        "priceCount": "{count} prices"
+        "priceCount": "{count} prices",
+        "personSuffix": "pax",
+        "childSuffix": "child"
       }
     }
   },

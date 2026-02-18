@@ -271,7 +271,9 @@
               </div>
             </div>
             <p v-if="room.capacity" class="text-xs text-gray-500 dark:text-gray-400">
-              standart: {{ room.capacity.standardOccupancy || room.capacity.maxAdults || '?' }} kişi
+              <span v-if="room.capacity.roomSize" class="mr-1">{{ room.capacity.roomSize }}m²</span>
+              <span class="mr-1">•</span>
+              {{ room.capacity.standardOccupancy || room.capacity.maxAdults || '?' }}
               <span
                 v-if="
                   room.capacity.maxOccupancy &&
@@ -279,8 +281,13 @@
                     (room.capacity.standardOccupancy || room.capacity.maxAdults || 0)
                 "
               >
-                → max: {{ room.capacity.maxOccupancy }} kişi
+                → {{ room.capacity.maxOccupancy }}
               </span>
+              {{ $t('planning.pricing.contractImport.personSuffix') }}
+              <template v-if="room.capacity.maxChildren">
+                ({{ room.capacity.maxChildren }}
+                {{ $t('planning.pricing.contractImport.childSuffix') }})
+              </template>
             </p>
           </div>
           <span class="material-icons text-gray-400">arrow_forward</span>
