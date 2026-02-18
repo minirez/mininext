@@ -18,7 +18,7 @@ export const parseContract = async (hotelId, fileContent, mimeType, fileName) =>
         fileName
       },
       {
-        timeout: 180000 // 3 minutes for multi-pass AI analysis
+        timeout: 300000 // 5 minutes for multi-pass AI analysis (large contracts: 16+ rooms)
       }
     )
     return response.data

@@ -2,8 +2,8 @@ import logger from '../../core/logger.js'
 import { getAI, GEMINI_MODEL } from './client.js'
 import { cleanAndParseJson, validatePricingCompleteness } from './helpers.js'
 
-// Max parallel room pricing extractions (Gemini rate limit friendly)
-const PARALLEL_ROOMS = 3
+// Max parallel room pricing extractions (Gemini standard tier: 60 RPM)
+const PARALLEL_ROOMS = 5
 
 /**
  * Helper: Call Gemini with file + text prompt, return raw text
