@@ -97,7 +97,7 @@ PERIYOT TARİHLERİ
 - releaseDay: Release/stop sales gün sayısı. Her periyotta farklı olabilir! Belirtilmemişse 0.
 - ÖNEMLİ: Kontratın "MINIMUM STAY" satırını her periyot için ayrı oku!
 - ÖNEMLİ: Kontratın "Release Days" satırını her periyot için ayrı oku!
-- ÖNEMLİ: Bazı odalar/bölümler için minStay ve releaseDay farklı olabilir. Eğer farklıysa en yüksek olanı al.
+- ÖNEMLİ: Bazı odalar/bölümler için minStay ve releaseDay farklı olabilir. Periyot düzeyinde genel değeri yaz. Oda bazlı farklı değer varsa roomType'a yaz.
 
 ═══════════════════════════════════════════
 ODA TİPLERİ + KAPASİTE
@@ -123,6 +123,12 @@ KAPASİTE TESPİTİ - HER ODA İÇİN:
 - Villa/Suite UNIT RATE altında:
   • İlk PAX satırı = standardOccupancy + 1 → standardOccupancy = ilkPAX - 1
   • Son PAX satırı → maxOccupancy
+
+ODA BAZLI MIN GECE & RELEASE:
+- Bazı oda tipleri için minStay/releaseDay genel değerden farklı olabilir
+- Villa/Suite genellikle daha yüksek release day'e sahip
+- Oda tipine özel değer varsa → "minStay": X, "releaseDay": Y
+- Genel periyot değeriyle aynıysa → null bırak
 
 ═══════════════════════════════════════════
 PANSİYON EŞLEŞTİRME
@@ -178,7 +184,9 @@ JSON FORMATI:
         "maxInfants": 1,
         "maxOccupancy": 5,
         "roomSize": 80
-      }
+      },
+      "minStay": null,
+      "releaseDay": null
     }
   ],
   "mealPlans": [
@@ -586,7 +594,7 @@ const retryMissingPricingCSV = async (
 
   let csvColumns
   if (pricingType === 'unit') {
-    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|EXTRA_ADULT|EXTRA_CHILD1|EXTRA_CHILD2|EXTRA_INFANT'
+    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|SINGLE|EXTRA_ADULT|EXTRA_CHILD|EXTRA_INFANT'
   } else if (pricingType === 'per_person') {
     csvColumns = 'ROOM|PERIOD|MEAL|1PAX|2PAX|3PAX|4PAX|CHILD1|CHILD2|INFANT'
   } else {

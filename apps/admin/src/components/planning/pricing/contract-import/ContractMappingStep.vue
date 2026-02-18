@@ -32,7 +32,9 @@
           </div>
         </div>
         <div v-if="parsedData?.contractInfo?.childAgeRanges?.length">
-          <span class="text-gray-500 dark:text-gray-400">Çocuk Yaşları</span>
+          <span class="text-gray-500 dark:text-gray-400">{{
+            $t('planning.pricing.contractImport.childAges')
+          }}</span>
           <p class="font-medium text-gray-900 dark:text-white text-xs">
             {{
               parsedData.contractInfo.childAgeRanges.map(r => `${r.minAge}-${r.maxAge}`).join(', ')
@@ -40,7 +42,7 @@
           </p>
         </div>
         <div v-if="hasOBPPricing">
-          <span class="text-gray-500 dark:text-gray-400">OBP Fiyat Aralığı</span>
+          <span class="text-gray-500 dark:text-gray-400">OBP</span>
           <p class="font-medium text-gray-900 dark:text-white text-xs">
             {{ obpOccupancyRange }}
           </p>
@@ -54,21 +56,24 @@
     >
       <h4 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
         <span class="material-icons text-purple-600">event</span>
-        Oluşturulacak Sezon
+        {{ $t('planning.pricing.contractImport.seasonToCreate') }}
       </h4>
       <div class="flex items-center gap-4">
         <div class="flex-1">
           <p class="text-lg font-bold text-purple-700 dark:text-purple-300">
-            {{ seasonYear }} Sezonu
+            {{ seasonYear }} {{ $t('planning.pricing.contractImport.seasonSuffix') }}
           </p>
           <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ formatDate(seasonStartDate) }} → {{ formatDate(seasonEndDate) }}
-            <span class="text-xs text-gray-500">({{ seasonDays }} gün)</span>
+            <span class="text-xs text-gray-500"
+              >({{ seasonDays }} {{ $t('planning.pricing.contractImport.daysCount') }})</span
+            >
           </p>
         </div>
         <div class="text-right">
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ parsedData?.periods?.length || 0 }} farklı fiyat dönemi
+            {{ parsedData?.periods?.length || 0 }}
+            {{ $t('planning.pricing.contractImport.periodCount') }}
           </p>
         </div>
       </div>
@@ -78,7 +83,9 @@
     <div>
       <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
         <span class="material-icons text-blue-600">payments</span>
-        Fiyat Dönemleri ({{ parsedData?.periods?.length || 0 }})
+        {{ $t('planning.pricing.contractImport.pricePeriods') }} ({{
+          parsedData?.periods?.length || 0
+        }})
       </h4>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
         <div
@@ -125,7 +132,8 @@
         <span class="material-icons text-green-600">hotel</span>
         {{ $t('planning.pricing.contractImport.roomMappings') }}
         <span class="text-xs font-normal text-gray-500"
-          >({{ newRoomCount }} yeni, {{ existingRoomCount }} mevcut)</span
+          >({{ newRoomCount }} {{ $t('planning.pricing.contractImport.newLabel') }},
+          {{ existingRoomCount }} {{ $t('planning.pricing.contractImport.existingLabel') }})</span
         >
         <span
           v-if="roomMappingPercentage > 0"
@@ -138,10 +146,10 @@
                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
           "
         >
-          %{{ roomMappingPercentage }} eşleşti
+          %{{ roomMappingPercentage }} {{ $t('planning.pricing.contractImport.matched') }}
         </span>
       </h4>
-      <div class="space-y-2 max-h-80 overflow-y-auto">
+      <div class="space-y-2 max-h-[28rem] overflow-y-auto">
         <div
           v-for="room in parsedData?.roomTypes"
           :key="room.contractName"
@@ -153,6 +161,7 @@
           "
         >
           <div class="flex-1 min-w-0">
+            <!-- Row 1: Room name + badges -->
             <div class="flex items-center gap-2 flex-wrap">
               <p class="font-medium text-gray-900 dark:text-white truncate">
                 {{ room.contractName }}
@@ -160,7 +169,7 @@
               <span
                 v-if="room.isNewRoom"
                 class="px-1.5 py-0.5 text-xs rounded bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200"
-                >YENİ</span
+                >{{ $t('planning.pricing.contractImport.newBadge') }}</span
               >
               <!-- Pricing Type Badge -->
               <span
@@ -170,22 +179,42 @@
               >
                 {{ getRoomPricingBadge(room).label }}
               </span>
-              <!-- Extras Popover Trigger -->
-              <div v-if="hasRoomExtras(room)" class="relative">
+              <!-- Room-level MinStay & ReleaseDay -->
+              <span
+                v-if="room.minStay && room.minStay > 1"
+                class="px-1.5 py-0.5 text-xs rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+              >
+                {{ $t('planning.pricing.contractImport.minStayShort') }}:{{ room.minStay
+                }}{{ $t('planning.pricing.contractImport.nightSuffix') }}
+              </span>
+              <span
+                v-if="room.releaseDay && room.releaseDay > 0"
+                class="px-1.5 py-0.5 text-xs rounded font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+              >
+                {{ $t('planning.pricing.contractImport.releaseDayShort') }}:{{ room.releaseDay
+                }}{{ $t('planning.pricing.contractImport.daySuffix') }}
+              </span>
+              <!-- OBP Popover Trigger -->
+              <div
+                v-if="
+                  getRoomPricingDetailsData(room)?.pricingType !== 'unit' && hasRoomExtras(room)
+                "
+                class="relative"
+              >
                 <button
                   class="px-1.5 py-0.5 text-xs rounded font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   @click="toggleExtrasPopover(room.contractName)"
                 >
                   <span class="material-icons text-xs align-middle">info</span>
                 </button>
-                <!-- Extras Popover -->
+                <!-- OBP Popover -->
                 <div
                   v-if="activePopover === room.contractName"
                   class="absolute z-20 left-0 top-full mt-1 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-600 p-3 text-xs"
                 >
                   <div class="flex items-center justify-between mb-2">
                     <span class="font-semibold text-gray-900 dark:text-white">
-                      {{ getExtrasPopoverTitle(room) }}
+                      {{ $t('planning.pricing.contractImport.occupancyPricesTitle') }}
                     </span>
                     <button
                       class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -194,69 +223,25 @@
                       <span class="material-icons text-sm">close</span>
                     </button>
                   </div>
-                  <!-- OBP / OBPx: show occupancy prices -->
-                  <template v-if="getRoomPricingDetailsData(room)?.pricingType !== 'unit'">
+                  <div
+                    v-if="getRoomPricingDetailsData(room)?.sample?.occupancyPricing"
+                    class="space-y-1 mb-2"
+                  >
                     <div
-                      v-if="getRoomPricingDetailsData(room)?.sample?.occupancyPricing"
-                      class="space-y-1 mb-2"
+                      v-for="(price, pax) in getRoomPricingDetailsData(room).sample
+                        .occupancyPricing"
+                      :key="pax"
+                      class="flex justify-between"
                     >
-                      <div
-                        v-for="(price, pax) in getRoomPricingDetailsData(room).sample
-                          .occupancyPricing"
-                        :key="pax"
-                        class="flex justify-between"
+                      <span class="text-gray-500 dark:text-gray-400"
+                        >{{ pax }}
+                        {{ $t('planning.pricing.contractImport.paxLabel', { n: pax }) }}</span
                       >
-                        <span class="text-gray-500 dark:text-gray-400"
-                          >{{ pax }}
-                          {{ $t('planning.pricing.contractImport.paxLabel', { n: pax }) }}</span
-                        >
-                        <span class="font-medium text-gray-900 dark:text-white">{{
-                          formatPrice(price)
-                        }}</span>
-                      </div>
+                      <span class="font-medium text-gray-900 dark:text-white">{{
+                        formatPrice(price)
+                      }}</span>
                     </div>
-                  </template>
-                  <!-- Unit: show extras -->
-                  <template v-else>
-                    <div class="space-y-1">
-                      <div
-                        v-if="getRoomPricingDetailsData(room)?.sample?.extraAdult > 0"
-                        class="flex justify-between"
-                      >
-                        <span class="text-gray-500 dark:text-gray-400">{{
-                          $t('planning.pricing.contractImport.extraAdult')
-                        }}</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{
-                          formatPrice(getRoomPricingDetailsData(room).sample.extraAdult)
-                        }}</span>
-                      </div>
-                      <div
-                        v-for="(childPrice, idx) in getRoomPricingDetailsData(room)?.sample
-                          ?.extraChild || []"
-                        :key="idx"
-                        class="flex justify-between"
-                      >
-                        <span class="text-gray-500 dark:text-gray-400"
-                          >{{ $t('planning.pricing.contractImport.extraChild') }}
-                          {{ idx + 1 }}</span
-                        >
-                        <span class="font-medium text-gray-900 dark:text-white">{{
-                          formatPrice(childPrice)
-                        }}</span>
-                      </div>
-                      <div
-                        v-if="getRoomPricingDetailsData(room)?.sample?.extraInfant > 0"
-                        class="flex justify-between"
-                      >
-                        <span class="text-gray-500 dark:text-gray-400">{{
-                          $t('planning.pricing.contractImport.extraInfant')
-                        }}</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{
-                          formatPrice(getRoomPricingDetailsData(room).sample.extraInfant)
-                        }}</span>
-                      </div>
-                    </div>
-                  </template>
+                  </div>
                   <p
                     class="text-gray-400 dark:text-gray-500 mt-2 border-t pt-1 border-gray-100 dark:border-slate-700"
                   >
@@ -270,25 +255,72 @@
                 </div>
               </div>
             </div>
-            <p v-if="room.capacity" class="text-xs text-gray-500 dark:text-gray-400">
-              <span v-if="room.capacity.roomSize" class="mr-1">{{ room.capacity.roomSize }}m²</span>
-              <span class="mr-1">•</span>
+
+            <!-- Row 2: Capacity -->
+            <p v-if="room.capacity" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <span v-if="room.capacity.roomSize" class="mr-1"
+                >{{ room.capacity.roomSize }}m² &bull;</span
+              >
+              {{ $t('planning.pricing.contractImport.defaultAdults') }}:
               {{ room.capacity.standardOccupancy || room.capacity.maxAdults || '?' }}
-              <span
+              {{ $t('planning.pricing.contractImport.adultSuffix') }}
+              <template
                 v-if="
-                  room.capacity.maxOccupancy &&
-                  room.capacity.maxOccupancy >
-                    (room.capacity.standardOccupancy || room.capacity.maxAdults || 0)
+                  room.capacity.maxAdults &&
+                  room.capacity.maxAdults > (room.capacity.standardOccupancy || 0)
                 "
               >
-                → {{ room.capacity.maxOccupancy }}
-              </span>
-              {{ $t('planning.pricing.contractImport.personSuffix') }}
-              <template v-if="room.capacity.maxChildren">
-                ({{ room.capacity.maxChildren }}
-                {{ $t('planning.pricing.contractImport.childSuffix') }})
+                ({{ $t('planning.pricing.contractImport.maxShort') }}
+                {{ room.capacity.maxAdults }}AD
+                <template v-if="room.capacity.maxChildren"
+                  >+ {{ room.capacity.maxChildren }}CHD</template
+                >)
               </template>
             </p>
+
+            <!-- Row 3: Unit pricing extras (shown directly, not in popover) -->
+            <div
+              v-if="getUnitExtras(room)"
+              class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs"
+            >
+              <span v-if="getUnitExtras(room).basePrice" class="text-gray-500 dark:text-gray-400">
+                {{ $t('planning.pricing.contractImport.basePrice') }}:
+                <span class="font-medium text-gray-700 dark:text-gray-300">{{
+                  formatPrice(getUnitExtras(room).basePrice)
+                }}</span>
+              </span>
+              <span
+                v-if="getUnitExtras(room).singleSupplement > 0"
+                class="text-gray-500 dark:text-gray-400"
+              >
+                {{ $t('planning.pricing.contractImport.singlePrice') }}:
+                <span class="font-medium text-gray-700 dark:text-gray-300">{{
+                  formatPrice(getUnitExtras(room).basePrice - getUnitExtras(room).singleSupplement)
+                }}</span>
+              </span>
+              <span
+                v-if="getUnitExtras(room).extraAdult > 0"
+                class="text-emerald-600 dark:text-emerald-400"
+              >
+                +{{ $t('planning.pricing.contractImport.extraAdult') }}:
+                <span class="font-medium">{{ formatPrice(getUnitExtras(room).extraAdult) }}</span>
+              </span>
+              <span
+                v-for="(childPrice, idx) in getUnitExtras(room).extraChild || []"
+                :key="idx"
+                class="text-cyan-600 dark:text-cyan-400"
+              >
+                +{{ $t('planning.pricing.contractImport.extraChild') }}{{ idx + 1 }}:
+                <span class="font-medium">{{ formatPrice(childPrice) }}</span>
+              </span>
+              <span
+                v-if="getUnitExtras(room).extraInfant > 0"
+                class="text-pink-600 dark:text-pink-400"
+              >
+                +{{ $t('planning.pricing.contractImport.extraInfant') }}:
+                <span class="font-medium">{{ formatPrice(getUnitExtras(room).extraInfant) }}</span>
+              </span>
+            </div>
           </div>
           <span class="material-icons text-gray-400">arrow_forward</span>
           <div class="flex-1">
@@ -298,14 +330,22 @@
               @change="$emit('updateRoomMapping', room.contractName, $event.target.value)"
             >
               <option value="">{{ $t('planning.pricing.contractImport.skipRoom') }}</option>
-              <optgroup v-if="existingRoomTypes.length" label="Mevcut Odalar">
+              <optgroup
+                v-if="existingRoomTypes.length"
+                :label="$t('planning.pricing.contractImport.existingRooms')"
+              >
                 <option v-for="rt in existingRoomTypes" :key="rt.code" :value="rt.code">
                   {{ rt.code }} - {{ getLocalizedName(rt.name) }}
                 </option>
               </optgroup>
-              <optgroup v-if="room.isNewRoom && room.suggestedCode" label="Yeni Oluşturulacak">
+              <optgroup
+                v-if="room.isNewRoom && room.suggestedCode"
+                :label="$t('planning.pricing.contractImport.newToCreate')"
+              >
                 <option :value="room.suggestedCode">
-                  {{ room.suggestedCode }} - {{ room.contractName }} (YENİ)
+                  {{ room.suggestedCode }} - {{ room.contractName }} ({{
+                    $t('planning.pricing.contractImport.newBadge')
+                  }})
                 </option>
               </optgroup>
             </select>
@@ -328,7 +368,9 @@
         <span class="material-icons text-amber-600">restaurant</span>
         {{ $t('planning.pricing.contractImport.mealPlanMappings') }}
         <span class="text-xs font-normal text-gray-500"
-          >({{ newMealPlanCount }} yeni, {{ existingMealPlanCount }} mevcut)</span
+          >({{ newMealPlanCount }} {{ $t('planning.pricing.contractImport.newLabel') }},
+          {{ existingMealPlanCount }}
+          {{ $t('planning.pricing.contractImport.existingLabel') }})</span
         >
         <span
           v-if="mealPlanMappingPercentage > 0"
@@ -341,7 +383,7 @@
                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
           "
         >
-          %{{ mealPlanMappingPercentage }} eşleşti
+          %{{ mealPlanMappingPercentage }} {{ $t('planning.pricing.contractImport.matched') }}
         </span>
       </h4>
       <div class="space-y-2 max-h-48 overflow-y-auto">
@@ -363,7 +405,7 @@
               <span
                 v-if="mp.isNewMealPlan"
                 class="px-1.5 py-0.5 text-xs rounded bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200"
-                >YENİ</span
+                >{{ $t('planning.pricing.contractImport.newBadge') }}</span
               >
               <span v-if="mp.matchedCode" class="text-xs text-gray-500"
                 >→ {{ mp.matchedCode }}</span
@@ -378,14 +420,22 @@
               @change="$emit('updateMealPlanMapping', mp.contractName, $event.target.value)"
             >
               <option value="">{{ $t('planning.pricing.contractImport.skipMealPlan') }}</option>
-              <optgroup v-if="existingMealPlans.length" label="Mevcut Pansiyonlar">
+              <optgroup
+                v-if="existingMealPlans.length"
+                :label="$t('planning.pricing.contractImport.existingMeals')"
+              >
                 <option v-for="plan in existingMealPlans" :key="plan.code" :value="plan.code">
                   {{ plan.code }} - {{ getLocalizedName(plan.name) }}
                 </option>
               </optgroup>
-              <optgroup v-if="mp.isNewMealPlan && mp.suggestedCode" label="Yeni Oluşturulacak">
+              <optgroup
+                v-if="mp.isNewMealPlan && mp.suggestedCode"
+                :label="$t('planning.pricing.contractImport.newToCreate')"
+              >
                 <option :value="mp.suggestedCode">
-                  {{ mp.suggestedCode }} - {{ mp.contractName }} (YENİ)
+                  {{ mp.suggestedCode }} - {{ mp.contractName }} ({{
+                    $t('planning.pricing.contractImport.newBadge')
+                  }})
                 </option>
               </optgroup>
             </select>
@@ -397,6 +447,61 @@
             >
               {{ mp.confidence }}%
             </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EB Campaigns -->
+    <div v-if="parsedData?.earlyBookingDiscounts?.length">
+      <h4 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+        <span class="material-icons text-orange-600">local_offer</span>
+        {{ $t('planning.pricing.contractImport.campaignsTitle') }}
+        ({{ parsedData.earlyBookingDiscounts.length }})
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div
+          v-for="(eb, idx) in parsedData.earlyBookingDiscounts"
+          :key="idx"
+          class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800"
+        >
+          <div class="flex items-center gap-2 mb-1">
+            <span
+              class="px-2 py-0.5 text-sm font-bold rounded bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200"
+              >%{{ eb.discountPercentage }}</span
+            >
+            <span class="font-medium text-gray-900 dark:text-white text-sm">{{
+              eb.name || `EB %${eb.discountPercentage}`
+            }}</span>
+            <span
+              v-if="eb.isCumulative"
+              class="px-1.5 py-0.5 text-xs rounded bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200"
+              >{{ $t('planning.pricing.contractImport.cumulative') }}</span
+            >
+          </div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+            <p v-if="eb.salePeriod">
+              <span class="text-gray-400 dark:text-gray-500"
+                >{{ $t('planning.pricing.contractImport.salePeriod') }}:</span
+              >
+              {{ formatDate(eb.salePeriod.startDate) }} → {{ formatDate(eb.salePeriod.endDate) }}
+            </p>
+            <p v-if="eb.stayPeriod">
+              <span class="text-gray-400 dark:text-gray-500"
+                >{{ $t('planning.pricing.contractImport.stayPeriod') }}:</span
+              >
+              {{ formatDate(eb.stayPeriod.startDate) }} → {{ formatDate(eb.stayPeriod.endDate) }}
+            </p>
+            <p v-if="eb.paymentDueDate">
+              <span class="text-gray-400 dark:text-gray-500"
+                >{{ $t('planning.pricing.contractImport.paymentDue') }}:</span
+              >
+              {{ formatDate(eb.paymentDueDate) }}
+              <template v-if="eb.paymentPercentage"> (%{{ eb.paymentPercentage }}) </template>
+            </p>
+            <p v-if="eb.conditions" class="text-gray-400 dark:text-gray-500 italic">
+              {{ eb.conditions }}
+            </p>
           </div>
         </div>
       </div>
@@ -428,7 +533,9 @@
               class="w-4 h-4 rounded text-green-600"
               @change="$emit('updateOption', 'createMissingRooms', $event.target.checked)"
             />
-            <span class="text-sm text-gray-700 dark:text-gray-300">Eksik odaları oluştur</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{
+              $t('planning.pricing.contractImport.createMissingRooms')
+            }}</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer">
             <input
@@ -437,7 +544,9 @@
               class="w-4 h-4 rounded text-amber-600"
               @change="$emit('updateOption', 'createMissingMealPlans', $event.target.checked)"
             />
-            <span class="text-sm text-gray-700 dark:text-gray-300">Eksik pansiyonları oluştur</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{
+              $t('planning.pricing.contractImport.createMissingMealPlans')
+            }}</span>
           </label>
           <label class="flex items-center gap-3 cursor-pointer">
             <input
@@ -446,9 +555,9 @@
               class="w-4 h-4 rounded text-blue-600"
               @change="$emit('updateOption', 'updateRoomCapacity', $event.target.checked)"
             />
-            <span class="text-sm text-gray-700 dark:text-gray-300"
-              >Oda kapasitelerini güncelle</span
-            >
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{
+              $t('planning.pricing.contractImport.updateCapacity')
+            }}</span>
           </label>
         </div>
         <div class="space-y-3">
@@ -560,27 +669,30 @@ const getRoomPricingBadge = room => {
   }
 }
 
-// Check if room has extras to show in popover
+// Check if room has OBP extras to show in popover
 const hasRoomExtras = room => {
   const details = getRoomPricingDetailsData(room)
   if (!details) return false
-
-  if (details.pricingType === 'per_person' || details.pricingType === 'per_person_multiplier') {
-    return (
-      details.sample?.occupancyPricing && Object.keys(details.sample.occupancyPricing).length > 0
-    )
-  }
-  // Unit: check for extra prices
-  return details.hasExtraAdult || details.hasExtraChild || details.hasExtraInfant
+  return details.sample?.occupancyPricing && Object.keys(details.sample.occupancyPricing).length > 0
 }
 
-// Get popover title based on pricing type
-const getExtrasPopoverTitle = room => {
+// Get unit pricing extras for direct display on room card
+const getUnitExtras = room => {
   const details = getRoomPricingDetailsData(room)
-  if (!details) return ''
-  if (details.pricingType === 'per_person' || details.pricingType === 'per_person_multiplier') {
-    return t('planning.pricing.contractImport.occupancyPricesTitle')
+  if (!details || details.pricingType !== 'unit') return null
+
+  const sample = details.sample
+  if (!sample) return null
+
+  // Only show if there's meaningful data
+  if (!sample.pricePerNight && !sample.extraAdult && !sample.singleSupplement) return null
+
+  return {
+    basePrice: sample.pricePerNight || 0,
+    singleSupplement: sample.singleSupplement || 0,
+    extraAdult: sample.extraAdult || 0,
+    extraChild: sample.extraChild || [],
+    extraInfant: sample.extraInfant || 0
   }
-  return t('planning.pricing.contractImport.extraPricesTitle')
 }
 </script>

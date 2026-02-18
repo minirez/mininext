@@ -453,9 +453,18 @@ export const importContractPricing = asyncHandler(async (req, res) => {
       allotment
     } = priceEntry
 
-    const effectiveMinStay = minStay || periodMinStay[periodCode] || defaultMinStay
-    const effectiveReleaseDay = periodReleaseDay[periodCode] ?? 0
     const mappedRoomCode = roomMappings[roomCode] || roomCode
+
+    // Room-level minStay/releaseDay override from contract
+    const contractRoom = contractRoomTypes.find(r => {
+      const codes = [r.contractName, r.contractCode, r.matchedCode, r.suggestedCode].filter(Boolean)
+      return codes.some(c => c === roomCode || c.toLowerCase() === roomCode.toLowerCase())
+    })
+    const roomMinStay = contractRoom?.minStay || null
+    const roomReleaseDay = contractRoom?.releaseDay ?? null
+
+    const effectiveMinStay = minStay || roomMinStay || periodMinStay[periodCode] || defaultMinStay
+    const effectiveReleaseDay = roomReleaseDay ?? periodReleaseDay[periodCode] ?? 0
     const mappedMealPlanCode = mealPlanMappings[mealPlanCode] || mealPlanCode
 
     const roomType = roomTypeMap[mappedRoomCode]
