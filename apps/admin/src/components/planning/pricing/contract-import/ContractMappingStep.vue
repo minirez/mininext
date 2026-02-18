@@ -20,7 +20,7 @@
               }}
             </p>
             <span
-              v-if="hasOBPPricing"
+              v-if="hasOBPPricing && !hasMultiplierPricing"
               class="px-1.5 py-0.5 text-xs rounded bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200 font-semibold"
               >OBP</span
             >
@@ -80,14 +80,14 @@
         <span class="material-icons text-blue-600">payments</span>
         Fiyat Dönemleri ({{ parsedData?.periods?.length || 0 }})
       </h4>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
         <div
           v-for="period in parsedData?.periods"
           :key="period.code"
-          class="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm"
+          class="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm"
         >
           <span
-            class="w-10 h-6 rounded text-xs flex items-center justify-center font-mono bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+            class="w-10 h-6 rounded text-xs flex items-center justify-center font-mono bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 shrink-0"
             >{{ period.code }}</span
           >
           <div class="flex-1 min-w-0">
@@ -95,6 +95,25 @@
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {{ formatDate(period.startDate) }} → {{ formatDate(period.endDate) }}
             </p>
+          </div>
+          <!-- MinStay & ReleaseDay badges -->
+          <div class="flex items-center gap-1 shrink-0">
+            <span
+              v-if="period.minStay > 1"
+              class="px-1.5 py-0.5 text-xs rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+              :title="$t('planning.pricing.contractImport.defaultMinStay')"
+            >
+              {{ $t('planning.pricing.contractImport.minStayShort') }}:{{ period.minStay
+              }}{{ $t('planning.pricing.contractImport.nightSuffix') }}
+            </span>
+            <span
+              v-if="period.releaseDay > 0"
+              class="px-1.5 py-0.5 text-xs rounded font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+              :title="'Release Day'"
+            >
+              {{ $t('planning.pricing.contractImport.releaseDayShort') }}:{{ period.releaseDay
+              }}{{ $t('planning.pricing.contractImport.daySuffix') }}
+            </span>
           </div>
         </div>
       </div>
@@ -122,7 +141,7 @@
           %{{ roomMappingPercentage }} eşleşti
         </span>
       </h4>
-      <div class="space-y-2 max-h-64 overflow-y-auto">
+      <div class="space-y-2 max-h-80 overflow-y-auto">
         <div
           v-for="room in parsedData?.roomTypes"
           :key="room.contractName"
@@ -134,7 +153,7 @@
           "
         >
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <p class="font-medium text-gray-900 dark:text-white truncate">
                 {{ room.contractName }}
               </p>
@@ -143,12 +162,121 @@
                 class="px-1.5 py-0.5 text-xs rounded bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200"
                 >YENİ</span
               >
+              <!-- Pricing Type Badge -->
+              <span
+                v-if="getRoomPricingBadge(room)"
+                class="px-1.5 py-0.5 text-xs rounded font-semibold"
+                :class="getRoomPricingBadge(room).class"
+              >
+                {{ getRoomPricingBadge(room).label }}
+              </span>
+              <!-- Extras Popover Trigger -->
+              <div v-if="hasRoomExtras(room)" class="relative">
+                <button
+                  class="px-1.5 py-0.5 text-xs rounded font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  @click="toggleExtrasPopover(room.contractName)"
+                >
+                  <span class="material-icons text-xs align-middle">info</span>
+                </button>
+                <!-- Extras Popover -->
+                <div
+                  v-if="activePopover === room.contractName"
+                  class="absolute z-20 left-0 top-full mt-1 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-600 p-3 text-xs"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold text-gray-900 dark:text-white">
+                      {{ getExtrasPopoverTitle(room) }}
+                    </span>
+                    <button
+                      class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      @click="activePopover = null"
+                    >
+                      <span class="material-icons text-sm">close</span>
+                    </button>
+                  </div>
+                  <!-- OBP / OBPx: show occupancy prices -->
+                  <template v-if="getRoomPricingDetailsData(room)?.pricingType !== 'unit'">
+                    <div
+                      v-if="getRoomPricingDetailsData(room)?.sample?.occupancyPricing"
+                      class="space-y-1 mb-2"
+                    >
+                      <div
+                        v-for="(price, pax) in getRoomPricingDetailsData(room).sample
+                          .occupancyPricing"
+                        :key="pax"
+                        class="flex justify-between"
+                      >
+                        <span class="text-gray-500 dark:text-gray-400"
+                          >{{ pax }}
+                          {{ $t('planning.pricing.contractImport.paxLabel', { n: pax }) }}</span
+                        >
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(price)
+                        }}</span>
+                      </div>
+                    </div>
+                  </template>
+                  <!-- Unit: show extras -->
+                  <template v-else>
+                    <div class="space-y-1">
+                      <div
+                        v-if="getRoomPricingDetailsData(room)?.sample?.extraAdult > 0"
+                        class="flex justify-between"
+                      >
+                        <span class="text-gray-500 dark:text-gray-400">{{
+                          $t('planning.pricing.contractImport.extraAdult')
+                        }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(getRoomPricingDetailsData(room).sample.extraAdult)
+                        }}</span>
+                      </div>
+                      <div
+                        v-for="(childPrice, idx) in getRoomPricingDetailsData(room)?.sample
+                          ?.extraChild || []"
+                        :key="idx"
+                        class="flex justify-between"
+                      >
+                        <span class="text-gray-500 dark:text-gray-400"
+                          >{{ $t('planning.pricing.contractImport.extraChild') }}
+                          {{ idx + 1 }}</span
+                        >
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(childPrice)
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="getRoomPricingDetailsData(room)?.sample?.extraInfant > 0"
+                        class="flex justify-between"
+                      >
+                        <span class="text-gray-500 dark:text-gray-400">{{
+                          $t('planning.pricing.contractImport.extraInfant')
+                        }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(getRoomPricingDetailsData(room).sample.extraInfant)
+                        }}</span>
+                      </div>
+                    </div>
+                  </template>
+                  <p
+                    class="text-gray-400 dark:text-gray-500 mt-2 border-t pt-1 border-gray-100 dark:border-slate-700"
+                  >
+                    {{
+                      $t('planning.pricing.contractImport.priceCount', {
+                        count: getRoomPricingDetailsData(room)?.count || 0
+                      })
+                    }}
+                    ({{ parsedData?.periods?.[0]?.code || 'P1' }})
+                  </p>
+                </div>
+              </div>
             </div>
             <p v-if="room.capacity" class="text-xs text-gray-500 dark:text-gray-400">
-              standart: {{ room.capacity.maxAdults }} kişi
+              standart: {{ room.capacity.standardOccupancy || room.capacity.maxAdults || '?' }} kişi
               <span
                 v-if="
-                  room.capacity.maxOccupancy && room.capacity.maxOccupancy > room.capacity.maxAdults
+                  room.capacity.maxOccupancy &&
+                  room.capacity.maxOccupancy >
+                    (room.capacity.standardOccupancy || room.capacity.maxAdults || 0)
                 "
               >
                 → max: {{ room.capacity.maxOccupancy }} kişi
@@ -350,7 +478,12 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+const props = defineProps({
   parsedData: { type: Object, default: null },
   roomMappings: { type: Object, required: true },
   mealPlanMappings: { type: Object, required: true },
@@ -372,8 +505,75 @@ defineProps({
   mealPlanMappingPercentage: { type: Number, default: 0 },
   formatDate: { type: Function, required: true },
   getLocalizedName: { type: Function, required: true },
-  getConfidenceBadgeClass: { type: Function, required: true }
+  getConfidenceBadgeClass: { type: Function, required: true },
+  getRoomPricingDetails: { type: Function, default: () => null },
+  formatPrice: { type: Function, default: v => v }
 })
 
 defineEmits(['updateRoomMapping', 'updateMealPlanMapping', 'updateOption'])
+
+// Popover state
+const activePopover = ref(null)
+
+const toggleExtrasPopover = roomName => {
+  activePopover.value = activePopover.value === roomName ? null : roomName
+}
+
+// Cache pricing details
+const pricingDetailsCache = new Map()
+const getRoomPricingDetailsData = room => {
+  if (!room) return null
+  const key = room.contractName
+  if (!pricingDetailsCache.has(key)) {
+    pricingDetailsCache.set(key, props.getRoomPricingDetails(room))
+  }
+  return pricingDetailsCache.get(key)
+}
+
+// Get pricing type badge for a room
+const getRoomPricingBadge = room => {
+  const details = getRoomPricingDetailsData(room)
+  if (!details) return null
+
+  if (details.pricingType === 'per_person_multiplier') {
+    return {
+      label: t('planning.pricing.contractImport.pricingTypeBadgeOBPx'),
+      class: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+    }
+  }
+  if (details.pricingType === 'per_person') {
+    return {
+      label: t('planning.pricing.contractImport.pricingTypeBadgeOBP'),
+      class: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+    }
+  }
+  return {
+    label: t('planning.pricing.contractImport.pricingTypeBadgeUnit'),
+    class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+  }
+}
+
+// Check if room has extras to show in popover
+const hasRoomExtras = room => {
+  const details = getRoomPricingDetailsData(room)
+  if (!details) return false
+
+  if (details.pricingType === 'per_person' || details.pricingType === 'per_person_multiplier') {
+    return (
+      details.sample?.occupancyPricing && Object.keys(details.sample.occupancyPricing).length > 0
+    )
+  }
+  // Unit: check for extra prices
+  return details.hasExtraAdult || details.hasExtraChild || details.hasExtraInfant
+}
+
+// Get popover title based on pricing type
+const getExtrasPopoverTitle = room => {
+  const details = getRoomPricingDetailsData(room)
+  if (!details) return ''
+  if (details.pricingType === 'per_person' || details.pricingType === 'per_person_multiplier') {
+    return t('planning.pricing.contractImport.occupancyPricesTitle')
+  }
+  return t('planning.pricing.contractImport.extraPricesTitle')
+}
 </script>

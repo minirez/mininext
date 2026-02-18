@@ -346,6 +346,38 @@ export function useContractImport(props, emit) {
     }
   }
 
+  // Get pricing details for a room (type, extras, first price entry)
+  const getRoomPricingDetails = room => {
+    if (!parsedData.value?.pricing || !room) return null
+
+    const roomCodes = [
+      room.matchedCode,
+      room.contractCode,
+      room.suggestedCode,
+      room.contractName
+    ].filter(Boolean)
+
+    const roomPrices = parsedData.value.pricing.filter(p =>
+      roomCodes.some(
+        code => p.roomCode === code || p.roomCode?.toLowerCase() === code?.toLowerCase()
+      )
+    )
+
+    if (roomPrices.length === 0) return null
+
+    const first = roomPrices[0]
+    const pricingType = first.pricingType || (first.occupancyPricing ? 'per_person' : 'unit')
+
+    return {
+      pricingType,
+      count: roomPrices.length,
+      sample: first,
+      hasExtraAdult: roomPrices.some(p => p.extraAdult > 0),
+      hasExtraChild: roomPrices.some(p => p.extraChild?.length > 0),
+      hasExtraInfant: roomPrices.some(p => p.extraInfant > 0)
+    }
+  }
+
   const formatPrice = value => {
     if (!value && value !== 0) return '-'
     const currency = parsedData.value?.contractInfo?.currency || 'TRY'
@@ -554,6 +586,7 @@ export function useContractImport(props, emit) {
     getConfidenceColor,
     getConfidenceBadgeClass,
     getRoomPricingCount,
+    getRoomPricingDetails,
     getPriceForCell,
     formatPrice,
     startParsing,

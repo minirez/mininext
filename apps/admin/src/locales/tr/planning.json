@@ -1065,7 +1065,23 @@
         "pricingTypeOBP": "Kişi Bazlı (OBP)",
         "pricingTypeMultiplier": "Çarpanlı Kişi Bazlı",
         "multiplierBadge": "Çarpanlı",
-        "aiAnalyzingMultiPass": "Yapay zeka kontratı detaylı analiz ediyor, bu işlem 30-45 saniye sürebilir"
+        "aiAnalyzingMultiPass": "Yapay zeka kontratı detaylı analiz ediyor, bu işlem 30-45 saniye sürebilir",
+        "minStayShort": "Min",
+        "releaseDayShort": "Rls",
+        "nightSuffix": "g",
+        "daySuffix": "gün",
+        "pricingTypeBadgeUnit": "Unit",
+        "pricingTypeBadgeOBP": "OBP",
+        "pricingTypeBadgeOBPx": "OBPx",
+        "extraPricesTitle": "Ekstra Kişi Fiyatları",
+        "extraAdult": "Ekstra Yetişkin",
+        "extraChild": "Çocuk",
+        "extraInfant": "Bebek",
+        "occupancyPricesTitle": "Kişi Başı Fiyatlar",
+        "paxLabel": "{n} Kişi",
+        "multiplierLabel": "Çarpan",
+        "noPriceData": "Fiyat verisi bulunamadı",
+        "priceCount": "{count} fiyat"
       }
     }
   },

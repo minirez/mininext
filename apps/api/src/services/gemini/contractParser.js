@@ -79,7 +79,10 @@ GÖREV: Aşağıdaki bilgileri JSON olarak çıkar:
 
 PERIYOT TARİHLERİ:
 - Her periyot için code (P1, P2...), name, startDate (YYYY-MM-DD), endDate (YYYY-MM-DD)
-- minStay belirtilmişse ekle
+- minStay: Minimum konaklama süresi (gece). Her periyotta farklı olabilir! Belirtilmemişse 1.
+- releaseDay: Release/stop sales gün sayısı. Her periyotta farklı olabilir! Belirtilmemişse 0.
+- ÖNEMLİ: Kontratın "minimum gece" veya "min. stay" veya "min konaklama" sütununu her periyot için ayrı oku!
+- ÖNEMLİ: Kontratın "release" veya "stop sale" veya "kapanış" sütununu her periyot için ayrı oku!
 
 ODA TİPLERİ EŞLEŞTİRME:
 Mevcut odalarla (${existingRoomsStr}) eşleştir:
@@ -117,7 +120,7 @@ JSON FORMATI:
     "notes": "..."
   },
   "periods": [
-    { "code": "P1", "name": "...", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "minStay": 1 }
+    { "code": "P1", "name": "...", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "minStay": 3, "releaseDay": 2 }
   ],
   "roomTypes": [
     {

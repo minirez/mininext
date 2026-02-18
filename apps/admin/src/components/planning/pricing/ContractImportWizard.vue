@@ -80,6 +80,8 @@
       :format-date="formatDate"
       :get-localized-name="getLocalizedName"
       :get-confidence-badge-class="getConfidenceBadgeClass"
+      :get-room-pricing-details="getRoomPricingDetails"
+      :format-price="formatPrice"
       @update-room-mapping="(name, value) => (roomMappings[name] = value)"
       @update-meal-plan-mapping="(name, value) => (mealPlanMappings[name] = value)"
       @update-option="(key, value) => (importOptions[key] = value)"
@@ -231,7 +233,9 @@ const {
   getConfidenceColor,
   getConfidenceBadgeClass,
   getRoomPricingCount,
+  getRoomPricingDetails,
   getPriceForCell,
+  formatPrice,
   startParsing,
   executeImport
 } = useContractImport(props, emit)

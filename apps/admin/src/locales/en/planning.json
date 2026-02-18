@@ -1065,7 +1065,23 @@
         "pricingTypeOBP": "Per Person (OBP)",
         "pricingTypeMultiplier": "Per Person with Multipliers",
         "multiplierBadge": "Multiplier",
-        "aiAnalyzingMultiPass": "AI is performing detailed analysis, this may take 30-45 seconds"
+        "aiAnalyzingMultiPass": "AI is performing detailed analysis, this may take 30-45 seconds",
+        "minStayShort": "Min",
+        "releaseDayShort": "Rls",
+        "nightSuffix": "n",
+        "daySuffix": "d",
+        "pricingTypeBadgeUnit": "Unit",
+        "pricingTypeBadgeOBP": "OBP",
+        "pricingTypeBadgeOBPx": "OBPx",
+        "extraPricesTitle": "Extra Person Prices",
+        "extraAdult": "Extra Adult",
+        "extraChild": "Child",
+        "extraInfant": "Infant",
+        "occupancyPricesTitle": "Per Person Prices",
+        "paxLabel": "{n} Pax",
+        "multiplierLabel": "Multiplier",
+        "noPriceData": "No price data found",
+        "priceCount": "{count} prices"
       }
     }
   },
