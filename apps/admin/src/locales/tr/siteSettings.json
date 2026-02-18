@@ -188,7 +188,14 @@
       "siteTitle": "Site Başlığı",
       "siteTitlePlaceholder": "Şirketiniz - Seyahat Hizmetleri",
       "siteDescription": "Site Açıklaması",
-      "siteDescriptionPlaceholder": "Otel, tur ve transfer için en iyi seyahat hizmetleri..."
+      "siteDescriptionPlaceholder": "Otel, tur ve transfer için en iyi seyahat hizmetleri...",
+      "tursabLogo": "TURSAB Logosu",
+      "tursabHint": "TURSAB rozet görselinizi yükleyin ve belge numaranızı girin. B2C sitenizin alt bilgisinde görüntülenecektir.",
+      "tursabDocumentNumber": "Belge Numarası",
+      "tursabDocumentNumberPlaceholder": "ör: Şirket Adı Turizm Belge No: 12345",
+      "tursabLink": "TURSAB Doğrulama Linki",
+      "tursabUploaded": "TURSAB logosu başarıyla yüklendi",
+      "tursabDeleted": "TURSAB logosu başarıyla silindi"
     },
     "homepage": {
       "activeServices": "Aktif Hizmetler",

@@ -231,6 +231,8 @@ app.use('/api/pay', paymentLinkPublicRoutes)
 // Public storefront routes (no auth required - resolves partner from domain)
 import publicStorefrontRoutes from './modules/public/publicStorefront.routes.js'
 app.use('/api/public/storefront', publicStorefrontRoutes)
+// Alias: site3 browser-side proxy calls /api/storefront/* (Nginx may route /api/* here)
+app.use('/api/storefront', publicStorefrontRoutes)
 
 // Public Paximum routes (storefront API key auth - for site3 server-to-server calls)
 import publicPaximumRoutes from './modules/public/publicPaximum.routes.js'

@@ -207,6 +207,13 @@ export const updateGeneral = asyncHandler(async (req, res) => {
     }
   })
 
+  if (req.body.tursab !== undefined) {
+    settings.general.tursab = {
+      ...settings.general.tursab,
+      ...req.body.tursab
+    }
+  }
+
   await settings.save()
 
   res.json({
@@ -623,10 +630,14 @@ export const uploadSiteImage = asyncHandler(async (req, res) => {
   const type = req.body.type || 'image'
   const fileUrl = getSiteFileUrl(partnerId, req.file.filename)
 
-  // If it's logo or favicon, update settings
   if (type === 'logo' || type === 'favicon') {
     const settings = await SiteSettings.getOrCreateForPartner(partnerId)
     settings.general[type] = fileUrl
+    await settings.save()
+  } else if (type === 'tursab') {
+    const settings = await SiteSettings.getOrCreateForPartner(partnerId)
+    if (!settings.general.tursab) settings.general.tursab = {}
+    settings.general.tursab.photo = fileUrl
     await settings.save()
   }
 
@@ -657,10 +668,15 @@ export const deleteSiteImage = asyncHandler(async (req, res) => {
   // Delete file from disk
   deleteSiteFile(partnerId, filename)
 
-  // If it's logo or favicon, clear from settings
   if (type === 'logo' || type === 'favicon') {
     const settings = await SiteSettings.getOrCreateForPartner(partnerId)
     settings.general[type] = ''
+    await settings.save()
+  } else if (type === 'tursab') {
+    const settings = await SiteSettings.getOrCreateForPartner(partnerId)
+    if (settings.general.tursab) {
+      settings.general.tursab.photo = ''
+    }
     await settings.save()
   }
 

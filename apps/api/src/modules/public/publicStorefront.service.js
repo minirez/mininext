@@ -346,20 +346,57 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
   // Shape response for public consumption
   const publicData = shapePublicResponse(storefront, isDraftLive)
 
-  // Merge site-level maintenance mode from SiteSettings.
-  // If either SiteSettings.general.maintenanceMode OR Storefront.underMaintenance is true,
-  // the B2C frontend should display the maintenance page.
+  // Merge site-level settings from SiteSettings into the public storefront response.
   try {
     const siteSettings = await SiteSettings.findOne({ partner: partnerId })
-      .select({ 'general.maintenanceMode': 1, 'general.maintenanceMessage': 1 })
+      .select({
+        'general.maintenanceMode': 1,
+        'general.maintenanceMessage': 1,
+        'general.logo': 1,
+        'general.favicon': 1,
+        'general.tursab': 1
+      })
       .lean()
 
     if (siteSettings?.general?.maintenanceMode) {
       publicData.underMaintenance = true
       publicData.maintenanceMessage = siteSettings.general.maintenanceMessage || ''
     }
+
+    // Override storefront logo/favicon with site-settings values when present.
+    // Site-settings stores paths like "/uploads/sites/{partnerId}/logo.webp"
+    // which is the canonical source managed via the admin panel.
+    if (siteSettings?.general?.logo && publicData.settings) {
+      publicData.settings.logo = {
+        id: '',
+        width: 0,
+        height: 0,
+        link: siteSettings.general.logo
+      }
+    }
+    if (siteSettings?.general?.favicon && publicData.settings) {
+      publicData.settings.favicon = {
+        id: '',
+        width: 0,
+        height: 0,
+        link: siteSettings.general.favicon
+      }
+    }
+
+    if (siteSettings?.general?.tursab && publicData.settings) {
+      publicData.settings.tursab = {
+        photo: siteSettings.general.tursab.photo
+          ? { id: '', width: 0, height: 0, link: siteSettings.general.tursab.photo }
+          : publicData.settings?.tursab?.photo || { id: '', width: 0, height: 0, link: '' },
+        link: siteSettings.general.tursab.link || publicData.settings?.tursab?.link || '',
+        documentNumber:
+          siteSettings.general.tursab.documentNumber ||
+          publicData.settings?.tursab?.documentNumber ||
+          ''
+      }
+    }
   } catch (_e) {
-    // Non-critical: if SiteSettings lookup fails, fall back to storefront-only flag
+    // Non-critical: if SiteSettings lookup fails, fall back to storefront-only values
   }
 
   // If custom theme is enabled, return the resolved active page from the active preset.

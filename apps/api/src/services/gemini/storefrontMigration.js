@@ -83,7 +83,10 @@ const normalizeLangArray = (value, fallbackLang = 'en') => {
       .map(item => {
         if (typeof item === 'string') return { lang: fallbackLang, value: item }
         if (isPlainObject(item))
-          return { lang: typeof item.lang === 'string' ? item.lang : fallbackLang, value: item.value ?? '' }
+          return {
+            lang: typeof item.lang === 'string' ? item.lang : fallbackLang,
+            value: item.value ?? ''
+          }
         return null
       })
       .filter(Boolean)
@@ -104,7 +107,7 @@ const normalizeLangArray = (value, fallbackLang = 'en') => {
   return [{ lang: fallbackLang, value: '' }]
 }
 
-const normalizePhoto = (photo) => {
+const normalizePhoto = photo => {
   if (!photo) return { id: '', width: 0, height: 0, link: '' }
   if (typeof photo === 'string') return { id: '', width: 0, height: 0, link: photo }
   if (!isPlainObject(photo)) return { id: '', width: 0, height: 0, link: '' }
@@ -113,7 +116,8 @@ const normalizePhoto = (photo) => {
     id: typeof photo.id === 'string' ? photo.id : '',
     width: typeof photo.width === 'number' ? photo.width : 0,
     height: typeof photo.height === 'number' ? photo.height : 0,
-    link: typeof photo.link === 'string' ? photo.link : (typeof photo.url === 'string' ? photo.url : '')
+    link:
+      typeof photo.link === 'string' ? photo.link : typeof photo.url === 'string' ? photo.url : ''
   }
 }
 
@@ -123,8 +127,8 @@ const normalizePhoto = (photo) => {
  * - We intentionally skip: custom theme presets + draft structures.
  * - We preserve the nested header/footer structure, including sub-menus.
  */
-const mapStorefrontToCurrentShape = (source) => {
-  const src = (source && typeof source === 'object') ? source : {}
+const mapStorefrontToCurrentShape = source => {
+  const src = source && typeof source === 'object' ? source : {}
 
   const out = {}
 
@@ -152,8 +156,11 @@ const mapStorefrontToCurrentShape = (source) => {
   }
 
   // locationSection may exist, otherwise legacy `locations` array can be converted.
-  const locationSectionSource =
-    isPlainObject(src.locationSection) ? src.locationSection : (Array.isArray(src.locations) ? { items: src.locations } : null)
+  const locationSectionSource = isPlainObject(src.locationSection)
+    ? src.locationSection
+    : Array.isArray(src.locations)
+      ? { items: src.locations }
+      : null
   if (locationSectionSource) {
     out.locationSection = {
       title: normalizeLangArray(locationSectionSource.title),
@@ -202,7 +209,9 @@ const mapStorefrontToCurrentShape = (source) => {
         photo: normalizePhoto(src.settings?.tursab?.photo),
         link: typeof src.settings?.tursab?.link === 'string' ? src.settings.tursab.link : '',
         documentNumber:
-          typeof src.settings?.tursab?.documentNumber === 'string' ? src.settings.tursab.documentNumber : ''
+          typeof src.settings?.tursab?.documentNumber === 'string'
+            ? src.settings.tursab.documentNumber
+            : ''
       },
       socials: {
         facebook: src.settings?.socials?.facebook || '',
@@ -225,17 +234,26 @@ const mapStorefrontToCurrentShape = (source) => {
         workingHours: src.settings?.callCenter?.workingHours || ''
       },
       banks: Array.isArray(src.settings?.banks) ? src.settings.banks : [],
-      paymentMethods: Array.isArray(src.settings?.paymentMethods) ? src.settings.paymentMethods : [],
+      paymentMethods: Array.isArray(src.settings?.paymentMethods)
+        ? src.settings.paymentMethods
+        : [],
       seo: {
         title: normalizeLangArray(src.settings?.seo?.title),
         keywords: normalizeLangArray(src.settings?.seo?.keywords),
         description: normalizeLangArray(src.settings?.seo?.description),
         googleAnalyticsId:
-          typeof src.settings?.seo?.googleAnalyticsId === 'string' ? src.settings.seo.googleAnalyticsId : ''
+          typeof src.settings?.seo?.googleAnalyticsId === 'string'
+            ? src.settings.seo.googleAnalyticsId
+            : ''
       },
       extranetLink: typeof src.settings?.extranetLink === 'string' ? src.settings.extranetLink : '',
       siteTitle: typeof src.settings?.siteTitle === 'string' ? src.settings.siteTitle : '',
-      themeColor: typeof src.settings?.themeColor === 'string' ? src.settings.themeColor : (typeof src.themeColor === 'string' ? src.themeColor : ''),
+      themeColor:
+        typeof src.settings?.themeColor === 'string'
+          ? src.settings.themeColor
+          : typeof src.themeColor === 'string'
+            ? src.themeColor
+            : '',
       address: typeof src.settings?.address === 'string' ? src.settings.address : ''
     }
   } else if (typeof src.themeColor === 'string') {
@@ -303,7 +321,7 @@ const mapStorefrontToCurrentShape = (source) => {
     const theme = src.homepageTheme
     out.homepageTheme = { type: typeof theme.type === 'string' ? theme.type : 'home1' }
 
-    const copyThemeBlock = (key) => {
+    const copyThemeBlock = key => {
       if (!theme[key] || typeof theme[key] !== 'object') return
       // Normalize photos inside known theme blocks where needed.
       const t = theme[key]
@@ -325,23 +343,30 @@ const mapStorefrontToCurrentShape = (source) => {
 
   // Fill the selected "template" block (home1/home2/hotel) from legacy root fields.
   // This makes preview + apply consistent even if the source JSON had only root fields.
-  const themeType = out.homepageTheme?.type || (typeof src.homepageTheme?.type === 'string' ? src.homepageTheme.type : 'home1')
+  const themeType =
+    out.homepageTheme?.type ||
+    (typeof src.homepageTheme?.type === 'string' ? src.homepageTheme.type : 'home1')
   const target = ['home1', 'home2', 'hotel'].includes(themeType) ? themeType : 'home1'
 
   // If the source is already in the new format (data lives under homepageTheme[target]),
   // expose those sections at root-level as well so the admin importer can select/apply them.
-  const themeSource = src.homepageTheme && typeof src.homepageTheme === 'object' ? src.homepageTheme[target] : null
+  const themeSource =
+    src.homepageTheme && typeof src.homepageTheme === 'object' ? src.homepageTheme[target] : null
   if (themeSource && typeof themeSource === 'object') {
     if (out.hero === undefined && themeSource.hero) out.hero = themeSource.hero
-    if (out.campaignSection === undefined && themeSource.campaignSection) out.campaignSection = themeSource.campaignSection
-    if (out.locationSection === undefined && themeSource.locationSection) out.locationSection = themeSource.locationSection
+    if (out.campaignSection === undefined && themeSource.campaignSection)
+      out.campaignSection = themeSource.campaignSection
+    if (out.locationSection === undefined && themeSource.locationSection)
+      out.locationSection = themeSource.locationSection
     if (out.hotels === undefined && themeSource.hotels) out.hotels = themeSource.hotels
     if (out.tours === undefined && themeSource.tours) out.tours = themeSource.tours
   }
 
   out.homepageTheme = out.homepageTheme || { type: themeType }
   out.homepageTheme.type = themeType
-  out.homepageTheme[target] = isPlainObject(out.homepageTheme[target]) ? out.homepageTheme[target] : {}
+  out.homepageTheme[target] = isPlainObject(out.homepageTheme[target])
+    ? out.homepageTheme[target]
+    : {}
   ;['hero', 'campaignSection', 'locationSection', 'hotels', 'tours'].forEach(key => {
     if (out[key] !== undefined) out.homepageTheme[target][key] = out[key]
   })
@@ -609,7 +634,7 @@ export const migrateStorefrontData = async (jsonContent, options = {}) => {
     if (cleanedData.pages?.length) summary.sectionsFound.push('pages')
 
     // Find languages
-    const checkLang = (arr) => {
+    const checkLang = arr => {
       if (Array.isArray(arr)) {
         arr.forEach(item => {
           if (item?.lang) summary.languagesFound.add(item.lang)
@@ -682,7 +707,7 @@ export const saveToTempFile = async (imageBuffer, filename) => {
 /**
  * Clean up temp files
  */
-export const cleanupTempFile = async (filePath) => {
+export const cleanupTempFile = async filePath => {
   try {
     if (fs.existsSync(filePath)) {
       await fs.promises.unlink(filePath)

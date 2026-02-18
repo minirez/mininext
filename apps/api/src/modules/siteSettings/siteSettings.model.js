@@ -102,6 +102,11 @@ const siteSettingsSchema = new mongoose.Schema(
       siteDescription: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
+      },
+      tursab: {
+        photo: { type: String },
+        link: { type: String, default: '' },
+        documentNumber: { type: String, default: '' }
       }
     },
 

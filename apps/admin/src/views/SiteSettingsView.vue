@@ -52,18 +52,6 @@
           <GeneralTab :settings="settings?.general" :saving="saving" @save="handleGeneralSave" />
         </div>
 
-        <!-- Homepage Tab -->
-        <div v-show="activeTab === 'homepage'">
-          <HomepageTab
-            :settings="settings?.homepage"
-            :saving="saving"
-            @save="handleHomepageSave"
-            @add-slider="handleAddSlider"
-            @update-slider="handleUpdateSlider"
-            @delete-slider="handleDeleteSlider"
-          />
-        </div>
-
         <!-- Contact Tab -->
         <div v-show="activeTab === 'contact'">
           <ContactTab :settings="settings?.contact" :saving="saving" @save="handleContactSave" />
@@ -84,7 +72,6 @@ import { useI18n } from 'vue-i18n'
 import siteSettingsService from '@/services/siteSettingsService'
 import SetupTab from '@/components/siteSettings/SetupTab.vue'
 import GeneralTab from '@/components/siteSettings/GeneralTab.vue'
-import HomepageTab from '@/components/siteSettings/HomepageTab.vue'
 import ContactTab from '@/components/siteSettings/ContactTab.vue'
 import TrackingTab from '@/components/siteSettings/TrackingTab.vue'
 import { usePartnerContext } from '@/composables/usePartnerContext'
@@ -102,7 +89,6 @@ const activeTab = ref('setup')
 const tabs = computed(() => [
   { id: 'setup', label: t('siteSettings.tabs.setup'), icon: 'dns' },
   { id: 'general', label: t('siteSettings.tabs.general'), icon: 'settings' },
-  { id: 'homepage', label: t('siteSettings.tabs.homepage'), icon: 'home' },
   { id: 'contact', label: t('siteSettings.tabs.contact'), icon: 'contact_phone' },
   { id: 'tracking', label: t('siteSettings.tabs.tracking'), icon: 'analytics' }
 ])
@@ -162,43 +148,6 @@ const handleGeneralSave = async data => {
     successMessage: 'siteSettings.generalSaved',
     onSuccess: response => {
       settings.value.general = response.data
-    }
-  })
-}
-
-// Homepage handlers
-const handleHomepageSave = async data => {
-  await executeSave(() => siteSettingsService.updateHomepage(data), {
-    successMessage: 'siteSettings.homepageSaved',
-    onSuccess: response => {
-      settings.value.homepage = response.data
-    }
-  })
-}
-
-const handleAddSlider = async data => {
-  await executeSave(() => siteSettingsService.addSliderItem(data), {
-    successMessage: 'siteSettings.sliderAdded',
-    onSuccess: response => {
-      settings.value.homepage.slider = response.data
-    }
-  })
-}
-
-const handleUpdateSlider = async ({ sliderId, data }) => {
-  await executeSave(() => siteSettingsService.updateSliderItem(sliderId, data), {
-    successMessage: 'siteSettings.sliderUpdated',
-    onSuccess: response => {
-      settings.value.homepage.slider = response.data
-    }
-  })
-}
-
-const handleDeleteSlider = async sliderId => {
-  await executeSave(() => siteSettingsService.deleteSliderItem(sliderId), {
-    successMessage: 'siteSettings.sliderDeleted',
-    onSuccess: response => {
-      settings.value.homepage.slider = response.data
     }
   })
 }

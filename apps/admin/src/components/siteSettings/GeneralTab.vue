@@ -99,71 +99,76 @@
       </div>
     </div>
 
-    <!-- Languages -->
+    <!-- TURSAB Logo -->
     <div class="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-            {{ $t('siteSettings.general.activeLanguages') }}
-          </h3>
-          <p class="text-sm text-gray-500 dark:text-slate-400">
-            {{ $t('siteSettings.general.languagesDescription') }}
-          </p>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+        {{ $t('siteSettings.general.tursabLogo') }}
+      </h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
+        {{ $t('siteSettings.general.tursabHint') }}
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Photo Upload -->
+        <div class="flex flex-col items-center">
+          <div
+            class="w-40 h-40 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-slate-600 mb-4"
+          >
+            <img
+              v-if="form.tursab.photo"
+              :src="getImageUrl(form.tursab.photo)"
+              alt="TURSAB"
+              class="max-w-full max-h-full object-contain"
+            />
+            <span v-else class="material-icons text-4xl text-gray-300 dark:text-slate-600"
+              >verified</span
+            >
+          </div>
+
+          <div class="flex gap-2">
+            <label class="btn-primary cursor-pointer text-sm">
+              <span class="material-icons text-sm mr-1">upload</span>
+              {{ $t('common.upload') }}
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                :disabled="uploading"
+                @change="handleTursabUpload"
+              />
+            </label>
+            <button
+              v-if="form.tursab.photo"
+              class="btn-danger text-sm"
+              :disabled="uploading"
+              @click="handleTursabDelete"
+            >
+              <span class="material-icons text-sm">delete</span>
+            </button>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600 dark:text-slate-400"
-            >{{ $t('siteSettings.general.defaultLanguage') }}:</span
-          >
-          <select v-model="form.defaultLanguage" class="form-input w-auto text-sm py-1.5">
-            <option v-for="lang in form.activeLanguages" :key="lang" :value="lang">
-              {{ getLanguageFlag(lang) }} {{ getLanguageName(lang) }}
-            </option>
-          </select>
+
+        <!-- TURSAB Fields -->
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">{{ $t('siteSettings.general.tursabDocumentNumber') }}</label>
+            <input
+              v-model="form.tursab.documentNumber"
+              type="text"
+              class="form-input"
+              :placeholder="$t('siteSettings.general.tursabDocumentNumberPlaceholder')"
+            />
+          </div>
+          <div>
+            <label class="form-label">{{ $t('siteSettings.general.tursabLink') }}</label>
+            <input
+              v-model="form.tursab.link"
+              type="url"
+              class="form-input"
+              placeholder="https://www.tursab.org.tr/tr/ddsv"
+            />
+          </div>
         </div>
-      </div>
-
-      <div
-        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
-      >
-        <button
-          v-for="lang in availableLanguages"
-          :key="lang.code"
-          class="relative flex flex-col items-center p-3 rounded-lg transition-all border-2"
-          :class="
-            form.activeLanguages.includes(lang.code)
-              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-              : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
-          "
-          @click="toggleLanguage(lang.code)"
-        >
-          <!-- Default Language Star -->
-          <span v-if="isDefaultLanguage(lang.code)" class="absolute top-1 left-1 text-yellow-500">
-            <span class="material-icons text-sm">star</span>
-          </span>
-
-          <!-- Checkmark for active -->
-          <span
-            v-if="form.activeLanguages.includes(lang.code)"
-            class="absolute top-1 right-1 w-4 h-4 bg-purple-600 rounded-full flex items-center justify-center"
-          >
-            <span class="material-icons text-white text-xs">check</span>
-          </span>
-
-          <span class="text-2xl mb-1">{{ lang.flag }}</span>
-          <span
-            class="text-xs font-semibold"
-            :class="
-              form.activeLanguages.includes(lang.code)
-                ? 'text-purple-700 dark:text-purple-300'
-                : 'text-gray-700 dark:text-slate-300'
-            "
-          >
-            {{ lang.name }}
-          </span>
-          <span class="text-[10px] text-gray-500 dark:text-slate-400">
-            {{ lang.nameTr }}
-          </span>
-        </button>
       </div>
     </div>
 
@@ -357,7 +362,12 @@ const form = ref({
   maintenanceMode: false,
   maintenanceMessage: '',
   siteTitle: defaultLangData(),
-  siteDescription: defaultLangData()
+  siteDescription: defaultLangData(),
+  tursab: {
+    photo: '',
+    link: '',
+    documentNumber: ''
+  }
 })
 
 watch(
@@ -372,7 +382,12 @@ watch(
         maintenanceMode: newSettings.maintenanceMode || false,
         maintenanceMessage: newSettings.maintenanceMessage || '',
         siteTitle: { ...defaultLangData(), ...(newSettings.siteTitle || {}) },
-        siteDescription: { ...defaultLangData(), ...(newSettings.siteDescription || {}) }
+        siteDescription: { ...defaultLangData(), ...(newSettings.siteDescription || {}) },
+        tursab: {
+          photo: newSettings.tursab?.photo || '',
+          link: newSettings.tursab?.link || '',
+          documentNumber: newSettings.tursab?.documentNumber || ''
+        }
       }
       if (form.value.activeLanguages.length > 0) {
         selectedLang.value = form.value.activeLanguages[0]
@@ -394,25 +409,39 @@ const isDefaultLanguage = code => {
   return form.value.defaultLanguage === code
 }
 
-// getImageUrl imported from @/utils/imageUrl
+const handleTursabUpload = async event => {
+  const file = event.target.files[0]
+  if (!file) return
 
-const toggleLanguage = code => {
-  const index = form.value.activeLanguages.indexOf(code)
-  if (index > -1) {
-    // Don't allow removing last language
-    if (form.value.activeLanguages.length > 1) {
-      form.value.activeLanguages.splice(index, 1)
-      // If removed language was default, set new default
-      if (form.value.defaultLanguage === code) {
-        form.value.defaultLanguage = form.value.activeLanguages[0]
-      }
-      // If removed language was selected, select first
-      if (selectedLang.value === code) {
-        selectedLang.value = form.value.activeLanguages[0]
-      }
+  uploading.value = true
+  try {
+    const response = await siteSettingsService.uploadImage(file, 'tursab')
+    if (response.success) {
+      form.value.tursab.photo = response.data.url
+      toast.success(translate('siteSettings.general.tursabUploaded'))
+      emit('refresh')
     }
-  } else {
-    form.value.activeLanguages.push(code)
+  } catch (error) {
+    toast.error(error.response?.data?.message || translate('common.uploadFailed'))
+  } finally {
+    uploading.value = false
+  }
+}
+
+const handleTursabDelete = async () => {
+  if (!form.value.tursab.photo) return
+
+  uploading.value = true
+  try {
+    const filename = form.value.tursab.photo.split('/').pop()
+    await siteSettingsService.deleteImage(filename, 'tursab')
+    form.value.tursab.photo = ''
+    toast.success(translate('siteSettings.general.tursabDeleted'))
+    emit('refresh')
+  } catch (error) {
+    toast.error(error.response?.data?.message || translate('common.deleteFailed'))
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -489,10 +518,12 @@ const handleFaviconDelete = async () => {
 }
 
 const handleSave = () => {
-  // Don't include logo/favicon in save - they're uploaded separately
   // eslint-disable-next-line no-unused-vars
-  const { logo, favicon, ...rest } = form.value
-  emit('save', rest)
+  const { logo, favicon, tursab, ...rest } = form.value
+  emit('save', {
+    ...rest,
+    tursab: { link: tursab.link, documentNumber: tursab.documentNumber }
+  })
 }
 
 const handleTranslate = async () => {
