@@ -16,7 +16,9 @@ const callGeminiWithFile = async (
     model: GEMINI_MODEL,
     config: {
       temperature: 0.1,
-      maxOutputTokens
+      maxOutputTokens,
+      // Disable thinking for data extraction tasks - reduces latency from ~90s to ~10-15s
+      thinkingConfig: { thinkingLevel: 'none' }
     },
     contents: [
       {
@@ -165,9 +167,58 @@ SADECE GEÇERLİ JSON DÖNDÜR - AÇIKLAMA YAZMA!`
   const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 16384)
   const structure = cleanAndParseJson(text)
 
+  // Normalize keys - AI sometimes uses different key names
+  if (!structure.roomTypes && structure.rooms) {
+    structure.roomTypes = structure.rooms
+    delete structure.rooms
+  }
+  if (!structure.mealPlans && structure.meals) {
+    structure.mealPlans = structure.meals
+    delete structure.meals
+  }
+  if (!structure.mealPlans && structure.mealTypes) {
+    structure.mealPlans = structure.mealTypes
+    delete structure.mealTypes
+  }
+  if (!structure.mealPlans && structure.boardTypes) {
+    structure.mealPlans = structure.boardTypes
+    delete structure.boardTypes
+  }
+  if (!structure.periods && structure.pricingPeriods) {
+    structure.periods = structure.pricingPeriods
+    delete structure.pricingPeriods
+  }
+  if (!structure.periods && structure.seasons) {
+    structure.periods = structure.seasons
+    delete structure.seasons
+  }
+  // contractInfo might be named differently
+  if (!structure.contractInfo && structure.contract) {
+    structure.contractInfo = structure.contract
+    delete structure.contract
+  }
+  if (!structure.contractInfo && structure.info) {
+    structure.contractInfo = structure.info
+    delete structure.info
+  }
+
+  // Ensure pricingType is on contractInfo
+  if (structure.contractInfo && !structure.contractInfo.pricingType && structure.pricingType) {
+    structure.contractInfo.pricingType = structure.pricingType
+  }
+
   logger.info(
     `Pass 1 complete - periods: ${structure.periods?.length}, rooms: ${structure.roomTypes?.length}, meals: ${structure.mealPlans?.length}, pricingType: ${structure.contractInfo?.pricingType}`
   )
+
+  // Warn if critical data is still missing
+  if (!structure.roomTypes?.length) {
+    logger.warn('Pass 1: No room types found! Available keys: ' + Object.keys(structure).join(', '))
+  }
+  if (!structure.mealPlans?.length) {
+    logger.warn('Pass 1: No meal plans found! Available keys: ' + Object.keys(structure).join(', '))
+  }
+
   return structure
 }
 
@@ -178,25 +229,25 @@ SADECE GEÇERLİ JSON DÖNDÜR - AÇIKLAMA YAZMA!`
 const extractAllPricingCSV = async (client, base64Content, mimeType, structure) => {
   const pricingType = structure.contractInfo?.pricingType || 'unit'
 
-  const periodsRef = structure.periods
+  const periods = structure.periods || []
+  const rooms = structure.roomTypes || []
+  const meals = structure.mealPlans || []
+
+  const periodsRef = periods
     .map(p => `${p.code}: ${p.name} (${p.startDate} → ${p.endDate})`)
     .join('\n')
 
-  const roomCodes = (structure.roomTypes || []).map(
-    r => r.contractCode || r.suggestedCode || r.contractName
-  )
-  const roomsRef = (structure.roomTypes || [])
+  const roomCodes = rooms.map(r => r.contractCode || r.suggestedCode || r.contractName)
+  const roomsRef = rooms
     .map(r => `${r.contractCode || r.suggestedCode || r.contractName}: ${r.contractName}`)
     .join('\n')
 
-  const mealCodes = (structure.mealPlans || []).map(
-    m => m.contractCode || m.suggestedCode || m.contractName
-  )
+  const mealCodes = meals.map(m => m.contractCode || m.suggestedCode || m.contractName)
   const mealsRef = mealCodes.join(', ')
 
-  const roomCount = structure.roomTypes?.length || 0
-  const periodCount = structure.periods?.length || 0
-  const mealCount = structure.mealPlans?.length || 1
+  const roomCount = rooms.length
+  const periodCount = periods.length
+  const mealCount = meals.length || 1
   const expectedCount = roomCount * periodCount * mealCount
 
   let csvColumns, csvExample, pricingInstructions
@@ -231,19 +282,43 @@ const extractAllPricingCSV = async (client, base64Content, mimeType, structure) 
 - INFANT: Bebek fiyatı (yoksa 0)`
   }
 
+  // Build a dynamic prompt based on available structure data
+  const roomSection =
+    roomCount > 0
+      ? `ODALAR:\n${roomsRef}`
+      : 'ODALAR: Kontrattaki TÜM oda tiplerini bul ve kısa kod kullan (STD, DLX, SUP, FAM, vb.)'
+
+  const periodSection =
+    periodCount > 0
+      ? `DÖNEMLER:\n${periodsRef}`
+      : 'DÖNEMLER: Kontrattaki TÜM fiyat dönemlerini bul ve P1, P2, P3... şeklinde kodla'
+
+  const mealSection =
+    mealCodes.length > 0
+      ? `PANSİYONLAR: ${mealsRef}`
+      : 'PANSİYONLAR: Kontrattaki pansiyon tiplerini bul (AI, UAI, FB, HB, BB, RO vb.)'
+
+  const expectLine =
+    expectedCount > 0
+      ? `TOPLAM ${expectedCount} satır bekleniyor (${roomCount} oda × ${periodCount} dönem × ${mealCount} pansiyon).`
+      : 'Kontrattaki TÜM oda × dönem × pansiyon kombinasyonları için birer satır oluştur.'
+
+  const codesLine =
+    roomCount > 0 && periodCount > 0
+      ? `6. Oda kodları: ${roomCodes.join(', ')}\n7. Dönem kodları: ${periods.map(p => p.code).join(', ')}\n8. Pansiyon kodları: ${mealsRef}`
+      : '6. Oda, dönem ve pansiyon kodlarını kontratın içinden belirle'
+
   const prompt = `Bu kontrat dökümanından TÜM oda tiplerinin TÜM dönemlerdeki fiyatlarını çıkar.
 
-ODALAR:
-${roomsRef}
+${roomSection}
 
-DÖNEMLER:
-${periodsRef}
+${periodSection}
 
-PANSİYONLAR: ${mealsRef}
+${mealSection}
 
 ${pricingInstructions}
 
-TOPLAM ${expectedCount} satır bekleniyor (${roomCount} oda × ${periodCount} dönem × ${mealCount} pansiyon).
+${expectLine}
 HİÇBİR FİYAT ATLAMA! Tablodaki TÜM fiyatları çıkar!
 
 CSV FORMATI (| ile ayrılmış, başlık satırı KOYMA):
@@ -258,9 +333,7 @@ KURALLAR:
 3. Boş/bilinmeyen değer için 0 yaz
 4. Başlık satırı KOYMA, direkt verilerle başla
 5. Açıklama/yorum satırı YAZMA
-6. Oda kodları: ${roomCodes.join(', ')}
-7. Dönem kodları: ${structure.periods.map(p => p.code).join(', ')}
-8. Pansiyon kodları: ${mealsRef}
+${codesLine}
 
 SADECE CSV VERİSİ DÖNDÜR!`
 
