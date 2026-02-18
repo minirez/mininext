@@ -26,7 +26,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex-1 overflow-y-auto py-4 lg:py-6">
+    <div v-else class="flex-1 py-4 lg:py-6">
       <BookingLayout />
     </div>
 
@@ -91,7 +91,10 @@ const bookingStore = useBookingStore()
 const uiStore = useUIStore()
 
 // Async action composables
-const { isLoading: loading, execute: executeInit } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loading, execute: executeInit } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 const loadError = ref(null)
 const showContinueModal = ref(false)
@@ -201,15 +204,12 @@ const initializeBooking = async () => {
 
   if (bookingNumber) {
     // Loading existing draft from URL
-    await executeInit(
-      () => bookingStore.loadDraft(bookingNumber),
-      {
-        onError: error => {
-          console.error('Failed to initialize booking:', error)
-          loadError.value = error.message || t('booking.loadError')
-        }
+    await executeInit(() => bookingStore.loadDraft(bookingNumber), {
+      onError: error => {
+        console.error('Failed to initialize booking:', error)
+        loadError.value = error.message || t('booking.loadError')
       }
-    )
+    })
   } else {
     // New booking - check for existing data
     const phase1Data = loadPhase1Data()
