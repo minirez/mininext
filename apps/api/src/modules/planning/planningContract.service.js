@@ -415,6 +415,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
 
   const periodDates = {}
   const periodMinStay = {}
+  const periodReleaseDay = {}
   for (const period of periods) {
     const startDate = new Date(period.startDate)
     const endDate = new Date(period.endDate)
@@ -428,6 +429,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
 
     periodDates[period.code] = dates
     periodMinStay[period.code] = period.minStay || defaultMinStay
+    periodReleaseDay[period.code] = period.releaseDay ?? 0
   }
 
   let createdCount = 0
@@ -452,6 +454,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
     } = priceEntry
 
     const effectiveMinStay = minStay || periodMinStay[periodCode] || defaultMinStay
+    const effectiveReleaseDay = periodReleaseDay[periodCode] ?? 0
     const mappedRoomCode = roomMappings[roomCode] || roomCode
     const mappedMealPlanCode = mealPlanMappings[mealPlanCode] || mealPlanCode
 
@@ -480,6 +483,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
           currency: market.currency || 'EUR',
           allotment: allotment || defaultAllotment,
           minStay: effectiveMinStay,
+          releaseDays: effectiveReleaseDay,
           source: 'contract',
           status: 'active'
         }
