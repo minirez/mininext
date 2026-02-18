@@ -2,9 +2,6 @@ import logger from '../../core/logger.js'
 import { getAI, GEMINI_MODEL } from './client.js'
 import { cleanAndParseJson, validatePricingCompleteness } from './helpers.js'
 
-// Max parallel room pricing extractions (Gemini standard tier: 60 RPM)
-const PARALLEL_ROOMS = 5
-
 /**
  * Helper: Call Gemini with file + text prompt, return raw text
  */
@@ -175,54 +172,69 @@ SADECE GEÇERLİ JSON DÖNDÜR - AÇIKLAMA YAZMA!`
 }
 
 /**
- * PASS 2: Extract pricing for a single room type
- * Returns: array of pricing entries for this room
+ * PASS 2: Extract ALL room pricing in CSV format (single API call)
+ * CSV is 5-6x more token-efficient than JSON, allowing all rooms in one call.
  */
-const extractRoomPricing = async (client, base64Content, mimeType, structure, room) => {
+const extractAllPricingCSV = async (client, base64Content, mimeType, structure) => {
   const pricingType = structure.contractInfo?.pricingType || 'unit'
-  const roomCode = room.contractCode || room.suggestedCode || room.contractName
-  const roomName = room.contractName
 
-  // Build period reference
   const periodsRef = structure.periods
     .map(p => `${p.code}: ${p.name} (${p.startDate} → ${p.endDate})`)
     .join('\n')
 
-  // Build meal plan reference
-  const mealsRef = (structure.mealPlans || [])
-    .map(m => m.contractCode || m.suggestedCode || m.contractName)
-    .join(', ')
+  const roomCodes = (structure.roomTypes || []).map(
+    r => r.contractCode || r.suggestedCode || r.contractName
+  )
+  const roomsRef = (structure.roomTypes || [])
+    .map(r => `${r.contractCode || r.suggestedCode || r.contractName}: ${r.contractName}`)
+    .join('\n')
 
+  const mealCodes = (structure.mealPlans || []).map(
+    m => m.contractCode || m.suggestedCode || m.contractName
+  )
+  const mealsRef = mealCodes.join(', ')
+
+  const roomCount = structure.roomTypes?.length || 0
+  const periodCount = structure.periods?.length || 0
   const mealCount = structure.mealPlans?.length || 1
-  const periodCount = structure.periods?.length || 1
-  const expectedCount = periodCount * mealCount
+  const expectedCount = roomCount * periodCount * mealCount
 
-  let pricingInstructions = ''
+  let csvColumns, csvExample, pricingInstructions
+
   if (pricingType === 'unit') {
-    pricingInstructions = `FIYATLANDIRMA TİPİ: ÜNITE BAZLI (unit)
-Her kayıt için:
-- pricePerNight: Oda/ünite fiyatı
-- extraAdult: Ekstra yetişkin fiyatı (varsa, yoksa 0)
-- extraChild: Çocuk fiyatları dizisi [1.çocuk, 2.çocuk] (varsa)
-- extraInfant: Bebek fiyatı (varsa, yoksa 0)`
+    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|EXTRA_ADULT|EXTRA_CHILD1|EXTRA_CHILD2|EXTRA_INFANT'
+    csvExample = 'STD|P1|AI|1500|300|200|150|0'
+    pricingInstructions = `Unit (oda bazlı) fiyatlandırma:
+- PRICE: Oda/ünite gecelik fiyatı
+- EXTRA_ADULT: Ekstra yetişkin fiyatı (yoksa 0)
+- EXTRA_CHILD1: 1. çocuk fiyatı (yoksa 0)
+- EXTRA_CHILD2: 2. çocuk fiyatı (yoksa 0)
+- EXTRA_INFANT: Bebek fiyatı (yoksa 0)`
   } else if (pricingType === 'per_person') {
-    pricingInstructions = `FIYATLANDIRMA TİPİ: KİŞİ BAZLI (OBP - per_person)
-Her kayıt için:
-- pricingType: "per_person"
-- occupancyPricing: { "1": fiyat, "2": fiyat, "3": fiyat, ... } (her yetişkin sayısı için)
-- extraChild: Çocuk fiyatları dizisi [1.çocuk, 2.çocuk] (varsa)
-- pricePerNight KULLANMA (0 veya null)`
-  } else if (pricingType === 'per_person_multiplier') {
-    pricingInstructions = `FIYATLANDIRMA TİPİ: ÇARPANLI KİŞİ BAZLI (per_person_multiplier)
-Her kayıt için:
-- pricingType: "per_person_multiplier"
-- pricePerNight: BAZ fiyat (çarpanların uygulanacağı temel fiyat)
-- extraChild: Çocuk fiyatları dizisi (varsa)
-- extraInfant: Bebek fiyatı (varsa, yoksa 0)
-NOT: Çarpan tablosu ayrı çıkarılacak, burada sadece baz fiyatları ver.`
+    csvColumns = 'ROOM|PERIOD|MEAL|1PAX|2PAX|3PAX|4PAX|CHILD1|CHILD2|INFANT'
+    csvExample = 'STD|P1|AI|1200|1000|900|850|300|200|0'
+    pricingInstructions = `Kişi bazlı (OBP) fiyatlandırma:
+- 1PAX: 1 yetişkin kişi başı fiyat
+- 2PAX: 2 yetişkin kişi başı fiyat
+- 3PAX: 3 yetişkin kişi başı fiyat (yoksa 0)
+- 4PAX: 4 yetişkin kişi başı fiyat (yoksa 0)
+- CHILD1: 1. çocuk fiyatı (yoksa 0)
+- CHILD2: 2. çocuk fiyatı (yoksa 0)
+- INFANT: Bebek fiyatı (yoksa 0)`
+  } else {
+    csvColumns = 'ROOM|PERIOD|MEAL|BASE_PRICE|CHILD1|CHILD2|INFANT'
+    csvExample = 'STD|P1|AI|1000|300|200|0'
+    pricingInstructions = `Çarpanlı kişi bazlı fiyatlandırma:
+- BASE_PRICE: Baz fiyat (çarpanlar ayrı çıkarılacak)
+- CHILD1: 1. çocuk fiyatı (yoksa 0)
+- CHILD2: 2. çocuk fiyatı (yoksa 0)
+- INFANT: Bebek fiyatı (yoksa 0)`
   }
 
-  const prompt = `Bu kontrat dökümanından "${roomName}" (${roomCode}) odasının FİYATLARINI çıkar.
+  const prompt = `Bu kontrat dökümanından TÜM oda tiplerinin TÜM dönemlerdeki fiyatlarını çıkar.
+
+ODALAR:
+${roomsRef}
 
 DÖNEMLER:
 ${periodsRef}
@@ -231,32 +243,189 @@ PANSİYONLAR: ${mealsRef}
 
 ${pricingInstructions}
 
-Her dönem × pansiyon kombinasyonu için bir kayıt oluştur.
-TOPLAM ${expectedCount} kayıt bekleniyor (${periodCount} dönem × ${mealCount} pansiyon).
+TOPLAM ${expectedCount} satır bekleniyor (${roomCount} oda × ${periodCount} dönem × ${mealCount} pansiyon).
+HİÇBİR FİYAT ATLAMA! Tablodaki TÜM fiyatları çıkar!
 
-HİÇBİR FİYAT ATLAMA! Tablodaki TÜM dönemlerin fiyatlarını çıkar!
+CSV FORMATI (| ile ayrılmış, başlık satırı KOYMA):
+${csvColumns}
 
-JSON FORMATI:
-{
-  "roomCode": "${roomCode}",
-  "pricing": [
-    { "periodCode": "P1", "roomCode": "${roomCode}", "mealPlanCode": "...", ... }
-  ]
+ÖRNEK:
+${csvExample}
+
+KURALLAR:
+1. Her satırda ROOM, PERIOD ve MEAL kodu OLMALI
+2. Sadece sayısal değerler kullan (para birimi sembolü KOYMA)
+3. Boş/bilinmeyen değer için 0 yaz
+4. Başlık satırı KOYMA, direkt verilerle başla
+5. Açıklama/yorum satırı YAZMA
+6. Oda kodları: ${roomCodes.join(', ')}
+7. Dönem kodları: ${structure.periods.map(p => p.code).join(', ')}
+8. Pansiyon kodları: ${mealsRef}
+
+SADECE CSV VERİSİ DÖNDÜR!`
+
+  logger.info(
+    `Pass 2: Extracting ALL pricing in CSV format (expecting ${expectedCount} entries)...`
+  )
+
+  // CSV is very compact: ~50 chars/line. Allow generous tokens but cap at 65K
+  const maxTokens = Math.min(Math.max(16384, expectedCount * 100), 65536)
+  const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, maxTokens)
+
+  const pricing = parseCSVPricing(text, pricingType)
+  logger.info(`Pass 2 complete: Found ${pricing.length}/${expectedCount} price entries from CSV`)
+
+  return pricing
 }
 
-SADECE GEÇERLİ JSON DÖNDÜR!`
+/**
+ * Parse CSV pricing response into structured pricing array
+ */
+const parseCSVPricing = (text, pricingType) => {
+  if (!text) return []
 
-  try {
-    const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 8192)
-    const result = cleanAndParseJson(text)
+  // Clean the response
+  const cleaned = text
+    .replace(/```(?:csv|text)?\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim()
 
-    const pricing = result.pricing || []
-    logger.info(`Pass 2 [${roomCode}]: Found ${pricing.length}/${expectedCount} price entries`)
-    return pricing
-  } catch (error) {
-    logger.warn(`Pass 2 [${roomCode}]: Failed to extract pricing - ${error.message}`)
-    return []
+  const lines = cleaned.split('\n').filter(line => {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+    if (trimmed.startsWith('#')) return false
+    // Skip header lines
+    if (/^ROOM\s*\|/i.test(trimmed)) return false
+    if (/PERIOD.*MEAL.*PRICE/i.test(trimmed)) return false
+    // Must have pipe separators with at least 3 fields
+    if ((trimmed.match(/\|/g) || []).length < 2) return false
+    return true
+  })
+
+  const pricing = []
+
+  for (const line of lines) {
+    const parts = line.split('|').map(s => s.trim())
+
+    try {
+      if (pricingType === 'unit') {
+        if (parts.length < 4) continue
+        const entry = {
+          roomCode: parts[0],
+          periodCode: parts[1],
+          mealPlanCode: parts[2],
+          pricePerNight: parseFloat(parts[3]) || 0,
+          extraAdult: parseFloat(parts[4]) || 0,
+          extraChild: [],
+          extraInfant: parseFloat(parts[7]) || 0,
+          pricingType: 'unit'
+        }
+        const child1 = parseFloat(parts[5])
+        const child2 = parseFloat(parts[6])
+        if (child1) entry.extraChild.push(child1)
+        if (child2) entry.extraChild.push(child2)
+        if (entry.pricePerNight > 0) pricing.push(entry)
+      } else if (pricingType === 'per_person') {
+        if (parts.length < 5) continue
+        const occupancyPricing = {}
+        const pax1 = parseFloat(parts[3])
+        const pax2 = parseFloat(parts[4])
+        const pax3 = parseFloat(parts[5])
+        const pax4 = parseFloat(parts[6])
+        if (pax1) occupancyPricing['1'] = pax1
+        if (pax2) occupancyPricing['2'] = pax2
+        if (pax3) occupancyPricing['3'] = pax3
+        if (pax4) occupancyPricing['4'] = pax4
+
+        const entry = {
+          roomCode: parts[0],
+          periodCode: parts[1],
+          mealPlanCode: parts[2],
+          pricingType: 'per_person',
+          occupancyPricing,
+          pricePerNight: 0,
+          extraChild: [],
+          extraInfant: parseFloat(parts[9]) || 0
+        }
+        const child1 = parseFloat(parts[7])
+        const child2 = parseFloat(parts[8])
+        if (child1) entry.extraChild.push(child1)
+        if (child2) entry.extraChild.push(child2)
+        if (Object.keys(occupancyPricing).length > 0) pricing.push(entry)
+      } else {
+        // per_person_multiplier
+        if (parts.length < 4) continue
+        const entry = {
+          roomCode: parts[0],
+          periodCode: parts[1],
+          mealPlanCode: parts[2],
+          pricingType: 'per_person_multiplier',
+          pricePerNight: parseFloat(parts[3]) || 0,
+          extraChild: [],
+          extraInfant: parseFloat(parts[6]) || 0
+        }
+        const child1 = parseFloat(parts[4])
+        const child2 = parseFloat(parts[5])
+        if (child1) entry.extraChild.push(child1)
+        if (child2) entry.extraChild.push(child2)
+        if (entry.pricePerNight > 0) pricing.push(entry)
+      }
+    } catch (err) {
+      logger.warn(`CSV parse error on line: "${line}" - ${err.message}`)
+    }
   }
+
+  return pricing
+}
+
+/**
+ * Retry extraction for specific missing entries (single call, CSV format)
+ */
+const retryMissingPricingCSV = async (
+  client,
+  base64Content,
+  mimeType,
+  structure,
+  missingEntries
+) => {
+  const pricingType = structure.contractInfo?.pricingType || 'unit'
+
+  // Group missing by room for clarity
+  const missingByRoom = {}
+  for (const entry of missingEntries) {
+    if (!missingByRoom[entry.roomCode]) missingByRoom[entry.roomCode] = []
+    missingByRoom[entry.roomCode].push(`${entry.periodCode}/${entry.mealPlanCode}`)
+  }
+
+  const missingDesc = Object.entries(missingByRoom)
+    .map(([room, combos]) => `- ${room}: ${combos.join(', ')}`)
+    .join('\n')
+
+  let csvColumns
+  if (pricingType === 'unit') {
+    csvColumns = 'ROOM|PERIOD|MEAL|PRICE|EXTRA_ADULT|EXTRA_CHILD1|EXTRA_CHILD2|EXTRA_INFANT'
+  } else if (pricingType === 'per_person') {
+    csvColumns = 'ROOM|PERIOD|MEAL|1PAX|2PAX|3PAX|4PAX|CHILD1|CHILD2|INFANT'
+  } else {
+    csvColumns = 'ROOM|PERIOD|MEAL|BASE_PRICE|CHILD1|CHILD2|INFANT'
+  }
+
+  const prompt = `Bu kontrat dökümanından aşağıdaki EKSİK fiyat kayıtlarını çıkar.
+
+EKSİK KAYITLAR:
+${missingDesc}
+
+TOPLAM ${missingEntries.length} satır bekleniyor.
+
+CSV FORMATI (| ile ayrılmış, başlık KOYMA):
+${csvColumns}
+
+Sadece yukarıdaki eksik kombinasyonların fiyatlarını ver.
+SADECE CSV VERİSİ DÖNDÜR!`
+
+  logger.info(`Retry: Extracting ${missingEntries.length} missing entries...`)
+  const text = await callGeminiWithFile(client, base64Content, mimeType, prompt, 8192)
+  return parseCSVPricing(text, pricingType)
 }
 
 /**
@@ -315,72 +484,13 @@ SADECE GEÇERLİ JSON DÖNDÜR!`
 }
 
 /**
- * Process rooms in parallel batches
- */
-const extractAllRoomPricing = async (client, base64Content, mimeType, structure) => {
-  const rooms = structure.roomTypes || []
-  const allPricing = []
-
-  for (let i = 0; i < rooms.length; i += PARALLEL_ROOMS) {
-    const batch = rooms.slice(i, i + PARALLEL_ROOMS)
-    logger.info(
-      `Processing room batch ${Math.floor(i / PARALLEL_ROOMS) + 1}/${Math.ceil(rooms.length / PARALLEL_ROOMS)}: ${batch.map(r => r.contractCode || r.contractName).join(', ')}`
-    )
-
-    const results = await Promise.all(
-      batch.map(room => extractRoomPricing(client, base64Content, mimeType, structure, room))
-    )
-
-    for (const pricing of results) {
-      allPricing.push(...pricing)
-    }
-  }
-
-  return allPricing
-}
-
-/**
- * Retry extraction for missing room/period combinations
- */
-const retryMissingPricing = async (client, base64Content, mimeType, structure, missingEntries) => {
-  // Group missing entries by room
-  const missingByRoom = {}
-  for (const entry of missingEntries) {
-    if (!missingByRoom[entry.roomCode]) missingByRoom[entry.roomCode] = []
-    missingByRoom[entry.roomCode].push(entry)
-  }
-
-  const retryPricing = []
-  const roomCodes = Object.keys(missingByRoom)
-
-  for (let i = 0; i < roomCodes.length; i += PARALLEL_ROOMS) {
-    const batch = roomCodes.slice(i, i + PARALLEL_ROOMS)
-
-    const results = await Promise.all(
-      batch.map(roomCode => {
-        const room = structure.roomTypes.find(
-          r => (r.contractCode || r.suggestedCode || r.contractName) === roomCode
-        )
-        if (!room) return Promise.resolve([])
-        return extractRoomPricing(client, base64Content, mimeType, structure, room)
-      })
-    )
-
-    for (const pricing of results) {
-      retryPricing.push(...pricing)
-    }
-  }
-
-  return retryPricing
-}
-
-/**
  * Parse hotel pricing contract (PDF/Word/Image) using Gemini AI
- * Multi-pass approach:
- *   Pass 1: Structure extraction (no prices)
- *   Pass 2: Per-room pricing extraction (parallel)
- *   Pass 3: Multiplier table (if per_person_multiplier)
- *   Validation + targeted retry for missing entries
+ * Optimized 2-pass approach with CSV format:
+ *   Pass 1: Structure extraction (JSON) ~10-15s
+ *   Pass 2: ALL pricing in CSV format (single call) ~15-25s
+ *   Pass 3: Multiplier table if needed (JSON) ~5-10s
+ *   Validation + targeted retry for missing entries ~10-15s (if needed)
+ *   Total: ~30-50s (was ~90-180s with per-room approach)
  *
  * @param {Buffer|string} fileContent - File content as base64 or buffer
  * @param {string} mimeType - File MIME type (application/pdf, image/*, etc.)
@@ -396,21 +506,27 @@ export const parseHotelContract = async (fileContent, mimeType, context = {}) =>
   const base64Content = Buffer.isBuffer(fileContent) ? fileContent.toString('base64') : fileContent
 
   try {
+    const startTime = Date.now()
     logger.info(
-      `Parsing hotel contract (multi-pass) - mimeType: ${mimeType}, contentSize: ${base64Content.length} chars`
+      `Parsing hotel contract (CSV mode) - mimeType: ${mimeType}, contentSize: ${base64Content.length} chars`
     )
 
-    // === PASS 1: Structure Extraction ===
+    // === PASS 1: Structure Extraction (JSON) ===
     const structure = await extractContractStructure(client, base64Content, mimeType, context)
+    const pass1Time = Date.now()
+    logger.info(`Pass 1 took ${Math.round((pass1Time - startTime) / 1000)}s`)
 
-    // === PASS 2: Per-Room Pricing Extraction ===
-    const pricing = await extractAllRoomPricing(client, base64Content, mimeType, structure)
+    // === PASS 2: All Pricing in CSV Format (single call) ===
+    const pricing = await extractAllPricingCSV(client, base64Content, mimeType, structure)
+    const pass2Time = Date.now()
+    logger.info(`Pass 2 took ${Math.round((pass2Time - pass1Time) / 1000)}s`)
 
     // === PASS 3: Multiplier Table (if needed) ===
     let multiplierData = null
     const pricingType = structure.contractInfo?.pricingType
     if (pricingType === 'per_person_multiplier') {
       multiplierData = await extractMultiplierTable(client, base64Content, mimeType, structure)
+      logger.info(`Pass 3 took ${Math.round((Date.now() - pass2Time) / 1000)}s`)
     }
 
     // === VALIDATION ===
@@ -419,41 +535,46 @@ export const parseHotelContract = async (fileContent, mimeType, context = {}) =>
       `Validation: ${validation.completeness}% complete (${validation.totalFound}/${validation.totalExpected})`
     )
 
-    // === RETRY for missing entries ===
+    // === RETRY for missing entries (single focused call) ===
     let finalPricing = pricing
     if (
       validation.completeness < 100 &&
       validation.missingEntries.length > 0 &&
-      validation.missingEntries.length <= 30
+      validation.missingEntries.length <= 50
     ) {
       logger.info(`Retrying ${validation.missingEntries.length} missing price entries...`)
-      const retryPricing = await retryMissingPricing(
-        client,
-        base64Content,
-        mimeType,
-        structure,
-        validation.missingEntries
-      )
+      const retryStart = Date.now()
 
-      if (retryPricing.length > 0) {
-        // Merge: add only truly new entries
-        const existingKeys = new Set(
-          pricing.map(p => `${p.periodCode}|${p.roomCode}|${p.mealPlanCode}`)
+      try {
+        const retryPricing = await retryMissingPricingCSV(
+          client,
+          base64Content,
+          mimeType,
+          structure,
+          validation.missingEntries
         )
-        const newEntries = retryPricing.filter(
-          p => !existingKeys.has(`${p.periodCode}|${p.roomCode}|${p.mealPlanCode}`)
-        )
-        finalPricing = [...pricing, ...newEntries]
 
-        // Re-validate
-        validation = validatePricingCompleteness(structure, finalPricing)
-        logger.info(
-          `After retry: ${validation.completeness}% complete (${validation.totalFound}/${validation.totalExpected}), recovered ${newEntries.length} entries`
-        )
+        if (retryPricing.length > 0) {
+          const existingKeys = new Set(
+            pricing.map(p => `${p.periodCode}|${p.roomCode}|${p.mealPlanCode}`)
+          )
+          const newEntries = retryPricing.filter(
+            p => !existingKeys.has(`${p.periodCode}|${p.roomCode}|${p.mealPlanCode}`)
+          )
+          finalPricing = [...pricing, ...newEntries]
+
+          validation = validatePricingCompleteness(structure, finalPricing)
+          logger.info(
+            `After retry: ${validation.completeness}% (${validation.totalFound}/${validation.totalExpected}), recovered ${newEntries.length} entries in ${Math.round((Date.now() - retryStart) / 1000)}s`
+          )
+        }
+      } catch (retryError) {
+        logger.warn(`Retry failed: ${retryError.message}`)
       }
     }
 
     // === BUILD RESULT ===
+    const totalTime = Math.round((Date.now() - startTime) / 1000)
     const result = {
       ...structure,
       pricing: finalPricing,
@@ -468,14 +589,12 @@ export const parseHotelContract = async (fileContent, mimeType, context = {}) =>
       confidence: structure.confidence || { overall: 75, periods: 80, rooms: 80, pricing: 70 }
     }
 
-    // Add completeness warning if not 100%
     if (validation.completeness < 100) {
       result.warnings.push(
         `${validation.missingEntries.length} fiyat kaydı eksik olabilir (beklenen: ${validation.totalExpected}, bulunan: ${validation.totalFound}, tamamlanma: %${validation.completeness})`
       )
     }
 
-    // Adjust confidence based on completeness
     if (result.confidence && validation.completeness < 100) {
       result.confidence.pricing = validation.completeness
       result.confidence.overall = Math.round(
@@ -487,7 +606,7 @@ export const parseHotelContract = async (fileContent, mimeType, context = {}) =>
     const roomCount = structure.roomTypes?.length || 0
     const mealPlanCount = structure.mealPlans?.length || 0
 
-    logger.info('Contract parsing completed (multi-pass):')
+    logger.info(`Contract parsing completed in ${totalTime}s:`)
     logger.info(`  - Periods: ${periodCount}`)
     logger.info(`  - Room types: ${roomCount}`)
     logger.info(`  - Meal plans: ${mealPlanCount}`)
