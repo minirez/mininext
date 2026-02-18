@@ -17,8 +17,8 @@ const callGeminiWithFile = async (
     config: {
       temperature: 0.1,
       maxOutputTokens,
-      // Disable thinking for data extraction tasks - reduces latency from ~90s to ~10-15s
-      thinkingConfig: { thinkingLevel: 'none' }
+      // Minimal thinking for data extraction tasks - reduces latency significantly
+      thinkingConfig: { thinkingLevel: 'minimal' }
     },
     contents: [
       {
