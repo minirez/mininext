@@ -60,13 +60,25 @@ export const getById = asyncHandler(async (req, res) => {
  * Create package (admin)
  */
 export const create = asyncHandler(async (req, res) => {
-  const { name, description, slug, services, overridePrice, billingPeriod, trialDays, sortOrder } =
-    req.body
+  const {
+    name,
+    description,
+    slug,
+    services,
+    overridePrice,
+    billingPeriod,
+    trialDays,
+    sortOrder,
+    targetPartnerType,
+    icon,
+    color,
+    badge,
+    isPublic
+  } = req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
   if (!slug) throw new BadRequestError('SLUG_REQUIRED')
 
-  // Validate that referenced services exist
   if (services?.length) {
     const count = await SubscriptionService.countDocuments({ _id: { $in: services } })
     if (count !== services.length) throw new BadRequestError('INVALID_SERVICE_IDS')
@@ -80,7 +92,12 @@ export const create = asyncHandler(async (req, res) => {
     overridePrice: overridePrice ?? null,
     billingPeriod,
     trialDays: trialDays ?? 15,
-    sortOrder
+    sortOrder,
+    targetPartnerType: targetPartnerType || 'all',
+    icon: icon || 'inventory_2',
+    color: color || '#6366f1',
+    badge: badge || '',
+    isPublic: isPublic !== false
   })
 
   await recalcPrice(pkg)
@@ -110,7 +127,12 @@ export const update = asyncHandler(async (req, res) => {
     'billingPeriod',
     'trialDays',
     'sortOrder',
-    'isActive'
+    'isActive',
+    'targetPartnerType',
+    'icon',
+    'color',
+    'badge',
+    'isPublic'
   ]
 
   for (const field of allowedFields) {

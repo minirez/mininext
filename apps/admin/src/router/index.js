@@ -129,15 +129,10 @@ const router = createRouter({
             titleKey: 'mySubscription.title'
           }
         },
-        // My Membership (for partner users only)
+        // My Membership redirects to unified subscription view
         {
           path: 'my-membership',
-          name: 'my-membership',
-          component: () => import('../views/MyMembershipView.vue'),
-          meta: {
-            requiresPartner: true,
-            titleKey: 'membership.myMembership.title'
-          }
+          redirect: '/my-subscription'
         },
         // Issues (Platform users only)
         {

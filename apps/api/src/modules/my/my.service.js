@@ -521,3 +521,240 @@ export const paymentCallback = asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Payment failure recorded' })
   }
 })
+
+// ───────────────── subscription self-service (catalog + purchase) ─────────────────
+
+export const getMyMembership = asyncHandler(async (req, res) => {
+  const partnerId = requirePartner(req)
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const subscriptionStatus = partner.getSubscriptionStatus()
+  const purchases = (partner.subscription?.purchases || [])
+    .map(p => ({
+      _id: p._id,
+      type: p.type,
+      label: p.label,
+      status: p.status,
+      period: p.period,
+      price: p.price,
+      billingPeriod: p.billingPeriod,
+      plan: p.label?.tr || p.label?.en || '-',
+      planName: p.label?.tr || p.label?.en || '-'
+    }))
+    .sort((a, b) => new Date(b.period?.startDate || 0) - new Date(a.period?.startDate || 0))
+
+  const activePkgPurchase = purchases.find(
+    p => p.status === 'active' && p.type === 'package_subscription'
+  )
+
+  const Hotel = (await import('#modules/hotel/hotel.model.js')).default
+  const pmsHotelsCount = await Hotel.countDocuments({ partner: partnerId, 'pms.enabled': true })
+  const pmsLimit = partner.subscription?.customLimits?.pmsMaxHotels ?? 0
+
+  let activePackage = null
+  let activeServices = []
+
+  if (activePkgPurchase) {
+    const rawPurchase = partner.subscription.purchases.find(
+      p => p._id.toString() === activePkgPurchase._id.toString()
+    )
+    if (rawPurchase?.package) {
+      const pkg = await SubscriptionPackage.findById(rawPurchase.package).populate('services')
+      if (pkg) {
+        activePackage = {
+          _id: pkg._id,
+          name: pkg.name,
+          icon: pkg.icon,
+          color: pkg.color,
+          slug: pkg.slug
+        }
+        activeServices = (pkg.services || []).map(s => ({
+          _id: s._id,
+          name: s.name,
+          icon: s.icon,
+          category: s.category,
+          slug: s.slug,
+          source: 'package'
+        }))
+      }
+    }
+    if (!activePackage) {
+      const pkg = await SubscriptionPackage.findOne({
+        'name.tr': activePkgPurchase.label?.tr,
+        isActive: true
+      }).populate('services')
+      if (pkg) {
+        activePackage = {
+          _id: pkg._id,
+          name: pkg.name,
+          icon: pkg.icon,
+          color: pkg.color,
+          slug: pkg.slug
+        }
+        activeServices = (pkg.services || []).map(s => ({
+          _id: s._id,
+          name: s.name,
+          icon: s.icon,
+          category: s.category,
+          slug: s.slug,
+          source: 'package'
+        }))
+      }
+    }
+  }
+
+  const individualServices = purchases
+    .filter(p => p.type === 'service_purchase' && p.status === 'active')
+    .map(p => ({
+      _id: p._id,
+      name: p.label,
+      source: 'individual'
+    }))
+
+  res.json({
+    success: true,
+    data: {
+      status: subscriptionStatus.status,
+      package: activePackage,
+      startDate: activePkgPurchase?.period?.startDate || subscriptionStatus.startDate,
+      endDate: activePkgPurchase?.period?.endDate || subscriptionStatus.endDate,
+      remainingDays: subscriptionStatus.remainingDays,
+      services: [...activeServices, ...individualServices],
+      usage: {
+        pmsHotels: pmsHotelsCount,
+        pmsLimit: pmsLimit === -1 ? -1 : pmsLimit
+      },
+      purchases
+    }
+  })
+})
+
+export const getMembershipCatalog = asyncHandler(async (req, res) => {
+  const partnerId = requirePartner(req)
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const partnerType = partner.partnerType || 'hotel'
+
+  const packages = await SubscriptionPackage.findPublicCatalog(partnerType)
+  const services = await SubscriptionService.find({ isActive: true }).sort({ sortOrder: 1 })
+
+  res.json({
+    success: true,
+    data: {
+      packages: packages.map(pkg => ({
+        _id: pkg._id,
+        name: pkg.name,
+        description: pkg.description,
+        slug: pkg.slug,
+        targetPartnerType: pkg.targetPartnerType,
+        services: (pkg.services || []).map(s => ({
+          _id: s._id,
+          name: s.name,
+          icon: s.icon,
+          slug: s.slug,
+          category: s.category
+        })),
+        pricing: {
+          interval: pkg.billingPeriod,
+          prices: [{ currency: 'EUR', amount: pkg.price }]
+        },
+        trial: { enabled: pkg.trialDays > 0, days: pkg.trialDays },
+        badge: pkg.badge,
+        icon: pkg.icon,
+        color: pkg.color
+      })),
+      services: services.map(svc => ({
+        _id: svc._id,
+        name: svc.name,
+        description: svc.description,
+        slug: svc.slug,
+        category: svc.category,
+        pricing: {
+          interval: svc.billingPeriod,
+          prices: [{ currency: 'EUR', amount: svc.price }]
+        },
+        icon: svc.icon
+      }))
+    }
+  })
+})
+
+export const purchaseMembership = asyncHandler(async (req, res) => {
+  const partnerId = requirePartner(req)
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { type, packageId, serviceId } = req.body
+
+  if (!type || !['package', 'service'].includes(type)) {
+    throw new BadRequestError('INVALID_PURCHASE_TYPE')
+  }
+
+  if (!partner.subscription) partner.subscription = { purchases: [] }
+  if (!partner.subscription.purchases) partner.subscription.purchases = []
+
+  let label, amount, billingPeriod, catalogRef
+
+  if (type === 'package') {
+    if (!packageId) throw new BadRequestError('PACKAGE_ID_REQUIRED')
+    const pkg = await SubscriptionPackage.findById(packageId)
+    if (!pkg || !pkg.isActive) throw new NotFoundError('PACKAGE_NOT_FOUND')
+
+    label = { tr: pkg.name.tr, en: pkg.name.en }
+    amount = pkg.price
+    billingPeriod = pkg.billingPeriod || 'yearly'
+    catalogRef = { package: pkg._id }
+  } else {
+    if (!serviceId) throw new BadRequestError('SERVICE_ID_REQUIRED')
+    const svc = await SubscriptionService.findById(serviceId)
+    if (!svc || !svc.isActive) throw new NotFoundError('SERVICE_NOT_FOUND')
+
+    label = { tr: svc.name.tr, en: svc.name.en }
+    amount = svc.price
+    billingPeriod = svc.billingPeriod || 'yearly'
+    catalogRef = { service: svc._id }
+  }
+
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  if (billingPeriod === 'monthly') {
+    endDate.setMonth(endDate.getMonth() + 1)
+  } else {
+    endDate.setFullYear(endDate.getFullYear() + 1)
+  }
+
+  const purchase = {
+    type: type === 'package' ? 'package_subscription' : 'service_purchase',
+    ...catalogRef,
+    label,
+    period: { startDate, endDate },
+    price: { amount, currency: 'EUR' },
+    billingPeriod,
+    status: 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  partner.subscription.purchases.push(purchase)
+  await partner.save()
+
+  const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+  logger.info(`Self-service purchase for partner ${partner._id}: ${type} - €${amount}`)
+
+  res.json({
+    success: true,
+    data: {
+      purchase: {
+        _id: addedPurchase._id,
+        type: addedPurchase.type,
+        label: addedPurchase.label,
+        status: addedPurchase.status,
+        price: addedPurchase.price,
+        period: addedPurchase.period
+      }
+    }
+  })
+})

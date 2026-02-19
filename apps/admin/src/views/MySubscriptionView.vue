@@ -22,15 +22,24 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div class="flex items-center gap-4">
             <div
-              class="w-16 h-16 rounded-xl flex items-center justify-center bg-purple-100 dark:bg-purple-900/30"
+              class="w-16 h-16 rounded-xl flex items-center justify-center"
+              :style="{
+                backgroundColor: (membership.package?.color || '#6366f1') + '20'
+              }"
             >
-              <span class="material-icons text-3xl text-purple-600 dark:text-purple-400"
-                >workspace_premium</span
+              <span
+                class="material-icons text-3xl"
+                :style="{ color: membership.package?.color || '#6366f1' }"
               >
+                {{ membership.package?.icon || 'workspace_premium' }}
+              </span>
             </div>
             <div>
               <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                <template v-if="subscription.currentPurchase">
+                <template v-if="membership.package">
+                  {{ membership.package.name?.tr || membership.package.name?.en }}
+                </template>
+                <template v-else-if="subscription.currentPurchase">
                   {{
                     subscription.currentPurchase.label?.tr ||
                     subscription.currentPurchase.label?.en ||
@@ -56,13 +65,6 @@
             >
               {{ $t(`mySubscription.status.${subscription.status}`) }}
             </span>
-            <button
-              @click="showPurchaseModal = true"
-              class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors text-sm"
-            >
-              <span class="material-icons text-sm">shopping_cart</span>
-              {{ $t('mySubscription.purchase') }}
-            </button>
           </div>
         </div>
       </div>
@@ -101,52 +103,54 @@
         </div>
       </div>
 
-      <!-- Subscription Period & Progress -->
-      <div
-        v-if="subscription.currentPurchase"
-        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
-      >
-        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
-          {{ $t('mySubscription.subscriptionPeriod') }}
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('common.startDate') }}</p>
-            <p class="font-medium text-gray-900 dark:text-white">
-              {{ formatDate(subscription.startDate) }}
-            </p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 dark:text-slate-400">{{ $t('common.endDate') }}</p>
-            <p class="font-medium text-gray-900 dark:text-white">
-              {{ formatDate(subscription.endDate) }}
-            </p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 dark:text-slate-400">
-              {{ $t('mySubscription.remainingDays') }}
-            </p>
-            <p class="font-medium text-gray-900 dark:text-white">
-              {{ subscription.remainingDays ?? '-' }} {{ $t('common.days') }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Feature Status (driven by admin-set customLimits) -->
-      <div
-        v-if="subscription.pmsStatus || subscription.webDesignStatus"
-        class="grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
-        <!-- PMS -->
+      <!-- Subscription Period & Usage -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Period Card -->
         <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5"
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+        >
+          <h3 class="text-sm font-medium text-gray-500 dark:text-slate-400 mb-3">
+            {{ $t('mySubscription.subscriptionPeriod') }}
+          </h3>
+          <div v-if="subscription.startDate">
+            <div class="text-sm text-gray-600 dark:text-slate-300 mb-2">
+              {{ formatDate(subscription.startDate) }} — {{ formatDate(subscription.endDate) }}
+            </div>
+            <div v-if="subscription.remainingDays > 0" class="mt-2">
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="text-gray-500 dark:text-slate-400">{{
+                  $t('mySubscription.remainingDays')
+                }}</span>
+                <span
+                  class="font-bold"
+                  :class="subscription.remainingDays < 30 ? 'text-orange-500' : 'text-green-500'"
+                >
+                  {{ subscription.remainingDays }} {{ $t('common.days') }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                <div
+                  class="bg-purple-600 h-2 rounded-full transition-all"
+                  :style="{ width: progressPercent + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-gray-400 text-sm">-</div>
+        </div>
+
+        <!-- PMS Usage -->
+        <div
+          v-if="subscription.pmsStatus"
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
         >
           <div class="flex items-center justify-between mb-3">
-            <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <span class="material-icons text-blue-500">hotel</span>
+            <h3
+              class="text-sm font-medium text-gray-500 dark:text-slate-400 flex items-center gap-2"
+            >
+              <span class="material-icons text-blue-500 text-base">hotel</span>
               PMS
-            </h4>
+            </h3>
             <span
               class="text-xs font-medium px-2 py-1 rounded-full"
               :class="
@@ -171,13 +175,16 @@
 
         <!-- Web Design -->
         <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5"
+          v-if="subscription.webDesignStatus"
+          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
         >
           <div class="flex items-center justify-between mb-3">
-            <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <span class="material-icons text-purple-500">language</span>
+            <h3
+              class="text-sm font-medium text-gray-500 dark:text-slate-400 flex items-center gap-2"
+            >
+              <span class="material-icons text-purple-500 text-base">language</span>
               Web Design
-            </h4>
+            </h3>
             <span
               class="text-xs font-medium px-2 py-1 rounded-full"
               :class="
@@ -199,6 +206,203 @@
               {{ $t('mySubscription.maxSites') }}:
               {{ subscription.webDesignStatus.maxSitesDisplay }}
             </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Included Services -->
+      <div
+        v-if="membership.services?.length"
+        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+      >
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          {{ $t('mySubscription.includedServices') }}
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            v-for="svc in membership.services"
+            :key="svc._id"
+            class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-700/50"
+          >
+            <div
+              class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"
+            >
+              <span class="material-icons text-purple-500">{{ svc.icon || 'check_circle' }}</span>
+            </div>
+            <div>
+              <div class="font-medium text-sm text-gray-900 dark:text-white">
+                {{ svc.name?.tr || svc.name?.en }}
+              </div>
+              <div v-if="svc.source === 'individual'" class="text-xs text-purple-500">
+                {{ $t('mySubscription.addon') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Available Packages -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+            {{ $t('mySubscription.availablePackages') }}
+          </h3>
+        </div>
+        <div v-if="loadingCatalog" class="text-center py-8">
+          <span class="material-icons animate-spin text-purple-500">refresh</span>
+        </div>
+        <div
+          v-else-if="catalog.packages?.length"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <div
+            v-for="pkg in catalog.packages"
+            :key="pkg._id"
+            class="relative border rounded-xl p-5 transition-all duration-200"
+            :class="
+              membership.package?._id === pkg._id
+                ? 'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10 ring-2 ring-green-500/20'
+                : 'border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md'
+            "
+          >
+            <div
+              v-if="pkg.badge"
+              class="absolute -top-2 right-3 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full"
+            >
+              {{ pkg.badge }}
+            </div>
+            <span
+              v-if="membership.package?._id === pkg._id"
+              class="absolute -top-2 left-3 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+            >
+              {{ $t('mySubscription.currentPlan') }}
+            </span>
+            <div class="flex items-center gap-3 mb-3">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center"
+                :style="{ backgroundColor: (pkg.color || '#6366f1') + '20' }"
+              >
+                <span class="material-icons" :style="{ color: pkg.color || '#6366f1' }">{{
+                  pkg.icon || 'inventory_2'
+                }}</span>
+              </div>
+              <div>
+                <div class="font-bold text-gray-900 dark:text-white">{{ pkg.name?.tr }}</div>
+                <div
+                  v-if="pkg.description?.tr"
+                  class="text-xs text-gray-500 dark:text-slate-400 line-clamp-2"
+                >
+                  {{ pkg.description.tr }}
+                </div>
+              </div>
+            </div>
+            <!-- Included services -->
+            <div v-if="pkg.services?.length" class="space-y-1 mb-3">
+              <div
+                v-for="svc in pkg.services"
+                :key="svc._id"
+                class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300"
+              >
+                <span class="material-icons text-green-500 text-sm">check</span>
+                {{ svc.name?.tr || svc.name?.en }}
+              </div>
+            </div>
+            <!-- Trial -->
+            <div
+              v-if="pkg.trial?.enabled && pkg.trial?.days"
+              class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 mb-3"
+            >
+              <span class="material-icons text-sm">timer</span>
+              {{ pkg.trial.days }} {{ $t('mySubscription.trialDays') }}
+            </div>
+            <!-- Price + Action -->
+            <div
+              class="border-t border-gray-200 dark:border-slate-700 pt-3 flex items-center justify-between"
+            >
+              <div>
+                <div
+                  v-for="price in pkg.pricing?.prices"
+                  :key="price.currency"
+                  class="text-lg font-bold text-gray-900 dark:text-white"
+                >
+                  {{ formatCurrency(price.amount, price.currency) }}
+                  <span class="text-xs font-normal text-gray-500">
+                    / {{ $t(`mySubscription.intervals.${pkg.pricing?.interval || 'yearly'}`) }}
+                  </span>
+                </div>
+              </div>
+              <button
+                v-if="membership.package?._id !== pkg._id"
+                class="btn-primary text-sm"
+                :disabled="purchasing"
+                @click="handlePurchasePackage(pkg)"
+              >
+                {{ $t('mySubscription.purchase') }}
+              </button>
+              <span
+                v-else
+                class="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-1"
+              >
+                <span class="material-icons text-sm">check_circle</span>
+                {{ $t('common.active') }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <p v-else class="text-gray-400 text-sm text-center py-4">{{ $t('common.noData') }}</p>
+      </div>
+
+      <!-- Available Add-on Services -->
+      <div
+        v-if="availableAddons.length > 0"
+        class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6"
+      >
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          {{ $t('mySubscription.addonServices') }}
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            v-for="svc in availableAddons"
+            :key="svc._id"
+            class="border border-gray-200 dark:border-slate-700 rounded-lg p-4 hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
+          >
+            <div class="flex items-center gap-3 mb-2">
+              <div
+                class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"
+              >
+                <span class="material-icons text-purple-500 text-sm">{{
+                  svc.icon || 'extension'
+                }}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-sm text-gray-900 dark:text-white truncate">
+                  {{ svc.name?.tr || svc.name?.en }}
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-2">
+              <div v-if="svc.pricing?.prices?.length">
+                <span
+                  v-for="price in svc.pricing.prices.slice(0, 1)"
+                  :key="price.currency"
+                  class="text-sm font-bold text-gray-900 dark:text-white"
+                >
+                  {{ formatCurrency(price.amount, price.currency) }}
+                  <span class="text-xs font-normal text-gray-500">
+                    / {{ $t(`mySubscription.intervals.${svc.pricing?.interval || 'yearly'}`) }}
+                  </span>
+                </span>
+              </div>
+              <button
+                class="text-xs btn-primary px-3 py-1.5"
+                :disabled="purchasing"
+                @click="handlePurchaseService(svc)"
+              >
+                {{ $t('mySubscription.purchase') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -303,147 +507,50 @@
       </div>
     </div>
 
-    <!-- Purchase Modal -->
-    <Teleport to="body">
-      <div v-if="showPurchaseModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="fixed inset-0 bg-black/50" @click="showPurchaseModal = false"></div>
-        <div
-          class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-slate-800 shadow-2xl p-6"
-        >
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">
-              {{ $t('mySubscription.selectPlan') }}
-            </h2>
-            <button
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-              @click="showPurchaseModal = false"
-            >
-              <span class="material-icons">close</span>
-            </button>
+    <!-- Card Form Modal -->
+    <Modal v-model="showCardForm" :title="$t('mySubscription.cardDetails')" size="md">
+      <form @submit.prevent="submitCardForm" class="space-y-4">
+        <div>
+          <label class="form-label">{{ $t('mySubscription.cardHolder') }}</label>
+          <input v-model="cardForm.holder" type="text" required class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">{{ $t('mySubscription.cardNumber') }}</label>
+          <input
+            v-model="cardForm.number"
+            type="text"
+            maxlength="19"
+            required
+            class="form-input font-mono"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">{{ $t('mySubscription.expiry') }}</label>
+            <input
+              v-model="cardForm.expiry"
+              type="text"
+              placeholder="MM/YY"
+              maxlength="5"
+              required
+              class="form-input"
+            />
           </div>
-
-          <!-- Tabs: Packages / Services -->
-          <div class="flex border-b border-gray-200 dark:border-slate-700 mb-4">
-            <button
-              class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-              :class="
-                purchaseTab === 'packages'
-                  ? 'border-purple-600 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              "
-              @click="purchaseTab = 'packages'"
-            >
-              {{ $t('subscriptionPackages.title') }}
-            </button>
-            <button
-              class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-              :class="
-                purchaseTab === 'services'
-                  ? 'border-purple-600 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              "
-              @click="purchaseTab = 'services'"
-            >
-              {{ $t('subscriptionServices.title') }}
-            </button>
-          </div>
-
-          <!-- Packages List -->
-          <div v-if="purchaseTab === 'packages'" class="space-y-3">
-            <div v-if="loadingCatalog" class="text-center py-8">
-              <span class="material-icons animate-spin text-purple-500">refresh</span>
-            </div>
-            <div
-              v-for="pkg in catalogPackages"
-              :key="pkg._id"
-              class="border border-gray-200 dark:border-slate-600 rounded-lg p-4 hover:border-purple-400 cursor-pointer transition-colors"
-              :class="
-                selectedItem?._id === pkg._id
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                  : ''
-              "
-              @click="selectCatalogItem('package_subscription', pkg)"
-            >
-              <div class="flex items-center justify-between">
-                <h4 class="font-semibold text-gray-900 dark:text-white">
-                  {{ pkg.name?.tr || pkg.name?.en }}
-                </h4>
-                <span class="text-lg font-bold text-purple-600 dark:text-purple-400"
-                  >€{{ (pkg.overridePrice ?? pkg.calculatedPrice ?? 0).toFixed(2) }}</span
-                >
-              </div>
-              <p
-                v-if="pkg.description?.tr || pkg.description?.en"
-                class="text-xs text-gray-500 dark:text-slate-400 mt-1"
-              >
-                {{ pkg.description?.tr || pkg.description?.en }}
-              </p>
-              <div v-if="pkg.services?.length" class="flex flex-wrap gap-1 mt-2">
-                <span
-                  v-for="s in pkg.services"
-                  :key="s._id"
-                  class="text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded"
-                >
-                  {{ s.name?.tr || s.name?.en }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Services List -->
-          <div v-else class="space-y-3">
-            <div v-if="loadingCatalog" class="text-center py-8">
-              <span class="material-icons animate-spin text-purple-500">refresh</span>
-            </div>
-            <div
-              v-for="svc in catalogServices"
-              :key="svc._id"
-              class="border border-gray-200 dark:border-slate-600 rounded-lg p-4 hover:border-purple-400 cursor-pointer transition-colors"
-              :class="
-                selectedItem?._id === svc._id
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                  : ''
-              "
-              @click="selectCatalogItem('service_purchase', svc)"
-            >
-              <div class="flex items-center justify-between">
-                <h4 class="font-semibold text-gray-900 dark:text-white">
-                  {{ svc.name?.tr || svc.name?.en }}
-                </h4>
-                <span class="text-lg font-bold text-purple-600 dark:text-purple-400"
-                  >€{{ svc.price?.toFixed(2) }}</span
-                >
-              </div>
-              <p
-                v-if="svc.description?.tr || svc.description?.en"
-                class="text-xs text-gray-500 dark:text-slate-400 mt-1"
-              >
-                {{ svc.description?.tr || svc.description?.en }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Purchase Button -->
-          <div v-if="selectedItem" class="mt-6 pt-4 border-t border-gray-200 dark:border-slate-700">
-            <p class="text-sm text-gray-600 dark:text-slate-400 mb-3">
-              {{ $t('mySubscription.selectedItem') }}:
-              <strong>{{ selectedItem.name?.tr || selectedItem.name?.en }}</strong> –
-              <strong>€{{ selectedItemPrice.toFixed(2) }}</strong>
-            </p>
-            <div class="flex gap-3">
-              <button
-                class="flex-1 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
-                :disabled="purchasing"
-                @click="handleCardPurchase"
-              >
-                <span class="material-icons text-sm mr-1">credit_card</span>
-                {{ purchasing ? $t('common.saving') : $t('mySubscription.payWithCard') }}
-              </button>
-            </div>
+          <div>
+            <label class="form-label">CVV</label>
+            <input v-model="cardForm.cvv" type="text" maxlength="4" required class="form-input" />
           </div>
         </div>
-      </div>
-    </Teleport>
+      </form>
+      <template #footer>
+        <button class="btn-secondary" @click="showCardForm = false">
+          {{ $t('common.cancel') }}
+        </button>
+        <button class="btn-primary" :disabled="payingCard" @click="submitCardForm">
+          {{ payingCard ? $t('common.saving') : $t('mySubscription.pay') }}
+        </button>
+      </template>
+    </Modal>
 
     <!-- 3D Secure Modal -->
     <Teleport to="body">
@@ -463,123 +570,35 @@
       </div>
     </Teleport>
 
-    <!-- Card Form Modal (for both new purchase and pending purchase) -->
-    <Teleport to="body">
-      <div v-if="showCardForm" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="fixed inset-0 bg-black/50" @click="showCardForm = false"></div>
-        <div class="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-2xl p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">
-              {{ $t('mySubscription.cardDetails') }}
-            </h2>
-            <button
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
-              @click="showCardForm = false"
-            >
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-          <form @submit.prevent="submitCardForm" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
-                $t('mySubscription.cardHolder')
-              }}</label>
-              <input
-                v-model="cardForm.holder"
-                type="text"
-                required
-                class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
-                $t('mySubscription.cardNumber')
-              }}</label>
-              <input
-                v-model="cardForm.number"
-                type="text"
-                maxlength="19"
-                required
-                class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm font-mono"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{{
-                  $t('mySubscription.expiry')
-                }}</label>
-                <input
-                  v-model="cardForm.expiry"
-                  type="text"
-                  placeholder="MM/YY"
-                  maxlength="5"
-                  required
-                  class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"
-                  >CVV</label
-                >
-                <input
-                  v-model="cardForm.cvv"
-                  type="text"
-                  maxlength="4"
-                  required
-                  class="block w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              :disabled="payingCard"
-              class="w-full rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
-            >
-              {{ payingCard ? $t('common.saving') : $t('mySubscription.pay') }}
-            </button>
-          </form>
-        </div>
-      </div>
-    </Teleport>
-
     <!-- Success Modal -->
-    <Teleport to="body">
-      <div
-        v-if="showSuccess"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      >
-        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 text-center max-w-sm">
-          <div
-            class="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+    <Modal v-model="showSuccess" :title="$t('mySubscription.paymentSuccess')" size="sm">
+      <div class="text-center py-4">
+        <div
+          class="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+        >
+          <span class="material-icons text-3xl text-green-600 dark:text-green-400"
+            >check_circle</span
           >
-            <span class="material-icons text-3xl text-green-600 dark:text-green-400"
-              >check_circle</span
-            >
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
-            {{ $t('mySubscription.paymentSuccess') }}
-          </h3>
-          <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
-            {{ $t('mySubscription.paymentSuccessDescription') }}
-          </p>
-          <button
-            class="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white hover:bg-purple-700"
-            @click="handleSuccessClose"
-          >
-            {{ $t('common.close') }}
-          </button>
         </div>
+        <p class="text-sm text-gray-500 dark:text-slate-400">
+          {{ $t('mySubscription.paymentSuccessDescription') }}
+        </p>
       </div>
-    </Teleport>
+      <template #footer>
+        <button class="btn-primary" @click="handleSuccessClose">
+          {{ $t('common.close') }}
+        </button>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Modal from '@/components/common/Modal.vue'
 import partnerService from '@/services/partnerService'
-import subscriptionPackageService from '@/services/subscriptionPackageService'
-import subscriptionServiceService from '@/services/subscriptionServiceService'
+import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
@@ -587,38 +606,26 @@ const toast = useToast()
 
 const loading = ref(true)
 const subscription = ref(null)
+const membership = ref({})
 const invoices = ref([])
-
-// Purchase modal
-const showPurchaseModal = ref(false)
-const purchaseTab = ref('packages')
-const loadingCatalog = ref(false)
-const catalogPackages = ref([])
-const catalogServices = ref([])
-const selectedPurchaseType = ref(null)
-const selectedItem = ref(null)
 const purchasing = ref(false)
+
+// Catalog
+const loadingCatalog = ref(false)
+const catalog = ref({ packages: [], services: [] })
 
 // Card form
 const showCardForm = ref(false)
 const payingCard = ref(false)
 const cardForm = ref({ holder: '', number: '', expiry: '', cvv: '' })
-const pendingPurchaseId = ref(null) // for paying existing pending purchase
+const pendingPurchaseId = ref(null)
+const selectedPurchaseType = ref(null)
+const selectedItem = ref(null)
 
 // 3D Secure
 const show3DSecure = ref(false)
 const secureUrl = ref('')
-
-// Success
 const showSuccess = ref(false)
-
-const selectedItemPrice = computed(() => {
-  if (!selectedItem.value) return 0
-  if (selectedPurchaseType.value === 'package_subscription') {
-    return selectedItem.value.overridePrice ?? selectedItem.value.calculatedPrice ?? 0
-  }
-  return selectedItem.value.price ?? 0
-})
 
 const statusColors = {
   trial: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -637,25 +644,52 @@ const purchaseStatusColors = {
   refunded: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
 }
 
+const progressPercent = computed(() => {
+  if (!subscription.value?.startDate || !subscription.value?.endDate) return 0
+  const start = new Date(subscription.value.startDate).getTime()
+  const end = new Date(subscription.value.endDate).getTime()
+  const now = Date.now()
+  const total = end - start
+  const elapsed = now - start
+  return Math.min(100, Math.max(0, (elapsed / total) * 100))
+})
+
+const activeServiceSlugs = computed(() => {
+  return (membership.value.services || []).map(s => s.slug).filter(Boolean)
+})
+
+const availableAddons = computed(() => {
+  return (catalog.value.services || []).filter(svc => !activeServiceSlugs.value.includes(svc.slug))
+})
+
 const formatDate = date => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('tr-TR')
 }
 
-const handleSuccessClose = () => {
-  showSuccess.value = false
-  loadSubscription()
+const formatCurrency = (amount, currency = 'EUR') => {
+  if (amount == null) return '-'
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency }).format(amount)
 }
 
-const loadSubscription = async () => {
+const handleSuccessClose = () => {
+  showSuccess.value = false
+  loadAll()
+}
+
+const loadAll = async () => {
   loading.value = true
   try {
-    const [subRes, invRes] = await Promise.all([
+    const [subRes, invRes, memRes, catRes] = await Promise.all([
       partnerService.getMySubscription(),
-      partnerService.getMyInvoices()
+      partnerService.getMyInvoices(),
+      api.get('/api/my/membership').then(r => r.data),
+      api.get('/api/my/membership/catalog').then(r => r.data)
     ])
     subscription.value = subRes.data
     invoices.value = invRes.data?.invoices || []
+    membership.value = memRes.data || {}
+    catalog.value = catRes.data || { packages: [], services: [] }
   } catch {
     toast.error(t('common.fetchError'))
   } finally {
@@ -663,37 +697,27 @@ const loadSubscription = async () => {
   }
 }
 
-const loadCatalog = async () => {
-  loadingCatalog.value = true
-  try {
-    const [pkgRes, svcRes] = await Promise.all([
-      subscriptionPackageService.getActivePackages(),
-      subscriptionServiceService.getActiveServices()
-    ])
-    catalogPackages.value = pkgRes.data || []
-    catalogServices.value = svcRes.data || []
-  } catch {
-    toast.error(t('common.fetchError'))
-  } finally {
-    loadingCatalog.value = false
-  }
-}
-
-const selectCatalogItem = (type, item) => {
-  selectedPurchaseType.value = type
-  selectedItem.value = item
-}
-
-const handleCardPurchase = () => {
+const handlePurchasePackage = pkg => {
+  selectedPurchaseType.value = 'package_subscription'
+  selectedItem.value = pkg
   cardForm.value = { holder: '', number: '', expiry: '', cvv: '' }
   pendingPurchaseId.value = null
-  showPurchaseModal.value = false
+  showCardForm.value = true
+}
+
+const handlePurchaseService = svc => {
+  selectedPurchaseType.value = 'service_purchase'
+  selectedItem.value = svc
+  cardForm.value = { holder: '', number: '', expiry: '', cvv: '' }
+  pendingPurchaseId.value = null
   showCardForm.value = true
 }
 
 const openPayForPurchase = purchase => {
   cardForm.value = { holder: '', number: '', expiry: '', cvv: '' }
   pendingPurchaseId.value = purchase._id
+  selectedPurchaseType.value = null
+  selectedItem.value = null
   showCardForm.value = true
 }
 
@@ -737,13 +761,19 @@ const submitCardForm = async () => {
 
 const downloadInvoice = async id => {
   try {
-    await partnerService.downloadMyInvoicePDF(id)
+    const response = await partnerService.downloadMyInvoicePdf(id)
+    const blob = new Blob([response], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'invoice.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
   } catch {
     toast.error(t('common.error'))
   }
 }
 
-// Listen for 3D Secure callback
 const handle3DSecureMessage = event => {
   if (event.data?.type === 'payment-callback') {
     show3DSecure.value = false
@@ -752,12 +782,16 @@ const handle3DSecureMessage = event => {
     } else {
       toast.error(event.data.message || t('mySubscription.paymentFailed'))
     }
-    loadSubscription()
+    loadAll()
   }
 }
 
 onMounted(async () => {
   window.addEventListener('message', handle3DSecureMessage)
-  await Promise.all([loadSubscription(), loadCatalog()])
+  await loadAll()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('message', handle3DSecureMessage)
 })
 </script>

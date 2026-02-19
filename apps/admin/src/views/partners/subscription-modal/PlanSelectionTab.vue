@@ -51,7 +51,7 @@
         v-if="services.length > 0"
         :services="services"
         :selected-service-ids="selectedServiceIds"
-        :package-service-codes="packageServiceCodes"
+        :package-service-slugs="packageServiceSlugs"
         :currency="currency"
         :interval="interval"
         @toggle="$emit('service-toggle', $event)"
@@ -94,8 +94,8 @@ defineProps({
   selectedPackage: { type: Object, default: null },
   selectedServices: { type: Array, default: () => [] },
   selectedServiceIds: { type: Array, default: () => [] },
-  packageServiceCodes: { type: Array, default: () => [] },
-  currency: { type: String, default: 'TRY' },
+  packageServiceSlugs: { type: Array, default: () => [] },
+  currency: { type: String, default: 'EUR' },
   interval: { type: String, default: 'yearly' },
   total: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },

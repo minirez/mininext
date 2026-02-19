@@ -20,7 +20,7 @@
         <div class="flex items-center gap-2 mb-1">
           <span class="material-icons text-sm text-purple-500">inventory_2</span>
           <span class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ selectedPackage.name?.tr || selectedPackage.name?.en || selectedPackage.code }}
+            {{ selectedPackage.name?.tr || selectedPackage.name?.en || selectedPackage.slug }}
           </span>
         </div>
         <div class="text-xs text-gray-500 dark:text-slate-400">
@@ -43,7 +43,7 @@
           <div class="flex items-center gap-2 min-w-0">
             <span class="material-icons text-xs text-purple-400">add_circle</span>
             <span class="text-xs font-medium text-gray-800 dark:text-slate-200 truncate">
-              {{ svc.name?.tr || svc.name?.en || svc.code }}
+              {{ svc.name?.tr || svc.name?.en || svc.slug }}
             </span>
           </div>
           <span class="text-xs text-gray-500 dark:text-slate-400 flex-shrink-0 ml-2">
@@ -74,13 +74,11 @@
           <option value="monthly">{{ $t('partners.subscription.monthly') }}</option>
           <option value="yearly">{{ $t('partners.subscription.yearly') }}</option>
         </select>
-        <select
-          :value="currency"
-          class="w-20 text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300"
-          @change="$emit('currency-change', $event.target.value)"
+        <span
+          class="w-16 text-xs text-center font-medium text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-700"
         >
-          <option v-for="c in currencies" :key="c" :value="c">{{ c }}</option>
-        </select>
+          EUR
+        </span>
       </div>
 
       <!-- Toplam -->
@@ -136,7 +134,7 @@ import { formatCurrency } from '@booking-engine/utils'
 const props = defineProps({
   selectedPackage: { type: Object, default: null },
   selectedServices: { type: Array, default: () => [] },
-  currency: { type: String, default: 'TRY' },
+  currency: { type: String, default: 'EUR' },
   interval: { type: String, default: 'yearly' },
   total: { type: Number, default: 0 },
   loading: { type: Boolean, default: false }
@@ -150,21 +148,16 @@ defineEmits([
   'interval-change'
 ])
 
-const currencies = ['TRY', 'USD', 'EUR', 'GBP']
-
 const hasSelection = computed(() => props.selectedPackage || props.selectedServices.length > 0)
 
-const formattedTotal = computed(() => formatCurrency(props.total, props.currency))
+const formattedTotal = computed(() => formatCurrency(props.total, 'EUR'))
 
 const getPackagePrice = pkg => {
-  const priceObj = pkg.pricing?.prices?.find(p => p.currency === props.currency)
-  const amount = priceObj?.amount ?? 0
-  return formatCurrency(amount, props.currency)
+  const amount = pkg.price ?? pkg.overridePrice ?? pkg.calculatedPrice ?? 0
+  return formatCurrency(amount, 'EUR')
 }
 
 const getServicePrice = svc => {
-  const priceObj = svc.pricing?.prices?.find(p => p.currency === props.currency)
-  const amount = priceObj?.amount ?? 0
-  return formatCurrency(amount, props.currency)
+  return formatCurrency(svc.price ?? 0, 'EUR')
 }
 </script>

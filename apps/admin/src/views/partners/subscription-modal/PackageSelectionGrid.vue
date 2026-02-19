@@ -56,7 +56,7 @@
           </div>
           <div>
             <div class="font-semibold text-sm text-gray-900 dark:text-white">
-              {{ pkg.name?.tr || pkg.name?.en || pkg.code }}
+              {{ pkg.name?.tr || pkg.name?.en || pkg.slug }}
             </div>
             <div class="text-[11px] text-gray-500 dark:text-slate-400">
               {{ pkg.services?.length || 0 }} {{ $t('partners.subscription.packageServices') }}
@@ -89,15 +89,14 @@ const props = defineProps({
   packages: { type: Array, default: () => [] },
   selectedPackageId: { type: String, default: null },
   currentPackageId: { type: String, default: null },
-  currency: { type: String, default: 'TRY' },
+  currency: { type: String, default: 'EUR' },
   interval: { type: String, default: 'yearly' }
 })
 
 defineEmits(['select'])
 
 const getPackagePrice = pkg => {
-  const priceObj = pkg.pricing?.prices?.find(p => p.currency === props.currency)
-  const amount = priceObj?.amount ?? 0
+  const amount = pkg.price ?? pkg.overridePrice ?? pkg.calculatedPrice ?? 0
   return formatCurrency(amount, props.currency)
 }
 </script>

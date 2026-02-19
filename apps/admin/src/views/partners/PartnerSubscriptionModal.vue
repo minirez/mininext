@@ -59,13 +59,13 @@
         v-show="activeTab === 'plan'"
         :subscription-status="subscriptionStatus"
         :current-package-name="currentPackageName"
-        :packages="availablePackages"
+        :packages="filteredPackages"
         :services="availableServices"
         :selected-package-id="cart.packageId"
         :selected-package="selectedPackageObj"
         :selected-services="selectedServiceObjs"
         :selected-service-ids="cart.serviceIds"
-        :package-service-codes="packageServiceCodes"
+        :package-service-slugs="packageServiceSlugs"
         :currency="cart.currency"
         :interval="cart.interval"
         :total="cartTotal"
@@ -126,10 +126,7 @@
         <div>
           <label class="form-label">{{ $t('partners.subscription.currency') }}</label>
           <select v-model="editForm.currency" class="form-input">
-            <option value="TRY">TRY</option>
-            <option value="USD">USD</option>
             <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
           </select>
         </div>
       </div>
@@ -223,8 +220,8 @@ import PlanSelectionTab from './subscription-modal/PlanSelectionTab.vue'
 import PurchaseHistoryTab from './subscription-modal/PurchaseHistoryTab.vue'
 import SettingsTab from './subscription-modal/SettingsTab.vue'
 import partnerService from '@/services/partnerService'
-import membershipPackageService from '@/services/membershipPackageService'
-import membershipServiceService from '@/services/membershipServiceService'
+import subscriptionPackageService from '@/services/subscriptionPackageService'
+import subscriptionServiceService from '@/services/subscriptionServiceService'
 import { formatDate, formatCurrency } from '@booking-engine/utils'
 
 const { t } = useI18n()
@@ -260,7 +257,7 @@ const availableServices = ref([])
 const cart = ref({
   packageId: null,
   serviceIds: [],
-  currency: 'TRY',
+  currency: 'EUR',
   interval: 'yearly'
 })
 
@@ -278,7 +275,7 @@ const editForm = ref({
   startDate: '',
   endDate: '',
   amount: 0,
-  currency: 'TRY',
+  currency: 'EUR',
   paymentMethod: 'bank_transfer',
   paymentReference: ''
 })
@@ -307,6 +304,18 @@ const tabs = computed(() => [
   { value: 'settings', label: t('partners.subscription.settingsTab') }
 ])
 
+// Filter packages by partner type
+const filteredPackages = computed(() => {
+  const partnerType = props.partner?.partnerType
+  if (!partnerType) return availablePackages.value
+  return availablePackages.value.filter(
+    pkg =>
+      !pkg.targetPartnerType ||
+      pkg.targetPartnerType === 'all' ||
+      pkg.targetPartnerType === partnerType
+  )
+})
+
 // Computed - selected objects
 const selectedPackageObj = computed(
   () => availablePackages.value.find(p => p._id === cart.value.packageId) || null
@@ -316,11 +325,9 @@ const selectedServiceObjs = computed(() =>
   availableServices.value.filter(s => cart.value.serviceIds.includes(s._id))
 )
 
-const packageServiceCodes = computed(() => {
+const packageServiceSlugs = computed(() => {
   if (!selectedPackageObj.value) return []
-  return (selectedPackageObj.value.services || [])
-    .map(s => s.service?.code || s.code)
-    .filter(Boolean)
+  return (selectedPackageObj.value.services || []).map(s => s.slug).filter(Boolean)
 })
 
 const currentPackageName = computed(() => {
@@ -342,19 +349,18 @@ const enrichedPurchases = computed(() => {
   }))
 })
 
-// Cart total
 const cartTotal = computed(() => {
   let total = 0
   if (selectedPackageObj.value) {
-    const priceObj = selectedPackageObj.value.pricing?.prices?.find(
-      p => p.currency === cart.value.currency
-    )
-    total += priceObj?.amount ?? 0
+    total +=
+      selectedPackageObj.value.price ??
+      selectedPackageObj.value.overridePrice ??
+      selectedPackageObj.value.calculatedPrice ??
+      0
   }
   for (const svc of selectedServiceObjs.value) {
-    if (!packageServiceCodes.value.includes(svc.code)) {
-      const priceObj = svc.pricing?.prices?.find(p => p.currency === cart.value.currency)
-      total += priceObj?.amount ?? 0
+    if (!packageServiceSlugs.value.includes(svc.slug)) {
+      total += svc.price ?? 0
     }
   }
   return total
@@ -375,7 +381,7 @@ watch(
   async isVisible => {
     if (isVisible && props.partner?._id) {
       activeTab.value = 'plan'
-      cart.value = { packageId: null, serviceIds: [], currency: 'TRY', interval: 'yearly' }
+      cart.value = { packageId: null, serviceIds: [], currency: 'EUR', interval: 'yearly' }
       await loadData()
     }
   }
@@ -386,8 +392,8 @@ async function loadData() {
   try {
     const [subRes, pkgRes, svcRes] = await Promise.all([
       partnerService.getSubscription(props.partner._id),
-      membershipPackageService.getMembershipPackages({ status: 'active' }),
-      membershipServiceService.getMembershipServices({ status: 'active' })
+      subscriptionPackageService.getActivePackages(),
+      subscriptionServiceService.getActiveServices()
     ])
 
     subscriptionStatus.value = subRes.data
@@ -434,9 +440,8 @@ async function handleAction(action) {
       packageId: cart.value.packageId,
       serviceIds: cart.value.serviceIds.filter(id => {
         const svc = availableServices.value.find(s => s._id === id)
-        return svc && !packageServiceCodes.value.includes(svc.code)
+        return svc && !packageServiceSlugs.value.includes(svc.slug)
       }),
-      currency: cart.value.currency,
       interval: cart.value.interval,
       action
     }

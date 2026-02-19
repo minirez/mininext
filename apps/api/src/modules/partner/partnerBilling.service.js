@@ -1,6 +1,7 @@
 import Partner from './partner.model.js'
 import SubscriptionPackage from '#modules/subscriptions/subscription-package.model.js'
 import SubscriptionService from '#modules/subscriptions/subscription-service.model.js'
+import PaymentLink from '#modules/paymentLink/paymentLink.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { createInvoice } from '#modules/subscriptionInvoice/subscriptionInvoice.service.js'
@@ -56,9 +57,9 @@ export const getAllPurchases = asyncHandler(async (req, res) => {
 export const getCatalog = asyncHandler(async (req, res) => {
   const [packages, services] = await Promise.all([
     SubscriptionPackage.find({ isActive: true })
-      .populate('services', 'name slug price')
+      .populate('services', 'name slug price icon category')
       .sort({ sortOrder: 1 }),
-    SubscriptionService.find({ isActive: true }).sort({ sortOrder: 1 })
+    SubscriptionService.find({ isActive: true }).sort({ sortOrder: 1, category: 1 })
   ])
 
   res.json({
@@ -368,5 +369,179 @@ export const cancelPurchase = asyncHandler(async (req, res) => {
     success: true,
     message: req.t ? req.t('PURCHASE_CANCELLED') : 'Purchase cancelled successfully',
     data: { subscription: partner.getSubscriptionStatus() }
+  })
+})
+
+/**
+ * Create purchase from admin subscription modal.
+ * Uses SubscriptionPackage/SubscriptionService catalog (EUR-only).
+ * Supports actions: send_link, save_pending, mark_paid
+ */
+export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { packageId, serviceIds = [], interval = 'yearly', action } = req.body
+
+  if (!action || !['send_link', 'save_pending', 'mark_paid'].includes(action)) {
+    throw new BadRequestError('INVALID_ACTION')
+  }
+  if (!packageId && serviceIds.length === 0) {
+    throw new BadRequestError('NO_ITEMS_SELECTED')
+  }
+
+  if (!partner.subscription) partner.subscription = { purchases: [] }
+  if (!partner.subscription.purchases) partner.subscription.purchases = []
+
+  const now = new Date()
+  partner.subscription.purchases.forEach(p => {
+    if (p.status === 'active' && new Date(p.period.endDate) < now) {
+      p.status = 'expired'
+    }
+  })
+
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  if (interval === 'monthly') {
+    endDate.setMonth(endDate.getMonth() + 1)
+  } else {
+    endDate.setFullYear(endDate.getFullYear() + 1)
+  }
+
+  const createdPurchases = []
+  let totalAmount = 0
+  let packageServiceSlugs = []
+
+  if (packageId) {
+    const pkg = await SubscriptionPackage.findById(packageId).populate('services')
+    if (!pkg) throw new NotFoundError('PACKAGE_NOT_FOUND')
+
+    const amount = pkg.price
+    totalAmount += amount
+    packageServiceSlugs = (pkg.services || []).map(s => s.slug)
+
+    const purchase = {
+      type: 'package_subscription',
+      package: pkg._id,
+      label: { tr: pkg.name.tr, en: pkg.name.en },
+      period: { startDate, endDate },
+      price: { amount, currency: 'EUR' },
+      billingPeriod: interval,
+      status: action === 'mark_paid' ? 'active' : 'pending',
+      createdAt: new Date(),
+      createdBy: req.user._id
+    }
+
+    if (action === 'mark_paid') {
+      purchase.payment = {
+        date: new Date(),
+        method: 'manual',
+        reference: `admin-${req.user._id}`
+      }
+    }
+
+    partner.subscription.purchases.push(purchase)
+    createdPurchases.push({
+      purchase: partner.subscription.purchases[partner.subscription.purchases.length - 1],
+      label: pkg.name
+    })
+  }
+
+  for (const svcId of serviceIds) {
+    const svc = await SubscriptionService.findById(svcId)
+    if (!svc) continue
+    if (packageServiceSlugs.includes(svc.slug)) continue
+
+    const amount = svc.price
+    totalAmount += amount
+
+    const purchase = {
+      type: 'service_purchase',
+      service: svc._id,
+      label: { tr: svc.name.tr, en: svc.name.en },
+      period: { startDate, endDate },
+      price: { amount, currency: 'EUR' },
+      billingPeriod: interval,
+      status: action === 'mark_paid' ? 'active' : 'pending',
+      createdAt: new Date(),
+      createdBy: req.user._id
+    }
+
+    if (action === 'mark_paid') {
+      purchase.payment = {
+        date: new Date(),
+        method: 'manual',
+        reference: `admin-${req.user._id}`
+      }
+    }
+
+    partner.subscription.purchases.push(purchase)
+    createdPurchases.push({
+      purchase: partner.subscription.purchases[partner.subscription.purchases.length - 1],
+      label: svc.name
+    })
+  }
+
+  if (action === 'mark_paid') {
+    partner.subscription.status = 'active'
+  }
+
+  await partner.save()
+
+  let paymentLink = null
+  if (action === 'send_link' && totalAmount > 0) {
+    const linkData = {
+      partner: partner._id,
+      customer: {
+        name: partner.companyName,
+        email: partner.email,
+        phone: partner.phone || ''
+      },
+      description: createdPurchases.map(p => p.label?.tr || p.label?.en).join(', '),
+      amount: totalAmount,
+      currency: 'EUR',
+      purpose: 'subscription_package',
+      subscriptionContext: {
+        targetPartner: partner._id,
+        purchaseId: createdPurchases[0]?.purchase?._id
+      },
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      status: 'pending',
+      createdBy: req.user._id
+    }
+
+    paymentLink = await PaymentLink.create(linkData)
+    logger.info(`Payment link ${paymentLink._id} created for partner ${partner._id}`)
+  }
+
+  if (action === 'mark_paid') {
+    for (const { purchase } of createdPurchases) {
+      try {
+        await createInvoice(partner._id, purchase, req.user._id)
+      } catch (err) {
+        logger.error(`Invoice creation failed for purchase ${purchase._id}: ${err.message}`)
+      }
+    }
+  }
+
+  logger.info(
+    `${createdPurchases.length} purchases created for partner ${partner._id} (action: ${action})`
+  )
+
+  res.json({
+    success: true,
+    data: {
+      purchases: createdPurchases.map(p => ({
+        _id: p.purchase._id,
+        type: p.purchase.type,
+        label: p.purchase.label,
+        status: p.purchase.status,
+        price: p.purchase.price
+      })),
+      paymentLink: paymentLink
+        ? { _id: paymentLink._id, paymentUrl: `/payment/${paymentLink.token}` }
+        : null,
+      subscription: partner.getSubscriptionStatus()
+    }
   })
 })

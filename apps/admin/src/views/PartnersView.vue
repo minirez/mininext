@@ -902,18 +902,6 @@ const navItems = computed(() => [
     to: '/partners/subscriptions',
     icon: 'card_membership',
     label: t('partners.subscriptionManagement')
-  },
-  {
-    name: 'services',
-    to: '/partners/services',
-    icon: 'miscellaneous_services',
-    label: t('subscriptionServices.title')
-  },
-  {
-    name: 'packages',
-    to: '/partners/packages',
-    icon: 'inventory_2',
-    label: t('subscriptionPackages.title')
   }
 ])
 

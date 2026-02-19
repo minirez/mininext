@@ -215,8 +215,7 @@ const currentModuleIcon = computed(() => {
     '/issues': 'bug_report',
     '/payment': 'payments',
     '/admin/migration': 'swap_horiz',
-    '/admin/reservations': 'book_online',
-    '/my-membership': 'card_membership'
+    '/admin/reservations': 'book_online'
   }
 
   // Find matching route
@@ -499,18 +498,11 @@ const mainSection = computed(() => {
       })
     }
 
-    // Only real partner users can see their own subscription/membership
     if (authStore.accountType === 'partner') {
-      items.push({
-        name: 'my-membership',
-        to: '/my-membership',
-        icon: 'card_membership',
-        label: t('membership.myMembership.title')
-      })
       items.push({
         name: 'my-subscription',
         to: '/my-subscription',
-        icon: 'receipt_long',
+        icon: 'card_membership',
         label: t('nav.mySubscription')
       })
     }

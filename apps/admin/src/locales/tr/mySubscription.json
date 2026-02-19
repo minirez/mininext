@@ -102,6 +102,15 @@
     "cardDetails": "Kart Bilgileri",
     "pay": "Öde",
     "paymentSuccessDescription": "Aboneliğiniz başarıyla aktifleştirildi.",
-    "gracePeriodDays": "Ek sürenizin bitmesine {days} gün kaldı"
+    "gracePeriodDays": "Ek sürenizin bitmesine {days} gün kaldı",
+    "includedServices": "Dahil Servisler",
+    "availablePackages": "Mevcut Paketler",
+    "addonServices": "Ek Hizmetler",
+    "addon": "Ek hizmet",
+    "trialDays": "gün deneme",
+    "intervals": {
+      "monthly": "Aylık",
+      "yearly": "Yıllık"
+    }
   }
 }

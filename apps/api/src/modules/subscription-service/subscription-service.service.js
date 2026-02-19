@@ -38,7 +38,8 @@ export const getById = asyncHandler(async (req, res) => {
  * Create a new service (admin)
  */
 export const create = asyncHandler(async (req, res) => {
-  const { name, description, slug, price, billingPeriod, entitlements, sortOrder } = req.body
+  const { name, description, slug, price, billingPeriod, entitlements, sortOrder, category, icon } =
+    req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
   if (!slug) throw new BadRequestError('SLUG_REQUIRED')
@@ -51,7 +52,9 @@ export const create = asyncHandler(async (req, res) => {
     price,
     billingPeriod,
     entitlements,
-    sortOrder
+    sortOrder,
+    category: category || 'other',
+    icon: icon || 'extension'
   })
 
   logger.info(`SubscriptionService created: ${service.slug} (${service._id})`)
@@ -74,7 +77,9 @@ export const update = asyncHandler(async (req, res) => {
     'billingPeriod',
     'entitlements',
     'sortOrder',
-    'isActive'
+    'isActive',
+    'category',
+    'icon'
   ]
 
   for (const field of allowedFields) {

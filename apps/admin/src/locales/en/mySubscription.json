@@ -102,6 +102,15 @@
     "cardDetails": "Card Details",
     "pay": "Pay",
     "paymentSuccessDescription": "Your subscription has been activated successfully.",
-    "gracePeriodDays": "{days} days remaining in grace period"
+    "gracePeriodDays": "{days} days remaining in grace period",
+    "includedServices": "Included Services",
+    "availablePackages": "Available Packages",
+    "addonServices": "Add-on Services",
+    "addon": "Add-on",
+    "trialDays": "day trial",
+    "intervals": {
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    }
   }
 }

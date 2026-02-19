@@ -7,21 +7,30 @@ import mongoose from 'mongoose'
  * Services are referenced by SubscriptionPackages and can also be bought individually.
  * Currency is always EUR.
  */
+
+const SERVICE_CATEGORIES = [
+  'payment',
+  'booking',
+  'pms',
+  'web',
+  'design',
+  'support',
+  'integration',
+  'other'
+]
+
 const subscriptionServiceSchema = new mongoose.Schema(
   {
-    // Multi-language name  { tr: 'PMS Erişimi', en: 'PMS Access' }
     name: {
       tr: { type: String, required: true, trim: true },
       en: { type: String, required: true, trim: true }
     },
 
-    // Multi-language description
     description: {
       tr: { type: String, trim: true, default: '' },
       en: { type: String, trim: true, default: '' }
     },
 
-    // Unique slug for programmatic reference (e.g. 'pms-access')
     slug: {
       type: String,
       required: true,
@@ -31,25 +40,34 @@ const subscriptionServiceSchema = new mongoose.Schema(
       match: [/^[a-z0-9-]+$/, 'INVALID_SLUG']
     },
 
-    // EUR-only price (yearly by default)
+    category: {
+      type: String,
+      enum: { values: SERVICE_CATEGORIES, message: 'INVALID_CATEGORY' },
+      default: 'other'
+    },
+
+    icon: {
+      type: String,
+      trim: true,
+      default: 'extension'
+    },
+
     price: {
       type: Number,
       required: true,
       min: [0, 'PRICE_MIN_ZERO']
     },
 
-    // Billing period for standalone purchase
     billingPeriod: {
       type: String,
       enum: ['monthly', 'yearly', 'one_time'],
       default: 'yearly'
     },
 
-    // Feature entitlements this service grants
     entitlements: {
       pms: {
         enabled: { type: Boolean, default: false },
-        maxHotels: { type: Number, default: 0 } // -1 = unlimited
+        maxHotels: { type: Number, default: 0 }
       },
       webDesign: {
         enabled: { type: Boolean, default: false },
@@ -62,25 +80,26 @@ const subscriptionServiceSchema = new mongoose.Schema(
       }
     },
 
-    // Ordering for display
     sortOrder: {
       type: Number,
       default: 0
     },
 
-    // Soft-disable without removing
     isActive: {
       type: Boolean,
       default: true
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 )
 
-// Indexes
 subscriptionServiceSchema.index({ slug: 1 }, { unique: true })
 subscriptionServiceSchema.index({ isActive: 1, sortOrder: 1 })
+subscriptionServiceSchema.index({ category: 1 })
 
+export { SERVICE_CATEGORIES }
 export default mongoose.model('SubscriptionService', subscriptionServiceSchema)

@@ -59,7 +59,7 @@
               </span>
               <div class="min-w-0">
                 <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {{ svc.name?.tr || svc.name?.en || svc.code }}
+                  {{ svc.name?.tr || svc.name?.en || svc.slug }}
                 </div>
                 <div v-if="isIncluded(svc)" class="text-[10px] text-green-600 dark:text-green-400">
                   {{ $t('partners.subscription.includedInPackage') }}
@@ -101,8 +101,8 @@ import { formatCurrency } from '@booking-engine/utils'
 const props = defineProps({
   services: { type: Array, default: () => [] },
   selectedServiceIds: { type: Array, default: () => [] },
-  packageServiceCodes: { type: Array, default: () => [] },
-  currency: { type: String, default: 'TRY' },
+  packageServiceSlugs: { type: Array, default: () => [] },
+  currency: { type: String, default: 'EUR' },
   interval: { type: String, default: 'yearly' }
 })
 
@@ -119,13 +119,11 @@ const categoryIcons = {
   other: 'category'
 }
 
-const isIncluded = svc => props.packageServiceCodes.includes(svc.code)
+const isIncluded = svc => props.packageServiceSlugs.includes(svc.slug)
 const isSelected = svc => props.selectedServiceIds.includes(svc._id)
 
 const getServicePrice = svc => {
-  const priceObj = svc.pricing?.prices?.find(p => p.currency === props.currency)
-  const amount = priceObj?.amount ?? 0
-  return formatCurrency(amount, props.currency)
+  return formatCurrency(svc.price ?? 0, props.currency)
 }
 
 const groupedServices = computed(() => {
