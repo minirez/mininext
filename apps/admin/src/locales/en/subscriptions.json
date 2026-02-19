@@ -12,6 +12,7 @@
     "slugHelp": "Only lowercase letters, numbers, and hyphens are allowed",
     "price": "Price",
     "billingPeriod": "Billing Period",
+    "targetPartnerType": "Visible To",
     "entitlements": "Entitlements",
     "maxHotels": "Max hotels",
     "maxSites": "Max sites",
@@ -22,6 +23,11 @@
     "updated": "Service updated successfully",
     "deleted": "Service deleted successfully",
     "confirmDelete": "Are you sure you want to delete \"{name}\"?",
+    "partnerTypes": {
+      "all": "All Partners",
+      "hotel": "Hotels Only",
+      "agency": "Agencies Only"
+    },
     "periods": {
       "yearly": "Yearly",
       "monthly": "Monthly",
@@ -38,6 +44,7 @@
     "descriptionLabel": "Description",
     "slug": "Slug",
     "billingPeriod": "Billing Period",
+    "targetPartnerType": "Visible To",
     "selectServices": "Included Services",
     "includedServices": "Included Services",
     "noServicesYet": "No services added yet",
@@ -53,6 +60,11 @@
     "updated": "Package updated successfully",
     "deleted": "Package deleted successfully",
     "confirmDelete": "Are you sure you want to delete \"{name}\"?",
+    "partnerTypes": {
+      "all": "All Partners",
+      "hotel": "Hotels Only",
+      "agency": "Agencies Only"
+    },
     "periods": {
       "yearly": "Yearly",
       "monthly": "Monthly"

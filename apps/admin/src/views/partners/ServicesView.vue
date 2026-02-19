@@ -41,6 +41,11 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
               >
+                {{ $t('subscriptionServices.targetPartnerType') }}
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider"
+              >
                 {{ $t('common.status.label') }}
               </th>
               <th
@@ -71,6 +76,20 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
+                  class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                  :class="
+                    svc.targetPartnerType === 'hotel'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : svc.targetPartnerType === 'agency'
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                        : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400'
+                  "
+                >
+                  {{ $t(`subscriptionServices.partnerTypes.${svc.targetPartnerType || 'all'}`) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
                   :class="
                     svc.isActive
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
@@ -98,7 +117,7 @@
             </tr>
             <tr v-if="!services.length && !loading">
               <td
-                colspan="5"
+                colspan="6"
                 class="px-6 py-12 text-center text-sm text-gray-500 dark:text-slate-400"
               >
                 {{ $t('subscriptionServices.noServices') }}
@@ -159,6 +178,13 @@
           v-model="form.billingPeriod"
           :label="$t('subscriptionServices.billingPeriod')"
           :options="billingPeriodOptions"
+        />
+
+        <!-- Target Partner Type -->
+        <Dropdown
+          v-model="form.targetPartnerType"
+          :label="$t('subscriptionServices.targetPartnerType')"
+          :options="partnerTypeOptions"
         />
 
         <!-- Sort Order -->
@@ -256,6 +282,12 @@ const billingPeriodOptions = computed(() => [
   { value: 'one_time', label: t('subscriptionServices.periods.one_time') }
 ])
 
+const partnerTypeOptions = computed(() => [
+  { value: 'all', label: t('subscriptionServices.partnerTypes.all') },
+  { value: 'hotel', label: t('subscriptionServices.partnerTypes.hotel') },
+  { value: 'agency', label: t('subscriptionServices.partnerTypes.agency') }
+])
+
 const services = ref([])
 const loading = ref(false)
 const showModal = ref(false)
@@ -268,6 +300,7 @@ const defaultForm = () => ({
   description: { tr: '', en: '' },
   price: 0,
   billingPeriod: 'yearly',
+  targetPartnerType: 'all',
   sortOrder: 0,
   isActive: true
 })
@@ -299,6 +332,7 @@ const openEditModal = svc => {
     description: { tr: svc.description?.tr || '', en: svc.description?.en || '' },
     price: svc.price,
     billingPeriod: svc.billingPeriod || 'yearly',
+    targetPartnerType: svc.targetPartnerType || 'all',
     sortOrder: svc.sortOrder || 0,
     isActive: svc.isActive !== false
   }

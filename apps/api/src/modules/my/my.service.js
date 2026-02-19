@@ -638,7 +638,16 @@ export const getMembershipCatalog = asyncHandler(async (req, res) => {
   const partnerType = partner.partnerType || 'hotel'
 
   const packages = await SubscriptionPackage.findPublicCatalog(partnerType)
-  const services = await SubscriptionService.find({ isActive: true }).sort({ sortOrder: 1 })
+  const serviceFilter = { isActive: true }
+  if (partnerType && partnerType !== 'all') {
+    serviceFilter.$or = [
+      { targetPartnerType: partnerType },
+      { targetPartnerType: 'all' },
+      { targetPartnerType: { $exists: false } },
+      { targetPartnerType: null }
+    ]
+  }
+  const services = await SubscriptionService.find(serviceFilter).sort({ sortOrder: 1 })
 
   res.json({
     success: true,

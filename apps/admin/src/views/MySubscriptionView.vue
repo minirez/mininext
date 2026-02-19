@@ -518,35 +518,19 @@
                 {{ getLocalized(pkg.description) }}
               </p>
 
-              <!-- Included Services (collapsed: max 3, expanded: all with details) -->
+              <!-- Included Services (always show first 3) -->
               <div v-if="pkg.services?.length" class="space-y-2 mb-4 flex-1">
                 <div
-                  v-for="svc in expandedPackageId === pkg._id
-                    ? pkg.services
-                    : pkg.services.slice(0, 3)"
+                  v-for="svc in pkg.services.slice(0, 3)"
                   :key="svc._id"
-                  class="flex items-start gap-2.5 text-sm"
+                  class="flex items-center gap-2.5 text-sm"
                 >
-                  <span class="material-icons text-green-500 text-base flex-shrink-0 mt-0.5"
+                  <span class="material-icons text-green-500 text-base flex-shrink-0"
                     >check_circle</span
                   >
-                  <div class="min-w-0 flex-1">
-                    <span class="text-gray-700 dark:text-slate-300">
-                      {{ getLocalized(svc.name) }}
-                    </span>
-                    <p
-                      v-if="expandedPackageId === pkg._id && getLocalized(svc.description)"
-                      class="text-xs text-gray-400 dark:text-slate-500 mt-0.5"
-                    >
-                      {{ getLocalized(svc.description) }}
-                    </p>
-                  </div>
-                  <span
-                    v-if="expandedPackageId === pkg._id && svc.price"
-                    class="text-xs font-medium text-gray-500 dark:text-slate-400 flex-shrink-0"
-                  >
-                    {{ formatCurrency(svc.price, 'EUR') }}
-                  </span>
+                  <span class="text-gray-700 dark:text-slate-300">{{
+                    getLocalized(svc.name)
+                  }}</span>
                 </div>
                 <div
                   v-if="expandedPackageId !== pkg._id && pkg.services.length > 3"
@@ -556,24 +540,82 @@
                 </div>
               </div>
 
-              <!-- Trial Info (only in expanded) -->
+              <!-- Expanded Details (animated with grid row transition) -->
               <div
-                v-if="expandedPackageId === pkg._id && pkg.trial?.enabled && pkg.trial?.days"
-                class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 mb-4"
+                class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                :style="{ gridTemplateRows: expandedPackageId === pkg._id ? '1fr' : '0fr' }"
               >
-                <span class="material-icons text-sm">timer</span>
-                <span class="font-medium"
-                  >{{ pkg.trial.days }} {{ $t('mySubscription.trialDays') }}</span
-                >
-              </div>
+                <div class="overflow-hidden">
+                  <div class="space-y-2 pb-4">
+                    <template v-if="pkg.services?.length > 3">
+                      <div
+                        v-for="svc in pkg.services.slice(3)"
+                        :key="'extra-' + svc._id"
+                        class="flex items-start gap-2.5 text-sm"
+                      >
+                        <span class="material-icons text-green-500 text-base flex-shrink-0 mt-0.5"
+                          >check_circle</span
+                        >
+                        <div class="min-w-0 flex-1">
+                          <span class="text-gray-700 dark:text-slate-300">{{
+                            getLocalized(svc.name)
+                          }}</span>
+                          <p
+                            v-if="getLocalized(svc.description)"
+                            class="text-xs text-gray-400 dark:text-slate-500 mt-0.5"
+                          >
+                            {{ getLocalized(svc.description) }}
+                          </p>
+                        </div>
+                        <span
+                          v-if="svc.price"
+                          class="text-xs font-medium text-gray-500 dark:text-slate-400 flex-shrink-0"
+                          >{{ formatCurrency(svc.price, 'EUR') }}</span
+                        >
+                      </div>
+                    </template>
 
-              <!-- Billing Period Detail (only in expanded) -->
-              <div
-                v-if="expandedPackageId === pkg._id && pkg.pricing?.interval"
-                class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/30 rounded-lg px-3 py-2 mb-4"
-              >
-                <span class="material-icons text-sm">event_repeat</span>
-                <span>{{ $t(`mySubscription.intervals.${pkg.pricing.interval}`) }}</span>
+                    <div
+                      v-for="svc in pkg.services
+                        ?.slice(0, 3)
+                        .filter(s => getLocalized(s.description) || s.price)"
+                      :key="'info-' + svc._id"
+                      class="flex items-start gap-2.5 text-sm pl-7"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <p class="text-xs text-gray-400 dark:text-slate-500">
+                          <span class="font-medium text-gray-500 dark:text-slate-400"
+                            >{{ getLocalized(svc.name) }}:</span
+                          >
+                          {{ getLocalized(svc.description) }}
+                        </p>
+                      </div>
+                      <span
+                        v-if="svc.price"
+                        class="text-xs font-medium text-gray-500 dark:text-slate-400 flex-shrink-0"
+                        >{{ formatCurrency(svc.price, 'EUR') }}</span
+                      >
+                    </div>
+
+                    <div
+                      v-if="pkg.trial?.enabled && pkg.trial?.days"
+                      class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2"
+                    >
+                      <span class="material-icons text-sm">timer</span>
+                      <span class="font-medium"
+                        >{{ pkg.trial.days }} {{ $t('mySubscription.trialDays') }}</span
+                      >
+                    </div>
+
+                    <div
+                      v-if="pkg.pricing?.interval"
+                      class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/30 rounded-lg px-3 py-2"
+                    >
+                      <span class="material-icons text-sm">event_repeat</span>
+                      <span>{{ $t(`mySubscription.intervals.${pkg.pricing.interval}`) }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Price + CTA -->
@@ -658,134 +700,140 @@
           </span>
         </button>
         <div
-          v-show="showAddons"
-          class="px-6 pb-6 border-t border-gray-100 dark:border-slate-700/50"
+          class="grid transition-[grid-template-rows] duration-300 ease-in-out border-t border-gray-100 dark:border-slate-700/50"
+          :style="{ gridTemplateRows: showAddons ? '1fr' : '0fr' }"
         >
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-            <div
-              v-for="svc in availableAddons"
-              :key="svc._id"
-              class="rounded-xl border cursor-pointer transition-all duration-200"
-              :class="
-                expandedAddonId === svc._id
-                  ? 'border-indigo-400 dark:border-indigo-600 shadow-lg shadow-indigo-500/10'
-                  : 'border-gray-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-lg'
-              "
-              @click="toggleAddonExpand(svc._id)"
-            >
-              <div class="p-5">
-                <div class="flex items-start gap-3">
-                  <div
-                    class="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0 transition-transform"
-                    :class="{ 'scale-110': expandedAddonId === svc._id }"
-                  >
-                    <span class="material-icons text-indigo-500">{{
-                      svc.icon || 'extension'
-                    }}</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="font-semibold text-gray-900 dark:text-white">
-                      {{ getLocalized(svc.name) }}
-                    </div>
-                    <p
-                      v-if="getLocalized(svc.description)"
-                      class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 transition-all duration-200"
-                      :class="expandedAddonId === svc._id ? '' : 'line-clamp-2'"
-                    >
-                      {{ getLocalized(svc.description) }}
-                    </p>
-                  </div>
-                  <span
-                    class="material-icons text-gray-400 dark:text-slate-500 transition-transform duration-200 flex-shrink-0 text-xl"
-                    :class="{ 'rotate-180': expandedAddonId === svc._id }"
-                  >
-                    expand_more
-                  </span>
-                </div>
-
-                <!-- Expanded Details -->
-                <div v-if="expandedAddonId === svc._id" class="mt-4 space-y-3">
-                  <!-- Category -->
-                  <div
-                    v-if="svc.category"
-                    class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400"
-                  >
-                    <span class="material-icons text-sm">category</span>
-                    <span class="capitalize">{{ svc.category }}</span>
-                  </div>
-                  <!-- Billing Period -->
-                  <div
-                    v-if="svc.pricing?.interval || svc.billingPeriod"
-                    class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400"
-                  >
-                    <span class="material-icons text-sm">event_repeat</span>
-                    <span>{{
-                      $t(
-                        `mySubscription.intervals.${svc.pricing?.interval || svc.billingPeriod || 'yearly'}`
-                      )
-                    }}</span>
-                  </div>
-                  <!-- Entitlements Summary -->
-                  <div v-if="svc.entitlements" class="space-y-1">
-                    <div
-                      v-if="svc.entitlements.pms?.enabled"
-                      class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded px-2 py-1"
-                    >
-                      <span class="material-icons text-sm">apartment</span>
-                      PMS ({{
-                        svc.entitlements.pms.maxHotels === -1
-                          ? $t('common.unlimited')
-                          : svc.entitlements.pms.maxHotels
-                      }}
-                      {{ $t('mySubscription.hotels') }})
-                    </div>
-                    <div
-                      v-if="svc.entitlements.webDesign?.enabled"
-                      class="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded px-2 py-1"
-                    >
-                      <span class="material-icons text-sm">language</span>
-                      Web Design ({{
-                        svc.entitlements.webDesign.maxSites === -1
-                          ? $t('common.unlimited')
-                          : svc.entitlements.webDesign.maxSites
-                      }}
-                      {{ $t('mySubscription.sites') }})
-                    </div>
-                    <div
-                      v-if="svc.entitlements.channelManager?.enabled"
-                      class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded px-2 py-1"
-                    >
-                      <span class="material-icons text-sm">sync</span>
-                      Channel Manager
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Footer: Price + CTA -->
+          <div class="overflow-hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-6 py-4 pb-6">
               <div
-                class="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700"
+                v-for="svc in availableAddons"
+                :key="svc._id"
+                class="rounded-xl border cursor-pointer transition-all duration-200"
+                :class="
+                  expandedAddonId === svc._id
+                    ? 'border-indigo-400 dark:border-indigo-600 shadow-lg shadow-indigo-500/10'
+                    : 'border-gray-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-lg'
+                "
+                @click="toggleAddonExpand(svc._id)"
               >
-                <div v-if="svc.pricing?.prices?.length">
-                  <span
-                    v-for="price in svc.pricing.prices.slice(0, 1)"
-                    :key="price.currency"
-                    class="text-lg font-bold text-gray-900 dark:text-white"
-                  >
-                    {{ formatCurrency(price.amount, price.currency) }}
-                    <span class="text-xs font-normal text-gray-400">
-                      / {{ $t(`mySubscription.intervals.${svc.pricing?.interval || 'yearly'}`) }}
+                <div class="p-5">
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0 transition-transform"
+                      :class="{ 'scale-110': expandedAddonId === svc._id }"
+                    >
+                      <span class="material-icons text-indigo-500">{{
+                        svc.icon || 'extension'
+                      }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-semibold text-gray-900 dark:text-white">
+                        {{ getLocalized(svc.name) }}
+                      </div>
+                      <p
+                        v-if="getLocalized(svc.description)"
+                        class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 transition-all duration-200"
+                        :class="expandedAddonId === svc._id ? '' : 'line-clamp-2'"
+                      >
+                        {{ getLocalized(svc.description) }}
+                      </p>
+                    </div>
+                    <span
+                      class="material-icons text-gray-400 dark:text-slate-500 transition-transform duration-200 flex-shrink-0 text-xl"
+                      :class="{ 'rotate-180': expandedAddonId === svc._id }"
+                    >
+                      expand_more
                     </span>
-                  </span>
+                  </div>
+
+                  <!-- Expanded Details (animated) -->
+                  <div
+                    class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                    :style="{ gridTemplateRows: expandedAddonId === svc._id ? '1fr' : '0fr' }"
+                  >
+                    <div class="overflow-hidden">
+                      <div class="mt-4 space-y-2">
+                        <div
+                          v-if="svc.category"
+                          class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400"
+                        >
+                          <span class="material-icons text-sm">category</span>
+                          <span class="capitalize">{{ svc.category }}</span>
+                        </div>
+                        <div
+                          v-if="svc.pricing?.interval || svc.billingPeriod"
+                          class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400"
+                        >
+                          <span class="material-icons text-sm">event_repeat</span>
+                          <span>{{
+                            $t(
+                              `mySubscription.intervals.${svc.pricing?.interval || svc.billingPeriod || 'yearly'}`
+                            )
+                          }}</span>
+                        </div>
+                        <div v-if="svc.entitlements" class="space-y-1">
+                          <div
+                            v-if="svc.entitlements.pms?.enabled"
+                            class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded px-2 py-1"
+                          >
+                            <span class="material-icons text-sm">apartment</span>
+                            PMS ({{
+                              svc.entitlements.pms.maxHotels === -1
+                                ? $t('common.unlimited')
+                                : svc.entitlements.pms.maxHotels
+                            }}
+                            {{ $t('mySubscription.hotels') }})
+                          </div>
+                          <div
+                            v-if="svc.entitlements.webDesign?.enabled"
+                            class="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded px-2 py-1"
+                          >
+                            <span class="material-icons text-sm">language</span>
+                            Web Design ({{
+                              svc.entitlements.webDesign.maxSites === -1
+                                ? $t('common.unlimited')
+                                : svc.entitlements.webDesign.maxSites
+                            }}
+                            {{ $t('mySubscription.sites') }})
+                          </div>
+                          <div
+                            v-if="svc.entitlements.channelManager?.enabled"
+                            class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded px-2 py-1"
+                          >
+                            <span class="material-icons text-sm">sync</span>
+                            Channel Manager
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-1.5"
-                  :disabled="purchasing"
-                  @click.stop="handlePurchaseService(svc)"
+
+                <!-- Footer: Price + CTA -->
+                <div
+                  class="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700"
                 >
-                  <span class="material-icons text-sm">add_circle</span>
-                  {{ $t('mySubscription.purchase') }}
-                </button>
+                  <div v-if="svc.pricing?.prices?.length">
+                    <span
+                      v-for="price in svc.pricing.prices.slice(0, 1)"
+                      :key="price.currency"
+                      class="text-lg font-bold text-gray-900 dark:text-white"
+                    >
+                      {{ formatCurrency(price.amount, price.currency) }}
+                      <span class="text-xs font-normal text-gray-400">
+                        / {{ $t(`mySubscription.intervals.${svc.pricing?.interval || 'yearly'}`) }}
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-1.5"
+                    :disabled="purchasing"
+                    @click.stop="handlePurchaseService(svc)"
+                  >
+                    <span class="material-icons text-sm">add_circle</span>
+                    {{ $t('mySubscription.purchase') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@
     "slugHelp": "Sadece küçük harf, rakam ve tire kullanılabilir",
     "price": "Fiyat",
     "billingPeriod": "Faturalama Dönemi",
+    "targetPartnerType": "Görünürlük",
     "entitlements": "Yetkilendirmeler",
     "maxHotels": "Maks otel",
     "maxSites": "Maks site",
@@ -22,6 +23,11 @@
     "updated": "Servis başarıyla güncellendi",
     "deleted": "Servis başarıyla silindi",
     "confirmDelete": "\"{name}\" servisini silmek istediğinize emin misiniz?",
+    "partnerTypes": {
+      "all": "Tüm Partnerler",
+      "hotel": "Sadece Oteller",
+      "agency": "Sadece Acenteler"
+    },
     "periods": {
       "yearly": "Yıllık",
       "monthly": "Aylık",
@@ -38,6 +44,7 @@
     "descriptionLabel": "Açıklama",
     "slug": "Slug",
     "billingPeriod": "Faturalama Dönemi",
+    "targetPartnerType": "Görünürlük",
     "selectServices": "Dahil Edilecek Servisler",
     "includedServices": "Dahil Servisler",
     "noServicesYet": "Henüz servis eklenmemiş",
@@ -53,6 +60,11 @@
     "updated": "Paket başarıyla güncellendi",
     "deleted": "Paket başarıyla silindi",
     "confirmDelete": "\"{name}\" paketini silmek istediğinize emin misiniz?",
+    "partnerTypes": {
+      "all": "Tüm Partnerler",
+      "hotel": "Sadece Oteller",
+      "agency": "Sadece Acenteler"
+    },
     "periods": {
       "yearly": "Yıllık",
       "monthly": "Aylık"

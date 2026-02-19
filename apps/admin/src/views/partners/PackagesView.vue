@@ -45,6 +45,21 @@
                 {{ pkg.isActive ? $t('common.active') : $t('common.inactive') }}
               </span>
             </div>
+            <div v-if="pkg.targetPartnerType && pkg.targetPartnerType !== 'all'" class="mt-1">
+              <span
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                :class="
+                  pkg.targetPartnerType === 'hotel'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                "
+              >
+                <span class="material-icons text-xs">{{
+                  pkg.targetPartnerType === 'hotel' ? 'hotel' : 'groups'
+                }}</span>
+                {{ $t(`subscriptionPackages.partnerTypes.${pkg.targetPartnerType}`) }}
+              </span>
+            </div>
             <p
               v-if="pkg.description?.tr || pkg.description?.en"
               class="text-xs text-gray-500 dark:text-slate-400 mt-1"
@@ -149,6 +164,13 @@
           type="textarea"
           :rows="3"
           show-translate
+        />
+
+        <!-- Target Partner Type -->
+        <Dropdown
+          v-model="form.targetPartnerType"
+          :label="$t('subscriptionPackages.targetPartnerType')"
+          :options="partnerTypeOptions"
         />
 
         <!-- Services Selection -->
@@ -337,6 +359,12 @@ const billingPeriodOptions = computed(() => [
   { value: 'monthly', label: t('subscriptionPackages.periods.monthly') }
 ])
 
+const partnerTypeOptions = computed(() => [
+  { value: 'all', label: t('subscriptionPackages.partnerTypes.all') },
+  { value: 'hotel', label: t('subscriptionPackages.partnerTypes.hotel') },
+  { value: 'agency', label: t('subscriptionPackages.partnerTypes.agency') }
+])
+
 const packages = ref([])
 const allServices = ref([])
 const loading = ref(false)
@@ -348,6 +376,7 @@ const useOverride = ref(false)
 const defaultForm = () => ({
   name: { tr: '', en: '' },
   description: { tr: '', en: '' },
+  targetPartnerType: 'all',
   services: [],
   overridePrice: null,
   billingPeriod: 'yearly',
@@ -396,6 +425,7 @@ const openEditModal = pkg => {
   form.value = {
     name: { tr: pkg.name?.tr || '', en: pkg.name?.en || '' },
     description: { tr: pkg.description?.tr || '', en: pkg.description?.en || '' },
+    targetPartnerType: pkg.targetPartnerType || 'all',
     services: (pkg.services || []).map(s => s._id || s),
     overridePrice: pkg.overridePrice,
     billingPeriod: pkg.billingPeriod || 'yearly',

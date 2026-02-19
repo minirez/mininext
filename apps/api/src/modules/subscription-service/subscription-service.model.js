@@ -80,6 +80,12 @@ const subscriptionServiceSchema = new mongoose.Schema(
       }
     },
 
+    targetPartnerType: {
+      type: String,
+      enum: ['hotel', 'agency', 'all'],
+      default: 'all'
+    },
+
     sortOrder: {
       type: Number,
       default: 0
