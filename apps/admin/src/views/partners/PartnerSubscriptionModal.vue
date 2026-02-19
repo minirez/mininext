@@ -30,6 +30,7 @@
           class="badge flex-shrink-0"
           :class="{
             'badge-success': subscriptionStatus?.status === 'active',
+            'badge-info': subscriptionStatus?.status === 'trial',
             'badge-warning': subscriptionStatus?.status === 'grace_period',
             'badge-danger':
               subscriptionStatus?.status === 'expired' ||
@@ -40,6 +41,12 @@
           {{
             subscriptionStatusMap[subscriptionStatus?.status]?.label || subscriptionStatus?.status
           }}
+        </span>
+        <span
+          v-if="subscriptionStatus?.trialUsed && subscriptionStatus?.status === 'trial'"
+          class="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full flex-shrink-0"
+        >
+          {{ $t('partners.subscription.trialMode') }}
         </span>
         <span
           v-if="subscriptionStatus?.remainingDays != null"
@@ -71,11 +78,13 @@
         :total="cartTotal"
         :loading="loadingData"
         :submitting="submitting"
+        :trial-available="!subscriptionStatus?.trialUsed"
         @package-select="handlePackageSelect"
         @service-toggle="handleServiceToggle"
         @send-payment-link="handleAction('send_link')"
         @save-pending="handleAction('save_pending')"
         @mark-paid="handleAction('mark_paid')"
+        @activate-trial="handleAction('activate_trial')"
         @currency-change="cart.currency = $event"
         @interval-change="cart.interval = $event"
       />
@@ -291,6 +300,7 @@ const markPaidForm = ref({
 
 // Subscription status map
 const subscriptionStatusMap = computed(() => ({
+  trial: { label: t('partners.subscription.statusTrial') },
   active: { label: t('partners.subscription.statusActive') },
   expired: { label: t('partners.subscription.statusExpired') },
   grace_period: { label: t('partners.subscription.statusGracePeriod') },
@@ -452,6 +462,8 @@ async function handleAction(action) {
       toast.success(t('partners.subscription.paymentLinkSent'))
     } else if (action === 'mark_paid') {
       toast.success(t('partners.subscription.updateSuccess'))
+    } else if (action === 'activate_trial') {
+      toast.success(t('partners.subscription.trialActivatedSuccess'))
     } else {
       toast.success(t('common.success'))
     }

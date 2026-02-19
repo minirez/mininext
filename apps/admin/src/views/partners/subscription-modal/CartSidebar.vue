@@ -122,6 +122,16 @@
             {{ $t('partners.subscription.markAsPaidNow') }}
           </button>
         </div>
+        <button
+          v-if="trialAvailable"
+          type="button"
+          class="w-full btn text-xs py-2 flex items-center justify-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+          :disabled="!hasSelection || loading"
+          @click="$emit('activate-trial')"
+        >
+          <span class="material-icons text-xs">play_circle</span>
+          {{ $t('partners.subscription.activateTrial') }}
+        </button>
       </div>
     </div>
   </div>
@@ -137,13 +147,15 @@ const props = defineProps({
   currency: { type: String, default: 'EUR' },
   interval: { type: String, default: 'yearly' },
   total: { type: Number, default: 0 },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  trialAvailable: { type: Boolean, default: false }
 })
 
 defineEmits([
   'send-payment-link',
   'save-pending',
   'mark-paid',
+  'activate-trial',
   'currency-change',
   'interval-change'
 ])

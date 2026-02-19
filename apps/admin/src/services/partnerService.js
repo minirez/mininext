@@ -489,6 +489,29 @@ const initiatePurchase = async data => {
   }
 }
 
+const activateTrial = async data => {
+  try {
+    const response = await apiClient.post('/my/subscription/activate-trial', data)
+    return response.data
+  } catch (error) {
+    apiLogger.error('Partner Service: Activate trial failed', error.response?.data || error.message)
+    throw error
+  }
+}
+
+const getSubscriptionAlert = async () => {
+  try {
+    const response = await apiClient.get('/my/subscription/alert')
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Get subscription alert failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // Pay for existing pending purchase (admin-created packages)
 const payPendingPurchase = async (purchaseId, data) => {
   try {
@@ -542,5 +565,7 @@ export default {
   downloadMyInvoicePdf,
   querySubscriptionBin,
   initiatePurchase,
-  payPendingPurchase
+  payPendingPurchase,
+  activateTrial,
+  getSubscriptionAlert
 }

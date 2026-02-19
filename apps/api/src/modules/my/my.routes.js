@@ -33,6 +33,12 @@ router.get('/subscription', myService.getMySubscription)
 // Query BIN for subscription payment (for partner users)
 router.post('/subscription/query-bin', myService.querySubscriptionBin)
 
+// Activate trial (no payment, one-time only)
+router.post('/subscription/activate-trial', myService.activateTrial)
+
+// Get subscription alert status (trial/renewal/grace warnings)
+router.get('/subscription/alert', myService.getSubscriptionAlert)
+
 // Initiate subscription purchase with payment (for partner users)
 router.post('/subscription/purchase', myService.initiatePurchase)
 

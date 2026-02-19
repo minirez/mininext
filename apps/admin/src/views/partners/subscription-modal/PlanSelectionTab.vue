@@ -71,9 +71,11 @@
       :interval="interval"
       :total="total"
       :loading="submitting"
+      :trial-available="trialAvailable"
       @send-payment-link="$emit('send-payment-link')"
       @save-pending="$emit('save-pending')"
       @mark-paid="$emit('mark-paid')"
+      @activate-trial="$emit('activate-trial')"
       @currency-change="$emit('currency-change', $event)"
       @interval-change="$emit('interval-change', $event)"
     />
@@ -99,7 +101,8 @@ defineProps({
   interval: { type: String, default: 'yearly' },
   total: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
-  submitting: { type: Boolean, default: false }
+  submitting: { type: Boolean, default: false },
+  trialAvailable: { type: Boolean, default: false }
 })
 
 defineEmits([
@@ -108,6 +111,7 @@ defineEmits([
   'send-payment-link',
   'save-pending',
   'mark-paid',
+  'activate-trial',
   'currency-change',
   'interval-change'
 ])

@@ -43,6 +43,9 @@
         </template>
       </Header>
 
+      <!-- Subscription Alert Modal (trial/renewal/grace) -->
+      <SubscriptionAlertModal />
+
       <!-- Page Content -->
       <main
         class="flex-1 min-h-0 overflow-y-auto bg-gray-100 dark:bg-slate-900 print:overflow-visible print:bg-white"
@@ -73,6 +76,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
+import SubscriptionAlertModal from '@/components/common/SubscriptionAlertModal.vue'
 import { useUIStore } from '@/stores/ui'
 
 const route = useRoute()

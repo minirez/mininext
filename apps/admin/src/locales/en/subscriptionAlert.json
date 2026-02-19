@@ -1,0 +1,18 @@
+{
+  "subscriptionAlert": {
+    "trialTitle": "You're in Trial Mode",
+    "trialDescription": "Your trial period has {days} days remaining. Complete your payment to keep uninterrupted access to all services.",
+    "renewalTitle": "Subscription Renewal Due",
+    "renewalDescription": "Your yearly subscription expires in {days} days. Renew now to avoid service interruption.",
+    "graceTitle": "Payment Overdue",
+    "graceDescription": "Your subscription payment is overdue. You have {days} days left before access is suspended.",
+    "expiredTitle": "Subscription Expired",
+    "expiredDescription": "Your subscription has expired and your access to services has been suspended. Please make a payment to reactivate.",
+    "daysRemaining": "{days} days remaining",
+    "goToPayment": "Go to Payment",
+    "renewNow": "Renew Now",
+    "payNow": "Pay Now",
+    "reactivate": "Reactivate Subscription",
+    "remindLater": "Remind me later"
+  }
+}

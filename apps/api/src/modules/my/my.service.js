@@ -60,6 +60,8 @@ export const getMySubscription = asyncHandler(async (req, res) => {
       status: subscriptionStatus.status,
       statusLabel: subscriptionStatus.statusLabel,
       trial: subscriptionStatus.trial,
+      trialUsed: subscriptionStatus.trialUsed,
+      alert: subscriptionStatus.alert,
       currentPurchase: subscriptionStatus.currentPurchase,
       startDate: subscriptionStatus.startDate,
       endDate: subscriptionStatus.endDate,
@@ -233,6 +235,82 @@ export const downloadMyInvoicePDF = asyncHandler(async (req, res) => {
   doc.text('This invoice was generated electronically.', 50, 792, { align: 'center' })
 
   doc.end()
+})
+
+// ───────────────── activate trial (no payment) ─────────────────
+
+export const activateTrial = asyncHandler(async (req, res) => {
+  const partnerId = requirePartner(req)
+  const { packageId } = req.body
+
+  if (!packageId) throw new BadRequestError('PACKAGE_ID_REQUIRED')
+
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  if (partner.hasUsedTrial()) {
+    throw new BadRequestError('TRIAL_ALREADY_USED')
+  }
+
+  const pkg = await SubscriptionPackage.findById(packageId)
+  if (!pkg || !pkg.isActive) throw new NotFoundError('PACKAGE_NOT_FOUND')
+  if (!pkg.trialDays || pkg.trialDays <= 0) throw new BadRequestError('TRIAL_NOT_AVAILABLE')
+
+  if (!partner.subscription) partner.subscription = { purchases: [] }
+  if (!partner.subscription.purchases) partner.subscription.purchases = []
+
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  endDate.setFullYear(endDate.getFullYear() + 1)
+
+  const purchase = {
+    type: 'package_subscription',
+    package: pkg._id,
+    label: { tr: pkg.name.tr, en: pkg.name.en },
+    period: { startDate, endDate },
+    price: { amount: pkg.price, currency: 'EUR' },
+    billingPeriod: pkg.billingPeriod || 'yearly',
+    status: 'pending',
+    createdAt: new Date(),
+    createdBy: req.user._id
+  }
+
+  partner.subscription.purchases.push(purchase)
+
+  partner.startTrial()
+
+  await partner.save()
+
+  const addedPurchase = partner.subscription.purchases[partner.subscription.purchases.length - 1]
+
+  logger.info(`Trial activated for partner ${partner._id}, package ${pkg._id}`)
+
+  res.json({
+    success: true,
+    data: {
+      purchase: {
+        _id: addedPurchase._id,
+        type: addedPurchase.type,
+        label: addedPurchase.label,
+        status: addedPurchase.status,
+        price: addedPurchase.price,
+        period: addedPurchase.period
+      },
+      subscription: partner.getSubscriptionStatus()
+    }
+  })
+})
+
+// ───────────────── subscription alert check ─────────────────
+
+export const getSubscriptionAlert = asyncHandler(async (req, res) => {
+  const partnerId = requirePartner(req)
+  const partner = await Partner.findById(partnerId)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const alert = partner.getSubscriptionAlert()
+
+  res.json({ success: true, data: alert })
 })
 
 // ───────────────── BIN query (EUR-only) ─────────────────

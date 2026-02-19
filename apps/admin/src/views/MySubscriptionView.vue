@@ -636,20 +636,32 @@
                     </div>
                   </div>
                 </div>
-                <button
-                  v-if="!isCurrentPackage(pkg._id)"
-                  class="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                  :class="
-                    pkg.badge
-                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/20'
-                      : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
-                  "
-                  :disabled="purchasing"
-                  @click.stop="handlePurchasePackage(pkg)"
-                >
-                  <span class="material-icons text-base">shopping_cart</span>
-                  {{ $t('mySubscription.purchase') }}
-                </button>
+                <div v-if="!isCurrentPackage(pkg._id)" class="space-y-2">
+                  <button
+                    v-if="canUseTrial && pkg.trial?.enabled"
+                    class="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 shadow-lg shadow-blue-500/20"
+                    :disabled="purchasing"
+                    @click.stop="handleActivateTrial(pkg)"
+                  >
+                    <span class="material-icons text-base">play_circle</span>
+                    {{ $t('mySubscription.startTrial') }}
+                  </button>
+                  <button
+                    class="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                    :class="[
+                      canUseTrial && pkg.trial?.enabled
+                        ? 'border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                        : pkg.badge
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/20'
+                          : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                    ]"
+                    :disabled="purchasing"
+                    @click.stop="handlePurchasePackage(pkg)"
+                  >
+                    <span class="material-icons text-base">shopping_cart</span>
+                    {{ $t('mySubscription.purchase') }}
+                  </button>
+                </div>
                 <div
                   v-else
                   class="w-full py-3 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-semibold text-sm text-center flex items-center justify-center gap-2"
@@ -1324,6 +1336,10 @@ const paymentAmount = computed(() => {
   return prices[0]?.amount || selectedItem.value.price || 0
 })
 
+const canUseTrial = computed(() => {
+  return !subscription.value?.trialUsed && subscription.value?.status !== 'active'
+})
+
 const isCurrentPackage = id => membership.value.package?._id === id
 
 const formatDate = date => {
@@ -1380,6 +1396,19 @@ const loadAll = async () => {
     toast.error(t('mySubscription.loadError'))
   } finally {
     loading.value = false
+  }
+}
+
+const handleActivateTrial = async pkg => {
+  purchasing.value = true
+  try {
+    await partnerService.activateTrial({ packageId: pkg._id })
+    toast.success(t('mySubscription.trialActivated'))
+    await loadAll()
+  } catch (err) {
+    toast.error(err.response?.data?.error || t('mySubscription.trialActivationFailed'))
+  } finally {
+    purchasing.value = false
   }
 }
 

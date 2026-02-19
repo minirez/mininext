@@ -383,8 +383,14 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
 
   const { packageId, serviceIds = [], interval = 'yearly', action } = req.body
 
-  if (!action || !['send_link', 'save_pending', 'mark_paid'].includes(action)) {
+  if (!action || !['send_link', 'save_pending', 'mark_paid', 'activate_trial'].includes(action)) {
     throw new BadRequestError('INVALID_ACTION')
+  }
+
+  if (action === 'activate_trial') {
+    if (partner.hasUsedTrial()) {
+      throw new BadRequestError('TRIAL_ALREADY_USED')
+    }
   }
   if (!packageId && serviceIds.length === 0) {
     throw new BadRequestError('NO_ITEMS_SELECTED')
@@ -420,6 +426,8 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
     totalAmount += amount
     packageServiceSlugs = (pkg.services || []).map(s => s.slug)
 
+    const purchaseStatus = action === 'mark_paid' ? 'active' : 'pending'
+
     const purchase = {
       type: 'package_subscription',
       package: pkg._id,
@@ -427,7 +435,7 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
       period: { startDate, endDate },
       price: { amount, currency: 'EUR' },
       billingPeriod: interval,
-      status: action === 'mark_paid' ? 'active' : 'pending',
+      status: purchaseStatus,
       createdAt: new Date(),
       createdBy: req.user._id
     }
@@ -455,6 +463,8 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
     const amount = svc.price
     totalAmount += amount
 
+    const purchaseStatus = action === 'mark_paid' ? 'active' : 'pending'
+
     const purchase = {
       type: 'service_purchase',
       service: svc._id,
@@ -462,7 +472,7 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
       period: { startDate, endDate },
       price: { amount, currency: 'EUR' },
       billingPeriod: interval,
-      status: action === 'mark_paid' ? 'active' : 'pending',
+      status: purchaseStatus,
       createdAt: new Date(),
       createdBy: req.user._id
     }
@@ -484,6 +494,10 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
 
   if (action === 'mark_paid') {
     partner.subscription.status = 'active'
+  }
+
+  if (action === 'activate_trial') {
+    partner.startTrial()
   }
 
   await partner.save()

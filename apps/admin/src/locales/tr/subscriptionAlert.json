@@ -1,0 +1,18 @@
+{
+  "subscriptionAlert": {
+    "trialTitle": "Deneme Modundasınız",
+    "trialDescription": "Deneme sürenizin bitmesine {days} gün kaldı. Tüm hizmetlere kesintisiz erişim için ödemenizi tamamlayın.",
+    "renewalTitle": "Abonelik Yenileme Zamanı",
+    "renewalDescription": "Yıllık aboneliğinizin bitmesine {days} gün kaldı. Hizmet kesintisini önlemek için şimdi yenileyin.",
+    "graceTitle": "Ödeme Gecikmiş",
+    "graceDescription": "Abonelik ödemeniz gecikmiş durumda. Erişiminizin askıya alınmasına {days} gün kaldı.",
+    "expiredTitle": "Abonelik Süresi Doldu",
+    "expiredDescription": "Aboneliğinizin süresi doldu ve hizmetlere erişiminiz askıya alındı. Yeniden aktifleştirmek için ödeme yapın.",
+    "daysRemaining": "{days} gün kaldı",
+    "goToPayment": "Ödemeye Git",
+    "renewNow": "Şimdi Yenile",
+    "payNow": "Şimdi Öde",
+    "reactivate": "Aboneliği Yeniden Aktifleştir",
+    "remindLater": "Daha sonra hatırlat"
+  }
+}

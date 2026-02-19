@@ -377,7 +377,8 @@ const partnerSchema = new mongoose.Schema(
       // Trial tracking
       trial: {
         startDate: { type: Date },
-        endDate: { type: Date } // startDate + 15 days
+        endDate: { type: Date }, // startDate + 15 days
+        used: { type: Boolean, default: false }
       },
 
       // Admin-set feature limits
@@ -492,16 +493,22 @@ partnerSchema.methods.isActive = function () {
 /**
  * Initialise 15-day trial for a newly approved partner.
  * Idempotent – does nothing if trial dates are already set.
+ * One-time only – refuses if trial was already used.
  */
 partnerSchema.methods.startTrial = function () {
+  if (this.subscription?.trial?.used) return this
   if (this.subscription?.trial?.startDate) return this
   if (!this.subscription) this.subscription = { purchases: [] }
   const now = new Date()
   const end = new Date(now)
   end.setDate(end.getDate() + 15)
-  this.subscription.trial = { startDate: now, endDate: end }
+  this.subscription.trial = { startDate: now, endDate: end, used: true }
   this.subscription.status = 'trial'
   return this
+}
+
+partnerSchema.methods.hasUsedTrial = function () {
+  return !!this.subscription?.trial?.used
 }
 
 partnerSchema.methods.isInTrial = function () {
@@ -595,8 +602,15 @@ partnerSchema.methods.calculateSubscriptionStatus = function () {
 
   if (now <= endDate) return 'active'
 
-  // Grace period (15 days after end)
-  const gracePeriodEnd = new Date(endDate)
+  // Yearly paid users get 3 extra overdue days (365 + 3)
+  const isYearly = purchase.billingPeriod === 'yearly'
+  const overdueDays = isYearly && purchase.status === 'active' ? 3 : 0
+  const overdueEnd = new Date(endDate)
+  overdueEnd.setDate(overdueEnd.getDate() + overdueDays)
+  if (now <= overdueEnd) return 'active'
+
+  // Grace period (15 days after end + overdue)
+  const gracePeriodEnd = new Date(overdueEnd)
   gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 15)
   if (now <= gracePeriodEnd) return 'grace_period'
 
@@ -639,10 +653,66 @@ partnerSchema.methods.getGracePeriodRemainingDays = function () {
   if (status !== 'grace_period') return null
   const purchase = this.getCurrentPurchase()
   if (!purchase?.period?.endDate) return null
-  const gracePeriodEnd = new Date(purchase.period.endDate)
+  const endDate = new Date(purchase.period.endDate)
+  const isYearly = purchase.billingPeriod === 'yearly'
+  const overdueDays = isYearly && purchase.status === 'active' ? 3 : 0
+  const overdueEnd = new Date(endDate)
+  overdueEnd.setDate(overdueEnd.getDate() + overdueDays)
+  const gracePeriodEnd = new Date(overdueEnd)
   gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 15)
   const diff = gracePeriodEnd - new Date()
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+/**
+ * Returns info for subscription warning modals on the frontend.
+ * Covers: trial mode, yearly renewal (last 15 days), grace period.
+ */
+partnerSchema.methods.getSubscriptionAlert = function () {
+  const status = this.calculateSubscriptionStatus()
+
+  // Trial mode: always show
+  if (status === 'trial') {
+    const remaining = this.getRemainingDays()
+    return {
+      type: 'trial',
+      show: true,
+      remainingDays: remaining,
+      trialEndDate: this.subscription?.trial?.endDate
+    }
+  }
+
+  // Grace period: always show
+  if (status === 'grace_period') {
+    return {
+      type: 'grace_period',
+      show: true,
+      remainingDays: this.getGracePeriodRemainingDays()
+    }
+  }
+
+  // Active yearly subscription within last 15 days: renewal warning
+  if (status === 'active') {
+    const purchase = this.getCurrentPurchase()
+    if (purchase?.billingPeriod === 'yearly' && purchase?.period?.endDate) {
+      const remaining = this.getRemainingDays()
+      if (remaining !== null && remaining <= 15) {
+        return {
+          type: 'renewal_warning',
+          show: true,
+          remainingDays: remaining,
+          endDate: purchase.period.endDate
+        }
+      }
+    }
+  }
+
+  // Expired
+  if (status === 'expired') {
+    return { type: 'expired', show: true, remainingDays: 0 }
+  }
+
+  return { type: null, show: false }
 }
 
 partnerSchema.methods.getStatusLabel = function (status) {
@@ -678,12 +748,18 @@ partnerSchema.methods.getSubscriptionStatus = function () {
     (a, b) => new Date(b.period.startDate) - new Date(a.period.startDate)
   )
 
+  const alert = this.getSubscriptionAlert()
+
   return {
     status,
     statusLabel: this.getStatusLabel(status),
 
     // Trial info
     trial: this.subscription?.trial || null,
+    trialUsed: !!this.subscription?.trial?.used,
+
+    // Alert for modals
+    alert,
 
     // Current active purchase
     currentPurchase: currentPurchase
