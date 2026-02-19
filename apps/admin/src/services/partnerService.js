@@ -171,9 +171,9 @@ const addPurchase = async (partnerId, data) => {
   }
 }
 
-const getAllPurchases = async () => {
+const getAllPurchases = async (params = {}) => {
   try {
-    const response = await apiClient.get('/partners/subscriptions/purchases')
+    const response = await apiClient.get('/partners/subscriptions/purchases', { params })
     return response.data
   } catch (error) {
     apiLogger.error(
@@ -210,6 +210,21 @@ const cancelPurchase = async (partnerId, purchaseId, reason) => {
   } catch (error) {
     apiLogger.error(
       'Partner Service: Cancel purchase failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const deletePurchase = async (partnerId, purchaseId) => {
+  try {
+    const response = await apiClient.delete(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}`
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Delete purchase failed',
       error.response?.data || error.message
     )
     throw error
@@ -544,6 +559,7 @@ export default {
   getAllPurchases,
   updatePurchase,
   cancelPurchase,
+  deletePurchase,
   markPurchaseAsPaid,
   createPurchaseWithPaymentLink,
   // Partner Self-Profile

@@ -447,7 +447,7 @@ const partnerSchema = new mongoose.Schema(
           // Purchase status
           status: {
             type: String,
-            enum: ['pending', 'active', 'expired', 'cancelled', 'refunded'],
+            enum: ['pending', 'active', 'expired', 'cancelled', 'refunded', 'deleted'],
             default: 'pending'
           },
 

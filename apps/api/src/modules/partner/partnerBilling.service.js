@@ -11,6 +11,8 @@ import logger from '#core/logger.js'
  * Get all purchases across all partners (admin subscription management)
  */
 export const getAllPurchases = asyncHandler(async (req, res) => {
+  const { includeDeleted } = req.query
+
   const partners = await Partner.find({
     'subscription.purchases': { $exists: true, $ne: [] }
   })
@@ -22,6 +24,7 @@ export const getAllPurchases = asyncHandler(async (req, res) => {
   for (const partner of partners) {
     if (partner.subscription?.purchases) {
       for (const purchase of partner.subscription.purchases) {
+        if (purchase.status === 'deleted' && includeDeleted !== 'true') continue
         allPurchases.push({
           partner: {
             _id: partner._id,
@@ -373,9 +376,36 @@ export const cancelPurchase = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Soft-delete a cancelled purchase (mark as deleted, hidden from default view)
+ */
+export const deletePurchase = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { purchaseId } = req.params
+
+  const purchase = partner.subscription?.purchases?.find(p => p._id.toString() === purchaseId)
+  if (!purchase) throw new NotFoundError('PURCHASE_NOT_FOUND')
+  if (!['cancelled', 'refunded', 'expired'].includes(purchase.status)) {
+    throw new BadRequestError('ONLY_CANCELLED_CAN_BE_DELETED')
+  }
+
+  purchase.status = 'deleted'
+  await partner.save()
+
+  logger.info(`Purchase ${purchaseId} soft-deleted for partner ${partner._id}`)
+
+  res.json({
+    success: true,
+    message: req.t ? req.t('PURCHASE_DELETED') : 'Purchase deleted successfully',
+    data: { subscription: partner.getSubscriptionStatus() }
+  })
+})
+
+/**
  * Create purchase from admin subscription modal.
  * Uses SubscriptionPackage/SubscriptionService catalog (EUR-only).
- * Supports actions: send_link, save_pending, mark_paid
+ * Supports actions: send_link, save_pending, mark_paid, activate_trial
  */
 export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
   const partner = await Partner.findById(req.params.id)

@@ -101,12 +101,25 @@
             <option value="active">{{ $t('partnerSubscriptions.status.active') }}</option>
             <option value="expired">{{ $t('partnerSubscriptions.status.expired') }}</option>
             <option value="cancelled">{{ $t('partnerSubscriptions.status.cancelled') }}</option>
+            <option v-if="filters.showDeleted" value="deleted">
+              {{ $t('partnerSubscriptions.status.deleted') }}
+            </option>
           </select>
           <select v-model="filters.type" class="form-input w-48">
             <option value="">{{ $t('partnerSubscriptions.allTypes') || 'All Types' }}</option>
             <option value="package_subscription">{{ $t('subscriptionPackages.title') }}</option>
             <option value="service_purchase">{{ $t('subscriptionServices.title') }}</option>
           </select>
+          <label
+            class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 cursor-pointer select-none"
+          >
+            <input
+              v-model="filters.showDeleted"
+              type="checkbox"
+              class="rounded border-gray-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
+            />
+            {{ $t('partnerSubscriptions.showDeleted') }}
+          </label>
         </div>
       </div>
 
@@ -173,7 +186,10 @@
               v-for="item in filteredPurchases"
               :key="item.purchase._id"
               class="hover:bg-gray-50 dark:hover:bg-slate-700/30"
-              :class="{ 'bg-amber-50 dark:bg-amber-900/10': item.purchase.status === 'pending' }"
+              :class="{
+                'bg-amber-50 dark:bg-amber-900/10': item.purchase.status === 'pending',
+                'opacity-50': item.purchase.status === 'deleted'
+              }"
             >
               <td class="px-4 py-3">
                 <div class="font-medium text-gray-900 dark:text-white">
@@ -232,7 +248,8 @@
                     'badge-warning': item.purchase.status === 'pending',
                     'badge-success': item.purchase.status === 'active',
                     'badge-secondary': item.purchase.status === 'expired',
-                    'badge-danger': item.purchase.status === 'cancelled'
+                    'badge-danger':
+                      item.purchase.status === 'cancelled' || item.purchase.status === 'deleted'
                   }"
                 >
                   {{ $t(`partnerSubscriptions.status.${item.purchase.status}`) }}
@@ -263,6 +280,14 @@
                     @click="confirmCancel(item)"
                   >
                     <span class="material-icons text-xl">cancel</span>
+                  </button>
+                  <button
+                    v-if="['cancelled', 'expired', 'refunded'].includes(item.purchase.status)"
+                    class="p-2 text-gray-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+                    :title="$t('partnerSubscriptions.delete')"
+                    @click="confirmDelete(item)"
+                  >
+                    <span class="material-icons text-xl">delete_outline</span>
                   </button>
                   <button
                     class="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400"
@@ -389,12 +414,23 @@
         :cancel-text="$t('common.cancel')"
         @confirm="handleCancelPurchase"
       />
+
+      <!-- Delete Confirmation Dialog -->
+      <ConfirmDialog
+        v-model="showDeleteDialog"
+        type="danger"
+        :title="$t('partnerSubscriptions.delete')"
+        :message="$t('partnerSubscriptions.deleteConfirm')"
+        :confirm-text="$t('partnerSubscriptions.delete')"
+        :cancel-text="$t('common.cancel')"
+        @confirm="handleDeletePurchase"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/components/common/Modal.vue'
@@ -433,7 +469,7 @@ const loading = ref(true)
 const processing = ref(false)
 const allPurchases = ref([])
 
-const filters = ref({ search: '', status: '', type: '' })
+const filters = ref({ search: '', status: '', type: '', showDeleted: false })
 
 const showMarkPaidModal = ref(false)
 const showEditModal = ref(false)
@@ -477,7 +513,9 @@ const filteredPurchases = computed(() => {
 const fetchAllPurchases = async () => {
   loading.value = true
   try {
-    const response = await partnerService.getAllPurchases()
+    const params = {}
+    if (filters.value.showDeleted) params.includeDeleted = 'true'
+    const response = await partnerService.getAllPurchases(params)
     allPurchases.value = response.data || []
   } catch {
     toast.error(t('partnerSubscriptions.loadError'))
@@ -577,9 +615,36 @@ const handleCancelPurchase = async () => {
   }
 }
 
+const showDeleteDialog = ref(false)
+const deletingItem = ref(null)
+
+const confirmDelete = item => {
+  deletingItem.value = item
+  showDeleteDialog.value = true
+}
+
+const handleDeletePurchase = async () => {
+  if (!deletingItem.value) return
+  try {
+    await partnerService.deletePurchase(
+      deletingItem.value.partner._id,
+      deletingItem.value.purchase._id
+    )
+    toast.success(t('partnerSubscriptions.deleteSuccess'))
+    await fetchAllPurchases()
+  } catch {
+    toast.error(t('partnerSubscriptions.deleteError'))
+  } finally {
+    showDeleteDialog.value = false
+    deletingItem.value = null
+  }
+}
+
 const goToPartner = partnerId => {
   router.push({ name: 'partners', query: { id: partnerId, tab: 'subscription' } })
 }
+
+watch(() => filters.value.showDeleted, fetchAllPurchases)
 
 onMounted(fetchAllPurchases)
 </script>

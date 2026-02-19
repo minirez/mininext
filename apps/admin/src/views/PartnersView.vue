@@ -886,22 +886,22 @@ const navItems = computed(() => [
     badgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
   },
   {
+    name: 'subscriptions',
+    to: '/partners/subscriptions',
+    icon: 'card_membership',
+    label: t('partners.subscriptionManagement')
+  },
+  {
     name: 'services',
     to: '/partners/services',
-    icon: 'layers',
-    label: t('membership.nav.services')
+    icon: 'miscellaneous_services',
+    label: t('subscriptionServices.title')
   },
   {
     name: 'packages',
     to: '/partners/packages',
     icon: 'inventory_2',
-    label: t('membership.nav.packages')
-  },
-  {
-    name: 'subscriptions',
-    to: '/partners/subscriptions',
-    icon: 'card_membership',
-    label: t('partners.subscriptionManagement')
+    label: t('subscriptionPackages.title')
   }
 ])
 

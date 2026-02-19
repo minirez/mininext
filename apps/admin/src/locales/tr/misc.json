@@ -558,8 +558,14 @@
       "pending": "Ödeme Bekliyor",
       "active": "Aktif",
       "expired": "Süresi Doldu",
-      "cancelled": "İptal Edildi"
+      "cancelled": "İptal Edildi",
+      "deleted": "Silindi"
     },
+    "showDeleted": "Silinenleri Göster",
+    "delete": "Sil",
+    "deleteConfirm": "Bu kaydı silmek istediğinize emin misiniz? Ana görünümden gizlenecektir.",
+    "deleteSuccess": "Kayıt başarıyla silindi",
+    "deleteError": "Kayıt silinirken hata oluştu",
     "markAsPaid": "Ödendi Olarak İşaretle",
     "edit": "Düzenle",
     "cancel": "İptal Et",
