@@ -311,14 +311,10 @@
                     :key="mp.contractName"
                     class="py-2 pr-4 text-right"
                   >
-                    <template
-                      v-if="getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)"
-                    >
+                    <template v-if="getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)">
                       <!-- OBP price display -->
                       <div
-                        v-if="
-                          getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period).isOBP
-                        "
+                        v-if="getCellData(parsedData.roomTypes[selectedRoomTab], mp, period).isOBP"
                         class="text-right"
                       >
                         <span
@@ -327,7 +323,7 @@
                         >
                         <div class="text-xs text-gray-500 dark:text-gray-400">
                           <template
-                            v-for="(price, pax) in getPriceForCell(
+                            v-for="(price, pax) in getCellData(
                               parsedData.roomTypes[selectedRoomTab],
                               mp,
                               period
@@ -343,122 +339,75 @@
                           </template>
                         </div>
                       </div>
-                      <!-- Unit price display with popover -->
-                      <div v-else class="relative inline-block">
-                        <button
-                          class="font-bold text-green-600 dark:text-green-400 hover:underline cursor-pointer"
-                          @click="togglePricePopover(period.code, mp.contractName)"
-                        >
-                          {{
-                            getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period).price
-                          }}
-                          <span class="text-xs font-normal text-gray-400">{{
+                      <!-- Unit price display — inline extras -->
+                      <div v-else class="text-right leading-tight">
+                        <div class="font-bold text-green-600 dark:text-green-400">
+                          {{ getCellData(parsedData.roomTypes[selectedRoomTab], mp, period).price }}
+                          <span class="text-[10px] font-normal text-gray-400">{{
                             parsedData?.contractInfo?.currency || 'EUR'
                           }}</span>
-                        </button>
-                        <!-- Unit Price Popover -->
-                        <div
-                          v-if="activePricePopover === `${period.code}|${mp.contractName}`"
-                          class="absolute z-30 right-0 top-full mt-1 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-600 p-3 text-xs text-left"
-                        >
-                          <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-900 dark:text-white">
-                              {{ period.code }} -
-                              {{ $t('planning.pricing.contractImport.extraPricesTitle') }}
-                            </span>
-                            <button
-                              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                              @click="activePricePopover = null"
-                            >
-                              <span class="material-icons text-sm">close</span>
-                            </button>
+                        </div>
+                        <!-- Inline extras under price -->
+                        <div class="text-[10px] leading-snug mt-0.5 space-y-px">
+                          <div
+                            v-if="
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .singleSupplement > 0
+                            "
+                            class="text-gray-500 dark:text-gray-400"
+                          >
+                            SGL:
+                            <span class="font-semibold">{{
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period).price -
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .singleSupplement
+                            }}</span>
                           </div>
-                          <div class="space-y-1.5">
-                            <div class="flex justify-between">
-                              <span class="text-gray-500 dark:text-gray-400">{{
-                                $t('planning.pricing.contractImport.basePrice')
-                              }}</span>
-                              <span class="font-medium text-gray-900 dark:text-white">{{
-                                formatCurrency(
-                                  getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                    .price
-                                )
-                              }}</span>
+                          <div
+                            v-if="
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .extraAdult > 0
+                            "
+                            class="text-emerald-600 dark:text-emerald-400"
+                          >
+                            +AD:
+                            <span class="font-semibold">{{
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .extraAdult
+                            }}</span>
+                          </div>
+                          <template
+                            v-for="(childPrice, idx) in getCellData(
+                              parsedData.roomTypes[selectedRoomTab],
+                              mp,
+                              period
+                            ).extraChild || []"
+                            :key="idx"
+                          >
+                            <div v-if="childPrice > 0" class="text-cyan-600 dark:text-cyan-400">
+                              +CHD{{
+                                (
+                                  getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                    .extraChild || []
+                                ).length > 1
+                                  ? idx + 1
+                                  : ''
+                              }}:
+                              <span class="font-semibold">{{ childPrice }}</span>
                             </div>
-                            <div
-                              v-if="
-                                getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                  .singleSupplement > 0
-                              "
-                              class="flex justify-between"
-                            >
-                              <span class="text-gray-500 dark:text-gray-400">{{
-                                $t('planning.pricing.contractImport.singlePrice')
-                              }}</span>
-                              <span class="font-medium text-gray-900 dark:text-white">{{
-                                formatCurrency(
-                                  getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                    .price -
-                                    getPriceForCell(
-                                      parsedData.roomTypes[selectedRoomTab],
-                                      mp,
-                                      period
-                                    ).singleSupplement
-                                )
-                              }}</span>
-                            </div>
-                            <div
-                              v-if="
-                                getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                  .extraAdult > 0
-                              "
-                              class="flex justify-between"
-                            >
-                              <span class="text-emerald-600 dark:text-emerald-400"
-                                >+{{ $t('planning.pricing.contractImport.extraAdult') }}</span
-                              >
-                              <span class="font-medium text-emerald-600 dark:text-emerald-400">{{
-                                formatCurrency(
-                                  getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                    .extraAdult
-                                )
-                              }}</span>
-                            </div>
-                            <template
-                              v-for="(childPrice, idx) in getPriceForCell(
-                                parsedData.roomTypes[selectedRoomTab],
-                                mp,
-                                period
-                              ).extraChild || []"
-                              :key="idx"
-                            >
-                              <div v-if="childPrice > 0" class="flex justify-between">
-                                <span class="text-cyan-600 dark:text-cyan-400"
-                                  >+{{ $t('planning.pricing.contractImport.extraChild') }}
-                                  {{ idx + 1 }}</span
-                                >
-                                <span class="font-medium text-cyan-600 dark:text-cyan-400">{{
-                                  formatCurrency(childPrice)
-                                }}</span>
-                              </div>
-                            </template>
-                            <div
-                              v-if="
-                                getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                  .extraInfant > 0
-                              "
-                              class="flex justify-between"
-                            >
-                              <span class="text-pink-600 dark:text-pink-400"
-                                >+{{ $t('planning.pricing.contractImport.extraInfant') }}</span
-                              >
-                              <span class="font-medium text-pink-600 dark:text-pink-400">{{
-                                formatCurrency(
-                                  getPriceForCell(parsedData.roomTypes[selectedRoomTab], mp, period)
-                                    .extraInfant
-                                )
-                              }}</span>
-                            </div>
+                          </template>
+                          <div
+                            v-if="
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .extraInfant > 0
+                            "
+                            class="text-pink-600 dark:text-pink-400"
+                          >
+                            +INF:
+                            <span class="font-semibold">{{
+                              getCellData(parsedData.roomTypes[selectedRoomTab], mp, period)
+                                .extraInfant
+                            }}</span>
                           </div>
                         </div>
                       </div>
@@ -507,7 +456,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
   isImporting: { type: Boolean, default: false },
@@ -525,27 +474,10 @@ const props = defineProps({
 
 defineEmits(['update:selectedRoomTab'])
 
-// Price popover state
-const activePricePopover = ref(null)
-
-const togglePricePopover = (periodCode, mealName) => {
-  const key = `${periodCode}|${mealName}`
-  activePricePopover.value = activePricePopover.value === key ? null : key
-}
-
 // Selected room shorthand
 const selectedRoom = computed(() => props.parsedData?.roomTypes?.[props.selectedRoomTab] || null)
 const selectedRoomCapacity = computed(() => selectedRoom.value?.capacity || null)
 
-// Format currency
-const formatCurrency = value => {
-  if (!value && value !== 0) return '-'
-  const currency = props.parsedData?.contractInfo?.currency || 'EUR'
-  return new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value)
-}
+// Cache getPriceForCell results to avoid repeated calls in template
+const getCellData = (room, mp, period) => props.getPriceForCell(room, mp, period)
 </script>
