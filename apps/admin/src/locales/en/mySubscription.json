@@ -108,9 +108,12 @@
     "addonServices": "Add-on Services",
     "addon": "Add-on",
     "trialDays": "day trial",
+    "hotels": "hotels",
+    "sites": "sites",
     "intervals": {
       "monthly": "Monthly",
-      "yearly": "Yearly"
+      "yearly": "Yearly",
+      "one_time": "One-time"
     }
   }
 }

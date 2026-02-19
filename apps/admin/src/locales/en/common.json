@@ -219,6 +219,7 @@
       "cancelled": "Cancelled"
     },
     "total": "Total",
+    "unlimited": "Unlimited",
     "paid": "Paid",
     "remaining": "Remaining",
     "addNew": "Add Payment",

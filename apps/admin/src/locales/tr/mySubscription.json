@@ -108,9 +108,12 @@
     "addonServices": "Ek Hizmetler",
     "addon": "Ek hizmet",
     "trialDays": "gün deneme",
+    "hotels": "otel",
+    "sites": "site",
     "intervals": {
       "monthly": "Aylık",
-      "yearly": "Yıllık"
+      "yearly": "Yıllık",
+      "one_time": "Tek seferlik"
     }
   }
 }

@@ -114,12 +114,17 @@ subscriptionPackageSchema.index({ isActive: 1, sortOrder: 1 })
 subscriptionPackageSchema.index({ targetPartnerType: 1 })
 
 subscriptionPackageSchema.statics.findPublicCatalog = function (partnerType) {
-  const filter = { isActive: true, isPublic: true }
+  const filter = { isActive: true, isPublic: { $ne: false } }
   if (partnerType && partnerType !== 'all') {
-    filter.targetPartnerType = { $in: [partnerType, 'all'] }
+    filter.$or = [
+      { targetPartnerType: partnerType },
+      { targetPartnerType: 'all' },
+      { targetPartnerType: { $exists: false } },
+      { targetPartnerType: null }
+    ]
   }
   return this.find(filter)
-    .populate('services', 'name slug price icon category')
+    .populate('services', 'name slug price icon category description')
     .sort({ sortOrder: 1 })
 }
 

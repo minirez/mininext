@@ -652,9 +652,11 @@ export const getMembershipCatalog = asyncHandler(async (req, res) => {
         services: (pkg.services || []).map(s => ({
           _id: s._id,
           name: s.name,
+          description: s.description,
           icon: s.icon,
           slug: s.slug,
-          category: s.category
+          category: s.category,
+          price: s.price
         })),
         pricing: {
           interval: pkg.billingPeriod,
@@ -675,6 +677,8 @@ export const getMembershipCatalog = asyncHandler(async (req, res) => {
           interval: svc.billingPeriod,
           prices: [{ currency: 'EUR', amount: svc.price }]
         },
+        billingPeriod: svc.billingPeriod,
+        entitlements: svc.entitlements,
         icon: svc.icon
       }))
     }
