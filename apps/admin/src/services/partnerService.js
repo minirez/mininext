@@ -392,6 +392,48 @@ const getMySubscription = async () => {
   }
 }
 
+// Get my membership summary (for partner users)
+const getMyMembership = async () => {
+  try {
+    const response = await apiClient.get('/my/membership')
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Get my membership failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+// Get membership catalog (packages + services for partner users)
+const getMembershipCatalog = async () => {
+  try {
+    const response = await apiClient.get('/my/membership/catalog')
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Get membership catalog failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+// Purchase membership (create pending purchase - no payment)
+const purchaseMembership = async data => {
+  try {
+    const response = await apiClient.post('/my/membership/purchase', data)
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Purchase membership failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // Get my invoices (for partner users)
 const getMyInvoices = async (params = {}) => {
   try {
@@ -423,9 +465,9 @@ const downloadMyInvoicePdf = async invoiceId => {
 }
 
 // Query BIN for subscription payment (for partner users)
-const querySubscriptionBin = async (bin, plan) => {
+const querySubscriptionBin = async (bin, amount) => {
   try {
-    const response = await apiClient.post('/my/subscription/query-bin', { bin, plan })
+    const response = await apiClient.post('/my/subscription/query-bin', { bin, amount })
     return response.data
   } catch (error) {
     apiLogger.error('Partner Service: Query BIN failed', error.response?.data || error.message)
@@ -491,8 +533,11 @@ export default {
   deleteMyLogo,
   uploadMyFavicon,
   deleteMyFavicon,
-  // Subscription
+  // Subscription (partner self-service)
   getMySubscription,
+  getMyMembership,
+  getMembershipCatalog,
+  purchaseMembership,
   getMyInvoices,
   downloadMyInvoicePdf,
   querySubscriptionBin,
