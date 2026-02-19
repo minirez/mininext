@@ -707,8 +707,14 @@ partnerSchema.methods.getSubscriptionAlert = function () {
     }
   }
 
-  // Expired
+  // No subscription at all: never had an active purchase and trial not used
   if (status === 'expired') {
+    const hasPurchases = this.subscription?.purchases?.some(
+      p => !['cancelled', 'deleted', 'refunded'].includes(p.status)
+    )
+    if (!hasPurchases && !this.hasUsedTrial()) {
+      return { type: 'no_subscription', show: true, trialAvailable: true }
+    }
     return { type: 'expired', show: true, remainingDays: 0 }
   }
 
@@ -744,9 +750,9 @@ partnerSchema.methods.getSubscriptionStatus = function () {
     gracePeriodEndDate.setDate(gracePeriodEndDate.getDate() + 15)
   }
 
-  const sortedPurchases = [...(this.subscription?.purchases || [])].sort(
-    (a, b) => new Date(b.period.startDate) - new Date(a.period.startDate)
-  )
+  const sortedPurchases = [...(this.subscription?.purchases || [])]
+    .filter(p => p.status !== 'deleted')
+    .sort((a, b) => new Date(b.period.startDate) - new Date(a.period.startDate))
 
   const alert = this.getSubscriptionAlert()
 

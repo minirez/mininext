@@ -34,7 +34,8 @@
       "active": "Aktif",
       "expired": "Süresi Doldu",
       "cancelled": "İptal Edildi",
-      "refunded": "İade Edildi"
+      "refunded": "İade Edildi",
+      "deleted": "Kaldırıldı"
     },
     "gracePeriodWarning": "Aboneliğiniz ek süre dönemindedir. Hizmetlerin kesintisiz devam etmesi için lütfen ödemenizi yapın.",
     "gracePeriodEnds": "Ek süre bitiş: {date}",

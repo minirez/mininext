@@ -1,5 +1,8 @@
 {
   "subscriptionAlert": {
+    "noSubTitle": "Hoş Geldiniz! Ücretsiz Denemeyi Başlatın",
+    "noSubDescription": "Henüz aktif bir aboneliğiniz yok. Tüm platform özelliklerini keşfetmek için 15 günlük ücretsiz denemenizi başlatın.",
+    "startTrial": "15 Günlük Ücretsiz Denemeyi Başlat",
     "trialTitle": "Deneme Modundasınız",
     "trialDescription": "Deneme sürenizin bitmesine {days} gün kaldı. Tüm hizmetlere kesintisiz erişim için ödemenizi tamamlayın.",
     "renewalTitle": "Abonelik Yenileme Zamanı",
@@ -8,6 +11,7 @@
     "graceDescription": "Abonelik ödemeniz gecikmiş durumda. Erişiminizin askıya alınmasına {days} gün kaldı.",
     "expiredTitle": "Abonelik Süresi Doldu",
     "expiredDescription": "Aboneliğinizin süresi doldu ve hizmetlere erişiminiz askıya alındı. Yeniden aktifleştirmek için ödeme yapın.",
+    "freeTrialBadge": "15 gün ücretsiz – ödeme gerekmez",
     "daysRemaining": "{days} gün kaldı",
     "goToPayment": "Ödemeye Git",
     "renewNow": "Şimdi Yenile",

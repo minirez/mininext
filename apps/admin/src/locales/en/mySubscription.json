@@ -34,7 +34,8 @@
       "active": "Active",
       "expired": "Expired",
       "cancelled": "Cancelled",
-      "refunded": "Refunded"
+      "refunded": "Refunded",
+      "deleted": "Removed"
     },
     "gracePeriodWarning": "Your subscription is in grace period. Please make a payment to continue uninterrupted service.",
     "gracePeriodEnds": "Grace period ends: {date}",

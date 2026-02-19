@@ -1,5 +1,8 @@
 {
   "subscriptionAlert": {
+    "noSubTitle": "Welcome! Start Your Free Trial",
+    "noSubDescription": "You don't have an active subscription yet. Start your free 15-day trial to explore all platform features and see how they work for your business.",
+    "startTrial": "Start 15-Day Free Trial",
     "trialTitle": "You're in Trial Mode",
     "trialDescription": "Your trial period has {days} days remaining. Complete your payment to keep uninterrupted access to all services.",
     "renewalTitle": "Subscription Renewal Due",
@@ -8,6 +11,7 @@
     "graceDescription": "Your subscription payment is overdue. You have {days} days left before access is suspended.",
     "expiredTitle": "Subscription Expired",
     "expiredDescription": "Your subscription has expired and your access to services has been suspended. Please make a payment to reactivate.",
+    "freeTrialBadge": "15 days free – no payment required",
     "daysRemaining": "{days} days remaining",
     "goToPayment": "Go to Payment",
     "renewNow": "Renew Now",

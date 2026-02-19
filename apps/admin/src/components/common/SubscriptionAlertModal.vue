@@ -50,9 +50,18 @@
                 {{ alertDescription }}
               </p>
 
+              <!-- Free trial badge for no_subscription -->
+              <div
+                v-if="alert?.type === 'no_subscription'"
+                class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full text-sm font-semibold"
+                :class="daysBadgeClass"
+              >
+                <span class="material-icons text-base">card_giftcard</span>
+                {{ $t('subscriptionAlert.freeTrialBadge') }}
+              </div>
               <!-- Remaining days badge -->
               <div
-                v-if="alert?.remainingDays != null"
+                v-else-if="alert?.remainingDays != null"
                 class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full text-sm font-semibold"
                 :class="daysBadgeClass"
               >
@@ -93,7 +102,9 @@ import { useAuthStore } from '@/stores/auth'
 import partnerService from '@/services/partnerService'
 
 const ALERT_COOLDOWN_KEY = 'subscription_alert_dismissed_at'
+const NO_SUB_COOLDOWN_KEY = 'no_subscription_alert_dismissed_at'
 const COOLDOWN_MS = 30 * 60 * 1000 // 30 min between dismissals
+const NO_SUB_COOLDOWN_MS = 5 * 60 * 1000 // 5 min for no-subscription (more aggressive)
 
 const router = useRouter()
 const { t } = useI18n()
@@ -104,6 +115,7 @@ const alert = ref(null)
 
 const accentClass = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return 'bg-gradient-to-r from-purple-500 to-indigo-500'
   if (type === 'trial') return 'bg-gradient-to-r from-blue-500 to-indigo-500'
   if (type === 'renewal_warning') return 'bg-gradient-to-r from-amber-400 to-orange-500'
   if (type === 'grace_period') return 'bg-gradient-to-r from-red-400 to-rose-500'
@@ -113,6 +125,7 @@ const accentClass = computed(() => {
 
 const iconBgClass = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return 'bg-purple-50 dark:bg-purple-900/20'
   if (type === 'trial') return 'bg-blue-50 dark:bg-blue-900/20'
   if (type === 'renewal_warning') return 'bg-amber-50 dark:bg-amber-900/20'
   if (type === 'grace_period') return 'bg-red-50 dark:bg-red-900/20'
@@ -122,6 +135,7 @@ const iconBgClass = computed(() => {
 
 const iconClass = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return 'text-purple-500'
   if (type === 'trial') return 'text-blue-500'
   if (type === 'renewal_warning') return 'text-amber-500'
   if (type === 'grace_period') return 'text-red-500'
@@ -131,6 +145,7 @@ const iconClass = computed(() => {
 
 const alertIcon = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return 'rocket_launch'
   if (type === 'trial') return 'timer'
   if (type === 'renewal_warning') return 'notifications_active'
   if (type === 'grace_period') return 'warning'
@@ -140,6 +155,7 @@ const alertIcon = computed(() => {
 
 const alertTitle = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return t('subscriptionAlert.noSubTitle')
   if (type === 'trial') return t('subscriptionAlert.trialTitle')
   if (type === 'renewal_warning') return t('subscriptionAlert.renewalTitle')
   if (type === 'grace_period') return t('subscriptionAlert.graceTitle')
@@ -150,6 +166,7 @@ const alertTitle = computed(() => {
 const alertDescription = computed(() => {
   const type = alert.value?.type
   const days = alert.value?.remainingDays
+  if (type === 'no_subscription') return t('subscriptionAlert.noSubDescription')
   if (type === 'trial') return t('subscriptionAlert.trialDescription', { days })
   if (type === 'renewal_warning') return t('subscriptionAlert.renewalDescription', { days })
   if (type === 'grace_period') return t('subscriptionAlert.graceDescription', { days })
@@ -159,6 +176,8 @@ const alertDescription = computed(() => {
 
 const daysBadgeClass = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription')
+    return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
   if (type === 'trial') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
   if (type === 'renewal_warning')
     return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
@@ -169,6 +188,8 @@ const daysBadgeClass = computed(() => {
 
 const primaryBtnClass = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription')
+    return 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-lg shadow-purple-500/20'
   if (type === 'trial')
     return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 shadow-lg shadow-blue-500/20'
   if (type === 'renewal_warning')
@@ -178,6 +199,7 @@ const primaryBtnClass = computed(() => {
 
 const primaryBtnIcon = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return 'rocket_launch'
   if (type === 'trial') return 'payment'
   if (type === 'renewal_warning') return 'autorenew'
   return 'payment'
@@ -185,6 +207,7 @@ const primaryBtnIcon = computed(() => {
 
 const primaryBtnLabel = computed(() => {
   const type = alert.value?.type
+  if (type === 'no_subscription') return t('subscriptionAlert.startTrial')
   if (type === 'trial') return t('subscriptionAlert.goToPayment')
   if (type === 'renewal_warning') return t('subscriptionAlert.renewNow')
   if (type === 'grace_period') return t('subscriptionAlert.payNow')
@@ -194,7 +217,9 @@ const primaryBtnLabel = computed(() => {
 
 function dismiss() {
   visible.value = false
-  sessionStorage.setItem(ALERT_COOLDOWN_KEY, Date.now().toString())
+  const cooldownKey =
+    alert.value?.type === 'no_subscription' ? NO_SUB_COOLDOWN_KEY : ALERT_COOLDOWN_KEY
+  sessionStorage.setItem(cooldownKey, Date.now().toString())
 }
 
 function goToSubscription() {
@@ -202,11 +227,13 @@ function goToSubscription() {
   router.push({ name: 'my-subscription' })
 }
 
-function shouldShowAlert() {
-  const dismissed = sessionStorage.getItem(ALERT_COOLDOWN_KEY)
+function shouldShowAlert(alertType) {
+  const key = alertType === 'no_subscription' ? NO_SUB_COOLDOWN_KEY : ALERT_COOLDOWN_KEY
+  const cooldown = alertType === 'no_subscription' ? NO_SUB_COOLDOWN_MS : COOLDOWN_MS
+  const dismissed = sessionStorage.getItem(key)
   if (dismissed) {
     const elapsed = Date.now() - parseInt(dismissed, 10)
-    if (elapsed < COOLDOWN_MS) return false
+    if (elapsed < cooldown) return false
   }
   return true
 }
@@ -216,11 +243,11 @@ let visibilityHandler = null
 async function checkAlert() {
   if (authStore.accountType !== 'partner') return
   if (!authStore.isAuthenticated) return
-  if (!shouldShowAlert()) return
 
   try {
     const res = await partnerService.getSubscriptionAlert()
     if (res.data?.show) {
+      if (!shouldShowAlert(res.data.type)) return
       alert.value = res.data
       visible.value = true
     }
