@@ -22,7 +22,8 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
-        changeOrigin: true
+        changeOrigin: true,
+        timeout: 600000 // 10 min — AI contract parsing can take 3-5 min for large PDFs
       },
       '/uploads': {
         target: 'http://localhost:4000',

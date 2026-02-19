@@ -2,6 +2,8 @@
   <Modal
     :model-value="show"
     size="xl"
+    :close-on-overlay="false"
+    :close-on-esc="false"
     :title="$t('planning.pricing.contractImport.title')"
     @close="$emit('close')"
   >

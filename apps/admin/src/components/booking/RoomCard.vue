@@ -202,10 +202,28 @@ const formatPrice = (amount, currency) => {
   return formatter.format(amount)
 }
 
-// Get unavailable reason
+// Get unavailable reason based on specific issue type
 const getUnavailableReason = option => {
-  if (option.issues?.length) {
-    return option.issues[0].message || t('booking.roomNotAvailable')
+  const issues = option.issues || []
+  for (const issue of issues) {
+    if (issue.type === 'minStay') {
+      return t('booking.minStayRequired', { nights: issue.required || 2 })
+    }
+    if (issue.type === 'releaseDays') {
+      return t('booking.releaseDaysRequired', { days: issue.required || 2 })
+    }
+    if (issue.type === 'stopSale') {
+      return t('booking.stopSale')
+    }
+    if (issue.type === 'noInventory') {
+      return t('booking.noInventory')
+    }
+    if (issue.type === 'closedToArrival') {
+      return t('booking.closedToArrival')
+    }
+    if (issue.type === 'closedToDeparture') {
+      return t('booking.closedToDeparture')
+    }
   }
   return t('booking.roomNotAvailable')
 }

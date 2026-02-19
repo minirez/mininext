@@ -22,6 +22,11 @@ import { getPartnerId, verifyHotelOwnership, getAuditActor } from '#services/hel
  * Parse hotel contract document using Gemini AI
  */
 export const parseContract = asyncHandler(async (req, res) => {
+  // Multi-pass AI parsing can take 5+ min for large contracts — override all timeouts
+  req.setTimeout(0)
+  res.setTimeout(0)
+  if (req.socket) req.socket.setTimeout(0)
+
   const partnerId = getPartnerId(req)
   const { hotelId } = req.params
   const { fileContent, mimeType, fileName } = req.body
@@ -171,6 +176,11 @@ export const parseContract = asyncHandler(async (req, res) => {
  * Import pricing from parsed contract data
  */
 export const importContractPricing = asyncHandler(async (req, res) => {
+  // Contract import with many rooms/periods can take a while — disable timeouts
+  req.setTimeout(0)
+  res.setTimeout(0)
+  if (req.socket) req.socket.setTimeout(0)
+
   const partnerId = getPartnerId(req)
   const { hotelId } = req.params
   const { contractData, mappings, options = {} } = req.body
@@ -658,7 +668,7 @@ export const importContractPricing = asyncHandler(async (req, res) => {
             value: eb.discountPercentage
           },
           conditions: {
-            minNights: 1
+            minNights: eb.minimumStay || eb.minNights || eb.minStay || 1
           },
           combinable: eb.isCumulative || false,
           applicationType: 'stay',

@@ -18,7 +18,7 @@ export const parseContract = async (hotelId, fileContent, mimeType, fileName) =>
         fileName
       },
       {
-        timeout: 300000 // 5 minutes for multi-pass AI analysis (large contracts: 16+ rooms)
+        timeout: 0 // no timeout — multi-pass AI analysis can take 10+ min for large contracts
       }
     )
     return response.data
@@ -33,11 +33,11 @@ export const parseContract = async (hotelId, fileContent, mimeType, fileName) =>
 
 export const importContractPricing = async (hotelId, contractData, mappings, options = {}) => {
   try {
-    const response = await apiClient.post(`${BASE_URL}/hotels/${hotelId}/contract/import`, {
-      contractData,
-      mappings,
-      options
-    })
+    const response = await apiClient.post(
+      `${BASE_URL}/hotels/${hotelId}/contract/import`,
+      { contractData, mappings, options },
+      { timeout: 0 }
+    )
     return response.data
   } catch (error) {
     apiLogger.error(

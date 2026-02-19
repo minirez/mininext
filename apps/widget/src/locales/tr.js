@@ -61,6 +61,8 @@ export default {
       releaseDays: 'Bu odaya en az {days} gün önceden rezervasyon yapmalısınız',
       stopSale: 'Bu oda şu anda satışa kapalıdır',
       noInventory: 'Bu tarihler için müsait oda yok',
+      closedToArrival: 'Bu tarihte giriş yapılamaz',
+      closedToDeparture: 'Bu tarihte çıkış yapılamaz',
       capacityExceeded: 'Oda kapasitesi yetersiz',
       default: 'Bu oda seçili tarihler için müsait değil'
     },

@@ -554,9 +554,35 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
 
     if (!restrictionCheck.isBookable) {
       hasIssues = true
-      restrictionCheck.messages.forEach(msg => {
-        issues.push({ date: dateStr, type: 'restriction', message: msg })
-      })
+      const r = restrictionCheck.restrictions
+      if (r.stopSale) {
+        issues.push({ date: dateStr, type: 'stopSale' })
+      }
+      if (r.minStay) {
+        issues.push({ date: dateStr, type: 'minStay', required: rate.minStay })
+      }
+      if (r.maxStay) {
+        issues.push({ date: dateStr, type: 'maxStay', required: rate.maxStay })
+      }
+      if (r.releaseDays) {
+        issues.push({ date: dateStr, type: 'releaseDays', required: rate.releaseDays })
+      }
+      if (r.closedToArrival) {
+        issues.push({ date: dateStr, type: 'closedToArrival' })
+      }
+      if (r.closedToDeparture) {
+        issues.push({ date: dateStr, type: 'closedToDeparture' })
+      }
+      if (r.noAvailability || r.insufficientAllotment) {
+        issues.push({ date: dateStr, type: 'noInventory' })
+      }
+      if (r.singleStop || r.belowMinAdults) {
+        issues.push({
+          date: dateStr,
+          type: 'occupancy',
+          message: restrictionCheck.messages.find(m => m.includes('adult') || m.includes('Single'))
+        })
+      }
     }
 
     dailyBreakdown.push(dayData)

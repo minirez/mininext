@@ -206,6 +206,7 @@ JSON FORMATI:
     {
       "name": "EB %20",
       "discountPercentage": 20,
+      "minimumStay": 1,
       "salePeriod": { "startDate": "...", "endDate": "..." },
       "stayPeriod": { "startDate": "...", "endDate": "..." },
       "paymentDueDate": "YYYY-MM-DD",

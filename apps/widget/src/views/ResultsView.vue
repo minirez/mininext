@@ -151,6 +151,12 @@ function getUnavailabilityReason(roomResult) {
         if (issue.type === 'noInventory' || issue.reason === 'noInventory') {
           return t('results.unavailable.noInventory')
         }
+        if (issue.type === 'closedToArrival') {
+          return t('results.unavailable.closedToArrival')
+        }
+        if (issue.type === 'closedToDeparture') {
+          return t('results.unavailable.closedToDeparture')
+        }
       }
     }
   }

@@ -60,6 +60,8 @@ export default {
       releaseDays: 'This room requires at least {days} days advance booking',
       stopSale: 'This room is currently not available for sale',
       noInventory: 'No rooms available for these dates',
+      closedToArrival: 'Check-in not available on this date',
+      closedToDeparture: 'Check-out not available on this date',
       capacityExceeded: 'Room capacity exceeded',
       default: 'This room is not available for the selected dates'
     },
