@@ -206,13 +206,15 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           })
         } else {
           // Include unavailable options with reason
+          const issues = priceResult.availability?.issues || []
           roomResult.options.push({
             mealPlan: {
               code: mealPlan.code,
               name: mealPlan.name
             },
             available: false,
-            issues: priceResult.availability?.issues || []
+            issues,
+            availability: { isAvailable: false, issues }
           })
         }
       } catch (error) {

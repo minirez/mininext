@@ -132,7 +132,7 @@ function getUnavailabilityReason(roomResult) {
 
   for (const option of options) {
     if (option.available === false || !option.pricing) {
-      const issues = option.availability?.issues || []
+      const issues = option.issues || option.availability?.issues || []
 
       for (const issue of issues) {
         if (issue.type === 'minStay' || issue.reason === 'minStay') {
