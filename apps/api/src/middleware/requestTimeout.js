@@ -1,7 +1,7 @@
 /**
  * Request Timeout middleware
  * Enforces a maximum duration for requests to prevent hanging connections.
- * Default: 30 seconds for API, 120 seconds for file uploads.
+ * Default: 30 seconds for API, 120 seconds for file uploads/search.
  */
 export function requestTimeout(defaultMs = 30000) {
   return (req, res, next) => {
@@ -14,7 +14,15 @@ export function requestTimeout(defaultMs = 30000) {
 
     const isUpload =
       req.path.includes('/upload') || req.path.includes('/avatar') || req.path.includes('/photos')
-    const timeout = isUpload ? 180000 : defaultMs
+
+    // Public search/availability — can be heavy for hotels with many room types
+    const isSearch =
+      req.path.includes('/search') ||
+      req.path.includes('/availability') ||
+      req.originalUrl?.includes('/search') ||
+      req.originalUrl?.includes('/availability')
+
+    const timeout = isUpload || isSearch ? 120000 : defaultMs
 
     req.setTimeout(timeout)
     res.setTimeout(timeout, () => {
