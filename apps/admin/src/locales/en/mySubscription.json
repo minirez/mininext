@@ -3,6 +3,7 @@
     "title": "My Subscription",
     "description": "View your subscription information and invoices",
     "loadError": "Failed to load subscription information",
+    "free": "Free",
     "planInfo": "Plan Information",
     "currentPlan": "Current Plan",
     "currentPurchase": "Active Package",

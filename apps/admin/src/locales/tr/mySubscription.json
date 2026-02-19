@@ -3,6 +3,7 @@
     "title": "Aboneliğim",
     "description": "Abonelik bilgilerinizi ve faturalarınızı görüntüleyin",
     "loadError": "Abonelik bilgileri yüklenirken hata oluştu",
+    "free": "Ücretsiz",
     "planInfo": "Paket Bilgileri",
     "currentPlan": "Mevcut Paket",
     "currentPurchase": "Aktif Paket",

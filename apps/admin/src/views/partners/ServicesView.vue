@@ -66,10 +66,17 @@
               >
                 {{ svc.name?.tr || svc.name?.en }}
               </td>
-              <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold"
-              >
-                €{{ svc.price?.toFixed(2) }}
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold">
+                <span
+                  v-if="svc.price === 0"
+                  class="inline-flex items-center gap-1 text-green-600 dark:text-green-400"
+                >
+                  <span class="material-icons text-sm">card_giftcard</span>
+                  {{ $t('subscriptionServices.free') }}
+                </span>
+                <span v-else class="text-gray-900 dark:text-white">
+                  €{{ svc.price?.toFixed(2) }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                 {{ $t(`subscriptionServices.periods.${svc.billingPeriod || 'yearly'}`) }}

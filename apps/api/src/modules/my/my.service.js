@@ -31,8 +31,9 @@ export const getMySubscription = asyncHandler(async (req, res) => {
   const Hotel = (await import('#modules/hotel/hotel.model.js')).default
   const pmsHotelsCount = await Hotel.countDocuments({ partner: partnerId, 'pms.enabled': true })
 
-  // Map purchases
+  // Map purchases (exclude soft-deleted)
   const purchases = (partner.subscription?.purchases || [])
+    .filter(p => p.status !== 'deleted')
     .map(p => ({
       _id: p._id,
       type: p.type,
@@ -609,6 +610,7 @@ export const getMyMembership = asyncHandler(async (req, res) => {
 
   const subscriptionStatus = partner.getSubscriptionStatus()
   const purchases = (partner.subscription?.purchases || [])
+    .filter(p => p.status !== 'deleted')
     .map(p => ({
       _id: p._id,
       type: p.type,
@@ -702,8 +704,7 @@ export const getMyMembership = asyncHandler(async (req, res) => {
       usage: {
         pmsHotels: pmsHotelsCount,
         pmsLimit: pmsLimit === -1 ? -1 : pmsLimit
-      },
-      purchases
+      }
     }
   })
 })

@@ -28,6 +28,7 @@
       "hotel": "Hotels Only",
       "agency": "Agencies Only"
     },
+    "free": "Free",
     "periods": {
       "yearly": "Yearly",
       "monthly": "Monthly",

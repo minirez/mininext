@@ -568,9 +568,14 @@
                           </p>
                         </div>
                         <span
-                          v-if="svc.price"
+                          v-if="svc.price > 0"
                           class="text-xs font-medium text-gray-500 dark:text-slate-400 flex-shrink-0"
                           >{{ formatCurrency(svc.price, 'EUR') }}</span
+                        >
+                        <span
+                          v-else-if="svc.price === 0"
+                          class="text-xs font-medium text-green-600 dark:text-green-400 flex-shrink-0"
+                          >{{ $t('mySubscription.free') }}</span
                         >
                       </div>
                     </template>
@@ -578,7 +583,7 @@
                     <div
                       v-for="svc in pkg.services
                         ?.slice(0, 3)
-                        .filter(s => getLocalized(s.description) || s.price)"
+                        .filter(s => getLocalized(s.description) || s.price != null)"
                       :key="'info-' + svc._id"
                       class="flex items-start gap-2.5 text-sm pl-7"
                     >
@@ -591,9 +596,14 @@
                         </p>
                       </div>
                       <span
-                        v-if="svc.price"
+                        v-if="svc.price > 0"
                         class="text-xs font-medium text-gray-500 dark:text-slate-400 flex-shrink-0"
                         >{{ formatCurrency(svc.price, 'EUR') }}</span
+                      >
+                      <span
+                        v-else-if="svc.price === 0"
+                        class="text-xs font-medium text-green-600 dark:text-green-400 flex-shrink-0"
+                        >{{ $t('mySubscription.free') }}</span
                       >
                     </div>
 
@@ -826,16 +836,27 @@
                   class="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-slate-700"
                 >
                   <div v-if="svc.pricing?.prices?.length">
-                    <span
-                      v-for="price in svc.pricing.prices.slice(0, 1)"
-                      :key="price.currency"
-                      class="text-lg font-bold text-gray-900 dark:text-white"
-                    >
-                      {{ formatCurrency(price.amount, price.currency) }}
-                      <span class="text-xs font-normal text-gray-400">
-                        / {{ $t(`mySubscription.intervals.${svc.pricing?.interval || 'yearly'}`) }}
+                    <template v-if="svc.pricing.prices[0]?.amount === 0">
+                      <span
+                        class="text-lg font-bold text-green-600 dark:text-green-400 flex items-center gap-1"
+                      >
+                        <span class="material-icons text-base">card_giftcard</span>
+                        {{ $t('mySubscription.free') }}
                       </span>
-                    </span>
+                    </template>
+                    <template v-else>
+                      <span
+                        v-for="price in svc.pricing.prices.slice(0, 1)"
+                        :key="price.currency"
+                        class="text-lg font-bold text-gray-900 dark:text-white"
+                      >
+                        {{ formatCurrency(price.amount, price.currency) }}
+                        <span class="text-xs font-normal text-gray-400">
+                          /
+                          {{ $t(`mySubscription.intervals.${svc.pricing?.interval || 'yearly'}`) }}
+                        </span>
+                      </span>
+                    </template>
                   </div>
                   <button
                     class="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-1.5"
