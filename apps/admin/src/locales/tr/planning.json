@@ -1109,7 +1109,17 @@
         "cumulative": "Kümülatif",
         "salePeriod": "Satış",
         "stayPeriod": "Konaklama",
-        "paymentDue": "Ödeme"
+        "paymentDue": "Ödeme",
+        "dateRange": "Tarih Aralığı",
+        "totalMax": "Toplam maks",
+        "rateRecords": "Fiyat Kayıtları",
+        "newRoomsCreated": "Yeni Oda",
+        "roomsUpdatedLabel": "Oda Güncellendi",
+        "newMealPlansCreated": "Yeni Pansiyon",
+        "newSeasonsCreated": "Yeni Sezon",
+        "campaignsCreatedLabel": "Kampanya Oluşturuldu",
+        "missingCombinations": "kombinasyon için fiyat bulunamadı. Kontratı kontrol edin veya eksik fiyatları manuel girin.",
+        "noRoomFound": "Oda tipi bulunamadı"
       }
     }
   },

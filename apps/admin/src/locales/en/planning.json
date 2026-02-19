@@ -1109,7 +1109,17 @@
         "cumulative": "Cumulative",
         "salePeriod": "Booking",
         "stayPeriod": "Stay",
-        "paymentDue": "Payment"
+        "paymentDue": "Payment",
+        "dateRange": "Date Range",
+        "totalMax": "Total max",
+        "rateRecords": "Rate Records",
+        "newRoomsCreated": "New Room",
+        "roomsUpdatedLabel": "Room Updated",
+        "newMealPlansCreated": "New Meal Plan",
+        "newSeasonsCreated": "New Season",
+        "campaignsCreatedLabel": "Campaign Created",
+        "missingCombinations": "combinations have no price found. Check contract or enter missing prices manually.",
+        "noRoomFound": "No room type found"
       }
     }
   },

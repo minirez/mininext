@@ -194,27 +194,26 @@
                 {{ $t('planning.pricing.contractImport.releaseDayShort') }}:{{ room.releaseDay
                 }}{{ $t('planning.pricing.contractImport.daySuffix') }}
               </span>
-              <!-- OBP Popover Trigger -->
-              <div
-                v-if="
-                  getRoomPricingDetailsData(room)?.pricingType !== 'unit' && hasRoomExtras(room)
-                "
-                class="relative"
-              >
+              <!-- Extras Popover Trigger -->
+              <div v-if="getRoomPricingDetailsData(room)" class="relative">
                 <button
                   class="px-1.5 py-0.5 text-xs rounded font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   @click="toggleExtrasPopover(room.contractName)"
                 >
                   <span class="material-icons text-xs align-middle">info</span>
                 </button>
-                <!-- OBP Popover -->
+                <!-- Extras Popover -->
                 <div
                   v-if="activePopover === room.contractName"
                   class="absolute z-20 left-0 top-full mt-1 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-600 p-3 text-xs"
                 >
                   <div class="flex items-center justify-between mb-2">
                     <span class="font-semibold text-gray-900 dark:text-white">
-                      {{ $t('planning.pricing.contractImport.occupancyPricesTitle') }}
+                      {{
+                        getRoomPricingDetailsData(room)?.pricingType === 'unit'
+                          ? $t('planning.pricing.contractImport.extraPricesTitle')
+                          : $t('planning.pricing.contractImport.occupancyPricesTitle')
+                      }}
                     </span>
                     <button
                       class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -223,25 +222,91 @@
                       <span class="material-icons text-sm">close</span>
                     </button>
                   </div>
-                  <div
-                    v-if="getRoomPricingDetailsData(room)?.sample?.occupancyPricing"
-                    class="space-y-1 mb-2"
-                  >
+                  <!-- OBP details -->
+                  <template v-if="getRoomPricingDetailsData(room)?.pricingType !== 'unit'">
                     <div
-                      v-for="(price, pax) in getRoomPricingDetailsData(room).sample
-                        .occupancyPricing"
-                      :key="pax"
-                      class="flex justify-between"
+                      v-if="getRoomPricingDetailsData(room)?.sample?.occupancyPricing"
+                      class="space-y-1 mb-2"
                     >
-                      <span class="text-gray-500 dark:text-gray-400"
-                        >{{ pax }}
-                        {{ $t('planning.pricing.contractImport.paxLabel', { n: pax }) }}</span
+                      <div
+                        v-for="(price, pax) in getRoomPricingDetailsData(room).sample
+                          .occupancyPricing"
+                        :key="pax"
+                        class="flex justify-between"
                       >
-                      <span class="font-medium text-gray-900 dark:text-white">{{
-                        formatPrice(price)
-                      }}</span>
+                        <span class="text-gray-500 dark:text-gray-400"
+                          >{{ pax }}
+                          {{ $t('planning.pricing.contractImport.paxLabel', { n: pax }) }}</span
+                        >
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(price)
+                        }}</span>
+                      </div>
                     </div>
-                  </div>
+                  </template>
+                  <!-- Unit details -->
+                  <template v-else>
+                    <div class="space-y-1 mb-2">
+                      <div class="flex justify-between">
+                        <span class="text-gray-500 dark:text-gray-400">{{
+                          $t('planning.pricing.contractImport.basePrice')
+                        }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(getRoomPricingDetailsData(room)?.sample?.pricePerNight)
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="getRoomPricingDetailsData(room)?.sample?.singleSupplement > 0"
+                        class="flex justify-between"
+                      >
+                        <span class="text-gray-500 dark:text-gray-400">{{
+                          $t('planning.pricing.contractImport.singlePrice')
+                        }}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{
+                          formatPrice(
+                            getRoomPricingDetailsData(room).sample.pricePerNight -
+                              getRoomPricingDetailsData(room).sample.singleSupplement
+                          )
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="getRoomPricingDetailsData(room)?.sample?.extraAdult > 0"
+                        class="flex justify-between"
+                      >
+                        <span class="text-emerald-600 dark:text-emerald-400"
+                          >+{{ $t('planning.pricing.contractImport.extraAdult') }}</span
+                        >
+                        <span class="font-medium text-emerald-600 dark:text-emerald-400">{{
+                          formatPrice(getRoomPricingDetailsData(room).sample.extraAdult)
+                        }}</span>
+                      </div>
+                      <div
+                        v-for="(childPrice, idx) in getRoomPricingDetailsData(room)?.sample
+                          ?.extraChild || []"
+                        :key="idx"
+                        class="flex justify-between"
+                      >
+                        <span class="text-cyan-600 dark:text-cyan-400"
+                          >+{{ $t('planning.pricing.contractImport.extraChild') }}
+                          {{ idx + 1 }}</span
+                        >
+                        <span class="font-medium text-cyan-600 dark:text-cyan-400">{{
+                          formatPrice(childPrice)
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="getRoomPricingDetailsData(room)?.sample?.extraInfant > 0"
+                        class="flex justify-between"
+                      >
+                        <span class="text-pink-600 dark:text-pink-400"
+                          >+{{ $t('planning.pricing.contractImport.extraInfant') }}</span
+                        >
+                        <span class="font-medium text-pink-600 dark:text-pink-400">{{
+                          formatPrice(getRoomPricingDetailsData(room).sample.extraInfant)
+                        }}</span>
+                      </div>
+                    </div>
+                  </template>
                   <p
                     class="text-gray-400 dark:text-gray-500 mt-2 border-t pt-1 border-gray-100 dark:border-slate-700"
                   >
@@ -667,13 +732,6 @@ const getRoomPricingBadge = room => {
     label: t('planning.pricing.contractImport.pricingTypeBadgeUnit'),
     class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
   }
-}
-
-// Check if room has OBP extras to show in popover
-const hasRoomExtras = room => {
-  const details = getRoomPricingDetailsData(room)
-  if (!details) return false
-  return details.sample?.occupancyPricing && Object.keys(details.sample.occupancyPricing).length > 0
 }
 
 // Get unit pricing extras for direct display on room card

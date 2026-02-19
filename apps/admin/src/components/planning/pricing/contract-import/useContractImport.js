@@ -335,6 +335,8 @@ export function useContractImport(props, emit) {
       return {
         isOBP: true,
         occupancyPricing: price.occupancyPricing,
+        extraChild: price.extraChild || [],
+        extraInfant: price.extraInfant || 0,
         price: null
       }
     }
@@ -342,6 +344,10 @@ export function useContractImport(props, emit) {
     return {
       isOBP: false,
       price: price.pricePerNight,
+      singleSupplement: price.singleSupplement || 0,
+      extraAdult: price.extraAdult || 0,
+      extraChild: price.extraChild || [],
+      extraInfant: price.extraInfant || 0,
       occupancyPricing: null
     }
   }
