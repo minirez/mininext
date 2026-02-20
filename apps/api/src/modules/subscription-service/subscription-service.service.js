@@ -2,6 +2,7 @@ import SubscriptionService from './subscription-service.model.js'
 import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import logger from '#core/logger.js'
+import { slugify } from '@booking-engine/utils/string'
 
 /**
  * List all services (admin) – optionally filter by isActive
@@ -42,13 +43,17 @@ export const create = asyncHandler(async (req, res) => {
     req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
-  if (!slug) throw new BadRequestError('SLUG_REQUIRED')
+
+  // Auto-generate slug from English name if not provided
+  const finalSlug = slug || slugify(name.en)
+  if (!finalSlug) throw new BadRequestError('SLUG_REQUIRED')
+
   if (price == null || price < 0) throw new BadRequestError('VALID_PRICE_REQUIRED')
 
   const service = await SubscriptionService.create({
     name,
     description,
-    slug,
+    slug: finalSlug,
     price,
     billingPeriod,
     entitlements,

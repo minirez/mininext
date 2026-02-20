@@ -3,6 +3,7 @@ import SubscriptionService from '#modules/subscription-service/subscription-serv
 import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import logger from '#core/logger.js'
+import { slugify } from '@booking-engine/utils/string'
 
 /**
  * Recalculate calculatedPrice from linked services
@@ -77,7 +78,10 @@ export const create = asyncHandler(async (req, res) => {
   } = req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
-  if (!slug) throw new BadRequestError('SLUG_REQUIRED')
+
+  // Auto-generate slug from English name if not provided
+  const finalSlug = slug || slugify(name.en)
+  if (!finalSlug) throw new BadRequestError('SLUG_REQUIRED')
 
   if (services?.length) {
     const count = await SubscriptionService.countDocuments({ _id: { $in: services } })
@@ -87,7 +91,7 @@ export const create = asyncHandler(async (req, res) => {
   const pkg = new SubscriptionPackage({
     name,
     description,
-    slug,
+    slug: finalSlug,
     services: services || [],
     overridePrice: overridePrice ?? null,
     billingPeriod,
