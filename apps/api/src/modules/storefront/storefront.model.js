@@ -202,7 +202,7 @@ const tourShowcaseSchema = new Schema(
     title: { type: [langSchema], default: defaultLang },
     description: { type: [langSchema], default: defaultLang },
     ids: [Schema.Types.Mixed], // legacy
-    names: { type: [langSchema], default: defaultLang }, // legacy
+    names: [Schema.Types.Mixed], // legacy (accepts both plain strings and lang objects)
     items: { type: [showcaseItemSchema], default: () => [] } // new format
   },
   { _id: false }
@@ -236,7 +236,7 @@ const tourThemeSchema = new Schema(
       title: { type: [langSchema], default: defaultLang },
       description: { type: [langSchema], default: defaultLang },
       campaign: { type: campaignItemSchema, default: () => ({}) },
-      campaignTourIds: [Number]
+      campaignTourIds: [Schema.Types.Mixed]
     },
     locations: {
       title: { type: [langSchema], default: defaultLang },
@@ -273,7 +273,11 @@ const activityThemeSchema = new Schema(
         validate: [v => v.length <= 3, 'Max 3']
       }
     },
-    tourIds: { top4: [Number], bottom8: [Number] },
+    tourIds: {
+      top4: [Schema.Types.Mixed],
+      bottom8: [Schema.Types.Mixed],
+      items: { type: [showcaseItemSchema], default: () => [] }
+    },
     locations: {
       title: { type: [langSchema], default: defaultLang },
       description: { type: [langSchema], default: defaultLang },
@@ -334,7 +338,7 @@ const transferThemeSchema = new Schema(
     transfers: {
       title: { type: [langSchema], default: defaultLang },
       description: { type: [langSchema], default: defaultLang },
-      ids: [Number]
+      ids: [Schema.Types.Mixed]
     },
     subdomain: {
       status: { type: Boolean, default: false },
@@ -354,7 +358,7 @@ const cruiseThemeSchema = new Schema(
     tours: {
       title: { type: [langSchema], default: defaultLang },
       description: { type: [langSchema], default: defaultLang },
-      ids: [Number]
+      ids: [Schema.Types.Mixed]
     },
     searchLocationPreset: { departure: [String], arrival: [String] },
     subdomain: {
