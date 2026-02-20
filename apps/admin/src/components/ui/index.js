@@ -1,6 +1,6 @@
 /**
  * UI Framework - Main Export File
- * Booking Engine UI Component Library
+ * Maxirez UI Component Library
  *
  * Kullanim:
  * import { DataTable, PhoneInput, BaseButton } from '@/components/ui'

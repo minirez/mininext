@@ -259,7 +259,7 @@ const changeLanguage = async lang => {
 const props = defineProps({
   pageTitle: {
     type: String,
-    default: 'Booking Engine'
+    default: 'Maxirez'
   },
   pageDescription: {
     type: String,

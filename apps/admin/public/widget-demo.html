@@ -1,621 +1,648 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MaxiRez Widget Demo - Hotel Website Simulation</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MaxiRez Widget Demo - Hotel Website Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      line-height: 1.6;
-      color: #1f2937;
-      background: #f3f4f6;
-    }
+      body {
+        font-family:
+          'Inter',
+          system-ui,
+          -apple-system,
+          sans-serif;
+        line-height: 1.6;
+        color: #1f2937;
+        background: #f3f4f6;
+      }
 
-    /* Demo Header - Simulating hotel website header */
-    .demo-header {
-      background: linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%);
-      color: white;
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+      /* Demo Header - Simulating hotel website header */
+      .demo-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%);
+        color: white;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
 
-    .demo-header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      .demo-header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .demo-logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+      .demo-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    .demo-logo-icon {
-      width: 40px;
-      height: 40px;
-      background: #3b82f6;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .demo-nav {
-      display: flex;
-      gap: 2rem;
-    }
-
-    .demo-nav a {
-      color: rgba(255,255,255,0.8);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .demo-nav a:hover {
-      color: white;
-    }
-
-    /* Hero Section */
-    .demo-hero {
-      background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
-                  url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80') center/cover;
-      min-height: 500px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: white;
-      padding: 2rem;
-    }
-
-    .demo-hero h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .demo-hero p {
-      font-size: 1.25rem;
-      opacity: 0.9;
-      max-width: 600px;
-      margin: 0 auto 2rem;
-    }
-
-    /* Controls Panel */
-    .demo-controls {
-      background: white;
-      padding: 2rem;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .demo-controls-content {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .demo-controls h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #374151;
-    }
-
-    .demo-controls-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .demo-control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .demo-control-group label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #6b7280;
-    }
-
-    .demo-control-group select,
-    .demo-control-group input {
-      padding: 0.625rem 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      font-size: 0.9375rem;
-      background: white;
-      cursor: pointer;
-    }
-
-    .demo-control-group select:focus,
-    .demo-control-group input:focus {
-      outline: none;
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-    }
-
-    .demo-apply-btn {
-      padding: 0.75rem 1.5rem;
-      background: #7c3aed;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      align-self: flex-end;
-    }
-
-    .demo-apply-btn:hover {
-      background: #6d28d9;
-    }
-
-    /* Inline Widget Container */
-    .demo-inline-section {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 2rem;
-    }
-
-    .demo-inline-section h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #1f2937;
-    }
-
-    #inline-widget-container {
-      background: white;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      min-height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #9ca3af;
-    }
-
-    #inline-widget-container.has-widget {
-      display: block;
-    }
-
-    /* Content Sections */
-    .demo-section {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 3rem 2rem;
-    }
-
-    .demo-section h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: #1f2937;
-    }
-
-    .demo-rooms-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .demo-room-card {
-      background: white;
-      border-radius: 1rem;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    }
-
-    .demo-room-card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-
-    .demo-room-card-body {
-      padding: 1.5rem;
-    }
-
-    .demo-room-card h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .demo-room-card p {
-      color: #6b7280;
-      margin-bottom: 1rem;
-    }
-
-    .demo-room-price {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #7c3aed;
-    }
-
-    .demo-room-price span {
-      font-size: 0.875rem;
-      font-weight: 400;
-      color: #9ca3af;
-    }
-
-    /* Footer */
-    .demo-footer {
-      background: #1f2937;
-      color: white;
-      padding: 3rem 2rem;
-      text-align: center;
-    }
-
-    .demo-footer p {
-      opacity: 0.7;
-    }
-
-    /* API Button */
-    .demo-api-section {
-      background: #f9fafb;
-      padding: 2rem;
-      margin: 2rem auto;
-      max-width: 1200px;
-      border-radius: 1rem;
-    }
-
-    .demo-api-section h3 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .demo-api-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .demo-api-btn {
-      padding: 0.625rem 1.25rem;
-      background: #374151;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .demo-api-btn:hover {
-      background: #4b5563;
-    }
-
-    /* Code Block */
-    .demo-code {
-      background: #1f2937;
-      color: #f9fafb;
-      padding: 1.5rem;
-      border-radius: 0.5rem;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 0.875rem;
-      overflow-x: auto;
-      margin-top: 1rem;
-    }
-
-    .demo-code .comment {
-      color: #6b7280;
-    }
-
-    .demo-code .string {
-      color: #a5d6ff;
-    }
-
-    .demo-code .attr {
-      color: #7ee787;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .demo-hero h1 {
-        font-size: 2rem;
+      .demo-logo-icon {
+        width: 40px;
+        height: 40px;
+        background: #3b82f6;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .demo-nav {
-        display: none;
+        display: flex;
+        gap: 2rem;
+      }
+
+      .demo-nav a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+
+      .demo-nav a:hover {
+        color: white;
+      }
+
+      /* Hero Section */
+      .demo-hero {
+        background:
+          linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+          url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80')
+            center/cover;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: white;
+        padding: 2rem;
+      }
+
+      .demo-hero h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .demo-hero p {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto 2rem;
+      }
+
+      /* Controls Panel */
+      .demo-controls {
+        background: white;
+        padding: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .demo-controls-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .demo-controls h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #374151;
       }
 
       .demo-controls-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- Simulated Hotel Website Header -->
-  <header class="demo-header">
-    <div class="demo-header-content">
-      <div class="demo-logo">
-        <div class="demo-logo-icon">H</div>
-        Grand Hotel Istanbul
-      </div>
-      <nav class="demo-nav">
-        <a href="#">Odalar</a>
-        <a href="#">Hizmetler</a>
-        <a href="#">Galeri</a>
-        <a href="#">Konum</a>
-        <a href="#">İletişim</a>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Hero Section -->
-  <section class="demo-hero">
-    <div>
-      <h1>Hayalinizdeki Konaklama</h1>
-      <p>Istanbul'un kalbinde, Boğaz manzaralı lüks odalarımızda unutulmaz bir deneyim yaşayın.</p>
-    </div>
-  </section>
-
-  <!-- Widget Controls Panel -->
-  <div class="demo-controls">
-    <div class="demo-controls-content">
-      <h2>Widget Yapılandırması</h2>
-      <div class="demo-controls-grid">
-        <div class="demo-control-group">
-          <label for="widget-mode">Görüntüleme Modu</label>
-          <select id="widget-mode">
-            <option value="floating">Floating (Yüzen Buton)</option>
-            <option value="inline">Inline (Sayfa İçi)</option>
-            <option value="fullpage">Fullpage (Tam Sayfa)</option>
-          </select>
-        </div>
-        <div class="demo-control-group">
-          <label for="widget-theme">Tema</label>
-          <select id="widget-theme">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="auto">Auto (Sistem)</option>
-          </select>
-        </div>
-        <div class="demo-control-group">
-          <label for="widget-color">Ana Renk</label>
-          <input type="color" id="widget-color" value="#7c3aed">
-        </div>
-        <div class="demo-control-group">
-          <label for="widget-lang">Dil</label>
-          <select id="widget-lang">
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="ru">Русский</option>
-            <option value="ar">العربية</option>
-          </select>
-        </div>
-        <div class="demo-control-group">
-          <label for="widget-hotel">Hotel Code</label>
-          <input type="text" id="widget-hotel" value="ahama-hotel" placeholder="Hotel code">
-        </div>
-        <div class="demo-control-group">
-          <label for="widget-partner">Partner ID</label>
-          <input type="text" id="widget-partner" value="" placeholder="Partner ID (optional)">
-          <small style="color: #6b7280; font-size: 0.75rem;">Partner'a ait otel için zorunlu</small>
-        </div>
-        <div class="demo-control-group">
-          <button class="demo-apply-btn" onclick="reloadWidget()">Widget'ı Yeniden Yükle</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Inline Widget Section (only shown when inline mode is selected) -->
-  <section class="demo-inline-section" id="inline-section" style="display: none;">
-    <h2>Hemen Rezervasyon Yapın</h2>
-    <div id="inline-widget-container">
-      <p>Widget burada görüntülenecek...</p>
-    </div>
-  </section>
-
-  <!-- Room Cards Section -->
-  <section class="demo-section">
-    <h2>Odalarımız</h2>
-    <div class="demo-rooms-grid">
-      <div class="demo-room-card">
-        <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80" alt="Deluxe Oda">
-        <div class="demo-room-card-body">
-          <h3>Deluxe Oda</h3>
-          <p>30m², Şehir Manzarası, King Size Yatak</p>
-          <div class="demo-room-price">
-            ₺2.500 <span>/ gece</span>
-          </div>
-        </div>
-      </div>
-      <div class="demo-room-card">
-        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80" alt="Suite Oda">
-        <div class="demo-room-card-body">
-          <h3>Suite Oda</h3>
-          <p>50m², Boğaz Manzarası, Oturma Alanı</p>
-          <div class="demo-room-price">
-            ₺4.200 <span>/ gece</span>
-          </div>
-        </div>
-      </div>
-      <div class="demo-room-card">
-        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80" alt="Aile Odası">
-        <div class="demo-room-card-body">
-          <h3>Aile Odası</h3>
-          <p>60m², 2 Yatak Odası, Çocuk Dostu</p>
-          <div class="demo-room-price">
-            ₺5.500 <span>/ gece</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Widget API Test Section -->
-  <section class="demo-api-section">
-    <h3>Widget API Test</h3>
-    <p style="color: #6b7280; margin-bottom: 1rem;">Programatik olarak widget'ı kontrol edin:</p>
-    <div class="demo-api-buttons">
-      <button class="demo-api-btn" onclick="openWidget()">Widget'ı Aç</button>
-      <button class="demo-api-btn" onclick="closeWidget()">Widget'ı Kapat</button>
-      <button class="demo-api-btn" onclick="setDates()">Tarihleri Ayarla (Yarın - 3 gün)</button>
-    </div>
-
-    <div class="demo-code">
-      <span class="comment">// Widget'ı programatik olarak açma</span><br>
-      window.MaxiResWidget.open();<br><br>
-
-      <span class="comment">// Widget'ı kapatma</span><br>
-      window.MaxiResWidget.close();<br><br>
-
-      <span class="comment">// Tarihleri ayarlama</span><br>
-      window.MaxiResWidget.setDates(<span class="string">'2024-03-15'</span>, <span class="string">'2024-03-18'</span>);
-    </div>
-  </section>
-
-  <!-- Embed Code Section -->
-  <section class="demo-section">
-    <h3>Sitenize Ekleyin</h3>
-    <p style="color: #6b7280; margin-bottom: 1rem;">Aşağıdaki kodu sitenizin &lt;body&gt; etiketinin sonuna ekleyin:</p>
-    <div class="demo-code" id="embed-code">
-      <span class="comment">&lt;!-- MaxiRez Booking Widget --&gt;</span><br>
-      &lt;script<br>
-      &nbsp;&nbsp;src=<span class="string">"https://widget.maxirez.com/widget.js"</span><br>
-      &nbsp;&nbsp;<span class="attr">data-hotel</span>=<span class="string">"ahama-hotel"</span><br>
-      &nbsp;&nbsp;<span class="attr">data-partner</span>=<span class="string">"PARTNER_ID"</span><br>
-      &nbsp;&nbsp;<span class="attr">data-mode</span>=<span class="string">"floating"</span><br>
-      &nbsp;&nbsp;<span class="attr">data-theme</span>=<span class="string">"light"</span><br>
-      &nbsp;&nbsp;<span class="attr">data-primary-color</span>=<span class="string">"#7c3aed"</span><br>
-      &gt;&lt;/script&gt;
-      <br><br>
-      <span class="comment">&lt;!-- Partner ID'yi kendi partner ID'nizle değiştirin --&gt;</span>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="demo-footer">
-    <p>Bu sayfa MaxiRez Widget demo sayfasıdır. Gerçek bir otel web sitesi değildir.</p>
-    <p style="margin-top: 0.5rem;">MaxiRez Booking Engine &copy; 2024</p>
-  </footer>
-
-  <!-- Widget Container for Inline Mode -->
-  <div id="maxirez-widget" style="display: none;"></div>
-
-  <script type="module">
-    // Development mode - load widget directly from source
-    // In production, this would be a CDN URL like https://widget.maxirez.com/widget.js
-
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    let widgetLoaded = false;
-
-    // Function to load widget
-    async function loadWidget() {
-      const mode = document.getElementById('widget-mode').value;
-      const theme = document.getElementById('widget-theme').value;
-      const color = document.getElementById('widget-color').value;
-      const lang = document.getElementById('widget-lang').value;
-      const hotel = document.getElementById('widget-hotel').value;
-
-      // Show/hide inline section
-      const inlineSection = document.getElementById('inline-section');
-      const inlineContainer = document.getElementById('inline-widget-container');
-
-      if (mode === 'inline') {
-        inlineSection.style.display = 'block';
-        inlineContainer.classList.add('has-widget');
-      } else {
-        inlineSection.style.display = 'none';
-        inlineContainer.classList.remove('has-widget');
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
       }
 
-      // Remove existing widget host
-      const existingHost = document.getElementById('maxirez-widget-host');
-      if (existingHost) {
-        existingHost.remove();
+      .demo-control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
       }
 
-      // Clear inline container
-      inlineContainer.innerHTML = mode === 'inline' ? '' : '<p>Widget burada görüntülenecek...</p>';
+      .demo-control-group label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+      }
 
-      // Update embed code display
-      updateEmbedCode(hotel, mode, theme, color);
+      .demo-control-group select,
+      .demo-control-group input {
+        padding: 0.625rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.9375rem;
+        background: white;
+        cursor: pointer;
+      }
 
-      // For development, we'll use a different approach
-      // Create a mock widget for demonstration
-      if (isDev && !widgetLoaded) {
-        console.log('[Demo] Widget configuration:', { mode, theme, color, lang, hotel });
+      .demo-control-group select:focus,
+      .demo-control-group input:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+      }
 
-        // Create widget host element with data attributes
-        const host = document.createElement('div');
-        host.id = 'maxirez-widget-host';
-        host.dataset.hotel = hotel;
-        host.dataset.mode = mode;
-        host.dataset.theme = theme;
-        host.dataset.primaryColor = color;
-        host.dataset.language = lang;
+      .demo-apply-btn {
+        padding: 0.75rem 1.5rem;
+        background: #7c3aed;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        align-self: flex-end;
+      }
 
-        if (mode === 'inline') {
-          host.dataset.container = 'inline-widget-container';
+      .demo-apply-btn:hover {
+        background: #6d28d9;
+      }
+
+      /* Inline Widget Container */
+      .demo-inline-section {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+      }
+
+      .demo-inline-section h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #1f2937;
+      }
+
+      #inline-widget-container {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+      }
+
+      #inline-widget-container.has-widget {
+        display: block;
+      }
+
+      /* Content Sections */
+      .demo-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+
+      .demo-section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+      }
+
+      .demo-rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .demo-room-card {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .demo-room-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .demo-room-card-body {
+        padding: 1.5rem;
+      }
+
+      .demo-room-card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .demo-room-card p {
+        color: #6b7280;
+        margin-bottom: 1rem;
+      }
+
+      .demo-room-price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #7c3aed;
+      }
+
+      .demo-room-price span {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #9ca3af;
+      }
+
+      /* Footer */
+      .demo-footer {
+        background: #1f2937;
+        color: white;
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+
+      .demo-footer p {
+        opacity: 0.7;
+      }
+
+      /* API Button */
+      .demo-api-section {
+        background: #f9fafb;
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 1200px;
+        border-radius: 1rem;
+      }
+
+      .demo-api-section h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .demo-api-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .demo-api-btn {
+        padding: 0.625rem 1.25rem;
+        background: #374151;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .demo-api-btn:hover {
+        background: #4b5563;
+      }
+
+      /* Code Block */
+      .demo-code {
+        background: #1f2937;
+        color: #f9fafb;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.875rem;
+        overflow-x: auto;
+        margin-top: 1rem;
+      }
+
+      .demo-code .comment {
+        color: #6b7280;
+      }
+
+      .demo-code .string {
+        color: #a5d6ff;
+      }
+
+      .demo-code .attr {
+        color: #7ee787;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .demo-hero h1 {
+          font-size: 2rem;
         }
 
-        document.body.appendChild(host);
+        .demo-nav {
+          display: none;
+        }
 
-        // Dynamic import of widget entry from widget dev server (port 5174)
-        try {
-          const partnerId = document.getElementById('widget-partner')?.value || null;
-          const widgetBaseUrl = 'http://localhost:5174';
-          const { createWidget } = await import(/* @vite-ignore */ `${widgetBaseUrl}/src/widget-entry.js`);
-          await createWidget({
-            hotelCode: hotel,
-            partnerId: partnerId,
-            mode: mode,
-            theme: theme,
-            primaryColor: color,
-            language: lang,
-            apiUrl: 'http://localhost:4000/api',
-            containerId: mode === 'inline' ? 'inline-widget-container' : 'maxirez-widget'
-          });
-          widgetLoaded = true;
-          console.log('[Demo] Widget loaded successfully from widget dev server');
-        } catch (err) {
-          console.error('[Demo] Failed to load widget:', err);
+        .demo-controls-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Simulated Hotel Website Header -->
+    <header class="demo-header">
+      <div class="demo-header-content">
+        <div class="demo-logo">
+          <div class="demo-logo-icon">H</div>
+          Grand Hotel Istanbul
+        </div>
+        <nav class="demo-nav">
+          <a href="#">Odalar</a>
+          <a href="#">Hizmetler</a>
+          <a href="#">Galeri</a>
+          <a href="#">Konum</a>
+          <a href="#">İletişim</a>
+        </nav>
+      </div>
+    </header>
 
-          // Show fallback message
+    <!-- Hero Section -->
+    <section class="demo-hero">
+      <div>
+        <h1>Hayalinizdeki Konaklama</h1>
+        <p>
+          Istanbul'un kalbinde, Boğaz manzaralı lüks odalarımızda unutulmaz bir deneyim yaşayın.
+        </p>
+      </div>
+    </section>
+
+    <!-- Widget Controls Panel -->
+    <div class="demo-controls">
+      <div class="demo-controls-content">
+        <h2>Widget Yapılandırması</h2>
+        <div class="demo-controls-grid">
+          <div class="demo-control-group">
+            <label for="widget-mode">Görüntüleme Modu</label>
+            <select id="widget-mode">
+              <option value="floating">Floating (Yüzen Buton)</option>
+              <option value="inline">Inline (Sayfa İçi)</option>
+              <option value="fullpage">Fullpage (Tam Sayfa)</option>
+            </select>
+          </div>
+          <div class="demo-control-group">
+            <label for="widget-theme">Tema</label>
+            <select id="widget-theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="auto">Auto (Sistem)</option>
+            </select>
+          </div>
+          <div class="demo-control-group">
+            <label for="widget-color">Ana Renk</label>
+            <input type="color" id="widget-color" value="#7c3aed" />
+          </div>
+          <div class="demo-control-group">
+            <label for="widget-lang">Dil</label>
+            <select id="widget-lang">
+              <option value="tr">Türkçe</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+              <option value="ru">Русский</option>
+              <option value="ar">العربية</option>
+            </select>
+          </div>
+          <div class="demo-control-group">
+            <label for="widget-hotel">Hotel Code</label>
+            <input type="text" id="widget-hotel" value="ahama-hotel" placeholder="Hotel code" />
+          </div>
+          <div class="demo-control-group">
+            <label for="widget-partner">Partner ID</label>
+            <input type="text" id="widget-partner" value="" placeholder="Partner ID (optional)" />
+            <small style="color: #6b7280; font-size: 0.75rem"
+              >Partner'a ait otel için zorunlu</small
+            >
+          </div>
+          <div class="demo-control-group">
+            <button class="demo-apply-btn" onclick="reloadWidget()">Widget'ı Yeniden Yükle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline Widget Section (only shown when inline mode is selected) -->
+    <section class="demo-inline-section" id="inline-section" style="display: none">
+      <h2>Hemen Rezervasyon Yapın</h2>
+      <div id="inline-widget-container">
+        <p>Widget burada görüntülenecek...</p>
+      </div>
+    </section>
+
+    <!-- Room Cards Section -->
+    <section class="demo-section">
+      <h2>Odalarımız</h2>
+      <div class="demo-rooms-grid">
+        <div class="demo-room-card">
+          <img
+            src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80"
+            alt="Deluxe Oda"
+          />
+          <div class="demo-room-card-body">
+            <h3>Deluxe Oda</h3>
+            <p>30m², Şehir Manzarası, King Size Yatak</p>
+            <div class="demo-room-price">₺2.500 <span>/ gece</span></div>
+          </div>
+        </div>
+        <div class="demo-room-card">
+          <img
+            src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80"
+            alt="Suite Oda"
+          />
+          <div class="demo-room-card-body">
+            <h3>Suite Oda</h3>
+            <p>50m², Boğaz Manzarası, Oturma Alanı</p>
+            <div class="demo-room-price">₺4.200 <span>/ gece</span></div>
+          </div>
+        </div>
+        <div class="demo-room-card">
+          <img
+            src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80"
+            alt="Aile Odası"
+          />
+          <div class="demo-room-card-body">
+            <h3>Aile Odası</h3>
+            <p>60m², 2 Yatak Odası, Çocuk Dostu</p>
+            <div class="demo-room-price">₺5.500 <span>/ gece</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Widget API Test Section -->
+    <section class="demo-api-section">
+      <h3>Widget API Test</h3>
+      <p style="color: #6b7280; margin-bottom: 1rem">Programatik olarak widget'ı kontrol edin:</p>
+      <div class="demo-api-buttons">
+        <button class="demo-api-btn" onclick="openWidget()">Widget'ı Aç</button>
+        <button class="demo-api-btn" onclick="closeWidget()">Widget'ı Kapat</button>
+        <button class="demo-api-btn" onclick="setDates()">Tarihleri Ayarla (Yarın - 3 gün)</button>
+      </div>
+
+      <div class="demo-code">
+        <span class="comment">// Widget'ı programatik olarak açma</span><br />
+        window.MaxiResWidget.open();<br /><br />
+
+        <span class="comment">// Widget'ı kapatma</span><br />
+        window.MaxiResWidget.close();<br /><br />
+
+        <span class="comment">// Tarihleri ayarlama</span><br />
+        window.MaxiResWidget.setDates(<span class="string">'2024-03-15'</span>,
+        <span class="string">'2024-03-18'</span>);
+      </div>
+    </section>
+
+    <!-- Embed Code Section -->
+    <section class="demo-section">
+      <h3>Sitenize Ekleyin</h3>
+      <p style="color: #6b7280; margin-bottom: 1rem">
+        Aşağıdaki kodu sitenizin &lt;body&gt; etiketinin sonuna ekleyin:
+      </p>
+      <div class="demo-code" id="embed-code">
+        <span class="comment">&lt;!-- MaxiRez Booking Widget --&gt;</span><br />
+        &lt;script<br />
+        &nbsp;&nbsp;src=<span class="string">"https://widget.maxirez.com/widget.js"</span><br />
+        &nbsp;&nbsp;<span class="attr">data-hotel</span>=<span class="string">"ahama-hotel"</span
+        ><br />
+        &nbsp;&nbsp;<span class="attr">data-partner</span>=<span class="string">"PARTNER_ID"</span
+        ><br />
+        &nbsp;&nbsp;<span class="attr">data-mode</span>=<span class="string">"floating"</span><br />
+        &nbsp;&nbsp;<span class="attr">data-theme</span>=<span class="string">"light"</span><br />
+        &nbsp;&nbsp;<span class="attr">data-primary-color</span>=<span class="string"
+          >"#7c3aed"</span
+        ><br />
+        &gt;&lt;/script&gt;
+        <br /><br />
+        <span class="comment">&lt;!-- Partner ID'yi kendi partner ID'nizle değiştirin --&gt;</span>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="demo-footer">
+      <p>Bu sayfa MaxiRez Widget demo sayfasıdır. Gerçek bir otel web sitesi değildir.</p>
+      <p style="margin-top: 0.5rem">Maxirez &copy; 2026</p>
+    </footer>
+
+    <!-- Widget Container for Inline Mode -->
+    <div id="maxirez-widget" style="display: none"></div>
+
+    <script type="module">
+      // Development mode - load widget directly from source
+      // In production, this would be a CDN URL like https://widget.maxirez.com/widget.js
+
+      const isDev =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+      let widgetLoaded = false
+
+      // Function to load widget
+      async function loadWidget() {
+        const mode = document.getElementById('widget-mode').value
+        const theme = document.getElementById('widget-theme').value
+        const color = document.getElementById('widget-color').value
+        const lang = document.getElementById('widget-lang').value
+        const hotel = document.getElementById('widget-hotel').value
+
+        // Show/hide inline section
+        const inlineSection = document.getElementById('inline-section')
+        const inlineContainer = document.getElementById('inline-widget-container')
+
+        if (mode === 'inline') {
+          inlineSection.style.display = 'block'
+          inlineContainer.classList.add('has-widget')
+        } else {
+          inlineSection.style.display = 'none'
+          inlineContainer.classList.remove('has-widget')
+        }
+
+        // Remove existing widget host
+        const existingHost = document.getElementById('maxirez-widget-host')
+        if (existingHost) {
+          existingHost.remove()
+        }
+
+        // Clear inline container
+        inlineContainer.innerHTML =
+          mode === 'inline' ? '' : '<p>Widget burada görüntülenecek...</p>'
+
+        // Update embed code display
+        updateEmbedCode(hotel, mode, theme, color)
+
+        // For development, we'll use a different approach
+        // Create a mock widget for demonstration
+        if (isDev && !widgetLoaded) {
+          console.log('[Demo] Widget configuration:', { mode, theme, color, lang, hotel })
+
+          // Create widget host element with data attributes
+          const host = document.createElement('div')
+          host.id = 'maxirez-widget-host'
+          host.dataset.hotel = hotel
+          host.dataset.mode = mode
+          host.dataset.theme = theme
+          host.dataset.primaryColor = color
+          host.dataset.language = lang
+
           if (mode === 'inline') {
-            inlineContainer.innerHTML = `
+            host.dataset.container = 'inline-widget-container'
+          }
+
+          document.body.appendChild(host)
+
+          // Dynamic import of widget entry from widget dev server (port 5174)
+          try {
+            const partnerId = document.getElementById('widget-partner')?.value || null
+            const widgetBaseUrl = 'http://localhost:5174'
+            const { createWidget } = await import(
+              /* @vite-ignore */ `${widgetBaseUrl}/src/widget-entry.js`
+            )
+            await createWidget({
+              hotelCode: hotel,
+              partnerId: partnerId,
+              mode: mode,
+              theme: theme,
+              primaryColor: color,
+              language: lang,
+              apiUrl: 'http://localhost:4000/api',
+              containerId: mode === 'inline' ? 'inline-widget-container' : 'maxirez-widget'
+            })
+            widgetLoaded = true
+            console.log('[Demo] Widget loaded successfully from widget dev server')
+          } catch (err) {
+            console.error('[Demo] Failed to load widget:', err)
+
+            // Show fallback message
+            if (mode === 'inline') {
+              inlineContainer.innerHTML = `
               <div style="padding: 2rem; text-align: center; color: #6b7280;">
                 <p style="margin-bottom: 1rem;">Widget yüklenemedi.</p>
                 <p style="font-size: 0.875rem;">Dev server çalışıyor olmalı: <code>pnpm dev</code></p>
                 <p style="font-size: 0.75rem; margin-top: 0.5rem; color: #ef4444;">${err.message}</p>
               </div>
-            `;
-          } else {
-            // Create floating button fallback
-            const fallback = document.createElement('div');
-            fallback.id = 'maxirez-widget-host';
-            fallback.innerHTML = `
+            `
+            } else {
+              // Create floating button fallback
+              const fallback = document.createElement('div')
+              fallback.id = 'maxirez-widget-host'
+              fallback.innerHTML = `
               <div style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1050;">
                 <button style="
                   display: flex; align-items: center; gap: 0.5rem;
@@ -632,21 +659,21 @@
                   Rezervasyon Yap
                 </button>
               </div>
-            `;
-            document.body.appendChild(fallback);
+            `
+              document.body.appendChild(fallback)
+            }
           }
         }
       }
-    }
 
-    // Update embed code display
-    function updateEmbedCode(hotel, mode, theme, color) {
-      const partnerId = document.getElementById('widget-partner')?.value || '';
-      const codeEl = document.getElementById('embed-code');
-      const partnerLine = partnerId
-        ? `&nbsp;&nbsp;<span class="attr">data-partner</span>=<span class="string">"${partnerId}"</span><br>`
-        : '';
-      codeEl.innerHTML = `
+      // Update embed code display
+      function updateEmbedCode(hotel, mode, theme, color) {
+        const partnerId = document.getElementById('widget-partner')?.value || ''
+        const codeEl = document.getElementById('embed-code')
+        const partnerLine = partnerId
+          ? `&nbsp;&nbsp;<span class="attr">data-partner</span>=<span class="string">"${partnerId}"</span><br>`
+          : ''
+        codeEl.innerHTML = `
         <span class="comment">&lt;!-- MaxiRez Booking Widget --&gt;</span><br>
         &lt;script<br>
         &nbsp;&nbsp;src=<span class="string">"https://widget.maxirez.com/widget.js"</span><br>
@@ -655,55 +682,55 @@
         &nbsp;&nbsp;<span class="attr">data-theme</span>=<span class="string">"${theme}"</span><br>
         &nbsp;&nbsp;<span class="attr">data-primary-color</span>=<span class="string">"${color}"</span><br>
         &gt;&lt;/script&gt;
-      `;
-    }
-
-    // Reload widget with new config
-    window.reloadWidget = function() {
-      widgetLoaded = false;
-      loadWidget();
-    };
-
-    // API functions
-    window.openWidget = function() {
-      if (window.MaxiResWidget) {
-        window.MaxiResWidget.open();
-      } else {
-        alert('Widget henüz yüklenmedi');
+      `
       }
-    };
 
-    window.closeWidget = function() {
-      if (window.MaxiResWidget) {
-        window.MaxiResWidget.close();
-      } else {
-        alert('Widget henüz yüklenmedi');
+      // Reload widget with new config
+      window.reloadWidget = function () {
+        widgetLoaded = false
+        loadWidget()
       }
-    };
 
-    window.setDates = function() {
-      if (window.MaxiResWidget) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const checkOut = new Date(tomorrow);
-        checkOut.setDate(checkOut.getDate() + 3);
-
-        const formatDate = (d) => d.toISOString().split('T')[0];
-        window.MaxiResWidget.setDates(formatDate(tomorrow), formatDate(checkOut));
-        window.MaxiResWidget.open();
-      } else {
-        alert('Widget henüz yüklenmedi');
+      // API functions
+      window.openWidget = function () {
+        if (window.MaxiResWidget) {
+          window.MaxiResWidget.open()
+        } else {
+          alert('Widget henüz yüklenmedi')
+        }
       }
-    };
 
-    // Handle mode change to show/hide inline section
-    document.getElementById('widget-mode').addEventListener('change', function() {
-      const inlineSection = document.getElementById('inline-section');
-      inlineSection.style.display = this.value === 'inline' ? 'block' : 'none';
-    });
+      window.closeWidget = function () {
+        if (window.MaxiResWidget) {
+          window.MaxiResWidget.close()
+        } else {
+          alert('Widget henüz yüklenmedi')
+        }
+      }
 
-    // Load widget on page load
-    document.addEventListener('DOMContentLoaded', loadWidget);
-  </script>
-</body>
+      window.setDates = function () {
+        if (window.MaxiResWidget) {
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          const checkOut = new Date(tomorrow)
+          checkOut.setDate(checkOut.getDate() + 3)
+
+          const formatDate = d => d.toISOString().split('T')[0]
+          window.MaxiResWidget.setDates(formatDate(tomorrow), formatDate(checkOut))
+          window.MaxiResWidget.open()
+        } else {
+          alert('Widget henüz yüklenmedi')
+        }
+      }
+
+      // Handle mode change to show/hide inline section
+      document.getElementById('widget-mode').addEventListener('change', function () {
+        const inlineSection = document.getElementById('inline-section')
+        inlineSection.style.display = this.value === 'inline' ? 'block' : 'none'
+      })
+
+      // Load widget on page load
+      document.addEventListener('DOMContentLoaded', loadWidget)
+    </script>
+  </body>
 </html>

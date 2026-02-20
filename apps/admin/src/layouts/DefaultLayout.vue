@@ -140,7 +140,7 @@ const getBaseTitle = routeName => {
     'booking-new': t('booking.newBooking'),
     'booking-detail': t('booking.bookingDetails')
   }
-  return titles[routeName] || 'Booking Engine'
+  return titles[routeName] || 'Maxirez'
 }
 
 const getBaseDescription = routeName => {
@@ -191,7 +191,7 @@ const pageDescription = computed(() => {
 watch(
   pageTitle,
   newTitle => {
-    document.title = newTitle ? `${newTitle} | Booking Engine` : 'Booking Engine'
+    document.title = newTitle ? `${newTitle} | Maxirez` : 'Maxirez'
   },
   { immediate: true }
 )
