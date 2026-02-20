@@ -409,14 +409,14 @@ const partnerSchema = new mongoose.Schema(
 
           // Period
           period: {
-            startDate: { type: Date, required: true },
-            endDate: { type: Date, required: true }
+            startDate: { type: Date },
+            endDate: { type: Date }
           },
 
-          // EUR-only pricing
+          // EUR-only pricing (legacy data may contain USD)
           price: {
-            amount: { type: Number, required: true },
-            currency: { type: String, default: 'EUR', enum: ['EUR'] }
+            amount: { type: Number, default: 0 },
+            currency: { type: String, default: 'EUR' }
           },
 
           billingPeriod: {
