@@ -1,4 +1,4 @@
-# Booking Engine API
+# Maxirez API
 
 Modern, modüler ve ölçeklenebilir bir rezervasyon platformu backend'i.
 
