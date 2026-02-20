@@ -102,52 +102,25 @@
           </div>
 
           <!-- Status Filter -->
-          <div class="relative">
-            <span
-              class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-            >
-              filter_list
-            </span>
-            <select
+          <div class="min-w-[160px]">
+            <Dropdown
               v-model="filters.status"
-              class="appearance-none pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-sm text-gray-700 dark:text-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors min-w-[160px]"
-            >
-              <option value="">{{ $t('partnerSubscriptions.allStatuses') }}</option>
-              <option value="pending">{{ $t('partnerSubscriptions.status.pending') }}</option>
-              <option value="active">{{ $t('partnerSubscriptions.status.active') }}</option>
-              <option value="expired">{{ $t('partnerSubscriptions.status.expired') }}</option>
-              <option value="cancelled">{{ $t('partnerSubscriptions.status.cancelled') }}</option>
-              <option v-if="filters.showDeleted" value="deleted">
-                {{ $t('partnerSubscriptions.status.deleted') }}
-              </option>
-            </select>
-            <span
-              class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-            >
-              expand_more
-            </span>
+              :options="statusOptions"
+              :placeholder="$t('partnerSubscriptions.allStatuses')"
+              clearable
+              size="md"
+            />
           </div>
 
           <!-- Type Filter -->
-          <div class="relative">
-            <span
-              class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-            >
-              category
-            </span>
-            <select
+          <div class="min-w-[180px]">
+            <Dropdown
               v-model="filters.type"
-              class="appearance-none pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-sm text-gray-700 dark:text-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors min-w-[180px]"
-            >
-              <option value="">{{ $t('partnerSubscriptions.allTypes') }}</option>
-              <option value="package_subscription">{{ $t('subscriptionPackages.title') }}</option>
-              <option value="service_purchase">{{ $t('subscriptionServices.title') }}</option>
-            </select>
-            <span
-              class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-            >
-              expand_more
-            </span>
+              :options="typeOptions"
+              :placeholder="$t('partnerSubscriptions.allTypes')"
+              clearable
+              size="md"
+            />
           </div>
 
           <!-- Show Deleted Toggle -->
@@ -385,33 +358,12 @@
               />
             </div>
             <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
-              <div class="relative">
-                <span
-                  class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                >
-                  payment
-                </span>
-                <select
-                  v-model="markPaidForm.paymentMethod"
-                  class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
-                >
-                  <option value="bank_transfer">
-                    {{ $t('partners.subscription.methods.bankTransfer') }}
-                  </option>
-                  <option value="credit_card">
-                    {{ $t('partners.subscription.methods.creditCard') }}
-                  </option>
-                  <option value="payment_link">Payment Link</option>
-                  <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
-                  <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
-                </select>
-                <span
-                  class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                >
-                  expand_more
-                </span>
-              </div>
+              <Dropdown
+                v-model="markPaidForm.paymentMethod"
+                :label="$t('partnerSubscriptions.paymentMethod')"
+                :options="paymentMethodOptions"
+                size="md"
+              />
             </div>
           </div>
           <div>
@@ -615,31 +567,12 @@
                 </div>
               </div>
               <div>
-                <label class="form-label">{{ $t('partnerSubscriptions.billingPeriod') }}</label>
-                <div class="relative">
-                  <span
-                    class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                  >
-                    event_repeat
-                  </span>
-                  <select
-                    v-model="editForm.billingPeriod"
-                    class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
-                  >
-                    <option value="monthly">
-                      {{ $t('partnerSubscriptions.billing.monthly') }}
-                    </option>
-                    <option value="yearly">{{ $t('partnerSubscriptions.billing.yearly') }}</option>
-                    <option value="one_time">
-                      {{ $t('partnerSubscriptions.billing.one_time') }}
-                    </option>
-                  </select>
-                  <span
-                    class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                  >
-                    expand_more
-                  </span>
-                </div>
+                <Dropdown
+                  v-model="editForm.billingPeriod"
+                  :label="$t('partnerSubscriptions.billingPeriod')"
+                  :options="billingPeriodOptions"
+                  size="md"
+                />
               </div>
             </div>
           </div>
@@ -696,34 +629,12 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
-                <div class="relative">
-                  <span
-                    class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                  >
-                    payment
-                  </span>
-                  <select
-                    v-model="editForm.paymentMethod"
-                    class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
-                  >
-                    <option value="">{{ $t('partnerSubscriptions.notSet') }}</option>
-                    <option value="bank_transfer">
-                      {{ $t('partners.subscription.methods.bankTransfer') }}
-                    </option>
-                    <option value="credit_card">
-                      {{ $t('partners.subscription.methods.creditCard') }}
-                    </option>
-                    <option value="payment_link">Payment Link</option>
-                    <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
-                    <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
-                  </select>
-                  <span
-                    class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
-                  >
-                    expand_more
-                  </span>
-                </div>
+                <Dropdown
+                  v-model="editForm.paymentMethod"
+                  :label="$t('partnerSubscriptions.paymentMethod')"
+                  :options="editPaymentMethodOptions"
+                  size="md"
+                />
               </div>
               <div>
                 <label class="form-label">{{ $t('partnerSubscriptions.reference') }}</label>
@@ -791,6 +702,7 @@ import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import ConfirmDialog from '@/components/ui/feedback/ConfirmDialog.vue'
 import DatePicker from '@/components/ui/date/DatePicker.vue'
+import Dropdown from '@/components/ui/form/Dropdown.vue'
 import partnerService from '@/services/partnerService'
 import subscriptionPackageService from '@/services/subscriptionPackageService'
 import subscriptionServiceService from '@/services/subscriptionServiceService'
@@ -826,7 +738,7 @@ const loading = ref(true)
 const processing = ref(false)
 const allPurchases = ref([])
 
-const filters = ref({ search: '', status: '', type: '', showDeleted: false })
+const filters = ref({ search: '', status: null, type: null, showDeleted: false })
 
 const showMarkPaidModal = ref(false)
 const showEditModal = ref(false)
@@ -855,6 +767,55 @@ const editForm = ref({
   paymentReference: '',
   paymentNotes: ''
 })
+
+const statusOptions = computed(() => {
+  const opts = [
+    { value: 'pending', label: t('partnerSubscriptions.status.pending'), icon: 'pending' },
+    { value: 'active', label: t('partnerSubscriptions.status.active'), icon: 'check_circle' },
+    { value: 'expired', label: t('partnerSubscriptions.status.expired'), icon: 'event_busy' },
+    { value: 'cancelled', label: t('partnerSubscriptions.status.cancelled'), icon: 'cancel' }
+  ]
+  if (filters.value.showDeleted) {
+    opts.push({ value: 'deleted', label: t('partnerSubscriptions.status.deleted'), icon: 'delete' })
+  }
+  return opts
+})
+
+const typeOptions = computed(() => [
+  { value: 'package_subscription', label: t('subscriptionPackages.title'), icon: 'inventory_2' },
+  {
+    value: 'service_purchase',
+    label: t('subscriptionServices.title'),
+    icon: 'miscellaneous_services'
+  }
+])
+
+const paymentMethodOptions = computed(() => [
+  {
+    value: 'bank_transfer',
+    label: t('partners.subscription.methods.bankTransfer'),
+    icon: 'account_balance'
+  },
+  {
+    value: 'credit_card',
+    label: t('partners.subscription.methods.creditCard'),
+    icon: 'credit_card'
+  },
+  { value: 'payment_link', label: 'Payment Link', icon: 'link' },
+  { value: 'cash', label: t('partners.subscription.methods.cash'), icon: 'payments' },
+  { value: 'other', label: t('partners.subscription.methods.other'), icon: 'more_horiz' }
+])
+
+const editPaymentMethodOptions = computed(() => [
+  { value: '', label: t('partnerSubscriptions.notSet'), icon: 'remove_circle_outline' },
+  ...paymentMethodOptions.value
+])
+
+const billingPeriodOptions = computed(() => [
+  { value: 'monthly', label: t('partnerSubscriptions.billing.monthly'), icon: 'calendar_month' },
+  { value: 'yearly', label: t('partnerSubscriptions.billing.yearly'), icon: 'event_repeat' },
+  { value: 'one_time', label: t('partnerSubscriptions.billing.one_time'), icon: 'event_available' }
+])
 
 const stats = computed(() => {
   const pending = allPurchases.value.filter(p => p.purchase.status === 'pending')

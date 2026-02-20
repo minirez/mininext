@@ -636,15 +636,18 @@ partnerSchema.methods.canUseWebDesign = async function () {
 // ───────────────────── Remaining days ─────────────────────
 
 partnerSchema.methods.getRemainingDays = function () {
-  // Trial remaining
+  // Active purchase takes priority (matches calculateSubscriptionStatus order)
+  const purchase = this.getCurrentPurchase()
+  if (purchase?.period?.endDate) {
+    const diff = new Date(purchase.period.endDate) - new Date()
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  }
+  // Fall back to trial remaining
   if (this.isInTrial()) {
     const diff = new Date(this.subscription.trial.endDate) - new Date()
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
   }
-  const purchase = this.getCurrentPurchase()
-  if (!purchase?.period?.endDate) return null
-  const diff = new Date(purchase.period.endDate) - new Date()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  return null
 }
 
 partnerSchema.methods.getGracePeriodRemainingDays = function () {

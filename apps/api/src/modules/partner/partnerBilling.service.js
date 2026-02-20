@@ -371,22 +371,6 @@ export const markPurchaseAsPaid = asyncHandler(async (req, res) => {
 })
 
 /**
- * Backfill missing fields on legacy purchases so Mongoose validation passes.
- * Old purchases may lack `type`, have `USD` currency, or miss period dates.
- */
-function backfillLegacyPurchases(partner) {
-  if (!partner.subscription?.purchases?.length) return
-  for (const p of partner.subscription.purchases) {
-    if (!p.type) {
-      p.type = p.service ? 'service_purchase' : 'package_subscription'
-    }
-    if (p.price && p.price.currency && p.price.currency !== 'EUR') {
-      p.price.currency = 'EUR'
-    }
-  }
-}
-
-/**
  * Cancel purchase
  */
 export const cancelPurchase = asyncHandler(async (req, res) => {
@@ -405,7 +389,6 @@ export const cancelPurchase = asyncHandler(async (req, res) => {
   purchase.cancelledBy = req.user._id
   purchase.cancellationReason = reason
 
-  backfillLegacyPurchases(partner)
   partner.subscription.status = partner.calculateSubscriptionStatus()
   await partner.save()
 
@@ -434,7 +417,6 @@ export const deletePurchase = asyncHandler(async (req, res) => {
   }
 
   purchase.status = 'deleted'
-  backfillLegacyPurchases(partner)
   await partner.save()
 
   logger.info(`Purchase ${purchaseId} soft-deleted for partner ${partner._id}`)
