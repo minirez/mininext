@@ -64,7 +64,6 @@ export const create = asyncHandler(async (req, res) => {
   const {
     name,
     description,
-    slug,
     services,
     overridePrice,
     billingPeriod,
@@ -76,10 +75,10 @@ export const create = asyncHandler(async (req, res) => {
     badge,
     isPublic
   } = req.body
+  let { slug } = req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
 
-  // Auto-generate slug from English name if not provided
   const finalSlug = slug || slugify(name.en)
   if (!finalSlug) throw new BadRequestError('SLUG_REQUIRED')
 
@@ -107,7 +106,6 @@ export const create = asyncHandler(async (req, res) => {
   await recalcPrice(pkg)
   await pkg.save()
 
-  // Populate services before returning
   await pkg.populate('services', 'name slug price billingPeriod entitlements isActive')
 
   logger.info(`SubscriptionPackage created: ${pkg.slug} (${pkg._id})`)
@@ -145,7 +143,6 @@ export const update = asyncHandler(async (req, res) => {
     }
   }
 
-  // Validate services
   if (req.body.services !== undefined && pkg.services?.length) {
     const count = await SubscriptionService.countDocuments({ _id: { $in: pkg.services } })
     if (count !== pkg.services.length) throw new BadRequestError('INVALID_SERVICE_IDS')

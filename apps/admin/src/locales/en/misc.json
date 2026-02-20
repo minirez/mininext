@@ -617,7 +617,21 @@
     "paymentStatus": "Payment Status",
     "paymentCompleted": "Completed",
     "paymentPending": "Awaiting Payment",
-    "statusLabel": "Status"
+    "statusLabel": "Status",
+    "changePackage": "Change Package / Service",
+    "selectPackage": "Select Package",
+    "selectService": "Select Service",
+    "selectDate": "Select date",
+    "periodAndPricing": "Period & Pricing",
+    "billingPeriod": "Billing Period",
+    "paymentDetails": "Payment Details",
+    "notSet": "Not set",
+    "notesPlaceholder": "Add admin notes...",
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "one_time": "One-time"
+    }
   },
   "misc": {
     "search": "Search",

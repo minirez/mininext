@@ -39,12 +39,12 @@ export const getById = asyncHandler(async (req, res) => {
  * Create a new service (admin)
  */
 export const create = asyncHandler(async (req, res) => {
-  const { name, description, slug, price, billingPeriod, entitlements, sortOrder, category, icon } =
+  const { name, description, price, billingPeriod, entitlements, sortOrder, category, icon } =
     req.body
+  let { slug } = req.body
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
 
-  // Auto-generate slug from English name if not provided
   const finalSlug = slug || slugify(name.en)
   if (!finalSlug) throw new BadRequestError('SLUG_REQUIRED')
 
@@ -107,7 +107,6 @@ export const remove = asyncHandler(async (req, res) => {
   const service = await SubscriptionService.findById(req.params.id)
   if (!service) throw new NotFoundError('SERVICE_NOT_FOUND')
 
-  // Lazy-import to avoid circular dep
   const SubscriptionPackage = (await import('#modules/subscriptions/subscription-package.model.js'))
     .default
 

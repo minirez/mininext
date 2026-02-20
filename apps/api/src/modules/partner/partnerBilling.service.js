@@ -223,7 +223,7 @@ export const addPurchase = asyncHandler(async (req, res) => {
 })
 
 /**
- * Update existing purchase
+ * Update existing purchase (admin can also change the package/service)
  */
 export const updatePurchase = asyncHandler(async (req, res) => {
   const partner = await Partner.findById(req.params.id)
@@ -237,7 +237,10 @@ export const updatePurchase = asyncHandler(async (req, res) => {
     billingPeriod,
     paymentMethod,
     paymentReference,
-    paymentNotes
+    paymentNotes,
+    packageId,
+    serviceId,
+    status: newStatus
   } = req.body
 
   const purchase = partner.subscription?.purchases?.find(p => p._id.toString() === purchaseId)
@@ -247,11 +250,32 @@ export const updatePurchase = asyncHandler(async (req, res) => {
     throw new BadRequestError('PURCHASE_CANNOT_BE_EDITED')
   }
 
+  if (packageId && purchase.type === 'package_subscription') {
+    const pkg = await SubscriptionPackage.findById(packageId)
+    if (!pkg) throw new NotFoundError('PACKAGE_NOT_FOUND')
+    purchase.package = pkg._id
+    purchase.label = { tr: pkg.name.tr, en: pkg.name.en }
+    if (amount === undefined) purchase.price.amount = pkg.price
+  }
+
+  if (serviceId && purchase.type === 'service_purchase') {
+    const svc = await SubscriptionService.findById(serviceId)
+    if (!svc) throw new NotFoundError('SERVICE_NOT_FOUND')
+    purchase.service = svc._id
+    purchase.label = { tr: svc.name.tr, en: svc.name.en }
+    if (amount === undefined) purchase.price.amount = svc.price
+  }
+
   if (startDate) purchase.period.startDate = new Date(startDate)
   if (endDate) purchase.period.endDate = new Date(endDate)
   if (amount !== undefined) purchase.price.amount = amount
   purchase.price.currency = 'EUR'
   if (billingPeriod) purchase.billingPeriod = billingPeriod
+
+  if (newStatus && ['pending', 'active'].includes(newStatus)) {
+    purchase.status = newStatus
+    if (newStatus === 'active') partner.subscription.status = 'active'
+  }
 
   if (paymentMethod || paymentReference || paymentNotes) {
     if (!purchase.payment) purchase.payment = {}
@@ -271,6 +295,8 @@ export const updatePurchase = asyncHandler(async (req, res) => {
       purchase: {
         _id: purchase._id,
         type: purchase.type,
+        package: purchase.package,
+        service: purchase.service,
         label: purchase.label,
         period: purchase.period,
         price: purchase.price,

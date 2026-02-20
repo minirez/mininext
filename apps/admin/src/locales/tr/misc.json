@@ -590,7 +590,21 @@
     "paymentStatus": "Ödeme Durumu",
     "paymentCompleted": "Tamamlandı",
     "paymentPending": "Ödeme Bekliyor",
-    "statusLabel": "Durum"
+    "statusLabel": "Durum",
+    "changePackage": "Paket / Hizmet Değiştir",
+    "selectPackage": "Paket Seçin",
+    "selectService": "Hizmet Seçin",
+    "selectDate": "Tarih seçin",
+    "periodAndPricing": "Dönem ve Fiyatlandırma",
+    "billingPeriod": "Faturalama Dönemi",
+    "paymentDetails": "Ödeme Detayları",
+    "notSet": "Belirlenmedi",
+    "notesPlaceholder": "Admin notu ekleyin...",
+    "billing": {
+      "monthly": "Aylık",
+      "yearly": "Yıllık",
+      "one_time": "Tek Seferlik"
+    }
   },
   "misc": {
     "search": "Ara",

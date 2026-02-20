@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Module Navigation -->
     <ModuleNavigation :items="navItems" color="purple" />
 
     <div class="p-6">
@@ -305,21 +304,39 @@
 
       <!-- Mark as Paid Modal -->
       <Modal v-model="showMarkPaidModal" :title="$t('partnerSubscriptions.markAsPaid')" size="md">
-        <div v-if="selectedItem" class="space-y-4">
-          <div class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-            <div class="font-medium text-gray-900 dark:text-white">
-              {{ selectedItem.partner.companyName }}
-            </div>
-            <div class="text-sm text-gray-500 dark:text-slate-400">
-              {{ selectedItem.purchase.label?.tr || selectedItem.purchase.label?.en }} – €{{
-                (selectedItem.purchase.price?.amount || 0).toFixed(2)
-              }}
+        <div v-if="selectedItem" class="space-y-5">
+          <!-- Partner & Purchase Info -->
+          <div
+            class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800/40"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center"
+              >
+                <span class="material-icons text-green-600 dark:text-green-400">payments</span>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900 dark:text-white">
+                  {{ selectedItem.partner.companyName }}
+                </div>
+                <div class="text-sm text-gray-600 dark:text-slate-400">
+                  {{ selectedItem.purchase.label?.tr || selectedItem.purchase.label?.en }}
+                  <span class="font-semibold text-green-700 dark:text-green-400">
+                    – €{{ (selectedItem.purchase.price?.amount || 0).toFixed(2) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.paymentDate') }} *</label>
-              <input v-model="markPaidForm.paymentDate" type="date" class="form-input" required />
+              <DatePicker
+                v-model="markPaidForm.paymentDate"
+                :label="$t('partnerSubscriptions.paymentDate')"
+                required
+                :placeholder="$t('partnerSubscriptions.selectDate')"
+              />
             </div>
             <div>
               <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
@@ -356,40 +373,278 @@
         </template>
       </Modal>
 
-      <!-- Edit Modal -->
+      <!-- Edit Modal (Enriched) -->
       <Modal v-model="showEditModal" :title="$t('partnerSubscriptions.editPackage')" size="lg">
-        <div v-if="selectedItem" class="space-y-4">
-          <div class="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-            <div class="font-medium text-gray-900 dark:text-white">
-              {{ selectedItem.partner.companyName }}
-            </div>
-            <div class="text-sm text-gray-500 dark:text-slate-400">
-              {{ selectedItem.purchase.label?.tr || selectedItem.purchase.label?.en }}
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.startDate') }}</label>
-              <input v-model="editForm.startDate" type="date" class="form-input" />
-            </div>
-            <div>
-              <label class="form-label">{{ $t('partnerSubscriptions.endDate') }}</label>
-              <input v-model="editForm.endDate" type="date" class="form-input" />
-            </div>
-          </div>
-          <div>
-            <label class="form-label">{{ $t('partnerSubscriptions.amount') }} (EUR)</label>
-            <div class="relative">
-              <span
-                class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm font-medium"
-                >€</span
+        <div v-if="selectedItem" class="space-y-5">
+          <!-- Partner Info Header -->
+          <div
+            class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-800/40"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"
               >
-              <input
-                v-model.number="editForm.amount"
-                type="number"
-                step="0.01"
-                class="form-input pl-8"
+                <span class="material-icons text-purple-600 dark:text-purple-400">business</span>
+              </div>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900 dark:text-white">
+                  {{ selectedItem.partner.companyName }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-slate-400">
+                  {{ selectedItem.partner.email }}
+                </div>
+              </div>
+              <span
+                class="badge"
+                :class="{
+                  'badge-warning': selectedItem.purchase.status === 'pending',
+                  'badge-success': selectedItem.purchase.status === 'active'
+                }"
+              >
+                {{ $t(`partnerSubscriptions.status.${selectedItem.purchase.status}`) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Package / Service Change -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-icons text-indigo-500 text-lg">swap_horiz</span>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.changePackage') }}
+              </h4>
+            </div>
+
+            <div v-if="selectedItem.purchase.type === 'package_subscription'">
+              <label class="form-label">{{ $t('partnerSubscriptions.selectPackage') }}</label>
+              <div v-if="catalogLoading" class="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                {{ $t('common.loading') }}
+              </div>
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  v-for="pkg in availablePackages"
+                  :key="pkg._id"
+                  type="button"
+                  class="flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left"
+                  :class="
+                    editForm.packageId === pkg._id
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500'
+                      : 'border-gray-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-700'
+                  "
+                  @click="selectPackage(pkg)"
+                >
+                  <div
+                    class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    :style="{ backgroundColor: (pkg.color || '#6366f1') + '20' }"
+                  >
+                    <span class="material-icons text-lg" :style="{ color: pkg.color || '#6366f1' }">
+                      {{ pkg.icon || 'inventory_2' }}
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm text-gray-900 dark:text-white truncate">
+                      {{ pkg.name?.tr || pkg.name?.en }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      €{{
+                        (pkg.price || pkg.overridePrice || pkg.calculatedPrice || 0).toFixed(2)
+                      }}
+                      / {{ $t(`partnerSubscriptions.billing.${pkg.billingPeriod || 'yearly'}`) }}
+                    </div>
+                  </div>
+                  <span
+                    v-if="editForm.packageId === pkg._id"
+                    class="material-icons text-purple-500 text-lg flex-shrink-0"
+                  >
+                    check_circle
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div v-else>
+              <label class="form-label">{{ $t('partnerSubscriptions.selectService') }}</label>
+              <div v-if="catalogLoading" class="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                {{ $t('common.loading') }}
+              </div>
+              <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  v-for="svc in availableServices"
+                  :key="svc._id"
+                  type="button"
+                  class="flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left"
+                  :class="
+                    editForm.serviceId === svc._id
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+                      : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700'
+                  "
+                  @click="selectService(svc)"
+                >
+                  <div
+                    class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0"
+                  >
+                    <span class="material-icons text-blue-600 dark:text-blue-400 text-lg">
+                      {{ svc.icon || 'extension' }}
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm text-gray-900 dark:text-white truncate">
+                      {{ svc.name?.tr || svc.name?.en }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      €{{ (svc.price || 0).toFixed(2) }} /
+                      {{ $t(`partnerSubscriptions.billing.${svc.billingPeriod || 'yearly'}`) }}
+                    </div>
+                  </div>
+                  <span
+                    v-if="editForm.serviceId === svc._id"
+                    class="material-icons text-blue-500 text-lg flex-shrink-0"
+                  >
+                    check_circle
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period & Pricing -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-icons text-indigo-500 text-lg">calendar_month</span>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.periodAndPricing') }}
+              </h4>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <DatePicker
+                v-model="editForm.startDate"
+                :label="$t('partnerSubscriptions.startDate')"
+                :placeholder="$t('partnerSubscriptions.selectDate')"
               />
+              <DatePicker
+                v-model="editForm.endDate"
+                :label="$t('partnerSubscriptions.endDate')"
+                :min-date="editForm.startDate"
+                :placeholder="$t('partnerSubscriptions.selectDate')"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="form-label">{{ $t('partnerSubscriptions.amount') }} (EUR)</label>
+                <div class="relative">
+                  <span
+                    class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 text-sm font-medium"
+                    >€</span
+                  >
+                  <input
+                    v-model.number="editForm.amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="form-input pl-8"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="form-label">{{ $t('partnerSubscriptions.billingPeriod') }}</label>
+                <select v-model="editForm.billingPeriod" class="form-input">
+                  <option value="monthly">{{ $t('partnerSubscriptions.billing.monthly') }}</option>
+                  <option value="yearly">{{ $t('partnerSubscriptions.billing.yearly') }}</option>
+                  <option value="one_time">
+                    {{ $t('partnerSubscriptions.billing.one_time') }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Change -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-icons text-indigo-500 text-lg">toggle_on</span>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.statusLabel') }}
+              </h4>
+            </div>
+            <div class="flex gap-3">
+              <button
+                type="button"
+                class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
+                :class="
+                  editForm.status === 'pending'
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                    : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:border-amber-300'
+                "
+                @click="editForm.status = 'pending'"
+              >
+                <span class="material-icons text-lg">pending</span>
+                {{ $t('partnerSubscriptions.status.pending') }}
+              </button>
+              <button
+                type="button"
+                class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all"
+                :class="
+                  editForm.status === 'active'
+                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                    : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:border-green-300'
+                "
+                @click="editForm.status = 'active'"
+              >
+                <span class="material-icons text-lg">check_circle</span>
+                {{ $t('partnerSubscriptions.status.active') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Payment Details -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-icons text-indigo-500 text-lg">receipt_long</span>
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.paymentDetails') }}
+              </h4>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
+                <select v-model="editForm.paymentMethod" class="form-input">
+                  <option value="">{{ $t('partnerSubscriptions.notSet') }}</option>
+                  <option value="bank_transfer">
+                    {{ $t('partners.subscription.methods.bankTransfer') }}
+                  </option>
+                  <option value="credit_card">
+                    {{ $t('partners.subscription.methods.creditCard') }}
+                  </option>
+                  <option value="payment_link">Payment Link</option>
+                  <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
+                  <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">{{ $t('partnerSubscriptions.reference') }}</label>
+                <input v-model="editForm.paymentReference" type="text" class="form-input" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="form-label">{{ $t('partnerSubscriptions.notes') }}</label>
+              <textarea
+                v-model="editForm.paymentNotes"
+                rows="2"
+                class="form-input"
+                :placeholder="$t('partnerSubscriptions.notesPlaceholder')"
+              ></textarea>
             </div>
           </div>
         </div>
@@ -398,8 +653,14 @@
             {{ $t('common.cancel') }}
           </button>
           <button class="btn-primary" :disabled="processing" @click="handleUpdate">
-            <span v-if="processing">{{ $t('common.loading') }}</span>
-            <span v-else>{{ $t('common.save') }}</span>
+            <span v-if="processing" class="flex items-center gap-2">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              {{ $t('common.loading') }}
+            </span>
+            <span v-else class="flex items-center gap-2">
+              <span class="material-icons text-lg">save</span>
+              {{ $t('common.save') }}
+            </span>
           </button>
         </template>
       </Modal>
@@ -436,7 +697,10 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/components/common/Modal.vue'
 import ModuleNavigation from '@/components/common/ModuleNavigation.vue'
 import ConfirmDialog from '@/components/ui/feedback/ConfirmDialog.vue'
+import DatePicker from '@/components/ui/date/DatePicker.vue'
 import partnerService from '@/services/partnerService'
+import subscriptionPackageService from '@/services/subscriptionPackageService'
+import subscriptionServiceService from '@/services/subscriptionServiceService'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
@@ -475,6 +739,10 @@ const showMarkPaidModal = ref(false)
 const showEditModal = ref(false)
 const selectedItem = ref(null)
 
+const catalogLoading = ref(false)
+const availablePackages = ref([])
+const availableServices = ref([])
+
 const markPaidForm = ref({
   paymentDate: new Date().toISOString().split('T')[0],
   paymentMethod: 'bank_transfer',
@@ -482,7 +750,18 @@ const markPaidForm = ref({
   paymentNotes: ''
 })
 
-const editForm = ref({ startDate: '', endDate: '', amount: null })
+const editForm = ref({
+  startDate: '',
+  endDate: '',
+  amount: null,
+  billingPeriod: 'yearly',
+  packageId: null,
+  serviceId: null,
+  status: 'pending',
+  paymentMethod: '',
+  paymentReference: '',
+  paymentNotes: ''
+})
 
 const stats = computed(() => {
   const pending = allPurchases.value.filter(p => p.purchase.status === 'pending')
@@ -524,6 +803,22 @@ const fetchAllPurchases = async () => {
   }
 }
 
+const fetchCatalog = async () => {
+  catalogLoading.value = true
+  try {
+    const [pkgRes, svcRes] = await Promise.all([
+      subscriptionPackageService.getActivePackages(),
+      subscriptionServiceService.getActiveServices()
+    ])
+    availablePackages.value = pkgRes.data || []
+    availableServices.value = svcRes.data || []
+  } catch {
+    // catalog load is non-critical
+  } finally {
+    catalogLoading.value = false
+  }
+}
+
 const formatDate = date => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('tr-TR')
@@ -540,15 +835,39 @@ const openMarkPaidModal = item => {
   showMarkPaidModal.value = true
 }
 
-const openEditModal = item => {
+const openEditModal = async item => {
   selectedItem.value = item
   const fmt = d => (d ? new Date(d).toISOString().split('T')[0] : '')
   editForm.value = {
     startDate: fmt(item.purchase.period?.startDate),
     endDate: fmt(item.purchase.period?.endDate),
-    amount: item.purchase.price?.amount
+    amount: item.purchase.price?.amount,
+    billingPeriod: item.purchase.billingPeriod || 'yearly',
+    packageId: item.purchase.package || null,
+    serviceId: item.purchase.service || null,
+    status: item.purchase.status,
+    paymentMethod: item.purchase.payment?.method || '',
+    paymentReference: item.purchase.payment?.reference || '',
+    paymentNotes: item.purchase.payment?.notes || ''
   }
   showEditModal.value = true
+
+  if (availablePackages.value.length === 0 && availableServices.value.length === 0) {
+    await fetchCatalog()
+  }
+}
+
+const selectPackage = pkg => {
+  editForm.value.packageId = pkg._id
+  const price = pkg.overridePrice != null ? pkg.overridePrice : pkg.calculatedPrice
+  editForm.value.amount = price || 0
+  editForm.value.billingPeriod = pkg.billingPeriod || 'yearly'
+}
+
+const selectService = svc => {
+  editForm.value.serviceId = svc._id
+  editForm.value.amount = svc.price || 0
+  editForm.value.billingPeriod = svc.billingPeriod || 'yearly'
 }
 
 const handleMarkAsPaid = async () => {
@@ -574,10 +893,37 @@ const handleUpdate = async () => {
   if (!selectedItem.value) return
   processing.value = true
   try {
+    const payload = {
+      startDate: editForm.value.startDate,
+      endDate: editForm.value.endDate,
+      amount: editForm.value.amount,
+      billingPeriod: editForm.value.billingPeriod,
+      status: editForm.value.status,
+      paymentMethod: editForm.value.paymentMethod || undefined,
+      paymentReference: editForm.value.paymentReference || undefined,
+      paymentNotes: editForm.value.paymentNotes || undefined
+    }
+
+    if (
+      selectedItem.value.purchase.type === 'package_subscription' &&
+      editForm.value.packageId &&
+      editForm.value.packageId !== selectedItem.value.purchase.package
+    ) {
+      payload.packageId = editForm.value.packageId
+    }
+
+    if (
+      selectedItem.value.purchase.type === 'service_purchase' &&
+      editForm.value.serviceId &&
+      editForm.value.serviceId !== selectedItem.value.purchase.service
+    ) {
+      payload.serviceId = editForm.value.serviceId
+    }
+
     await partnerService.updatePurchase(
       selectedItem.value.partner._id,
       selectedItem.value.purchase._id,
-      editForm.value
+      payload
     )
     toast.success(t('partnerSubscriptions.updateSuccess'))
     showEditModal.value = false
