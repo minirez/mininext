@@ -111,9 +111,13 @@ export const getStorefront = asyncHandler(async (req, res) => {
   else if (include) {
     const projection = { _id: 1, partner: 1, updatedAt: 1 }
     include.split(',').forEach(f => {
-      projection[f.trim()] = 1
+      const field = f.trim()
+      projection[field] = 1
     })
     query = query.select(projection)
+    if (include.includes('pages')) query = query.select('+pages')
+  } else {
+    query = query.select('+pages')
   }
 
   let storefront = await query.lean()

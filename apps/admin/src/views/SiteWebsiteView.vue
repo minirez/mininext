@@ -109,6 +109,7 @@
                 :storefront="storefront"
                 :saving="saving"
                 @save="handlePageSave"
+                @update="handlePageUpdate"
                 @delete="handlePageDelete"
               />
             </div>
@@ -233,6 +234,15 @@ const handlePublish = async () => {
 
 const handlePageSave = async data => {
   await executeSave(() => websiteService.savePage(data), {
+    successMessage: 'website.pageSaved',
+    onSuccess: async () => {
+      await fetchStorefront()
+    }
+  })
+}
+
+const handlePageUpdate = async ({ originalUrl, ...data }) => {
+  await executeSave(() => websiteService.updatePage(originalUrl, data), {
     successMessage: 'website.pageSaved',
     onSuccess: async () => {
       await fetchStorefront()

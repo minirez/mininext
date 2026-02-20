@@ -67,6 +67,8 @@ export const discardDraft = () =>
 
 export const savePage = data =>
   request('Save page', () => apiClient.post('/storefronts/pages', data))
+export const updatePage = (url, data) =>
+  request('Update page', () => apiClient.put(`/storefronts/pages/${encodeURIComponent(url)}`, data))
 export const deletePage = url =>
   request('Delete page', () => apiClient.delete(`/storefronts/pages/${encodeURIComponent(url)}`))
 
@@ -124,6 +126,7 @@ export default {
   publishDraft,
   discardDraft,
   savePage,
+  updatePage,
   deletePage,
   uploadPhoto,
   deletePhoto,
