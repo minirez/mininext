@@ -371,6 +371,18 @@ export const markPurchaseAsPaid = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Backfill missing `type` on legacy purchases so Mongoose validation passes.
+ */
+function backfillPurchaseTypes(partner) {
+  if (!partner.subscription?.purchases?.length) return
+  for (const p of partner.subscription.purchases) {
+    if (!p.type) {
+      p.type = p.service ? 'service_purchase' : 'package_subscription'
+    }
+  }
+}
+
+/**
  * Cancel purchase
  */
 export const cancelPurchase = asyncHandler(async (req, res) => {
@@ -389,6 +401,7 @@ export const cancelPurchase = asyncHandler(async (req, res) => {
   purchase.cancelledBy = req.user._id
   purchase.cancellationReason = reason
 
+  backfillPurchaseTypes(partner)
   partner.subscription.status = partner.calculateSubscriptionStatus()
   await partner.save()
 
@@ -417,6 +430,7 @@ export const deletePurchase = asyncHandler(async (req, res) => {
   }
 
   purchase.status = 'deleted'
+  backfillPurchaseTypes(partner)
   await partner.save()
 
   logger.info(`Purchase ${purchaseId} soft-deleted for partner ${partner._id}`)

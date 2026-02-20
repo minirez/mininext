@@ -85,38 +85,84 @@
       <div
         class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-6"
       >
-        <div class="flex flex-wrap items-center gap-4">
-          <div class="flex-1 min-w-[200px]">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search -->
+          <div class="flex-1 min-w-[220px] relative">
+            <span
+              class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg"
+            >
+              search
+            </span>
             <input
               v-model="filters.search"
               type="text"
-              class="form-input w-full"
+              class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
               :placeholder="$t('partnerSubscriptions.searchPlaceholder')"
             />
           </div>
-          <select v-model="filters.status" class="form-input w-40">
-            <option value="">{{ $t('partnerSubscriptions.allStatuses') }}</option>
-            <option value="pending">{{ $t('partnerSubscriptions.status.pending') }}</option>
-            <option value="active">{{ $t('partnerSubscriptions.status.active') }}</option>
-            <option value="expired">{{ $t('partnerSubscriptions.status.expired') }}</option>
-            <option value="cancelled">{{ $t('partnerSubscriptions.status.cancelled') }}</option>
-            <option v-if="filters.showDeleted" value="deleted">
-              {{ $t('partnerSubscriptions.status.deleted') }}
-            </option>
-          </select>
-          <select v-model="filters.type" class="form-input w-48">
-            <option value="">{{ $t('partnerSubscriptions.allTypes') || 'All Types' }}</option>
-            <option value="package_subscription">{{ $t('subscriptionPackages.title') }}</option>
-            <option value="service_purchase">{{ $t('subscriptionServices.title') }}</option>
-          </select>
+
+          <!-- Status Filter -->
+          <div class="relative">
+            <span
+              class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+            >
+              filter_list
+            </span>
+            <select
+              v-model="filters.status"
+              class="appearance-none pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-sm text-gray-700 dark:text-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors min-w-[160px]"
+            >
+              <option value="">{{ $t('partnerSubscriptions.allStatuses') }}</option>
+              <option value="pending">{{ $t('partnerSubscriptions.status.pending') }}</option>
+              <option value="active">{{ $t('partnerSubscriptions.status.active') }}</option>
+              <option value="expired">{{ $t('partnerSubscriptions.status.expired') }}</option>
+              <option value="cancelled">{{ $t('partnerSubscriptions.status.cancelled') }}</option>
+              <option v-if="filters.showDeleted" value="deleted">
+                {{ $t('partnerSubscriptions.status.deleted') }}
+              </option>
+            </select>
+            <span
+              class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+            >
+              expand_more
+            </span>
+          </div>
+
+          <!-- Type Filter -->
+          <div class="relative">
+            <span
+              class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+            >
+              category
+            </span>
+            <select
+              v-model="filters.type"
+              class="appearance-none pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-sm text-gray-700 dark:text-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors min-w-[180px]"
+            >
+              <option value="">{{ $t('partnerSubscriptions.allTypes') }}</option>
+              <option value="package_subscription">{{ $t('subscriptionPackages.title') }}</option>
+              <option value="service_purchase">{{ $t('subscriptionServices.title') }}</option>
+            </select>
+            <span
+              class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+            >
+              expand_more
+            </span>
+          </div>
+
+          <!-- Show Deleted Toggle -->
           <label
-            class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 cursor-pointer select-none"
+            class="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-pointer select-none transition-colors text-sm"
+            :class="
+              filters.showDeleted
+                ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-500'
+            "
           >
-            <input
-              v-model="filters.showDeleted"
-              type="checkbox"
-              class="rounded border-gray-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
-            />
+            <input v-model="filters.showDeleted" type="checkbox" class="sr-only" />
+            <span class="material-icons text-lg">
+              {{ filters.showDeleted ? 'visibility' : 'visibility_off' }}
+            </span>
             {{ $t('partnerSubscriptions.showDeleted') }}
           </label>
         </div>
@@ -340,17 +386,32 @@
             </div>
             <div>
               <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
-              <select v-model="markPaidForm.paymentMethod" class="form-input">
-                <option value="bank_transfer">
-                  {{ $t('partners.subscription.methods.bankTransfer') }}
-                </option>
-                <option value="credit_card">
-                  {{ $t('partners.subscription.methods.creditCard') }}
-                </option>
-                <option value="payment_link">Payment Link</option>
-                <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
-                <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
-              </select>
+              <div class="relative">
+                <span
+                  class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                >
+                  payment
+                </span>
+                <select
+                  v-model="markPaidForm.paymentMethod"
+                  class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
+                >
+                  <option value="bank_transfer">
+                    {{ $t('partners.subscription.methods.bankTransfer') }}
+                  </option>
+                  <option value="credit_card">
+                    {{ $t('partners.subscription.methods.creditCard') }}
+                  </option>
+                  <option value="payment_link">Payment Link</option>
+                  <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
+                  <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
+                </select>
+                <span
+                  class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                >
+                  expand_more
+                </span>
+              </div>
             </div>
           </div>
           <div>
@@ -555,13 +616,30 @@
               </div>
               <div>
                 <label class="form-label">{{ $t('partnerSubscriptions.billingPeriod') }}</label>
-                <select v-model="editForm.billingPeriod" class="form-input">
-                  <option value="monthly">{{ $t('partnerSubscriptions.billing.monthly') }}</option>
-                  <option value="yearly">{{ $t('partnerSubscriptions.billing.yearly') }}</option>
-                  <option value="one_time">
-                    {{ $t('partnerSubscriptions.billing.one_time') }}
-                  </option>
-                </select>
+                <div class="relative">
+                  <span
+                    class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                  >
+                    event_repeat
+                  </span>
+                  <select
+                    v-model="editForm.billingPeriod"
+                    class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
+                  >
+                    <option value="monthly">
+                      {{ $t('partnerSubscriptions.billing.monthly') }}
+                    </option>
+                    <option value="yearly">{{ $t('partnerSubscriptions.billing.yearly') }}</option>
+                    <option value="one_time">
+                      {{ $t('partnerSubscriptions.billing.one_time') }}
+                    </option>
+                  </select>
+                  <span
+                    class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                  >
+                    expand_more
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -619,18 +697,33 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="form-label">{{ $t('partnerSubscriptions.paymentMethod') }}</label>
-                <select v-model="editForm.paymentMethod" class="form-input">
-                  <option value="">{{ $t('partnerSubscriptions.notSet') }}</option>
-                  <option value="bank_transfer">
-                    {{ $t('partners.subscription.methods.bankTransfer') }}
-                  </option>
-                  <option value="credit_card">
-                    {{ $t('partners.subscription.methods.creditCard') }}
-                  </option>
-                  <option value="payment_link">Payment Link</option>
-                  <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
-                  <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
-                </select>
+                <div class="relative">
+                  <span
+                    class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                  >
+                    payment
+                  </span>
+                  <select
+                    v-model="editForm.paymentMethod"
+                    class="appearance-none w-full pl-10 pr-9 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-colors"
+                  >
+                    <option value="">{{ $t('partnerSubscriptions.notSet') }}</option>
+                    <option value="bank_transfer">
+                      {{ $t('partners.subscription.methods.bankTransfer') }}
+                    </option>
+                    <option value="credit_card">
+                      {{ $t('partners.subscription.methods.creditCard') }}
+                    </option>
+                    <option value="payment_link">Payment Link</option>
+                    <option value="cash">{{ $t('partners.subscription.methods.cash') }}</option>
+                    <option value="other">{{ $t('partners.subscription.methods.other') }}</option>
+                  </select>
+                  <span
+                    class="material-icons absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-lg pointer-events-none"
+                  >
+                    expand_more
+                  </span>
+                </div>
               </div>
               <div>
                 <label class="form-label">{{ $t('partnerSubscriptions.reference') }}</label>

@@ -394,7 +394,7 @@ const partnerSchema = new mongoose.Schema(
           type: {
             type: String,
             enum: ['package_subscription', 'service_purchase'],
-            required: true
+            default: 'package_subscription'
           },
 
           // Reference to the catalog entity
@@ -591,30 +591,29 @@ partnerSchema.methods.calculateSubscriptionStatus = function () {
   if (sub?.status === 'cancelled') return 'cancelled'
   if (sub?.status === 'suspended') return 'suspended'
 
-  // Trial check
+  // Active purchase takes priority over trial
+  const purchase = this.getCurrentPurchase()
+  if (purchase) {
+    const now = new Date()
+    const endDate = new Date(purchase.period.endDate)
+
+    if (now <= endDate) return 'active'
+
+    const isYearly = purchase.billingPeriod === 'yearly'
+    const overdueDays = isYearly && purchase.status === 'active' ? 3 : 0
+    const overdueEnd = new Date(endDate)
+    overdueEnd.setDate(overdueEnd.getDate() + overdueDays)
+    if (now <= overdueEnd) return 'active'
+
+    const gracePeriodEnd = new Date(overdueEnd)
+    gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 15)
+    if (now <= gracePeriodEnd) return 'grace_period'
+  }
+
+  // Fall back to trial if no active purchase
   if (this.isInTrial()) return 'trial'
 
-  const purchase = this.getCurrentPurchase()
-  if (!purchase) return 'expired'
-
-  const now = new Date()
-  const endDate = new Date(purchase.period.endDate)
-
-  if (now <= endDate) return 'active'
-
-  // Yearly paid users get 3 extra overdue days (365 + 3)
-  const isYearly = purchase.billingPeriod === 'yearly'
-  const overdueDays = isYearly && purchase.status === 'active' ? 3 : 0
-  const overdueEnd = new Date(endDate)
-  overdueEnd.setDate(overdueEnd.getDate() + overdueDays)
-  if (now <= overdueEnd) return 'active'
-
-  // Grace period (15 days after end + overdue)
-  const gracePeriodEnd = new Date(overdueEnd)
-  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 15)
-  if (now <= gracePeriodEnd) return 'grace_period'
-
-  return 'expired'
+  return purchase ? 'expired' : 'expired'
 }
 
 partnerSchema.methods.isSubscriptionActive = function () {
