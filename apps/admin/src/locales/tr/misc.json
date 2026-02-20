@@ -604,6 +604,23 @@
       "monthly": "Aylık",
       "yearly": "Yıllık",
       "one_time": "Tek Seferlik"
+    },
+    "dashboard": {
+      "totalEarned": "Toplam Kazanç",
+      "thisYear": "Bu Yıl",
+      "collected": "Tahsilat",
+      "mrr": "Aylık Gelir (MRR)",
+      "arr": "Yıllık Projeksiyon (ARR)",
+      "pendingCollections": "Bekleyen Tahsilat",
+      "next30Days": "30 Gün İçinde",
+      "statusBreakdown": "Durum Dağılımı",
+      "total": "toplam",
+      "revenueBySubscription": "Abonelik Bazlı Gelir",
+      "upcomingRenewals": "Yaklaşan Yenilemeler",
+      "noUpcoming": "60 gün içinde yenileme yok",
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "inDays": "{days} gün içinde"
     }
   },
   "misc": {

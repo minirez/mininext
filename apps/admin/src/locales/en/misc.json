@@ -631,6 +631,23 @@
       "monthly": "Monthly",
       "yearly": "Yearly",
       "one_time": "One-time"
+    },
+    "dashboard": {
+      "totalEarned": "Total Earned",
+      "thisYear": "This Year",
+      "collected": "Collected",
+      "mrr": "Monthly Revenue (MRR)",
+      "arr": "Annual Projection (ARR)",
+      "pendingCollections": "Pending Collections",
+      "next30Days": "Due in 30 Days",
+      "statusBreakdown": "Status Breakdown",
+      "total": "total",
+      "revenueBySubscription": "Revenue by Subscription",
+      "upcomingRenewals": "Upcoming Renewals",
+      "noUpcoming": "No renewals in the next 60 days",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "in {days} days"
     }
   },
   "misc": {

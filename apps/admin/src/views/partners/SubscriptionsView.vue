@@ -3,78 +3,315 @@
     <ModuleNavigation :items="navItems" color="purple" />
 
     <div class="p-6">
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
-        >
-          <div class="flex items-center gap-3">
+      <!-- Revenue Dashboard -->
+      <div class="mb-6 space-y-4">
+        <!-- Top Row: Revenue hero + key metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Revenue Hero Card -->
+          <div
+            class="lg:col-span-1 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 text-white relative overflow-hidden"
+          >
             <div
-              class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"
-            >
-              <span class="material-icons text-amber-500">pending</span>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                {{ stats.pending }}
+              class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8"
+            ></div>
+            <div
+              class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6"
+            ></div>
+            <div class="relative">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="material-icons text-purple-200 text-lg">account_balance</span>
+                <span class="text-sm font-medium text-purple-200">{{
+                  $t('partnerSubscriptions.dashboard.totalEarned')
+                }}</span>
               </div>
-              <div class="text-sm text-gray-500 dark:text-slate-400">
-                {{ $t('partnerSubscriptions.pendingPayments') }}
+              <div class="text-3xl font-bold tracking-tight mb-3">
+                €{{ formatMoney(revenueStats.totalEarned) }}
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <div>
+                  <div class="text-purple-300">
+                    {{ $t('partnerSubscriptions.dashboard.thisYear') }}
+                  </div>
+                  <div class="font-semibold">€{{ formatMoney(revenueStats.thisYearEarned) }}</div>
+                </div>
+                <div class="w-px h-8 bg-white/20"></div>
+                <div>
+                  <div class="text-purple-300">
+                    {{ $t('partnerSubscriptions.dashboard.collected') }}
+                  </div>
+                  <div class="font-semibold">{{ revenueStats.collectionRate }}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Financial Metrics -->
+          <div class="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- MRR -->
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 flex flex-col justify-between"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <div
+                  class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"
+                >
+                  <span
+                    class="material-icons text-emerald-600 dark:text-emerald-400"
+                    style="font-size: 18px"
+                    >trending_up</span
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                  €{{ formatMoney(revenueStats.mrr) }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  {{ $t('partnerSubscriptions.dashboard.mrr') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- ARR / Annual Projection -->
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 flex flex-col justify-between"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <div
+                  class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"
+                >
+                  <span
+                    class="material-icons text-blue-600 dark:text-blue-400"
+                    style="font-size: 18px"
+                    >show_chart</span
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                  €{{ formatMoney(revenueStats.arr) }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  {{ $t('partnerSubscriptions.dashboard.arr') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Collections -->
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 flex flex-col justify-between"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <div
+                  class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"
+                >
+                  <span
+                    class="material-icons text-amber-600 dark:text-amber-400"
+                    style="font-size: 18px"
+                    >schedule</span
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                  €{{ formatMoney(revenueStats.pendingAmount) }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  {{ $t('partnerSubscriptions.dashboard.pendingCollections') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Next 30 Days -->
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 flex flex-col justify-between"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <div
+                  class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center"
+                >
+                  <span
+                    class="material-icons text-violet-600 dark:text-violet-400"
+                    style="font-size: 18px"
+                    >refresh</span
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                  €{{ formatMoney(revenueStats.next30Days) }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                  {{ $t('partnerSubscriptions.dashboard.next30Days') }}
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
-            >
-              <span class="material-icons text-green-500">check_circle</span>
+
+        <!-- Bottom Row: Status breakdown + Revenue split + Upcoming renewals -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Subscription Status Breakdown -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.dashboard.statusBreakdown') }}
+              </h3>
+              <span class="text-xs text-gray-500 dark:text-slate-400"
+                >{{ allPurchases.length }} {{ $t('partnerSubscriptions.dashboard.total') }}</span
+              >
             </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.active }}</div>
-              <div class="text-sm text-gray-500 dark:text-slate-400">
-                {{ $t('partnerSubscriptions.activePackages') }}
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                <span class="text-sm text-gray-700 dark:text-slate-300 flex-1">{{
+                  $t('partnerSubscriptions.status.active')
+                }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                  stats.active
+                }}</span>
+                <div class="w-16 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-green-500 rounded-full"
+                    :style="{ width: statusBarWidth(stats.active) }"
+                  ></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></div>
+                <span class="text-sm text-gray-700 dark:text-slate-300 flex-1">{{
+                  $t('partnerSubscriptions.status.pending')
+                }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                  stats.pending
+                }}</span>
+                <div class="w-16 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-amber-500 rounded-full"
+                    :style="{ width: statusBarWidth(stats.pending) }"
+                  ></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                <span class="text-sm text-gray-700 dark:text-slate-300 flex-1">{{
+                  $t('partnerSubscriptions.status.expired')
+                }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                  stats.expired
+                }}</span>
+                <div class="w-16 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-red-500 rounded-full"
+                    :style="{ width: statusBarWidth(stats.expired) }"
+                  ></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></div>
+                <span class="text-sm text-gray-700 dark:text-slate-300 flex-1">{{
+                  $t('partnerSubscriptions.status.cancelled')
+                }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                  stats.cancelled
+                }}</span>
+                <div class="w-16 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-gray-400 rounded-full"
+                    :style="{ width: statusBarWidth(stats.cancelled) }"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
-            >
-              <span class="material-icons text-red-500">event_busy</span>
+
+          <!-- Revenue by Subscription -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                {{ $t('partnerSubscriptions.dashboard.revenueBySubscription') }}
+              </h3>
+              <span class="text-xs text-gray-500 dark:text-slate-400"
+                >€{{ formatMoney(revenueStats.totalEarned) }}</span
+              >
             </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                {{ stats.expired }}
-              </div>
-              <div class="text-sm text-gray-500 dark:text-slate-400">
-                {{ $t('partnerSubscriptions.expiredPackages') }}
+            <div
+              v-if="revenueBySubscription.length === 0"
+              class="text-center py-4 text-sm text-gray-400 dark:text-slate-500"
+            >
+              {{ $t('partnerSubscriptions.noPurchases') }}
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="(sub, idx) in revenueBySubscription" :key="sub.label">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm text-gray-700 dark:text-slate-300 truncate flex-1 mr-2">{{
+                    sub.label
+                  }}</span>
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-xs text-gray-400 dark:text-slate-500">{{ sub.count }}x</span>
+                    <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                      >€{{ formatMoney(sub.amount) }}</span
+                    >
+                  </div>
+                </div>
+                <div
+                  class="w-full h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden"
+                >
+                  <div
+                    class="h-full rounded-full transition-all"
+                    :class="subscriptionBarColors[idx % subscriptionBarColors.length]"
+                    :style="{ width: subscriptionBarWidth(sub.amount) }"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div
-          class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4"
-        >
-          <div class="flex items-center gap-3">
+
+          <!-- Upcoming Renewals -->
+          <div
+            class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5"
+          >
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+              {{ $t('partnerSubscriptions.dashboard.upcomingRenewals') }}
+            </h3>
             <div
-              class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"
+              v-if="upcomingRenewals.length === 0"
+              class="text-center py-4 text-sm text-gray-400 dark:text-slate-500"
             >
-              <span class="material-icons text-blue-500">euro</span>
+              {{ $t('partnerSubscriptions.dashboard.noUpcoming') }}
             </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                €{{ stats.totalPending.toFixed(2) }}
-              </div>
-              <div class="text-sm text-gray-500 dark:text-slate-400">
-                {{ $t('partnerSubscriptions.pendingAmount') }}
+            <div v-else class="space-y-2.5">
+              <div
+                v-for="item in upcomingRenewals"
+                :key="item.purchase._id"
+                class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer"
+                @click="goToPartner(item.partner._id)"
+              >
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                >
+                  {{ getInitials(item.partner.companyName) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {{ item.partner.companyName }}
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-slate-400">
+                    {{ item.purchase.label?.tr || item.purchase.label?.en }}
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                    €{{ (item.purchase.price?.amount || 0).toFixed(0) }}
+                  </div>
+                  <div class="text-xs" :class="renewalUrgencyClass(item)">
+                    {{ formatRenewalDate(item) }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -823,9 +1060,135 @@ const stats = computed(() => {
     pending: pending.length,
     active: allPurchases.value.filter(p => p.purchase.status === 'active').length,
     expired: allPurchases.value.filter(p => p.purchase.status === 'expired').length,
+    cancelled: allPurchases.value.filter(p => p.purchase.status === 'cancelled').length,
     totalPending: pending.reduce((sum, p) => sum + (p.purchase.price?.amount || 0), 0)
   }
 })
+
+const revenueStats = computed(() => {
+  const now = new Date()
+  const yearStart = new Date(now.getFullYear(), 0, 1)
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+  const paid = allPurchases.value.filter(p => p.purchase.payment?.date)
+  const active = allPurchases.value.filter(p => p.purchase.status === 'active')
+  const pending = allPurchases.value.filter(p => p.purchase.status === 'pending')
+
+  const totalEarned = paid.reduce((s, p) => s + (p.purchase.price?.amount || 0), 0)
+
+  const thisYearEarned = paid
+    .filter(p => new Date(p.purchase.payment.date) >= yearStart)
+    .reduce((s, p) => s + (p.purchase.price?.amount || 0), 0)
+
+  const allRevenue = allPurchases.value.reduce((s, p) => s + (p.purchase.price?.amount || 0), 0)
+  const collectionRate = allRevenue > 0 ? Math.round((totalEarned / allRevenue) * 100) : 0
+
+  let mrr = 0
+  for (const item of active) {
+    const amt = item.purchase.price?.amount || 0
+    const bp = item.purchase.billingPeriod
+    if (bp === 'monthly') mrr += amt
+    else if (bp === 'yearly') mrr += amt / 12
+  }
+
+  const arr = mrr * 12
+
+  const pendingAmount = pending.reduce((s, p) => s + (p.purchase.price?.amount || 0), 0)
+
+  let next30Days = 0
+  for (const item of active) {
+    const endDate = item.purchase.period?.endDate ? new Date(item.purchase.period.endDate) : null
+    if (endDate && endDate >= now && endDate <= in30Days) {
+      next30Days += item.purchase.price?.amount || 0
+    }
+  }
+  for (const item of pending) {
+    next30Days += item.purchase.price?.amount || 0
+  }
+
+  return { totalEarned, thisYearEarned, collectionRate, mrr, arr, pendingAmount, next30Days }
+})
+
+const upcomingRenewals = computed(() => {
+  const now = new Date()
+  const in60Days = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
+
+  return allPurchases.value
+    .filter(item => {
+      if (item.purchase.status !== 'active') return false
+      const endDate = item.purchase.period?.endDate ? new Date(item.purchase.period.endDate) : null
+      return endDate && endDate >= now && endDate <= in60Days
+    })
+    .sort((a, b) => new Date(a.purchase.period.endDate) - new Date(b.purchase.period.endDate))
+    .slice(0, 5)
+})
+
+const formatMoney = val => {
+  if (val >= 1000)
+    return val.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return val.toFixed(2)
+}
+
+const getInitials = name => {
+  if (!name) return '?'
+  return name
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+const statusBarWidth = count => {
+  const total = allPurchases.value.length
+  if (!total) return '0%'
+  return Math.max(4, (count / total) * 100) + '%'
+}
+
+const revenueBySubscription = computed(() => {
+  const map = {}
+  for (const item of allPurchases.value) {
+    if (!item.purchase.payment?.date) continue
+    const label = item.purchase.label?.tr || item.purchase.label?.en || '-'
+    if (!map[label]) map[label] = { label, amount: 0, count: 0 }
+    map[label].amount += item.purchase.price?.amount || 0
+    map[label].count++
+  }
+  return Object.values(map)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 6)
+})
+
+const subscriptionBarColors = [
+  'bg-purple-500',
+  'bg-blue-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-500'
+]
+
+const subscriptionBarWidth = amount => {
+  const max = revenueBySubscription.value[0]?.amount || 1
+  return Math.max(4, (amount / max) * 100) + '%'
+}
+
+const formatRenewalDate = item => {
+  const endDate = new Date(item.purchase.period.endDate)
+  const now = new Date()
+  const diffDays = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+  if (diffDays <= 0) return t('partnerSubscriptions.dashboard.today')
+  if (diffDays === 1) return t('partnerSubscriptions.dashboard.tomorrow')
+  return t('partnerSubscriptions.dashboard.inDays', { days: diffDays })
+}
+
+const renewalUrgencyClass = item => {
+  const endDate = new Date(item.purchase.period.endDate)
+  const diffDays = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24))
+  if (diffDays <= 7) return 'text-red-500 dark:text-red-400 font-medium'
+  if (diffDays <= 30) return 'text-amber-500 dark:text-amber-400'
+  return 'text-gray-500 dark:text-slate-400'
+}
 
 const filteredPurchases = computed(() => {
   return allPurchases.value.filter(item => {
