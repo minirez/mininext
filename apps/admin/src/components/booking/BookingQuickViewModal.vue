@@ -218,11 +218,14 @@
                             {{ getLocalizedName(room.mealPlanName) }}
                           </p>
                         </div>
-                        <div class="flex items-center gap-1">
-                          <span
-                            class="px-1 py-0.5 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                          >
-                            {{ room.roomTypeCode }}
+                        <div class="text-right">
+                          <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{
+                              formatPrice(
+                                room.pricing?.finalTotal,
+                                bookingDetails.pricing?.currency
+                              )
+                            }}
                           </span>
                         </div>
                       </div>
@@ -239,6 +242,27 @@
                     {{ $t('booking.pricing') }}
                   </h3>
                   <div class="space-y-1">
+                    <!-- Cancellation Guarantee -->
+                    <div
+                      v-if="bookingDetails.cancellationGuarantee?.purchased"
+                      class="flex justify-between items-center"
+                    >
+                      <span
+                        class="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1"
+                      >
+                        <span class="material-icons" style="font-size: 14px">verified_user</span>
+                        {{ $t('booking.cancellationGuarantee') }}
+                        ({{ bookingDetails.cancellationGuarantee.rate }}%)
+                      </span>
+                      <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        +{{
+                          formatPrice(
+                            bookingDetails.cancellationGuarantee.amount,
+                            bookingDetails.pricing?.currency
+                          )
+                        }}
+                      </span>
+                    </div>
                     <div class="flex justify-between items-center">
                       <span class="text-sm text-gray-600 dark:text-slate-300">{{
                         $t('payment.total')

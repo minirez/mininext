@@ -52,6 +52,17 @@
         </span>
       </div>
 
+      <!-- Cancellation Guarantee -->
+      <div v-if="cancellationGuarantee?.purchased" class="flex justify-between text-sm">
+        <span class="text-blue-600 dark:text-blue-400 flex items-center gap-1">
+          <span class="material-icons text-sm">verified_user</span>
+          {{ $t('booking.cancellationGuarantee') }} ({{ cancellationGuarantee.rate }}%)
+        </span>
+        <span class="text-blue-600 dark:text-blue-400">
+          +{{ formatPrice(cancellationGuarantee.amount, currency) }}
+        </span>
+      </div>
+
       <!-- Divider -->
       <div class="border-t border-gray-200 dark:border-slate-700 my-3"></div>
 
@@ -148,6 +159,10 @@ defineProps({
   showBreakdown: {
     type: Boolean,
     default: false
+  },
+  cancellationGuarantee: {
+    type: Object,
+    default: null
   }
 })
 

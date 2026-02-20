@@ -64,7 +64,17 @@ export const cancelBooking = asyncHandler(async (req, res) => {
     }
   }
 
-  const refundAmount = (booking.payment.paidAmount || 0) * (refundPercent / 100)
+  // If cancellation guarantee purchased, override to full refund (on refundable amount)
+  if (booking.cancellationGuarantee?.purchased && refundPercent < 100) {
+    refundPercent = 100
+  }
+
+  // Deduct guarantee amount from refundable base
+  const guaranteeAmount = booking.cancellationGuarantee?.purchased
+    ? booking.cancellationGuarantee.amount || 0
+    : 0
+  const refundableAmount = (booking.payment.paidAmount || 0) - guaranteeAmount
+  const refundAmount = Math.max(0, refundableAmount * (refundPercent / 100))
 
   // Update booking
   booking.status = 'cancelled'
@@ -177,7 +187,9 @@ export const deleteBooking = asyncHandler(async (req, res) => {
   const deletedPayments = await Payment.deleteMany({ booking: id })
   const deletedPaymentLinks = await PaymentLink.deleteMany({ booking: id })
 
-  logger.info(`Cascade delete: ${deletedPayments.deletedCount} payments, ${deletedPaymentLinks.deletedCount} payment links`)
+  logger.info(
+    `Cascade delete: ${deletedPayments.deletedCount} payments, ${deletedPaymentLinks.deletedCount} payment links`
+  )
 
   // Hard delete the booking
   await Booking.findByIdAndDelete(id)

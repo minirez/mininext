@@ -4244,3 +4244,94 @@ select.form-input option {
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
+
+/* ==================== CANCELLATION GUARANTEE PACKAGE ==================== */
+.guarantee-package {
+  margin: 16px 0;
+}
+
+.guarantee-package-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-primary);
+}
+
+.guarantee-package-toggle:hover {
+  border-color: var(--primary-light);
+}
+
+.guarantee-package-toggle.active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-primary));
+}
+
+.guarantee-package-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-top: 1px;
+}
+
+.guarantee-package-toggle.active .guarantee-package-check {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.guarantee-package-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.guarantee-package-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guarantee-package-header svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.guarantee-package-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.guarantee-package-rate {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.guarantee-package-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.guarantee-package-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 6px;
+}

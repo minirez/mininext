@@ -424,6 +424,23 @@
                   </div>
                 </div>
 
+                <!-- Cancellation Guarantee -->
+                <div
+                  v-if="booking.cancellationGuarantee?.purchased"
+                  class="flex justify-between text-sm"
+                >
+                  <span class="text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                    <span class="material-icons" style="font-size: 14px">verified_user</span>
+                    {{ $t('booking.cancellationGuarantee') }}
+                    ({{ booking.cancellationGuarantee.rate }}%)
+                  </span>
+                  <span class="text-blue-600 dark:text-blue-400">
+                    +{{
+                      formatPrice(booking.cancellationGuarantee.amount, booking.pricing?.currency)
+                    }}
+                  </span>
+                </div>
+
                 <div class="border-t border-gray-200 dark:border-slate-700 my-3"></div>
 
                 <div class="flex justify-between">
@@ -499,14 +516,23 @@
                   </span>
                 </div>
                 <div class="flex justify-between text-sm">
-                  <span class="text-gray-500 dark:text-slate-400">{{ $t('payment.remaining') }}</span>
+                  <span class="text-gray-500 dark:text-slate-400">{{
+                    $t('payment.remaining')
+                  }}</span>
                   <span
                     class="font-medium"
-                    :class="(booking.pricing?.grandTotal - (booking.payment?.paidAmount || 0)) > 0
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-gray-600 dark:text-slate-300'"
+                    :class="
+                      booking.pricing?.grandTotal - (booking.payment?.paidAmount || 0) > 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-600 dark:text-slate-300'
+                    "
                   >
-                    {{ formatPrice((booking.pricing?.grandTotal || 0) - (booking.payment?.paidAmount || 0), booking.pricing?.currency) }}
+                    {{
+                      formatPrice(
+                        (booking.pricing?.grandTotal || 0) - (booking.payment?.paidAmount || 0),
+                        booking.pricing?.currency
+                      )
+                    }}
                   </span>
                 </div>
               </div>
@@ -629,11 +655,21 @@ const navItems = computed(() => [
 ])
 
 // Async action composables
-const { isLoading, execute: executeLoad } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading, execute: executeLoad } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 const { isLoading: isUpdating, execute: executeUpdate } = useAsyncAction({ showErrorToast: false })
-const { isLoading: isAddingNote, execute: executeAddNote } = useAsyncAction({ showErrorToast: false })
-const { isLoading: isCancelling, execute: executeCancel } = useAsyncAction({ showErrorToast: false })
-const { isLoading: isLoadingHistory, execute: executeHistory } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: isAddingNote, execute: executeAddNote } = useAsyncAction({
+  showErrorToast: false
+})
+const { isLoading: isCancelling, execute: executeCancel } = useAsyncAction({
+  showErrorToast: false
+})
+const { isLoading: isLoadingHistory, execute: executeHistory } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 // State
 const booking = ref(null)
@@ -668,20 +704,17 @@ const nights = computed(() => {
 
 // Fetch booking
 const fetchBooking = async () => {
-  await executeLoad(
-    () => bookingService.getBooking(route.params.id),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          booking.value = response.data
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch booking:', error)
-        toast.error(t('booking.fetchFailed'))
+  await executeLoad(() => bookingService.getBooking(route.params.id), {
+    onSuccess: response => {
+      if (response.success) {
+        booking.value = response.data
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch booking:', error)
+      toast.error(t('booking.fetchFailed'))
     }
-  )
+  })
 }
 
 // Format date
@@ -756,36 +789,30 @@ const getMealPlanName = mealPlan => {
 
 // Handle confirm
 const handleConfirm = async () => {
-  await executeUpdate(
-    () => bookingService.updateBookingStatus(booking.value._id, 'confirmed'),
-    {
-      successMessage: 'booking.confirmSuccess',
-      onSuccess: () => {
-        booking.value.status = 'confirmed'
-      },
-      onError: error => {
-        toast.error(error.message || t('booking.confirmFailed'))
-      }
+  await executeUpdate(() => bookingService.updateBookingStatus(booking.value._id, 'confirmed'), {
+    successMessage: 'booking.confirmSuccess',
+    onSuccess: () => {
+      booking.value.status = 'confirmed'
+    },
+    onError: error => {
+      toast.error(error.message || t('booking.confirmFailed'))
     }
-  )
+  })
 }
 
 // Handle cancel
 const handleCancel = async () => {
-  await executeCancel(
-    () => bookingService.cancelBooking(booking.value._id, cancelReason.value),
-    {
-      successMessage: 'booking.cancelSuccess',
-      onSuccess: () => {
-        booking.value.status = 'cancelled'
-        showCancelModal.value = false
-        cancelReason.value = ''
-      },
-      onError: error => {
-        toast.error(error.message || t('booking.cancelFailed'))
-      }
+  await executeCancel(() => bookingService.cancelBooking(booking.value._id, cancelReason.value), {
+    successMessage: 'booking.cancelSuccess',
+    onSuccess: () => {
+      booking.value.status = 'cancelled'
+      showCancelModal.value = false
+      cancelReason.value = ''
+    },
+    onError: error => {
+      toast.error(error.message || t('booking.cancelFailed'))
     }
-  )
+  })
 }
 
 // Handle add note
@@ -793,25 +820,22 @@ const handleAddNote = async () => {
   if (!newNote.value.trim()) return
 
   const noteContent = newNote.value
-  await executeAddNote(
-    () => bookingService.addBookingNote(booking.value._id, noteContent),
-    {
-      successMessage: 'booking.noteAdded',
-      onSuccess: response => {
-        if (!booking.value.notes) booking.value.notes = []
-        booking.value.notes.push(
-          response.data.note || {
-            content: noteContent,
-            createdAt: new Date().toISOString()
-          }
-        )
-        newNote.value = ''
-      },
-      onError: error => {
-        toast.error(error.message || t('booking.noteAddFailed'))
-      }
+  await executeAddNote(() => bookingService.addBookingNote(booking.value._id, noteContent), {
+    successMessage: 'booking.noteAdded',
+    onSuccess: response => {
+      if (!booking.value.notes) booking.value.notes = []
+      booking.value.notes.push(
+        response.data.note || {
+          content: noteContent,
+          createdAt: new Date().toISOString()
+        }
+      )
+      newNote.value = ''
+    },
+    onError: error => {
+      toast.error(error.message || t('booking.noteAddFailed'))
     }
-  )
+  })
 }
 
 // Print booking
@@ -835,19 +859,16 @@ const handleAmendmentComplete = () => {
 const fetchAmendmentHistory = async () => {
   if (!booking.value?._id) return
 
-  await executeHistory(
-    () => getAmendmentHistory(booking.value._id),
-    {
-      onSuccess: response => {
-        if (response.success) {
-          amendmentHistory.value = response.data.amendments || []
-        }
-      },
-      onError: error => {
-        console.error('Failed to fetch amendment history:', error)
+  await executeHistory(() => getAmendmentHistory(booking.value._id), {
+    onSuccess: response => {
+      if (response.success) {
+        amendmentHistory.value = response.data.amendments || []
       }
+    },
+    onError: error => {
+      console.error('Failed to fetch amendment history:', error)
     }
-  )
+  })
 }
 
 // Get payment status class

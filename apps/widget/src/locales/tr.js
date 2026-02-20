@@ -282,6 +282,10 @@ export default {
     }
   },
 
+  cancellationGuarantee: 'İptal Garanti Paketi',
+  cancellationGuaranteeDesc:
+    'İptal durumunda ödenen tutarın tamamı iade edilir. Garanti paketi ücreti iade edilmez.',
+
   footer: {
     poweredBy: 'Powered by'
   }

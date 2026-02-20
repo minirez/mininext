@@ -80,6 +80,10 @@ export const useWidgetStore = defineStore('widget', () => {
   const bankTransferDescription = ref({})
   const bankTransferEnabled = ref(false)
 
+  // Cancellation Guarantee Package
+  const cancellationGuarantee = ref(false) // purchased toggle
+  const cancellationGuaranteeConfig = ref(null) // { enabled, rate } from search response
+
   // Promo Code State
   const promoCode = ref('')
   const promoResult = ref(null) // { valid, campaign, error }
@@ -181,6 +185,14 @@ export const useWidgetStore = defineStore('widget', () => {
     const checkIn = new Date(searchParams.value.checkIn)
     const checkOut = new Date(searchParams.value.checkOut)
     return Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
+  })
+
+  // Cancellation guarantee amount
+  const guaranteeAmount = computed(() => {
+    if (!cancellationGuarantee.value || !cancellationGuaranteeConfig.value?.enabled) return 0
+    const rate = cancellationGuaranteeConfig.value.rate || 0
+    const total = selectedOption.value?.pricing?.finalTotal || 0
+    return Math.round((total * rate) / 100)
   })
 
   // Amount to charge based on prepayment selection
@@ -331,6 +343,10 @@ export const useWidgetStore = defineStore('widget', () => {
       if (results.search?.paymentTerms) {
         paymentTerms.value = results.search.paymentTerms
       }
+      // Cancellation guarantee config
+      if (results.search?.cancellationGuarantee) {
+        cancellationGuaranteeConfig.value = results.search.cancellationGuarantee
+      }
       if (results.search?.bankTransferDiscount) {
         bankTransferDiscount.value = results.search.bankTransferDiscount
       }
@@ -396,7 +412,8 @@ export const useWidgetStore = defineStore('widget', () => {
         countryCode: searchParams.value.countryCode,
         paymentMethod: paymentMethod.value,
         guestLanguage: config.value.language || 'en',
-        ...(promoCode.value && promoResult.value?.valid && { campaignCode: promoCode.value })
+        ...(promoCode.value && promoResult.value?.valid && { campaignCode: promoCode.value }),
+        ...(cancellationGuarantee.value && { cancellationGuarantee: { purchased: true } })
       }
 
       const result = await widgetApi.createBooking(bookingPayload, config.value.apiUrl)
@@ -577,6 +594,8 @@ export const useWidgetStore = defineStore('widget', () => {
     booking.value = null
     paymentResult.value = null
     selectedPaymentType.value = 'full'
+    cancellationGuarantee.value = false
+    cancellationGuaranteeConfig.value = null
     promoCode.value = ''
     promoResult.value = null
     error.value = null
@@ -619,6 +638,8 @@ export const useWidgetStore = defineStore('widget', () => {
     bankTransferDescription,
     bankTransferEnabled,
     detectedMarket,
+    cancellationGuarantee,
+    cancellationGuaranteeConfig,
     promoCode,
     promoResult,
     promoLoading,
@@ -626,6 +647,7 @@ export const useWidgetStore = defineStore('widget', () => {
     // Computed
     effectiveTheme,
     nights,
+    guaranteeAmount,
     paymentAmountToCharge,
     hasActiveSession,
     resultsStale,

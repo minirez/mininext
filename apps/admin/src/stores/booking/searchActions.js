@@ -10,7 +10,7 @@ import { storeLogger } from '@/utils/logger'
  * Create search actions with store state refs
  */
 export function createSearchActions(state, getters) {
-  const { search, searchResults, payment, loading, error } = state
+  const { search, searchResults, payment, cancellationGuaranteeConfig, loading, error } = state
   const { isSearchValid } = getters
 
   /**
@@ -98,6 +98,10 @@ export function createSearchActions(state, getters) {
         // Store market info from search response
         if (response.data.search?.market) {
           searchResults.value.selectedMarket = response.data.search.market
+        }
+        // Store cancellation guarantee config
+        if (response.data.search?.cancellationGuarantee) {
+          cancellationGuaranteeConfig.value = response.data.search.cancellationGuarantee
         }
         // Set payment methods from hotel
         if (searchResults.value.selectedHotel?.paymentMethods) {

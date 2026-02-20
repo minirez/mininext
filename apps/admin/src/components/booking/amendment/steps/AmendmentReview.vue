@@ -66,12 +66,33 @@
           <!-- Price -->
           <div class="flex items-start gap-3 pt-3 border-t dark:border-gray-600">
             <span class="material-icons text-gray-400 text-sm mt-1">payments</span>
-            <div>
+            <div class="flex-1">
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('booking.grandTotal') }}</p>
               <p class="text-lg font-bold text-gray-900 dark:text-white">
                 {{
                   formatCurrency(originalData?.pricing?.grandTotal, originalData?.pricing?.currency)
                 }}
+              </p>
+              <p
+                v-if="
+                  originalData?.cancellationGuarantee?.purchased ||
+                  booking?.cancellationGuarantee?.purchased
+                "
+                class="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1"
+              >
+                <span class="material-icons" style="font-size: 12px">verified_user</span>
+                {{ $t('booking.cancellationGuarantee') }}
+                ({{
+                  booking?.cancellationGuarantee?.rate || originalData?.cancellationGuarantee?.rate
+                }}%)
+                {{
+                  formatCurrency(
+                    booking?.cancellationGuarantee?.amount ||
+                      originalData?.cancellationGuarantee?.amount,
+                    originalData?.pricing?.currency
+                  )
+                }}
+                {{ $t('booking.amendment.included') }}
               </p>
             </div>
           </div>
@@ -156,12 +177,30 @@
             class="flex items-start gap-3 pt-3 border-t border-indigo-200 dark:border-indigo-700"
           >
             <span class="material-icons text-indigo-400 text-sm mt-1">payments</span>
-            <div>
+            <div class="flex-1">
               <p class="text-sm text-indigo-500 dark:text-indigo-400">
                 {{ $t('booking.grandTotal') }}
               </p>
               <p class="text-lg font-bold text-indigo-700 dark:text-indigo-300">
                 {{ formatCurrency(newGrandTotal, originalData?.pricing?.currency) }}
+              </p>
+              <p
+                v-if="
+                  previewData?.preview?.cancellationGuarantee?.purchased ||
+                  booking?.cancellationGuarantee?.purchased
+                "
+                class="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1"
+              >
+                <span class="material-icons" style="font-size: 12px">verified_user</span>
+                {{ $t('booking.cancellationGuarantee') }}
+                ({{ booking?.cancellationGuarantee?.rate }}%)
+                {{
+                  formatCurrency(
+                    booking?.cancellationGuarantee?.amount,
+                    originalData?.pricing?.currency
+                  )
+                }}
+                {{ $t('booking.amendment.included') }}
               </p>
             </div>
           </div>

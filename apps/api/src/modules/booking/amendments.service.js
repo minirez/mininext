@@ -325,9 +325,10 @@ export const previewAmendment = asyncHandler(async (req, res) => {
   // Determine sales channel from booking or request
   // Priority: request body > booking.salesChannel > searchCriteria.channel > default 'b2c'
   // searchCriteria.channel is 'B2B' or 'B2C', salesChannel is 'b2b' or 'b2c'
-  const effectiveSalesChannel = req.body.salesChannel ||
+  const effectiveSalesChannel =
+    req.body.salesChannel ||
     booking.salesChannel ||
-    (booking.searchCriteria?.channel?.toLowerCase()) ||
+    booking.searchCriteria?.channel?.toLowerCase() ||
     'b2c'
 
   // Use centralized multi-room pricing calculation
@@ -420,16 +421,23 @@ export const previewAmendment = asyncHandler(async (req, res) => {
   // Use totals from centralized pricing service
   const { subtotal, totalDiscount, grandTotal, currency } = pricingResult.totals
 
+  // Preserve cancellation guarantee in new pricing
+  // Guarantee amount stays fixed (paid at booking time), only room prices change
+  const guaranteeAmount = booking.cancellationGuarantee?.purchased
+    ? booking.cancellationGuarantee.amount || 0
+    : 0
+  const grandTotalWithGuarantee = grandTotal + guaranteeAmount
+
   newPricing = {
     currency,
     subtotal,
     totalDiscount,
-    grandTotal
+    grandTotal: grandTotalWithGuarantee
   }
 
-  // Calculate price difference
+  // Calculate price difference (both totals now include guarantee, so it cancels out)
   const originalTotal = booking.pricing?.grandTotal || 0
-  const difference = grandTotal - originalTotal
+  const difference = grandTotalWithGuarantee - originalTotal
 
   res.json({
     success: true,
@@ -446,6 +454,7 @@ export const previewAmendment = asyncHandler(async (req, res) => {
         nights: booking.nights,
         rooms: booking.rooms,
         pricing: booking.pricing,
+        cancellationGuarantee: booking.cancellationGuarantee,
         leadGuest: booking.leadGuest,
         contact: booking.contact
       },
@@ -455,13 +464,14 @@ export const previewAmendment = asyncHandler(async (req, res) => {
         nights: effectiveNights,
         rooms: newRoomsProcessed,
         pricing: newPricing,
+        cancellationGuarantee: booking.cancellationGuarantee,
         leadGuest: newLeadGuest || booking.leadGuest,
         contact: newContact || booking.contact
       },
       priceDifference: {
         currency,
         originalTotal,
-        newTotal: grandTotal,
+        newTotal: grandTotalWithGuarantee,
         difference,
         isIncrease: difference > 0,
         isDecrease: difference < 0
@@ -545,9 +555,10 @@ export const applyAmendment = asyncHandler(async (req, res) => {
 
   // Determine sales channel from booking or request
   // Priority: request body > booking.salesChannel > searchCriteria.channel > default 'b2c'
-  const effectiveSalesChannel = req.body.salesChannel ||
+  const effectiveSalesChannel =
+    req.body.salesChannel ||
     booking.salesChannel ||
-    (booking.searchCriteria?.channel?.toLowerCase()) ||
+    booking.searchCriteria?.channel?.toLowerCase() ||
     'b2c'
 
   // Create snapshot of current state BEFORE any changes
@@ -709,13 +720,15 @@ export const applyAmendment = asyncHandler(async (req, res) => {
       // Select price based on sales channel
       // B2C: Use b2cPrice (with B2C markup)
       // B2B: Use b2bPrice (with agency commission)
-      let finalPrice = effectiveSalesChannel === 'b2b'
-        ? priceResult.pricing.b2bPrice
-        : priceResult.pricing.b2cPrice
+      let finalPrice =
+        effectiveSalesChannel === 'b2b'
+          ? priceResult.pricing.b2bPrice
+          : priceResult.pricing.b2cPrice
       if (roomData.rateType === 'non_refundable' && priceResult.nonRefundable?.enabled) {
-        finalPrice = effectiveSalesChannel === 'b2b'
-          ? priceResult.nonRefundable.pricing?.b2bPrice
-          : priceResult.nonRefundable.pricing?.b2cPrice
+        finalPrice =
+          effectiveSalesChannel === 'b2b'
+            ? priceResult.nonRefundable.pricing?.b2bPrice
+            : priceResult.nonRefundable.pricing?.b2cPrice
       }
 
       // Get season info from daily breakdown
@@ -791,8 +804,11 @@ export const applyAmendment = asyncHandler(async (req, res) => {
       booking.marketName = effectiveMarket.name
     }
 
-    // Update pricing
-    const grandTotal = subtotal - totalDiscount
+    // Update pricing - preserve cancellation guarantee amount
+    const guaranteeAmount = booking.cancellationGuarantee?.purchased
+      ? booking.cancellationGuarantee.amount || 0
+      : 0
+    const grandTotal = subtotal - totalDiscount + guaranteeAmount
     booking.pricing = {
       ...booking.pricing,
       subtotal,
@@ -800,7 +816,7 @@ export const applyAmendment = asyncHandler(async (req, res) => {
       grandTotal
     }
 
-    // Update snapshot with price difference
+    // Update snapshot with price difference (both include guarantee, so only room diff matters)
     snapshot.amendment.priceDifference.newTotal = grandTotal
     snapshot.amendment.priceDifference.difference =
       grandTotal - snapshot.amendment.priceDifference.originalTotal
@@ -825,6 +841,14 @@ export const applyAmendment = asyncHandler(async (req, res) => {
     previousValue: snapshot.bookingState.pricing?.grandTotal,
     newValue: booking.pricing?.grandTotal
   })
+
+  // Sync payment amounts with updated pricing
+  if (booking.payment && booking.pricing?.grandTotal) {
+    booking.payment.totalAmount = booking.pricing.grandTotal
+    const paidAmount = booking.payment.paidAmount || 0
+    booking.payment.dueAmount = Math.max(0, booking.pricing.grandTotal - paidAmount)
+    booking.markModified('payment')
+  }
 
   // Save booking
   await booking.save()

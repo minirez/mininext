@@ -20,6 +20,8 @@ export function createDraftActions(state, getters, helpers) {
     payment,
     specialRequests,
     invoiceDetails,
+    cancellationGuarantee,
+    cancellationGuaranteeConfig,
     draftBookingNumber,
     draftData,
     lastSavedAt,
@@ -103,7 +105,10 @@ export function createDraftActions(state, getters, helpers) {
       const firstItem = cart.value[0]
 
       const response = await bookingService.createDraft({
-        searchCriteria: search.value,
+        searchCriteria: {
+          ...search.value,
+          cancellationGuaranteeConfig: cancellationGuaranteeConfig.value || undefined
+        },
         hotel: firstItem.hotelId,
         // Market info from cart
         market: firstItem.market?._id,
@@ -169,6 +174,9 @@ export function createDraftActions(state, getters, helpers) {
         invoiceDetails: invoiceDetails.value,
         payment: { method: payment.value.method },
         specialRequests: specialRequests.value,
+        cancellationGuarantee: cancellationGuarantee.value
+          ? { purchased: true }
+          : { purchased: false },
         rooms: cart.value.map((item, index) => ({
           adults: item.adults,
           children: item.children,
@@ -203,14 +211,25 @@ export function createDraftActions(state, getters, helpers) {
 
         // Restore search criteria
         if (draft.searchCriteria) {
+          // Extract cancellationGuaranteeConfig before spreading into search
+          if (draft.searchCriteria.cancellationGuaranteeConfig) {
+            cancellationGuaranteeConfig.value = draft.searchCriteria.cancellationGuaranteeConfig
+          }
+          // Spread search criteria but exclude cancellationGuaranteeConfig (it's not a search param)
+          const { cancellationGuaranteeConfig: _cgc, ...searchData } = draft.searchCriteria
           search.value = {
             ...search.value,
-            ...draft.searchCriteria,
+            ...searchData,
             dateRange: {
               start: draft.checkIn,
               end: draft.checkOut
             }
           }
+        }
+
+        // Fallback: if no config saved in draft, default to enabled (Mongoose schema defaults)
+        if (!cancellationGuaranteeConfig.value) {
+          cancellationGuaranteeConfig.value = { enabled: true, rate: 1 }
         }
 
         // Restore cart

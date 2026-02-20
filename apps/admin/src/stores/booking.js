@@ -137,6 +137,10 @@ export const useBookingStore = defineStore('booking', () => {
     }
   })
 
+  // Cancellation guarantee
+  const cancellationGuarantee = ref(false) // purchased toggle
+  const cancellationGuaranteeConfig = ref(null) // { enabled, rate } from search response
+
   // Draft booking state
   const draftBookingNumber = ref(null)
   const draftData = ref(null)
@@ -223,6 +227,12 @@ export const useBookingStore = defineStore('booking', () => {
   const grandTotal = computed(() =>
     cart.value.reduce((sum, item) => sum + (item.pricing?.finalTotal || 0), 0)
   )
+  const guaranteeAmount = computed(() => {
+    if (!cancellationGuarantee.value || !cancellationGuaranteeConfig.value?.enabled) return 0
+    const rate = cancellationGuaranteeConfig.value.rate || 0
+    return Math.round((grandTotal.value * rate) / 100)
+  })
+  const grandTotalWithGuarantee = computed(() => grandTotal.value + guaranteeAmount.value)
   const avgPerNight = computed(() => (nights.value === 0 ? 0 : grandTotal.value / nights.value))
 
   const appliedCampaigns = computed(() => {
@@ -284,6 +294,8 @@ export const useBookingStore = defineStore('booking', () => {
     termsAccepted,
     bookingResult,
     invoiceDetails,
+    cancellationGuarantee,
+    cancellationGuaranteeConfig,
     draftBookingNumber,
     draftData,
     lastSavedAt,
@@ -380,7 +392,8 @@ export const useBookingStore = defineStore('booking', () => {
         billing: {
           paymentMethod: payment.value.method
         },
-        specialRequests: specialRequests.value
+        specialRequests: specialRequests.value,
+        ...(cancellationGuarantee.value && { cancellationGuarantee: { purchased: true } })
       }
 
       const response = await bookingService.createBooking(bookingData)
@@ -445,7 +458,8 @@ export const useBookingStore = defineStore('booking', () => {
         },
         specialRequests: specialRequests.value,
         sendEmail,
-        sendSms
+        sendSms,
+        ...(cancellationGuarantee.value && { cancellationGuarantee: { purchased: true } })
       }
 
       const response = await bookingService.createBookingWithPaymentLink(bookingData)
@@ -520,6 +534,8 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = { hotels: false, rooms: false, booking: false, draft: false }
     error.value = null
 
+    cancellationGuarantee.value = false
+    cancellationGuaranteeConfig.value = null
     draftBookingNumber.value = null
     draftData.value = null
     lastSavedAt.value = null
@@ -561,6 +577,8 @@ export const useBookingStore = defineStore('booking', () => {
     loading,
     error,
     invoiceDetails,
+    cancellationGuarantee,
+    cancellationGuaranteeConfig,
     draftBookingNumber,
     draftData,
     lastSavedAt,
@@ -583,6 +601,8 @@ export const useBookingStore = defineStore('booking', () => {
     subtotal,
     totalDiscount,
     grandTotal,
+    guaranteeAmount,
+    grandTotalWithGuarantee,
     avgPerNight,
     appliedCampaigns,
     selectedHotel,

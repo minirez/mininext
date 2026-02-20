@@ -184,7 +184,12 @@ const marketSchema = new mongoose.Schema(
           daysBeforeCheckIn: { type: Number, default: 0 },
           refundPercent: { type: Number, min: 0, max: 100, default: 0 }
         }
-      ]
+      ],
+      // Cancellation guarantee package
+      guaranteePackage: {
+        enabled: { type: Boolean, default: true },
+        rate: { type: Number, default: 1, min: 0, max: 100 }
+      }
     },
 
     // Is this the default/fallback market for the hotel (for countries not in any market)

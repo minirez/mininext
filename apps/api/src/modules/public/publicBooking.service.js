@@ -59,7 +59,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     countryCode,
     paymentMethod,
     guestLanguage,
-    campaignCode
+    campaignCode,
+    cancellationGuarantee: cancellationGuaranteeInput
   } = req.body
 
   // Validate hotel (hotelCode can be slug or _id)
@@ -194,10 +195,29 @@ export const createBooking = asyncHandler(async (req, res) => {
   const taxRate = hotel.pricingSettings?.taxRate || 0
   const tax = hotel.pricingSettings?.taxIncluded ? 0 : (grandTotal * taxRate) / 100
 
+  // Calculate cancellation guarantee
+  // lean() bypasses Mongoose defaults - treat missing guaranteePackage as enabled with 1% rate
+  const gp = market.cancellationPolicy?.guaranteePackage
+  const gpEnabled = gp ? gp.enabled !== false : true
+  let guaranteeData = null
+  let guaranteeAmount = 0
+  if (cancellationGuaranteeInput?.purchased && gpEnabled) {
+    const rate = gp?.rate ?? 1
+    guaranteeAmount = Math.round((grandTotal * rate) / 100)
+    guaranteeData = {
+      purchased: true,
+      rate,
+      amount: guaranteeAmount,
+      currency: market.currency
+    }
+  }
+
   // Generate booking number
   const bookingNumber = await Booking.generateBookingNumber(hotel.partner)
 
   // Create booking
+  const publicFinalTotal = grandTotal + tax + guaranteeAmount
+
   const booking = new Booking({
     bookingNumber,
     partner: hotel.partner,
@@ -226,18 +246,19 @@ export const createBooking = asyncHandler(async (req, res) => {
       countryCode: countryCode || contact.countryCode
     },
     billing,
+    ...(guaranteeData && { cancellationGuarantee: guaranteeData }),
     pricing: {
       currency: market.currency,
       subtotal,
       totalDiscount,
       tax,
       taxRate,
-      grandTotal: grandTotal + tax
+      grandTotal: publicFinalTotal
     },
     payment: {
       status: 'pending',
       method: paymentMethod || 'credit_card',
-      dueAmount: grandTotal + tax,
+      dueAmount: publicFinalTotal,
       ...(market.paymentTerms?.prepaymentRequired && {
         paymentTerms: {
           prepaymentRequired: true,
@@ -280,7 +301,7 @@ export const createBooking = asyncHandler(async (req, res) => {
         partner: hotel.partner,
         booking: booking._id,
         type: paymentMethod,
-        amount: grandTotal + tax,
+        amount: publicFinalTotal,
         currency: market.currency,
         status: 'pending'
       })
@@ -456,7 +477,17 @@ export const cancelBooking = asyncHandler(async (req, res) => {
     refundPercent = booking.hotel.calculateRefund?.(daysBeforeCheckIn) || 0
   }
 
-  const refundAmount = (booking.payment.paidAmount || 0) * (refundPercent / 100)
+  // If cancellation guarantee purchased, override to full refund (on refundable amount)
+  if (booking.cancellationGuarantee?.purchased && refundPercent < 100) {
+    refundPercent = 100
+  }
+
+  // Deduct guarantee amount from refundable base
+  const guaranteeAmount = booking.cancellationGuarantee?.purchased
+    ? booking.cancellationGuarantee.amount || 0
+    : 0
+  const refundableAmount = (booking.payment.paidAmount || 0) - guaranteeAmount
+  const refundAmount = Math.max(0, refundableAmount * (refundPercent / 100))
 
   // Update booking
   booking.status = 'cancelled'

@@ -280,6 +280,10 @@ export default {
     }
   },
 
+  cancellationGuarantee: 'Cancellation Guarantee',
+  cancellationGuaranteeDesc:
+    'Full refund of paid amount in case of cancellation. Guarantee fee is non-refundable.',
+
   footer: {
     poweredBy: 'Powered by'
   }

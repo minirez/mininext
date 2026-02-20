@@ -41,7 +41,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     specialRequests,
     salesChannel = 'b2c',
     paymentMethod,
-    guestLanguage
+    guestLanguage,
+    cancellationGuarantee: cancellationGuaranteeInput
   } = req.body
 
   // Validate hotel
@@ -200,6 +201,23 @@ export const createBooking = asyncHandler(async (req, res) => {
   const taxRate = hotel.pricingSettings?.taxRate || 0
   const tax = hotel.pricingSettings?.taxIncluded ? 0 : (grandTotal * taxRate) / 100
 
+  // Calculate cancellation guarantee
+  // lean() bypasses Mongoose defaults - treat missing guaranteePackage as enabled with 1% rate
+  const gp = market.cancellationPolicy?.guaranteePackage
+  const gpEnabled = gp ? gp.enabled !== false : true
+  let guaranteeData = null
+  let guaranteeAmount = 0
+  if (cancellationGuaranteeInput?.purchased && gpEnabled) {
+    const rate = gp?.rate ?? 1
+    guaranteeAmount = Math.round((grandTotal * rate) / 100)
+    guaranteeData = {
+      purchased: true,
+      rate,
+      amount: guaranteeAmount,
+      currency: market.currency
+    }
+  }
+
   // Get primary season from first room's first day
   let primarySeason = null
   if (processedRooms[0]?.dailyBreakdown?.[0]?.season) {
@@ -271,6 +289,8 @@ export const createBooking = asyncHandler(async (req, res) => {
   }
 
   // Create booking
+  const finalTotal = grandTotal + tax + guaranteeAmount
+
   const booking = new Booking({
     bookingNumber,
     partner: partnerId,
@@ -299,18 +319,19 @@ export const createBooking = asyncHandler(async (req, res) => {
       countryCode: contact.countryCode
     },
     billing,
+    ...(guaranteeData && { cancellationGuarantee: guaranteeData }),
     pricing: {
       currency: market.currency,
       subtotal,
       totalDiscount,
       tax,
       taxRate,
-      grandTotal: grandTotal + tax
+      grandTotal: finalTotal
     },
     payment: {
       status: 'pending',
       method: paymentMethod || 'credit_card',
-      dueAmount: grandTotal + tax
+      dueAmount: finalTotal
     },
     status: 'pending',
     source: getSourceInfo(req),
@@ -390,7 +411,8 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     salesChannel = 'b2c',
     sendEmail = true,
     sendSms = false,
-    guestLanguage
+    guestLanguage,
+    cancellationGuarantee: cancellationGuaranteeInput2
   } = req.body
 
   // Validate hotel
@@ -548,7 +570,25 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
   const grandTotal = subtotal - totalDiscount
   const taxRate = hotel.pricingSettings?.taxRate || 0
   const tax = hotel.pricingSettings?.taxIncluded ? 0 : (grandTotal * taxRate) / 100
-  const finalTotal = grandTotal + tax
+
+  // Calculate cancellation guarantee
+  // lean() bypasses Mongoose defaults - treat missing guaranteePackage as enabled with 1% rate
+  const gp2 = market.cancellationPolicy?.guaranteePackage
+  const gpEnabled2 = gp2 ? gp2.enabled !== false : true
+  let guaranteeData2 = null
+  let guaranteeAmount2 = 0
+  if (cancellationGuaranteeInput2?.purchased && gpEnabled2) {
+    const rate = gp2?.rate ?? 1
+    guaranteeAmount2 = Math.round((grandTotal * rate) / 100)
+    guaranteeData2 = {
+      purchased: true,
+      rate,
+      amount: guaranteeAmount2,
+      currency: market.currency
+    }
+  }
+
+  const finalTotal = grandTotal + tax + guaranteeAmount2
 
   // Get primary season from first room's first day
   let primarySeason = null
@@ -669,6 +709,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
       countryCode: contact.countryCode
     },
     billing,
+    ...(guaranteeData2 && { cancellationGuarantee: guaranteeData2 }),
     pricing: {
       currency: market.currency,
       subtotal,

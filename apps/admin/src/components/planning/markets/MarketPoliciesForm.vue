@@ -412,6 +412,102 @@
         </div>
       </div>
     </div>
+
+    <!-- Cancellation Guarantee Package -->
+    <div>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+        <span class="material-icons text-blue-600">verified_user</span>
+        {{ $t('planning.markets.guaranteePackage') }}
+      </h3>
+
+      <div
+        class="p-6 rounded-xl border-2 transition-all cursor-pointer"
+        :class="
+          formData.guaranteePackage.enabled
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+            : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'
+        "
+        @click="formData.guaranteePackage.enabled = !formData.guaranteePackage.enabled"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-12 h-12 rounded-xl flex items-center justify-center"
+              :class="
+                formData.guaranteePackage.enabled
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-slate-600 text-gray-500'
+              "
+            >
+              <span class="material-icons">shield</span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800 dark:text-white">
+                {{ $t('planning.markets.guaranteePackageEnabled') }}
+              </h4>
+              <p class="text-sm text-gray-500 dark:text-slate-400">
+                {{ $t('planning.markets.guaranteePackageDescription') }}
+              </p>
+            </div>
+          </div>
+          <div class="relative">
+            <input v-model="formData.guaranteePackage.enabled" type="checkbox" class="sr-only" />
+            <div
+              class="w-11 h-6 rounded-full transition-colors"
+              :class="
+                formData.guaranteePackage.enabled ? 'bg-blue-500' : 'bg-gray-300 dark:bg-slate-600'
+              "
+            >
+              <div
+                class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                :class="{ 'translate-x-5': formData.guaranteePackage.enabled }"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rate Setting -->
+        <div
+          v-if="formData.guaranteePackage.enabled"
+          class="mt-6 pt-4 border-t border-blue-200 dark:border-blue-800"
+          @click.stop
+        >
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="material-icons text-blue-500">percent</span>
+            <label class="text-sm text-gray-700 dark:text-slate-300">{{
+              $t('planning.markets.guaranteePackageRate')
+            }}</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model.number="formData.guaranteePackage.rate"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                class="form-input w-20 text-center text-lg font-bold"
+              />
+              <span class="text-gray-500">%</span>
+            </div>
+            <div class="flex gap-2">
+              <button
+                v-for="pct in [0.5, 1, 2, 3]"
+                :key="pct"
+                type="button"
+                class="px-3 py-1 text-sm rounded-lg border transition-colors"
+                :class="
+                  formData.guaranteePackage.rate === pct
+                    ? 'bg-blue-500 border-blue-500 text-white'
+                    : 'border-gray-300 dark:border-slate-600 hover:bg-gray-50'
+                "
+                @click="formData.guaranteePackage.rate = pct"
+              >
+                {{ pct }}%
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -442,6 +538,10 @@ const formData = ref({
     useHotelPolicy: true,
     freeCancellation: { enabled: false, daysBeforeCheckIn: 7 },
     rules: []
+  },
+  guaranteePackage: {
+    enabled: true,
+    rate: 1
   }
 })
 
@@ -517,6 +617,14 @@ watch(
         daysBeforeCheckIn: newVal.cancellationPolicy.freeCancellation?.daysBeforeCheckIn ?? 7
       }
       formData.value.cancellationPolicy.rules = [...(newVal.cancellationPolicy.rules || [])]
+
+      // Guarantee package
+      if (newVal.cancellationPolicy.guaranteePackage) {
+        formData.value.guaranteePackage = {
+          enabled: newVal.cancellationPolicy.guaranteePackage.enabled ?? true,
+          rate: newVal.cancellationPolicy.guaranteePackage.rate ?? 1
+        }
+      }
     }
   },
   { immediate: true, deep: true }
@@ -529,7 +637,11 @@ const getFormData = () => {
     cancellationPolicy: {
       useHotelPolicy: formData.value.cancellationPolicy.useHotelPolicy,
       freeCancellation: formData.value.cancellationPolicy.freeCancellation,
-      rules: formData.value.cancellationPolicy.rules
+      rules: formData.value.cancellationPolicy.rules,
+      guaranteePackage: {
+        enabled: formData.value.guaranteePackage.enabled,
+        rate: formData.value.guaranteePackage.rate
+      }
     }
   }
 }

@@ -23,6 +23,18 @@ const paymentTerms = computed(() => widgetStore.paymentTerms)
 const bankTransferDiscount = computed(() => widgetStore.bankTransferDiscount)
 const bankTransferReleaseDays = computed(() => widgetStore.bankTransferReleaseDays)
 
+// Cancellation guarantee
+const guaranteeConfig = computed(() => widgetStore.cancellationGuaranteeConfig)
+const guaranteeAmount = computed(() => widgetStore.guaranteeAmount)
+const showGuarantee = computed(() => {
+  // Non-refundable rate'lerde gösterme
+  const isNonRefundable =
+    selectedOption.value?.nonRefundable?.enabled &&
+    selectedOption.value?.pricing?.finalTotal ===
+      selectedOption.value?.nonRefundable?.pricing?.finalTotal
+  return guaranteeConfig.value?.enabled && !isNonRefundable
+})
+
 // Banka havalesi: check-in'e releaseDays'den az kaldıysa gizle
 const isBankTransferAvailable = computed(() => {
   if (!paymentMethods.value.bankTransfer) return false
@@ -39,7 +51,9 @@ const isBankTransferAvailable = computed(() => {
 })
 
 // Ön ödeme hesaplamaları
-const totalAmount = computed(() => selectedOption.value?.pricing?.finalTotal || 0)
+const totalAmount = computed(
+  () => (selectedOption.value?.pricing?.finalTotal || 0) + guaranteeAmount.value
+)
 
 const prepaymentAmount = computed(() => {
   if (!paymentTerms.value?.prepaymentRequired) return 0
@@ -285,7 +299,7 @@ onMounted(() => {
               {{ formatCurrency(selectedOption?.pricing?.originalTotal || 0) }}
             </span>
             <span :class="{ 'has-discount': selectedOption?.pricing?.totalDiscount > 0 }">
-              {{ formatCurrency(selectedOption?.pricing?.finalTotal || 0) }}
+              {{ formatCurrency(totalAmount) }}
             </span>
           </div>
         </div>
@@ -295,6 +309,55 @@ onMounted(() => {
           {{ c.discountText || c.name }}
         </span>
       </div>
+    </div>
+
+    <!-- Cancellation Guarantee Package -->
+    <div v-if="showGuarantee" class="guarantee-package">
+      <label
+        class="guarantee-package-toggle"
+        :class="{ active: widgetStore.cancellationGuarantee }"
+      >
+        <input v-model="widgetStore.cancellationGuarantee" type="checkbox" class="sr-only" />
+        <div class="guarantee-package-check">
+          <svg
+            v-if="widgetStore.cancellationGuarantee"
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="guarantee-package-content">
+          <div class="guarantee-package-header">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span class="guarantee-package-title">{{ t('cancellationGuarantee') }}</span>
+            <span class="guarantee-package-rate">%{{ guaranteeConfig?.rate }}</span>
+          </div>
+          <div class="guarantee-package-desc">{{ t('cancellationGuaranteeDesc') }}</div>
+          <div v-if="widgetStore.cancellationGuarantee" class="guarantee-package-amount">
+            +{{ formatCurrency(guaranteeAmount) }}
+          </div>
+        </div>
+      </label>
     </div>
 
     <!-- Contact Form -->

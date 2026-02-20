@@ -203,6 +203,21 @@
                 }}</span
               >
             </div>
+            <div
+              v-if="booking?.cancellationGuarantee?.purchased"
+              class="flex justify-between text-blue-600 dark:text-blue-400"
+            >
+              <span class="flex items-center gap-1">
+                <span class="material-icons" style="font-size: 14px">verified_user</span>
+                {{ $t('booking.cancellationGuarantee') }}
+                ({{ booking.cancellationGuarantee.rate }}%)
+              </span>
+              <span>
+                +{{
+                  formatCurrency(booking.cancellationGuarantee.amount, booking?.pricing?.currency)
+                }}
+              </span>
+            </div>
             <div class="flex justify-between pt-2 border-t dark:border-gray-600">
               <span class="font-medium text-gray-900 dark:text-white">{{
                 $t('booking.grandTotal')

@@ -247,7 +247,13 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         paymentTerms: market.paymentTerms || null,
         bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0,
         bankTransferReleaseDays: market.paymentMethods?.bankTransfer?.releaseDays ?? 3,
-        campaignCode: campaignCode || null
+        campaignCode: campaignCode || null,
+        cancellationGuarantee: (() => {
+          const gp = market.cancellationPolicy?.guaranteePackage
+          // lean() bypasses Mongoose defaults - treat missing field as enabled with 1% rate
+          const enabled = gp ? gp.enabled !== false : true
+          return enabled ? { enabled: true, rate: gp?.rate ?? 1 } : { enabled: false }
+        })()
       },
       results
     }

@@ -333,6 +333,14 @@ const bookingSchema = new mongoose.Schema(
       postalCode: { type: String, trim: true }
     },
 
+    // Cancellation guarantee package
+    cancellationGuarantee: {
+      purchased: { type: Boolean, default: false },
+      rate: { type: Number },
+      amount: { type: Number },
+      currency: { type: String }
+    },
+
     // Pricing summary (required for final booking, optional for draft)
     pricing: {
       currency: { type: String },
@@ -446,7 +454,11 @@ const bookingSchema = new mongoose.Schema(
       adults: { type: Number },
       children: [{ type: Number }],
       channel: { type: String, enum: ['B2B', 'B2C'] },
-      countryCode: { type: String }
+      countryCode: { type: String },
+      cancellationGuaranteeConfig: {
+        enabled: { type: Boolean },
+        rate: { type: Number }
+      }
     },
 
     // Invoice details (required for final booking)

@@ -606,7 +606,13 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           _id: market._id,
           code: market.code,
           currency: market.currency
-        }
+        },
+        cancellationGuarantee: (() => {
+          const gp = market.cancellationPolicy?.guaranteePackage
+          // lean() bypasses Mongoose defaults - treat missing field as enabled with 1% rate
+          const enabled = gp ? gp.enabled !== false : true
+          return enabled ? { enabled: true, rate: gp?.rate ?? 1 } : { enabled: false }
+        })()
       },
       results
     }

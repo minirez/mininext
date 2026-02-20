@@ -87,6 +87,16 @@
         <span>-{{ formatPrice(discount, currency) }}</span>
       </div>
       <div
+        v-if="cancellationGuarantee?.purchased"
+        class="flex justify-between text-blue-600 dark:text-blue-400"
+      >
+        <span class="flex items-center gap-1">
+          <span class="material-icons" style="font-size: 14px">verified_user</span>
+          {{ $t('booking.cancellationGuarantee') }} ({{ cancellationGuarantee.rate }}%)
+        </span>
+        <span>+{{ formatPrice(cancellationGuarantee.amount, currency) }}</span>
+      </div>
+      <div
         class="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-slate-700"
       >
         <span class="text-gray-900 dark:text-white">{{ $t('booking.total') }}</span>
@@ -129,6 +139,10 @@ defineProps({
   total: {
     type: Number,
     default: 0
+  },
+  cancellationGuarantee: {
+    type: Object,
+    default: null
   }
 })
 

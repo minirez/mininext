@@ -128,14 +128,72 @@
         {{ $t('booking.addAnotherRoom') }}
       </button>
 
+      <!-- Cancellation Guarantee Package -->
+      <div
+        v-if="showGuarantee"
+        class="bg-white dark:bg-slate-800 rounded-xl border-2 transition-all cursor-pointer p-4"
+        :class="
+          bookingStore.cancellationGuarantee
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+            : 'border-gray-200 dark:border-slate-600'
+        "
+        @click="bookingStore.cancellationGuarantee = !bookingStore.cancellationGuarantee"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+              :class="
+                bookingStore.cancellationGuarantee
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'border-gray-300 dark:border-slate-500'
+              "
+            >
+              <span
+                v-if="bookingStore.cancellationGuarantee"
+                class="material-icons text-white"
+                style="font-size: 14px"
+                >check</span
+              >
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="material-icons text-blue-600 text-lg">verified_user</span>
+                <span class="font-semibold text-gray-800 dark:text-white text-sm">
+                  {{ $t('booking.cancellationGuarantee') }}
+                  ({{ bookingStore.cancellationGuaranteeConfig?.rate }}%)
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                {{ $t('planning.markets.guaranteePackageDescription') }}
+              </p>
+            </div>
+          </div>
+          <div v-if="bookingStore.cancellationGuarantee" class="text-right">
+            <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
+              +{{ formatPrice(bookingStore.guaranteeAmount, bookingStore.currency) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Price Summary -->
       <PriceSummary
         :subtotal="bookingStore.subtotal"
         :discount="bookingStore.totalDiscount"
-        :total="bookingStore.grandTotal"
+        :total="bookingStore.grandTotalWithGuarantee"
         :currency="bookingStore.currency"
         :nights="bookingStore.nights"
         :campaigns="bookingStore.appliedCampaigns"
+        :cancellation-guarantee="
+          bookingStore.cancellationGuarantee
+            ? {
+                purchased: true,
+                rate: bookingStore.cancellationGuaranteeConfig?.rate,
+                amount: bookingStore.guaranteeAmount
+              }
+            : null
+        "
       />
 
       <!-- Continue Button -->
@@ -159,6 +217,14 @@ const { locale } = useI18n()
 const bookingStore = useBookingStore()
 
 defineEmits(['go-back', 'proceed'])
+
+// Show guarantee if config enabled and no non-refundable only rate
+const showGuarantee = computed(() => {
+  if (!bookingStore.cancellationGuaranteeConfig?.enabled) return false
+  // Hide if all cart items are non-refundable
+  const allNonRefundable = bookingStore.cart.every(item => item.rateType === 'non_refundable')
+  return !allNonRefundable
+})
 
 // Format date range
 const formatDateRange = computed(() => {

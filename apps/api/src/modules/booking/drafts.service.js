@@ -279,7 +279,16 @@ export const updateDraft = asyncHandler(async (req, res) => {
   }
 
   const { bookingNumber } = req.params
-  const { guests, leadGuest, invoiceDetails, contact, payment, specialRequests, rooms } = req.body
+  const {
+    guests,
+    leadGuest,
+    invoiceDetails,
+    contact,
+    payment,
+    specialRequests,
+    rooms,
+    cancellationGuarantee: cancellationGuaranteeInput
+  } = req.body
 
   const draft = await Booking.findOne({
     bookingNumber: bookingNumber.toUpperCase(),
@@ -309,6 +318,45 @@ export const updateDraft = asyncHandler(async (req, res) => {
     }
   }
   if (specialRequests !== undefined) draft.specialRequests = specialRequests
+
+  // Update cancellation guarantee selection
+  if (cancellationGuaranteeInput !== undefined) {
+    if (cancellationGuaranteeInput?.purchased) {
+      // Calculate guarantee amount from market config
+      const gp = draft.market
+        ? await Market.findById(draft.market)
+            .select('cancellationPolicy.guaranteePackage currency')
+            .lean()
+        : null
+      const gpConfig = gp?.cancellationPolicy?.guaranteePackage
+      const gpEnabled = gpConfig ? gpConfig.enabled !== false : true
+      if (gpEnabled) {
+        const rate = gpConfig?.rate ?? 1
+        const baseTotal = draft.pricing?.grandTotal || 0
+        // Remove any previous guarantee amount from grandTotal before calculating
+        const prevGuarantee = draft.cancellationGuarantee?.amount || 0
+        const cleanTotal = baseTotal - prevGuarantee
+        const amount = Math.round((cleanTotal * rate) / 100)
+        draft.cancellationGuarantee = {
+          purchased: true,
+          rate,
+          amount,
+          currency: gp?.currency || draft.pricing?.currency || 'TRY'
+        }
+        // Update grandTotal to include guarantee
+        draft.pricing.grandTotal = cleanTotal + amount
+        draft.markModified('pricing')
+      }
+    } else {
+      // Remove guarantee - subtract amount from grandTotal
+      const prevGuarantee = draft.cancellationGuarantee?.amount || 0
+      if (prevGuarantee > 0 && draft.pricing?.grandTotal) {
+        draft.pricing.grandTotal = draft.pricing.grandTotal - prevGuarantee
+        draft.markModified('pricing')
+      }
+      draft.cancellationGuarantee = { purchased: false }
+    }
+  }
 
   // Update room guests if provided
   if (rooms && rooms.length > 0) {
@@ -560,6 +608,23 @@ export const completeDraft = asyncHandler(async (req, res) => {
     }
   }
 
+  // Ensure cancellation guarantee is properly calculated in pricing
+  if (draft.cancellationGuarantee?.purchased && draft.cancellationGuarantee?.amount > 0) {
+    // Verify grandTotal includes guarantee amount
+    const roomsTotal = (draft.pricing?.subtotal || 0) - (draft.pricing?.totalDiscount || 0)
+    const tax = draft.pricing?.tax || 0
+    const expectedTotal = roomsTotal + tax + draft.cancellationGuarantee.amount
+    if (Math.abs(draft.pricing.grandTotal - expectedTotal) > 1) {
+      logger.info('[completeDraft] Correcting grandTotal to include guarantee:', {
+        was: draft.pricing.grandTotal,
+        expected: expectedTotal,
+        guaranteeAmount: draft.cancellationGuarantee.amount
+      })
+      draft.pricing.grandTotal = expectedTotal
+      draft.markModified('pricing')
+    }
+  }
+
   // Generate new booking number (BKG instead of DRF)
   const newBookingNumber = await Booking.generateBookingNumber(partnerId, 'booking')
 
@@ -574,6 +639,11 @@ export const completeDraft = asyncHandler(async (req, res) => {
     draft.nights = Math.ceil(
       (new Date(draft.checkOut) - new Date(draft.checkIn)) / (1000 * 60 * 60 * 24)
     )
+  }
+
+  // Update payment dueAmount to match grandTotal (includes guarantee if any)
+  if (draft.payment) {
+    draft.payment.dueAmount = draft.pricing.grandTotal
   }
 
   await draft.save()

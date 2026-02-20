@@ -153,7 +153,16 @@
               :currency="bookingStore.currency"
               :subtotal="bookingStore.subtotal"
               :discount="bookingStore.totalDiscount"
-              :total="bookingStore.grandTotal"
+              :total="bookingStore.grandTotalWithGuarantee"
+              :cancellation-guarantee="
+                bookingStore.cancellationGuarantee
+                  ? {
+                      purchased: true,
+                      rate: bookingStore.cancellationGuaranteeConfig?.rate || 1,
+                      amount: bookingStore.guaranteeAmount
+                    }
+                  : null
+              "
             />
           </div>
         </div>
@@ -179,6 +188,60 @@
               @update="handleUpdateInvoiceDetails"
             />
 
+            <!-- Cancellation Guarantee Package -->
+            <div
+              v-if="showGuarantee"
+              class="bg-white dark:bg-slate-800 rounded-xl border-2 transition-all cursor-pointer p-5"
+              :class="
+                bookingStore.cancellationGuarantee
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
+              "
+              @click="toggleGuarantee"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0"
+                    :class="
+                      bookingStore.cancellationGuarantee
+                        ? 'bg-blue-500 border-blue-500'
+                        : 'border-gray-300 dark:border-slate-500'
+                    "
+                  >
+                    <span
+                      v-if="bookingStore.cancellationGuarantee"
+                      class="material-icons text-white"
+                      style="font-size: 14px"
+                      >check</span
+                    >
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons text-blue-600 dark:text-blue-400 text-lg"
+                        >verified_user</span
+                      >
+                      <span class="font-semibold text-gray-800 dark:text-white text-sm">
+                        {{ $t('booking.cancellationGuarantee') }}
+                        ({{ bookingStore.cancellationGuaranteeConfig?.rate || 1 }}%)
+                      </span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 ml-7">
+                      {{ $t('booking.cancellationGuaranteeDesc') }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  v-if="bookingStore.cancellationGuarantee"
+                  class="text-right flex-shrink-0 ml-3"
+                >
+                  <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
+                    +{{ formatGuaranteeAmount }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <PaymentMethodSelect
               :accepted-methods="bookingStore.payment.acceptedMethods"
               :selected-method="bookingStore.payment.method"
@@ -192,7 +255,7 @@
               v-model="creditCardOption"
               v-model:send-email="sendPaymentLinkEmail"
               v-model:send-sms="sendPaymentLinkSms"
-              :amount="bookingStore.grandTotal"
+              :amount="bookingStore.grandTotalWithGuarantee"
               :currency="bookingStore.currency"
               :customer-name="
                 (bookingStore.guests.leadGuest?.firstName || '') +
@@ -437,6 +500,27 @@ const creditCardPaymentRef = ref(null)
 const inlinePaymentBookingId = ref(null)
 const inlinePaymentId = ref(null)
 
+// Cancellation guarantee
+const showGuarantee = computed(() => {
+  if (!bookingStore.cancellationGuaranteeConfig?.enabled) return false
+  // Hide if all cart items are non-refundable
+  const allNonRefundable = bookingStore.cart.every(item => item.rateType === 'non_refundable')
+  return !allNonRefundable
+})
+
+const toggleGuarantee = () => {
+  bookingStore.cancellationGuarantee = !bookingStore.cancellationGuarantee
+  triggerAutoSave()
+}
+
+const formatGuaranteeAmount = computed(() => {
+  const amount = bookingStore.guaranteeAmount
+  if (!amount) return '-'
+  const symbols = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }
+  const symbol = symbols[bookingStore.currency] || bookingStore.currency
+  return `${symbol}${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0 }).format(amount)}`
+})
+
 // Auto-save debounce timer
 let autoSaveTimer = null
 
@@ -611,7 +695,7 @@ const handleInlinePaymentStart = async paymentData => {
     console.log('[BookingLayout] Creating payment record...')
     const paymentResponse = await paymentService.addPayment(draftId, {
       type: 'credit_card',
-      amount: bookingStore.grandTotal,
+      amount: bookingStore.grandTotalWithGuarantee,
       currency: bookingStore.currency
     })
     console.log('[BookingLayout] Payment record created:', paymentResponse?.data?._id)
