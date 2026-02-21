@@ -26,7 +26,8 @@
     "partnerTypes": {
       "all": "All Partners",
       "hotel": "Hotels Only",
-      "agency": "Agencies Only"
+      "agency": "Agencies Only",
+      "web": "Web Only"
     },
     "free": "Free",
     "periods": {
@@ -64,7 +65,8 @@
     "partnerTypes": {
       "all": "All Partners",
       "hotel": "Hotels Only",
-      "agency": "Agencies Only"
+      "agency": "Agencies Only",
+      "web": "Web Only"
     },
     "periods": {
       "yearly": "Yearly",

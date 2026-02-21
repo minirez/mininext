@@ -371,7 +371,9 @@ export const register = asyncHandler(async (req, res) => {
   }
 
   // Validate partnerType
-  const partnerType = ['hotel', 'agency'].includes(rawPartnerType) ? rawPartnerType : 'agency'
+  const partnerType = ['hotel', 'agency', 'web'].includes(rawPartnerType)
+    ? rawPartnerType
+    : 'agency'
 
   // Check if email already exists
   const existingUser = await User.findOne({ email: email.toLowerCase() })

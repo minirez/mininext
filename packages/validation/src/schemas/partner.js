@@ -225,7 +225,7 @@ export const partnerSettingsSchema = {
 // PARTNER TYPES (from actual model)
 // ==========================================
 
-export const PARTNER_MODEL_TYPES = ['hotel', 'agency']
+export const PARTNER_MODEL_TYPES = ['hotel', 'agency', 'web']
 export const PARTNER_CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP']
 
 // ==========================================

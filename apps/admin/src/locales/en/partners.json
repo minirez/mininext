@@ -14,11 +14,13 @@
     "partnerType": "Partner Type",
     "types": {
       "hotel": "Hotel",
-      "agency": "Agency"
+      "agency": "Agency",
+      "web": "Web"
     },
     "typeDesc": {
       "hotel": "Manage your own hotels",
-      "agency": "Work as a travel agency"
+      "agency": "Work as a travel agency",
+      "web": "Work with a website"
     },
     "companyInfo": "Company Information",
     "contactInfo": "Contact Information",

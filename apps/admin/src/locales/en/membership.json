@@ -46,7 +46,8 @@
       "partnerTypes": {
         "all": "All",
         "hotel": "Hotel",
-        "agency": "Agency"
+        "agency": "Agency",
+        "web": "Web"
       },
       "interval": "Billing Period",
       "priceMode": "Price Mode",

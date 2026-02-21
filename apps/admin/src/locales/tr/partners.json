@@ -14,11 +14,13 @@
     "partnerType": "Partner Tipi",
     "types": {
       "hotel": "Otel",
-      "agency": "Acente"
+      "agency": "Acente",
+      "web": "Web"
     },
     "typeDesc": {
       "hotel": "Kendi otellerinizi yönetin",
-      "agency": "Seyahat acentesi olarak çalışın"
+      "agency": "Seyahat acentesi olarak çalışın",
+      "web": "Web sitesi ile çalışın"
     },
     "companyInfo": "Şirket Bilgileri",
     "contactInfo": "İletişim Bilgileri",

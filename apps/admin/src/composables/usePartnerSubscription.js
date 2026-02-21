@@ -111,6 +111,23 @@ export function usePartnerSubscription() {
     return row.subscription?.status || 'expired'
   }
 
+  const getActivePackageName = (row, locale = 'tr') => {
+    const purchases = row.subscription?.purchases
+    if (!purchases?.length) return null
+    const now = new Date()
+    const activePkg = purchases.find(
+      p =>
+        p.type === 'package_subscription' &&
+        p.status === 'active' &&
+        new Date(p.period?.startDate) <= now &&
+        new Date(p.period?.endDate) >= now
+    )
+    if (!activePkg) return null
+    const label = activePkg.label
+    if (!label) return null
+    return typeof label === 'object' ? label[locale] || label.tr || label.en : label
+  }
+
   // Load catalog (packages + services)
   const loadSubscriptionPlans = async () => {
     try {
@@ -397,6 +414,7 @@ export function usePartnerSubscription() {
     getProvisionedHotels,
     getPmsLimit,
     getSubscriptionStatusForRow,
+    getActivePackageName,
     loadSubscriptionPlans,
     loadSubscriptionData,
     openSubscriptionModal,

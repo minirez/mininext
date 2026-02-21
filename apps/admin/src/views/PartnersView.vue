@@ -40,6 +40,7 @@
             <option value="">{{ $t('partners.allTypes', 'Tüm Tipler') }}</option>
             <option value="hotel">{{ $t('partners.types.hotel') }}</option>
             <option value="agency">{{ $t('partners.types.agency') }}</option>
+            <option value="web">{{ $t('partners.types.web') }}</option>
           </select>
         </div>
       </div>
@@ -78,7 +79,8 @@
               class="badge"
               :class="{
                 'badge-info': value === 'hotel',
-                'badge-purple': value === 'agency'
+                'badge-purple': value === 'agency',
+                'badge-success': value === 'web'
               }"
             >
               {{ $t(`partners.types.${value || 'agency'}`) }}
@@ -105,21 +107,13 @@
 
           <template #cell-subscription="{ row }">
             <div class="flex flex-col gap-1">
-              <span class="badge badge-primary">
-                {{ row.subscriptionStatus?.statusLabel || '-' }}
-              </span>
               <span
-                v-if="getSubscriptionStatusForRow(row) === 'grace_period'"
-                class="text-xs text-amber-600 dark:text-amber-400"
+                v-if="getActivePackageName(row, locale)"
+                class="text-sm font-medium text-gray-900 dark:text-white"
               >
-                {{ getGracePeriodDays(row) }} {{ $t('partners.subscription.daysGrace') }}
+                {{ getActivePackageName(row, locale) }}
               </span>
-              <span
-                v-else-if="getRemainingDays(row) !== null && getRemainingDays(row) <= 30"
-                class="text-xs text-gray-500 dark:text-slate-400"
-              >
-                {{ getRemainingDays(row) }} {{ $t('partners.subscription.daysLeft') }}
-              </span>
+              <span v-else class="text-sm text-gray-400 dark:text-slate-500">-</span>
             </div>
           </template>
 
@@ -236,7 +230,7 @@
           <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
             {{ $t('partners.partnerType') }}
           </label>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-3 gap-4">
             <label
               class="relative flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
               :class="
@@ -294,6 +288,36 @@
               }}</span>
               <div v-if="form.partnerType === 'agency'" class="absolute top-2 right-2">
                 <span class="material-icons text-purple-500">check_circle</span>
+              </div>
+            </label>
+
+            <label
+              class="relative flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
+              :class="
+                form.partnerType === 'web'
+                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 shadow-lg shadow-emerald-500/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-700 bg-white dark:bg-slate-800'
+              "
+            >
+              <input v-model="form.partnerType" type="radio" value="web" class="sr-only" />
+              <div
+                class="w-14 h-14 rounded-full flex items-center justify-center mb-2"
+                :class="
+                  form.partnerType === 'web'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
+                "
+              >
+                <span class="material-icons text-2xl">language</span>
+              </div>
+              <span class="font-semibold text-gray-800 dark:text-white">{{
+                $t('partners.types.web')
+              }}</span>
+              <span class="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">{{
+                $t('partners.typeDesc.web')
+              }}</span>
+              <div v-if="form.partnerType === 'web'" class="absolute top-2 right-2">
+                <span class="material-icons text-emerald-500">check_circle</span>
               </div>
             </label>
           </div>
@@ -837,7 +861,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import { usePartnerSubscription } from '@/composables/usePartnerSubscription'
 import PartnerSubscriptionModal from './partners/PartnerSubscriptionModal.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Subscription composable
 const subscription = usePartnerSubscription()
@@ -867,6 +891,7 @@ const {
   getProvisionedHotels,
   getPmsLimit,
   getSubscriptionStatusForRow,
+  getActivePackageName,
   openEditPurchaseModal,
   openMarkPaidModal,
   getInvoiceForPurchase,

@@ -18,7 +18,7 @@ const partnerSchema = new mongoose.Schema(
     partnerType: {
       type: String,
       enum: {
-        values: ['hotel', 'agency'],
+        values: ['hotel', 'agency', 'web'],
         message: 'INVALID_PARTNER_TYPE'
       },
       default: 'agency'

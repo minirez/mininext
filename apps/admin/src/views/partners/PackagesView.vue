@@ -362,7 +362,8 @@ const billingPeriodOptions = computed(() => [
 const partnerTypeOptions = computed(() => [
   { value: 'all', label: t('subscriptionPackages.partnerTypes.all') },
   { value: 'hotel', label: t('subscriptionPackages.partnerTypes.hotel') },
-  { value: 'agency', label: t('subscriptionPackages.partnerTypes.agency') }
+  { value: 'agency', label: t('subscriptionPackages.partnerTypes.agency') },
+  { value: 'web', label: t('subscriptionPackages.partnerTypes.web') }
 ])
 
 const packages = ref([])

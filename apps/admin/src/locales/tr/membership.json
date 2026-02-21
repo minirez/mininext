@@ -46,7 +46,8 @@
       "partnerTypes": {
         "all": "Tümü",
         "hotel": "Otel",
-        "agency": "Acente"
+        "agency": "Acente",
+        "web": "Web"
       },
       "interval": "Faturalama Periyodu",
       "priceMode": "Fiyat Modu",
