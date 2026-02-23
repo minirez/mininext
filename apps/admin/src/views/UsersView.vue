@@ -267,10 +267,7 @@
     <UserEditModal
       v-if="showEditModal && selectedUser"
       :user="selectedUser"
-      @close="
-        showEditModal = false
-        selectedUser = null
-      "
+      @close="closeEditModal"
       @success="handleEditSuccess"
     />
 
@@ -278,10 +275,7 @@
     <PermissionsModal
       v-if="showPermissionsModal && selectedUser"
       :user="selectedUser"
-      @close="
-        showPermissionsModal = false
-        selectedUser = null
-      "
+      @close="closePermissionsModal"
       @success="handlePermissionsSuccess"
     />
 
@@ -289,10 +283,7 @@
     <SessionsModal
       v-if="showSessionsModal && selectedUser"
       :user="selectedUser"
-      @close="
-        showSessionsModal = false
-        selectedUser = null
-      "
+      @close="closeSessionsModal"
     />
 
     <!-- Delete Confirmation -->
@@ -596,6 +587,22 @@ const handleActionSelect = (item, row) => {
       handleDelete(row)
       break
   }
+}
+
+// Close modal handlers
+const closeEditModal = () => {
+  showEditModal.value = false
+  selectedUser.value = null
+}
+
+const closePermissionsModal = () => {
+  showPermissionsModal.value = false
+  selectedUser.value = null
+}
+
+const closeSessionsModal = () => {
+  showSessionsModal.value = false
+  selectedUser.value = null
 }
 
 // Modal handlers
