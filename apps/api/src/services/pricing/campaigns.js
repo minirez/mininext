@@ -543,6 +543,7 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
         workingMode: daySalesSettings.workingMode,
         commissionRate: daySalesSettings.commissionRate,
         agencyCommission: daySalesSettings.agencyCommission,
+        agencyMarginShare: daySalesSettings.agencyMarginShare,
         markup: daySalesSettings.markup
       },
       season: daySeason ? { _id: daySeason._id, code: daySeason.code, name: daySeason.name } : null,

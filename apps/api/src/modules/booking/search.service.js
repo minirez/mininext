@@ -11,6 +11,7 @@ import MealPlan from '../planning/mealPlan.model.js'
 import Market from '../planning/market.model.js'
 import pricingService from '#services/pricingService.js'
 import { getEffectiveChildAgeGroups } from '#services/pricing/multipliers.js'
+import { calculateTierPricing } from '#services/pricing/tiers.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import logger from '#core/logger.js'
 import { getPartnerId } from '#services/helpers.js'
@@ -522,6 +523,36 @@ export const searchAvailability = asyncHandler(async (req, res) => {
             ? priceResult.pricing.b2bPrice
             : priceResult.pricing.b2cPrice
 
+        // Map daily breakdown to channel-specific prices for consistent display
+        // (so daily prices add up to the total)
+        const channelDailyBreakdown = priceResult.dailyBreakdown.map(day => {
+          if (!day.hasRate) return day
+          const channelDayPrice =
+            effectiveSalesChannel === 'b2b' ? day.b2bPrice || day.price : day.b2cPrice || day.price
+          // Calculate channel-specific original price (before campaigns) via tier pricing
+          let channelOrigPrice = day.originalPrice
+          if (day.originalPrice && day.originalPrice !== day.price && day.salesSettings) {
+            const origTier = calculateTierPricing(day.originalPrice, day.salesSettings)
+            channelOrigPrice =
+              effectiveSalesChannel === 'b2b' ? origTier.b2bPrice : origTier.b2cPrice
+          }
+          return {
+            ...day,
+            price: channelDayPrice,
+            originalPrice: channelOrigPrice
+          }
+        })
+
+        // Calculate channel-specific original total (before campaigns, in channel terms)
+        // Falls back to price if originalPrice is not set (no campaigns applied)
+        const channelOriginalTotal = channelDailyBreakdown.reduce(
+          (sum, day) => sum + (day.hasRate ? day.originalPrice || day.price || 0 : 0),
+          0
+        )
+        // Campaign discount in channel terms = channel original - channel final
+        const channelCampaignDiscount =
+          Math.round((channelOriginalTotal - channelPrice) * 100) / 100
+
         // Build option data
         const optionData = {
           mealPlan: {
@@ -531,13 +562,17 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           },
           pricing: {
             currency: market.currency,
-            originalTotal: priceResult.pricing.originalTotal,
-            campaignDiscount: priceResult.pricing.totalDiscount,
-            afterCampaignTotal: priceResult.pricing.finalTotal,
-            totalDiscount: priceResult.pricing.originalTotal - channelPrice,
+            originalTotal: channelOriginalTotal,
+            campaignDiscount: channelCampaignDiscount,
+            afterCampaignTotal: channelPrice,
+            totalDiscount: channelCampaignDiscount,
             finalTotal: channelPrice,
             avgPerNight: channelPrice / nights,
-            perNight: priceResult.pricing.perNight,
+            perNight: {
+              hotelCost: priceResult.pricing.perNight?.hotelCost,
+              b2cPrice: priceResult.pricing.perNight?.b2cPrice,
+              b2bPrice: priceResult.pricing.perNight?.b2bPrice
+            },
             hotelCost: priceResult.pricing.hotelCost,
             b2bPrice: priceResult.pricing.b2bPrice
           },
@@ -553,7 +588,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
               discountAmount: c.discountAmount,
               discountText: c.discountText
             })) || [],
-          dailyBreakdown: priceResult.dailyBreakdown,
+          dailyBreakdown: channelDailyBreakdown,
           nights,
           nonRefundable: priceResult.nonRefundable?.enabled
             ? {
