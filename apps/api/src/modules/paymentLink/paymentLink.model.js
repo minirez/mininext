@@ -338,7 +338,13 @@ paymentLinkSchema.methods.recordNotification = async function (channel) {
 
 // Static Methods
 paymentLinkSchema.statics.findByToken = function (token) {
-  return this.findOne({ token }).populate('partner', 'companyName branding')
+  return this.findOne({ token })
+    .populate('partner', 'companyName branding')
+    .populate(
+      'subscriptionContext.package',
+      'name description services trialDays billingPeriod calculatedPrice overridePrice icon color'
+    )
+    .populate('subscriptionContext.service', 'name description price billingPeriod icon category')
 }
 
 paymentLinkSchema.statics.findActiveByPartner = function (partnerId) {

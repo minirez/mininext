@@ -364,11 +364,64 @@ router.get('/:token/result', async (req, res) => {
 // ============================================================================
 
 function renderPaymentForm(paymentLink, token) {
-  const { customer, description, amount, currency, installment, partner } = paymentLink
+  const { customer, description, amount, currency, installment, partner, subscription, purpose } =
+    paymentLink
   const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
     amount
   )
   const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[currency] || currency
+
+  const isSubscription = purpose === 'subscription_package' || purpose === 'subscription_service'
+
+  let subscriptionHtml = ''
+  if (isSubscription && subscription) {
+    const lang = 'tr'
+    const subName = subscription.name?.[lang] || subscription.name?.en || ''
+    const subDesc = subscription.description?.[lang] || subscription.description?.en || ''
+    const billingLabel =
+      { monthly: 'Aylık', yearly: 'Yıllık', one_time: 'Tek Seferlik' }[
+        subscription.billingPeriod
+      ] || ''
+
+    let servicesHtml = ''
+    if (subscription.services && subscription.services.length > 0) {
+      servicesHtml = `
+        <div class="sub-services">
+          <div class="sub-services-title">Dahil Hizmetler</div>
+          ${subscription.services
+            .map(s => {
+              const sName = s.name?.[lang] || s.name?.en || ''
+              const sPrice = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+                s.price || 0
+              )
+              return `<div class="sub-service-item">
+              <span class="sub-service-name">${sName}</span>
+              <span class="sub-service-price">${currencySymbol}${sPrice}</span>
+            </div>`
+            })
+            .join('')}
+        </div>`
+    }
+
+    const trialHtml = subscription.trialDays
+      ? `
+      <div class="sub-trial">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${subscription.trialDays} gün deneme süresi
+      </div>`
+      : ''
+
+    subscriptionHtml = `
+      <div class="sub-details">
+        <div class="sub-header-row">
+          <div class="sub-name">${subName}</div>
+          ${billingLabel ? `<span class="sub-billing">${billingLabel}</span>` : ''}
+        </div>
+        ${subDesc ? `<div class="sub-desc">${subDesc}</div>` : ''}
+        ${servicesHtml}
+        ${trialHtml}
+      </div>`
+  }
 
   return `
 <!DOCTYPE html>
@@ -381,7 +434,7 @@ function renderPaymentForm(paymentLink, token) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 40%, #334155 100%);
       min-height: 100vh;
       padding: 20px;
     }
@@ -402,6 +455,83 @@ function renderPaymentForm(paymentLink, token) {
     }
     .logo { max-height: 48px; margin-bottom: 12px; filter: brightness(0) invert(1); }
     .company-name { font-size: 18px; font-weight: 600; color: #fff; }
+    .sub-details {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .sub-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .sub-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0c4a6e;
+    }
+    .sub-billing {
+      font-size: 11px;
+      font-weight: 600;
+      color: #0369a1;
+      background: #e0f2fe;
+      border: 1px solid #7dd3fc;
+      padding: 2px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sub-desc {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .sub-services {
+      border-top: 1px solid #bae6fd;
+      padding-top: 10px;
+    }
+    .sub-services-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #0369a1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .sub-service-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .sub-service-item + .sub-service-item {
+      border-top: 1px dashed #bae6fd;
+    }
+    .sub-service-name {
+      color: #334155;
+      font-weight: 500;
+    }
+    .sub-service-price {
+      color: #0c4a6e;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .sub-trial {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #bae6fd;
+      font-size: 12px;
+      font-weight: 500;
+      color: #0369a1;
+    }
     .content { padding: 24px; }
     .amount-display {
       text-align: center;
@@ -703,6 +833,8 @@ function renderPaymentForm(paymentLink, token) {
           <div class="amount-value">${currencySymbol}${formattedAmount}</div>
           <div style="font-size:13px;color:#64748b;margin-top:6px;">${description}</div>
         </div>
+
+        ${subscriptionHtml}
 
         <div class="customer-info" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:#f8fafc;border-radius:8px;margin-bottom:20px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

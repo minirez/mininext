@@ -486,7 +486,9 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
     subscriptionContext: {
       targetPartner: partner._id,
       purchaseId: purchase._id,
-      purchaseIds: [purchase._id]
+      purchaseIds: [purchase._id],
+      package: purchase.package || undefined,
+      service: purchase.service || undefined
     },
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     status: 'pending',

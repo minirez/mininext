@@ -607,6 +607,14 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
     throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
   }
 
+  // Deep-populate package services if subscription link
+  if (paymentLink.subscriptionContext?.package?.services) {
+    await paymentLink.populate(
+      'subscriptionContext.package.services',
+      'name price billingPeriod icon category'
+    )
+  }
+
   // Check if expired - both 'pending' and 'viewed' links can expire
   if (paymentLink.expiresAt < new Date() && ['pending', 'viewed'].includes(paymentLink.status)) {
     paymentLink.status = 'expired'
@@ -642,6 +650,37 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
   // Mark as viewed
   await paymentLink.markViewed()
 
+  // Build subscription details for the public page
+  let subscription = null
+  const pkg = paymentLink.subscriptionContext?.package
+  const svc = paymentLink.subscriptionContext?.service
+  if (pkg) {
+    subscription = {
+      type: 'package',
+      name: pkg.name,
+      description: pkg.description,
+      trialDays: pkg.trialDays,
+      billingPeriod: pkg.billingPeriod,
+      icon: pkg.icon,
+      color: pkg.color,
+      services: (pkg.services || []).map(s => ({
+        name: s.name,
+        price: s.price,
+        billingPeriod: s.billingPeriod,
+        icon: s.icon
+      }))
+    }
+  } else if (svc) {
+    subscription = {
+      type: 'service',
+      name: svc.name,
+      description: svc.description,
+      billingPeriod: svc.billingPeriod,
+      icon: svc.icon,
+      price: svc.price
+    }
+  }
+
   // Return public data
   res.json({
     success: true,
@@ -662,6 +701,8 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
       expiresAt: paymentLink.expiresAt,
       daysUntilExpiry: paymentLink.daysUntilExpiry,
       status: paymentLink.status,
+      purpose: paymentLink.purpose,
+      subscription,
       partner: paymentLink.partner
         ? {
             companyName: paymentLink.partner.companyName,
