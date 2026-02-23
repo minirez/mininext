@@ -46,6 +46,7 @@ router.get('/:token', async (req, res) => {
 /**
  * POST /pay-link/:token/bin
  * BIN query for payment link
+ * DCC: domestic (TR) cards with foreign currency are converted to TRY
  */
 router.post('/:token/bin', async (req, res) => {
   try {
@@ -70,13 +71,35 @@ router.post('/:token/bin', async (req, res) => {
       })
     }
 
-    // Query BIN using PaymentService (platform-level, no partnerId needed for now)
-    const result = await PaymentService.queryBin(
-      null, // partnerId - will use platform POS
-      bin,
-      paymentLink.amount,
-      paymentLink.currency.toLowerCase()
-    )
+    const linkCurrency = paymentLink.currency.toLowerCase()
+    let effectiveAmount = paymentLink.amount
+    let effectiveCurrency = linkCurrency
+    let currencyConversion = null
+
+    // DCC: if foreign currency, first get BIN info to check if card is domestic
+    if (linkCurrency !== 'try') {
+      const { getBinInfo } = await import('../services/BinService.js')
+      const binInfo = await getBinInfo(bin)
+      const cardCountry = binInfo?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = !!(binInfo?.bankCode && binInfo?.bank !== 'Unknown')
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic && paymentLink.tryEquivalent?.amount) {
+        effectiveAmount = paymentLink.tryEquivalent.amount
+        effectiveCurrency = 'try'
+        currencyConversion = {
+          originalCurrency: paymentLink.currency,
+          originalAmount: paymentLink.amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: paymentLink.tryEquivalent.amount,
+          exchangeRate: paymentLink.tryEquivalent.rate
+        }
+        console.log('[PaymentLink BIN] DCC applied:', currencyConversion)
+      }
+    }
+
+    // Query BIN with effective (possibly converted) currency
+    const result = await PaymentService.queryBin(null, bin, effectiveAmount, effectiveCurrency)
 
     if (!result.success) {
       return res.status(400).json(result)
@@ -97,29 +120,26 @@ router.post('/:token/bin', async (req, res) => {
     if (hasRates) {
       installments = installments.map(inst => {
         if (inst.count === 1) {
-          // No interest for single payment
           return {
             ...inst,
-            totalAmount: paymentLink.amount,
-            monthlyAmount: paymentLink.amount,
+            totalAmount: effectiveAmount,
+            monthlyAmount: effectiveAmount,
             interestAmount: 0,
             interestRate: 0
           }
         }
-        // Get rate for this installment count
         const rate = rates[inst.count] || rates[String(inst.count)] || 0
         if (rate <= 0) {
           return {
             ...inst,
-            totalAmount: paymentLink.amount,
-            monthlyAmount: Math.round((paymentLink.amount / inst.count) * 100) / 100,
+            totalAmount: effectiveAmount,
+            monthlyAmount: Math.round((effectiveAmount / inst.count) * 100) / 100,
             interestAmount: 0,
             interestRate: 0
           }
         }
-        // Calculate interest: amount * rate/100 * installmentCount
-        const totalInterest = paymentLink.amount * (rate / 100) * inst.count
-        const totalAmount = paymentLink.amount + totalInterest
+        const totalInterest = effectiveAmount * (rate / 100) * inst.count
+        const totalAmount = effectiveAmount + totalInterest
         return {
           ...inst,
           totalAmount: Math.round(totalAmount * 100) / 100,
@@ -129,11 +149,10 @@ router.post('/:token/bin', async (req, res) => {
         }
       })
     } else {
-      // No interest rates configured - just calculate monthly amounts
       installments = installments.map(inst => ({
         ...inst,
-        totalAmount: paymentLink.amount,
-        monthlyAmount: Math.round((paymentLink.amount / inst.count) * 100) / 100,
+        totalAmount: effectiveAmount,
+        monthlyAmount: Math.round((effectiveAmount / inst.count) * 100) / 100,
         interestAmount: 0,
         interestRate: 0
       }))
@@ -143,7 +162,8 @@ router.post('/:token/bin', async (req, res) => {
       success: true,
       card: result.card,
       installments,
-      pos: result.pos
+      pos: result.pos,
+      currencyConversion
     })
   } catch (error) {
     console.error('BIN query error:', error.message)
@@ -157,6 +177,7 @@ router.post('/:token/bin', async (req, res) => {
 /**
  * POST /pay-link/:token/process
  * Process payment for payment link
+ * DCC: domestic (TR) cards with foreign currency are converted to TRY
  */
 router.post('/:token/process', async (req, res) => {
   try {
@@ -198,12 +219,46 @@ router.post('/:token/process', async (req, res) => {
       })
     }
 
-    // Process payment
+    const linkCurrency = paymentLink.currency.toLowerCase()
+    let paymentAmount = paymentLink.amount
+    let paymentCurrency = linkCurrency
+    let currencyConversion = null
+
+    // DCC: if foreign currency, check if domestic card needs TRY conversion
+    if (linkCurrency !== 'try') {
+      const { getBinInfo } = await import('../services/BinService.js')
+      const cardBin = card.number.replace(/\s/g, '').slice(0, 8)
+      const binInfo = await getBinInfo(cardBin)
+      const cardCountry = binInfo?.country?.toLowerCase() || ''
+      const hasReliableBankInfo = !!(binInfo?.bankCode && binInfo?.bank !== 'Unknown')
+      const isLikelyDomestic = cardCountry === 'tr' || !hasReliableBankInfo
+
+      if (isLikelyDomestic) {
+        if (!paymentLink.tryEquivalent?.amount) {
+          return res.status(400).json({
+            status: false,
+            error: 'Döviz kuru bilgisi alınamadı. Lütfen tekrar deneyin.'
+          })
+        }
+        paymentAmount = paymentLink.tryEquivalent.amount
+        paymentCurrency = 'try'
+        currencyConversion = {
+          originalCurrency: paymentLink.currency,
+          originalAmount: paymentLink.amount,
+          convertedCurrency: 'TRY',
+          convertedAmount: paymentLink.tryEquivalent.amount,
+          exchangeRate: paymentLink.tryEquivalent.rate
+        }
+        console.log('[PaymentLink Process] DCC applied:', currencyConversion)
+      }
+    }
+
+    // Process payment with effective (possibly converted) amount/currency
     const customerIp = req.ip
     const paymentResult = await PaymentService.createPayment({
       posId,
-      amount: paymentLink.amount,
-      currency: paymentLink.currency.toLowerCase(),
+      amount: paymentAmount,
+      currency: paymentCurrency,
       installment: selectedInstallment,
       card: {
         holder: card.holder,
@@ -217,7 +272,8 @@ router.post('/:token/process', async (req, res) => {
         phone: paymentLink.customer.phone,
         ip: customerIp
       },
-      externalId: `PL-${token}`
+      externalId: `PL-${token}`,
+      currencyConversion
     })
 
     // If 3D redirect needed (check both formUrl and redirectUrl)
@@ -234,10 +290,10 @@ router.post('/:token/process', async (req, res) => {
     // Direct payment success - update payment link status in main API
     if (paymentResult.success) {
       try {
-        // Get full transaction details
         const txDetails = await PaymentService.getTransactionDetails(paymentResult.transactionId)
-
-        // Notify main API about successful payment
+        if (currencyConversion) {
+          txDetails.currencyConversion = currencyConversion
+        }
         await axios.post(`${API_BASE_URL}/pay/${token}/complete`, txDetails, { httpsAgent })
       } catch (notifyError) {
         console.error('Failed to notify main API:', notifyError.message)
@@ -317,6 +373,11 @@ router.post('/:token/callback', async (req, res) => {
 
         // Get full transaction details (now includes commission)
         const txDetails = await PaymentService.getTransactionDetails(transactionId)
+
+        // Pass DCC info if currency conversion was applied
+        if (transaction?.currencyConversion) {
+          txDetails.currencyConversion = transaction.currencyConversion
+        }
 
         console.log('[PaymentLink Callback] Transaction details:', txDetails ? 'OK' : 'NULL')
         console.log(
@@ -1072,28 +1133,43 @@ function renderPaymentForm(paymentLink, token) {
 
           cardInfo.classList.remove('hidden');
 
+          // DCC: if currency conversion applied, update button to show TRY amount
+          const dcc = data.currencyConversion;
+          let effectiveSymbol = currencySymbol;
+          let effectiveAmount = baseAmount;
+          if (dcc && dcc.convertedCurrency === 'TRY') {
+            effectiveSymbol = '₺';
+            effectiveAmount = dcc.convertedAmount;
+            const fmtTry = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(dcc.convertedAmount);
+            const fmtOrig = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(dcc.originalAmount);
+            payBtn.innerHTML = '≈ ₺' + fmtTry + ' Öde' +
+              '<div style="font-size:12px;font-weight:400;opacity:0.8;margin-top:2px;">' + currencySymbol + fmtOrig + ' (KDV dahil)</div>';
+          }
+
           // Update custom dropdown options
           if (data.installments && data.installments.length > 0) {
             const dropdownOptions = document.getElementById('dropdownOptions');
             const checkIcon = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            const dispAmount = dcc ? effectiveAmount : baseAmount;
+            const dispSymbol = dcc ? effectiveSymbol : currencySymbol;
 
             dropdownOptions.innerHTML = data.installments.map((i, idx) => {
-              const totalAmount = (i.totalAmount || baseAmount).toFixed(2);
-              const monthlyAmount = (i.monthlyAmount || baseAmount).toFixed(2);
-              const hasInterest = i.totalAmount && i.totalAmount > baseAmount;
-              const extraAmount = hasInterest ? (i.totalAmount - baseAmount).toFixed(2) : null;
+              const totalAmount = (i.totalAmount || dispAmount).toFixed(2);
+              const monthlyAmount = (i.monthlyAmount || dispAmount).toFixed(2);
+              const hasInterest = i.totalAmount && i.totalAmount > dispAmount;
+              const extraAmount = hasInterest ? (i.totalAmount - dispAmount).toFixed(2) : null;
               const isFirst = idx === 0;
 
               let label, priceText;
               if (i.count === 1) {
                 label = 'Tek Çekim';
-                priceText = currencySymbol + totalAmount;
+                priceText = dispSymbol + totalAmount;
               } else {
                 label = i.count + ' Taksit';
-                priceText = currencySymbol + monthlyAmount + '/ay';
+                priceText = dispSymbol + monthlyAmount + '/ay';
               }
 
-              const extraHtml = extraAmount ? '<span class="dropdown-option-extra">(+' + currencySymbol + extraAmount + ')</span>' : '';
+              const extraHtml = extraAmount ? '<span class="dropdown-option-extra">(+' + dispSymbol + extraAmount + ')</span>' : '';
 
               return '<div class="dropdown-option' + (isFirst ? ' selected' : '') + '" data-value="' + i.count + '" data-total="' + totalAmount + '" data-label="' + label + '" onclick="selectOption(this)">' +
                 '<span class="dropdown-option-label">' + label + '</span>' +

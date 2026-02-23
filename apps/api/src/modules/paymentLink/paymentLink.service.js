@@ -864,6 +864,9 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     installment: transactionData.installment,
     commission: transactionData.commission,
 
+    // DCC (Dynamic Currency Conversion) info
+    currencyConversion: transactionData.currencyConversion || null,
+
     // Ham yanıt
     rawResponse: transactionData
   })
@@ -899,7 +902,16 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
               refNumber: transactionData.refNumber,
               provisionNumber: transactionData.provisionNumber,
               maskedCard: transactionData.maskedCard
-            }
+            },
+            ...(transactionData.currencyConversion && {
+              currencyConversion: {
+                originalCurrency: transactionData.currencyConversion.originalCurrency,
+                originalAmount: transactionData.currencyConversion.originalAmount,
+                convertedCurrency: transactionData.currencyConversion.convertedCurrency,
+                convertedAmount: transactionData.currencyConversion.convertedAmount,
+                exchangeRate: transactionData.currencyConversion.exchangeRate
+              }
+            })
           },
           // Commission data from payment gateway
           ...(transactionData.commission && {
@@ -913,7 +925,9 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
               netAmount: transactionData.commission.netAmount
             }
           }),
-          notes: `Payment link ile ödendi: ${paymentLink.linkNumber}`
+          notes: transactionData.currencyConversion
+            ? `Payment link ile ödendi: ${paymentLink.linkNumber} (${transactionData.currencyConversion.originalAmount} ${transactionData.currencyConversion.originalCurrency} → ${transactionData.currencyConversion.convertedAmount} TRY, kur: ${transactionData.currencyConversion.exchangeRate})`
+            : `Payment link ile ödendi: ${paymentLink.linkNumber}`
         })
         await payment.save()
 

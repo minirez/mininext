@@ -280,7 +280,17 @@ function generateInstallmentOptions(pos, amount, currency, binInfo) {
  * Create and start payment
  */
 export async function createPayment(data) {
-  const { posId, amount, currency, installment, card, customer, externalId, partnerId } = data
+  const {
+    posId,
+    amount,
+    currency,
+    installment,
+    card,
+    customer,
+    externalId,
+    partnerId,
+    currencyConversion
+  } = data
 
   // Get POS
   const pos = await VirtualPos.findById(posId)
@@ -327,7 +337,8 @@ export async function createPayment(data) {
       : {},
     customer: customer || {},
     status: 'pending',
-    externalId
+    externalId,
+    currencyConversion: currencyConversion || null
   })
 
   await transaction.save()
