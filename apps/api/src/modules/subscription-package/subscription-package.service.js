@@ -79,8 +79,20 @@ export const create = asyncHandler(async (req, res) => {
 
   if (!name?.tr || !name?.en) throw new BadRequestError('NAME_REQUIRED')
 
-  const finalSlug = slug || slugify(name.en)
+  let finalSlug = slug || slugify(name.en)
   if (!finalSlug) throw new BadRequestError('SLUG_REQUIRED')
+
+  const existingSlug = await SubscriptionPackage.findOne({ slug: finalSlug }).select('_id').lean()
+  if (existingSlug) {
+    const regex = new RegExp(`^${finalSlug}(-\\d+)?$`)
+    const siblings = await SubscriptionPackage.find({ slug: regex }).select('slug').lean()
+    let max = 1
+    for (const s of siblings) {
+      const match = s.slug.match(/-(\d+)$/)
+      if (match) max = Math.max(max, Number(match[1]))
+    }
+    finalSlug = `${finalSlug}-${max + 1}`
+  }
 
   if (services?.length) {
     const count = await SubscriptionService.countDocuments({ _id: { $in: services } })
