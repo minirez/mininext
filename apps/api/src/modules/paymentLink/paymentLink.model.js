@@ -105,11 +105,9 @@ const paymentLinkSchema = new mongoose.Schema(
 
     // Subscription purchase context (when purpose = subscription_package | subscription_service)
     subscriptionContext: {
-      // Target partner (the one who will receive the subscription)
       targetPartner: { type: mongoose.Schema.Types.ObjectId, ref: 'Partner' },
-      // Which purchase inside partner.subscription.purchases
       purchaseId: { type: mongoose.Schema.Types.ObjectId },
-      // Catalog reference
+      purchaseIds: [{ type: mongoose.Schema.Types.ObjectId }],
       package: { type: mongoose.Schema.Types.ObjectId, ref: 'SubscriptionPackage' },
       service: { type: mongoose.Schema.Types.ObjectId, ref: 'SubscriptionService' }
     },

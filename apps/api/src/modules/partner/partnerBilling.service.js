@@ -429,6 +429,90 @@ export const deletePurchase = asyncHandler(async (req, res) => {
 })
 
 /**
+ * Get payment links associated with a specific purchase
+ */
+export const getPaymentLinksForPurchase = asyncHandler(async (req, res) => {
+  const { id: partnerId, purchaseId } = req.params
+
+  const links = await PaymentLink.find({
+    'subscriptionContext.targetPartner': partnerId,
+    $or: [
+      { 'subscriptionContext.purchaseId': purchaseId },
+      { 'subscriptionContext.purchaseIds': purchaseId }
+    ]
+  })
+    .select('token linkNumber amount currency status expiresAt createdAt paidAt transaction')
+    .sort({ createdAt: -1 })
+    .lean()
+
+  const enriched = links.map(link => ({
+    ...link,
+    paymentUrl: (() => {
+      const isDev = process.env.NODE_ENV === 'development'
+      const defaultUrl = isDev ? 'https://payment.mini.com' : 'https://payment.maxirez.com'
+      const baseUrl = process.env.PAYMENT_PUBLIC_URL || defaultUrl
+      return `${baseUrl}/pay-link/${link.token}`
+    })()
+  }))
+
+  res.json({ success: true, data: enriched })
+})
+
+/**
+ * Send a new payment link for an existing pending purchase
+ */
+export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
+  const partner = await Partner.findById(req.params.id)
+  if (!partner) throw new NotFoundError('PARTNER_NOT_FOUND')
+
+  const { purchaseId } = req.params
+  const purchase = partner.subscription?.purchases?.find(p => p._id.toString() === purchaseId)
+  if (!purchase) throw new NotFoundError('PURCHASE_NOT_FOUND')
+  if (purchase.status !== 'pending') throw new BadRequestError('PURCHASE_NOT_PENDING')
+
+  const linkData = {
+    partner: partner._id,
+    customer: {
+      name: partner.companyName,
+      email: partner.email,
+      phone: partner.phone || ''
+    },
+    description: purchase.label?.tr || purchase.label?.en || 'Subscription',
+    amount: purchase.price?.amount || 0,
+    currency: purchase.price?.currency || 'EUR',
+    purpose:
+      purchase.type === 'package_subscription' ? 'subscription_package' : 'subscription_service',
+    subscriptionContext: {
+      targetPartner: partner._id,
+      purchaseId: purchase._id,
+      purchaseIds: [purchase._id]
+    },
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    status: 'pending',
+    createdBy: req.user._id
+  }
+
+  const paymentLink = await PaymentLink.create(linkData)
+  logger.info(
+    `Payment link ${paymentLink._id} sent for purchase ${purchaseId} of partner ${partner._id}`
+  )
+
+  res.json({
+    success: true,
+    data: {
+      _id: paymentLink._id,
+      token: paymentLink.token,
+      paymentUrl: paymentLink.paymentUrl,
+      linkNumber: paymentLink.linkNumber,
+      amount: paymentLink.amount,
+      currency: paymentLink.currency,
+      status: paymentLink.status,
+      expiresAt: paymentLink.expiresAt
+    }
+  })
+})
+
+/**
  * Create purchase from admin subscription modal.
  * Uses SubscriptionPackage/SubscriptionService catalog (EUR-only).
  * Supports actions: send_link, save_pending, mark_paid, activate_trial
@@ -560,6 +644,8 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
 
   let paymentLink = null
   if (action === 'send_link' && totalAmount > 0) {
+    const purchaseIds = createdPurchases.map(p => p.purchase._id)
+    const hasPackage = createdPurchases.some(p => p.purchase.type === 'package_subscription')
     const linkData = {
       partner: partner._id,
       customer: {
@@ -570,10 +656,11 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
       description: createdPurchases.map(p => p.label?.tr || p.label?.en).join(', '),
       amount: totalAmount,
       currency: 'EUR',
-      purpose: 'subscription_package',
+      purpose: hasPackage ? 'subscription_package' : 'subscription_service',
       subscriptionContext: {
         targetPartner: partner._id,
-        purchaseId: createdPurchases[0]?.purchase?._id
+        purchaseId: purchaseIds[0],
+        purchaseIds
       },
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'pending',
@@ -609,7 +696,7 @@ export const createPurchaseWithPaymentLink = asyncHandler(async (req, res) => {
         price: p.purchase.price
       })),
       paymentLink: paymentLink
-        ? { _id: paymentLink._id, paymentUrl: `/payment/${paymentLink.token}` }
+        ? { _id: paymentLink._id, token: paymentLink.token, paymentUrl: paymentLink.paymentUrl }
         : null,
       subscription: partner.getSubscriptionStatus()
     }

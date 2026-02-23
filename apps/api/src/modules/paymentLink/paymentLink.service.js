@@ -869,11 +869,18 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     try {
       const targetPartner = await Partner.findById(paymentLink.subscriptionContext.targetPartner)
       if (targetPartner) {
-        const purchase = targetPartner.subscription?.purchases?.find(
-          p => p._id.toString() === paymentLink.subscriptionContext.purchaseId?.toString()
-        )
+        const ctx = paymentLink.subscriptionContext
+        const purchaseIds = ctx.purchaseIds?.length
+          ? ctx.purchaseIds.map(id => id.toString())
+          : ctx.purchaseId
+            ? [ctx.purchaseId.toString()]
+            : []
 
-        if (purchase && purchase.status === 'pending') {
+        const activatedPurchases = []
+        for (const purchase of targetPartner.subscription?.purchases || []) {
+          if (!purchaseIds.includes(purchase._id.toString())) continue
+          if (purchase.status !== 'pending') continue
+
           purchase.status = 'active'
           purchase.payment = {
             ...(purchase.payment || {}),
@@ -882,25 +889,34 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
             reference: transactionData.transactionId,
             transactionId: transactionData.transactionId
           }
-          targetPartner.subscription.status = 'active'
+          activatedPurchases.push(purchase)
+        }
 
+        if (activatedPurchases.length) {
+          targetPartner.subscription.status = 'active'
           await targetPartner.save()
 
-          // Create invoice (idempotent)
-          try {
-            const { createInvoice } =
-              await import('#modules/subscriptionInvoice/subscriptionInvoice.service.js')
-            const invoice = await createInvoice(targetPartner._id, purchase, null)
-            if (invoice && !purchase.invoice) {
-              purchase.invoice = invoice._id
-              await targetPartner.save()
+          for (const purchase of activatedPurchases) {
+            try {
+              const { createInvoice } =
+                await import('#modules/subscriptionInvoice/subscriptionInvoice.service.js')
+              const invoice = await createInvoice(targetPartner._id, purchase, null)
+              if (invoice && !purchase.invoice) {
+                purchase.invoice = invoice._id
+              }
+            } catch (invErr) {
+              logger.error(
+                'Failed to create subscription invoice from payment link:',
+                invErr.message
+              )
             }
-          } catch (invErr) {
-            logger.error('Failed to create subscription invoice from payment link:', invErr.message)
+          }
+          if (activatedPurchases.some(p => p.invoice)) {
+            await targetPartner.save()
           }
 
           logger.info(
-            `Subscription purchase ${purchase._id} activated via payment link ${paymentLink.linkNumber}`
+            `${activatedPurchases.length} subscription purchases activated via payment link ${paymentLink.linkNumber}`
           )
         }
       }

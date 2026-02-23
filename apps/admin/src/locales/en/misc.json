@@ -632,6 +632,15 @@
       "yearly": "Yearly",
       "one_time": "One-time"
     },
+    "sendPaymentLink": "Send Payment Link",
+    "paymentLinkSent": "Payment link created",
+    "paymentLinkSentAndCopied": "Payment link created and copied",
+    "paymentLinkError": "Failed to send payment link",
+    "paymentLinks": "Payment Links",
+    "noPaymentLinks": "No payment links sent yet",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard",
+    "paidAt": "Paid at",
     "dashboard": {
       "totalEarned": "Total Earned",
       "thisYear": "This Year",

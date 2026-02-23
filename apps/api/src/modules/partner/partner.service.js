@@ -64,5 +64,7 @@ export {
   markPurchaseAsPaid,
   cancelPurchase,
   deletePurchase,
+  getPaymentLinksForPurchase,
+  sendPaymentLinkForPurchase,
   createPurchaseWithPaymentLink
 } from './partnerBilling.service.js'

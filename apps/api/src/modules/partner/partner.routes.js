@@ -100,6 +100,14 @@ router.put('/:id/subscription/purchases/:purchaseId', partnerService.updatePurch
 router.post('/:id/subscription/purchases/:purchaseId/cancel', partnerService.cancelPurchase)
 router.post('/:id/subscription/purchases/:purchaseId/mark-paid', partnerService.markPurchaseAsPaid)
 router.delete('/:id/subscription/purchases/:purchaseId', partnerService.deletePurchase)
+router.get(
+  '/:id/subscription/purchases/:purchaseId/payment-links',
+  partnerService.getPaymentLinksForPurchase
+)
+router.post(
+  '/:id/subscription/purchases/:purchaseId/send-link',
+  partnerService.sendPaymentLinkForPurchase
+)
 router.post('/:id/subscription/purchase-with-link', partnerService.createPurchaseWithPaymentLink)
 
 // Document upload

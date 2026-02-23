@@ -263,6 +263,36 @@ const createPurchaseWithPaymentLink = async (partnerId, data) => {
   }
 }
 
+const getPaymentLinksForPurchase = async (partnerId, purchaseId) => {
+  try {
+    const response = await apiClient.get(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}/payment-links`
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Get payment links failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const sendPaymentLinkForPurchase = async (partnerId, purchaseId) => {
+  try {
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/purchases/${purchaseId}/send-link`
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Send payment link failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // ==================== Partner Self-Profile ====================
 
 // Get my profile (for partner users)
@@ -562,6 +592,8 @@ export default {
   deletePurchase,
   markPurchaseAsPaid,
   createPurchaseWithPaymentLink,
+  getPaymentLinksForPurchase,
+  sendPaymentLinkForPurchase,
   // Partner Self-Profile
   getMyProfile,
   updateMyProfile,

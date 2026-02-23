@@ -605,6 +605,15 @@
       "yearly": "Yıllık",
       "one_time": "Tek Seferlik"
     },
+    "sendPaymentLink": "Ödeme Linki Gönder",
+    "paymentLinkSent": "Ödeme linki oluşturuldu",
+    "paymentLinkSentAndCopied": "Ödeme linki oluşturuldu ve kopyalandı",
+    "paymentLinkError": "Ödeme linki gönderilemedi",
+    "paymentLinks": "Ödeme Linkleri",
+    "noPaymentLinks": "Henüz ödeme linki gönderilmemiş",
+    "copyLink": "Linki Kopyala",
+    "linkCopied": "Link panoya kopyalandı",
+    "paidAt": "Ödeme tarihi",
     "dashboard": {
       "totalEarned": "Toplam Kazanç",
       "thisYear": "Bu Yıl",
