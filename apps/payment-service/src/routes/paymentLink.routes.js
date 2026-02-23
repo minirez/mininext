@@ -383,28 +383,32 @@ function renderPaymentForm(paymentLink, token) {
 
   const isSubscription = purpose === 'subscription_package' || purpose === 'subscription_service'
 
+  const hasTax = tax && tax.rate > 0
+  const displayAmount = hasTax ? tax.subtotal : amount
+  const formattedDisplayAmount = new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 2
+  }).format(displayAmount)
+
   let taxBreakdownHtml = ''
-  if (tax && tax.rate > 0) {
-    const fmtSubtotal = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
-      tax.subtotal
-    )
+  if (hasTax) {
     const fmtTax = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(tax.amount)
     taxBreakdownHtml = `
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0;">
-        <span>Ara Toplam</span>
-        <span>${currencySymbol}${fmtSubtotal}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:4px;">
         <span>KDV (%${tax.rate})</span>
-        <span>${currencySymbol}${fmtTax}</span>
+        <span>+ ${currencySymbol}${fmtTax}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#1e293b;margin-top:4px;">
+        <span>Toplam</span>
+        <span>${currencySymbol}${formattedAmount}</span>
       </div>`
   }
 
   let tryHtml = ''
-  if (tryEquivalent && currency !== 'TRY') {
-    const formattedTry = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
-      tryEquivalent.amount
-    )
+  const formattedTry =
+    tryEquivalent && currency !== 'TRY'
+      ? new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(tryEquivalent.amount)
+      : null
+  if (formattedTry) {
     tryHtml = `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">≈ ₺${formattedTry}</div>`
   }
 
@@ -869,8 +873,8 @@ function renderPaymentForm(paymentLink, token) {
 
       <div class="content">
         <div class="amount-display">
-          <div class="amount-label">Ödenecek Tutar</div>
-          <div class="amount-value">${currencySymbol}${formattedAmount}</div>
+          <div class="amount-label">${hasTax ? 'Paket Tutarı' : 'Ödenecek Tutar'}</div>
+          <div class="amount-value">${currencySymbol}${formattedDisplayAmount}</div>
           ${tryHtml}
           <div style="font-size:13px;color:#64748b;margin-top:6px;">${description}</div>
           ${taxBreakdownHtml}
@@ -939,7 +943,8 @@ function renderPaymentForm(paymentLink, token) {
           <input type="hidden" id="token" value="${token}">
 
           <button type="submit" class="btn-pay" id="payBtn">
-            ${currencySymbol}${formattedAmount} Öde
+            ${formattedTry ? `≈ ₺${formattedTry} Öde` : `${currencySymbol}${formattedAmount} Öde`}
+            ${hasTax && formattedTry ? `<div style="font-size:12px;font-weight:400;opacity:0.8;margin-top:2px;">${currencySymbol}${formattedAmount} (KDV dahil)</div>` : ''}
           </button>
         </form>
 
