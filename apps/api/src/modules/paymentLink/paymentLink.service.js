@@ -710,6 +710,14 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
       description: paymentLink.description,
       amount: paymentLink.amount,
       currency: paymentLink.currency,
+      tax:
+        paymentLink.tax?.rate > 0
+          ? {
+              rate: paymentLink.tax.rate,
+              amount: paymentLink.tax.amount,
+              subtotal: paymentLink.tax.subtotal
+            }
+          : null,
       tryEquivalent,
       installment: {
         enabled: paymentLink.installment?.enabled || false,
@@ -1074,8 +1082,22 @@ export const createSubscriptionPaymentLink = async ({ partner, purchase, created
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
+  let taxRate = 20
+  try {
+    const { default: PlatformSettings } =
+      await import('#modules/platform-settings/platformSettings.model.js')
+    const settings = await PlatformSettings.getSettings()
+    taxRate = settings?.billing?.defaultTaxRate || 20
+  } catch {
+    // fallback to 20%
+  }
+
+  const subtotal = purchase.price.amount
+  const taxAmount = taxRate > 0 ? Math.round(((subtotal * taxRate) / 100) * 100) / 100 : 0
+  const totalWithTax = Math.round((subtotal + taxAmount) * 100) / 100
+
   const link = await PaymentLink.create({
-    partner: null, // platform-level – subscription payments are platform receipts
+    partner: null,
     purpose,
     customer: {
       name: partner.companyName,
@@ -1083,8 +1105,9 @@ export const createSubscriptionPaymentLink = async ({ partner, purchase, created
       phone: partner.phone
     },
     description: `Abonelik: ${description}`,
-    amount: purchase.price.amount,
+    amount: totalWithTax,
     currency: 'EUR',
+    tax: { rate: taxRate, amount: taxAmount, subtotal },
     expiresAt,
     subscriptionContext: {
       targetPartner: partner._id,

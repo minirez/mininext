@@ -63,6 +63,13 @@ const paymentLinkSchema = new mongoose.Schema(
       uppercase: true
     },
 
+    // Tax / VAT (KDV)
+    tax: {
+      rate: { type: Number, default: 0 },
+      amount: { type: Number, default: 0 },
+      subtotal: { type: Number, default: 0 }
+    },
+
     // Installment Settings
     installment: {
       enabled: {

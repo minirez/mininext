@@ -373,7 +373,8 @@ function renderPaymentForm(paymentLink, token) {
     partner,
     subscription,
     purpose,
-    tryEquivalent
+    tryEquivalent,
+    tax
   } = paymentLink
   const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
     amount
@@ -381,6 +382,23 @@ function renderPaymentForm(paymentLink, token) {
   const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[currency] || currency
 
   const isSubscription = purpose === 'subscription_package' || purpose === 'subscription_service'
+
+  let taxBreakdownHtml = ''
+  if (tax && tax.rate > 0) {
+    const fmtSubtotal = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+      tax.subtotal
+    )
+    const fmtTax = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(tax.amount)
+    taxBreakdownHtml = `
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0;">
+        <span>Ara Toplam</span>
+        <span>${currencySymbol}${fmtSubtotal}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-top:4px;">
+        <span>KDV (%${tax.rate})</span>
+        <span>${currencySymbol}${fmtTax}</span>
+      </div>`
+  }
 
   let tryHtml = ''
   if (tryEquivalent && currency !== 'TRY') {
@@ -855,6 +873,7 @@ function renderPaymentForm(paymentLink, token) {
           <div class="amount-value">${currencySymbol}${formattedAmount}</div>
           ${tryHtml}
           <div style="font-size:13px;color:#64748b;margin-top:6px;">${description}</div>
+          ${taxBreakdownHtml}
         </div>
 
         ${subscriptionHtml}

@@ -6,6 +6,7 @@ import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { createInvoice } from '#modules/subscriptionInvoice/subscriptionInvoice.service.js'
 import { sendPaymentLinkNotification } from '#modules/booking/payment-notifications.service.js'
+import PlatformSettings from '#modules/platform-settings/platformSettings.model.js'
 import logger from '#core/logger.js'
 
 /**
@@ -442,7 +443,7 @@ export const getPaymentLinksForPurchase = asyncHandler(async (req, res) => {
       { 'subscriptionContext.purchaseIds': purchaseId }
     ]
   })
-    .select('token linkNumber amount currency status expiresAt createdAt paidAt transaction')
+    .select('token linkNumber amount currency tax status expiresAt createdAt paidAt transaction')
     .sort({ createdAt: -1 })
     .lean()
 
@@ -471,6 +472,12 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
   if (!purchase) throw new NotFoundError('PURCHASE_NOT_FOUND')
   if (purchase.status !== 'pending') throw new BadRequestError('PURCHASE_NOT_PENDING')
 
+  const platformSettings = await PlatformSettings.getSettings()
+  const taxRate = platformSettings?.billing?.defaultTaxRate || 20
+  const subtotal = purchase.price?.amount || 0
+  const taxAmount = taxRate > 0 ? Math.round(((subtotal * taxRate) / 100) * 100) / 100 : 0
+  const totalWithTax = Math.round((subtotal + taxAmount) * 100) / 100
+
   const linkData = {
     partner: partner._id,
     customer: {
@@ -479,8 +486,13 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
       phone: partner.phone || ''
     },
     description: purchase.label?.tr || purchase.label?.en || 'Subscription',
-    amount: purchase.price?.amount || 0,
+    amount: totalWithTax,
     currency: purchase.price?.currency || 'EUR',
+    tax: {
+      rate: taxRate,
+      amount: taxAmount,
+      subtotal
+    },
     purpose:
       purchase.type === 'package_subscription' ? 'subscription_package' : 'subscription_service',
     subscriptionContext: {

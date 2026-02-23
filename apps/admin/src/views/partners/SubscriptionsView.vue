@@ -986,8 +986,13 @@
                       </span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                      €{{ (link.amount || 0).toFixed(2) }} &middot;
-                      {{ formatDate(link.createdAt) }}
+                      €{{ (link.amount || 0).toFixed(2) }}
+                      <template v-if="link.tax?.rate > 0">
+                        <span class="text-gray-400 dark:text-slate-500"
+                          >(KDV %{{ link.tax.rate }} dahil)</span
+                        >
+                      </template>
+                      &middot; {{ formatDate(link.createdAt) }}
                       <template v-if="link.paidAt">
                         &middot; {{ $t('partnerSubscriptions.paidAt') }}:
                         {{ formatDate(link.paidAt) }}</template
