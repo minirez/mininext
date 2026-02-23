@@ -286,8 +286,21 @@ export const updateGuestInfo = asyncHandler(async (req, res) => {
 async function buildEmailTemplateData(booking, type, language = 'tr') {
   const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
   const hotel = booking.hotel || {}
-  const partner = booking.partner || {}
   const locale = language === 'tr' ? 'tr-TR' : 'en-US'
+
+  // Get partner branding - if already populated use it, otherwise fetch from DB
+  let partner = {}
+  if (booking.partner?.companyName || booking.partner?.branding) {
+    // Already populated (e.g. from .populate('partner'))
+    partner = booking.partner
+  } else {
+    const partnerId = booking.partner?._id || booking.partner
+    if (partnerId) {
+      partner =
+        (await Partner.findById(partnerId).select('companyName email address branding').lean()) ||
+        {}
+    }
+  }
 
   // Format dates
   const checkInDate = formatDateLocale(booking.checkIn, locale, {
