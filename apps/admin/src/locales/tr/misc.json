@@ -606,6 +606,8 @@
       "one_time": "Tek Seferlik"
     },
     "sendPaymentLink": "Ödeme Linki Gönder",
+    "createPaymentLink": "Ödeme Linki Oluştur",
+    "paymentLinkCreated": "Ödeme linki oluşturuldu",
     "paymentLinkSent": "Ödeme linki oluşturuldu",
     "paymentLinkSentAndCopied": "Ödeme linki oluşturuldu ve kopyalandı",
     "paymentLinkError": "Ödeme linki gönderilemedi",

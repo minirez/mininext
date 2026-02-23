@@ -905,12 +905,12 @@
                 type="button"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
                 :disabled="sendingLink"
-                @click="handleSendPaymentLinkFromEdit"
+                @click="handleCreatePaymentLinkFromEdit"
               >
                 <span class="material-icons text-sm">{{
                   sendingLink ? 'refresh' : 'add_link'
                 }}</span>
-                {{ $t('partnerSubscriptions.sendPaymentLink') }}
+                {{ $t('partnerSubscriptions.createPaymentLink') }}
               </button>
             </div>
 
@@ -1575,16 +1575,16 @@ const handleDeletePurchase = async () => {
   }
 }
 
-const handleSendPaymentLink = async item => {
+const handleCreatePaymentLink = async item => {
   sendingLink.value = true
   try {
     const res = await partnerService.sendPaymentLinkForPurchase(item.partner._id, item.purchase._id)
     const url = res.data?.paymentUrl
     if (url) {
-      await navigator.clipboard.writeText(url)
-      toast.success(t('partnerSubscriptions.paymentLinkSentAndCopied'))
+      window.open(url, '_blank')
+      toast.success(t('partnerSubscriptions.paymentLinkCreated'))
     } else {
-      toast.success(t('partnerSubscriptions.paymentLinkSent'))
+      toast.success(t('partnerSubscriptions.paymentLinkCreated'))
     }
   } catch {
     toast.error(t('partnerSubscriptions.paymentLinkError'))
@@ -1593,9 +1593,9 @@ const handleSendPaymentLink = async item => {
   }
 }
 
-const handleSendPaymentLinkFromEdit = async () => {
+const handleCreatePaymentLinkFromEdit = async () => {
   if (!selectedItem.value) return
-  await handleSendPaymentLink(selectedItem.value)
+  await handleCreatePaymentLink(selectedItem.value)
   await loadPurchasePaymentLinks()
 }
 

@@ -497,14 +497,8 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
 
   const paymentLink = await PaymentLink.create(linkData)
   logger.info(
-    `Payment link ${paymentLink._id} sent for purchase ${purchaseId} of partner ${partner._id}`
+    `Payment link ${paymentLink._id} created for purchase ${purchaseId} of partner ${partner._id}`
   )
-
-  try {
-    await sendPaymentLinkNotification(paymentLink, null, { email: true, sms: false })
-  } catch (err) {
-    logger.error('Failed to send payment link notification:', err.message)
-  }
 
   res.json({
     success: true,
