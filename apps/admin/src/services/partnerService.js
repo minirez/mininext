@@ -293,6 +293,38 @@ const sendPaymentLinkForPurchase = async (partnerId, purchaseId) => {
   }
 }
 
+const cancelSubscriptionPaymentLink = async (partnerId, linkId, reason) => {
+  try {
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/payment-links/${linkId}/cancel`,
+      { reason }
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Cancel subscription payment link failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const resendSubscriptionPaymentLinkNotification = async (partnerId, linkId, channel) => {
+  try {
+    const response = await apiClient.post(
+      `/partners/${partnerId}/subscription/payment-links/${linkId}/resend`,
+      { channel }
+    )
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Resend subscription payment link notification failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // ==================== Partner Self-Profile ====================
 
 // Get my profile (for partner users)
@@ -594,6 +626,8 @@ export default {
   createPurchaseWithPaymentLink,
   getPaymentLinksForPurchase,
   sendPaymentLinkForPurchase,
+  cancelSubscriptionPaymentLink,
+  resendSubscriptionPaymentLinkNotification,
   // Partner Self-Profile
   getMyProfile,
   updateMyProfile,

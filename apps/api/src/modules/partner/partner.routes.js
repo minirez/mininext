@@ -109,6 +109,14 @@ router.post(
   partnerService.sendPaymentLinkForPurchase
 )
 router.post('/:id/subscription/purchase-with-link', partnerService.createPurchaseWithPaymentLink)
+router.post(
+  '/:id/subscription/payment-links/:linkId/cancel',
+  partnerService.cancelSubscriptionPaymentLink
+)
+router.post(
+  '/:id/subscription/payment-links/:linkId/resend',
+  partnerService.resendSubscriptionPaymentLinkNotification
+)
 
 // Document upload
 router.post('/:id/upload', upload.single('document'), partnerService.uploadDocument)

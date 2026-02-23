@@ -2,9 +2,10 @@ import Partner from './partner.model.js'
 import SubscriptionPackage from '#modules/subscriptions/subscription-package.model.js'
 import SubscriptionService from '#modules/subscriptions/subscription-service.model.js'
 import PaymentLink from '#modules/paymentLink/paymentLink.model.js'
-import { NotFoundError, BadRequestError } from '#core/errors.js'
+import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { createInvoice } from '#modules/subscriptionInvoice/subscriptionInvoice.service.js'
+import { sendPaymentLinkNotification } from '#modules/booking/payment-notifications.service.js'
 import logger from '#core/logger.js'
 
 /**
@@ -497,6 +498,12 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
     `Payment link ${paymentLink._id} sent for purchase ${purchaseId} of partner ${partner._id}`
   )
 
+  try {
+    await sendPaymentLinkNotification(paymentLink, null, { email: true, sms: false })
+  } catch (err) {
+    logger.error('Failed to send payment link notification:', err.message)
+  }
+
   res.json({
     success: true,
     data: {
@@ -509,6 +516,69 @@ export const sendPaymentLinkForPurchase = asyncHandler(async (req, res) => {
       status: paymentLink.status,
       expiresAt: paymentLink.expiresAt
     }
+  })
+})
+
+/**
+ * Cancel a subscription payment link
+ */
+export const cancelSubscriptionPaymentLink = asyncHandler(async (req, res) => {
+  const { id: partnerId, linkId } = req.params
+
+  const paymentLink = await PaymentLink.findOne({
+    _id: linkId,
+    'subscriptionContext.targetPartner': partnerId
+  })
+
+  if (!paymentLink) throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  if (paymentLink.status === 'paid') throw new ConflictError('PAYMENT_LINK_ALREADY_PAID')
+  if (paymentLink.status === 'cancelled') throw new ConflictError('PAYMENT_LINK_ALREADY_CANCELLED')
+
+  await paymentLink.cancel(req.user._id, req.body.reason || 'Cancelled by admin')
+
+  logger.info(
+    `Subscription payment link ${paymentLink.linkNumber} cancelled for partner ${partnerId}`
+  )
+
+  res.json({ success: true, message: 'Payment link cancelled' })
+})
+
+/**
+ * Resend notification for a subscription payment link (email or sms)
+ */
+export const resendSubscriptionPaymentLinkNotification = asyncHandler(async (req, res) => {
+  const { id: partnerId, linkId } = req.params
+  const { channel = 'email' } = req.body
+
+  const paymentLink = await PaymentLink.findOne({
+    _id: linkId,
+    'subscriptionContext.targetPartner': partnerId
+  })
+
+  if (!paymentLink) throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+  if (!['pending', 'viewed'].includes(paymentLink.status)) {
+    throw new ConflictError('PAYMENT_LINK_CANNOT_RESEND')
+  }
+  if (paymentLink.expiresAt < new Date()) {
+    throw new ConflictError('PAYMENT_LINK_EXPIRED')
+  }
+
+  const sendEmail = channel === 'email' || channel === 'both'
+  const sendSms = channel === 'sms' || channel === 'both'
+
+  const result = await sendPaymentLinkNotification(paymentLink, null, {
+    email: sendEmail,
+    sms: sendSms
+  })
+
+  logger.info(
+    `Subscription payment link ${paymentLink.linkNumber} notification resent (${channel}) for partner ${partnerId}`
+  )
+
+  res.json({
+    success: true,
+    message: 'Notification sent',
+    data: { email: sendEmail ? result.email : null, sms: sendSms ? result.sms : null }
   })
 })
 

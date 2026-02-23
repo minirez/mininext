@@ -514,14 +514,6 @@
                 <div class="flex items-center justify-end gap-1">
                   <button
                     v-if="item.purchase.status === 'pending'"
-                    class="p-2 text-purple-600 hover:text-purple-700 dark:text-purple-400"
-                    :title="$t('partnerSubscriptions.sendPaymentLink')"
-                    @click="handleSendPaymentLink(item)"
-                  >
-                    <span class="material-icons text-xl">link</span>
-                  </button>
-                  <button
-                    v-if="item.purchase.status === 'pending'"
                     class="p-2 text-green-600 hover:text-green-700 dark:text-green-400"
                     :title="$t('partnerSubscriptions.markAsPaid')"
                     @click="openMarkPaidModal(item)"
@@ -915,7 +907,9 @@
                 :disabled="sendingLink"
                 @click="handleSendPaymentLinkFromEdit"
               >
-                <span class="material-icons text-sm">{{ sendingLink ? 'refresh' : 'send' }}</span>
+                <span class="material-icons text-sm">{{
+                  sendingLink ? 'refresh' : 'add_link'
+                }}</span>
                 {{ $t('partnerSubscriptions.sendPaymentLink') }}
               </button>
             </div>
@@ -933,7 +927,7 @@
               <div
                 v-for="link in purchasePaymentLinks"
                 :key="link._id"
-                class="flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                class="p-3 rounded-lg border transition-colors"
                 :class="
                   link.status === 'paid'
                     ? 'border-green-200 dark:border-green-800/40 bg-green-50 dark:bg-green-900/10'
@@ -942,71 +936,107 @@
                       : 'border-purple-200 dark:border-purple-800/40 bg-purple-50 dark:bg-purple-900/10'
                 "
               >
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                  :class="
-                    link.status === 'paid'
-                      ? 'bg-green-100 dark:bg-green-900/30'
-                      : link.status === 'expired' || link.status === 'cancelled'
-                        ? 'bg-gray-100 dark:bg-slate-700'
-                        : 'bg-purple-100 dark:bg-purple-900/30'
-                  "
-                >
-                  <span
-                    class="material-icons text-sm"
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                     :class="
                       link.status === 'paid'
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'bg-green-100 dark:bg-green-900/30'
                         : link.status === 'expired' || link.status === 'cancelled'
-                          ? 'text-gray-400 dark:text-slate-500'
-                          : 'text-purple-600 dark:text-purple-400'
+                          ? 'bg-gray-100 dark:bg-slate-700'
+                          : 'bg-purple-100 dark:bg-purple-900/30'
                     "
                   >
-                    {{
-                      link.status === 'paid'
-                        ? 'check_circle'
-                        : link.status === 'expired'
-                          ? 'timer_off'
-                          : link.status === 'cancelled'
-                            ? 'cancel'
-                            : 'pending'
-                    }}
-                  </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ link.linkNumber }}
-                    </span>
                     <span
-                      class="badge text-xs"
-                      :class="{
-                        'badge-success': link.status === 'paid',
-                        'badge-warning': link.status === 'pending' || link.status === 'viewed',
-                        'badge-secondary': link.status === 'expired',
-                        'badge-danger': link.status === 'cancelled'
-                      }"
+                      class="material-icons text-sm"
+                      :class="
+                        link.status === 'paid'
+                          ? 'text-green-600 dark:text-green-400'
+                          : link.status === 'expired' || link.status === 'cancelled'
+                            ? 'text-gray-400 dark:text-slate-500'
+                            : 'text-purple-600 dark:text-purple-400'
+                      "
                     >
-                      {{ link.status }}
+                      {{
+                        link.status === 'paid'
+                          ? 'check_circle'
+                          : link.status === 'expired'
+                            ? 'timer_off'
+                            : link.status === 'cancelled'
+                              ? 'cancel'
+                              : 'pending'
+                      }}
                     </span>
                   </div>
-                  <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                    €{{ (link.amount || 0).toFixed(2) }} &middot;
-                    {{ formatDate(link.createdAt) }}
-                    <template v-if="link.paidAt">
-                      &middot; {{ $t('partnerSubscriptions.paidAt') }}:
-                      {{ formatDate(link.paidAt) }}</template
-                    >
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ link.linkNumber }}
+                      </span>
+                      <span
+                        class="badge text-xs"
+                        :class="{
+                          'badge-success': link.status === 'paid',
+                          'badge-warning': link.status === 'pending' || link.status === 'viewed',
+                          'badge-secondary': link.status === 'expired',
+                          'badge-danger': link.status === 'cancelled'
+                        }"
+                      >
+                        {{ link.status }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      €{{ (link.amount || 0).toFixed(2) }} &middot;
+                      {{ formatDate(link.createdAt) }}
+                      <template v-if="link.paidAt">
+                        &middot; {{ $t('partnerSubscriptions.paidAt') }}:
+                        {{ formatDate(link.paidAt) }}</template
+                      >
+                    </div>
                   </div>
                 </div>
-                <button
+
+                <!-- Action buttons for active links -->
+                <div
                   v-if="['pending', 'viewed'].includes(link.status)"
-                  class="p-1.5 text-gray-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 transition-colors"
-                  :title="$t('partnerSubscriptions.copyLink')"
-                  @click="copyPaymentLink(link.paymentUrl)"
+                  class="flex items-center gap-1.5 mt-2 pt-2 border-t border-purple-100 dark:border-purple-800/30"
                 >
-                  <span class="material-icons text-lg">content_copy</span>
-                </button>
+                  <button
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    :disabled="linkActionLoading"
+                    :title="$t('partnerSubscriptions.sendEmail')"
+                    @click="handleResendLinkNotification(link, 'email')"
+                  >
+                    <span class="material-icons text-xs">email</span>
+                    {{ $t('partnerSubscriptions.sendEmail') }}
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+                    :disabled="linkActionLoading"
+                    :title="$t('partnerSubscriptions.sendSms')"
+                    @click="handleResendLinkNotification(link, 'sms')"
+                  >
+                    <span class="material-icons text-xs">sms</span>
+                    {{ $t('partnerSubscriptions.sendSms') }}
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    :title="$t('partnerSubscriptions.copyLink')"
+                    @click="copyPaymentLink(link.paymentUrl)"
+                  >
+                    <span class="material-icons text-xs">content_copy</span>
+                  </button>
+                  <div class="flex-1"></div>
+                  <button
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                    :disabled="linkActionLoading"
+                    :title="$t('partnerSubscriptions.cancelLink')"
+                    @click="handleCancelPaymentLink(link)"
+                  >
+                    <span class="material-icons text-xs">close</span>
+                    {{ $t('partnerSubscriptions.cancelLink') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1048,6 +1078,17 @@
         :confirm-text="$t('partnerSubscriptions.delete')"
         :cancel-text="$t('common.cancel')"
         @confirm="handleDeletePurchase"
+      />
+
+      <!-- Cancel Payment Link Confirmation Dialog -->
+      <ConfirmDialog
+        v-model="showCancelLinkDialog"
+        type="danger"
+        :title="$t('partnerSubscriptions.cancelLink')"
+        :message="$t('partnerSubscriptions.cancelLinkConfirm')"
+        :confirm-text="$t('partnerSubscriptions.cancelLink')"
+        :cancel-text="$t('common.cancel')"
+        @confirm="confirmCancelPaymentLink"
       />
     </div>
   </div>
@@ -1108,6 +1149,9 @@ const availablePackages = ref([])
 const availableServices = ref([])
 const purchasePaymentLinks = ref([])
 const sendingLink = ref(false)
+const linkActionLoading = ref(false)
+const showCancelLinkDialog = ref(false)
+const cancellingLink = ref(null)
 
 const markPaidForm = ref({
   paymentDate: new Date().toISOString().split('T')[0],
@@ -1574,6 +1618,55 @@ const copyPaymentLink = async url => {
     toast.success(t('partnerSubscriptions.linkCopied'))
   } catch {
     toast.error(t('common.error'))
+  }
+}
+
+const handleCancelPaymentLink = link => {
+  cancellingLink.value = link
+  showCancelLinkDialog.value = true
+}
+
+const confirmCancelPaymentLink = async () => {
+  if (!cancellingLink.value || !selectedItem.value) return
+  linkActionLoading.value = true
+  try {
+    await partnerService.cancelSubscriptionPaymentLink(
+      selectedItem.value.partner._id,
+      cancellingLink.value._id
+    )
+    toast.success(t('partnerSubscriptions.linkCancelled'))
+    await loadPurchasePaymentLinks()
+  } catch {
+    toast.error(t('partnerSubscriptions.linkCancelError'))
+  } finally {
+    linkActionLoading.value = false
+    showCancelLinkDialog.value = false
+    cancellingLink.value = null
+  }
+}
+
+const handleResendLinkNotification = async (link, channel) => {
+  if (!selectedItem.value) return
+  linkActionLoading.value = true
+  try {
+    await partnerService.resendSubscriptionPaymentLinkNotification(
+      selectedItem.value.partner._id,
+      link._id,
+      channel
+    )
+    if (channel === 'email') {
+      toast.success(t('partnerSubscriptions.emailSent'))
+    } else {
+      toast.success(t('partnerSubscriptions.smsSent'))
+    }
+  } catch {
+    if (channel === 'email') {
+      toast.error(t('partnerSubscriptions.emailSendError'))
+    } else {
+      toast.error(t('partnerSubscriptions.smsSendError'))
+    }
+  } finally {
+    linkActionLoading.value = false
   }
 }
 
