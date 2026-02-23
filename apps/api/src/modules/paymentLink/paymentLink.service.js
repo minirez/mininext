@@ -2,6 +2,7 @@ import PaymentLink from './paymentLink.model.js'
 import Partner from '../partner/partner.model.js'
 import Booking from '../booking/booking.model.js'
 import Payment from '../booking/payment.model.js'
+import Exchange from '../../models/exchange.model.js'
 import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
 import { asyncHandler, getEffectivePartnerId, escapeRegex } from '#helpers'
 import logger from '#core/logger.js'
@@ -681,6 +682,22 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
     }
   }
 
+  // Convert to TRY if currency is not TRY
+  let tryEquivalent = null
+  if (paymentLink.currency !== 'TRY') {
+    try {
+      const tryAmount = await Exchange.convert(paymentLink.amount, paymentLink.currency, 'TRY')
+      if (tryAmount) {
+        tryEquivalent = {
+          amount: Math.round(tryAmount * 100) / 100,
+          rate: Math.round((tryAmount / paymentLink.amount) * 10000) / 10000
+        }
+      }
+    } catch (err) {
+      logger.warn('[PaymentLink] TRY conversion failed:', err.message)
+    }
+  }
+
   // Return public data
   res.json({
     success: true,
@@ -693,6 +710,7 @@ export const getPaymentLinkByToken = asyncHandler(async (req, res) => {
       description: paymentLink.description,
       amount: paymentLink.amount,
       currency: paymentLink.currency,
+      tryEquivalent,
       installment: {
         enabled: paymentLink.installment?.enabled || false,
         maxCount: paymentLink.installment?.maxCount || 1,

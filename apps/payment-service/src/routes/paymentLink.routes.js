@@ -364,14 +364,31 @@ router.get('/:token/result', async (req, res) => {
 // ============================================================================
 
 function renderPaymentForm(paymentLink, token) {
-  const { customer, description, amount, currency, installment, partner, subscription, purpose } =
-    paymentLink
+  const {
+    customer,
+    description,
+    amount,
+    currency,
+    installment,
+    partner,
+    subscription,
+    purpose,
+    tryEquivalent
+  } = paymentLink
   const formattedAmount = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
     amount
   )
   const currencySymbol = { TRY: '₺', USD: '$', EUR: '€', GBP: '£' }[currency] || currency
 
   const isSubscription = purpose === 'subscription_package' || purpose === 'subscription_service'
+
+  let tryHtml = ''
+  if (tryEquivalent && currency !== 'TRY') {
+    const formattedTry = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
+      tryEquivalent.amount
+    )
+    tryHtml = `<div style="font-size:12px;color:#94a3b8;margin-top:4px;">≈ ₺${formattedTry}</div>`
+  }
 
   let subscriptionHtml = ''
   if (isSubscription && subscription) {
@@ -385,6 +402,7 @@ function renderPaymentForm(paymentLink, token) {
 
     let servicesHtml = ''
     if (subscription.services && subscription.services.length > 0) {
+      const tryRate = tryEquivalent ? tryEquivalent.rate : null
       servicesHtml = `
         <div class="sub-services">
           <div class="sub-services-title">Dahil Hizmetler</div>
@@ -394,9 +412,13 @@ function renderPaymentForm(paymentLink, token) {
               const sPrice = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(
                 s.price || 0
               )
+              const sTryPrice =
+                tryRate && currency !== 'TRY'
+                  ? `<span style="font-size:10px;color:#94a3b8;margin-left:4px;">≈ ₺${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format((s.price || 0) * tryRate)}</span>`
+                  : ''
               return `<div class="sub-service-item">
               <span class="sub-service-name">${sName}</span>
-              <span class="sub-service-price">${currencySymbol}${sPrice}</span>
+              <span class="sub-service-price">${currencySymbol}${sPrice}${sTryPrice}</span>
             </div>`
             })
             .join('')}
@@ -831,6 +853,7 @@ function renderPaymentForm(paymentLink, token) {
         <div class="amount-display">
           <div class="amount-label">Ödenecek Tutar</div>
           <div class="amount-value">${currencySymbol}${formattedAmount}</div>
+          ${tryHtml}
           <div style="font-size:13px;color:#64748b;margin-top:6px;">${description}</div>
         </div>
 
