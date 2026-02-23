@@ -59,8 +59,48 @@ app.use('/api/channel-manager/webhook', cors({ origin: true, credentials: false 
 
 // CORS - Dynamic origin validation for multi-tenant domains
 // Public routes are already handled above with open CORS, skip them here
+
+// Cache partner extranet/site/pms domains for CORS (refresh every 5 minutes)
+let cachedPartnerDomains = new Set()
+let lastDomainCacheUpdate = 0
+const DOMAIN_CACHE_TTL = 5 * 60 * 1000
+
+async function getPartnerDomains() {
+  const now = Date.now()
+  if (now - lastDomainCacheUpdate < DOMAIN_CACHE_TTL && cachedPartnerDomains.size > 0) {
+    return cachedPartnerDomains
+  }
+
+  try {
+    const { default: Partner } = await import('#modules/partner/partner.model.js')
+    const partners = await Partner.find(
+      {
+        $or: [
+          { 'branding.extranetDomain': { $exists: true, $ne: '' } },
+          { 'branding.siteDomain': { $exists: true, $ne: '' } },
+          { 'branding.pmsDomain': { $exists: true, $ne: '' } }
+        ]
+      },
+      { 'branding.extranetDomain': 1, 'branding.siteDomain': 1, 'branding.pmsDomain': 1 }
+    ).lean()
+
+    const domains = new Set()
+    for (const p of partners) {
+      if (p.branding?.extranetDomain) domains.add(p.branding.extranetDomain)
+      if (p.branding?.siteDomain) domains.add(p.branding.siteDomain)
+      if (p.branding?.pmsDomain) domains.add(p.branding.pmsDomain)
+    }
+    cachedPartnerDomains = domains
+    lastDomainCacheUpdate = now
+  } catch (err) {
+    console.error('Failed to cache partner domains for CORS:', err.message)
+  }
+
+  return cachedPartnerDomains
+}
+
 const corsOptions = {
-  origin: (origin, callback) => {
+  origin: async (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) {
       return callback(null, true)
@@ -102,8 +142,12 @@ const corsOptions = {
         return callback(null, true)
       }
 
-      // Production: Only allow configured origins
-      // Partner domains should be added to CORS_ORIGIN env variable
+      // Dynamic check: allow registered partner domains (extranet, site, pms)
+      const partnerDomains = await getPartnerDomains()
+      if (partnerDomains.has(hostname)) {
+        return callback(null, true)
+      }
+
       return callback(new Error('Origin not allowed by CORS'), false)
     } catch {
       return callback(new Error('Invalid origin'), false)
