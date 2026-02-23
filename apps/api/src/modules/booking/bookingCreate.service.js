@@ -107,6 +107,10 @@ export const createBooking = asyncHandler(async (req, res) => {
     throw new NotFoundError('NO_MARKET_AVAILABLE')
   }
 
+  // Resolve effective sales channel based on market settings
+  const effectiveSalesChannel =
+    salesChannel === 'b2b' && !market.salesChannels?.b2b ? 'b2c' : salesChannel
+
   // Process rooms and calculate prices
   const processedRooms = []
   let totalAdults = 0
@@ -161,9 +165,9 @@ export const createBooking = asyncHandler(async (req, res) => {
       )
     }
 
-    // Determine display price based on sales channel
+    // Determine display price based on effective sales channel
     const channelPrice =
-      salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
+      effectiveSalesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
     // Build room booking
     const roomBooking = {
@@ -305,7 +309,7 @@ export const createBooking = asyncHandler(async (req, res) => {
     season: primarySeason?._id,
     seasonCode: primarySeason?.code,
     seasonName: primarySeason?.name,
-    salesChannel,
+    salesChannel: effectiveSalesChannel,
     checkIn: checkInDate,
     checkOut: checkOutDate,
     nights,
@@ -479,6 +483,10 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     throw new NotFoundError('NO_MARKET_AVAILABLE')
   }
 
+  // Resolve effective sales channel based on market settings
+  const effectiveSalesChannel =
+    salesChannel === 'b2b' && !market.salesChannels?.b2b ? 'b2c' : salesChannel
+
   // Process rooms and calculate prices
   const processedRooms = []
   let totalAdults = 0
@@ -533,9 +541,9 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
       )
     }
 
-    // Determine display price based on sales channel
+    // Determine display price based on effective sales channel
     const channelPrice =
-      salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
+      effectiveSalesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
 
     // Build room booking
     const roomBooking = {
@@ -697,7 +705,7 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     season: primarySeason?._id,
     seasonCode: primarySeason?.code,
     seasonName: primarySeason?.name,
-    salesChannel,
+    salesChannel: effectiveSalesChannel,
     checkIn: checkInDate,
     checkOut: checkOutDate,
     nights,

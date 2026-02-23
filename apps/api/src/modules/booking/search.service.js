@@ -104,7 +104,7 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 
   const [allMarkets, allRoomTypes, allMealPlans] = await Promise.all([
     Market.find({ hotel: { $in: hotelIds_list }, status: 'active' })
-      .select('_id hotel name currency countries isDefault')
+      .select('_id hotel name currency countries isDefault salesChannels')
       .lean(),
     RoomType.find({ hotel: { $in: hotelIds_list }, status: 'active' })
       .select('_id hotel code occupancy')
@@ -163,6 +163,10 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 
       hotelDebug.marketId = market._id
       hotelDebug.marketName = market.name
+
+      // Resolve effective sales channel based on market settings
+      const effectiveChannel =
+        salesChannel === 'b2b' && !market.salesChannels?.b2b ? 'b2c' : salesChannel
 
       // Get active room types from pre-fetched data
       const roomTypes = roomTypesByHotel.get(hotelKey) || []
@@ -246,9 +250,10 @@ export const searchHotelsWithPrices = asyncHandler(async (req, res) => {
 
             if (priceResult.availability?.isAvailable) {
               availableRoomCount++
-              // Use channel-specific price (NOT hotelCost!)
               const price =
-                salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
+                effectiveChannel === 'b2b'
+                  ? priceResult.pricing.b2bPrice
+                  : priceResult.pricing.b2cPrice
 
               if (cheapestPrice === null || price < cheapestPrice) {
                 cheapestPrice = price
@@ -417,6 +422,10 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     throw new NotFoundError('NO_MARKET_AVAILABLE')
   }
 
+  // Resolve effective sales channel based on market settings
+  const effectiveSalesChannel =
+    salesChannel === 'b2b' && !market.salesChannels?.b2b ? 'b2c' : salesChannel
+
   // Get active room types and meal plans
   const [roomTypes, mealPlans] = await Promise.all([
     RoomType.find({ hotel: hotel._id, status: 'active' }).sort('displayOrder').lean(),
@@ -507,9 +516,11 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           includeCampaigns: true
         })
 
-        // Determine display price based on sales channel
+        // Determine display price based on effective sales channel
         const channelPrice =
-          salesChannel === 'b2b' ? priceResult.pricing.b2bPrice : priceResult.pricing.b2cPrice
+          effectiveSalesChannel === 'b2b'
+            ? priceResult.pricing.b2bPrice
+            : priceResult.pricing.b2cPrice
 
         // Build option data
         const optionData = {
@@ -550,11 +561,11 @@ export const searchAvailability = asyncHandler(async (req, res) => {
                 discountPercent: priceResult.nonRefundable.discountPercent,
                 pricing: {
                   finalTotal:
-                    salesChannel === 'b2b'
+                    effectiveSalesChannel === 'b2b'
                       ? priceResult.nonRefundable.pricing.b2bPrice
                       : priceResult.nonRefundable.pricing.b2cPrice,
                   avgPerNight:
-                    (salesChannel === 'b2b'
+                    (effectiveSalesChannel === 'b2b'
                       ? priceResult.nonRefundable.pricing.b2bPrice
                       : priceResult.nonRefundable.pricing.b2cPrice) / nights,
                   hotelCost: priceResult.nonRefundable.pricing.hotelCost,
@@ -604,6 +615,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         nights,
         adults,
         children,
+        salesChannel: effectiveSalesChannel,
         market: {
           _id: market._id,
           code: market.code,
