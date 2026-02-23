@@ -10,7 +10,7 @@ import PaymentService from '../services/PaymentService.js'
 
 const router = Router()
 
-// API Base URL (main booking-engine API)
+// API Base URL (main Maxirez API)
 const API_BASE_URL = process.env.MAIN_API_URL || 'http://localhost:4000/api'
 
 // HTTPS agent for self-signed certificates in development
@@ -381,7 +381,7 @@ function renderPaymentForm(paymentLink, token) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
       min-height: 100vh;
       padding: 20px;
     }
@@ -396,31 +396,33 @@ function renderPaymentForm(paymentLink, token) {
       overflow: hidden;
     }
     .header {
-      background: #f8f9fa;
-      padding: 24px;
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+      padding: 28px 24px;
       text-align: center;
-      border-bottom: 1px solid #e9ecef;
     }
-    .logo { max-height: 48px; margin-bottom: 12px; }
-    .company-name { font-size: 18px; font-weight: 600; color: #333; }
+    .logo { max-height: 48px; margin-bottom: 12px; filter: brightness(0) invert(1); }
+    .company-name { font-size: 18px; font-weight: 600; color: #fff; }
     .content { padding: 24px; }
     .amount-display {
       text-align: center;
-      padding: 20px;
-      background: #f8f9fa;
+      padding: 24px 20px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid #bfdbfe;
       border-radius: 12px;
       margin-bottom: 24px;
     }
-    .amount-label { font-size: 14px; color: #666; margin-bottom: 4px; }
-    .amount-value { font-size: 36px; font-weight: 700; color: #333; }
+    .amount-label { font-size: 14px; color: #1e40af; margin-bottom: 4px; font-weight: 500; }
+    .amount-value { font-size: 36px; font-weight: 700; color: #1e3a5f; }
     .description {
       font-size: 14px;
-      color: #666;
+      color: #1e40af;
       text-align: center;
       margin-bottom: 24px;
-      padding: 12px;
-      background: #fff3cd;
+      padding: 12px 16px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
       border-radius: 8px;
+      font-weight: 500;
     }
     .customer-info {
       font-size: 13px;
@@ -446,8 +448,8 @@ function renderPaymentForm(paymentLink, token) {
     }
     .form-input:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
     .form-row { display: flex; gap: 12px; }
     .form-row .form-group { flex: 1; }
@@ -469,7 +471,7 @@ function renderPaymentForm(paymentLink, token) {
     .card-bank { color: #666; font-size: 13px; }
     .card-family {
       display: inline-block;
-      background: #667eea;
+      background: #2563eb;
       color: white;
       font-size: 10px;
       padding: 2px 8px;
@@ -495,10 +497,10 @@ function renderPaymentForm(paymentLink, token) {
       transition: all 0.2s ease;
     }
     .dropdown-selected:hover {
-      border-color: #667eea;
+      border-color: #2563eb;
     }
     .custom-dropdown.open .dropdown-selected {
-      border-color: #667eea;
+      border-color: #2563eb;
       border-radius: 10px 10px 0 0;
     }
     .dropdown-selected-text {
@@ -509,7 +511,7 @@ function renderPaymentForm(paymentLink, token) {
     .dropdown-selected-amount {
       font-size: 14px;
       font-weight: 700;
-      color: #667eea;
+      color: #2563eb;
       margin-right: 8px;
     }
     .dropdown-arrow {
@@ -534,7 +536,7 @@ function renderPaymentForm(paymentLink, token) {
       left: 0;
       right: 0;
       background: white;
-      border: 2px solid #667eea;
+      border: 2px solid #2563eb;
       border-top: 1px solid #e5e7eb;
       border-radius: 0 0 10px 10px;
       max-height: 0;
@@ -563,10 +565,10 @@ function renderPaymentForm(paymentLink, token) {
       border-bottom: none;
     }
     .dropdown-option:hover {
-      background: #f8f9ff;
+      background: #eff6ff;
     }
     .dropdown-option.selected {
-      background: #eef2ff;
+      background: #dbeafe;
     }
     .dropdown-option-label {
       color: #374151;
@@ -595,7 +597,7 @@ function renderPaymentForm(paymentLink, token) {
     .dropdown-option-check svg {
       width: 16px;
       height: 16px;
-      stroke: #667eea;
+      stroke: #2563eb;
       stroke-width: 3;
       fill: none;
     }
@@ -605,7 +607,7 @@ function renderPaymentForm(paymentLink, token) {
     .installment-summary {
       margin-top: 8px;
       padding: 10px 14px;
-      background: #f8f9ff;
+      background: #eff6ff;
       border-radius: 8px;
       display: flex;
       justify-content: space-between;
@@ -617,12 +619,12 @@ function renderPaymentForm(paymentLink, token) {
     }
     .installment-summary-value {
       font-weight: 600;
-      color: #667eea;
+      color: #2563eb;
     }
         .btn-pay {
       width: 100%;
       padding: 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
       color: white;
       border: none;
       border-radius: 10px;
@@ -632,7 +634,7 @@ function renderPaymentForm(paymentLink, token) {
       margin-top: 20px;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+    .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); }
     .btn-pay:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     .secure-badge {
       display: flex;
@@ -649,7 +651,7 @@ function renderPaymentForm(paymentLink, token) {
       width: 50px;
       height: 50px;
       border: 4px solid #e9ecef;
-      border-top-color: #667eea;
+      border-top-color: #2563eb;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
@@ -699,12 +701,13 @@ function renderPaymentForm(paymentLink, token) {
         <div class="amount-display">
           <div class="amount-label">Ödenecek Tutar</div>
           <div class="amount-value">${currencySymbol}${formattedAmount}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:6px;">${description}</div>
         </div>
 
-        <div class="description">${description}</div>
-
-        <div class="customer-info">
-          ${customer.name} • ${customer.email}
+        <div class="customer-info" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:#f8fafc;border-radius:8px;margin-bottom:20px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>${customer.name}</span>
+          ${customer.email ? `<span style="color:#cbd5e1;">•</span><span>${customer.email}</span>` : ''}
         </div>
 
         <div class="error-msg" id="errorMsg"></div>
@@ -1188,7 +1191,7 @@ function renderResultPage(success, message, token) {
     .btn {
       display: inline-block;
       padding: 12px 24px;
-      background: #667eea;
+      background: #2563eb;
       color: white;
       text-decoration: none;
       border-radius: 8px;
