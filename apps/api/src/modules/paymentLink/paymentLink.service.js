@@ -876,6 +876,10 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
     rawResponse: transactionData
   })
 
+  paymentLink.completionSource = 'payment_gateway'
+  paymentLink.completionNotes = `Paid via ${transactionData.brand || 'card'} ending ${transactionData.lastFour || '****'} (${transactionData.posName || 'unknown POS'})`
+  await paymentLink.save()
+
   logger.info(`Payment link ${paymentLink.linkNumber} marked as paid`)
 
   // If linked to a booking (standalone link without linkedPayment), create Payment record

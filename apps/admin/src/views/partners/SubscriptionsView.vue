@@ -1128,31 +1128,53 @@
         size="xl"
       >
         <div class="space-y-3">
-          <!-- Filter tabs -->
-          <div class="flex items-center gap-2 border-b border-gray-200 dark:border-slate-700 pb-3">
-            <button
-              v-for="s in paymentLinkStatusTabs"
-              :key="s.value"
-              class="px-3 py-1.5 text-xs font-medium rounded-full transition-colors"
-              :class="
-                allLinksFilter === s.value
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
-                  : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
-              "
-              @click="filterAllLinks(s.value)"
-            >
-              {{ s.label }}
-              <span
-                v-if="s.count > 0"
-                class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full"
+          <!-- Filter tabs + controls -->
+          <div
+            class="flex items-center justify-between border-b border-gray-200 dark:border-slate-700 pb-3"
+          >
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                v-for="s in paymentLinkStatusTabs"
+                :key="s.value"
+                class="px-3 py-1.5 text-xs font-medium rounded-full transition-colors"
                 :class="
                   allLinksFilter === s.value
-                    ? 'bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300'
-                    : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
+                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                    : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                 "
+                @click="filterAllLinks(s.value)"
               >
-                {{ s.count }}
-              </span>
+                {{ s.label }}
+                <span
+                  v-if="s.count > 0"
+                  class="ml-1 px-1.5 py-0.5 text-[10px] rounded-full"
+                  :class="
+                    allLinksFilter === s.value
+                      ? 'bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-300'
+                      : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-300'
+                  "
+                >
+                  {{ s.count }}
+                </span>
+              </button>
+            </div>
+            <button
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+              :class="
+                showDeletedLinks
+                  ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                  : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+              "
+              @click="toggleShowDeletedLinks"
+            >
+              <span class="material-icons text-sm">{{
+                showDeletedLinks ? 'visibility' : 'visibility_off'
+              }}</span>
+              {{
+                showDeletedLinks
+                  ? $t('partnerSubscriptions.hideDeleted')
+                  : $t('partnerSubscriptions.showDeleted')
+              }}
             </button>
           </div>
 
@@ -1175,98 +1197,363 @@
             <div
               v-for="link in filteredAllLinks"
               :key="link._id"
-              class="p-3 rounded-lg border transition-colors"
-              :class="
-                link.status === 'paid'
-                  ? 'border-green-200 dark:border-green-800/40 bg-green-50/50 dark:bg-green-900/10'
-                  : link.status === 'cancelled' || link.status === 'expired'
-                    ? 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 opacity-70'
-                    : 'border-indigo-200 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-900/10'
-              "
+              class="rounded-lg border transition-colors"
+              :class="[
+                link.deletedAt
+                  ? 'border-red-200 dark:border-red-800/30 bg-red-50/30 dark:bg-red-900/5 opacity-60'
+                  : link.status === 'paid'
+                    ? 'border-green-200 dark:border-green-800/40 bg-green-50/50 dark:bg-green-900/10'
+                    : link.status === 'cancelled' || link.status === 'expired'
+                      ? 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 opacity-70'
+                      : 'border-indigo-200 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-900/10'
+              ]"
             >
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                  :class="
-                    link.status === 'paid'
-                      ? 'bg-green-100 dark:bg-green-900/30'
-                      : link.status === 'cancelled' || link.status === 'expired'
-                        ? 'bg-gray-100 dark:bg-slate-700'
-                        : 'bg-indigo-100 dark:bg-indigo-900/30'
-                  "
-                >
-                  <span
-                    class="material-icons text-sm"
+              <!-- Main row -->
+              <div class="p-3 cursor-pointer" @click="toggleLinkDetail(link._id)">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                     :class="
                       link.status === 'paid'
-                        ? 'text-green-600 dark:text-green-400'
+                        ? 'bg-green-100 dark:bg-green-900/30'
                         : link.status === 'cancelled' || link.status === 'expired'
-                          ? 'text-gray-400 dark:text-slate-500'
-                          : 'text-indigo-600 dark:text-indigo-400'
+                          ? 'bg-gray-100 dark:bg-slate-700'
+                          : 'bg-indigo-100 dark:bg-indigo-900/30'
                     "
                   >
-                    {{
-                      link.status === 'paid'
-                        ? 'check_circle'
-                        : link.status === 'expired'
-                          ? 'timer_off'
-                          : link.status === 'cancelled'
-                            ? 'cancel'
-                            : 'pending'
-                    }}
-                  </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ link.linkNumber }}
-                    </span>
                     <span
-                      class="badge text-xs"
-                      :class="{
-                        'badge-success': link.status === 'paid',
-                        'badge-warning': link.status === 'pending' || link.status === 'viewed',
-                        'badge-secondary': link.status === 'expired',
-                        'badge-danger': link.status === 'cancelled'
-                      }"
+                      class="material-icons text-sm"
+                      :class="
+                        link.status === 'paid'
+                          ? 'text-green-600 dark:text-green-400'
+                          : link.status === 'cancelled' || link.status === 'expired'
+                            ? 'text-gray-400 dark:text-slate-500'
+                            : 'text-indigo-600 dark:text-indigo-400'
+                      "
                     >
-                      {{ link.status }}
+                      {{
+                        link.status === 'paid'
+                          ? 'check_circle'
+                          : link.status === 'expired'
+                            ? 'timer_off'
+                            : link.status === 'cancelled'
+                              ? 'cancel'
+                              : 'pending'
+                      }}
                     </span>
                   </div>
-                  <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                    <span class="font-medium">{{ link.customer?.name || '-' }}</span>
-                    <span v-if="link.customer?.email" class="ml-1 text-gray-400"
-                      >({{ link.customer.email }})</span
-                    >
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ link.linkNumber }}
+                      </span>
+                      <span
+                        class="badge text-xs"
+                        :class="{
+                          'badge-success': link.status === 'paid',
+                          'badge-warning': link.status === 'pending' || link.status === 'viewed',
+                          'badge-secondary': link.status === 'expired',
+                          'badge-danger': link.status === 'cancelled'
+                        }"
+                      >
+                        {{ link.status }}
+                      </span>
+                      <span v-if="link.deletedAt" class="badge badge-danger text-xs">
+                        <span class="material-icons text-xs mr-0.5">delete</span>
+                        {{ $t('partnerSubscriptions.deleted') }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      <span class="font-medium">{{ link.customer?.name || '-' }}</span>
+                      <span v-if="link.customer?.email" class="ml-1 text-gray-400"
+                        >({{ link.customer.email }})</span
+                      >
+                      <span
+                        v-if="link.subscriptionContext?.targetPartner?.companyName"
+                        class="ml-1 text-indigo-500 dark:text-indigo-400"
+                      >
+                        &middot; {{ link.subscriptionContext.targetPartner.companyName }}
+                      </span>
+                    </div>
+                    <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                      €{{ (link.amount || 0).toFixed(2) }}
+                      <template v-if="link.tax?.rate > 0">
+                        <span>(KDV %{{ link.tax.rate }})</span>
+                      </template>
+                      &middot; {{ formatDate(link.createdAt) }}
+                      <template v-if="link.paidAt">
+                        &middot; {{ $t('partnerSubscriptions.paidAt') }}:
+                        {{ formatDate(link.paidAt) }}
+                      </template>
+                      <template v-if="link.description"> &middot; {{ link.description }} </template>
+                    </div>
                   </div>
-                  <div class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                    €{{ (link.amount || 0).toFixed(2) }}
-                    <template v-if="link.tax?.rate > 0">
-                      <span>(KDV %{{ link.tax.rate }})</span>
-                    </template>
-                    &middot; {{ formatDate(link.createdAt) }}
-                    <template v-if="link.paidAt">
-                      &middot; {{ $t('partnerSubscriptions.paidAt') }}:
-                      {{ formatDate(link.paidAt) }}
-                    </template>
-                    <template v-if="link.description"> &middot; {{ link.description }} </template>
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      v-if="
+                        link.paymentUrl &&
+                        ['pending', 'viewed'].includes(link.status) &&
+                        !link.deletedAt
+                      "
+                      class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+                      :title="$t('partnerSubscriptions.copyLink')"
+                      @click.stop="copyPaymentLink(link.paymentUrl)"
+                    >
+                      <span class="material-icons text-sm">content_copy</span>
+                    </button>
+                    <span
+                      class="material-icons text-sm text-gray-400 transition-transform"
+                      :class="{ 'rotate-180': linkDetailExpanded === link._id }"
+                    >
+                      expand_more
+                    </span>
                   </div>
                 </div>
-                <div class="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    v-if="link.paymentUrl"
-                    class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
-                    :title="$t('partnerSubscriptions.copyLink')"
-                    @click="copyPaymentLink(link.paymentUrl)"
+              </div>
+
+              <!-- Expanded detail panel -->
+              <div
+                v-if="linkDetailExpanded === link._id"
+                class="px-3 pb-3 border-t border-gray-100 dark:border-slate-700/50 pt-2"
+              >
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3">
+                  <div>
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.purpose') }}:</span
+                    >
+                    <span class="ml-1 text-gray-700 dark:text-slate-300">{{ link.purpose }}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.expiresAt') }}:</span
+                    >
+                    <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                      formatDate(link.expiresAt)
+                    }}</span>
+                  </div>
+                  <div v-if="link.createdBy">
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.createdBy') }}:</span
+                    >
+                    <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                      link.createdBy.name || link.createdBy.email
+                    }}</span>
+                  </div>
+                  <div v-if="link.viewedAt">
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.viewedAt') }}:</span
+                    >
+                    <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                      formatDate(link.viewedAt)
+                    }}</span>
+                  </div>
+
+                  <!-- Cancellation details -->
+                  <template v-if="link.status === 'cancelled'">
+                    <div v-if="link.cancelledBy">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.cancelledBy') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                        link.cancelledBy.name || link.cancelledBy.email
+                      }}</span>
+                    </div>
+                    <div v-if="link.cancelledAt">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.cancelledAt') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                        formatDate(link.cancelledAt)
+                      }}</span>
+                    </div>
+                    <div v-if="link.cancelReason" class="col-span-2">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.cancelReason') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                        link.cancelReason
+                      }}</span>
+                    </div>
+                  </template>
+
+                  <!-- Completion/Payment details -->
+                  <template v-if="link.status === 'paid'">
+                    <div>
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.completionSource') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300 font-medium">{{
+                        getCompletionSourceLabel(link.completionSource)
+                      }}</span>
+                    </div>
+                    <div v-if="link.paidAt">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.paidAt') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                        formatDate(link.paidAt)
+                      }}</span>
+                    </div>
+                    <div v-if="link.completionNotes" class="col-span-2">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.completionNotes') }}:</span
+                      >
+                      <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                        link.completionNotes
+                      }}</span>
+                    </div>
+                    <template v-if="link.transaction?.gatewayTransactionId">
+                      <div>
+                        <span class="text-gray-400 dark:text-slate-500"
+                          >{{ $t('partnerSubscriptions.linkDetail.transactionId') }}:</span
+                        >
+                        <span
+                          class="ml-1 text-gray-700 dark:text-slate-300 font-mono text-[10px]"
+                          >{{ link.transaction.gatewayTransactionId }}</span
+                        >
+                      </div>
+                      <div v-if="link.transaction.maskedCard">
+                        <span class="text-gray-400 dark:text-slate-500"
+                          >{{ $t('partnerSubscriptions.linkDetail.card') }}:</span
+                        >
+                        <span class="ml-1 text-gray-700 dark:text-slate-300"
+                          >{{ link.transaction.maskedCard }} ({{ link.transaction.brand }})</span
+                        >
+                      </div>
+                      <div v-if="link.transaction.posName">
+                        <span class="text-gray-400 dark:text-slate-500">POS:</span>
+                        <span class="ml-1 text-gray-700 dark:text-slate-300"
+                          >{{ link.transaction.posName }} ({{ link.transaction.posBank }})</span
+                        >
+                      </div>
+                      <div v-if="link.transaction.authCode">
+                        <span class="text-gray-400 dark:text-slate-500">Auth:</span>
+                        <span
+                          class="ml-1 text-gray-700 dark:text-slate-300 font-mono text-[10px]"
+                          >{{ link.transaction.authCode }}</span
+                        >
+                      </div>
+                      <div v-if="link.transaction.installmentCount > 1">
+                        <span class="text-gray-400 dark:text-slate-500"
+                          >{{ $t('partnerSubscriptions.linkDetail.installment') }}:</span
+                        >
+                        <span class="ml-1 text-gray-700 dark:text-slate-300"
+                          >{{ link.transaction.installmentCount }}x</span
+                        >
+                      </div>
+                      <div v-if="link.transaction.commission?.netAmount">
+                        <span class="text-gray-400 dark:text-slate-500"
+                          >{{ $t('partnerSubscriptions.linkDetail.netAmount') }}:</span
+                        >
+                        <span class="ml-1 text-gray-700 dark:text-slate-300"
+                          >€{{ link.transaction.commission.netAmount.toFixed(2) }}</span
+                        >
+                      </div>
+                    </template>
+                  </template>
+
+                  <!-- Soft delete details -->
+                  <template v-if="link.deletedAt">
+                    <div>
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.deletedAt') }}:</span
+                      >
+                      <span class="ml-1 text-red-600 dark:text-red-400">{{
+                        formatDate(link.deletedAt)
+                      }}</span>
+                    </div>
+                    <div v-if="link.deletedBy">
+                      <span class="text-gray-400 dark:text-slate-500"
+                        >{{ $t('partnerSubscriptions.linkDetail.deletedBy') }}:</span
+                      >
+                      <span class="ml-1 text-red-600 dark:text-red-400">{{
+                        link.deletedBy.name || link.deletedBy.email
+                      }}</span>
+                    </div>
+                  </template>
+
+                  <!-- Completion source for cancelled links -->
+                  <div v-if="link.completionSource && link.status === 'cancelled'">
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.completionSource') }}:</span
+                    >
+                    <span class="ml-1 text-amber-600 dark:text-amber-400 font-medium">{{
+                      getCompletionSourceLabel(link.completionSource)
+                    }}</span>
+                  </div>
+                  <div
+                    v-if="link.completionNotes && link.status === 'cancelled'"
+                    class="col-span-2"
                   >
-                    <span class="material-icons text-sm">content_copy</span>
-                  </button>
+                    <span class="text-gray-400 dark:text-slate-500"
+                      >{{ $t('partnerSubscriptions.linkDetail.completionNotes') }}:</span
+                    >
+                    <span class="ml-1 text-gray-700 dark:text-slate-300">{{
+                      link.completionNotes
+                    }}</span>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div
+                  class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-700/50"
+                >
+                  <template v-if="link.deletedAt">
+                    <button
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                      :disabled="linkActionLoading"
+                      @click.stop="handleRestorePaymentLink(link)"
+                    >
+                      <span class="material-icons text-xs">restore</span>
+                      {{ $t('partnerSubscriptions.restoreLink') }}
+                    </button>
+                  </template>
+                  <template v-else>
+                    <button
+                      v-if="['pending', 'viewed'].includes(link.status)"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      :disabled="linkActionLoading"
+                      @click.stop="handleCancelPaymentLinkFromModal(link)"
+                    >
+                      <span class="material-icons text-xs">close</span>
+                      {{ $t('partnerSubscriptions.cancelLink') }}
+                    </button>
+                    <button
+                      v-if="link.paymentUrl && ['pending', 'viewed'].includes(link.status)"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/50 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                      @click.stop="copyPaymentLink(link.paymentUrl)"
+                    >
+                      <span class="material-icons text-xs">content_copy</span>
+                      {{ $t('partnerSubscriptions.copyLink') }}
+                    </button>
+                    <div class="flex-1"></div>
+                    <button
+                      v-if="['cancelled', 'expired', 'paid'].includes(link.status)"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      :disabled="linkActionLoading"
+                      @click.stop="handleDeletePaymentLink(link)"
+                    >
+                      <span class="material-icons text-xs">delete_outline</span>
+                      {{ $t('partnerSubscriptions.deleteLink') }}
+                    </button>
+                  </template>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </Modal>
+
+      <!-- Delete Payment Link Confirmation Dialog -->
+      <ConfirmDialog
+        v-model="showDeleteLinkDialog"
+        type="danger"
+        :title="$t('partnerSubscriptions.deleteLink')"
+        :message="$t('partnerSubscriptions.deleteLinkConfirm')"
+        :confirm-text="$t('partnerSubscriptions.deleteLink')"
+        :cancel-text="$t('common.cancel')"
+        @confirm="confirmDeletePaymentLink"
+      />
     </div>
   </div>
 </template>
@@ -1326,16 +1613,19 @@ const catalogLoading = ref(false)
 const availablePackages = ref([])
 const availableServices = ref([])
 const purchasePaymentLinks = ref([])
-const hiddenLinkIds = ref(new Set())
 const sendingLink = ref(false)
 const linkActionLoading = ref(false)
 const showCancelLinkDialog = ref(false)
 const cancellingLink = ref(null)
+const showDeleteLinkDialog = ref(false)
+const deletingLink = ref(null)
 
 const showPaymentLinksModal = ref(false)
 const allPaymentLinks = ref([])
 const allLinksLoading = ref(false)
 const allLinksFilter = ref('all')
+const showDeletedLinks = ref(false)
+const linkDetailExpanded = ref(null)
 
 const markPaidForm = ref({
   paymentDate: new Date().toISOString().split('T')[0],
@@ -1407,11 +1697,16 @@ const billingPeriodOptions = computed(() => [
 ])
 
 const visiblePaymentLinks = computed(() =>
-  purchasePaymentLinks.value.filter(link => !hiddenLinkIds.value.has(link._id))
+  purchasePaymentLinks.value.filter(link => !link.deletedAt)
 )
 
+const displayableLinks = computed(() => {
+  if (showDeletedLinks.value) return allPaymentLinks.value
+  return allPaymentLinks.value.filter(l => !l.deletedAt)
+})
+
 const paymentLinkStatusTabs = computed(() => {
-  const links = allPaymentLinks.value
+  const links = displayableLinks.value
   return [
     { value: 'all', label: t('common.all'), count: links.length },
     {
@@ -1438,11 +1733,12 @@ const paymentLinkStatusTabs = computed(() => {
 })
 
 const filteredAllLinks = computed(() => {
-  if (allLinksFilter.value === 'all') return allPaymentLinks.value
+  const base = displayableLinks.value
+  if (allLinksFilter.value === 'all') return base
   if (allLinksFilter.value === 'pending') {
-    return allPaymentLinks.value.filter(l => l.status === 'pending' || l.status === 'viewed')
+    return base.filter(l => l.status === 'pending' || l.status === 'viewed')
   }
-  return allPaymentLinks.value.filter(l => l.status === allLinksFilter.value)
+  return base.filter(l => l.status === allLinksFilter.value)
 })
 
 const stats = computed(() => {
@@ -1887,34 +2183,33 @@ const handleResendLinkNotification = async (link, channel) => {
   }
 }
 
-const hidePaymentLink = linkId => {
-  hiddenLinkIds.value.add(linkId)
+const hidePaymentLink = async linkId => {
+  linkActionLoading.value = true
+  try {
+    await partnerService.softDeleteSubscriptionPaymentLink(linkId)
+    toast.success(t('partnerSubscriptions.linkDeleted'))
+    await loadPurchasePaymentLinks()
+  } catch {
+    toast.error(t('common.error'))
+  } finally {
+    linkActionLoading.value = false
+  }
 }
 
 const openPaymentLinksModal = async () => {
   showPaymentLinksModal.value = true
   allLinksFilter.value = 'all'
+  linkDetailExpanded.value = null
+  await loadAllPaymentLinks()
+}
+
+const loadAllPaymentLinks = async () => {
   allLinksLoading.value = true
   try {
-    const [pkgRes, svcRes] = await Promise.all([
-      paymentLinkService.getPaymentLinks({
-        purpose: 'subscription_package',
-        limit: 200,
-        sortBy: 'createdAt',
-        sortOrder: 'desc'
-      }),
-      paymentLinkService.getPaymentLinks({
-        purpose: 'subscription_service',
-        limit: 200,
-        sortBy: 'createdAt',
-        sortOrder: 'desc'
-      })
-    ])
-    const pkgLinks = pkgRes.data?.items || pkgRes.data || []
-    const svcLinks = svcRes.data?.items || svcRes.data || []
-    allPaymentLinks.value = [...pkgLinks, ...svcLinks].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    )
+    const res = await partnerService.getAllSubscriptionPaymentLinks({
+      includeDeleted: showDeletedLinks.value ? 'true' : 'false'
+    })
+    allPaymentLinks.value = res.data || []
   } catch {
     toast.error(t('common.error'))
     allPaymentLinks.value = []
@@ -1925,6 +2220,74 @@ const openPaymentLinksModal = async () => {
 
 const filterAllLinks = status => {
   allLinksFilter.value = status
+}
+
+const toggleShowDeletedLinks = async () => {
+  showDeletedLinks.value = !showDeletedLinks.value
+  await loadAllPaymentLinks()
+}
+
+const handleDeletePaymentLink = link => {
+  deletingLink.value = link
+  showDeleteLinkDialog.value = true
+}
+
+const confirmDeletePaymentLink = async () => {
+  if (!deletingLink.value) return
+  linkActionLoading.value = true
+  try {
+    await partnerService.softDeleteSubscriptionPaymentLink(deletingLink.value._id)
+    toast.success(t('partnerSubscriptions.linkDeleted'))
+    await loadAllPaymentLinks()
+  } catch {
+    toast.error(t('common.error'))
+  } finally {
+    linkActionLoading.value = false
+    showDeleteLinkDialog.value = false
+    deletingLink.value = null
+  }
+}
+
+const handleRestorePaymentLink = async link => {
+  linkActionLoading.value = true
+  try {
+    await partnerService.restoreSubscriptionPaymentLink(link._id)
+    toast.success(t('partnerSubscriptions.linkRestored'))
+    await loadAllPaymentLinks()
+  } catch {
+    toast.error(t('common.error'))
+  } finally {
+    linkActionLoading.value = false
+  }
+}
+
+const handleCancelPaymentLinkFromModal = async link => {
+  if (!link.subscriptionContext?.targetPartner) return
+  linkActionLoading.value = true
+  try {
+    const partnerId =
+      link.subscriptionContext.targetPartner._id || link.subscriptionContext.targetPartner
+    await partnerService.cancelSubscriptionPaymentLink(partnerId, link._id)
+    toast.success(t('partnerSubscriptions.linkCancelled'))
+    await loadAllPaymentLinks()
+  } catch {
+    toast.error(t('partnerSubscriptions.linkCancelError'))
+  } finally {
+    linkActionLoading.value = false
+  }
+}
+
+const toggleLinkDetail = linkId => {
+  linkDetailExpanded.value = linkDetailExpanded.value === linkId ? null : linkId
+}
+
+const getCompletionSourceLabel = source => {
+  const map = {
+    payment_gateway: t('partnerSubscriptions.completionSource.paymentGateway'),
+    admin_manual: t('partnerSubscriptions.completionSource.adminManual'),
+    auto_cancelled: t('partnerSubscriptions.completionSource.autoCancelled')
+  }
+  return map[source] || source || '-'
 }
 
 const goToPartner = partnerId => {

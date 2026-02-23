@@ -82,6 +82,17 @@ router.get('/sms-providers', partnerService.getSMSProviders)
 router.get('/subscription-catalog', partnerService.getCatalog)
 router.get('/subscriptions/purchases', partnerService.getAllPurchases)
 
+// Global subscription payment links management (admin) - must be before /:id
+router.get('/subscription-payment-links', partnerService.getAllSubscriptionPaymentLinks)
+router.delete(
+  '/subscription-payment-links/:linkId',
+  partnerService.softDeleteSubscriptionPaymentLink
+)
+router.post(
+  '/subscription-payment-links/:linkId/restore',
+  partnerService.restoreSubscriptionPaymentLink
+)
+
 router.get('/:id', partnerService.getPartner)
 router.put('/:id', partnerService.updatePartner)
 router.put('/:id/admin-theme', partnerService.updatePartnerAdminTheme)

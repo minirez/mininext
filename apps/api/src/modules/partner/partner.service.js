@@ -68,5 +68,8 @@ export {
   sendPaymentLinkForPurchase,
   createPurchaseWithPaymentLink,
   cancelSubscriptionPaymentLink,
-  resendSubscriptionPaymentLinkNotification
+  resendSubscriptionPaymentLinkNotification,
+  getAllSubscriptionPaymentLinks,
+  softDeleteSubscriptionPaymentLink,
+  restoreSubscriptionPaymentLink
 } from './partnerBilling.service.js'

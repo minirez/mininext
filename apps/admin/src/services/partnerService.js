@@ -325,6 +325,45 @@ const resendSubscriptionPaymentLinkNotification = async (partnerId, linkId, chan
   }
 }
 
+const getAllSubscriptionPaymentLinks = async (params = {}) => {
+  try {
+    const response = await apiClient.get('/partners/subscription-payment-links', { params })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Get all subscription payment links failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const softDeleteSubscriptionPaymentLink = async linkId => {
+  try {
+    const response = await apiClient.delete(`/partners/subscription-payment-links/${linkId}`)
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Soft delete subscription payment link failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const restoreSubscriptionPaymentLink = async linkId => {
+  try {
+    const response = await apiClient.post(`/partners/subscription-payment-links/${linkId}/restore`)
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Partner Service: Restore subscription payment link failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 // ==================== Partner Self-Profile ====================
 
 // Get my profile (for partner users)
@@ -628,6 +667,9 @@ export default {
   sendPaymentLinkForPurchase,
   cancelSubscriptionPaymentLink,
   resendSubscriptionPaymentLinkNotification,
+  getAllSubscriptionPaymentLinks,
+  softDeleteSubscriptionPaymentLink,
+  restoreSubscriptionPaymentLink,
   // Partner Self-Profile
   getMyProfile,
   updateMyProfile,

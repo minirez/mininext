@@ -274,6 +274,7 @@ export const updatePurchase = asyncHandler(async (req, res) => {
   purchase.price.currency = 'EUR'
   if (billingPeriod) purchase.billingPeriod = billingPeriod
 
+  const wasStatusChanged = newStatus && newStatus !== purchase.status
   if (newStatus && ['pending', 'active'].includes(newStatus)) {
     purchase.status = newStatus
     if (newStatus === 'active') partner.subscription.status = 'active'
@@ -287,6 +288,32 @@ export const updatePurchase = asyncHandler(async (req, res) => {
   }
 
   await partner.save()
+
+  // Auto-cancel outstanding payment links when purchase is manually set to active
+  if (wasStatusChanged && newStatus === 'active') {
+    try {
+      const pendingLinks = await PaymentLink.find({
+        'subscriptionContext.targetPartner': partner._id,
+        $or: [
+          { 'subscriptionContext.purchaseId': purchaseId },
+          { 'subscriptionContext.purchaseIds': purchaseId }
+        ],
+        status: { $in: ['pending', 'viewed'] }
+      })
+      for (const link of pendingLinks) {
+        link.status = 'cancelled'
+        link.cancelledBy = req.user._id
+        link.cancelledAt = new Date()
+        link.cancelReason = 'Purchase manually activated by admin'
+        link.completionSource = 'auto_cancelled'
+        link.completionNotes = `Auto-cancelled: purchase ${purchaseId} was manually set to active`
+        await link.save()
+        logger.info(`Payment link ${link.linkNumber} auto-cancelled (purchase manually activated)`)
+      }
+    } catch (linkErr) {
+      logger.error(`Failed to cancel outstanding payment links: ${linkErr.message}`)
+    }
+  }
 
   logger.info(`Purchase ${purchaseId} updated for partner ${partner._id}`)
 
@@ -338,6 +365,30 @@ export const markPurchaseAsPaid = asyncHandler(async (req, res) => {
   partner.subscription.status = 'active'
 
   await partner.save()
+
+  // Auto-cancel outstanding payment links for this purchase
+  try {
+    const pendingLinks = await PaymentLink.find({
+      'subscriptionContext.targetPartner': partner._id,
+      $or: [
+        { 'subscriptionContext.purchaseId': purchaseId },
+        { 'subscriptionContext.purchaseIds': purchaseId }
+      ],
+      status: { $in: ['pending', 'viewed'] }
+    })
+    for (const link of pendingLinks) {
+      link.status = 'cancelled'
+      link.cancelledBy = req.user._id
+      link.cancelledAt = new Date()
+      link.cancelReason = 'Purchase manually marked as paid by admin'
+      link.completionSource = 'auto_cancelled'
+      link.completionNotes = `Auto-cancelled: purchase ${purchaseId} was marked as paid via ${paymentMethod || 'bank_transfer'}`
+      await link.save()
+      logger.info(`Payment link ${link.linkNumber} auto-cancelled (purchase marked as paid)`)
+    }
+  } catch (linkErr) {
+    logger.error(`Failed to cancel outstanding payment links: ${linkErr.message}`)
+  }
 
   // Create invoice (idempotent – skip if already created for this purchase)
   let invoice = null
@@ -588,6 +639,87 @@ export const resendSubscriptionPaymentLinkNotification = asyncHandler(async (req
     message: 'Notification sent',
     data: { email: sendEmail ? result.email : null, sms: sendSms ? result.sms : null }
   })
+})
+
+/**
+ * Get all subscription payment links (admin global view)
+ */
+export const getAllSubscriptionPaymentLinks = asyncHandler(async (req, res) => {
+  const { status, includeDeleted } = req.query
+
+  const filter = {
+    purpose: { $in: ['subscription_package', 'subscription_service'] }
+  }
+
+  if (status && status !== 'all') {
+    filter.status = status
+  }
+
+  if (includeDeleted !== 'true') {
+    filter.deletedAt = null
+  }
+
+  const links = await PaymentLink.find(filter)
+    .populate('createdBy', 'name email')
+    .populate('cancelledBy', 'name email')
+    .populate('deletedBy', 'name email')
+    .populate('subscriptionContext.targetPartner', 'companyName email')
+    .sort({ createdAt: -1 })
+    .limit(500)
+    .lean()
+
+  const enriched = links.map(link => ({
+    ...link,
+    paymentUrl: (() => {
+      const isDev = process.env.NODE_ENV === 'development'
+      const defaultUrl = isDev ? 'https://payment.mini.com' : 'https://payment.maxirez.com'
+      const baseUrl = process.env.PAYMENT_PUBLIC_URL || defaultUrl
+      return `${baseUrl}/pay-link/${link.token}`
+    })()
+  }))
+
+  res.json({ success: true, data: enriched })
+})
+
+/**
+ * Soft-delete a subscription payment link
+ */
+export const softDeleteSubscriptionPaymentLink = asyncHandler(async (req, res) => {
+  const { linkId } = req.params
+
+  const paymentLink = await PaymentLink.findOne({
+    _id: linkId,
+    purpose: { $in: ['subscription_package', 'subscription_service'] }
+  })
+
+  if (!paymentLink) throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+
+  await paymentLink.softDelete(req.user._id)
+
+  logger.info(`Subscription payment link ${paymentLink.linkNumber} soft-deleted by ${req.user._id}`)
+
+  res.json({ success: true, message: 'Payment link deleted' })
+})
+
+/**
+ * Restore a soft-deleted subscription payment link
+ */
+export const restoreSubscriptionPaymentLink = asyncHandler(async (req, res) => {
+  const { linkId } = req.params
+
+  const paymentLink = await PaymentLink.findOne({
+    _id: linkId,
+    purpose: { $in: ['subscription_package', 'subscription_service'] },
+    deletedAt: { $ne: null }
+  })
+
+  if (!paymentLink) throw new NotFoundError('PAYMENT_LINK_NOT_FOUND')
+
+  await paymentLink.restore()
+
+  logger.info(`Subscription payment link ${paymentLink.linkNumber} restored by ${req.user._id}`)
+
+  res.json({ success: true, message: 'Payment link restored' })
 })
 
 /**

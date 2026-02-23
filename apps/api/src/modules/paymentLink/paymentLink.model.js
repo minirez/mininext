@@ -198,7 +198,22 @@ const paymentLinkSchema = new mongoose.Schema(
       ref: 'User'
     },
     cancelledAt: { type: Date },
-    cancelReason: { type: String }
+    cancelReason: { type: String },
+
+    // Soft delete
+    deletedAt: { type: Date, default: null },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+
+    // Completion audit trail
+    completionSource: {
+      type: String,
+      enum: ['payment_gateway', 'admin_manual', 'auto_cancelled', null],
+      default: null
+    },
+    completionNotes: { type: String }
   },
   {
     timestamps: true,
@@ -325,6 +340,20 @@ paymentLinkSchema.methods.cancel = async function (userId, reason) {
   this.cancelledBy = userId
   this.cancelledAt = new Date()
   this.cancelReason = reason
+  await this.save()
+  return this
+}
+
+paymentLinkSchema.methods.softDelete = async function (userId) {
+  this.deletedAt = new Date()
+  this.deletedBy = userId
+  await this.save()
+  return this
+}
+
+paymentLinkSchema.methods.restore = async function () {
+  this.deletedAt = null
+  this.deletedBy = null
   await this.save()
   return this
 }
