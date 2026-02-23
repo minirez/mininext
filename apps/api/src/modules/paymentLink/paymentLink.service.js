@@ -59,6 +59,11 @@ export const getPaymentLinks = asyncHandler(async (req, res) => {
     conditions.push({ booking })
   }
 
+  // Purpose filter (subscription_package, subscription_service, booking, other)
+  if (req.query.purpose) {
+    conditions.push({ purpose: req.query.purpose })
+  }
+
   // Date range filter
   if (startDate || endDate) {
     const dateFilter = {}

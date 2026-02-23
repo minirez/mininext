@@ -559,7 +559,8 @@
       "active": "Aktif",
       "expired": "Süresi Doldu",
       "cancelled": "İptal Edildi",
-      "deleted": "Silindi"
+      "deleted": "Silindi",
+      "paid": "Ödendi"
     },
     "showDeleted": "Silinenleri Göster",
     "delete": "Sil",
@@ -626,6 +627,9 @@
     "smsSent": "SMS başarıyla gönderildi",
     "emailSendError": "E-posta gönderilemedi",
     "smsSendError": "SMS gönderilemedi",
+    "hideLink": "Gizle",
+    "showPaymentLinks": "Ödeme Linkleri",
+    "allPaymentLinks": "Tüm Abonelik Ödeme Linkleri",
     "dashboard": {
       "totalEarned": "Toplam Kazanç",
       "thisYear": "Bu Yıl",

@@ -586,7 +586,8 @@
       "active": "Active",
       "expired": "Expired",
       "cancelled": "Cancelled",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "paid": "Paid"
     },
     "showDeleted": "Show Deleted",
     "delete": "Delete",
@@ -653,6 +654,9 @@
     "smsSent": "SMS sent successfully",
     "emailSendError": "Failed to send email",
     "smsSendError": "Failed to send SMS",
+    "hideLink": "Hide",
+    "showPaymentLinks": "Payment Links",
+    "allPaymentLinks": "All Subscription Payment Links",
     "dashboard": {
       "totalEarned": "Total Earned",
       "thisYear": "This Year",
