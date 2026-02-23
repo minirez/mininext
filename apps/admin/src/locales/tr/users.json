@@ -39,6 +39,8 @@
     "accountStatus": "Hesap Durumu",
     "statusActiveDesc": "Aktif - Sisteme giriş yapabilir",
     "statusInactiveDesc": "Pasif - Giriş yapamaz",
+    "pendingActivation": "Aktivasyon Bekliyor",
+    "awaitingPasswordSetup": "Şifre Belirleme Bekliyor",
     "namePlaceholder": "Ad Soyad girin",
     "emailPlaceholder": "ornek{'@'}email.com",
     "emailCannotChange": "E-posta değiştirilemez",
@@ -182,6 +184,19 @@
       "alreadyHaveAccount": "Zaten hesabınız var mı?",
       "accountCreated": "Hesabınız Oluşturuldu!",
       "accountCreatedDesc": "Artık giriş yapabilirsiniz."
+    },
+    "adminActivation": {
+      "title": "Yönetici Aktivasyonu",
+      "description": "Bu kullanıcının henüz şifresi yok. Platform yöneticisi olarak hesabı aktifleştirebilirsiniz.",
+      "withoutPassword": "Şifre olmadan aktifleştir",
+      "withoutPasswordDesc": "Kullanıcıya şifre belirleme linki gönderilir. İlk girişte kendi şifresini belirler.",
+      "withPassword": "Şifre belirleyerek aktifleştir",
+      "withPasswordDesc": "Kullanıcıya giriş bilgileri gönderilir. İlk girişte şifresini değiştirmesi istenir.",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "En az 8 karakter",
+      "passwordHint": "Büyük/küçük harf ve rakam içermelidir. İlk girişte değiştirilmesi istenecektir.",
+      "activateButton": "Aktifleştir",
+      "success": "Kullanıcı başarıyla aktifleştirildi"
     },
     "activation": {
       "verifying": "Hesap doğrulanıyor...",

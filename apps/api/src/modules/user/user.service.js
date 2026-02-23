@@ -3,10 +3,17 @@ import User from './user.model.js'
 import Partner from '../partner/partner.model.js'
 import Agency from '../agency/agency.model.js'
 import Session from '../session/session.model.js'
+import AuditLog from '../audit/audit.model.js'
 import { NotFoundError, ForbiddenError, BadRequestError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
 import { generate2FASecret, generateQRCode, verify2FAToken } from '#helpers/twoFactor.js'
-import { send2FASetupEmail, sendActivationEmail, sendWelcomeEmail } from '#helpers/mail.js'
+import {
+  send2FASetupEmail,
+  sendActivationEmail,
+  sendWelcomeEmail,
+  sendAdminActivatedEmail,
+  sendAdminActivatedWithCredentialsEmail
+} from '#helpers/mail.js'
 import config from '#config'
 import logger from '#core/logger.js'
 import { parsePagination } from '#services/queryBuilder.js'
@@ -252,9 +259,13 @@ export const updateUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // Prevent activating pending users without password
+  // For pending users without password: non-platform users cannot activate via simple status toggle
   if (req.body.status === 'active' && user.status === 'pending' && !user.password) {
-    throw new BadRequestError('PENDING_USER_NO_PASSWORD')
+    if (req.user.accountType !== 'platform') {
+      throw new BadRequestError('PENDING_USER_NO_PASSWORD')
+    }
+    // Platform admins should use the dedicated admin-activate endpoint instead
+    throw new BadRequestError('USE_ADMIN_ACTIVATE_ENDPOINT')
   }
 
   // Update only allowed fields (security: prevent mass assignment)
@@ -667,7 +678,7 @@ export const disable2FA = asyncHandler(async (req, res) => {
 
 // Activate user (admin action)
 export const activateUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id)
+  const user = await User.findById(req.params.id).select('+password')
 
   if (!user) {
     throw new NotFoundError('USER_NOT_FOUND')
@@ -680,13 +691,191 @@ export const activateUser = asyncHandler(async (req, res) => {
     }
   }
 
+  // For pending users without password, non-platform admins cannot activate
+  if (!user.password && ['pending', 'pending_activation'].includes(user.status)) {
+    if (req.user.accountType !== 'platform') {
+      throw new BadRequestError('PENDING_USER_NO_PASSWORD')
+    }
+  }
+
   user.status = 'active'
   await user.save()
+
+  const userObj = user.toObject()
+  delete userObj.password
 
   res.json({
     success: true,
     message: req.t('USER_ACTIVATED'),
-    data: user
+    data: userObj
+  })
+})
+
+// Admin activate pending user (platform admin only - supports optional password)
+export const adminActivateUser = asyncHandler(async (req, res) => {
+  if (req.user.accountType !== 'platform') {
+    throw new ForbiddenError('PLATFORM_ADMIN_REQUIRED')
+  }
+
+  const user = await User.findById(req.params.id).select('+password')
+  if (!user) {
+    throw new NotFoundError('USER_NOT_FOUND')
+  }
+
+  if (!['pending', 'pending_activation'].includes(user.status)) {
+    throw new BadRequestError('USER_NOT_PENDING')
+  }
+
+  const { password } = req.body
+  const previousStatus = user.status
+
+  // Get account info for emails
+  let accountName = ''
+  let partnerId = null
+  let loginUrl = config.adminUrl
+  if (user.accountType === 'partner') {
+    const partner = await Partner.findById(user.accountId)
+    if (partner) {
+      partnerId = partner._id
+      accountName = partner.companyName
+      if (partner.branding?.siteDomain) {
+        loginUrl = `https://${partner.branding.siteDomain}/login`
+      }
+    }
+  } else if (user.accountType === 'agency') {
+    const agency = await Agency.findById(user.accountId)
+    if (agency) {
+      partnerId = agency.partner
+      accountName = agency.companyName
+    }
+  }
+
+  if (password) {
+    // Admin provides a password: activate fully, force password change on first login
+    user.password = password
+    user.status = 'active'
+    user.forcePasswordChange = true
+    user.clearActivationToken()
+    await user.save()
+
+    // Send credentials email
+    try {
+      await sendAdminActivatedWithCredentialsEmail({
+        to: user.email,
+        name: user.name,
+        email: user.email,
+        password,
+        accountName,
+        loginUrl,
+        partnerId,
+        adminName: req.user.name
+      })
+      logger.info(`Admin-activated credentials email sent to ${user.email}`)
+    } catch (error) {
+      logger.error(
+        `Failed to send admin-activated credentials email to ${user.email}:`,
+        error.message
+      )
+    }
+
+    // Audit log
+    await AuditLog.log({
+      actor: {
+        userId: req.user._id,
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      },
+      module: 'user',
+      subModule: 'activation',
+      action: 'activate',
+      target: {
+        collection: 'users',
+        documentId: user._id,
+        documentName: user.name
+      },
+      changes: {
+        before: { status: previousStatus, hasPassword: false },
+        after: { status: 'active', hasPassword: true, forcePasswordChange: true },
+        diff: [
+          { field: 'status', from: previousStatus, to: 'active' },
+          { field: 'password', from: null, to: '[set by admin]' },
+          { field: 'forcePasswordChange', from: false, to: true }
+        ]
+      },
+      metadata: {
+        reason: 'Platform admin activated user with manual password',
+        notes: `Activated by ${req.user.name} (${req.user.email})`
+      }
+    })
+  } else {
+    // No password: activate and generate a password reset token so user can set their own password
+    user.status = 'active'
+    user.forcePasswordChange = true
+    user.clearActivationToken()
+    const resetToken = user.generatePasswordResetToken()
+    await user.save()
+
+    const resetUrl = `${loginUrl.replace('/login', '')}/reset-password/${resetToken}`
+
+    // Send activation notification email with password setup link
+    try {
+      await sendAdminActivatedEmail({
+        to: user.email,
+        name: user.name,
+        accountName,
+        loginUrl,
+        resetUrl,
+        partnerId,
+        adminName: req.user.name
+      })
+      logger.info(`Admin-activated notification email sent to ${user.email}`)
+    } catch (error) {
+      logger.error(`Failed to send admin-activated email to ${user.email}:`, error.message)
+    }
+
+    // Audit log
+    await AuditLog.log({
+      actor: {
+        userId: req.user._id,
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      },
+      module: 'user',
+      subModule: 'activation',
+      action: 'activate',
+      target: {
+        collection: 'users',
+        documentId: user._id,
+        documentName: user.name
+      },
+      changes: {
+        before: { status: previousStatus, hasPassword: false },
+        after: { status: 'active', hasPassword: false, forcePasswordChange: true },
+        diff: [
+          { field: 'status', from: previousStatus, to: 'active' },
+          { field: 'forcePasswordChange', from: false, to: true }
+        ]
+      },
+      metadata: {
+        reason: 'Platform admin activated user without password (awaiting user password setup)',
+        notes: `Activated by ${req.user.name} (${req.user.email})`
+      }
+    })
+  }
+
+  const userObj = user.toObject()
+  delete userObj.password
+
+  res.json({
+    success: true,
+    message: req.t(password ? 'USER_ADMIN_ACTIVATED_WITH_PASSWORD' : 'USER_ADMIN_ACTIVATED'),
+    data: userObj
   })
 })
 

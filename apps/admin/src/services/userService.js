@@ -62,6 +62,14 @@ export const activateUser = async id => {
 }
 
 /**
+ * Admin activate pending user (platform admin only - supports optional password)
+ */
+export const adminActivateUser = async (id, data = {}) => {
+  const response = await api.post(`/users/${id}/admin-activate`, data)
+  return response.data
+}
+
+/**
  * Deactivate user
  */
 export const deactivateUser = async id => {
@@ -220,6 +228,7 @@ export default {
   deleteUser,
   // Status
   activateUser,
+  adminActivateUser,
   deactivateUser,
   forcePasswordReset,
   // Activation

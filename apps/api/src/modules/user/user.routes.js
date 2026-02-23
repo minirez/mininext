@@ -71,6 +71,16 @@ router.delete('/:id', requirePermission('users', 'delete'), userService.deleteUs
 // Activate user
 router.post('/:id/activate', requirePermission('users', 'edit'), userService.activateUser)
 
+// Admin activate pending user (platform admin only - supports optional password)
+router.post(
+  '/:id/admin-activate',
+  requireAdmin,
+  validateBody({
+    password: { type: 'string', required: false, minLength: 8, maxLength: 128 }
+  }),
+  userService.adminActivateUser
+)
+
 // Deactivate user
 router.post('/:id/deactivate', requirePermission('users', 'edit'), userService.deactivateUser)
 

@@ -164,24 +164,37 @@
 
       <!-- Status Cell -->
       <template #cell-status="{ row }">
-        <span
-          :class="[
-            'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-            row.status === 'active'
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-              : row.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
-          ]"
-        >
+        <div class="flex flex-col gap-1">
           <span
             :class="[
-              'w-1.5 h-1.5 rounded-full mr-1.5',
-              row.status === 'active' ? 'bg-green-500' : row.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-400'
+              'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+              row.status === 'active'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                : row.status === 'pending' || row.status === 'pending_activation'
+                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                  : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
             ]"
-          ></span>
-          {{ row.status === 'active' ? $t('common.active') : row.status === 'pending' ? $t('common.pending') : $t('common.inactive') }}
-        </span>
+          >
+            <span
+              :class="[
+                'w-1.5 h-1.5 rounded-full mr-1.5',
+                row.status === 'active'
+                  ? 'bg-green-500'
+                  : row.status === 'pending' || row.status === 'pending_activation'
+                    ? 'bg-yellow-500'
+                    : 'bg-gray-400'
+              ]"
+            ></span>
+            {{ getStatusLabel(row) }}
+          </span>
+          <span
+            v-if="row.status === 'active' && row.forcePasswordChange"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+          >
+            <span class="material-icons text-[10px] mr-0.5">hourglass_top</span>
+            {{ $t('users.awaitingPasswordSetup') }}
+          </span>
+        </div>
       </template>
 
       <!-- Last Login Cell -->
@@ -248,17 +261,16 @@
     </DataTable>
 
     <!-- Add User Modal -->
-    <AddUserModal
-      v-if="showAddModal"
-      @close="showAddModal = false"
-      @success="handleAddSuccess"
-    />
+    <AddUserModal v-if="showAddModal" @close="showAddModal = false" @success="handleAddSuccess" />
 
     <!-- Edit User Modal -->
     <UserEditModal
       v-if="showEditModal && selectedUser"
       :user="selectedUser"
-      @close="showEditModal = false; selectedUser = null"
+      @close="
+        showEditModal = false
+        selectedUser = null
+      "
       @success="handleEditSuccess"
     />
 
@@ -266,7 +278,10 @@
     <PermissionsModal
       v-if="showPermissionsModal && selectedUser"
       :user="selectedUser"
-      @close="showPermissionsModal = false; selectedUser = null"
+      @close="
+        showPermissionsModal = false
+        selectedUser = null
+      "
       @success="handlePermissionsSuccess"
     />
 
@@ -274,7 +289,10 @@
     <SessionsModal
       v-if="showSessionsModal && selectedUser"
       :user="selectedUser"
-      @close="showSessionsModal = false; selectedUser = null"
+      @close="
+        showSessionsModal = false
+        selectedUser = null
+      "
     />
 
     <!-- Delete Confirmation -->
@@ -337,6 +355,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import {
   getUsers,
   activateUser,
+  adminActivateUser,
   deactivateUser,
   forcePasswordReset,
   resetUser2FA,
@@ -385,6 +404,7 @@ const tableFilters = computed(() => [
     options: [
       { value: 'active', label: t('common.active') },
       { value: 'pending', label: t('common.pending') },
+      { value: 'pending_activation', label: t('users.pendingActivation') },
       { value: 'inactive', label: t('common.inactive') }
     ]
   },
@@ -485,6 +505,14 @@ const getInitials = name => {
     .substring(0, 2)
 }
 
+// Get status label for user
+const getStatusLabel = row => {
+  if (row.status === 'active') return t('common.active')
+  if (row.status === 'pending') return t('common.pending')
+  if (row.status === 'pending_activation') return t('users.pendingActivation')
+  return t('common.inactive')
+}
+
 // Format relative time
 const formatRelativeTime = dateString => {
   if (!dateString) return ''
@@ -505,8 +533,12 @@ const formatRelativeTime = dateString => {
 const getActionMenuItems = row => {
   const items = []
 
-  if (row.status === 'pending') {
-    items.push({ key: 'resendActivation', label: t('users.actions.resendActivation'), icon: 'send' })
+  if (row.status === 'pending' || row.status === 'pending_activation') {
+    items.push({
+      key: 'resendActivation',
+      label: t('users.actions.resendActivation'),
+      icon: 'send'
+    })
   }
   if (row.status === 'inactive') {
     items.push({ key: 'activate', label: t('users.actions.activate'), icon: 'check_circle' })
@@ -514,14 +546,22 @@ const getActionMenuItems = row => {
   if (row.status === 'active') {
     items.push({ key: 'deactivate', label: t('users.actions.deactivate'), icon: 'pause_circle' })
   }
-  if (row.status !== 'pending') {
-    items.push({ key: 'forcePasswordReset', label: t('users.actions.forcePasswordReset'), icon: 'lock_reset' })
+  if (row.status !== 'pending' && row.status !== 'pending_activation') {
+    items.push({
+      key: 'forcePasswordReset',
+      label: t('users.actions.forcePasswordReset'),
+      icon: 'lock_reset'
+    })
   }
   if (row.twoFactorEnabled) {
     items.push({ key: 'reset2FA', label: t('users.actions.reset2FA'), icon: 'shield' })
   }
   if (authStore.user?.accountType === 'platform') {
-    items.push({ key: 'unblockAccount', label: t('users.actions.unblockAccount'), icon: 'lock_open' })
+    items.push({
+      key: 'unblockAccount',
+      label: t('users.actions.unblockAccount'),
+      icon: 'lock_open'
+    })
   }
   if (row._id !== authStore.user?.id) {
     items.push({ divider: true })
@@ -581,80 +621,62 @@ const openSessionsModal = user => {
 
 // Action handlers
 const handleActivate = async user => {
-  await executeActivate(
-    () => activateUser(user._id),
-    {
-      successMessage: 'users.activated',
-      onSuccess: () => fetchUsers(),
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeActivate(() => activateUser(user._id), {
+    successMessage: 'users.activated',
+    onSuccess: () => fetchUsers(),
+    onError: error => toast.error(error.message)
+  })
 }
 
 const handleDeactivate = async user => {
-    await executeDeactivate(
-    () => deactivateUser(user._id),
-    {
-      successMessage: 'users.deactivated',
-      onSuccess: () => fetchUsers(),
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeDeactivate(() => deactivateUser(user._id), {
+    successMessage: 'users.deactivated',
+    onSuccess: () => fetchUsers(),
+    onError: error => toast.error(error.message)
+  })
 }
 
 const handleForcePasswordReset = async user => {
-    await executeForcePasswordReset(
-    () => forcePasswordReset(user._id),
-    {
-      successMessage: 'users.passwordResetForced',
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeForcePasswordReset(() => forcePasswordReset(user._id), {
+    successMessage: 'users.passwordResetForced',
+    onError: error => toast.error(error.message)
+  })
 }
 
 const handleReset2FA = async user => {
-    await executeReset2FA(
-    () => resetUser2FA(user._id),
-    {
-      successMessage: 'users.twoFactorReset',
-      onSuccess: () => fetchUsers(),
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeReset2FA(() => resetUser2FA(user._id), {
+    successMessage: 'users.twoFactorReset',
+    onSuccess: () => fetchUsers(),
+    onError: error => toast.error(error.message)
+  })
 }
 
 const handleUnblockAccount = async user => {
-    await executeUnblock(
-    () => authService.unblockAccount(user.email),
-    {
-      successMessage: 'users.accountUnblocked',
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeUnblock(() => authService.unblockAccount(user.email), {
+    successMessage: 'users.accountUnblocked',
+    onError: error => toast.error(error.message)
+  })
 }
 
 const handleDelete = user => {
   userToDelete.value = user
   showDeleteConfirm.value = true
-  }
+}
 
 const confirmDelete = async () => {
   if (!userToDelete.value) return
-  await executeDelete(
-    () => deleteUser(userToDelete.value._id),
-    {
-      successMessage: 'common.deleted',
-      onSuccess: () => {
-        showDeleteConfirm.value = false
-        userToDelete.value = null
-        fetchUsers()
-      },
-      onFinally: () => {
-        showDeleteConfirm.value = false
-        userToDelete.value = null
-      }
+  await executeDelete(() => deleteUser(userToDelete.value._id), {
+    successMessage: 'common.deleted',
+    onSuccess: () => {
+      showDeleteConfirm.value = false
+      userToDelete.value = null
+      fetchUsers()
+    },
+    onFinally: () => {
+      showDeleteConfirm.value = false
+      userToDelete.value = null
     }
-  )
+  })
 }
 
 // Success handlers
@@ -679,13 +701,10 @@ const handlePermissionsSuccess = () => {
 
 // Resend activation email for pending user
 const handleResendActivation = async user => {
-    await executeResendActivation(
-    () => resendActivation(user._id),
-    {
-      successMessage: 'users.activationResent',
-      onError: error => toast.error(error.message)
-    }
-  )
+  await executeResendActivation(() => resendActivation(user._id), {
+    successMessage: 'users.activationResent',
+    onError: error => toast.error(error.message)
+  })
 }
 
 // Lifecycle
@@ -694,7 +713,10 @@ onMounted(() => {
 })
 
 // Re-fetch when selected partner changes
-watch(() => partnerStore.selectedPartner, () => {
-  fetchUsers()
-})
+watch(
+  () => partnerStore.selectedPartner,
+  () => {
+    fetchUsers()
+  }
+)
 </script>

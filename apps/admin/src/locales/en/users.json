@@ -39,6 +39,8 @@
     "accountStatus": "Account Status",
     "statusActiveDesc": "Active - Can log in to the system",
     "statusInactiveDesc": "Inactive - Cannot log in",
+    "pendingActivation": "Pending Activation",
+    "awaitingPasswordSetup": "Awaiting Password Setup",
     "namePlaceholder": "Enter full name",
     "emailPlaceholder": "example{'@'}email.com",
     "emailCannotChange": "Email cannot be changed",
@@ -182,6 +184,19 @@
       "alreadyHaveAccount": "Already have an account?",
       "accountCreated": "Account Created!",
       "accountCreatedDesc": "You can now log in."
+    },
+    "adminActivation": {
+      "title": "Admin Activation",
+      "description": "This user doesn't have a password yet. As a platform admin, you can activate their account.",
+      "withoutPassword": "Activate without password",
+      "withoutPasswordDesc": "A password setup link will be sent to the user. They will set their own password.",
+      "withPassword": "Activate with password",
+      "withPasswordDesc": "Login credentials will be sent to the user. They will be asked to change their password on first login.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "passwordHint": "Must contain uppercase, lowercase and numbers. Will be required to change on first login.",
+      "activateButton": "Activate",
+      "success": "User activated successfully"
     },
     "activation": {
       "verifying": "Verifying account...",

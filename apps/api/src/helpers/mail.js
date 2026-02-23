@@ -24,7 +24,9 @@ export {
   sendPasswordResetEmail,
   sendNightAuditReports,
   sendIssueNudgeEmail,
-  sendNewPartnerNotification
+  sendNewPartnerNotification,
+  sendAdminActivatedEmail,
+  sendAdminActivatedWithCredentialsEmail
 } from './mail/senders.js'
 
 // Default export for backward compatibility
@@ -39,7 +41,9 @@ import {
   sendPasswordResetEmail,
   sendNightAuditReports,
   sendIssueNudgeEmail,
-  sendNewPartnerNotification
+  sendNewPartnerNotification,
+  sendAdminActivatedEmail,
+  sendAdminActivatedWithCredentialsEmail
 } from './mail/senders.js'
 
 export default {
@@ -54,6 +58,8 @@ export default {
   sendNightAuditReports,
   sendIssueNudgeEmail,
   sendNewPartnerNotification,
+  sendAdminActivatedEmail,
+  sendAdminActivatedWithCredentialsEmail,
   clearEmailCache,
   getAdminUrl
 }

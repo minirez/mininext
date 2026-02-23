@@ -192,16 +192,14 @@ export const sendActivationEmail = async ({
 
     const text = htmlToText(html)
     const subject =
-      language === 'tr'
-        ? 'Hesabınızı Aktifleştirin - Booking Engine'
-        : 'Activate Your Account - Booking Engine'
+      language === 'tr' ? 'Hesabınızı Aktifleştirin - Maxirez' : 'Activate Your Account - Maxirez'
 
     return sendEmail({ to, subject, html, text, partnerId, type: 'activation' })
   } catch (error) {
     // Fallback to simple HTML if template fails
     logger.warn('Failed to render activation template, using fallback:', error.message)
 
-    const subject = 'Hesabınızı Aktifleştirin - Booking Engine'
+    const subject = 'Hesabınızı Aktifleştirin - Maxirez'
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #4F46E5;">Hoş Geldiniz!</h1>
@@ -477,7 +475,7 @@ export const sendNightAuditReports = async ({
           </p>
         </div>
         <div class="footer">
-          © ${new Date().getFullYear()} Booking Engine - Tüm hakları saklıdır.
+          © ${new Date().getFullYear()} Maxirez - Tüm hakları saklıdır.
         </div>
       </div>
     </body>
@@ -586,7 +584,7 @@ export const sendIssueNudgeEmail = async ({
           </p>
         </div>
         <div class="footer">
-          © ${new Date().getFullYear()} Booking Engine
+          © ${new Date().getFullYear()} Maxirez
         </div>
       </div>
     </body>
@@ -599,6 +597,188 @@ export const sendIssueNudgeEmail = async ({
     html,
     type: 'issue-nudge'
   })
+}
+
+/**
+ * Send email when platform admin activates a user WITHOUT providing a password.
+ * Includes a password reset link so the user can set their own password.
+ */
+export const sendAdminActivatedEmail = async ({
+  to,
+  name,
+  accountName,
+  loginUrl,
+  resetUrl,
+  partnerId,
+  adminName,
+  language = 'tr'
+}) => {
+  const brandingVars = await getEmailBranding(partnerId)
+  const companyName = brandingVars.COMPANY_NAME || accountName || 'Maxirez'
+  const isEn = language === 'en'
+
+  const subject = isEn
+    ? `Your Account Has Been Activated - ${companyName}`
+    : `Hesabınız Aktifleştirildi - ${companyName}`
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .container { max-width: 600px; margin: 0 auto; background: white; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .header p { color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 14px; }
+        .content { padding: 30px; }
+        .info-box { background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .warning-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${isEn ? 'Account Activated' : 'Hesabınız Aktifleştirildi'}</h1>
+          <p>${isEn ? 'Your account is ready to use' : 'Hesabınız kullanıma hazır'}</p>
+        </div>
+        <div class="content">
+          <p>${isEn ? 'Hi' : 'Merhaba'} ${name},</p>
+          <p>${
+            isEn
+              ? `Your account has been activated by a platform administrator (<strong>${adminName}</strong>). To get started, you need to set your password.`
+              : `Hesabınız platform yöneticisi (<strong>${adminName}</strong>) tarafından aktifleştirildi. Başlamak için şifrenizi belirlemeniz gerekmektedir.`
+          }</p>
+
+          <div class="info-box">
+            <strong>${isEn ? 'Account' : 'Hesap'}:</strong> ${accountName || companyName}<br>
+            <strong>${isEn ? 'Email' : 'E-posta'}:</strong> ${to}
+          </div>
+
+          <div style="text-align: center;">
+            <a href="${resetUrl}" class="btn">${isEn ? 'Set Your Password' : 'Şifrenizi Belirleyin'}</a>
+          </div>
+
+          <div class="warning-box">
+            <strong>${isEn ? 'Important:' : 'Önemli:'}</strong>
+            ${
+              isEn
+                ? 'This password setup link is valid for 1 hour. After setting your password, you can log in at:'
+                : 'Bu şifre belirleme linki 1 saat geçerlidir. Şifrenizi belirledikten sonra giriş yapabilirsiniz:'
+            }
+            <br><a href="${loginUrl}">${loginUrl}</a>
+          </div>
+        </div>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} ${companyName}
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = isEn
+    ? `Hi ${name},\n\nYour account has been activated by ${adminName}. Set your password: ${resetUrl}\n\nThis link is valid for 1 hour.`
+    : `Merhaba ${name},\n\nHesabınız ${adminName} tarafından aktifleştirildi. Şifrenizi belirleyin: ${resetUrl}\n\nBu link 1 saat geçerlidir.`
+
+  return sendEmail({ to, subject, html, text, partnerId, type: 'admin-activated' })
+}
+
+/**
+ * Send email when platform admin activates a user WITH a password.
+ * Includes credentials and a note that password change will be required on first login.
+ */
+export const sendAdminActivatedWithCredentialsEmail = async ({
+  to,
+  name,
+  email,
+  password,
+  accountName,
+  loginUrl,
+  partnerId,
+  adminName,
+  language = 'tr'
+}) => {
+  const brandingVars = await getEmailBranding(partnerId)
+  const companyName = brandingVars.COMPANY_NAME || accountName || 'Maxirez'
+  const isEn = language === 'en'
+
+  const subject = isEn
+    ? `Your Account Has Been Activated - ${companyName}`
+    : `Hesabınız Aktifleştirildi - ${companyName}`
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .container { max-width: 600px; margin: 0 auto; background: white; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .header p { color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 14px; }
+        .content { padding: 30px; }
+        .credentials-box { background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .credentials-box .label { color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+        .credentials-box .value { color: #1e293b; font-size: 16px; font-weight: 500; margin-bottom: 12px; font-family: monospace; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${isEn ? 'Account Activated' : 'Hesabınız Aktifleştirildi'}</h1>
+          <p>${isEn ? 'Your login credentials are ready' : 'Giriş bilgileriniz hazır'}</p>
+        </div>
+        <div class="content">
+          <p>${isEn ? 'Hi' : 'Merhaba'} ${name},</p>
+          <p>${
+            isEn
+              ? `Your account has been activated by a platform administrator (<strong>${adminName}</strong>). Here are your login credentials:`
+              : `Hesabınız platform yöneticisi (<strong>${adminName}</strong>) tarafından aktifleştirildi. Giriş bilgileriniz aşağıdadır:`
+          }</p>
+
+          <div class="credentials-box">
+            <div class="label">${isEn ? 'Email' : 'E-posta'}</div>
+            <div class="value">${email}</div>
+            <div class="label">${isEn ? 'Password' : 'Şifre'}</div>
+            <div class="value">${password}</div>
+          </div>
+
+          <div class="warning-box">
+            <strong>${isEn ? 'Important:' : 'Önemli:'}</strong>
+            ${
+              isEn
+                ? 'You will be asked to change your password when you first log in. Please choose a strong, unique password.'
+                : 'İlk girişinizde şifrenizi değiştirmeniz istenecektir. Lütfen güçlü ve benzersiz bir şifre seçin.'
+            }
+          </div>
+
+          <div style="text-align: center;">
+            <a href="${loginUrl}" class="btn">${isEn ? 'Log In Now' : 'Şimdi Giriş Yap'}</a>
+          </div>
+        </div>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} ${companyName}
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const text = isEn
+    ? `Hi ${name},\n\nYour account has been activated by ${adminName}.\n\nEmail: ${email}\nPassword: ${password}\n\nYou will be asked to change your password on first login.\n\nLog in: ${loginUrl}`
+    : `Merhaba ${name},\n\nHesabınız ${adminName} tarafından aktifleştirildi.\n\nE-posta: ${email}\nŞifre: ${password}\n\nİlk girişinizde şifrenizi değiştirmeniz istenecektir.\n\nGiriş: ${loginUrl}`
+
+  return sendEmail({ to, subject, html, text, partnerId, type: 'admin-activated-credentials' })
 }
 
 /**

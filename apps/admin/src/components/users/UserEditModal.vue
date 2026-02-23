@@ -20,18 +20,11 @@
           <span
             :class="[
               'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-              props.user?.status === 'active'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                : 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
+              statusBadgeClass
             ]"
           >
-            <span
-              :class="[
-                'w-1.5 h-1.5 rounded-full mr-1.5',
-                props.user?.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
-              ]"
-            ></span>
-            {{ props.user?.status === 'active' ? $t('common.active') : $t('common.inactive') }}
+            <span :class="['w-1.5 h-1.5 rounded-full mr-1.5', statusDotClass]"></span>
+            {{ statusLabel }}
           </span>
         </div>
       </div>
@@ -88,7 +81,8 @@
               {{ $t('users.email') }}
             </label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
                 >email</span
               >
               <input
@@ -166,8 +160,128 @@
         </div>
       </div>
 
-      <!-- Section: Hesap Durumu -->
-      <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
+      <!-- Section: Admin Activation (for pending users without password, platform admin only) -->
+      <div
+        v-if="isPendingWithoutPassword && isPlatformAdmin"
+        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4"
+      >
+        <div class="flex items-center gap-2 mb-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"
+          >
+            <span class="material-icons text-amber-600 dark:text-amber-400 text-lg"
+              >admin_panel_settings</span
+            >
+          </div>
+          <h3 class="font-semibold text-gray-900 dark:text-white">
+            {{ $t('users.adminActivation.title') }}
+          </h3>
+        </div>
+
+        <p class="text-sm text-amber-700 dark:text-amber-300 mb-4">
+          {{ $t('users.adminActivation.description') }}
+        </p>
+
+        <!-- Activation mode selection -->
+        <div class="space-y-3">
+          <label
+            class="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all"
+            :class="
+              activationMode === 'no-password'
+                ? 'border-amber-400 bg-amber-100/50 dark:bg-amber-900/30'
+                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
+            "
+          >
+            <input
+              v-model="activationMode"
+              type="radio"
+              value="no-password"
+              class="mt-0.5 text-amber-500 focus:ring-amber-500"
+            />
+            <div>
+              <p class="font-medium text-gray-900 dark:text-white text-sm">
+                {{ $t('users.adminActivation.withoutPassword') }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                {{ $t('users.adminActivation.withoutPasswordDesc') }}
+              </p>
+            </div>
+          </label>
+
+          <label
+            class="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all"
+            :class="
+              activationMode === 'with-password'
+                ? 'border-amber-400 bg-amber-100/50 dark:bg-amber-900/30'
+                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
+            "
+          >
+            <input
+              v-model="activationMode"
+              type="radio"
+              value="with-password"
+              class="mt-0.5 text-amber-500 focus:ring-amber-500"
+            />
+            <div class="flex-1">
+              <p class="font-medium text-gray-900 dark:text-white text-sm">
+                {{ $t('users.adminActivation.withPassword') }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                {{ $t('users.adminActivation.withPasswordDesc') }}
+              </p>
+            </div>
+          </label>
+
+          <!-- Password field (shown when with-password is selected) -->
+          <div v-if="activationMode === 'with-password'" class="pl-8">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ $t('users.adminActivation.passwordLabel') }} <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-lg"
+                :class="errors.password ? 'text-red-400' : 'text-gray-400'"
+                >lock</span
+              >
+              <input
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                class="w-full pl-10 pr-10 py-2.5 border rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                :class="
+                  errors.password
+                    ? 'border-red-500 bg-red-50 dark:bg-red-900/10'
+                    : 'border-gray-300 dark:border-slate-600'
+                "
+                :placeholder="$t('users.adminActivation.passwordPlaceholder')"
+                @blur="validateField('password')"
+                @input="clearError('password')"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                @click="showPassword = !showPassword"
+              >
+                <span class="material-icons text-lg">{{
+                  showPassword ? 'visibility_off' : 'visibility'
+                }}</span>
+              </button>
+            </div>
+            <p v-if="errors.password" class="mt-1 text-sm text-red-500 flex items-center gap-1">
+              <span class="material-icons text-sm">error</span>
+              {{ errors.password }}
+            </p>
+            <p v-else class="mt-1 text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('users.adminActivation.passwordHint') }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Hesap Durumu (hidden for pending users without password when platform admin) -->
+      <div
+        v-if="!isPendingWithoutPassword"
+        class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl"
+      >
         <div class="flex items-center gap-3">
           <div
             class="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -233,6 +347,17 @@
             {{ $t('common.cancel') }}
           </button>
           <button
+            v-if="isPendingWithoutPassword && isPlatformAdmin"
+            :disabled="saving || (activationMode === 'with-password' && !form.password)"
+            class="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-green-500/25 transition-all"
+            @click="handleAdminActivate"
+          >
+            <span v-if="saving" class="animate-spin material-icons text-lg">refresh</span>
+            <span v-else class="material-icons text-lg">check_circle</span>
+            {{ saving ? $t('common.saving') : $t('users.adminActivation.activateButton') }}
+          </button>
+          <button
+            v-else
             :disabled="saving"
             class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-purple-500/25 transition-all"
             @click="handleSubmit"
@@ -251,8 +376,9 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import Modal from '@/components/common/Modal.vue'
-import { updateUser } from '@/services/userService'
+import { updateUser, adminActivateUser } from '@/services/userService'
 
 const props = defineProps({
   user: {
@@ -265,6 +391,7 @@ const emit = defineEmits(['close', 'success'])
 
 const { t } = useI18n()
 const toast = useToast()
+const authStore = useAuthStore()
 
 const isOpen = computed({
   get: () => true,
@@ -274,18 +401,27 @@ const isOpen = computed({
 })
 
 const saving = ref(false)
+const showPassword = ref(false)
+const activationMode = ref('no-password')
+
+const isPlatformAdmin = computed(() => authStore.user?.accountType === 'platform')
+const isPendingWithoutPassword = computed(
+  () => ['pending', 'pending_activation'].includes(props.user?.status) && isPlatformAdmin.value
+)
 
 // Form data
 const form = ref({
   name: '',
   email: '',
   role: 'user',
-  status: 'active'
+  status: 'active',
+  password: ''
 })
 
 // Validation errors
 const errors = reactive({
-  name: ''
+  name: '',
+  password: ''
 })
 
 // Initialize form from props
@@ -297,22 +433,49 @@ watch(
         name: user.name || '',
         email: user.email || '',
         role: user.role || 'user',
-        status: user.status || 'active'
+        status: user.status || 'active',
+        password: ''
       }
     }
   },
   { immediate: true }
 )
 
+// Status badge classes
+const statusBadgeClass = computed(() => {
+  const s = props.user?.status
+  if (s === 'active') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+  if (s === 'pending' || s === 'pending_activation')
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+  return 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300'
+})
+
+const statusDotClass = computed(() => {
+  const s = props.user?.status
+  if (s === 'active') return 'bg-green-500'
+  if (s === 'pending' || s === 'pending_activation') return 'bg-yellow-500'
+  return 'bg-gray-400'
+})
+
+const statusLabel = computed(() => {
+  const s = props.user?.status
+  if (s === 'active') return t('common.active')
+  if (s === 'pending') return t('common.pending')
+  if (s === 'pending_activation') return t('users.pendingActivation')
+  return t('common.inactive')
+})
+
 // Avatar initials
 const avatarInitials = computed(() => {
   const name = form.value.name || ''
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2) || '?'
+  return (
+    name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2) || '?'
+  )
 })
 
 // Roles
@@ -355,11 +518,33 @@ const validateField = field => {
         errors.name = ''
       }
       break
+    case 'password':
+      if (activationMode.value === 'with-password') {
+        if (!form.value.password) {
+          errors.password = t('validation.required')
+        } else if (form.value.password.length < 8) {
+          errors.password = t('validation.minLength', { min: 8 })
+        } else {
+          errors.password = ''
+        }
+      } else {
+        errors.password = ''
+      }
+      break
   }
 }
 
 const validateAll = () => {
   validateField('name')
+  return !errors.name
+}
+
+const validateActivation = () => {
+  validateField('name')
+  if (activationMode.value === 'with-password') {
+    validateField('password')
+    return !errors.name && !errors.password
+  }
   return !errors.name
 }
 
@@ -371,6 +556,7 @@ const handleCancel = () => {
   emit('close')
 }
 
+// Standard update (for non-pending users)
 const handleSubmit = async () => {
   if (!validateAll()) {
     toast.error(t('validation.checkForm'))
@@ -385,6 +571,36 @@ const handleSubmit = async () => {
       status: form.value.status
     })
     toast.success(t('common.saved'))
+    emit('success')
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || t('common.error')
+    toast.error(message)
+  } finally {
+    saving.value = false
+  }
+}
+
+// Admin activation (for pending users without password)
+const handleAdminActivate = async () => {
+  if (!validateActivation()) {
+    toast.error(t('validation.checkForm'))
+    return
+  }
+
+  saving.value = true
+  try {
+    // First update name/role if changed
+    await updateUser(props.user._id, {
+      name: form.value.name,
+      role: form.value.role
+    })
+
+    // Then admin-activate
+    const payload =
+      activationMode.value === 'with-password' ? { password: form.value.password } : {}
+
+    const result = await adminActivateUser(props.user._id, payload)
+    toast.success(result.message || t('users.adminActivation.success'))
     emit('success')
   } catch (error) {
     const message = error.response?.data?.message || error.message || t('common.error')
