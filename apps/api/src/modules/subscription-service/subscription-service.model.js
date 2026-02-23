@@ -82,7 +82,7 @@ const subscriptionServiceSchema = new mongoose.Schema(
 
     targetPartnerType: {
       type: String,
-      enum: ['hotel', 'agency', 'all'],
+      enum: ['hotel', 'agency', 'web', 'all'],
       default: 'all'
     },
 

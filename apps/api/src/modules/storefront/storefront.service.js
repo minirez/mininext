@@ -63,6 +63,19 @@ const toPosixPath = p => String(p || '').replace(/\\/g, '/')
 const getStorefrontUploadsUrlFromRelativePath = (partnerId, relativePath) =>
   `storefront/${partnerId}/${toPosixPath(relativePath).replace(/^\/+/, '')}`
 
+const DRAFT_ALLOWED_KEYS = new Set(STOREFRONT_DRAFT_ALLOWED_FIELDS)
+
+const sanitizeDraftData = draftData => {
+  const src = draftData && typeof draftData === 'object' ? draftData : {}
+  const sanitized = {}
+  Object.entries(src).forEach(([k, v]) => {
+    if (!DRAFT_ALLOWED_KEYS.has(k)) return
+    if (v === undefined) return
+    sanitized[k] = v
+  })
+  return sanitized
+}
+
 const attachB2cDomain = async (storefront, partnerId) => {
   try {
     const settings = await SiteSettings.findOne({ partner: partnerId })
@@ -138,11 +151,12 @@ export const getStorefront = asyncHandler(async (req, res) => {
   }
 
   // Merge draft if requested
-  const hasDraft = storefront.draft?.data && Object.keys(storefront.draft.data).length > 0
+  const sanitizedDraftData = sanitizeDraftData(storefront.draft?.data)
+  const hasDraft = Object.keys(sanitizedDraftData).length > 0
   if (includeDraft === 'true' && hasDraft) {
-    // Admin-only endpoint: simplest behavior is to overlay ALL draft keys.
-    Object.entries(storefront.draft.data).forEach(([k, v]) => {
-      if (v !== undefined) storefront[k] = v
+    // Overlay only whitelisted draft keys to avoid legacy/stale fields masking live data.
+    Object.entries(sanitizedDraftData).forEach(([k, v]) => {
+      storefront[k] = v
     })
     storefront._hasDraft = true
     storefront._draftLastModified = storefront.draft.lastModified
@@ -559,8 +573,6 @@ const DRAFT_PROTECTED_KEYS = new Set([
   'updatedAt',
   '__v'
 ])
-
-const DRAFT_ALLOWED_KEYS = new Set(STOREFRONT_DRAFT_ALLOWED_FIELDS)
 
 export const saveDraft = asyncHandler(async (req, res) => {
   const partnerId = getPartnerIdOrThrow(req)

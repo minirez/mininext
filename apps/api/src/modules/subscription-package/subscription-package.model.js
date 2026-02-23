@@ -8,7 +8,7 @@ import mongoose from 'mongoose'
  * Currency is always EUR. Billing period defaults to yearly.
  */
 
-const PARTNER_TYPES = ['hotel', 'agency', 'all']
+const PARTNER_TYPES = ['hotel', 'agency', 'web', 'all']
 
 const subscriptionPackageSchema = new mongoose.Schema(
   {
