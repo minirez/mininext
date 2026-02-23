@@ -456,7 +456,7 @@ function renderPaymentForm(paymentLink, token) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(160deg, #0f172a 0%, #1e293b 40%, #334155 100%);
+      background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
       min-height: 100vh;
       padding: 20px;
     }
@@ -467,7 +467,7 @@ function renderPaymentForm(paymentLink, token) {
     .card {
       background: white;
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
       overflow: hidden;
     }
     .header {

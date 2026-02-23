@@ -1578,14 +1578,8 @@ const handleDeletePurchase = async () => {
 const handleCreatePaymentLink = async item => {
   sendingLink.value = true
   try {
-    const res = await partnerService.sendPaymentLinkForPurchase(item.partner._id, item.purchase._id)
-    const url = res.data?.paymentUrl
-    if (url) {
-      window.open(url, '_blank')
-      toast.success(t('partnerSubscriptions.paymentLinkCreated'))
-    } else {
-      toast.success(t('partnerSubscriptions.paymentLinkCreated'))
-    }
+    await partnerService.sendPaymentLinkForPurchase(item.partner._id, item.purchase._id)
+    toast.success(t('partnerSubscriptions.paymentLinkCreated'))
   } catch {
     toast.error(t('partnerSubscriptions.paymentLinkError'))
   } finally {
