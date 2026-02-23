@@ -177,7 +177,9 @@ export const createBooking = asyncHandler(async (req, res) => {
       pricing: {
         currency: market.currency,
         originalTotal: priceResult.pricing.originalTotal,
-        discount: priceResult.pricing.totalDiscount,
+        campaignDiscount: priceResult.pricing.totalDiscount,
+        afterCampaignTotal: priceResult.pricing.finalTotal,
+        discount: priceResult.pricing.originalTotal - channelPrice,
         finalTotal: channelPrice,
         avgPerNight: channelPrice / nights
       },
@@ -547,7 +549,9 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
       pricing: {
         currency: market.currency,
         originalTotal: priceResult.pricing.originalTotal,
-        discount: priceResult.pricing.totalDiscount,
+        campaignDiscount: priceResult.pricing.totalDiscount,
+        afterCampaignTotal: priceResult.pricing.finalTotal,
+        discount: priceResult.pricing.originalTotal - channelPrice,
         finalTotal: channelPrice,
         avgPerNight: channelPrice / nights
       },

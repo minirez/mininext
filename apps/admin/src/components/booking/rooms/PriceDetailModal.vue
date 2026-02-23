@@ -215,7 +215,9 @@
 
               <!-- Max Discount Info (Real Margin Based) -->
               <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-1">
-                <p class="text-xs text-blue-700 dark:text-blue-300 font-medium flex items-center gap-1">
+                <p
+                  class="text-xs text-blue-700 dark:text-blue-300 font-medium flex items-center gap-1"
+                >
                   <span class="material-icons text-sm">info</span>
                   Kâr Marjı: %{{ realMarginPercent }} ({{ formatPrice(maxDiscountAmount) }})
                 </p>
@@ -240,7 +242,8 @@
               >
                 <span class="material-icons text-sm">block</span>
                 <span>
-                  <strong>Maliyet altına düşüyor!</strong> Son fiyat ({{ formatPrice(finalTotal) }}) maliyetin ({{ formatPrice(costAmount) }}) altında olamaz.
+                  <strong>Maliyet altına düşüyor!</strong> Son fiyat ({{ formatPrice(finalTotal) }})
+                  maliyetin ({{ formatPrice(costAmount) }}) altında olamaz.
                 </span>
               </div>
               <div
@@ -249,7 +252,8 @@
               >
                 <span class="material-icons text-sm">warning</span>
                 <span>
-                  Maksimum indirim: {{ discountType === 'percent' ? '%' + maxDiscount : formatPrice(maxDiscount) }}
+                  Maksimum indirim:
+                  {{ discountType === 'percent' ? '%' + maxDiscount : formatPrice(maxDiscount) }}
                 </span>
               </div>
             </div>
@@ -266,13 +270,31 @@
                 <span>{{ formatPrice(option?.pricing?.originalTotal) }}</span>
               </div>
 
-              <!-- System Discounts -->
+              <!-- Campaign Discounts -->
               <div
-                v-if="option?.pricing?.totalDiscount > 0"
+                v-if="campaignDiscountAmount > 0"
                 class="flex items-center justify-between text-green-600 dark:text-green-400"
               >
-                <span>{{ $t('booking.discount') }} (Kampanyalar)</span>
-                <span>-{{ formatPrice(option?.pricing?.totalDiscount) }}</span>
+                <span>{{ $t('booking.discount') }} ({{ $t('booking.campaigns') }})</span>
+                <span>-{{ formatPrice(campaignDiscountAmount) }}</span>
+              </div>
+
+              <!-- After Campaign Price -->
+              <div
+                v-if="campaignDiscountAmount > 0 && marginAmount > 0"
+                class="flex items-center justify-between text-gray-500 dark:text-slate-400"
+              >
+                <span>{{ $t('booking.afterCampaign') }}</span>
+                <span>{{ formatPrice(afterCampaignTotal) }}</span>
+              </div>
+
+              <!-- Partner Margin -->
+              <div
+                v-if="marginAmount > 0"
+                class="flex items-center justify-between text-blue-600 dark:text-blue-400"
+              >
+                <span>{{ isAgency ? 'Acente İndirimi' : 'Partner İndirimi' }}</span>
+                <span>-{{ formatPrice(marginAmount) }}</span>
               </div>
 
               <!-- Custom Discount -->
@@ -391,6 +413,27 @@ const discountValue = ref(0)
 
 // Rate type selection (refundable / non-refundable)
 const selectedRateType = ref('refundable')
+
+// Campaign discount (pure campaign amount, excluding tier/margin)
+const campaignDiscountAmount = computed(() => {
+  return props.option?.pricing?.campaignDiscount || props.option?.pricing?.totalDiscount || 0
+})
+
+const afterCampaignTotal = computed(() => {
+  return (
+    props.option?.pricing?.afterCampaignTotal ||
+    props.option?.pricing?.originalTotal - campaignDiscountAmount.value ||
+    0
+  )
+})
+
+// Margin = difference between after-campaign price and channel price (b2b/b2c)
+const marginAmount = computed(() => {
+  const afterCampaign = afterCampaignTotal.value
+  const channelPrice = props.option?.pricing?.finalTotal || 0
+  const margin = afterCampaign - channelPrice
+  return margin > 0 ? margin : 0
+})
 
 // Get base price based on rate type selection
 const basePriceForCalculation = computed(() => {

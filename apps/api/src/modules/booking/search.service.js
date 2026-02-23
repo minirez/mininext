@@ -521,6 +521,8 @@ export const searchAvailability = asyncHandler(async (req, res) => {
           pricing: {
             currency: market.currency,
             originalTotal: priceResult.pricing.originalTotal,
+            campaignDiscount: priceResult.pricing.totalDiscount,
+            afterCampaignTotal: priceResult.pricing.finalTotal,
             totalDiscount: priceResult.pricing.originalTotal - channelPrice,
             finalTotal: channelPrice,
             avgPerNight: channelPrice / nights,

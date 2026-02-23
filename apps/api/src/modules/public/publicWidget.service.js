@@ -215,13 +215,13 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
       message: hotel.widgetConfig?.whatsapp?.message || null
     },
     paymentMethods: {
-      creditCard: marketPM
-        ? (marketPM.creditCard?.enabled ?? true)
-        : (widgetPM?.creditCard ?? true),
+      creditCard:
+        (widgetPM?.creditCard ?? true) &&
+        (marketPM ? (marketPM.creditCard?.enabled ?? true) : true),
       payAtHotel: widgetPM?.payAtHotel ?? true,
-      bankTransfer: marketPM
-        ? (marketPM.bankTransfer?.enabled ?? false)
-        : (widgetPM?.bankTransfer ?? false),
+      bankTransfer:
+        (widgetPM?.bankTransfer ?? false) &&
+        (marketPM ? (marketPM.bankTransfer?.enabled ?? false) : true),
       bankTransferReleaseDays: marketPM?.bankTransfer?.releaseDays ?? 3,
       bankTransferDiscount: marketPM?.bankTransfer?.discountRate ?? 0
     },

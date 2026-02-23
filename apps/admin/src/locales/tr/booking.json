@@ -465,6 +465,8 @@
     "basePrice": "Baz Fiyat",
     "finalPrice": "Net Fiyat",
     "appliedCampaigns": "Uygulanan Kampanyalar",
+    "campaigns": "Kampanyalar",
+    "afterCampaign": "Kampanya Sonrası",
     "avgPerNight": "Gece Ortalaması",
     "mealPlan": "Pansiyon",
     "addToCart": "Sepete Ekle",
