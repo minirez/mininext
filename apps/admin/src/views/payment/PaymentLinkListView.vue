@@ -1566,14 +1566,8 @@ watch(
           <button type="button" class="btn-secondary" @click="showDetailModal = false">
             {{ $t('misc.close') }}
           </button>
-          <button
-            v-if="['pending', 'viewed'].includes(selectedItem.status)"
-            class="btn-primary"
-            @click="
-              showDetailModal = false
-              openEditModal(selectedItem)
-            "
-          >
+          <!-- prettier-ignore -->
+          <button v-if="['pending', 'viewed'].includes(selectedItem.status)" class="btn-primary" @click="showDetailModal = false; openEditModal(selectedItem)">
             <span class="material-icons text-sm mr-1">edit</span>
             {{ $t('misc.edit') }}
           </button>
