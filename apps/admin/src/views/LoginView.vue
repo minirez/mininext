@@ -5,7 +5,9 @@
       <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-2">
         {{ $t('auth.welcome') }}
       </h2>
-      <p class="text-center text-gray-600 dark:text-slate-400 mb-8">{{ $t('auth.signIn') }}</p>
+      <p class="text-center text-gray-600 dark:text-slate-400 mb-4 sm:mb-8">
+        {{ $t('auth.signIn') }}
+      </p>
 
       <!-- Error message -->
       <div
@@ -20,7 +22,7 @@
       </div>
 
       <!-- Login Form -->
-      <form class="space-y-6" @submit.prevent="handleLogin">
+      <form class="space-y-4 sm:space-y-6" @submit.prevent="handleLogin">
         <div>
           <label for="email" class="form-label">{{ $t('auth.email') }}</label>
           <div class="relative">
@@ -135,7 +137,7 @@
       </form>
 
       <!-- Register Link -->
-      <div class="mt-6 text-center">
+      <div class="mt-4 sm:mt-6 text-center">
         <p class="text-sm text-gray-600 dark:text-slate-400">
           {{ $t('auth.dontHaveAccount') }}
           <RouterLink

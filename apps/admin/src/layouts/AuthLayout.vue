@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br"
+    class="min-h-screen flex flex-col items-center justify-center py-6 sm:py-12 bg-gradient-to-br"
     :class="[branding.config.gradientFrom, branding.config.gradientTo]"
   >
     <!-- Top Bar: Language & Theme -->
@@ -18,20 +18,22 @@
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10 w-full max-w-md px-6">
       <!-- Logo -->
-      <div class="text-center mb-8">
+      <div class="text-center mb-4 sm:mb-8">
         <!-- Partner logo (custom domain) -->
         <template v-if="partnerBranding">
           <div
             v-if="partnerBranding.logo"
-            class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
+            class="inline-flex items-center justify-center w-16 h-16 sm:w-28 sm:h-28 bg-white rounded-xl sm:rounded-2xl shadow-lg mb-3 sm:mb-4 overflow-hidden"
           >
             <img
               :src="partnerLogoUrl"
               :alt="partnerBranding.partnerName"
-              class="w-24 h-24 object-contain"
+              class="w-12 h-12 sm:w-24 sm:h-24 object-contain"
             />
           </div>
-          <h1 class="text-3xl font-bold text-white">{{ partnerBranding.partnerName }}</h1>
+          <h1 class="text-xl sm:text-3xl font-bold text-white">
+            {{ partnerBranding.partnerName }}
+          </h1>
           <p class="mt-2" :class="branding.config.textMuted">
             {{ $t(branding.config.portalSubtitle) }}
           </p>
@@ -40,11 +42,17 @@
         <!-- Default logo (platform domain) -->
         <template v-else>
           <div
-            class="inline-flex items-center justify-center w-28 h-28 bg-white rounded-2xl shadow-lg mb-4 overflow-hidden"
+            class="inline-flex items-center justify-center w-16 h-16 sm:w-28 sm:h-28 bg-white rounded-xl sm:rounded-2xl shadow-lg mb-3 sm:mb-4 overflow-hidden"
           >
-            <img :src="aaLogo" alt="AdviceAl Logo" class="w-24 h-24 object-contain" />
+            <img
+              :src="aaLogo"
+              alt="AdviceAl Logo"
+              class="w-12 h-12 sm:w-24 sm:h-24 object-contain"
+            />
           </div>
-          <h1 class="text-3xl font-bold text-white">{{ $t(branding.config.portalTitle) }}</h1>
+          <h1 class="text-xl sm:text-3xl font-bold text-white">
+            {{ $t(branding.config.portalTitle) }}
+          </h1>
           <p class="mt-2" :class="branding.config.textMuted">
             {{ $t(branding.config.portalSubtitle) }}
           </p>
@@ -53,13 +61,13 @@
 
       <!-- Auth Form Container -->
       <div
-        class="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-2xl shadow-xl p-8"
+        class="bg-white dark:bg-slate-800 dark:border dark:border-slate-700 rounded-2xl shadow-xl p-5 sm:p-8"
       >
         <router-view />
       </div>
 
       <!-- Footer -->
-      <div class="text-center mt-8">
+      <div class="text-center mt-4 sm:mt-8">
         <p v-if="partnerBranding" class="text-sm" :class="branding.config.textMuted">
           © {{ new Date().getFullYear() }} {{ partnerBranding.partnerName }}
         </p>
@@ -92,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import LanguageSelector from '@/components/common/LanguageSelector.vue'
 import { useUIStore } from '@/stores/ui'
 import { useDomainBranding } from '@/composables/useDomainBranding'
@@ -103,6 +111,20 @@ const branding = useDomainBranding()
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
+
+// Auth sayfalarında scroll'u aktif et (global overflow:hidden'ı geçersiz kıl)
+onMounted(() => {
+  document.documentElement.style.overflow = 'auto'
+  document.documentElement.style.height = 'auto'
+  document.body.style.overflow = 'auto'
+  document.body.style.height = 'auto'
+})
+onUnmounted(() => {
+  document.documentElement.style.overflow = ''
+  document.documentElement.style.height = ''
+  document.body.style.overflow = ''
+  document.body.style.height = ''
+})
 
 // Partner branding from custom domain
 const partnerBranding = ref(null)
