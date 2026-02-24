@@ -268,6 +268,7 @@
     "bookingStatusNote": "Booking Status",
     "bookingStatusDescription": "This booking will be saved as 'Pending' and will require confirmation.",
     "confirmBooking": "Confirm Booking",
+    "createBooking": "Create Booking",
     "bookingSuccess": "Your booking has been successfully created!",
     "bookingSuccessTitle": "Your booking has been confirmed!",
     "bookingSuccessDescription": "A confirmation email will be sent to your email address.",

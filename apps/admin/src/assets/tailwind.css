@@ -6,6 +6,20 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  @media print {
+    html,
+    body {
+      overflow: visible;
+      height: auto;
+    }
+  }
+
   body {
     font-family: 'Inter', sans-serif;
   }
