@@ -5,7 +5,7 @@
       <label
         v-for="policy in ratePolicies"
         :key="policy.value"
-        class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-all"
+        class="relative flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-all"
         :class="
           ratePolicy === policy.value
             ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'

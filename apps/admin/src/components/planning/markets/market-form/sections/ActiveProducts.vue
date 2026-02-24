@@ -25,7 +25,7 @@
         <label
           v-for="rt in roomTypes"
           :key="rt._id"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+          class="relative flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
           :class="
             activeRoomTypes.includes(rt._id)
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
@@ -65,7 +65,7 @@
         <label
           v-for="mp in mealPlans"
           :key="mp._id"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+          class="relative flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
           :class="
             activeMealPlans.includes(mp._id)
               ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'

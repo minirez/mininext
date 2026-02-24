@@ -27,23 +27,12 @@
             type="color"
             class="w-12 h-10 rounded border border-gray-300 cursor-pointer"
           />
-          <input
-            v-model="form.color"
-            type="text"
-            class="form-input flex-1"
-            placeholder="#6366f1"
-          />
+          <input v-model="form.color" type="text" class="form-input flex-1" placeholder="#6366f1" />
         </div>
       </div>
       <div>
         <label class="form-label">{{ $t('planning.pricing.priority') }}</label>
-        <input
-          v-model.number="form.priority"
-          type="number"
-          min="0"
-          max="100"
-          class="form-input"
-        />
+        <input v-model.number="form.priority" type="number" min="0" max="100" class="form-input" />
         <p class="text-xs text-gray-500 mt-1">{{ $t('planning.pricing.priorityHint') }}</p>
       </div>
     </div>
@@ -131,19 +120,14 @@
           <label
             v-for="rt in filteredRoomTypes"
             :key="rt._id"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+            class="relative flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
             :class="
               form.activeRoomTypes.includes(rt._id)
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                 : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
             "
           >
-            <input
-              v-model="form.activeRoomTypes"
-              type="checkbox"
-              :value="rt._id"
-              class="sr-only"
-            />
+            <input v-model="form.activeRoomTypes" type="checkbox" :value="rt._id" class="sr-only" />
             <span class="font-medium">{{ rt.code }}</span>
             <span class="text-xs text-gray-500 dark:text-slate-400">{{
               rt.name?.[locale] || rt.name?.tr
@@ -171,19 +155,14 @@
           <label
             v-for="mp in filteredMealPlans"
             :key="mp._id"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
+            class="relative flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-all text-sm"
             :class="
               form.activeMealPlans.includes(mp._id)
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                 : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
             "
           >
-            <input
-              v-model="form.activeMealPlans"
-              type="checkbox"
-              :value="mp._id"
-              class="sr-only"
-            />
+            <input v-model="form.activeMealPlans" type="checkbox" :value="mp._id" class="sr-only" />
             <span class="font-medium">{{ mp.code }}</span>
             <span class="text-xs text-gray-500 dark:text-slate-400">{{
               mp.name?.[locale] || mp.name?.tr
@@ -220,13 +199,13 @@
                 ? 'bg-pink-500'
                 : 'bg-gray-300 dark:bg-slate-600'
             "
-            @click="form.childAgeSettings.inheritFromMarket = !form.childAgeSettings.inheritFromMarket"
+            @click="
+              form.childAgeSettings.inheritFromMarket = !form.childAgeSettings.inheritFromMarket
+            "
           >
             <span
               class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300"
-              :class="
-                form.childAgeSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'
-              "
+              :class="form.childAgeSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'"
             ></span>
           </button>
         </div>
@@ -322,13 +301,13 @@
                 ? 'bg-emerald-500'
                 : 'bg-gray-300 dark:bg-slate-600'
             "
-            @click="form.paymentSettings.inheritFromMarket = !form.paymentSettings.inheritFromMarket"
+            @click="
+              form.paymentSettings.inheritFromMarket = !form.paymentSettings.inheritFromMarket
+            "
           >
             <span
               class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300"
-              :class="
-                form.paymentSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'
-              "
+              :class="form.paymentSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'"
             ></span>
           </button>
         </div>
@@ -352,9 +331,7 @@
                   : 'text-red-500'
               "
             >
-              {{
-                market.paymentMethods?.creditCard?.enabled !== false ? 'check_circle' : 'cancel'
-              }}
+              {{ market.paymentMethods?.creditCard?.enabled !== false ? 'check_circle' : 'cancel' }}
             </span>
             {{ $t('planning.markets.creditCard') }}
           </span>
@@ -368,9 +345,7 @@
               "
             >
               {{
-                market.paymentMethods?.bankTransfer?.enabled !== false
-                  ? 'check_circle'
-                  : 'cancel'
+                market.paymentMethods?.bankTransfer?.enabled !== false ? 'check_circle' : 'cancel'
               }}
             </span>
             {{ $t('planning.markets.bankTransfer') }}
@@ -397,13 +372,13 @@
                   ? 'bg-emerald-500'
                   : 'bg-gray-300 dark:bg-slate-600'
               "
-              @click="form.paymentSettings.creditCard.enabled = !form.paymentSettings.creditCard.enabled"
+              @click="
+                form.paymentSettings.creditCard.enabled = !form.paymentSettings.creditCard.enabled
+              "
             >
               <span
                 class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300"
-                :class="
-                  form.paymentSettings.creditCard.enabled ? 'translate-x-5' : 'translate-x-0'
-                "
+                :class="form.paymentSettings.creditCard.enabled ? 'translate-x-5' : 'translate-x-0'"
               ></span>
             </button>
           </div>
@@ -426,7 +401,10 @@
                   ? 'bg-emerald-500'
                   : 'bg-gray-300 dark:bg-slate-600'
               "
-              @click="form.paymentSettings.bankTransfer.enabled = !form.paymentSettings.bankTransfer.enabled"
+              @click="
+                form.paymentSettings.bankTransfer.enabled =
+                  !form.paymentSettings.bankTransfer.enabled
+              "
             >
               <span
                 class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300"
@@ -499,13 +477,13 @@
                 ? 'bg-amber-500'
                 : 'bg-gray-300 dark:bg-slate-600'
             "
-            @click="form.childrenSettings.inheritFromMarket = !form.childrenSettings.inheritFromMarket"
+            @click="
+              form.childrenSettings.inheritFromMarket = !form.childrenSettings.inheritFromMarket
+            "
           >
             <span
               class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300"
-              :class="
-                form.childrenSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'
-              "
+              :class="form.childrenSettings.inheritFromMarket ? 'translate-x-6' : 'translate-x-0'"
             ></span>
           </button>
         </div>
@@ -574,7 +552,10 @@
                 ? 'bg-indigo-500'
                 : 'bg-gray-300 dark:bg-slate-600'
             "
-            @click="form.salesSettingsOverride.inheritFromMarket = !form.salesSettingsOverride.inheritFromMarket"
+            @click="
+              form.salesSettingsOverride.inheritFromMarket =
+                !form.salesSettingsOverride.inheritFromMarket
+            "
           >
             <span
               class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300"
@@ -635,7 +616,8 @@
             {{ $t('planning.markets.agencyCommissionShort') }} %{{
               Math.round(
                 ((market.commissionRate || 10) / (100 + (market.commissionRate || 10))) *
-                (market.agencyMarginShare ?? 50) * 100
+                  (market.agencyMarginShare ?? 50) *
+                  100
               ) / 100
             }}
           </span>
@@ -771,10 +753,16 @@
           <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <span class="text-sm text-blue-700 dark:text-blue-300">
               {{ $t('planning.markets.grossMargin') }}: %{{
-                Math.round((form.salesSettingsOverride.commissionRate / (100 + form.salesSettingsOverride.commissionRate)) * 10000) / 100
+                Math.round(
+                  (form.salesSettingsOverride.commissionRate /
+                    (100 + form.salesSettingsOverride.commissionRate)) *
+                    10000
+                ) / 100
               }}
             </span>
-            <span class="text-xs text-blue-500 ml-2">({{ form.salesSettingsOverride.commissionRate }}% komisyondan)</span>
+            <span class="text-xs text-blue-500 ml-2"
+              >({{ form.salesSettingsOverride.commissionRate }}% komisyondan)</span
+            >
           </div>
 
           <!-- Agency Margin Share Input -->
@@ -799,15 +787,19 @@
           </div>
 
           <!-- Calculated Commission Display -->
-          <div class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <div
+            class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg"
+          >
             <span class="text-sm text-green-700 dark:text-green-300">
               {{ $t('planning.markets.calculatedAgencyCommission') }}:
             </span>
             <span class="font-bold text-green-700 dark:text-green-300">
               %{{
                 Math.round(
-                  (form.salesSettingsOverride.commissionRate / (100 + form.salesSettingsOverride.commissionRate)) *
-                  form.salesSettingsOverride.agencyMarginShare * 100
+                  (form.salesSettingsOverride.commissionRate /
+                    (100 + form.salesSettingsOverride.commissionRate)) *
+                    form.salesSettingsOverride.agencyMarginShare *
+                    100
                 ) / 100
               }}
             </span>
@@ -839,7 +831,10 @@
                 ? 'bg-red-500'
                 : 'bg-gray-300 dark:bg-slate-600'
             "
-            @click="form.nonRefundableOverride.inheritFromMarket = !form.nonRefundableOverride.inheritFromMarket"
+            @click="
+              form.nonRefundableOverride.inheritFromMarket =
+                !form.nonRefundableOverride.inheritFromMarket
+            "
           >
             <span
               class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300"
@@ -866,9 +861,7 @@
             class="flex items-center gap-1 px-2 py-1 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
           >
             <span class="material-icons text-xs">block</span>
-            {{ $t('planning.markets.nonRefundable') }} -%{{
-              market.nonRefundableDiscount || 10
-            }}
+            {{ $t('planning.markets.nonRefundable') }} -%{{ market.nonRefundableDiscount || 10 }}
           </span>
           <span
             v-else
