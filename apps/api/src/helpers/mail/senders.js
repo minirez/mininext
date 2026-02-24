@@ -48,7 +48,10 @@ const getEmailBranding = async partnerId => {
         }
 
         if (partner.branding?.logo) {
-          result.LOGO_URL = `${config.apiUrl}${partner.branding.logo}`
+          const logo = partner.branding.logo
+          result.LOGO_URL = logo.startsWith('http')
+            ? logo
+            : `${config.apiUrl}${logo.startsWith('/') ? '' : '/'}${logo}`
         }
 
         if (partner.branding?.extranetDomain) {
@@ -58,6 +61,11 @@ const getEmailBranding = async partnerId => {
     } catch (error) {
       logger.warn('Failed to load partner branding:', error.message)
     }
+  }
+
+  // Fallback: partner logosu yoksa platform default
+  if (!result.LOGO_URL) {
+    result.LOGO_URL = `${result.SITE_URL || config.adminUrl}/logo.png`
   }
 
   return result

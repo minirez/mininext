@@ -122,7 +122,7 @@ export async function sendPaymentNotification(payment, booking, eventType) {
         SUPPORT_EMAIL: supportEmail,
         SITE_URL: siteUrl,
         COMPANY_ADDRESS: companyAddress,
-        ...(logoUrl && { LOGO_URL: logoUrl }),
+        LOGO_URL: logoUrl || `${siteUrl}/logo.png`,
         // Payment data
         CUSTOMER_NAME:
           `${booking.leadGuest?.firstName || ''} ${booking.leadGuest?.lastName || ''}`.trim() ||
@@ -233,7 +233,7 @@ export async function sendPaymentLinkNotification(paymentLink, partner, channels
     PAYMENT_URL: paymentLink.paymentUrl,
     EXPIRY_DATE: formattedExpiry,
     COMPANY_NAME: companyName,
-    LOGO_URL: logoUrl,
+    LOGO_URL: logoUrl || `${siteUrl}/logo.png`,
     SITE_URL: siteUrl,
     SUPPORT_EMAIL: supportEmail,
 
