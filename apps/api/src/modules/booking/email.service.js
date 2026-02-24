@@ -393,13 +393,16 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
   }
 
   // Common data for all templates
+  // Labels spread first so partner-specific values override them
   const commonData = {
+    ...labels,
+
     // Template meta
     TITLE: emailTitles[language]?.[type] || emailTitles.tr[type],
     PREVIEW_TEXT: previewTexts[language]?.[type] || previewTexts.tr[type],
     LANG: language,
 
-    // Site & Branding (use partner branding if available)
+    // Site & Branding (partner values override label defaults)
     SITE_URL: partner.branding?.siteDomain ? `https://${partner.branding.siteDomain}` : siteUrl,
     LOGO_URL: partner.branding?.logo
       ? partner.branding.logo.startsWith('http')
@@ -429,10 +432,7 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
     GUEST_EMAIL: booking.contact?.email || '',
     GUEST_PHONE: booking.contact?.phone || '',
     BOOKING_URL: bookingUrl,
-    STATUS: language === 'tr' ? 'Onaylandı' : 'Confirmed',
-
-    // Spread labels from emailTemplates.js
-    ...labels
+    STATUS: language === 'tr' ? 'Onaylandı' : 'Confirmed'
   }
 
   // Type-specific data
