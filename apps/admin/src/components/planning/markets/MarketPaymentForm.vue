@@ -135,7 +135,7 @@
         <div class="space-y-3">
           <!-- Option 1: Days after booking -->
           <label
-            class="flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
+            class="relative flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
             :class="
               formData.remainingPayment.type === 'days_after_booking'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
@@ -184,7 +184,7 @@
 
           <!-- Option 2: Days before check-in -->
           <label
-            class="flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
+            class="relative flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
             :class="
               formData.remainingPayment.type === 'days_before_checkin'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
@@ -233,7 +233,7 @@
 
           <!-- Option 3: At check-in (pay at hotel) -->
           <label
-            class="flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
+            class="relative flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
             :class="
               formData.remainingPayment.type === 'at_checkin'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'

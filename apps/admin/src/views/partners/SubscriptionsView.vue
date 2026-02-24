@@ -362,7 +362,7 @@
 
           <!-- Show Deleted Toggle -->
           <label
-            class="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-pointer select-none transition-colors text-sm"
+            class="relative inline-flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-pointer select-none transition-colors text-sm"
             :class="
               filters.showDeleted
                 ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'

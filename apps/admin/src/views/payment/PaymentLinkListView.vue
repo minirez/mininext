@@ -130,12 +130,15 @@ function getEstimatedCommission(installment) {
 }
 
 // Watch currency changes - reset installment if not TRY
-watch(() => formData.value.currency, (newCurrency) => {
-  if (newCurrency !== 'TRY') {
-    formData.value.installment.enabled = false
-    formData.value.installment.maxCount = 1
+watch(
+  () => formData.value.currency,
+  newCurrency => {
+    if (newCurrency !== 'TRY') {
+      formData.value.installment.enabled = false
+      formData.value.installment.maxCount = 1
+    }
   }
-})
+)
 
 // Methods
 async function fetchItems() {
@@ -319,7 +322,10 @@ function confirmCancel(item) {
 
 async function cancelItem() {
   try {
-    await paymentLinkService.cancelPaymentLink(selectedItem.value._id, 'Admin tarafından iptal edildi')
+    await paymentLinkService.cancelPaymentLink(
+      selectedItem.value._id,
+      'Admin tarafından iptal edildi'
+    )
     confirmDialog.value.show = false
     await fetchItems()
     await fetchStats()
@@ -409,11 +415,14 @@ onMounted(() => {
 })
 
 // Re-fetch when selected partner changes (platform admin switches partner in header)
-watch(() => partnerStore.selectedPartner, () => {
-  pagination.value.page = 1 // Reset to first page
-  fetchItems()
-  fetchStats()
-})
+watch(
+  () => partnerStore.selectedPartner,
+  () => {
+    pagination.value.page = 1 // Reset to first page
+    fetchItems()
+    fetchStats()
+  }
+)
 </script>
 
 <template>
@@ -433,56 +442,78 @@ watch(() => partnerStore.selectedPartner, () => {
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+          <div
+            class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+          >
             <span class="material-icons text-blue-600 dark:text-blue-400">link</span>
           </div>
           <div>
             <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.total || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('paymentLink.stats.total') }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('paymentLink.stats.total') }}
+            </p>
           </div>
         </div>
       </div>
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+          <div
+            class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center"
+          >
             <span class="material-icons text-yellow-600 dark:text-yellow-400">schedule</span>
           </div>
           <div>
             <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.pending || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('paymentLink.stats.pending') }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('paymentLink.stats.pending') }}
+            </p>
           </div>
         </div>
       </div>
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center">
+          <div
+            class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center"
+          >
             <span class="material-icons text-cyan-600 dark:text-cyan-400">visibility</span>
           </div>
           <div>
             <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.viewed || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('paymentLink.stats.viewed') }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('paymentLink.stats.viewed') }}
+            </p>
           </div>
         </div>
       </div>
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+          <div
+            class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center"
+          >
             <span class="material-icons text-green-600 dark:text-green-400">check_circle</span>
           </div>
           <div>
             <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.paid || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('paymentLink.stats.paid') }}</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('paymentLink.stats.paid') }}
+            </p>
           </div>
         </div>
       </div>
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+          <div
+            class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center"
+          >
             <span class="material-icons text-purple-600 dark:text-purple-400">calendar_today</span>
           </div>
           <div>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.thisMonth || 0 }}</p>
-            <p class="text-xs text-gray-500 dark:text-slate-400">{{ $t('paymentLink.stats.thisMonth') }}</p>
+            <p class="text-xl font-bold text-gray-900 dark:text-white">
+              {{ stats.thisMonth || 0 }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              {{ $t('paymentLink.stats.thisMonth') }}
+            </p>
           </div>
         </div>
       </div>
@@ -525,31 +556,49 @@ watch(() => partnerStore.selectedPartner, () => {
       <table class="w-full">
         <thead class="bg-gray-50 dark:bg-slate-700 border-b dark:border-slate-600">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.fields.linkNumber') }}
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.fields.customer') }}
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.fields.description') }}
             </th>
-            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.fields.amount') }}
             </th>
-            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.installment') }}
             </th>
-            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.commission') }}
             </th>
-            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-center text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('misc.status') }}
             </th>
-            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('paymentLink.fields.expiresAt') }}
             </th>
-            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase">
+            <th
+              class="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase"
+            >
               {{ $t('misc.actions') }}
             </th>
           </tr>
@@ -557,12 +606,16 @@ watch(() => partnerStore.selectedPartner, () => {
         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
           <tr v-if="loading">
             <td colspan="9" class="px-4 py-16 text-center">
-              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <div
+                class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"
+              ></div>
             </td>
           </tr>
           <tr v-else-if="items.length === 0">
             <td colspan="9" class="px-4 py-16 text-center text-gray-500 dark:text-slate-400">
-              <span class="material-icons text-4xl text-gray-300 dark:text-slate-600 mb-2 block">link_off</span>
+              <span class="material-icons text-4xl text-gray-300 dark:text-slate-600 mb-2 block"
+                >link_off</span
+              >
               {{ $t('paymentLink.noData') }}
             </td>
           </tr>
@@ -579,7 +632,9 @@ watch(() => partnerStore.selectedPartner, () => {
             </td>
             <td class="px-4 py-3">
               <div class="font-medium text-gray-900 dark:text-white">{{ item.customer?.name }}</div>
-              <div class="text-xs text-gray-500 dark:text-slate-400">{{ item.customer?.email }}</div>
+              <div class="text-xs text-gray-500 dark:text-slate-400">
+                {{ item.customer?.email }}
+              </div>
             </td>
             <td class="px-4 py-3 text-sm text-gray-600 dark:text-slate-300 max-w-xs truncate">
               {{ item.description }}
@@ -591,10 +646,19 @@ watch(() => partnerStore.selectedPartner, () => {
               <div class="flex flex-col items-center gap-0.5">
                 <!-- Ödenmişse: kaç taksitle ödendiği -->
                 <template v-if="item.status === 'paid' && item.transaction?.installment">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
-                    {{ item.transaction.installment === 1 ? $t('paymentLink.singlePayment') : item.transaction.installment + ' ' + $t('paymentLink.installment') }}
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                  >
+                    {{
+                      item.transaction.installment === 1
+                        ? $t('paymentLink.singlePayment')
+                        : item.transaction.installment + ' ' + $t('paymentLink.installment')
+                    }}
                   </span>
-                  <span v-if="item.installment?.maxCount > 1" class="text-[10px] text-gray-400 dark:text-slate-500">
+                  <span
+                    v-if="item.installment?.maxCount > 1"
+                    class="text-[10px] text-gray-400 dark:text-slate-500"
+                  >
                     ({{ $t('paymentLink.upTo') }} {{ item.installment.maxCount }})
                   </span>
                 </template>
@@ -611,7 +675,9 @@ watch(() => partnerStore.selectedPartner, () => {
               </div>
             </td>
             <td class="px-4 py-3 text-right">
-              <template v-if="item.status === 'paid' && item.transaction?.commission?.totalAmount > 0">
+              <template
+                v-if="item.status === 'paid' && item.transaction?.commission?.totalAmount > 0"
+              >
                 <div class="text-sm font-medium text-orange-600 dark:text-orange-400">
                   {{ formatAmount(item.transaction.commission.totalAmount, item.currency) }}
                 </div>
@@ -683,22 +749,29 @@ watch(() => partnerStore.selectedPartner, () => {
       </table>
 
       <!-- Pagination -->
-      <div v-if="pagination.pages > 1" class="px-4 py-3 border-t dark:border-slate-700 flex justify-between items-center">
+      <div
+        v-if="pagination.pages > 1"
+        class="px-4 py-3 border-t dark:border-slate-700 flex justify-between items-center"
+      >
         <div class="text-sm text-gray-600 dark:text-slate-400">
-          {{ $t('pagination.showing', {
-            from: (pagination.page - 1) * pagination.limit + 1,
-            to: Math.min(pagination.page * pagination.limit, pagination.total),
-            total: pagination.total
-          }) }}
+          {{
+            $t('pagination.showing', {
+              from: (pagination.page - 1) * pagination.limit + 1,
+              to: Math.min(pagination.page * pagination.limit, pagination.total),
+              total: pagination.total
+            })
+          }}
         </div>
         <div class="flex gap-1">
           <button
             v-for="p in pagination.pages"
             :key="p"
             class="px-3 py-1.5 rounded text-sm font-medium transition-colors"
-            :class="pagination.page === p
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-slate-700 border dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'"
+            :class="
+              pagination.page === p
+                ? 'bg-primary-600 text-white'
+                : 'bg-white dark:bg-slate-700 border dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
+            "
             @click="changePage(p)"
           >
             {{ p }}
@@ -708,10 +781,18 @@ watch(() => partnerStore.selectedPartner, () => {
     </div>
 
     <!-- Create/Edit Modal -->
-    <Modal v-model="showFormModal" :title="selectedItem ? $t('paymentLink.edit') : $t('paymentLink.create')" size="lg" @close="showFormModal = false">
+    <Modal
+      v-model="showFormModal"
+      :title="selectedItem ? $t('paymentLink.edit') : $t('paymentLink.create')"
+      size="lg"
+      @close="showFormModal = false"
+    >
       <form @submit.prevent="saveForm" class="space-y-4">
         <!-- Error Alert -->
-        <div v-if="formErrors.general" class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+        <div
+          v-if="formErrors.general"
+          class="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
+        >
           <span class="material-icons text-red-500">error</span>
           <span class="text-red-600 dark:text-red-400 text-sm">{{ formErrors.general }}</span>
         </div>
@@ -720,7 +801,9 @@ watch(() => partnerStore.selectedPartner, () => {
         <div class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
           <div class="flex items-center gap-2 mb-3">
             <span class="material-icons text-primary-500">person</span>
-            <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('paymentLink.customerInfo') }}</h4>
+            <h4 class="font-semibold text-gray-900 dark:text-white">
+              {{ $t('paymentLink.customerInfo') }}
+            </h4>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -728,16 +811,25 @@ watch(() => partnerStore.selectedPartner, () => {
                 {{ $t('paymentLink.fields.customerName') }} <span class="text-red-500">*</span>
               </label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">badge</span>
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                  >badge</span
+                >
                 <input
                   v-model="formData.customer.name"
                   type="text"
                   class="form-input w-full pl-10"
-                  :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': formErrors.customerName }"
+                  :class="{
+                    'border-red-500 focus:border-red-500 focus:ring-red-500':
+                      formErrors.customerName
+                  }"
                   :placeholder="$t('paymentLink.placeholders.name')"
                 />
               </div>
-              <p v-if="formErrors.customerName" class="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <p
+                v-if="formErrors.customerName"
+                class="text-red-500 text-xs mt-1 flex items-center gap-1"
+              >
                 <span class="material-icons text-xs">error</span>
                 {{ formErrors.customerName }}
               </p>
@@ -747,7 +839,10 @@ watch(() => partnerStore.selectedPartner, () => {
                 {{ $t('paymentLink.fields.customerEmail') }}
               </label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">email</span>
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                  >email</span
+                >
                 <input
                   v-model="formData.customer.email"
                   type="email"
@@ -762,7 +857,10 @@ watch(() => partnerStore.selectedPartner, () => {
                 <span class="text-gray-400 font-normal">({{ $t('misc.optional') }})</span>
               </label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg">phone</span>
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 material-icons text-gray-400 text-lg"
+                  >phone</span
+                >
                 <input
                   v-model="formData.customer.phone"
                   type="tel"
@@ -778,7 +876,9 @@ watch(() => partnerStore.selectedPartner, () => {
         <div class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
           <div class="flex items-center gap-2 mb-3">
             <span class="material-icons text-primary-500">receipt_long</span>
-            <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('paymentLink.paymentInfo') }}</h4>
+            <h4 class="font-semibold text-gray-900 dark:text-white">
+              {{ $t('paymentLink.paymentInfo') }}
+            </h4>
           </div>
           <div class="space-y-4">
             <div>
@@ -789,10 +889,15 @@ watch(() => partnerStore.selectedPartner, () => {
                 v-model="formData.description"
                 rows="2"
                 class="form-input w-full resize-none"
-                :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': formErrors.description }"
+                :class="{
+                  'border-red-500 focus:border-red-500 focus:ring-red-500': formErrors.description
+                }"
                 :placeholder="$t('paymentLink.placeholders.description')"
               ></textarea>
-              <p v-if="formErrors.description" class="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <p
+                v-if="formErrors.description"
+                class="text-red-500 text-xs mt-1 flex items-center gap-1"
+              >
                 <span class="material-icons text-xs">error</span>
                 {{ formErrors.description }}
               </p>
@@ -809,14 +914,19 @@ watch(() => partnerStore.selectedPartner, () => {
                     step="0.01"
                     min="0.01"
                     class="form-input w-full pr-12 text-lg font-semibold"
-                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': formErrors.amount }"
+                    :class="{
+                      'border-red-500 focus:border-red-500 focus:ring-red-500': formErrors.amount
+                    }"
                     placeholder="0.00"
                   />
                   <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
                     {{ currencySymbols[formData.currency] }}
                   </span>
                 </div>
-                <p v-if="formErrors.amount" class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <p
+                  v-if="formErrors.amount"
+                  class="text-red-500 text-xs mt-1 flex items-center gap-1"
+                >
                   <span class="material-icons text-xs">error</span>
                   {{ formErrors.amount }}
                 </p>
@@ -831,9 +941,11 @@ watch(() => partnerStore.selectedPartner, () => {
                     :key="opt.value"
                     type="button"
                     class="py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all"
-                    :class="formData.currency === opt.value
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-primary-300'"
+                    :class="
+                      formData.currency === opt.value
+                        ? 'bg-primary-500 text-white border-primary-500'
+                        : 'bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-primary-300'
+                    "
                     @click="formData.currency = opt.value"
                   >
                     {{ opt.label }}
@@ -854,15 +966,22 @@ watch(() => partnerStore.selectedPartner, () => {
         </div>
 
         <!-- Installment Section (only for TRY) -->
-        <div v-if="formData.currency === 'TRY'" class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
+        <div
+          v-if="formData.currency === 'TRY'"
+          class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <span class="material-icons text-primary-500">credit_score</span>
-              <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('paymentLink.installmentSettings') }}</h4>
+              <h4 class="font-semibold text-gray-900 dark:text-white">
+                {{ $t('paymentLink.installmentSettings') }}
+              </h4>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input v-model="formData.installment.enabled" type="checkbox" class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary-500"></div>
+              <div
+                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary-500"
+              ></div>
             </label>
           </div>
 
@@ -879,9 +998,11 @@ watch(() => partnerStore.selectedPartner, () => {
                     :key="n"
                     type="button"
                     class="relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                    :class="formData.installment.maxCount === n
-                      ? 'bg-primary-600 text-white shadow-md shadow-primary-200 dark:shadow-primary-900/30 ring-2 ring-primary-600 ring-offset-2 dark:ring-offset-slate-800'
-                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600'"
+                    :class="
+                      formData.installment.maxCount === n
+                        ? 'bg-primary-600 text-white shadow-md shadow-primary-200 dark:shadow-primary-900/30 ring-2 ring-primary-600 ring-offset-2 dark:ring-offset-slate-800'
+                        : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600'
+                    "
                     @click="formData.installment.maxCount = n"
                   >
                     {{ n }} Taksit
@@ -915,7 +1036,10 @@ watch(() => partnerStore.selectedPartner, () => {
                 </div>
 
                 <!-- Warning if rates modified -->
-                <div v-if="ratesModified" class="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div
+                  v-if="ratesModified"
+                  class="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+                >
                   <p class="text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
                     <span class="material-icons text-sm">warning</span>
                     {{ $t('paymentLink.ratesModifiedWarning') }}
@@ -929,8 +1053,14 @@ watch(() => partnerStore.selectedPartner, () => {
                     class="bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 p-3"
                   >
                     <div class="flex items-center justify-between mb-1">
-                      <span class="text-sm font-medium text-gray-700 dark:text-slate-300">{{ n }} {{ $t('paymentLink.installment') }}</span>
-                      <span v-if="defaultRatesBreakdown[n]" class="text-xs text-gray-400" :title="`Banka: %${defaultRatesBreakdown[n].bankRate}, Platform: %${defaultRatesBreakdown[n].platformMargin}`">
+                      <span class="text-sm font-medium text-gray-700 dark:text-slate-300"
+                        >{{ n }} {{ $t('paymentLink.installment') }}</span
+                      >
+                      <span
+                        v-if="defaultRatesBreakdown[n]"
+                        class="text-xs text-gray-400"
+                        :title="`Banka: %${defaultRatesBreakdown[n].bankRate}, Platform: %${defaultRatesBreakdown[n].platformMargin}`"
+                      >
                         <span class="material-icons text-xs">info</span>
                       </span>
                     </div>
@@ -954,8 +1084,13 @@ watch(() => partnerStore.selectedPartner, () => {
                 </p>
 
                 <!-- Estimated Commission Display -->
-                <div v-if="formData.amount > 0 && formData.installment.maxCount > 1" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-1">
+                <div
+                  v-if="formData.amount > 0 && formData.installment.maxCount > 1"
+                  class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+                >
+                  <h5
+                    class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-1"
+                  >
                     <span class="material-icons text-sm">calculate</span>
                     {{ $t('paymentLink.estimatedCommission') }}
                   </h5>
@@ -963,11 +1098,28 @@ watch(() => partnerStore.selectedPartner, () => {
                     <template v-if="getEstimatedCommission(formData.installment.maxCount)">
                       <p>
                         {{ formData.installment.maxCount }} {{ $t('paymentLink.installment') }}:
-                        <span class="font-semibold">{{ formatAmount(getEstimatedCommission(formData.installment.maxCount).totalAmount, formData.currency) }}</span>
-                        <span class="text-gray-500">(%{{ getEstimatedCommission(formData.installment.maxCount).totalRate.toFixed(2) }})</span>
+                        <span class="font-semibold">{{
+                          formatAmount(
+                            getEstimatedCommission(formData.installment.maxCount).totalAmount,
+                            formData.currency
+                          )
+                        }}</span>
+                        <span class="text-gray-500"
+                          >(%{{
+                            getEstimatedCommission(formData.installment.maxCount).totalRate.toFixed(
+                              2
+                            )
+                          }})</span
+                        >
                       </p>
                       <p class="mt-1 text-gray-500 dark:text-slate-500">
-                        {{ $t('paymentLink.netAmount') }}: {{ formatAmount(getEstimatedCommission(formData.installment.maxCount).netAmount, formData.currency) }}
+                        {{ $t('paymentLink.netAmount') }}:
+                        {{
+                          formatAmount(
+                            getEstimatedCommission(formData.installment.maxCount).netAmount,
+                            formData.currency
+                          )
+                        }}
                       </p>
                     </template>
                     <p v-else class="text-gray-500 dark:text-slate-500">
@@ -988,45 +1140,83 @@ watch(() => partnerStore.selectedPartner, () => {
         <div v-if="!selectedItem" class="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4">
           <div class="flex items-center gap-2 mb-3">
             <span class="material-icons text-primary-500">notifications</span>
-            <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('paymentLink.notification') }}</h4>
+            <h4 class="font-semibold text-gray-900 dark:text-white">
+              {{ $t('paymentLink.notification') }}
+            </h4>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Email Option -->
             <label
-              class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="formData.sendEmail
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+              class="relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
+              :class="
+                formData.sendEmail
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
+              "
             >
-              <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" :class="formData.sendEmail ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-400'">
+              <div
+                class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                :class="
+                  formData.sendEmail
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-400'
+                "
+              >
                 <span class="material-icons">email</span>
               </div>
               <div class="flex-1">
-                <p class="font-medium text-gray-900 dark:text-white">{{ $t('paymentLink.sendEmail') }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ formData.customer.email || $t('paymentLink.noEmailEntered') }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">
+                  {{ $t('paymentLink.sendEmail') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ formData.customer.email || $t('paymentLink.noEmailEntered') }}
+                </p>
               </div>
               <input v-model="formData.sendEmail" type="checkbox" class="sr-only" />
-              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center" :class="formData.sendEmail ? 'border-primary-500 bg-primary-500' : 'border-gray-300'">
-                <span v-if="formData.sendEmail" class="material-icons text-white text-sm">check</span>
+              <div
+                class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                :class="
+                  formData.sendEmail ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
+                "
+              >
+                <span v-if="formData.sendEmail" class="material-icons text-white text-sm"
+                  >check</span
+                >
               </div>
             </label>
 
             <!-- SMS Option -->
             <label
-              class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="formData.sendSms
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'"
+              class="relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
+              :class="
+                formData.sendSms
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:border-gray-300'
+              "
             >
-              <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" :class="formData.sendSms ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-400'">
+              <div
+                class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                :class="
+                  formData.sendSms
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-100 dark:bg-slate-700 text-gray-400'
+                "
+              >
                 <span class="material-icons">sms</span>
               </div>
               <div class="flex-1">
-                <p class="font-medium text-gray-900 dark:text-white">{{ $t('paymentLink.sendSms') }}</p>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ formData.customer.phone || $t('paymentLink.noPhoneEntered') }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">
+                  {{ $t('paymentLink.sendSms') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ formData.customer.phone || $t('paymentLink.noPhoneEntered') }}
+                </p>
               </div>
               <input v-model="formData.sendSms" type="checkbox" class="sr-only" />
-              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center" :class="formData.sendSms ? 'border-primary-500 bg-primary-500' : 'border-gray-300'">
+              <div
+                class="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                :class="formData.sendSms ? 'border-primary-500 bg-primary-500' : 'border-gray-300'"
+              >
                 <span v-if="formData.sendSms" class="material-icons text-white text-sm">check</span>
               </div>
             </label>
@@ -1053,18 +1243,37 @@ watch(() => partnerStore.selectedPartner, () => {
     </Modal>
 
     <!-- Detail Modal -->
-    <Modal v-model="showDetailModal" :title="$t('paymentLink.detail')" size="lg" @close="showDetailModal = false">
+    <Modal
+      v-model="showDetailModal"
+      :title="$t('paymentLink.detail')"
+      size="lg"
+      @close="showDetailModal = false"
+    >
       <div v-if="selectedItem">
         <!-- Status Banner -->
-        <div class="mb-6 p-4 rounded-lg" :class="{
-          'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800': selectedItem.status === 'pending',
-          'bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800': selectedItem.status === 'viewed',
-          'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800': selectedItem.status === 'processing',
-          'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800': selectedItem.status === 'paid',
-          'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800': ['expired', 'cancelled'].includes(selectedItem.status)
-        }">
+        <div
+          class="mb-6 p-4 rounded-lg"
+          :class="{
+            'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800':
+              selectedItem.status === 'pending',
+            'bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800':
+              selectedItem.status === 'viewed',
+            'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800':
+              selectedItem.status === 'processing',
+            'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800':
+              selectedItem.status === 'paid',
+            'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800': [
+              'expired',
+              'cancelled'
+            ].includes(selectedItem.status)
+          }"
+        >
           <div class="flex items-center gap-3">
-            <StatusBadge :status="selectedItem.status" :variant="getStatusVariant(selectedItem.status)" size="lg">
+            <StatusBadge
+              :status="selectedItem.status"
+              :variant="getStatusVariant(selectedItem.status)"
+              size="lg"
+            >
               {{ $t(`paymentLink.status.${selectedItem.status}`) }}
             </StatusBadge>
             <span v-if="selectedItem.paidAt" class="text-sm text-gray-600 dark:text-slate-400">
@@ -1076,27 +1285,41 @@ watch(() => partnerStore.selectedPartner, () => {
         <!-- Info Grid -->
         <div class="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.fields.linkNumber') }}</label>
+            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+              $t('paymentLink.fields.linkNumber')
+            }}</label>
             <div class="font-mono text-sm mt-1">{{ selectedItem.linkNumber }}</div>
           </div>
           <div>
-            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.fields.amount') }}</label>
-            <div class="text-xl font-bold mt-1">{{ formatAmount(selectedItem.amount, selectedItem.currency) }}</div>
-          </div>
-          <div>
-            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.fields.customer') }}</label>
-            <div class="mt-1">
-              <div class="font-medium">{{ selectedItem.customer?.name }}</div>
-              <div class="text-sm text-gray-500">{{ selectedItem.customer?.email }}</div>
-              <div v-if="selectedItem.customer?.phone" class="text-sm text-gray-500">{{ selectedItem.customer?.phone }}</div>
+            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+              $t('paymentLink.fields.amount')
+            }}</label>
+            <div class="text-xl font-bold mt-1">
+              {{ formatAmount(selectedItem.amount, selectedItem.currency) }}
             </div>
           </div>
           <div>
-            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.fields.expiresAt') }}</label>
+            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+              $t('paymentLink.fields.customer')
+            }}</label>
+            <div class="mt-1">
+              <div class="font-medium">{{ selectedItem.customer?.name }}</div>
+              <div class="text-sm text-gray-500">{{ selectedItem.customer?.email }}</div>
+              <div v-if="selectedItem.customer?.phone" class="text-sm text-gray-500">
+                {{ selectedItem.customer?.phone }}
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+              $t('paymentLink.fields.expiresAt')
+            }}</label>
             <div class="mt-1">{{ formatDate(selectedItem.expiresAt) }}</div>
           </div>
           <div class="col-span-2">
-            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.fields.description') }}</label>
+            <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+              $t('paymentLink.fields.description')
+            }}</label>
             <div class="mt-1">{{ selectedItem.description }}</div>
           </div>
         </div>
@@ -1104,69 +1327,109 @@ watch(() => partnerStore.selectedPartner, () => {
         <!-- Transaction Info (if paid) -->
         <div v-if="selectedItem.transaction?.gatewayTransactionId" class="mb-6 space-y-4">
           <!-- İşlem Bilgileri -->
-          <div class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div
+            class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+          >
             <h4 class="font-medium text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
               <span class="material-icons text-lg">check_circle</span>
               {{ $t('paymentLink.transactionInfo') }}
             </h4>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Transaction ID</label>
-                <div class="font-mono text-xs mt-1">{{ selectedItem.transaction.gatewayTransactionId }}</div>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Transaction ID</label
+                >
+                <div class="font-mono text-xs mt-1">
+                  {{ selectedItem.transaction.gatewayTransactionId }}
+                </div>
               </div>
               <div>
                 <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Onay Kodu</label>
                 <div class="font-mono mt-1">{{ selectedItem.transaction.authCode || '-' }}</div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Referans No</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Referans No</label
+                >
                 <div class="font-mono mt-1">{{ selectedItem.transaction.refNumber || '-' }}</div>
               </div>
             </div>
           </div>
 
           <!-- Kart Bilgileri -->
-          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div
+            class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+          >
             <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
               <span class="material-icons text-lg">credit_card</span>
               {{ $t('paymentLink.cardInfo') }}
             </h4>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Kart Numarası</label>
-                <div class="font-mono mt-1">{{ selectedItem.transaction.maskedCard || `**** **** **** ${selectedItem.transaction.lastFour}` }}</div>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Kart Numarası</label
+                >
+                <div class="font-mono mt-1">
+                  {{
+                    selectedItem.transaction.maskedCard ||
+                    `**** **** **** ${selectedItem.transaction.lastFour}`
+                  }}
+                </div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Kart Markası</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Kart Markası</label
+                >
                 <div class="mt-1 flex items-center gap-2">
                   <span class="font-medium">{{ selectedItem.transaction.brand || '-' }}</span>
-                  <span v-if="selectedItem.transaction.cardFamily" class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">
+                  <span
+                    v-if="selectedItem.transaction.cardFamily"
+                    class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full"
+                  >
                     {{ selectedItem.transaction.cardFamily }}
                   </span>
                 </div>
               </div>
               <div>
                 <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Kart Tipi</label>
-                <div class="mt-1">{{ selectedItem.transaction.cardType === 'credit' ? 'Kredi Kartı' : selectedItem.transaction.cardType === 'debit' ? 'Banka Kartı' : '-' }}</div>
+                <div class="mt-1">
+                  {{
+                    selectedItem.transaction.cardType === 'credit'
+                      ? 'Kredi Kartı'
+                      : selectedItem.transaction.cardType === 'debit'
+                        ? 'Banka Kartı'
+                        : '-'
+                  }}
+                </div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Kart Bankası</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Kart Bankası</label
+                >
                 <div class="mt-1">{{ selectedItem.transaction.cardBank || '-' }}</div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Kart Ülkesi</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >Kart Ülkesi</label
+                >
                 <div class="mt-1">{{ getCountryName(selectedItem.transaction.cardCountry) }}</div>
               </div>
               <div v-if="selectedItem.transaction.installmentCount > 1">
                 <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Taksit</label>
-                <div class="mt-1 font-medium">{{ selectedItem.transaction.installmentCount }} Taksit</div>
+                <div class="mt-1 font-medium">
+                  {{ selectedItem.transaction.installmentCount }} Taksit
+                </div>
               </div>
             </div>
           </div>
 
           <!-- POS Bilgileri -->
-          <div class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-            <h4 class="font-medium text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+          <div
+            class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
+          >
+            <h4
+              class="font-medium text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2"
+            >
               <span class="material-icons text-lg">point_of_sale</span>
               POS Bilgileri
             </h4>
@@ -1176,39 +1439,72 @@ watch(() => partnerStore.selectedPartner, () => {
                 <div class="mt-1">{{ selectedItem.transaction.posName || '-' }}</div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">POS Bankası</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase"
+                  >POS Bankası</label
+                >
                 <div class="mt-1">{{ selectedItem.transaction.posBank || '-' }}</div>
               </div>
             </div>
           </div>
 
           <!-- Komisyon Bilgileri -->
-          <div v-if="selectedItem.transaction.commission" class="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <h4 class="font-medium text-orange-800 dark:text-orange-300 mb-3 flex items-center gap-2">
+          <div
+            v-if="selectedItem.transaction.commission"
+            class="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
+          >
+            <h4
+              class="font-medium text-orange-800 dark:text-orange-300 mb-3 flex items-center gap-2"
+            >
               <span class="material-icons text-lg">account_balance</span>
               {{ $t('paymentLink.commissionDetails') }}
             </h4>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.commissionLabel') }}</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+                  $t('paymentLink.commissionLabel')
+                }}</label>
                 <div class="mt-1">
-                  <span class="font-medium">{{ formatAmount(selectedItem.transaction.commission.totalAmount || 0, selectedItem.currency) }}</span>
-                  <span class="text-xs text-gray-500 ml-1">(%{{ selectedItem.transaction.commission.totalRate || 0 }})</span>
+                  <span class="font-medium">{{
+                    formatAmount(
+                      selectedItem.transaction.commission.totalAmount || 0,
+                      selectedItem.currency
+                    )
+                  }}</span>
+                  <span class="text-xs text-gray-500 ml-1"
+                    >(%{{ selectedItem.transaction.commission.totalRate || 0 }})</span
+                  >
                 </div>
-                <div v-if="selectedItem.transaction.commission.platformAmount > 0" class="text-xs text-gray-400 mt-0.5">
-                  Banka: %{{ selectedItem.transaction.commission.bankRate }} + Markup: %{{ selectedItem.transaction.commission.platformRate }}
+                <div
+                  v-if="selectedItem.transaction.commission.platformAmount > 0"
+                  class="text-xs text-gray-400 mt-0.5"
+                >
+                  Banka: %{{ selectedItem.transaction.commission.bankRate }} + Markup: %{{
+                    selectedItem.transaction.commission.platformRate
+                  }}
                 </div>
               </div>
               <div>
-                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.totalDeduction') }}</label>
+                <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+                  $t('paymentLink.totalDeduction')
+                }}</label>
                 <div class="mt-1 font-medium text-orange-600 dark:text-orange-400">
-                  {{ formatAmount(selectedItem.transaction.commission.totalAmount || 0, selectedItem.currency) }}
+                  {{
+                    formatAmount(
+                      selectedItem.transaction.commission.totalAmount || 0,
+                      selectedItem.currency
+                    )
+                  }}
                 </div>
               </div>
               <div>
                 <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">Net Tutar</label>
                 <div class="mt-1 font-bold text-green-600 dark:text-green-400">
-                  {{ formatAmount(selectedItem.transaction.commission.netAmount || selectedItem.amount, selectedItem.currency) }}
+                  {{
+                    formatAmount(
+                      selectedItem.transaction.commission.netAmount || selectedItem.amount,
+                      selectedItem.currency
+                    )
+                  }}
                 </div>
               </div>
             </div>
@@ -1217,9 +1513,15 @@ watch(() => partnerStore.selectedPartner, () => {
 
         <!-- Payment URL -->
         <div v-if="['pending', 'viewed'].includes(selectedItem.status)" class="mb-6">
-          <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{ $t('paymentLink.paymentUrl') }}</label>
+          <label class="text-xs text-gray-500 dark:text-slate-400 uppercase">{{
+            $t('paymentLink.paymentUrl')
+          }}</label>
           <div class="flex items-center gap-2 mt-1">
-            <input :value="selectedItem.paymentUrl" readonly class="form-input flex-1 text-sm font-mono" />
+            <input
+              :value="selectedItem.paymentUrl"
+              readonly
+              class="form-input flex-1 text-sm font-mono"
+            />
             <button class="btn-secondary" @click="copyLink(selectedItem)">
               <span class="material-icons text-sm">content_copy</span>
             </button>
@@ -1228,7 +1530,9 @@ watch(() => partnerStore.selectedPartner, () => {
 
         <!-- Resend Notification -->
         <div v-if="['pending', 'viewed'].includes(selectedItem.status)" class="mb-6">
-          <label class="text-xs text-gray-500 dark:text-slate-400 uppercase mb-2 block">{{ $t('paymentLink.resendNotification') }}</label>
+          <label class="text-xs text-gray-500 dark:text-slate-400 uppercase mb-2 block">{{
+            $t('paymentLink.resendNotification')
+          }}</label>
           <div class="flex flex-wrap gap-2">
             <button
               v-if="selectedItem.customer?.email"
@@ -1248,7 +1552,10 @@ watch(() => partnerStore.selectedPartner, () => {
               {{ $t('paymentLink.resendSms') }}
               <span class="text-xs text-gray-400">({{ selectedItem.customer.phone }})</span>
             </button>
-            <span v-if="!selectedItem.customer?.email && !selectedItem.customer?.phone" class="text-sm text-gray-400 italic">
+            <span
+              v-if="!selectedItem.customer?.email && !selectedItem.customer?.phone"
+              class="text-sm text-gray-400 italic"
+            >
               {{ $t('paymentLink.noContactInfo') }}
             </span>
           </div>
@@ -1259,7 +1566,14 @@ watch(() => partnerStore.selectedPartner, () => {
           <button type="button" class="btn-secondary" @click="showDetailModal = false">
             {{ $t('misc.close') }}
           </button>
-          <button v-if="['pending', 'viewed'].includes(selectedItem.status)" class="btn-primary" @click="showDetailModal = false; openEditModal(selectedItem)">
+          <button
+            v-if="['pending', 'viewed'].includes(selectedItem.status)"
+            class="btn-primary"
+            @click="
+              showDetailModal = false
+              openEditModal(selectedItem)
+            "
+          >
             <span class="material-icons text-sm mr-1">edit</span>
             {{ $t('misc.edit') }}
           </button>

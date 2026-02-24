@@ -645,7 +645,7 @@
           <label class="form-label">{{ $t('website.themeEditor.listType') }}</label>
           <div class="flex gap-4">
             <label
-              class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all"
+              class="relative flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all"
               :class="
                 localContent.listType === 'carousel'
                   ? 'border-purple-500 bg-purple-50'
@@ -662,7 +662,7 @@
               <span class="text-sm">{{ $t('website.themeEditor.carousel') }}</span>
             </label>
             <label
-              class="flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all"
+              class="relative flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all"
               :class="
                 localContent.listType === 'grid'
                   ? 'border-purple-500 bg-purple-50'

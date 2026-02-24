@@ -63,7 +63,7 @@
         <label
           v-for="option in searchOptionsList"
           :key="option.id"
-          class="flex items-center px-3 py-2 rounded-lg cursor-pointer border transition-all"
+          class="relative flex items-center px-3 py-2 rounded-lg cursor-pointer border transition-all"
           :class="
             isSearchOptionActive(option.id)
               ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'

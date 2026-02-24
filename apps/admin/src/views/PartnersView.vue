@@ -370,7 +370,7 @@
                   <label
                     v-for="statusOption in statusOptions"
                     :key="statusOption.value"
-                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all"
+                    class="relative flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all"
                     :class="
                       form.status === statusOption.value
                         ? `border-${statusOption.color}-500 bg-${statusOption.color}-50 dark:bg-${statusOption.color}-900/20`

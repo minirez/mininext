@@ -1,6 +1,6 @@
 <template>
   <label
-    class="ui-toggle inline-flex items-center gap-3"
+    class="ui-toggle relative inline-flex items-center gap-3"
     :class="{ 'cursor-not-allowed opacity-50': disabled, 'cursor-pointer': !disabled }"
   >
     <!-- Hidden input for form compatibility -->
