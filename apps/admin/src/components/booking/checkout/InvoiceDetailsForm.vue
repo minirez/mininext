@@ -15,7 +15,7 @@
       </label>
       <div class="flex gap-4">
         <label
-          class="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+          class="relative flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
           :class="[
             invoiceDetails.type === 'individual'
               ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
@@ -50,7 +50,7 @@
         </label>
 
         <label
-          class="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+          class="relative flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
           :class="[
             invoiceDetails.type === 'corporate'
               ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
