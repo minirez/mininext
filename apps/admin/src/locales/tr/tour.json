@@ -162,6 +162,8 @@
       "departures": "hareket",
       "noSelectedDates": "Hareket tarihlerini seçmek için takvime tıklayın",
       "selectOnetimeDate": "Hareket tarihinizi seçmek için bir tarihe tıklayın",
+      "selectStartDate": "Kalkış tarihini ayarlamak için bir tarihe tıklayın",
+      "selectEndDate": "Şimdi dönüş tarihini ayarlamak için başka bir tarihe tıklayın veya aşağıdaki süreyi ayarlayın",
       "clickToSelectRange": "Her tık tam tarih aralığını seçer",
       "multiDayHint": "Bu {days} günlük bir tur. Tam hareket aralığını seçmek için bir tarihe tıklayın.",
       "onetimeMultiDayHint": "Bu {days} günlük bir tur. Hareket tarihinizi seçin.",

@@ -162,6 +162,8 @@
       "departures": "departures",
       "noSelectedDates": "Click on calendar dates to select departure dates",
       "selectOnetimeDate": "Click on a date to select your departure",
+      "selectStartDate": "Click a date to set the departure date",
+      "selectEndDate": "Now click another date to set the return date, or adjust duration below",
       "clickToSelectRange": "Each click selects a full date range",
       "multiDayHint": "This is a {days}-day tour. Click a date to select the full departure range.",
       "onetimeMultiDayHint": "This is a {days}-day tour. Select your departure date.",

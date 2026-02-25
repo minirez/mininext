@@ -105,7 +105,10 @@
                     @click="form.status = status"
                   >
                     <span class="flex items-center gap-1.5">
-                      <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(status)"></span>
+                      <span
+                        class="w-1.5 h-1.5 rounded-full"
+                        :class="getStatusDotClass(status)"
+                      ></span>
                       {{ $t(`tour.statuses.${status}`) }}
                     </span>
                   </button>
@@ -301,7 +304,9 @@
                   />
                 </div>
                 <div>
-                  <label class="form-label text-xs">{{ $t('tour.basePricing.childWithBed') }}</label>
+                  <label class="form-label text-xs">{{
+                    $t('tour.basePricing.childWithBed')
+                  }}</label>
                   <input
                     v-model.number="form.basePricing.accommodationPricing.childWithBed"
                     type="number"
@@ -394,8 +399,10 @@
             <TourScheduleBuilder
               ref="scheduleBuilderRef"
               :tour-id="isNew ? '' : String(route.params.id)"
+              :initial-schedule-preset="form.schedulePreset"
               @created="onDeparturesCreated"
               @schedule-changed="onScheduleChanged"
+              @preset-changed="onPresetChanged"
             />
           </div>
         </div>
@@ -633,7 +640,8 @@ function getEmptyForm() {
       excluded: []
     },
     routePlan: { mode: 'sequence', stops: [] },
-    gallery: []
+    gallery: [],
+    schedulePreset: { timezone: 'Europe/Istanbul', scheduleType: 'recurring' }
   }
 }
 
@@ -768,7 +776,7 @@ async function saveTour() {
     const payload = sanitizePayload(form.value)
     if (isNew.value) {
       const created = await tourStore.createTour(payload)
-      
+
       // Auto-create departures in background if schedule was defined
       if (pendingDepartures.value.length > 0) {
         try {
@@ -779,15 +787,17 @@ async function saveTour() {
           // Don't block tour creation if departures fail
         }
       }
-      
+
       router.replace(`/tours/${created._id}`)
     } else {
       await tourStore.updateTour(route.params.id, payload)
-      
+
       // Auto-create departures for existing tours if any were scheduled
       if (pendingDepartures.value.length > 0) {
         try {
-          await tourStore.bulkCreateDepartures(route.params.id, { departures: pendingDepartures.value })
+          await tourStore.bulkCreateDepartures(route.params.id, {
+            departures: pendingDepartures.value
+          })
           pendingDepartures.value = []
           // Refresh the schedule builder to show new departures
           if (scheduleBuilderRef.value?.loadExisting) {
@@ -826,6 +836,13 @@ function onDeparturesCreated() {
 
 function onScheduleChanged(departures) {
   pendingDepartures.value = departures || []
+}
+
+function onPresetChanged(preset) {
+  if (!form.value.schedulePreset) {
+    form.value.schedulePreset = {}
+  }
+  Object.assign(form.value.schedulePreset, preset)
 }
 
 async function loadTour() {
@@ -873,7 +890,7 @@ watch(
 )
 
 // Apply pending AI schedule when schedule tab becomes active
-watch(activeTab, (newTab) => {
+watch(activeTab, newTab => {
   if (newTab === 'schedule' && pendingAISchedule.value) {
     // Small delay to ensure component is fully mounted
     setTimeout(() => applyAISchedule(), 100)
@@ -999,7 +1016,7 @@ function applyAIData(aiData) {
       durationDays,
       pricing: aiData.basePricing
     }
-    
+
     // Try to apply immediately if ref is available
     applyAISchedule()
   }
@@ -1007,7 +1024,7 @@ function applyAIData(aiData) {
 
 function applyAISchedule() {
   if (!pendingAISchedule.value) return
-  
+
   if (scheduleBuilderRef.value?.setFromAI) {
     const { schedule, durationDays, pricing } = pendingAISchedule.value
     scheduleBuilderRef.value.setFromAI(schedule, durationDays, pricing)

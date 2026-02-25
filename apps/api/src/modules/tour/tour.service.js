@@ -38,6 +38,7 @@ export {
   getTourDepartures,
   createTourDeparture,
   bulkCreateDepartures,
+  bulkDeleteDepartures,
   searchDepartures,
   getUpcomingDepartures,
   getDeparture,
@@ -48,13 +49,7 @@ export {
 } from './tourDeparture.service.js'
 
 // ==================== EXTRAS ====================
-export {
-  getExtras,
-  getExtra,
-  createExtra,
-  updateExtra,
-  deleteExtra
-} from './tourExtras.service.js'
+export { getExtras, getExtra, createExtra, updateExtra, deleteExtra } from './tourExtras.service.js'
 
 // ==================== BOOKINGS ====================
 export {
@@ -72,6 +67,4 @@ export {
 } from './tourBooking.service.js'
 
 // ==================== AI EXTRACTION ====================
-export {
-  aiExtractTourData
-} from './tourAI.service.js'
+export { aiExtractTourData } from './tourAI.service.js'

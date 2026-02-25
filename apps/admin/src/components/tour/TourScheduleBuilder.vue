@@ -845,9 +845,10 @@ const { t, locale } = useI18n()
 const toast = useToast()
 
 const props = defineProps({
-  tourId: { type: String, default: '' }
+  tourId: { type: String, default: '' },
+  initialSchedulePreset: { type: Object, default: () => ({}) }
 })
-const emit = defineEmits(['created', 'schedule-changed'])
+const emit = defineEmits(['created', 'schedule-changed', 'preset-changed'])
 
 const saving = ref(false)
 const loadingExisting = ref(false)
@@ -1590,23 +1591,17 @@ async function executeBulkDelete() {
   if (!props.tourId || existingDepartures.value.length === 0) return
   deletingDeparture.value = true
   try {
-    let deleted = 0
-    let failed = 0
-    for (const dep of existingDepartures.value) {
-      try {
-        await tourService.deleteDeparture(dep._id)
-        deleted++
-      } catch {
-        failed++
-      }
-    }
+    const resp = await tourService.bulkDeleteDepartures(props.tourId)
+    const { deleted, skipped } = resp.data || {}
     showBulkDeleteConfirm.value = false
-    if (failed > 0) {
-      toast.warning(`${deleted} deleted, ${failed} failed (may have bookings)`)
+    if (skipped > 0) {
+      toast.warning(`${deleted} deleted, ${skipped} skipped (have bookings)`)
     } else {
       toast.success(t('tour.schedule.allDeparturesDeleted') || `All ${deleted} departures deleted`)
     }
     await loadExisting()
+  } catch (err) {
+    toast.error(err.response?.data?.error || err.message || 'Failed to delete departures')
   } finally {
     deletingDeparture.value = false
   }
@@ -1772,8 +1767,33 @@ function setFromAI(aiSchedule, durationDays = 1, pricing = null) {
 
 defineExpose({ setFromAI, loadExisting })
 
+// Emit schedule preset whenever scheduleType changes
+watch(scheduleType, val => {
+  emit('preset-changed', { scheduleType: val })
+})
+
+// Restore from initialSchedulePreset if it arrives after mount (async tour load)
+watch(
+  () => props.initialSchedulePreset,
+  preset => {
+    if (preset?.scheduleType && preset.scheduleType !== scheduleType.value) {
+      suppressEmit.value = true
+      scheduleType.value = preset.scheduleType
+      nextTick(() => {
+        suppressEmit.value = false
+      })
+    }
+  },
+  { deep: true }
+)
+
 onMounted(() => {
   suppressEmit.value = true
+
+  // Restore schedule type from saved preset
+  if (props.initialSchedulePreset?.scheduleType) {
+    scheduleType.value = props.initialSchedulePreset.scheduleType
+  }
 
   const now = new Date()
   const to = addDays(now, 30)

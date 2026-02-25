@@ -160,6 +160,14 @@ export async function deleteDeparture(id) {
 }
 
 /**
+ * Bulk delete all departures for a tour (skips those with bookings)
+ */
+export async function bulkDeleteDepartures(tourId) {
+  const { data } = await api.delete(`${BASE_URL}/${tourId}/departures/bulk`)
+  return data
+}
+
+/**
  * Search departures across all tours
  */
 export async function searchDepartures(params = {}) {
@@ -480,6 +488,7 @@ export default {
   getDeparture,
   updateDeparture,
   deleteDeparture,
+  bulkDeleteDepartures,
   searchDepartures,
   checkAvailability,
   getUpcomingDepartures,

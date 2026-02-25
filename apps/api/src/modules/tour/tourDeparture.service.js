@@ -238,6 +238,39 @@ export const deleteDeparture = asyncHandler(async (req, res) => {
   res.json({ success: true })
 })
 
+export const bulkDeleteDepartures = asyncHandler(async (req, res) => {
+  const partnerId = requirePartnerId(req)
+  const { tourId } = req.params
+
+  const departures = await TourDeparture.find({ tour: tourId, partner: partnerId })
+  if (departures.length === 0) {
+    return res.json({ success: true, data: { deleted: 0, skipped: 0 } })
+  }
+
+  const departureIds = departures.map(d => d._id)
+  const bookingsMap = await TourBooking.aggregate([
+    {
+      $match: {
+        partner: partnerId,
+        departure: { $in: departureIds },
+        status: { $nin: ['cancelled'] }
+      }
+    },
+    { $group: { _id: '$departure', count: { $sum: 1 } } }
+  ])
+  const hasBookingsSet = new Set(bookingsMap.map(b => b._id.toString()))
+
+  const toDelete = departures.filter(d => !hasBookingsSet.has(d._id.toString()))
+  if (toDelete.length > 0) {
+    await TourDeparture.deleteMany({ _id: { $in: toDelete.map(d => d._id) } })
+  }
+
+  res.json({
+    success: true,
+    data: { deleted: toDelete.length, skipped: departures.length - toDelete.length }
+  })
+})
+
 export const getDepartureAvailability = asyncHandler(async (req, res) => {
   const partnerId = requirePartnerId(req)
   const dep = await TourDeparture.findOne({ _id: req.params.id, partner: partnerId }).lean()

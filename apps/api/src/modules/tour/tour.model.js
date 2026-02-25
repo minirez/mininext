@@ -245,6 +245,7 @@ const tourSchema = new Schema(
 
     schedulePreset: {
       timezone: { type: String, trim: true, default: 'Europe/Istanbul' },
+      scheduleType: { type: String, enum: ['recurring', 'onetime'], default: 'recurring' },
       pattern: { type: Schema.Types.Mixed }
     }
   },
