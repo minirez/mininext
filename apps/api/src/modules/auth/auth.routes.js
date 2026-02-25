@@ -86,7 +86,14 @@ router.post(
  *               taxNumber:
  *                 type: string
  *               address:
- *                 type: string
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   country:
+ *                     type: string
  *               partnerType:
  *                 type: string
  *                 enum: [hotel, agency, web]
@@ -109,7 +116,7 @@ router.post(
     tradeName: { type: 'string', maxLength: 200 },
     taxOffice: { type: 'string', maxLength: 100 },
     taxNumber: { type: 'string', maxLength: 50 },
-    address: { type: 'string', maxLength: 500 },
+    address: { type: 'object' },
     partnerType: { type: 'string' }
   }),
   authService.register

@@ -327,7 +327,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import apiClient from '@/services/api'
 import { useI18n } from 'vue-i18n'
@@ -340,6 +340,19 @@ import { useDomainBranding } from '@/composables/useDomainBranding'
 const { t } = useI18n()
 const uiStore = useUIStore()
 const branding = useDomainBranding()
+
+onMounted(() => {
+  document.documentElement.style.overflow = 'auto'
+  document.documentElement.style.height = 'auto'
+  document.body.style.overflow = 'auto'
+  document.body.style.height = 'auto'
+})
+onUnmounted(() => {
+  document.documentElement.style.overflow = ''
+  document.documentElement.style.height = ''
+  document.body.style.overflow = ''
+  document.body.style.height = ''
+})
 
 const isDark = computed(() => uiStore.darkMode)
 const toggleTheme = () => uiStore.toggleDarkMode()
