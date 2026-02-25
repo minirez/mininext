@@ -64,7 +64,7 @@ router.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [companyName, name, email, phone, password]
+ *             required: [companyName, name, email, phone]
  *             properties:
  *               companyName:
  *                 type: string
@@ -79,10 +79,17 @@ router.post(
  *               phone:
  *                 type: string
  *                 example: "+905551234567"
- *               password:
+ *               tradeName:
  *                 type: string
- *                 format: password
- *                 minLength: 8
+ *               taxOffice:
+ *                 type: string
+ *               taxNumber:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               partnerType:
+ *                 type: string
+ *                 enum: [hotel, agency, web]
  *     responses:
  *       201:
  *         description: Registration successful (pending approval)
@@ -99,7 +106,11 @@ router.post(
     name: { type: 'string', required: true, minLength: 2, maxLength: 100 },
     email: { type: 'email', required: true },
     phone: { type: 'string', required: true },
-    password: { type: 'string', required: true, minLength: 8, maxLength: 128 }
+    tradeName: { type: 'string', maxLength: 200 },
+    taxOffice: { type: 'string', maxLength: 100 },
+    taxNumber: { type: 'string', maxLength: 50 },
+    address: { type: 'string', maxLength: 500 },
+    partnerType: { type: 'string' }
   }),
   authService.register
 )
