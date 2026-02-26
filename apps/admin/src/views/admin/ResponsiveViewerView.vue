@@ -8,7 +8,7 @@
     >
       <!-- Row 1: Site + Devices + Export -->
       <div class="flex items-center justify-between gap-3 flex-wrap">
-        <!-- Left: URL selector -->
+        <!-- Left: URL selector + path input -->
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-xl p-1">
             <button
@@ -16,16 +16,34 @@
               :key="site.url"
               class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
               :class="
-                activeSite === site.url
-                  ? 'bg-white dark:bg-slate-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                activeSiteBase === site.url
+                  ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700'
               "
-              @click="activeSite = site.url"
+              @click="setActiveSiteBase(site.url)"
             >
               {{ site.label }}
             </button>
           </div>
-          <div class="text-xs text-gray-400 font-mono hidden lg:block">{{ activeSite }}</div>
+          <div
+            class="hidden lg:flex items-center gap-0.5 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 px-2 py-1"
+          >
+            <span class="text-xs text-gray-400 font-mono shrink-0">{{ activeSiteBase }}</span>
+            <input
+              v-model="activePath"
+              type="text"
+              class="text-xs text-gray-600 dark:text-slate-300 font-mono bg-transparent border-none outline-none w-40"
+              placeholder="/admin/dashboard"
+              @keydown.enter="refreshIframes"
+            />
+            <button
+              class="text-gray-400 hover:text-blue-500 shrink-0"
+              @click="refreshIframes"
+              title="Navigate to this path"
+            >
+              <span class="material-icons text-sm">arrow_forward</span>
+            </button>
+          </div>
         </div>
 
         <!-- Center: Device selector -->
@@ -36,7 +54,7 @@
             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
             :class="
               selectedDevices.includes(device.id)
-                ? 'bg-white dark:bg-slate-600 text-purple-600 dark:text-purple-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-gray-500 dark:text-slate-400 hover:text-gray-700'
             "
             @click="toggleDevice(device.id)"
@@ -47,132 +65,12 @@
           </button>
         </div>
 
-        <!-- Right: Controls row -->
+        <!-- Right: Export -->
         <div class="flex items-center gap-2">
-          <!-- Page zoom -->
-          <div class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1">
-            <span class="material-icons text-gray-400 text-sm">zoom_out</span>
-            <input
-              v-model.number="pageZoom"
-              type="range"
-              min="30"
-              max="200"
-              step="5"
-              class="w-24 h-1.5 accent-purple-600 cursor-pointer"
-            />
-            <span class="material-icons text-gray-400 text-sm">zoom_in</span>
-            <span class="text-xs text-gray-500 font-mono w-9 text-center">{{ pageZoom }}%</span>
-            <button
-              v-if="pageZoom !== 100"
-              class="text-gray-400 hover:text-purple-500"
-              @click="pageZoom = 100"
-              title="Reset zoom"
-            >
-              <span class="material-icons text-sm">restart_alt</span>
-            </button>
-          </div>
-
-          <!-- Iframe zoom -->
-          <div class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1">
-            <span class="material-icons text-gray-400 text-sm">web</span>
-            <input
-              v-model.number="iframeZoom"
-              type="range"
-              min="25"
-              max="200"
-              step="5"
-              class="w-20 h-1.5 accent-indigo-500 cursor-pointer"
-            />
-            <span class="text-xs text-gray-500 font-mono w-9 text-center">{{ iframeZoom }}%</span>
-            <button
-              v-if="iframeZoom !== 100"
-              class="text-gray-400 hover:text-indigo-500"
-              @click="iframeZoom = 100"
-              title="Reset content zoom"
-            >
-              <span class="material-icons text-sm">restart_alt</span>
-            </button>
-          </div>
-
-          <!-- Tilt -->
-          <div class="flex items-center gap-1">
-            <button
-              v-for="preset in tiltPresets"
-              :key="preset.name"
-              class="px-1.5 py-1 text-xs rounded-md transition-colors"
-              :class="
-                tiltX === preset.x && tiltY === preset.y
-                  ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              "
-              @click="applyTilt(preset)"
-              :title="preset.name"
-            >
-              {{ preset.label }}
-            </button>
-          </div>
-
-          <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-
-          <!-- Background -->
-          <div class="relative" ref="bgPickerRef">
-            <button
-              class="w-7 h-7 rounded-full border-2 transition-all duration-200 border-purple-400"
-              :style="{ background: activeBgPreview }"
-              @click="showBgPicker = !showBgPicker"
-              title="Background color"
-            />
-            <!-- Popover -->
-            <div
-              v-if="showBgPicker"
-              class="absolute right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-3 z-50 w-56"
-            >
-              <div class="text-xs font-medium text-gray-500 mb-2">Presets</div>
-              <div class="grid grid-cols-7 gap-1.5 mb-3">
-                <button
-                  v-for="bg in presetColors"
-                  :key="bg.value"
-                  class="w-6 h-6 rounded-full border-2 transition-all"
-                  :class="
-                    selectedBg === bg.value
-                      ? 'border-purple-500 scale-110'
-                      : 'border-gray-200 dark:border-slate-600 hover:border-gray-400'
-                  "
-                  :style="{ background: bg.preview }"
-                  @click="selectBg(bg.value)"
-                  :title="bg.name"
-                />
-              </div>
-              <div class="text-xs font-medium text-gray-500 mb-2">Custom</div>
-              <div class="flex items-center gap-2">
-                <input
-                  v-model="customColor"
-                  type="color"
-                  class="w-8 h-8 rounded cursor-pointer border-0 p-0"
-                />
-                <input
-                  v-model="customColor"
-                  type="text"
-                  class="flex-1 text-xs font-mono bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5"
-                  placeholder="#hex"
-                />
-                <button
-                  class="text-xs px-2 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                  @click="selectBg('custom')"
-                >
-                  Use
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
-
-          <!-- Export -->
           <button
             @click="exportAsPng"
             :disabled="exporting"
-            class="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            class="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <span v-if="exporting" class="material-icons text-sm animate-spin">refresh</span>
             <span v-else class="material-icons text-sm">image</span>
@@ -180,74 +78,321 @@
           </button>
         </div>
       </div>
+
+      <!-- Row 2: Controls -->
+      <div class="flex items-center gap-3 mt-2 flex-wrap">
+        <!-- Device Scale (slider 1) -->
+        <div
+          class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
+        >
+          <span class="material-icons text-gray-400 text-sm">zoom_out</span>
+          <input
+            v-model.number="pageZoom"
+            type="range"
+            min="30"
+            max="200"
+            step="5"
+            class="w-24 h-1.5 accent-blue-600 cursor-pointer"
+          />
+          <span class="material-icons text-gray-400 text-sm">zoom_in</span>
+          <span class="text-xs text-gray-500 font-mono w-10 text-center">{{ pageZoom }}%</span>
+          <button
+            v-if="pageZoom !== 100"
+            class="text-gray-400 hover:text-blue-500"
+            @click="pageZoom = 100"
+            title="Reset device scale"
+          >
+            <span class="material-icons text-sm">restart_alt</span>
+          </button>
+        </div>
+
+        <!-- Content Zoom (slider 2 - inner zoom like ctrl+/- ) -->
+        <div
+          class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
+        >
+          <span class="material-icons text-gray-400 text-sm">web</span>
+          <input
+            v-model.number="contentZoom"
+            type="range"
+            min="25"
+            max="200"
+            step="5"
+            class="w-20 h-1.5 accent-indigo-500 cursor-pointer"
+          />
+          <span class="text-xs text-gray-500 font-mono w-10 text-center">{{ contentZoom }}%</span>
+          <button
+            v-if="contentZoom !== 100"
+            class="text-gray-400 hover:text-indigo-500"
+            @click="contentZoom = 100"
+            title="Reset content zoom"
+          >
+            <span class="material-icons text-sm">restart_alt</span>
+          </button>
+        </div>
+
+        <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
+
+        <!-- Rotation -->
+        <div
+          class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
+        >
+          <span class="material-icons text-gray-400 text-sm">360</span>
+          <input
+            v-model.number="rotationY"
+            type="range"
+            min="-45"
+            max="45"
+            step="1"
+            class="w-16 h-1.5 accent-amber-500 cursor-pointer"
+          />
+          <span class="text-xs text-gray-500 font-mono w-8 text-center">{{ rotationY }}°</span>
+        </div>
+
+        <!-- Tilt -->
+        <div
+          class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
+        >
+          <span class="material-icons text-gray-400 text-sm">flip</span>
+          <input
+            v-model.number="tiltX"
+            type="range"
+            min="-30"
+            max="30"
+            step="1"
+            class="w-16 h-1.5 accent-emerald-500 cursor-pointer"
+          />
+          <span class="text-xs text-gray-500 font-mono w-8 text-center">{{ tiltX }}°</span>
+        </div>
+
+        <!-- Tilt presets -->
+        <div class="flex items-center gap-1">
+          <button
+            v-for="preset in tiltPresets"
+            :key="preset.name"
+            class="px-1.5 py-1 text-xs rounded-md transition-colors"
+            :class="
+              rotationY === preset.ry && tiltX === preset.tx
+                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+            "
+            @click="applyTiltPreset(preset)"
+            :title="preset.name"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
+
+        <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
+
+        <!-- Device Color -->
+        <div class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5">
+          <span class="text-xs text-gray-500 mr-1">Frame</span>
+          <button
+            class="w-5 h-5 rounded-full border-2 transition-all bg-[#1a1a1e]"
+            :class="deviceColor === 'black' ? 'border-blue-500 scale-110' : 'border-gray-300'"
+            @click="deviceColor = 'black'"
+            title="Black frame"
+          />
+          <button
+            class="w-5 h-5 rounded-full border-2 transition-all bg-white"
+            :class="deviceColor === 'white' ? 'border-blue-500 scale-110' : 'border-gray-300'"
+            @click="deviceColor = 'white'"
+            title="White frame"
+          />
+        </div>
+
+        <!-- Shadow -->
+        <div
+          class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
+        >
+          <span class="material-icons text-gray-400 text-sm">blur_on</span>
+          <input
+            v-model.number="shadowIntensity"
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            class="w-16 h-1.5 accent-gray-500 cursor-pointer"
+          />
+          <span class="text-xs text-gray-500 font-mono w-8 text-center"
+            >{{ shadowIntensity }}%</span
+          >
+        </div>
+
+        <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
+
+        <!-- Free Move -->
+        <button
+          class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all"
+          :class="
+            freeMode
+              ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 ring-1 ring-blue-300'
+              : 'bg-gray-100 dark:bg-slate-700 text-gray-500 hover:text-gray-700'
+          "
+          @click="freeMode = !freeMode"
+          title="Free position mode - drag devices to reposition"
+        >
+          <span class="material-icons text-sm">open_with</span>
+          <span class="text-xs">Free</span>
+        </button>
+
+        <button
+          v-if="freeMode"
+          class="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 hover:text-gray-700"
+          @click="resetFreePositions"
+          title="Reset all positions"
+        >
+          <span class="material-icons text-sm">restart_alt</span>
+        </button>
+
+        <div class="w-px h-6 bg-gray-200 dark:bg-slate-600"></div>
+
+        <!-- Background -->
+        <div class="relative" ref="bgPickerRef">
+          <button
+            class="w-7 h-7 rounded-full border-2 transition-all duration-200 border-blue-400"
+            :style="{ background: activeBgPreview }"
+            @click="showBgPicker = !showBgPicker"
+            title="Background color"
+          />
+          <div
+            v-if="showBgPicker"
+            class="absolute left-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-3 z-50 w-64"
+          >
+            <div class="text-xs font-medium text-gray-500 mb-2">Presets</div>
+            <div class="grid grid-cols-8 gap-1.5 mb-3">
+              <button
+                v-for="bg in presetColors"
+                :key="bg.value"
+                class="w-6 h-6 rounded-full border-2 transition-all"
+                :class="
+                  selectedBg === bg.value
+                    ? 'border-blue-500 scale-110'
+                    : 'border-gray-200 dark:border-slate-600 hover:border-gray-400'
+                "
+                :style="{ background: bg.preview }"
+                @click="selectBg(bg.value)"
+                :title="bg.name"
+              />
+            </div>
+            <div class="text-xs font-medium text-gray-500 mb-2">Custom</div>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <div
+                  class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer"
+                  :style="{ backgroundColor: customColor }"
+                  @click="$refs.hiddenColorInput.click()"
+                ></div>
+                <input ref="hiddenColorInput" v-model="customColor" type="color" class="sr-only" />
+              </div>
+              <input
+                v-model="customColor"
+                type="text"
+                class="flex-1 text-xs font-mono bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5"
+                placeholder="#hex"
+              />
+              <button
+                class="text-xs px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                @click="selectBg('custom')"
+              >
+                Use
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Device Canvas -->
     <div
-      class="overflow-auto min-h-[calc(100vh-64px)]"
+      ref="canvasContainer"
+      class="overflow-auto"
       :class="canvasBgClass"
-      :style="canvasBgStyle"
+      :style="canvasContainerStyle"
     >
       <div
         ref="captureArea"
-        class="device-canvas inline-flex items-end justify-center gap-8 mx-auto"
+        class="device-canvas"
+        :class="freeMode ? 'relative' : 'inline-flex items-end justify-center gap-8'"
         :style="captureAreaStyle"
       >
         <div
           v-for="device in activeDevices"
           :key="device.id"
           class="device-wrapper flex flex-col items-center shrink-0"
-          :style="deviceTiltStyle"
+          :class="{ 'absolute cursor-grab active:cursor-grabbing': freeMode }"
+          :style="getDeviceWrapperStyle(device)"
+          @mousedown="freeMode ? startDrag($event, device.id) : null"
         >
-          <div class="relative">
+          <div class="relative" :style="getDeviceShadowStyle()">
             <!-- Phone Frame -->
             <div v-if="device.type === 'phone'" class="device-phone">
-              <div class="phone-frame" :style="getPhoneFrameStyle(device)">
+              <div class="phone-frame" :class="frameColorClass" :style="getPhoneFrameStyle(device)">
                 <div class="phone-notch" :style="{ top: `${device.bezel}px` }"></div>
                 <div class="phone-screen" :style="{ borderRadius: `${device.screenRadius}px` }">
-                  <iframe
-                    :src="activeSite"
-                    :style="getIframeStyle(device)"
-                    class="device-iframe"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                    loading="lazy"
-                  />
+                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                    <iframe
+                      :key="device.id + '-' + iframeKey"
+                      :ref="el => setIframeRef(device.id, el)"
+                      :src="activeSite"
+                      :style="getIframeStyle(device)"
+                      class="device-iframe"
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-                <div class="phone-button-right"></div>
-                <div class="phone-button-left-top"></div>
-                <div class="phone-button-left-mid"></div>
-                <div class="phone-button-left-bot"></div>
+                <div class="phone-button-right" :class="buttonColorClass"></div>
+                <div class="phone-button-left-top" :class="buttonColorClass"></div>
+                <div class="phone-button-left-mid" :class="buttonColorClass"></div>
+                <div class="phone-button-left-bot" :class="buttonColorClass"></div>
               </div>
             </div>
 
             <!-- Tablet Frame -->
             <div v-if="device.type === 'tablet'" class="device-tablet">
-              <div class="tablet-frame" :style="getTabletFrameStyle(device)">
+              <div
+                class="tablet-frame"
+                :class="tabletFrameColorClass"
+                :style="getTabletFrameStyle(device)"
+              >
                 <div class="tablet-camera"></div>
                 <div class="tablet-screen">
-                  <iframe
-                    :src="activeSite"
-                    :style="getIframeStyle(device)"
-                    class="device-iframe"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                    loading="lazy"
-                  />
+                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                    <iframe
+                      :key="device.id + '-' + iframeKey"
+                      :ref="el => setIframeRef(device.id, el)"
+                      :src="activeSite"
+                      :style="getIframeStyle(device)"
+                      class="device-iframe"
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Laptop Frame -->
             <div v-if="device.type === 'laptop'" class="device-laptop">
-              <div class="laptop-screen-container" :style="getLaptopContainerStyle(device)">
+              <div
+                class="laptop-screen-container"
+                :class="laptopFrameColorClass"
+                :style="getLaptopContainerStyle(device)"
+              >
                 <div class="laptop-camera"></div>
                 <div class="laptop-screen">
-                  <iframe
-                    :src="activeSite"
-                    :style="getIframeStyle(device)"
-                    class="device-iframe"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                    loading="lazy"
-                  />
+                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                    <iframe
+                      :key="device.id + '-' + iframeKey"
+                      :ref="el => setIframeRef(device.id, el)"
+                      :src="activeSite"
+                      :style="getIframeStyle(device)"
+                      class="device-iframe"
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
               <div class="laptop-base" :style="getLaptopBaseStyle(device)">
@@ -258,17 +403,28 @@
 
             <!-- Desktop Frame -->
             <div v-if="device.type === 'desktop'" class="device-desktop">
-              <div class="imac-screen-container" :style="getImacContainerStyle(device)">
-                <div class="imac-screen" :style="getImacScreenStyle(device)">
-                  <iframe
-                    :src="activeSite"
-                    :style="getIframeStyle(device)"
-                    class="device-iframe"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                    loading="lazy"
-                  />
+              <div
+                class="imac-screen-container"
+                :class="imacFrameColorClass"
+                :style="getImacContainerStyle(device)"
+              >
+                <div class="imac-bezel-top">
+                  <div class="imac-camera"></div>
                 </div>
-                <div class="imac-chin">
+                <div class="imac-screen" :style="getImacScreenStyle(device)">
+                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                    <iframe
+                      :key="device.id + '-' + iframeKey"
+                      :ref="el => setIframeRef(device.id, el)"
+                      :src="activeSite"
+                      :style="getIframeStyle(device)"
+                      class="device-iframe"
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+                <div class="imac-chin" :class="imacChinColorClass">
                   <div class="imac-logo"></div>
                 </div>
               </div>
@@ -295,22 +451,42 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { toPng } from 'html-to-image'
 
 const captureArea = ref(null)
+const canvasContainer = ref(null)
 const exporting = ref(false)
 const bgPickerRef = ref(null)
 const showBgPicker = ref(false)
+
+const iframeRefs = reactive({})
+function setIframeRef(id, el) {
+  if (el) iframeRefs[id] = el
+}
 
 const sites = [
   { label: 'Maxirez', url: 'https://app.maxirez.com' },
   { label: 'Minirez', url: 'https://app.minirez.com' }
 ]
-const activeSite = ref('https://app.maxirez.com')
+const activeSiteBase = ref('https://app.maxirez.com')
+const activePath = ref('')
+const iframeKey = ref(0)
+
+const activeSite = computed(() => activeSiteBase.value + activePath.value)
+
+function setActiveSiteBase(url) {
+  activeSiteBase.value = url
+  activePath.value = ''
+  iframeKey.value++
+}
+
+function refreshIframes() {
+  iframeKey.value++
+}
 
 const pageZoom = ref(100)
-const iframeZoom = ref(100)
+const contentZoom = ref(100)
 
 const devices = [
   {
@@ -351,7 +527,7 @@ const devices = [
     type: 'desktop',
     viewport: { width: 2560, height: 1440 },
     baseScale: 0.3,
-    bezel: 16
+    bezel: 2
   }
 ]
 
@@ -368,26 +544,110 @@ const toggleDevice = id => {
 
 const activeDevices = computed(() => devices.filter(d => selectedDevices.value.includes(d.id)))
 
+// --- Rotation & Tilt ---
+const rotationY = ref(0)
 const tiltX = ref(0)
-const tiltY = ref(0)
 
 const tiltPresets = [
-  { name: 'Flat', label: '—', x: 0, y: 0 },
-  { name: 'Slight Left', label: '↰', x: 8, y: -3 },
-  { name: 'Slight Right', label: '↱', x: -8, y: 3 },
-  { name: 'Hero', label: '◇', x: 15, y: -8 },
-  { name: 'Dramatic', label: '◈', x: 25, y: -12 }
+  { name: 'Flat', label: '—', ry: 0, tx: 0 },
+  { name: 'Slight Left', label: '↰', ry: -8, tx: 5 },
+  { name: 'Slight Right', label: '↱', ry: 8, tx: 5 },
+  { name: 'Hero', label: '◇', ry: -15, tx: 10 },
+  { name: 'Dramatic', label: '◈', ry: -25, tx: 15 }
 ]
 
-function applyTilt(preset) {
-  tiltX.value = preset.x
-  tiltY.value = preset.y
+function applyTiltPreset(preset) {
+  rotationY.value = preset.ry
+  tiltX.value = preset.tx
 }
 
 const deviceTiltStyle = computed(() => ({
-  transform: `perspective(1200px) rotateX(${tiltY.value}deg) rotateY(${tiltX.value}deg)`,
+  transform: `perspective(1200px) rotateY(${rotationY.value}deg) rotateX(${tiltX.value}deg)`,
   transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 }))
+
+// --- Device Color ---
+const deviceColor = ref('black')
+
+const frameColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'frame-white' : 'frame-black'
+)
+const buttonColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'button-white' : 'button-black'
+)
+const tabletFrameColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'tablet-frame-white' : 'tablet-frame-black'
+)
+const laptopFrameColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'laptop-frame-white' : 'laptop-frame-black'
+)
+const imacFrameColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'imac-container-white' : 'imac-container-black'
+)
+const imacChinColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'imac-chin-white' : 'imac-chin-black'
+)
+
+// --- Shadow ---
+const shadowIntensity = ref(50)
+
+function getDeviceShadowStyle() {
+  const i = shadowIntensity.value / 100
+  if (i === 0) return { filter: 'none' }
+  return {
+    filter: `drop-shadow(0 ${10 * i}px ${30 * i}px rgba(0,0,0,${0.25 * i})) drop-shadow(0 ${4 * i}px ${8 * i}px rgba(0,0,0,${0.1 * i}))`
+  }
+}
+
+// --- Free Move ---
+const freeMode = ref(false)
+const freePositions = reactive({})
+const dragging = ref(null)
+const dragStart = reactive({ x: 0, y: 0, ox: 0, oy: 0 })
+
+function getDeviceWrapperStyle(device) {
+  const base = deviceTiltStyle.value
+  if (freeMode.value && freePositions[device.id]) {
+    return {
+      transform: base.transform,
+      transition: base.transition,
+      left: freePositions[device.id].x + 'px',
+      top: freePositions[device.id].y + 'px'
+    }
+  }
+  return base
+}
+
+function startDrag(e, deviceId) {
+  if (!freeMode.value) return
+  e.preventDefault()
+  dragging.value = deviceId
+  if (!freePositions[deviceId]) {
+    freePositions[deviceId] = { x: 0, y: 0 }
+  }
+  dragStart.x = e.clientX
+  dragStart.y = e.clientY
+  dragStart.ox = freePositions[deviceId].x
+  dragStart.oy = freePositions[deviceId].y
+}
+
+function onDrag(e) {
+  if (!dragging.value) return
+  const dx = (e.clientX - dragStart.x) / (pageZoom.value / 100)
+  const dy = (e.clientY - dragStart.y) / (pageZoom.value / 100)
+  freePositions[dragging.value] = {
+    x: dragStart.ox + dx,
+    y: dragStart.oy + dy
+  }
+}
+
+function stopDrag() {
+  dragging.value = null
+}
+
+function resetFreePositions() {
+  Object.keys(freePositions).forEach(k => delete freePositions[k])
+}
 
 // --- Background ---
 const presetColors = [
@@ -415,7 +675,22 @@ const presetColors = [
   { name: 'Purple', value: '#8b5cf6', preview: '#8b5cf6' },
   { name: 'Violet', value: '#7c3aed', preview: '#7c3aed' },
   { name: 'Fuchsia', value: '#d946ef', preview: '#d946ef' },
-  { name: 'Pink', value: '#ec4899', preview: '#ec4899' }
+  { name: 'Pink', value: '#ec4899', preview: '#ec4899' },
+  {
+    name: 'Gradient Blue',
+    value: 'gradient-blue',
+    preview: 'linear-gradient(135deg, #667eea, #764ba2)'
+  },
+  {
+    name: 'Gradient Sunset',
+    value: 'gradient-sunset',
+    preview: 'linear-gradient(135deg, #f093fb, #f5576c)'
+  },
+  {
+    name: 'Gradient Ocean',
+    value: 'gradient-ocean',
+    preview: 'linear-gradient(135deg, #4facfe, #00f2fe)'
+  }
 ]
 
 const selectedBg = ref('transparent')
@@ -426,18 +701,13 @@ const selectBg = value => {
   showBgPicker.value = false
 }
 
-const activeBgColor = computed(() => {
-  if (selectedBg.value === 'transparent') return null
-  if (selectedBg.value === 'custom') return customColor.value
-  return selectedBg.value
-})
-
 const activeBgPreview = computed(() => {
   if (selectedBg.value === 'transparent') {
     return 'repeating-conic-gradient(#e5e7eb 0% 25%, transparent 0% 50%) 50% / 10px 10px'
   }
   if (selectedBg.value === 'custom') return customColor.value
-  return selectedBg.value
+  const found = presetColors.find(c => c.value === selectedBg.value)
+  return found?.preview || selectedBg.value
 })
 
 const canvasBgClass = computed(() => {
@@ -445,41 +715,66 @@ const canvasBgClass = computed(() => {
   return ''
 })
 
-const canvasBgStyle = computed(() => {
-  if (selectedBg.value === 'transparent') return {}
-  const color = selectedBg.value === 'custom' ? customColor.value : selectedBg.value
-  return { backgroundColor: color }
+const canvasContainerStyle = computed(() => {
+  const style = { minHeight: 'calc(100vh - 120px)' }
+  if (selectedBg.value === 'transparent') return style
+  if (selectedBg.value === 'custom') {
+    style.backgroundColor = customColor.value
+  } else if (selectedBg.value.startsWith('gradient-')) {
+    const found = presetColors.find(c => c.value === selectedBg.value)
+    if (found) style.background = found.preview
+  } else {
+    style.backgroundColor = selectedBg.value
+  }
+  return style
 })
 
-const captureAreaStyle = computed(() => ({
-  transform: `scale(${pageZoom.value / 100})`,
-  transformOrigin: 'top center',
-  padding: '48px 40px 32px'
-}))
+const captureAreaStyle = computed(() => {
+  const s = pageZoom.value / 100
+  const style = {
+    transform: `scale(${s})`,
+    transformOrigin: 'top left',
+    padding: freeMode.value ? '48px 40px 200px' : '48px 40px 32px',
+    minWidth: freeMode.value ? '2000px' : undefined,
+    minHeight: freeMode.value ? '1500px' : undefined
+  }
+  return style
+})
 
-const effectiveScale = device => {
-  return device.baseScale * (iframeZoom.value / 100)
-}
+const screenW = device => device.viewport.width * device.baseScale
+const screenH = device => device.viewport.height * device.baseScale
 
 const getIframeStyle = device => {
-  const s = effectiveScale(device)
+  const s = device.baseScale
   return {
     width: device.viewport.width + 'px',
     height: device.viewport.height + 'px',
     transform: `scale(${s})`,
+    transformOrigin: 'top left',
+    display: 'block'
+  }
+}
+
+const getContentZoomWrapperStyle = device => {
+  const w = screenW(device)
+  const h = screenH(device)
+  const z = contentZoom.value / 100
+  return {
+    width: w + 'px',
+    height: h + 'px',
+    overflow: 'hidden',
+    transform: `scale(${z})`,
     transformOrigin: 'top left'
   }
 }
 
-const screenW = device => device.viewport.width * effectiveScale(device)
-const screenH = device => device.viewport.height * effectiveScale(device)
-
 const getPhoneFrameStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
+  const z = contentZoom.value / 100
   return {
-    width: w + device.bezel * 2 + 'px',
-    height: h + device.bezel * 2 + 'px',
+    width: w * z + device.bezel * 2 + 'px',
+    height: h * z + device.bezel * 2 + 'px',
     borderRadius: device.frameRadius + 'px',
     padding: device.bezel + 'px'
   }
@@ -488,9 +783,10 @@ const getPhoneFrameStyle = device => {
 const getTabletFrameStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
+  const z = contentZoom.value / 100
   return {
-    width: w + device.bezel * 2 + 'px',
-    height: h + device.bezel * 2 + 'px',
+    width: w * z + device.bezel * 2 + 'px',
+    height: h * z + device.bezel * 2 + 'px',
     padding: device.bezel + 'px'
   }
 }
@@ -498,15 +794,16 @@ const getTabletFrameStyle = device => {
 const getLaptopContainerStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
+  const z = contentZoom.value / 100
   return {
-    width: w + device.bezelH * 2 + 'px',
-    height: h + device.bezelTop + device.bezelBot + 'px',
+    width: w * z + device.bezelH * 2 + 'px',
+    height: h * z + device.bezelTop + device.bezelBot + 'px',
     padding: `${device.bezelTop}px ${device.bezelH}px ${device.bezelBot}px`
   }
 }
 
 const getLaptopBaseStyle = device => {
-  const containerW = screenW(device) + device.bezelH * 2
+  const containerW = screenW(device) * (contentZoom.value / 100) + device.bezelH * 2
   return {
     width: containerW + 80 + 'px',
     marginLeft: '-40px'
@@ -514,7 +811,7 @@ const getLaptopBaseStyle = device => {
 }
 
 const getLaptopBottomStyle = device => {
-  const containerW = screenW(device) + device.bezelH * 2
+  const containerW = screenW(device) * (contentZoom.value / 100) + device.bezelH * 2
   return {
     width: containerW + 120 + 'px',
     marginLeft: '-60px'
@@ -523,12 +820,18 @@ const getLaptopBottomStyle = device => {
 
 const getImacContainerStyle = device => {
   const w = screenW(device)
-  return { width: w + device.bezel * 2 + 'px' }
+  const z = contentZoom.value / 100
+  return { width: w * z + device.bezel * 2 + 'px' }
 }
 
 const getImacScreenStyle = device => {
   const h = screenH(device)
-  return { height: h + 'px' }
+  const z = contentZoom.value / 100
+  return { height: h * z + 'px' }
+}
+
+function getScreenshotUrl() {
+  return activeSite.value
 }
 
 // --- Screenshot export via own API (Puppeteer-based) ---
@@ -536,6 +839,7 @@ const screenshotCache = new Map()
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
 watch(activeSite, () => screenshotCache.clear())
+watch(activePath, () => screenshotCache.clear())
 
 const loadScreenshot = async (url, width, height) => {
   const cacheKey = `${url}::${width}x${height}`
@@ -574,27 +878,30 @@ const exportAsPng = async () => {
   const replacements = []
 
   try {
-    const screenshotPromises = Array.from(iframes).map(iframe => {
-      const vpWidth = parseInt(iframe.style.width)
-      const vpHeight = parseInt(iframe.style.height)
-      return loadScreenshot(activeSite.value, vpWidth, vpHeight).catch(() => null)
+    const screenshotUrl = getScreenshotUrl()
+    const screenshotPromises = activeDevices.value.map(device => {
+      return loadScreenshot(screenshotUrl, device.viewport.width, device.viewport.height).catch(
+        () => null
+      )
     })
 
     const screenshots = await Promise.all(screenshotPromises)
 
     iframes.forEach((iframe, i) => {
-      const parent = iframe.parentElement
-      const parentRect = parent.getBoundingClientRect()
+      const zoomWrapper = iframe.parentElement
+      const screenContainer = zoomWrapper.parentElement
+
+      const containerRect = screenContainer.getBoundingClientRect()
 
       const canvas = document.createElement('canvas')
-      canvas.width = parentRect.width * 2
-      canvas.height = parentRect.height * 2
-      canvas.style.width = parentRect.width + 'px'
-      canvas.style.height = parentRect.height + 'px'
+      canvas.width = Math.round(containerRect.width * 2)
+      canvas.height = Math.round(containerRect.height * 2)
+      canvas.style.width = containerRect.width + 'px'
+      canvas.style.height = containerRect.height + 'px'
       canvas.style.position = 'absolute'
       canvas.style.top = '0'
       canvas.style.left = '0'
-      canvas.style.borderRadius = getComputedStyle(parent).borderRadius
+      canvas.style.borderRadius = getComputedStyle(screenContainer).borderRadius
 
       const ctx = canvas.getContext('2d')
       const img = screenshots[i]
@@ -608,22 +915,21 @@ const exportAsPng = async () => {
         ctx.font = `${16 * 2}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(activeSite.value, canvas.width / 2, canvas.height / 2)
+        ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2)
       }
 
-      iframe.style.display = 'none'
-      parent.style.position = 'relative'
-      parent.appendChild(canvas)
-      replacements.push({ iframe, canvas, parent })
+      zoomWrapper.style.display = 'none'
+      screenContainer.style.position = 'relative'
+      screenContainer.appendChild(canvas)
+      replacements.push({ zoomWrapper, canvas, screenContainer })
     })
 
     const isTransparent = selectedBg.value === 'transparent'
-
-    const bgColor = isTransparent
-      ? null
-      : selectedBg.value === 'custom'
-        ? customColor.value
-        : selectedBg.value
+    let bgColor = null
+    if (!isTransparent) {
+      if (selectedBg.value === 'custom') bgColor = customColor.value
+      else if (!selectedBg.value.startsWith('gradient-')) bgColor = selectedBg.value
+    }
 
     const dataUrl = await toPng(captureArea.value, {
       pixelRatio: 2,
@@ -631,7 +937,12 @@ const exportAsPng = async () => {
       skipAutoScale: true,
       backgroundColor: bgColor,
       includeQueryParams: true,
-      filter: node => node.tagName !== 'IFRAME'
+      filter: node => {
+        if (node.tagName === 'IFRAME') return false
+        if (node.classList?.contains('iframe-zoom-wrapper') && node.style?.display === 'none')
+          return false
+        return true
+      }
     })
 
     const link = document.createElement('a')
@@ -641,9 +952,9 @@ const exportAsPng = async () => {
   } catch (err) {
     console.error('Export failed:', err)
   } finally {
-    for (const { iframe, canvas, parent } of replacements) {
-      iframe.style.display = ''
-      parent.removeChild(canvas)
+    for (const { zoomWrapper, canvas, screenContainer } of replacements) {
+      zoomWrapper.style.display = ''
+      screenContainer.removeChild(canvas)
     }
     labels.forEach(el => (el.style.display = ''))
     exporting.value = false
@@ -656,8 +967,16 @@ const handleClickOutside = e => {
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+})
 </script>
 
 <style scoped>
@@ -666,14 +985,27 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   display: block;
 }
 
-/* ===== Phone ===== */
+.iframe-zoom-wrapper {
+  position: relative;
+}
+
+/* ===== Phone Frame Colors ===== */
 .phone-frame {
   position: relative;
+}
+
+.frame-black {
   background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 20px 60px rgba(0, 0, 0, 0.3),
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.frame-white {
+  background: linear-gradient(145deg, #f0f0f4, #e0e0e4);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .phone-notch {
@@ -707,13 +1039,20 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: relative;
 }
 
+.button-black {
+  background: linear-gradient(180deg, #3a3a3e, #2a2a2e);
+}
+
+.button-white {
+  background: linear-gradient(180deg, #d8d8dc, #c8c8cc);
+}
+
 .phone-button-right {
   position: absolute;
   right: -3px;
   top: 28%;
   width: 3px;
   height: 60px;
-  background: linear-gradient(180deg, #3a3a3e, #2a2a2e);
   border-radius: 0 2px 2px 0;
 }
 
@@ -723,7 +1062,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   top: 18%;
   width: 3px;
   height: 25px;
-  background: linear-gradient(180deg, #3a3a3e, #2a2a2e);
   border-radius: 2px 0 0 2px;
 }
 
@@ -733,7 +1071,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   top: 28%;
   width: 3px;
   height: 50px;
-  background: linear-gradient(180deg, #3a3a3e, #2a2a2e);
   border-radius: 2px 0 0 2px;
 }
 
@@ -743,19 +1080,27 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   top: 40%;
   width: 3px;
   height: 50px;
-  background: linear-gradient(180deg, #3a3a3e, #2a2a2e);
   border-radius: 2px 0 0 2px;
 }
 
 /* ===== Tablet ===== */
 .tablet-frame {
   position: relative;
-  background: linear-gradient(145deg, #e4e4e8, #c8c8cc);
   border-radius: 20px;
+}
+
+.tablet-frame-white {
+  background: linear-gradient(145deg, #e4e4e8, #c8c8cc);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.4),
-    0 25px 80px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.tablet-frame-black {
+  background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .tablet-camera {
@@ -781,9 +1126,17 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 /* ===== Laptop ===== */
 .laptop-screen-container {
   position: relative;
-  background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
   border-radius: 14px 14px 0 0;
+}
+
+.laptop-frame-black {
+  background: linear-gradient(145deg, #2a2a2e, #1a1a1e);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.laptop-frame-white {
+  background: linear-gradient(145deg, #e8e8ec, #d8d8dc);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .laptop-camera {
@@ -811,7 +1164,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   margin: 0 auto;
   border-radius: 0 0 2px 2px;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .laptop-notch {
@@ -832,36 +1184,62 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   border-radius: 0 0 8px 8px;
 }
 
-/* ===== Desktop ===== */
+/* ===== Desktop / iMac ===== */
 .imac-screen-container {
-  background: linear-gradient(145deg, #e4e4e8, #d0d0d4);
-  border-radius: 16px 16px 0 0;
-  padding: 16px 16px 0;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.4),
-    0 30px 100px rgba(0, 0, 0, 0.2);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.imac-container-white {
+  background: linear-gradient(145deg, #f0f0f4, #e0e0e4);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.imac-container-black {
+  background: linear-gradient(145deg, #2a2a2e, #1e1e22);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.imac-bezel-top {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imac-camera {
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #3a5a3c 30%, #1a3a1c 70%);
+  border-radius: 50%;
 }
 
 .imac-screen {
   width: 100%;
-  border-radius: 4px;
   overflow: hidden;
   background: #000;
+  margin: 0 2px;
 }
 
 .imac-chin {
-  height: 36px;
-  background: linear-gradient(180deg, #e4e4e8, #d8d8dc);
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0 0 16px 16px;
+}
+
+.imac-chin-white {
+  background: linear-gradient(180deg, #e8e8ec, #dcdce0);
+}
+
+.imac-chin-black {
+  background: linear-gradient(180deg, #222226, #1a1a1e);
 }
 
 .imac-logo {
-  width: 16px;
-  height: 20px;
-  opacity: 0.3;
+  width: 14px;
+  height: 17px;
+  opacity: 0.25;
   background: radial-gradient(ellipse, #888, transparent);
   border-radius: 50%;
 }
@@ -873,18 +1251,17 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .imac-stand-neck {
-  width: 100px;
-  height: 60px;
-  background: linear-gradient(90deg, #c0c0c4, #d4d4d8, #c0c0c4);
-  clip-path: polygon(15% 0, 85% 0, 100% 100%, 0% 100%);
+  width: 80px;
+  height: 50px;
+  background: linear-gradient(90deg, #bbbbbf, #d0d0d4, #bbbbbf);
+  clip-path: polygon(18% 0, 82% 0, 100% 100%, 0% 100%);
 }
 
 .imac-stand-base {
-  width: 200px;
-  height: 8px;
-  background: linear-gradient(180deg, #c8c8cc, #b8b8bc);
+  width: 180px;
+  height: 6px;
+  background: linear-gradient(180deg, #c0c0c4, #b0b0b4);
   border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* ===== Checkerboard ===== */
