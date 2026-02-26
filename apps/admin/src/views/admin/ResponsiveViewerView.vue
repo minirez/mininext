@@ -65,8 +65,23 @@
           </button>
         </div>
 
-        <!-- Right: Export -->
+        <!-- Right: Scroll + Export -->
         <div class="flex items-center gap-2">
+          <div
+            class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1.5"
+            title="Scroll Y position for screenshot capture"
+          >
+            <span class="material-icons text-gray-400 text-sm">swap_vert</span>
+            <input
+              v-model.number="exportScrollY"
+              type="number"
+              min="0"
+              step="100"
+              class="w-16 text-xs text-gray-600 dark:text-slate-300 font-mono bg-transparent border-none outline-none text-center"
+              placeholder="0"
+            />
+            <span class="text-[10px] text-gray-400">px</span>
+          </div>
           <button
             @click="exportAsPng"
             :disabled="exporting"
@@ -855,23 +870,11 @@ function getScreenshotUrl() {
 
 const screenshotCache = new Map()
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+const exportScrollY = ref(0)
 
 watch(activeSite, () => screenshotCache.clear())
 watch(activePath, () => screenshotCache.clear())
-
-function getIframeScrollTop(deviceId) {
-  try {
-    const iframe = iframeRefs[deviceId]
-    if (!iframe?.contentWindow?.document) return 0
-    return (
-      iframe.contentWindow.document.documentElement.scrollTop ||
-      iframe.contentWindow.document.body.scrollTop ||
-      0
-    )
-  } catch {
-    return 0
-  }
-}
+watch(exportScrollY, () => screenshotCache.clear())
 
 const loadScreenshot = async (url, width, height, scrollY = 0) => {
   const cacheKey = `${url}::${width}x${height}::${scrollY}`
@@ -921,8 +924,7 @@ const exportAsPng = async () => {
     const screenshotPromises = activeDevices.value.map(device => {
       const ssWidth = Math.round(device.viewport.width / z)
       const ssHeight = Math.round(device.viewport.height / z)
-      const scrollY = getIframeScrollTop(device.id)
-      return loadScreenshot(screenshotUrl, ssWidth, ssHeight, scrollY).catch(() => null)
+      return loadScreenshot(screenshotUrl, ssWidth, ssHeight, exportScrollY.value).catch(() => null)
     })
 
     const screenshots = await Promise.all(screenshotPromises)

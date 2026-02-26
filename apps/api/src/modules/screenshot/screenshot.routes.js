@@ -40,10 +40,10 @@ function isAllowedUrl(url) {
  * Takes a screenshot of an allowed URL at a given viewport size.
  * Injects the caller's JWT into the target page's localStorage so
  * the SPA renders the authenticated view instead of the login screen.
- * Query params: url, width, height, scrollY
+ * Query params: url, width, height, scrollY, waitFor (CSS selector)
  */
 router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
-  const { url, width = '1280', height = '800', scrollY = '0' } = req.query
+  const { url, width = '1280', height = '800', scrollY = '0', waitFor } = req.query
 
   if (!url) {
     return res.status(400).json({ success: false, error: 'url parameter is required' })
@@ -78,19 +78,34 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
     }
 
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 })
-    await new Promise(r => setTimeout(r, 2000))
+
+    if (waitFor) {
+      await page.waitForSelector(waitFor, { timeout: 10000 }).catch(() => {})
+    }
+
+    await page.evaluate(
+      () =>
+        new Promise(resolve => {
+          if (document.readyState === 'complete') {
+            setTimeout(resolve, 1500)
+          } else {
+            window.addEventListener('load', () => setTimeout(resolve, 1500))
+          }
+        })
+    )
 
     if (scroll > 0) {
-      // eslint-disable-next-line no-undef
-      await page.evaluate(y => window.scrollTo(0, y), scroll)
-      await new Promise(r => setTimeout(r, 500))
+      await page.evaluate(y => {
+        window.scrollTo({ top: y, behavior: 'instant' })
+      }, scroll)
+      await new Promise(r => setTimeout(r, 800))
     }
 
     const screenshot = await page.screenshot({ type: 'png', fullPage: false })
 
     res.set({
       'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=300'
+      'Cache-Control': 'no-cache'
     })
     res.send(screenshot)
   } catch {
