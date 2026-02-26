@@ -127,9 +127,14 @@ export const getAdminUrl = async partnerId => {
   if (partnerId) {
     try {
       const { default: Partner } = await import('../../modules/partner/partner.model.js')
-      const partner = await Partner.findById(partnerId).select('branding.extranetDomain').lean()
+      const partner = await Partner.findById(partnerId)
+        .select('branding.extranetDomain partnerType')
+        .lean()
       if (partner?.branding?.extranetDomain) {
         return `https://${partner.branding.extranetDomain}`
+      }
+      if (partner?.partnerType === 'hotel') {
+        return config.adminUrl.replace('maxirez.com', 'minirez.com')
       }
     } catch (error) {
       logger.warn('Failed to get partner extranetDomain:', error.message)

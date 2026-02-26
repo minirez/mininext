@@ -740,6 +740,8 @@ export const adminActivateUser = asyncHandler(async (req, res) => {
       accountName = partner.companyName
       if (partner.branding?.siteDomain) {
         loginUrl = `https://${partner.branding.siteDomain}/login`
+      } else if (partner.partnerType === 'hotel') {
+        loginUrl = loginUrl.replace('maxirez.com', 'minirez.com')
       }
     }
   } else if (user.accountType === 'agency') {

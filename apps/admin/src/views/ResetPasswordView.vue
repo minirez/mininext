@@ -18,10 +18,7 @@
         <span>{{ $t('auth.passwordResetSuccess') }}</span>
       </div>
       <div class="mt-4 text-center">
-        <RouterLink
-          to="/login"
-          class="btn-primary inline-flex items-center"
-        >
+        <RouterLink to="/login" class="btn-primary inline-flex items-center">
           <span class="material-icons mr-2">login</span>
           {{ $t('auth.goToLogin') }}
         </RouterLink>
@@ -204,7 +201,10 @@ const route = useRoute()
 const { t } = useI18n()
 
 // Async action composable
-const { isLoading: loading, execute: executeSubmit } = useAsyncAction({ showSuccessToast: false, showErrorToast: false })
+const { isLoading: loading, execute: executeSubmit } = useAsyncAction({
+  showSuccessToast: false,
+  showErrorToast: false
+})
 
 const password = ref('')
 const confirmPassword = ref('')
@@ -222,7 +222,7 @@ const passwordStrength = computed(() => {
   const pwd = password.value
   let strength = 0
 
-  if (pwd.length >= 12) strength++
+  if (pwd.length >= 8) strength++
   if (/[a-z]/.test(pwd)) strength++
   if (/[A-Z]/.test(pwd)) strength++
   if (/[0-9]/.test(pwd)) strength++
@@ -243,22 +243,19 @@ const handleSubmit = async () => {
 
   errorMessage.value = ''
 
-  await executeSubmit(
-    () => authService.resetPassword(token.value, password.value),
-    {
-      onSuccess: () => {
-        success.value = true
-        // Clear any existing auth tokens since password was changed
-        // This invalidates all previous sessions
-        localStorage.removeItem('token')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        localStorage.removeItem('forcePasswordChange')
-      },
-      onError: error => {
-        errorMessage.value = error.response?.data?.message || t('auth.resetPasswordError')
-      }
+  await executeSubmit(() => authService.resetPassword(token.value, password.value), {
+    onSuccess: () => {
+      success.value = true
+      // Clear any existing auth tokens since password was changed
+      // This invalidates all previous sessions
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('forcePasswordChange')
+    },
+    onError: error => {
+      errorMessage.value = error.response?.data?.message || t('auth.resetPasswordError')
     }
-  )
+  })
 }
 </script>

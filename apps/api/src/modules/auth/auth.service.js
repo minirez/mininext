@@ -519,7 +519,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 
   // Validate password length
-  if (password.length < 12) {
+  if (password.length < 8) {
     throw new BadRequestError('PASSWORD_TOO_SHORT')
   }
 
