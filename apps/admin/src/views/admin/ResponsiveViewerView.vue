@@ -69,7 +69,8 @@
         <div class="flex items-center gap-2">
           <div
             class="flex items-center gap-1 bg-gray-100 dark:bg-slate-700 rounded-lg px-2 py-1.5"
-            title="Scroll Y position for screenshot capture"
+            :class="{ 'ring-1 ring-blue-400': scrollOverride }"
+            title="Scroll Y — auto-tracked from iframe, click lock to override"
           >
             <span class="material-icons text-gray-400 text-sm">swap_vert</span>
             <input
@@ -79,8 +80,17 @@
               step="100"
               class="w-16 text-xs text-gray-600 dark:text-slate-300 font-mono bg-transparent border-none outline-none text-center"
               placeholder="0"
+              @focus="scrollOverride = true"
             />
             <span class="text-[10px] text-gray-400">px</span>
+            <button
+              v-if="scrollOverride"
+              class="text-blue-400 hover:text-blue-600 ml-0.5"
+              title="Unlock — resume auto-tracking scroll"
+              @click="scrollOverride = false"
+            >
+              <span class="material-icons text-xs">lock</span>
+            </button>
           </div>
           <button
             @click="exportAsPng"
@@ -349,7 +359,7 @@
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
-                      :src="activeSite"
+                      :src="iframeSrc"
                       :style="getIframeStyle(device)"
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -378,7 +388,7 @@
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
-                      :src="activeSite"
+                      :src="iframeSrc"
                       :style="getIframeStyle(device)"
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -403,7 +413,7 @@
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
-                      :src="activeSite"
+                      :src="iframeSrc"
                       :style="getIframeStyle(device)"
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -430,7 +440,7 @@
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
-                      :src="activeSite"
+                      :src="iframeSrc"
                       :style="getIframeStyle(device)"
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -487,36 +497,75 @@ const sites = [
 const activeSiteBase = ref('https://app.maxirez.com')
 const activePath = ref('')
 const iframeKey = ref(0)
+const iframeScrollY = ref(0)
+let pollTimer = null
+let suppressPathSync = false
 
 const activeSite = computed(() => activeSiteBase.value + activePath.value)
+const iframeSrc = ref(activeSiteBase.value)
 
 function setActiveSiteBase(url) {
   activeSiteBase.value = url
   activePath.value = ''
+  iframeScrollY.value = 0
+  iframeSrc.value = url
   iframeKey.value++
 }
 
 function refreshIframes() {
+  iframeSrc.value = activeSite.value
   iframeKey.value++
 }
 
 function onIframeLoad(deviceId) {
+  syncIframeState(deviceId)
+}
+
+function syncIframeState(deviceId) {
   try {
     const iframe = iframeRefs[deviceId]
-    if (!iframe) return
-    const iframeUrl = iframe.contentWindow?.location?.href
+    if (!iframe?.contentWindow) return
+
+    const iframeUrl = iframe.contentWindow.location?.href
     if (iframeUrl && iframeUrl !== 'about:blank') {
       const parsed = new URL(iframeUrl)
       const baseParsed = new URL(activeSiteBase.value)
       if (parsed.origin === baseParsed.origin) {
         const newPath = parsed.pathname + parsed.search + parsed.hash
         if (newPath !== activePath.value) {
+          suppressPathSync = true
           activePath.value = newPath
+          setTimeout(() => {
+            suppressPathSync = false
+          }, 50)
         }
       }
     }
+
+    const scrollTop =
+      iframe.contentWindow.document?.documentElement?.scrollTop ||
+      iframe.contentWindow.document?.body?.scrollTop ||
+      0
+    iframeScrollY.value = Math.round(scrollTop)
   } catch {
-    // cross-origin - can't read iframe URL
+    // cross-origin — can't access iframe internals
+  }
+}
+
+function startIframePoll() {
+  stopIframePoll()
+  pollTimer = setInterval(() => {
+    const firstId = activeDevices.value[0]?.id
+    if (firstId && iframeRefs[firstId]) {
+      syncIframeState(firstId)
+    }
+  }, 400)
+}
+
+function stopIframePoll() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
   }
 }
 
@@ -871,6 +920,11 @@ function getScreenshotUrl() {
 const screenshotCache = new Map()
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 const exportScrollY = ref(0)
+const scrollOverride = ref(false)
+
+watch(iframeScrollY, val => {
+  if (!scrollOverride.value) exportScrollY.value = val
+})
 
 watch(activeSite, () => screenshotCache.clear())
 watch(activePath, () => screenshotCache.clear())
@@ -1014,11 +1068,13 @@ onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('mousemove', onDrag)
   document.addEventListener('mouseup', stopDrag)
+  startIframePoll()
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
+  stopIframePoll()
 })
 </script>
 
