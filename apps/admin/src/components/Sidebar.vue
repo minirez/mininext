@@ -36,131 +36,56 @@
           {{ $t('nav.main') }}
         </span>
 
-        <template v-for="entry in mainSection" :key="entry.name || entry.groupKey">
-          <!-- Collapsible Group -->
-          <template v-if="entry.isGroup">
-            <button
-              class="flex items-center rounded-lg transition-colors duration-200 cursor-pointer group relative"
-              :class="[
-                uiStore.sidebarExpanded ? 'px-3 py-2' : 'p-3 justify-center',
-                isGroupActive(entry)
-                  ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-                  : 'text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30'
-              ]"
-              :title="!uiStore.sidebarExpanded ? entry.label : ''"
-              @click="toggleGroup(entry.groupKey)"
+        <RouterLink
+          v-for="item in mainSection"
+          :key="item.name"
+          :to="item.to"
+          class="flex items-center rounded-lg transition-colors duration-200 cursor-pointer group relative"
+          :class="[
+            uiStore.sidebarExpanded ? 'px-3 py-2.5' : 'p-3 justify-center',
+            {
+              'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30': isActive(
+                item.to
+              ),
+              'text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30':
+                !isActive(item.to)
+            }
+          ]"
+          :title="!uiStore.sidebarExpanded ? item.label : ''"
+          @click="emit('navigate')"
+        >
+          <!-- Icon with badge dot (collapsed mode) -->
+          <span class="relative flex-shrink-0">
+            <span class="material-icons">{{ item.icon }}</span>
+            <span
+              v-if="item.badge && !uiStore.sidebarExpanded"
+              class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5 leading-none"
             >
-              <span class="material-icons flex-shrink-0 text-[20px]">{{ entry.icon }}</span>
-              <span
-                v-if="uiStore.sidebarExpanded"
-                class="ml-3 text-sm font-medium truncate flex-1 text-left"
-              >
-                {{ entry.label }}
-              </span>
-              <span
-                v-if="uiStore.sidebarExpanded"
-                class="material-icons text-[16px] ml-auto flex-shrink-0 transition-transform duration-200"
-                :class="{ 'rotate-180': expandedGroups[entry.groupKey] }"
-              >
-                expand_more
-              </span>
-              <span
-                v-if="!uiStore.sidebarExpanded"
-                class="absolute left-full ml-2 px-2 py-1 bg-gray-800 dark:bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none transition-opacity"
-              >
-                {{ entry.label }}
-              </span>
-            </button>
+              {{ item.badge > 99 ? '99+' : item.badge }}
+            </span>
+          </span>
 
-            <!-- Group Children -->
-            <div
-              v-if="expandedGroups[entry.groupKey] || !uiStore.sidebarExpanded"
-              class="flex flex-col space-y-0.5"
-              :class="
-                uiStore.sidebarExpanded
-                  ? 'ml-3 pl-3 border-l border-gray-200 dark:border-slate-700'
-                  : ''
-              "
-            >
-              <RouterLink
-                v-for="child in entry.children"
-                :key="child.name"
-                :to="child.to"
-                class="flex items-center rounded-lg transition-colors duration-200 cursor-pointer group relative"
-                :class="[
-                  uiStore.sidebarExpanded ? 'px-3 py-2' : 'p-3 justify-center',
-                  {
-                    'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30':
-                      isActive(child.to),
-                    'text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30':
-                      !isActive(child.to)
-                  }
-                ]"
-                :title="!uiStore.sidebarExpanded ? child.label : ''"
-                @click="emit('navigate')"
-              >
-                <span class="relative flex-shrink-0">
-                  <span class="material-icons text-[20px]">{{ child.icon }}</span>
-                </span>
-                <span
-                  v-if="uiStore.sidebarExpanded"
-                  class="ml-3 text-sm font-medium truncate flex-1"
-                >
-                  {{ child.label }}
-                </span>
-                <span
-                  v-if="!uiStore.sidebarExpanded"
-                  class="absolute left-full ml-2 px-2 py-1 bg-gray-800 dark:bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none transition-opacity"
-                >
-                  {{ child.label }}
-                </span>
-              </RouterLink>
-            </div>
-          </template>
+          <!-- Label (only when expanded) -->
+          <span v-if="uiStore.sidebarExpanded" class="ml-3 text-sm font-medium truncate flex-1">
+            {{ item.label }}
+          </span>
 
-          <!-- Regular Item -->
-          <RouterLink
-            v-else
-            :to="entry.to"
-            class="flex items-center rounded-lg transition-colors duration-200 cursor-pointer group relative"
-            :class="[
-              uiStore.sidebarExpanded ? 'px-3 py-2.5' : 'p-3 justify-center',
-              {
-                'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30':
-                  isActive(entry.to),
-                'text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30':
-                  !isActive(entry.to)
-              }
-            ]"
-            :title="!uiStore.sidebarExpanded ? entry.label : ''"
-            @click="emit('navigate')"
+          <!-- Badge (expanded mode) -->
+          <span
+            v-if="item.badge && uiStore.sidebarExpanded"
+            class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none ml-auto flex-shrink-0"
           >
-            <span class="relative flex-shrink-0">
-              <span class="material-icons">{{ entry.icon }}</span>
-              <span
-                v-if="entry.badge && !uiStore.sidebarExpanded"
-                class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5 leading-none"
-              >
-                {{ entry.badge > 99 ? '99+' : entry.badge }}
-              </span>
-            </span>
-            <span v-if="uiStore.sidebarExpanded" class="ml-3 text-sm font-medium truncate flex-1">
-              {{ entry.label }}
-            </span>
-            <span
-              v-if="entry.badge && uiStore.sidebarExpanded"
-              class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none ml-auto flex-shrink-0"
-            >
-              {{ entry.badge > 99 ? '99+' : entry.badge }}
-            </span>
-            <span
-              v-if="!uiStore.sidebarExpanded"
-              class="absolute left-full ml-2 px-2 py-1 bg-gray-800 dark:bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none transition-opacity"
-            >
-              {{ entry.label }}
-            </span>
-          </RouterLink>
-        </template>
+            {{ item.badge > 99 ? '99+' : item.badge }}
+          </span>
+
+          <!-- Tooltip (only when collapsed) -->
+          <span
+            v-if="!uiStore.sidebarExpanded"
+            class="absolute left-full ml-2 px-2 py-1 bg-gray-800 dark:bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none transition-opacity"
+          >
+            {{ item.label }}
+          </span>
+        </RouterLink>
       </div>
     </nav>
 
@@ -215,7 +140,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, watchEffect } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -251,24 +176,6 @@ const emit = defineEmits(['navigate'])
 const isActive = path => {
   return route.path === path || route.path.startsWith(path + '/')
 }
-
-const expandedGroups = reactive({})
-
-const toggleGroup = groupKey => {
-  expandedGroups[groupKey] = !expandedGroups[groupKey]
-}
-
-const isGroupActive = group => {
-  return group.children?.some(child => isActive(child.to))
-}
-
-watchEffect(() => {
-  for (const entry of mainSection.value) {
-    if (entry.isGroup && isGroupActive(entry) && !expandedGroups[entry.groupKey]) {
-      expandedGroups[entry.groupKey] = true
-    }
-  }
-})
 
 // Get current module icon based on route
 const currentModuleIcon = computed(() => {
@@ -477,14 +384,22 @@ const mainSection = computed(() => {
       label: t('nav.hotelBase')
     })
     items.push({
-      isGroup: true,
-      groupKey: 'logs',
-      icon: 'receipt_long',
-      label: t('nav.logs'),
-      children: [
-        { name: 'audit-logs', to: '/admin/audit-logs', icon: 'history', label: t('nav.auditLogs') },
-        { name: 'email-logs', to: '/admin/email-logs', icon: 'mail', label: t('nav.emailLogs') }
-      ]
+      name: 'audit-logs',
+      to: '/admin/audit-logs',
+      icon: 'history',
+      label: t('nav.auditLogs')
+    })
+    items.push({
+      name: 'platform-settings',
+      to: '/admin/platform-settings',
+      icon: 'settings',
+      label: t('nav.platformSettings')
+    })
+    items.push({
+      name: 'email-logs',
+      to: '/admin/email-logs',
+      icon: 'mail',
+      label: t('nav.emailLogs')
     })
     items.push({
       name: 'mailbox',
@@ -506,36 +421,22 @@ const mainSection = computed(() => {
       label: t('nav.payment')
     })
     items.push({
-      isGroup: true,
-      groupKey: 'settings-misc',
-      icon: 'tune',
-      label: t('nav.settingsMisc'),
-      children: [
-        {
-          name: 'platform-settings',
-          to: '/admin/platform-settings',
-          icon: 'settings',
-          label: t('nav.platformSettings')
-        },
-        {
-          name: 'migration',
-          to: '/admin/migration',
-          icon: 'swap_horiz',
-          label: t('migration.title')
-        },
-        {
-          name: 'tursab-directory',
-          to: '/admin/tursab-directory',
-          icon: 'menu_book',
-          label: t('tursab.title')
-        },
-        {
-          name: 'responsive-viewer',
-          to: '/admin/responsive-viewer',
-          icon: 'devices',
-          label: t('nav.responsiveViewer')
-        }
-      ]
+      name: 'migration',
+      to: '/admin/migration',
+      icon: 'swap_horiz',
+      label: t('migration.title')
+    })
+    items.push({
+      name: 'tursab-directory',
+      to: '/admin/tursab-directory',
+      icon: 'menu_book',
+      label: t('tursab.title')
+    })
+    items.push({
+      name: 'responsive-viewer',
+      to: '/admin/responsive-viewer',
+      icon: 'devices',
+      label: t('nav.responsiveViewer')
     })
   }
 

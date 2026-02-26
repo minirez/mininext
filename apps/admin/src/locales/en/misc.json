@@ -29,9 +29,7 @@
     "tours": "Tours & Activities",
     "platformReservations": "Reservations",
     "language": "Language",
-    "responsiveViewer": "Responsive Viewer",
-    "logs": "Logs",
-    "settingsMisc": "Settings & Misc"
+    "responsiveViewer": "Responsive Viewer"
   },
   "platformBookings": {
     "title": "Platform Reservations",

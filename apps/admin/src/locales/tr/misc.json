@@ -29,9 +29,7 @@
     "tours": "Turlar & Aktiviteler",
     "platformReservations": "Rezervasyonlar",
     "language": "Dil",
-    "responsiveViewer": "Responsive Viewer",
-    "logs": "Loglar",
-    "settingsMisc": "Ayarlar & Diğer"
+    "responsiveViewer": "Responsive Viewer"
   },
   "platformBookings": {
     "title": "Platform Rezervasyonları",
