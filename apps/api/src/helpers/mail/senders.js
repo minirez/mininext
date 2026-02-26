@@ -178,6 +178,18 @@ export const sendActivationEmail = async ({
   if (partnerCity) brandingVars.COMPANY_ADDRESS = partnerCity
   brandingVars.SITE_URL = baseUrl
 
+  // Resolve partner type to use correct platform brand name
+  let platformBrand = 'Maxirez'
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('partnerType').lean()
+      if (partner?.partnerType === 'hotel') platformBrand = 'Minirez'
+    } catch (e) {
+      // fallback to Maxirez
+    }
+  }
+
   try {
     const html = await renderEmailTemplate(
       'activation',
@@ -200,14 +212,18 @@ export const sendActivationEmail = async ({
 
     const text = htmlToText(html)
     const subject =
-      language === 'tr' ? 'Hesabınızı Aktifleştirin - Maxirez' : 'Activate Your Account - Maxirez'
+      language === 'tr'
+        ? `Hesabınızı Aktifleştirin - ${platformBrand}`
+        : `Activate Your Account - ${platformBrand}`
 
     return sendEmail({ to, subject, html, text, partnerId, type: 'activation' })
   } catch (error) {
-    // Fallback to simple HTML if template fails
     logger.warn('Failed to render activation template, using fallback:', error.message)
 
-    const subject = 'Hesabınızı Aktifleştirin - Maxirez'
+    const subject =
+      language === 'tr'
+        ? `Hesabınızı Aktifleştirin - ${platformBrand}`
+        : `Activate Your Account - ${platformBrand}`
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h1 style="color: #4F46E5;">Hoş Geldiniz!</h1>
@@ -800,21 +816,7 @@ export const sendNewPartnerNotification = async ({
   contactName,
   language = 'tr'
 }) => {
-  const { default: User } = await import('../../modules/user/user.model.js')
-
-  // Find platform admin users
-  const admins = await User.find({
-    accountType: 'platform',
-    role: 'admin',
-    status: 'active'
-  })
-    .select('email')
-    .lean()
-
-  if (!admins.length) {
-    logger.warn('No platform admins found to notify about new partner registration')
-    return
-  }
+  const NOTIFICATION_RECIPIENT = 'advicealcom@gmail.com'
 
   const labels = TEMPLATE_LABELS[language] || TEMPLATE_LABELS.tr
   const partnerTypeLabel =
@@ -858,10 +860,9 @@ export const sendNewPartnerNotification = async ({
   )
 
   const text = htmlToText(html)
-  const adminEmails = admins.map(a => a.email)
 
   return sendEmail({
-    to: adminEmails,
+    to: NOTIFICATION_RECIPIENT,
     subject,
     html,
     text,

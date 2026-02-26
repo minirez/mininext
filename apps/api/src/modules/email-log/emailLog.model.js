@@ -16,6 +16,8 @@ const emailLogSchema = new mongoose.Schema(
       type: String,
       enum: [
         'activation',
+        'admin-activated',
+        'admin-activated-credentials',
         'password-reset',
         'welcome',
         'booking-confirmation',

@@ -24,10 +24,14 @@ RUN pnpm install --frozen-lockfile --prod
 # =============================================================================
 FROM node:22-alpine AS runner
 
-# SSL operasyonlari icin gerekli paketler
+# System dependencies:
 # util-linux: nsenter (host uzerinde komut calistirmak icin)
 # openssl: sertifika kontrolu icin
-RUN apk add --no-cache util-linux openssl
+# chromium + nss/freetype: Puppeteer screenshot endpoint icin
+RUN apk add --no-cache util-linux openssl chromium nss freetype harfbuzz
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /app
 
