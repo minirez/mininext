@@ -77,10 +77,7 @@ const ROUTE_CONFIG = {
   migration: 'migration',
 
   // TURSAB Agency Directory
-  'tursab-agency': 'tursab-agencies',
-
-  // Screenshot service (responsive viewer)
-  screenshot: 'screenshot'
+  'tursab-agency': 'tursab-agencies'
 }
 
 /**

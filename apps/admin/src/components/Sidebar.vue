@@ -215,8 +215,7 @@ const currentModuleIcon = computed(() => {
     '/issues': 'bug_report',
     '/payment': 'payments',
     '/admin/migration': 'swap_horiz',
-    '/admin/reservations': 'book_online',
-    '/admin/responsive-viewer': 'devices'
+    '/admin/reservations': 'book_online'
   }
 
   // Find matching route
@@ -431,12 +430,6 @@ const mainSection = computed(() => {
       to: '/admin/tursab-directory',
       icon: 'menu_book',
       label: t('tursab.title')
-    })
-    items.push({
-      name: 'responsive-viewer',
-      to: '/admin/responsive-viewer',
-      icon: 'devices',
-      label: t('nav.responsiveViewer')
     })
   }
 

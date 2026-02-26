@@ -9,7 +9,6 @@ const MailboxView = () => import('@/views/admin/MailboxView.vue')
 const MigrationView = () => import('@/views/admin/MigrationView.vue')
 const PlatformReservationsView = () => import('@/views/admin/PlatformReservationsView.vue')
 const TursabDirectoryView = () => import('@/views/admin/TursabDirectoryView.vue')
-const ResponsiveViewerView = () => import('@/views/admin/ResponsiveViewerView.vue')
 
 export default [
   {
@@ -115,16 +114,6 @@ export default [
       requiresPlatformAdmin: true,
       titleKey: 'tursab.title',
       descriptionKey: 'tursab.description'
-    }
-  },
-  {
-    path: 'admin/responsive-viewer',
-    name: 'responsive-viewer',
-    component: ResponsiveViewerView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'responsiveViewer.title',
-      descriptionKey: 'responsiveViewer.description'
     }
   }
 ]

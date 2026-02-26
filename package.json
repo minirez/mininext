@@ -10,7 +10,7 @@
   "scripts": {
     "create-module": "node scripts/create-module.js",
     "build": "turbo run build",
-    "dev": "cross-env NODE_ENV=development turbo run dev",
+    "dev": "turbo run dev",
     "dev:pm2": "pm2 start ecosystem.config.cjs",
     "dev:api": "cd apps/api && node --watch src/index.js",
     "dev:admin": "cd apps/admin && npx vite --host",
@@ -32,7 +32,6 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "better-sqlite3": "^12.6.2",
-    "cross-env": "^7.0.3",
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "husky": "^9.1.7",
@@ -45,10 +44,5 @@
       "prettier --write"
     ]
   },
-  "packageManager": "pnpm@9.15.4",
-  "pnpm": {
-    "patchedDependencies": {
-      "@opentelemetry/context-async-hooks@2.5.1": "patches/@opentelemetry__context-async-hooks@2.5.1.patch"
-    }
-  }
+  "packageManager": "pnpm@9.15.4"
 }
