@@ -71,6 +71,7 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
 
     await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 15000 })
 
+    /* eslint-disable no-undef -- browser globals inside page.evaluate */
     if (authToken) {
       await page.evaluate(token => {
         localStorage.setItem('token', token)
@@ -95,11 +96,10 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
     )
 
     if (scroll > 0) {
-      await page.evaluate(y => {
-        window.scrollTo({ top: y, behavior: 'instant' })
-      }, scroll)
+      await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), scroll)
       await new Promise(r => setTimeout(r, 800))
     }
+    /* eslint-enable no-undef */
 
     const screenshot = await page.screenshot({ type: 'png', fullPage: false })
 
