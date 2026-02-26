@@ -89,8 +89,20 @@ export const sendWelcomeEmail = async ({
   // Get branding from PlatformSettings (base) + Partner (override)
   const brandingVars = await getEmailBranding(partnerId)
 
-  const companyName = brandingVars.COMPANY_NAME || labels.COMPANY_NAME
-  const subject = language === 'tr' ? `${companyName}'e Hoş Geldiniz` : `Welcome to ${companyName}`
+  // Use platform brand (Minirez for hotels, Maxirez for agencies) in subject
+  let platformBrand = 'Maxirez'
+  if (partnerId) {
+    try {
+      const { default: Partner } = await import('../../modules/partner/partner.model.js')
+      const partner = await Partner.findById(partnerId).select('partnerType').lean()
+      if (partner?.partnerType === 'hotel') platformBrand = 'Minirez'
+    } catch (e) {
+      // fallback to Maxirez
+    }
+  }
+
+  const subject =
+    language === 'tr' ? `${platformBrand}'e Hoş Geldiniz` : `Welcome to ${platformBrand}`
 
   const html = await renderEmailTemplate(
     'welcome',

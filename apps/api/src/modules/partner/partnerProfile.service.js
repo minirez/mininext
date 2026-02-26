@@ -2,59 +2,30 @@ import Partner from './partner.model.js'
 import { escapeRegex } from '#helpers'
 import User from '../user/user.model.js'
 import Agency from '../agency/agency.model.js'
-import { NotFoundError, ConflictError, BadRequestError } from '#core/errors.js'
+import { NotFoundError, ConflictError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
-import { sendWelcomeEmail, sendActivationEmail } from '#helpers/mail.js'
+import { sendActivationEmail } from '#helpers/mail.js'
 import { parsePagination } from '#services/queryBuilder.js'
-import crypto from 'crypto'
 import logger from '#core/logger.js'
-import config from '#config'
 
-// Generate random password that meets complexity requirements (uppercase + lowercase + number)
-const generatePassword = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  const bytes = crypto.randomBytes(8)
-  let password = ''
-  for (let i = 0; i < 8; i++) {
-    password += chars[bytes[i] % chars.length]
-  }
-  // Ensure at least one of each required type
-  return password[0].toUpperCase() + password.slice(1, 7) + String(bytes[7] % 10)
-}
-
-// Create partner
+// Create partner (always as pending; activation happens via approve flow)
 export const createPartner = asyncHandler(async (req, res) => {
+  req.body.status = 'pending'
   const partner = await Partner.create(req.body)
 
-  // Create admin user for partner
-  const tempPassword = generatePassword()
+  // Create admin user for partner (pending - no password until approved)
   const adminUser = await User.create({
     accountType: 'partner',
     accountId: partner._id,
     name: req.body.companyName + ' Admin',
     email: req.body.email,
-    password: tempPassword,
     role: 'admin',
-    status: 'active'
+    status: 'pending'
   })
 
-  // Send welcome email with credentials
-  try {
-    await sendWelcomeEmail({
-      to: adminUser.email,
-      name: adminUser.name,
-      email: adminUser.email,
-      password: tempPassword,
-      accountType: 'Partner',
-      partnerId: partner._id,
-      loginUrl: partner.branding?.siteDomain
-        ? `https://${partner.branding.siteDomain}/login`
-        : `${config.adminUrl}/login`
-    })
-    logger.info(`Welcome email sent to partner admin: ${adminUser.email}`)
-  } catch (error) {
-    logger.error(`Failed to send welcome email: ${error.message}`)
-  }
+  logger.info(
+    `Partner created: ${partner.companyName} (${partner._id}), admin user: ${adminUser.email}`
+  )
 
   res.status(201).json({
     success: true,
@@ -62,8 +33,7 @@ export const createPartner = asyncHandler(async (req, res) => {
     data: {
       partner,
       adminUser: {
-        email: adminUser.email,
-        tempPassword // Remove this in production, only send via email
+        email: adminUser.email
       }
     }
   })
@@ -144,6 +114,11 @@ export const updatePartner = asyncHandler(async (req, res) => {
     'partnerType',
     'paymentSettings'
   ]
+
+  // Prevent setting status to 'active' via update; activation must go through the approve flow
+  if (req.body.status === 'active') {
+    delete req.body.status
+  }
 
   allowedFields.forEach(field => {
     if (req.body[field] !== undefined) {

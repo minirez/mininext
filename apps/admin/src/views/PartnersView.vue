@@ -364,11 +364,11 @@
                 </p>
               </div>
 
-              <div>
+              <div v-if="isEditing">
                 <label class="form-label">{{ $t('common.status.label') }}</label>
                 <div class="flex gap-2">
                   <label
-                    v-for="statusOption in statusOptions"
+                    v-for="statusOption in editStatusOptions"
                     :key="statusOption.value"
                     class="relative flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all"
                     :class="
@@ -386,7 +386,6 @@
                     <span
                       class="w-2 h-2 rounded-full"
                       :class="{
-                        'bg-green-500': statusOption.value === 'active',
                         'bg-red-500': statusOption.value === 'inactive',
                         'bg-yellow-500': statusOption.value === 'pending'
                       }"
@@ -999,7 +998,7 @@ const form = ref({
     country: '',
     postalCode: ''
   },
-  status: 'active',
+  status: 'pending',
   partnerType: 'agency',
   paymentSettings: defaultPaymentSettings()
 })
@@ -1014,9 +1013,8 @@ const columns = [
   { key: 'status', label: t('common.status.label') }
 ]
 
-// Status options for form
-const statusOptions = [
-  { value: 'active', label: t('common.active'), color: 'green' },
+// Status options for edit form only (pending + inactive; activation to active is via approve button)
+const editStatusOptions = [
   { value: 'pending', label: t('common.pending'), color: 'yellow' },
   { value: 'inactive', label: t('common.inactive'), color: 'red' }
 ]
@@ -1036,7 +1034,7 @@ const openCreateModalInternal = () => {
       country: '',
       postalCode: ''
     },
-    status: 'active',
+    status: 'pending',
     partnerType: 'agency',
     paymentSettings: defaultPaymentSettings()
   }
