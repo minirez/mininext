@@ -13,13 +13,13 @@ import config from '#config'
 // Generate random password that meets complexity requirements (uppercase + lowercase + number)
 const generatePassword = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  const bytes = crypto.randomBytes(8)
+  const bytes = crypto.randomBytes(12)
   let password = ''
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 12; i++) {
     password += chars[bytes[i] % chars.length]
   }
   // Ensure at least one of each required type
-  return password[0].toUpperCase() + password.slice(1, 7) + String(bytes[7] % 10)
+  return password[0].toUpperCase() + password.slice(1, 11) + String(bytes[11] % 10)
 }
 
 // Create partner

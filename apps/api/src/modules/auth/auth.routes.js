@@ -217,7 +217,7 @@ router.post(
  *               password:
  *                 type: string
  *                 format: password
- *                 minLength: 8
+ *                 minLength: 12
  *     responses:
  *       200:
  *         description: Password reset successful
