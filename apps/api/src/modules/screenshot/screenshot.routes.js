@@ -81,6 +81,7 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
     await new Promise(r => setTimeout(r, 2000))
 
     if (scroll > 0) {
+      // eslint-disable-next-line no-undef
       await page.evaluate(y => window.scrollTo(0, y), scroll)
       await new Promise(r => setTimeout(r, 500))
     }
