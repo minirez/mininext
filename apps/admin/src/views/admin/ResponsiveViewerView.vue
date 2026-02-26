@@ -478,6 +478,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { toPng } from 'html-to-image'
+import html2canvas from 'html2canvas'
 
 const captureArea = ref(null)
 const canvasContainer = ref(null)
@@ -913,11 +914,6 @@ const getImacScreenStyle = device => {
   return { height: h + 'px' }
 }
 
-function getScreenshotUrl() {
-  return activeSite.value
-}
-
-const screenshotCache = new Map()
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 const exportScrollY = ref(0)
 const scrollOverride = ref(false)
@@ -926,14 +922,38 @@ watch(iframeScrollY, val => {
   if (!scrollOverride.value) exportScrollY.value = val
 })
 
-watch(activeSite, () => screenshotCache.clear())
-watch(activePath, () => screenshotCache.clear())
-watch(exportScrollY, () => screenshotCache.clear())
+/**
+ * Capture iframe content directly via html2canvas (same-origin only).
+ * This preserves the exact visual state: scroll position, open menus, etc.
+ */
+async function captureIframeDirect(deviceId, clipW, clipH) {
+  const iframe = iframeRefs[deviceId]
+  if (!iframe?.contentWindow?.document) return null
 
-const loadScreenshot = async (url, width, height, scrollY = 0) => {
-  const cacheKey = `${url}::${width}x${height}::${scrollY}`
-  if (screenshotCache.has(cacheKey)) return screenshotCache.get(cacheKey)
+  try {
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    const canvas = await html2canvas(doc.documentElement, {
+      width: Math.round(clipW),
+      height: Math.round(clipH),
+      windowWidth: iframe.contentWindow.innerWidth,
+      windowHeight: iframe.contentWindow.innerHeight,
+      scrollX: 0,
+      scrollY: -(doc.documentElement.scrollTop || doc.body.scrollTop || 0),
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false
+    })
+    return canvas
+  } catch {
+    return null
+  }
+}
 
+/**
+ * Fallback: server-side Puppeteer screenshot for cross-origin iframes.
+ */
+async function captureViaApi(url, width, height, scrollY = 0) {
   const token = localStorage.getItem('token')
   const params = new URLSearchParams({
     url,
@@ -952,10 +972,7 @@ const loadScreenshot = async (url, width, height, scrollY = 0) => {
 
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = () => {
-      screenshotCache.set(cacheKey, img)
-      resolve(img)
-    }
+    img.onload = () => resolve(img)
     img.onerror = () => reject(new Error('Screenshot load failed'))
     img.src = objectUrl
   })
@@ -972,13 +989,22 @@ const exportAsPng = async () => {
   const replacements = []
 
   try {
-    const screenshotUrl = getScreenshotUrl()
     const z = contentZoom.value / 100
 
-    const screenshotPromises = activeDevices.value.map(device => {
+    const screenshotPromises = activeDevices.value.map(async device => {
       const ssWidth = Math.round(device.viewport.width / z)
       const ssHeight = Math.round(device.viewport.height / z)
-      return loadScreenshot(screenshotUrl, ssWidth, ssHeight, exportScrollY.value).catch(() => null)
+
+      const directCanvas = await captureIframeDirect(device.id, ssWidth, ssHeight)
+      if (directCanvas) return { type: 'canvas', value: directCanvas }
+
+      const img = await captureViaApi(
+        activeSite.value,
+        ssWidth,
+        ssHeight,
+        exportScrollY.value
+      ).catch(() => null)
+      return { type: 'image', value: img }
     })
 
     const screenshots = await Promise.all(screenshotPromises)
@@ -990,30 +1016,38 @@ const exportAsPng = async () => {
       const clipW = parseFloat(clipBox.style.width)
       const clipH = parseFloat(clipBox.style.height)
 
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(clipW * 2)
-      canvas.height = Math.round(clipH * 2)
-      canvas.style.width = clipW + 'px'
-      canvas.style.height = clipH + 'px'
+      const shot = screenshots[i]
+      let canvas
+
+      if (shot?.type === 'canvas' && shot.value) {
+        canvas = shot.value
+        canvas.style.width = clipW + 'px'
+        canvas.style.height = clipH + 'px'
+      } else {
+        canvas = document.createElement('canvas')
+        canvas.width = Math.round(clipW * 2)
+        canvas.height = Math.round(clipH * 2)
+        canvas.style.width = clipW + 'px'
+        canvas.style.height = clipH + 'px'
+
+        const ctx = canvas.getContext('2d')
+        if (shot?.type === 'image' && shot.value) {
+          ctx.drawImage(shot.value, 0, 0, canvas.width, canvas.height)
+        } else {
+          ctx.fillStyle = '#1e293b'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          ctx.fillStyle = '#64748b'
+          ctx.font = `${16 * 2}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2)
+        }
+      }
+
       canvas.style.position = 'absolute'
       canvas.style.top = '0'
       canvas.style.left = '0'
       canvas.style.borderRadius = getComputedStyle(screenContainer).borderRadius
-
-      const ctx = canvas.getContext('2d')
-      const img = screenshots[i]
-
-      if (img) {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      } else {
-        ctx.fillStyle = '#1e293b'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.fillStyle = '#64748b'
-        ctx.font = `${16 * 2}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2)
-      }
 
       clipBox.style.display = 'none'
       screenContainer.style.position = 'relative'
