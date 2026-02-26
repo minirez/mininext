@@ -32,7 +32,7 @@
             <input
               v-model="activePath"
               type="text"
-              class="text-xs text-gray-600 dark:text-slate-300 font-mono bg-transparent border-none outline-none w-40"
+              class="text-xs text-gray-600 dark:text-slate-300 font-mono bg-transparent border-none outline-none w-48"
               placeholder="/admin/dashboard"
               @keydown.enter="refreshIframes"
             />
@@ -81,7 +81,7 @@
 
       <!-- Row 2: Controls -->
       <div class="flex items-center gap-3 mt-2 flex-wrap">
-        <!-- Device Scale (slider 1) -->
+        <!-- Device Scale (slider 1) — scales entire device visually -->
         <div
           class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
         >
@@ -106,7 +106,7 @@
           </button>
         </div>
 
-        <!-- Content Zoom (slider 2 - inner zoom like ctrl+/- ) -->
+        <!-- Content Zoom (slider 2) — zooms page content inside iframe only -->
         <div
           class="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg px-2.5 py-1.5"
         >
@@ -330,7 +330,7 @@
               <div class="phone-frame" :class="frameColorClass" :style="getPhoneFrameStyle(device)">
                 <div class="phone-notch" :style="{ top: `${device.bezel}px` }"></div>
                 <div class="phone-screen" :style="{ borderRadius: `${device.screenRadius}px` }">
-                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                  <div class="iframe-clip-box" :style="getScreenClipStyle(device)">
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
@@ -339,6 +339,7 @@
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                       loading="lazy"
+                      @load="onIframeLoad(device.id)"
                     />
                   </div>
                 </div>
@@ -358,7 +359,7 @@
               >
                 <div class="tablet-camera"></div>
                 <div class="tablet-screen">
-                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                  <div class="iframe-clip-box" :style="getScreenClipStyle(device)">
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
@@ -367,6 +368,7 @@
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                       loading="lazy"
+                      @load="onIframeLoad(device.id)"
                     />
                   </div>
                 </div>
@@ -382,7 +384,7 @@
               >
                 <div class="laptop-camera"></div>
                 <div class="laptop-screen">
-                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                  <div class="iframe-clip-box" :style="getScreenClipStyle(device)">
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
@@ -391,6 +393,7 @@
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                       loading="lazy"
+                      @load="onIframeLoad(device.id)"
                     />
                   </div>
                 </div>
@@ -403,16 +406,12 @@
 
             <!-- Desktop Frame -->
             <div v-if="device.type === 'desktop'" class="device-desktop">
-              <div
-                class="imac-screen-container"
-                :class="imacFrameColorClass"
-                :style="getImacContainerStyle(device)"
-              >
+              <div class="imac-body" :class="imacBodyColorClass" :style="getImacBodyStyle(device)">
                 <div class="imac-bezel-top">
                   <div class="imac-camera"></div>
                 </div>
                 <div class="imac-screen" :style="getImacScreenStyle(device)">
-                  <div class="iframe-zoom-wrapper" :style="getContentZoomWrapperStyle(device)">
+                  <div class="iframe-clip-box" :style="getScreenClipStyle(device)">
                     <iframe
                       :key="device.id + '-' + iframeKey"
                       :ref="el => setIframeRef(device.id, el)"
@@ -421,6 +420,7 @@
                       class="device-iframe"
                       sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                       loading="lazy"
+                      @load="onIframeLoad(device.id)"
                     />
                   </div>
                 </div>
@@ -485,6 +485,26 @@ function refreshIframes() {
   iframeKey.value++
 }
 
+function onIframeLoad(deviceId) {
+  try {
+    const iframe = iframeRefs[deviceId]
+    if (!iframe) return
+    const iframeUrl = iframe.contentWindow?.location?.href
+    if (iframeUrl && iframeUrl !== 'about:blank') {
+      const parsed = new URL(iframeUrl)
+      const baseParsed = new URL(activeSiteBase.value)
+      if (parsed.origin === baseParsed.origin) {
+        const newPath = parsed.pathname + parsed.search + parsed.hash
+        if (newPath !== activePath.value) {
+          activePath.value = newPath
+        }
+      }
+    }
+  } catch {
+    // cross-origin - can't read iframe URL
+  }
+}
+
 const pageZoom = ref(100)
 const contentZoom = ref(100)
 
@@ -527,7 +547,7 @@ const devices = [
     type: 'desktop',
     viewport: { width: 2560, height: 1440 },
     baseScale: 0.3,
-    bezel: 2
+    bezel: 14
   }
 ]
 
@@ -544,7 +564,6 @@ const toggleDevice = id => {
 
 const activeDevices = computed(() => devices.filter(d => selectedDevices.value.includes(d.id)))
 
-// --- Rotation & Tilt ---
 const rotationY = ref(0)
 const tiltX = ref(0)
 
@@ -566,7 +585,6 @@ const deviceTiltStyle = computed(() => ({
   transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 }))
 
-// --- Device Color ---
 const deviceColor = ref('black')
 
 const frameColorClass = computed(() =>
@@ -581,14 +599,13 @@ const tabletFrameColorClass = computed(() =>
 const laptopFrameColorClass = computed(() =>
   deviceColor.value === 'white' ? 'laptop-frame-white' : 'laptop-frame-black'
 )
-const imacFrameColorClass = computed(() =>
-  deviceColor.value === 'white' ? 'imac-container-white' : 'imac-container-black'
+const imacBodyColorClass = computed(() =>
+  deviceColor.value === 'white' ? 'imac-body-white' : 'imac-body-black'
 )
 const imacChinColorClass = computed(() =>
   deviceColor.value === 'white' ? 'imac-chin-white' : 'imac-chin-black'
 )
 
-// --- Shadow ---
 const shadowIntensity = ref(50)
 
 function getDeviceShadowStyle() {
@@ -599,7 +616,6 @@ function getDeviceShadowStyle() {
   }
 }
 
-// --- Free Move ---
 const freeMode = ref(false)
 const freePositions = reactive({})
 const dragging = ref(null)
@@ -649,7 +665,6 @@ function resetFreePositions() {
   Object.keys(freePositions).forEach(k => delete freePositions[k])
 }
 
-// --- Background ---
 const presetColors = [
   {
     name: 'Transparent',
@@ -731,50 +746,55 @@ const canvasContainerStyle = computed(() => {
 
 const captureAreaStyle = computed(() => {
   const s = pageZoom.value / 100
-  const style = {
+  return {
     transform: `scale(${s})`,
     transformOrigin: 'top left',
     padding: freeMode.value ? '48px 40px 200px' : '48px 40px 32px',
     minWidth: freeMode.value ? '2000px' : undefined,
     minHeight: freeMode.value ? '1500px' : undefined
   }
-  return style
 })
 
 const screenW = device => device.viewport.width * device.baseScale
 const screenH = device => device.viewport.height * device.baseScale
 
+/**
+ * The clip box is the visible screen area — always same fixed pixel size.
+ * Content zoom works by scaling the iframe INSIDE this fixed box.
+ */
+const getScreenClipStyle = device => ({
+  width: screenW(device) + 'px',
+  height: screenH(device) + 'px',
+  overflow: 'hidden',
+  position: 'relative'
+})
+
+/**
+ * Content zoom: scale the iframe's virtual viewport.
+ * At contentZoom 100%: iframe is viewport.width x viewport.height, scaled by baseScale.
+ * At contentZoom 50%: iframe is viewport.width*2 x viewport.height*2 (more content), scaled by baseScale*0.5.
+ * The visual size stays the same because (viewport * (1/zoom)) * (baseScale * zoom) = viewport * baseScale.
+ */
 const getIframeStyle = device => {
-  const s = device.baseScale
+  const z = contentZoom.value / 100
+  const effectiveScale = device.baseScale * z
+  const iframeW = device.viewport.width / z
+  const iframeH = device.viewport.height / z
   return {
-    width: device.viewport.width + 'px',
-    height: device.viewport.height + 'px',
-    transform: `scale(${s})`,
+    width: Math.round(iframeW) + 'px',
+    height: Math.round(iframeH) + 'px',
+    transform: `scale(${effectiveScale})`,
     transformOrigin: 'top left',
     display: 'block'
-  }
-}
-
-const getContentZoomWrapperStyle = device => {
-  const w = screenW(device)
-  const h = screenH(device)
-  const z = contentZoom.value / 100
-  return {
-    width: w + 'px',
-    height: h + 'px',
-    overflow: 'hidden',
-    transform: `scale(${z})`,
-    transformOrigin: 'top left'
   }
 }
 
 const getPhoneFrameStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
-  const z = contentZoom.value / 100
   return {
-    width: w * z + device.bezel * 2 + 'px',
-    height: h * z + device.bezel * 2 + 'px',
+    width: w + device.bezel * 2 + 'px',
+    height: h + device.bezel * 2 + 'px',
     borderRadius: device.frameRadius + 'px',
     padding: device.bezel + 'px'
   }
@@ -783,10 +803,9 @@ const getPhoneFrameStyle = device => {
 const getTabletFrameStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
-  const z = contentZoom.value / 100
   return {
-    width: w * z + device.bezel * 2 + 'px',
-    height: h * z + device.bezel * 2 + 'px',
+    width: w + device.bezel * 2 + 'px',
+    height: h + device.bezel * 2 + 'px',
     padding: device.bezel + 'px'
   }
 }
@@ -794,16 +813,15 @@ const getTabletFrameStyle = device => {
 const getLaptopContainerStyle = device => {
   const w = screenW(device)
   const h = screenH(device)
-  const z = contentZoom.value / 100
   return {
-    width: w * z + device.bezelH * 2 + 'px',
-    height: h * z + device.bezelTop + device.bezelBot + 'px',
+    width: w + device.bezelH * 2 + 'px',
+    height: h + device.bezelTop + device.bezelBot + 'px',
     padding: `${device.bezelTop}px ${device.bezelH}px ${device.bezelBot}px`
   }
 }
 
 const getLaptopBaseStyle = device => {
-  const containerW = screenW(device) * (contentZoom.value / 100) + device.bezelH * 2
+  const containerW = screenW(device) + device.bezelH * 2
   return {
     width: containerW + 80 + 'px',
     marginLeft: '-40px'
@@ -811,42 +829,61 @@ const getLaptopBaseStyle = device => {
 }
 
 const getLaptopBottomStyle = device => {
-  const containerW = screenW(device) * (contentZoom.value / 100) + device.bezelH * 2
+  const containerW = screenW(device) + device.bezelH * 2
   return {
     width: containerW + 120 + 'px',
     marginLeft: '-60px'
   }
 }
 
-const getImacContainerStyle = device => {
+const getImacBodyStyle = device => {
   const w = screenW(device)
-  const z = contentZoom.value / 100
-  return { width: w * z + device.bezel * 2 + 'px' }
+  return {
+    width: w + device.bezel * 2 + 'px',
+    padding: `0 ${device.bezel}px`
+  }
 }
 
 const getImacScreenStyle = device => {
   const h = screenH(device)
-  const z = contentZoom.value / 100
-  return { height: h * z + 'px' }
+  return { height: h + 'px' }
 }
 
 function getScreenshotUrl() {
   return activeSite.value
 }
 
-// --- Screenshot export via own API (Puppeteer-based) ---
 const screenshotCache = new Map()
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
 watch(activeSite, () => screenshotCache.clear())
 watch(activePath, () => screenshotCache.clear())
 
-const loadScreenshot = async (url, width, height) => {
-  const cacheKey = `${url}::${width}x${height}`
+function getIframeScrollTop(deviceId) {
+  try {
+    const iframe = iframeRefs[deviceId]
+    if (!iframe?.contentWindow?.document) return 0
+    return (
+      iframe.contentWindow.document.documentElement.scrollTop ||
+      iframe.contentWindow.document.body.scrollTop ||
+      0
+    )
+  } catch {
+    return 0
+  }
+}
+
+const loadScreenshot = async (url, width, height, scrollY = 0) => {
+  const cacheKey = `${url}::${width}x${height}::${scrollY}`
   if (screenshotCache.has(cacheKey)) return screenshotCache.get(cacheKey)
 
   const token = localStorage.getItem('token')
-  const params = new URLSearchParams({ url, width: String(width), height: String(height) })
+  const params = new URLSearchParams({
+    url,
+    width: String(width),
+    height: String(height),
+    scrollY: String(scrollY)
+  })
   const resp = await fetch(`${API_BASE}/screenshot/capture?${params}`, {
     headers: { Authorization: `Bearer ${token}` }
   })
@@ -879,25 +916,29 @@ const exportAsPng = async () => {
 
   try {
     const screenshotUrl = getScreenshotUrl()
+    const z = contentZoom.value / 100
+
     const screenshotPromises = activeDevices.value.map(device => {
-      return loadScreenshot(screenshotUrl, device.viewport.width, device.viewport.height).catch(
-        () => null
-      )
+      const ssWidth = Math.round(device.viewport.width / z)
+      const ssHeight = Math.round(device.viewport.height / z)
+      const scrollY = getIframeScrollTop(device.id)
+      return loadScreenshot(screenshotUrl, ssWidth, ssHeight, scrollY).catch(() => null)
     })
 
     const screenshots = await Promise.all(screenshotPromises)
 
     iframes.forEach((iframe, i) => {
-      const zoomWrapper = iframe.parentElement
-      const screenContainer = zoomWrapper.parentElement
+      const clipBox = iframe.parentElement
+      const screenContainer = clipBox.parentElement
 
-      const containerRect = screenContainer.getBoundingClientRect()
+      const clipW = parseFloat(clipBox.style.width)
+      const clipH = parseFloat(clipBox.style.height)
 
       const canvas = document.createElement('canvas')
-      canvas.width = Math.round(containerRect.width * 2)
-      canvas.height = Math.round(containerRect.height * 2)
-      canvas.style.width = containerRect.width + 'px'
-      canvas.style.height = containerRect.height + 'px'
+      canvas.width = Math.round(clipW * 2)
+      canvas.height = Math.round(clipH * 2)
+      canvas.style.width = clipW + 'px'
+      canvas.style.height = clipH + 'px'
       canvas.style.position = 'absolute'
       canvas.style.top = '0'
       canvas.style.left = '0'
@@ -918,10 +959,10 @@ const exportAsPng = async () => {
         ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2)
       }
 
-      zoomWrapper.style.display = 'none'
+      clipBox.style.display = 'none'
       screenContainer.style.position = 'relative'
       screenContainer.appendChild(canvas)
-      replacements.push({ zoomWrapper, canvas, screenContainer })
+      replacements.push({ clipBox, canvas, screenContainer })
     })
 
     const isTransparent = selectedBg.value === 'transparent'
@@ -939,7 +980,7 @@ const exportAsPng = async () => {
       includeQueryParams: true,
       filter: node => {
         if (node.tagName === 'IFRAME') return false
-        if (node.classList?.contains('iframe-zoom-wrapper') && node.style?.display === 'none')
+        if (node.classList?.contains('iframe-clip-box') && node.style?.display === 'none')
           return false
         return true
       }
@@ -952,8 +993,8 @@ const exportAsPng = async () => {
   } catch (err) {
     console.error('Export failed:', err)
   } finally {
-    for (const { zoomWrapper, canvas, screenContainer } of replacements) {
-      zoomWrapper.style.display = ''
+    for (const { clipBox, canvas, screenContainer } of replacements) {
+      clipBox.style.display = ''
       screenContainer.removeChild(canvas)
     }
     labels.forEach(el => (el.style.display = ''))
@@ -985,7 +1026,7 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-.iframe-zoom-wrapper {
+.iframe-clip-box {
   position: relative;
 }
 
@@ -1185,19 +1226,24 @@ onBeforeUnmount(() => {
 }
 
 /* ===== Desktop / iMac ===== */
-.imac-screen-container {
+.imac-body {
   border-radius: 14px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-.imac-container-white {
+.imac-body-white {
   background: linear-gradient(145deg, #f0f0f4, #e0e0e4);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 0px transparent;
 }
 
-.imac-container-black {
+.imac-body-black {
   background: linear-gradient(145deg, #2a2a2e, #1e1e22);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 0px transparent;
 }
 
 .imac-bezel-top {
@@ -1218,7 +1264,6 @@ onBeforeUnmount(() => {
   width: 100%;
   overflow: hidden;
   background: #000;
-  margin: 0 2px;
 }
 
 .imac-chin {

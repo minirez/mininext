@@ -40,10 +40,10 @@ function isAllowedUrl(url) {
  * Takes a screenshot of an allowed URL at a given viewport size.
  * Injects the caller's JWT into the target page's localStorage so
  * the SPA renders the authenticated view instead of the login screen.
- * Query params: url, width, height
+ * Query params: url, width, height, scrollY
  */
 router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
-  const { url, width = '1280', height = '800' } = req.query
+  const { url, width = '1280', height = '800', scrollY = '0' } = req.query
 
   if (!url) {
     return res.status(400).json({ success: false, error: 'url parameter is required' })
@@ -55,6 +55,7 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
 
   const vpWidth = Math.min(Math.max(parseInt(width) || 1280, 320), 3840)
   const vpHeight = Math.min(Math.max(parseInt(height) || 800, 320), 2560)
+  const scroll = Math.max(parseInt(scrollY) || 0, 0)
 
   const authToken = req.headers.authorization?.replace('Bearer ', '')
 
@@ -78,6 +79,11 @@ router.get('/capture', protect, requirePlatformAdmin, async (req, res) => {
 
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 })
     await new Promise(r => setTimeout(r, 2000))
+
+    if (scroll > 0) {
+      await page.evaluate(y => window.scrollTo(0, y), scroll)
+      await new Promise(r => setTimeout(r, 500))
+    }
 
     const screenshot = await page.screenshot({ type: 'png', fullPage: false })
 
