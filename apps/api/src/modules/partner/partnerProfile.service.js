@@ -4,7 +4,8 @@ import User from '../user/user.model.js'
 import Agency from '../agency/agency.model.js'
 import { NotFoundError, ConflictError } from '#core/errors.js'
 import { asyncHandler } from '#helpers'
-import { sendActivationEmail } from '#helpers/mail.js'
+import { sendActivationEmail, sendWelcomeEmail } from '#helpers/mail.js'
+import config from '#config'
 import { parsePagination } from '#services/queryBuilder.js'
 import logger from '#core/logger.js'
 
@@ -225,7 +226,7 @@ export const approvePartner = asyncHandler(async (req, res) => {
   adminUser.status = 'pending_activation' // Keep as pending_activation until they set password
   await adminUser.save()
 
-  // Send activation email
+  // Send activation email + welcome email
   let activationEmailSent = false
   try {
     logger.info(`Attempting to send activation email to: ${adminUser.email}`)
@@ -244,7 +245,24 @@ export const approvePartner = asyncHandler(async (req, res) => {
   } catch (error) {
     logger.error(`Failed to send activation email to ${adminUser.email}:`, error.message || error)
     logger.error('Full error:', JSON.stringify(error, null, 2))
-    // Don't fail the approval if email fails - they can request a new one
+  }
+
+  // Send welcome email (non-blocking)
+  try {
+    await sendWelcomeEmail({
+      to: adminUser.email,
+      name: adminUser.name,
+      email: adminUser.email,
+      password: '-',
+      accountType: 'Partner',
+      partnerId: partner._id,
+      loginUrl: partner.branding?.siteDomain
+        ? `https://${partner.branding.siteDomain}/login`
+        : `${config.adminUrl}/login`
+    })
+    logger.info(`Welcome email sent to partner admin: ${adminUser.email}`)
+  } catch (error) {
+    logger.error(`Failed to send welcome email: ${error.message}`)
   }
 
   res.json({
