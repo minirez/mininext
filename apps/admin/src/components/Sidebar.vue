@@ -182,11 +182,9 @@ const currentModuleIcon = computed(() => {
   const routeIconMap = {
     '/dashboard': 'dashboard',
     '/partners': 'business',
-    '/admin/regions': 'map',
     '/admin/hotel-base': 'domain',
-    '/admin/audit-logs': 'history',
-    '/admin/platform-settings': 'settings',
-    '/admin/email-logs': 'mail',
+    '/admin/logs': 'receipt_long',
+    '/admin/settings': 'tune',
     '/admin/mailbox': 'inbox',
     '/agencies': 'groups',
     '/site-management': 'language',
@@ -214,9 +212,7 @@ const currentModuleIcon = computed(() => {
     '/my-subscription': 'card_membership',
     '/issues': 'bug_report',
     '/payment': 'payments',
-    '/admin/migration': 'swap_horiz',
-    '/admin/reservations': 'book_online',
-    '/admin/responsive-viewer': 'devices'
+    '/admin/reservations': 'book_online'
   }
 
   // Find matching route
@@ -372,34 +368,16 @@ const mainSection = computed(() => {
     })
     items.push({ name: 'users', to: '/users', icon: 'people', label: t('nav.users') })
     items.push({
-      name: 'region-management',
-      to: '/admin/regions',
-      icon: 'map',
-      label: t('nav.regionManagement')
-    })
-    items.push({
       name: 'hotel-base',
       to: '/admin/hotel-base',
       icon: 'domain',
       label: t('nav.hotelBase')
     })
     items.push({
-      name: 'audit-logs',
-      to: '/admin/audit-logs',
-      icon: 'history',
-      label: t('nav.auditLogs')
-    })
-    items.push({
-      name: 'platform-settings',
-      to: '/admin/platform-settings',
-      icon: 'settings',
-      label: t('nav.platformSettings')
-    })
-    items.push({
-      name: 'email-logs',
-      to: '/admin/email-logs',
-      icon: 'mail',
-      label: t('nav.emailLogs')
+      name: 'logs',
+      to: '/admin/logs',
+      icon: 'receipt_long',
+      label: t('nav.logs')
     })
     items.push({
       name: 'mailbox',
@@ -421,22 +399,10 @@ const mainSection = computed(() => {
       label: t('nav.payment')
     })
     items.push({
-      name: 'migration',
-      to: '/admin/migration',
-      icon: 'swap_horiz',
-      label: t('migration.title')
-    })
-    items.push({
-      name: 'tursab-directory',
-      to: '/admin/tursab-directory',
-      icon: 'menu_book',
-      label: t('tursab.title')
-    })
-    items.push({
-      name: 'responsive-viewer',
-      to: '/admin/responsive-viewer',
-      icon: 'devices',
-      label: t('nav.responsiveViewer')
+      name: 'settings-misc',
+      to: '/admin/settings',
+      icon: 'tune',
+      label: t('nav.settingsMisc')
     })
   }
 

@@ -1,23 +1,10 @@
 // Platform Admin Routes
-const RegionManagementView = () => import('@/views/admin/RegionManagementView.vue')
 const HotelBaseListView = () => import('@/views/admin/HotelBaseListView.vue')
 const HotelBaseDetailView = () => import('@/views/admin/HotelBaseDetailView.vue')
-const AuditLogsView = () => import('@/views/admin/AuditLogsView.vue')
-const PlatformSettingsView = () => import('@/views/admin/PlatformSettingsView.vue')
-const EmailLogsView = () => import('@/views/admin/EmailLogsView.vue')
 const MailboxView = () => import('@/views/admin/MailboxView.vue')
-const MigrationView = () => import('@/views/admin/MigrationView.vue')
 const PlatformReservationsView = () => import('@/views/admin/PlatformReservationsView.vue')
-const TursabDirectoryView = () => import('@/views/admin/TursabDirectoryView.vue')
-const ResponsiveViewerView = () => import('@/views/admin/ResponsiveViewerView.vue')
 
 export default [
-  {
-    path: 'admin/regions',
-    name: 'region-management',
-    component: RegionManagementView,
-    meta: { requiresPlatformAdmin: true }
-  },
   {
     path: 'admin/hotel-base',
     name: 'hotel-base',
@@ -49,34 +36,27 @@ export default [
     }
   },
   {
-    path: 'admin/audit-logs',
-    name: 'audit-logs',
-    component: AuditLogsView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'audit.title',
-      descriptionKey: 'audit.description'
-    }
-  },
-  {
-    path: 'admin/platform-settings',
-    name: 'platform-settings',
-    component: PlatformSettingsView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'platformSettings.title',
-      descriptionKey: 'platformSettings.description'
-    }
-  },
-  {
-    path: 'admin/email-logs',
-    name: 'email-logs',
-    component: EmailLogsView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'emailLogs.title',
-      descriptionKey: 'emailLogs.description'
-    }
+    path: 'admin/logs',
+    component: () => import('@/views/admin/AdminLogsView.vue'),
+    meta: { requiresPlatformAdmin: true },
+    children: [
+      {
+        path: '',
+        redirect: '/admin/logs/audit'
+      },
+      {
+        path: 'audit',
+        name: 'audit-logs',
+        component: () => import('@/views/admin/AuditLogsView.vue'),
+        meta: { tab: 'audit-logs' }
+      },
+      {
+        path: 'email',
+        name: 'email-logs',
+        component: () => import('@/views/admin/EmailLogsView.vue'),
+        meta: { tab: 'email-logs' }
+      }
+    ]
   },
   {
     path: 'admin/mailbox',
@@ -86,15 +66,6 @@ export default [
       requiresPlatformAdmin: true,
       titleKey: 'mailbox.title',
       descriptionKey: 'mailbox.description'
-    }
-  },
-  {
-    path: 'admin/migration',
-    name: 'migration',
-    component: MigrationView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'migration.title'
     }
   },
   {
@@ -108,23 +79,44 @@ export default [
     }
   },
   {
-    path: 'admin/tursab-directory',
-    name: 'tursab-directory',
-    component: TursabDirectoryView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'tursab.title',
-      descriptionKey: 'tursab.description'
-    }
-  },
-  {
-    path: 'admin/responsive-viewer',
-    name: 'responsive-viewer',
-    component: ResponsiveViewerView,
-    meta: {
-      requiresPlatformAdmin: true,
-      titleKey: 'responsiveViewer.title',
-      descriptionKey: 'responsiveViewer.description'
-    }
+    path: 'admin/settings',
+    component: () => import('@/views/admin/AdminSettingsMiscView.vue'),
+    meta: { requiresPlatformAdmin: true },
+    children: [
+      {
+        path: '',
+        redirect: '/admin/settings/platform'
+      },
+      {
+        path: 'platform',
+        name: 'platform-settings',
+        component: () => import('@/views/admin/PlatformSettingsView.vue'),
+        meta: { tab: 'platform-settings' }
+      },
+      {
+        path: 'regions',
+        name: 'region-management',
+        component: () => import('@/views/admin/RegionManagementView.vue'),
+        meta: { tab: 'regions' }
+      },
+      {
+        path: 'migration',
+        name: 'migration',
+        component: () => import('@/views/admin/MigrationView.vue'),
+        meta: { tab: 'migration' }
+      },
+      {
+        path: 'tursab',
+        name: 'tursab-directory',
+        component: () => import('@/views/admin/TursabDirectoryView.vue'),
+        meta: { tab: 'tursab' }
+      },
+      {
+        path: 'responsive-viewer',
+        name: 'responsive-viewer',
+        component: () => import('@/views/admin/ResponsiveViewerView.vue'),
+        meta: { tab: 'responsive-viewer' }
+      }
+    ]
   }
 ]
