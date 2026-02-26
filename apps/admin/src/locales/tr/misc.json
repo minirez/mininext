@@ -28,7 +28,8 @@
     "payment": "Ödeme Sistemi",
     "tours": "Turlar & Aktiviteler",
     "platformReservations": "Rezervasyonlar",
-    "language": "Dil"
+    "language": "Dil",
+    "responsiveViewer": "Responsive Viewer"
   },
   "platformBookings": {
     "title": "Platform Rezervasyonları",
@@ -696,5 +697,9 @@
     "confirm": "Onayla",
     "yes": "Evet",
     "no": "Hayır"
+  },
+  "responsiveViewer": {
+    "title": "Responsive Viewer",
+    "description": "Pazarlama için cihaz mockup'larını önizleyin ve dışa aktarın"
   }
 }

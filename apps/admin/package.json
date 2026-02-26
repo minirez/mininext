@@ -27,6 +27,7 @@
     "cropperjs": "1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.1",
+    "html-to-image": "^1.11.13",
     "leaflet": "^1.9.4",
     "pinia": "^3.0.1",
     "socket.io-client": "^4.8.3",

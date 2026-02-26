@@ -28,7 +28,8 @@
     "payment": "Payment System",
     "tours": "Tours & Activities",
     "platformReservations": "Reservations",
-    "language": "Language"
+    "language": "Language",
+    "responsiveViewer": "Responsive Viewer"
   },
   "platformBookings": {
     "title": "Platform Reservations",
@@ -723,5 +724,9 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No"
+  },
+  "responsiveViewer": {
+    "title": "Responsive Viewer",
+    "description": "Preview and export device mockups for marketing"
   }
 }
