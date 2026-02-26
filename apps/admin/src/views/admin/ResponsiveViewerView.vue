@@ -105,10 +105,7 @@
                   ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600'
                   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               "
-              @click="
-                tiltX = preset.x
-                tiltY = preset.y
-              "
+              @click="applyTilt(preset)"
               :title="preset.name"
             >
               {{ preset.label }}
@@ -381,6 +378,11 @@ const tiltPresets = [
   { name: 'Hero', label: '◇', x: 15, y: -8 },
   { name: 'Dramatic', label: '◈', x: 25, y: -12 }
 ]
+
+function applyTilt(preset) {
+  tiltX.value = preset.x
+  tiltY.value = preset.y
+}
 
 const deviceTiltStyle = computed(() => ({
   transform: `perspective(1200px) rotateX(${tiltY.value}deg) rotateY(${tiltX.value}deg)`,
