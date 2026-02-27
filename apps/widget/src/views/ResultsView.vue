@@ -3,8 +3,6 @@ import { ref, computed } from 'vue'
 import { useWidgetStore } from '../stores/widget'
 import { useFormatters } from '../composables/useFormatters'
 import { useTranslation } from '../composables/useTranslation'
-import ViewHeader from '../components/ViewHeader.vue'
-
 const widgetStore = useWidgetStore()
 const { formatCurrency, formatDateShort } = useFormatters()
 const { t, locale } = useTranslation()
@@ -237,10 +235,24 @@ function prevImage() {
 
 <template>
   <div class="results-view">
-    <ViewHeader />
-
     <!-- Search Summary Card -->
     <div class="search-summary-card">
+      <button class="back-btn" @click="widgetStore.goBack()" type="button">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
       <div class="summary-dates">
         <div class="summary-date">
           <span class="summary-date-label">{{ t('common.checkIn') }}</span>
