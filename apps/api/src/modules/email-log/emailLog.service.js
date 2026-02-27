@@ -117,6 +117,18 @@ class EmailLogService extends BaseEntityService {
       if (body.Type === 'SubscriptionConfirmation') {
         const subscribeUrl = body.SubscribeURL
         if (subscribeUrl) {
+          // SSRF protection: only allow AWS SNS URLs
+          try {
+            const parsedUrl = new URL(subscribeUrl)
+            if (!parsedUrl.hostname.endsWith('.amazonaws.com')) {
+              logger.error('[SES Webhook] SubscribeURL is not an AWS domain:', parsedUrl.hostname)
+              return res.status(400).json({ success: false, error: 'Invalid SubscribeURL' })
+            }
+          } catch {
+            logger.error('[SES Webhook] Invalid SubscribeURL:', subscribeUrl)
+            return res.status(400).json({ success: false, error: 'Invalid SubscribeURL' })
+          }
+
           logger.info('[SES Webhook] Confirming SNS subscription...')
           const response = await fetch(subscribeUrl)
           if (response.ok) {

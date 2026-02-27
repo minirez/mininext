@@ -7,6 +7,7 @@ import { getPartnerId } from '#services/helpers.js'
 import { parsePagination } from '#services/queryBuilder.js'
 import { sendWelcomeEmail } from '#helpers/mail.js'
 import crypto from 'crypto'
+import path from 'path'
 import logger from '#core/logger.js'
 import config from '#config'
 
@@ -596,8 +597,13 @@ export const serveDocument = asyncHandler(async (req, res) => {
     throw new NotFoundError('DOCUMENT_NOT_FOUND')
   }
 
-  // Send file
-  res.sendFile(document.url, { root: '.' })
+  // Send file with path traversal protection
+  const filePath = path.resolve(document.url)
+  const uploadsDir = path.resolve('uploads')
+  if (!filePath.startsWith(uploadsDir)) {
+    throw new NotFoundError('DOCUMENT_NOT_FOUND')
+  }
+  res.sendFile(filePath)
 })
 
 // Suspend agency

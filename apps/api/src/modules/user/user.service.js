@@ -632,7 +632,7 @@ export const verify2FA = asyncHandler(async (req, res) => {
     throw new BadRequestError('2FA_NOT_ENABLED')
   }
 
-  const isValid = verify2FAToken(token, user.twoFactorSecret)
+  const isValid = verify2FAToken(token, user.twoFactorSecret, 1, userId.toString())
 
   if (!isValid) {
     throw new BadRequestError('INVALID_2FA_TOKEN')
@@ -666,7 +666,7 @@ export const disable2FA = asyncHandler(async (req, res) => {
     throw new BadRequestError('2FA_NOT_ENABLED')
   }
 
-  const isValid = verify2FAToken(token, user.twoFactorSecret)
+  const isValid = verify2FAToken(token, user.twoFactorSecret, 1, userId.toString())
 
   if (!isValid) {
     throw new BadRequestError('INVALID_2FA_TOKEN')

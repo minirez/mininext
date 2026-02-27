@@ -99,8 +99,11 @@ export const getPlatformDashboard = asyncHandler(async (req, res) => {
  * - Partner'a ait istatistikler
  */
 export const getPartnerDashboard = asyncHandler(async (req, res) => {
-  // Platform admin can view partner dashboard via X-Partner-Id header
-  const partnerIdStr = req.headers['x-partner-id'] || req.user.accountId
+  // Use authenticated user's accountId; platform admin can specify via header
+  const partnerIdStr =
+    req.user.accountType === 'platform'
+      ? req.headers['x-partner-id'] || req.user.accountId
+      : req.user.accountId
 
   if (!partnerIdStr) {
     return res.status(400).json({ success: false, message: 'Partner ID required' })

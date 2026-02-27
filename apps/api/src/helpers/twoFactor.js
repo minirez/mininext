@@ -1,6 +1,20 @@
 import speakeasy from 'speakeasy'
 import QRCode from 'qrcode'
+import crypto from 'crypto'
 import logger from '../core/logger.js'
+
+// Track last used TOTP counter per user to prevent replay attacks
+const lastUsedCounters = new Map()
+// Clean up old entries every hour
+setInterval(
+  () => {
+    const cutoff = Date.now() - 2 * 60 * 1000 // 2 minutes (one full TOTP window cycle)
+    for (const [key, entry] of lastUsedCounters) {
+      if (entry.timestamp < cutoff) lastUsedCounters.delete(key)
+    }
+  },
+  60 * 60 * 1000
+)
 
 /**
  * Generate 2FA secret
@@ -42,14 +56,32 @@ export const generateQRCode = async otpauthUrl => {
  * @param {number} window - Time window for validation (default: 1)
  * @returns {boolean} True if valid
  */
-export const verify2FAToken = (token, secret, window = 1) => {
+export const verify2FAToken = (token, secret, window = 1, userId = null) => {
   try {
-    return speakeasy.totp.verify({
+    const result = speakeasy.totp.verify({
       secret: secret,
       encoding: 'base32',
       token: token,
       window: window
     })
+
+    if (!result) return false
+
+    // Replay protection: prevent same TOTP code from being used twice
+    if (userId) {
+      const currentCounter = Math.floor(Date.now() / 30000) // 30-second TOTP period
+      const key = `${userId}:${token}`
+      const lastUsed = lastUsedCounters.get(key)
+
+      if (lastUsed && lastUsed.counter === currentCounter) {
+        logger.warn(`2FA replay attempt detected for user ${userId}`)
+        return false
+      }
+
+      lastUsedCounters.set(key, { counter: currentCounter, timestamp: Date.now() })
+    }
+
+    return true
   } catch (error) {
     logger.error('Failed to verify 2FA token:', error)
     return false
@@ -64,7 +96,7 @@ export const verify2FAToken = (token, secret, window = 1) => {
 export const generateBackupCodes = (count = 10) => {
   const codes = []
   for (let i = 0; i < count; i++) {
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase()
+    const code = crypto.randomBytes(4).toString('hex').toUpperCase()
     codes.push(code)
   }
   return codes

@@ -47,7 +47,15 @@ export const handleWebhook = async body => {
   if (snsMessage.Type === 'SubscriptionConfirmation') {
     logger.info('SNS Subscription Confirmation received, confirming...')
     try {
-      const response = await fetch(snsMessage.SubscribeURL)
+      // SSRF protection: only allow AWS SNS URLs
+      const subscribeUrl = snsMessage.SubscribeURL
+      const parsedUrl = new URL(subscribeUrl)
+      if (!parsedUrl.hostname.endsWith('.amazonaws.com')) {
+        logger.error('SNS SubscribeURL is not an AWS domain:', parsedUrl.hostname)
+        return { confirmed: false, error: 'Invalid SubscribeURL domain' }
+      }
+
+      const response = await fetch(subscribeUrl)
       if (response.ok) {
         logger.info('SNS Subscription confirmed successfully')
       } else {

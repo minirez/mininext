@@ -1,6 +1,6 @@
 import Session from './session.model.js'
 import User from '../user/user.model.js'
-import { NotFoundError, BadRequestError } from '#core/errors.js'
+import { NotFoundError, BadRequestError, ForbiddenError } from '#core/errors.js'
 
 /**
  * Session Service
@@ -55,10 +55,15 @@ class SessionService {
   /**
    * Terminate a specific session
    */
-  async terminateSession(sessionId, terminatedBy, reason = 'admin_action') {
+  async terminateSession(sessionId, terminatedBy, reason = 'admin_action', ownerUserId = null) {
     const session = await Session.findById(sessionId)
     if (!session) {
       throw new NotFoundError('SESSION_NOT_FOUND')
+    }
+
+    // H3 fix: If ownerUserId provided, verify session belongs to that user
+    if (ownerUserId && !session.userId.equals(ownerUserId)) {
+      throw new ForbiddenError('FORBIDDEN')
     }
 
     if (session.status !== 'active') {

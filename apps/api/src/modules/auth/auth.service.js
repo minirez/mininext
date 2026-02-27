@@ -122,7 +122,7 @@ export const login = asyncHandler(async (req, res) => {
       })
     }
 
-    const isValid = verify2FAToken(twoFactorToken, user.twoFactorSecret)
+    const isValid = verify2FAToken(twoFactorToken, user.twoFactorSecret, 1, user._id.toString())
     if (!isValid) {
       throw new UnauthorizedError('INVALID_2FA_TOKEN')
     }
@@ -136,6 +136,23 @@ export const login = asyncHandler(async (req, res) => {
 
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens(user, account)
+
+  // H5 fix: Enforce session limit (max 10 concurrent sessions per user)
+  const MAX_SESSIONS = 10
+  try {
+    const activeCount = await Session.countActiveSessions(user._id)
+    if (activeCount >= MAX_SESSIONS) {
+      // Terminate oldest sessions to make room
+      const oldestSessions = await Session.find({ userId: user._id, status: 'active' })
+        .sort({ lastActivity: 1 })
+        .limit(activeCount - MAX_SESSIONS + 1)
+      for (const s of oldestSessions) {
+        await s.terminate(user._id, 'security')
+      }
+    }
+  } catch (err) {
+    logger.error('Session limit check failed:', err.message)
+  }
 
   // Create session for tracking
   try {
@@ -362,6 +379,27 @@ export const changePassword = asyncHandler(async (req, res) => {
   user.password = newPassword
   user.forcePasswordChange = false // Clear force password change flag
   await user.save()
+
+  // H4 fix: Terminate all other sessions after password change
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '')
+    if (token) {
+      const currentSession = await Session.findByToken(token)
+      if (currentSession) {
+        await Session.updateMany(
+          { userId: user._id, status: 'active', _id: { $ne: currentSession._id } },
+          {
+            status: 'terminated',
+            terminatedAt: new Date(),
+            terminatedBy: user._id,
+            terminationReason: 'password_change'
+          }
+        )
+      }
+    }
+  } catch (err) {
+    logger.error('Failed to terminate sessions after password change:', err.message)
+  }
 
   res.json({
     success: true,

@@ -38,7 +38,8 @@ router.delete(
   asyncHandler(async (req, res) => {
     const { sessionId } = req.params
 
-    await sessionService.terminateSession(sessionId, req.user._id, 'logout')
+    // H3 fix: Verify session belongs to current user before terminating
+    await sessionService.terminateSession(sessionId, req.user._id, 'logout', req.user._id)
 
     res.json({
       success: true,
