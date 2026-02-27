@@ -80,8 +80,8 @@ export const useWidgetStore = defineStore('widget', () => {
   const bankTransferDescription = ref({})
   const bankTransferEnabled = ref(false)
 
-  // Cancellation Policy (from search response)
-  const cancellationPolicy = ref(null)
+  // Cancellation Policy (derived from search results - no separate ref needed)
+  const cancellationPolicy = computed(() => searchResults.value?.search?.cancellationPolicy || null)
 
   // Cancellation Guarantee Package
   const cancellationGuarantee = ref(false) // purchased toggle
@@ -346,10 +346,7 @@ export const useWidgetStore = defineStore('widget', () => {
       if (results.search?.paymentTerms) {
         paymentTerms.value = results.search.paymentTerms
       }
-      // Cancellation policy
-      if (results.search?.cancellationPolicy) {
-        cancellationPolicy.value = results.search.cancellationPolicy
-      }
+      // cancellationPolicy is now a computed from searchResults
       // Cancellation guarantee config
       if (results.search?.cancellationGuarantee) {
         cancellationGuaranteeConfig.value = results.search.cancellationGuarantee
@@ -601,7 +598,7 @@ export const useWidgetStore = defineStore('widget', () => {
     booking.value = null
     paymentResult.value = null
     selectedPaymentType.value = 'full'
-    cancellationPolicy.value = null
+    // cancellationPolicy is a computed from searchResults, no need to reset
     cancellationGuarantee.value = false
     cancellationGuaranteeConfig.value = null
     promoCode.value = ''
