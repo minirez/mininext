@@ -34,15 +34,18 @@ const registeredListeners = new Map()
 // SOCKET CONFIGURATION
 // ============================================================================
 
-const SOCKET_CONFIG = {
+const getSocketConfig = () => ({
   transports: ['websocket', 'polling'],
   autoConnect: false, // Manuel control
   reconnection: true,
   reconnectionAttempts: 10,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
-  timeout: 20000
-}
+  timeout: 20000,
+  auth: {
+    token: localStorage.getItem('token')
+  }
+})
 
 // ============================================================================
 // SOCKET INSTANCE MANAGEMENT
@@ -65,7 +68,7 @@ const getSocketInstance = () => {
 
   socketLogger.debug('[Socket] Creating new instance, connecting to:', baseUrl)
 
-  socketInstance = io(baseUrl, SOCKET_CONFIG)
+  socketInstance = io(baseUrl, getSocketConfig())
 
   // Connection events
   socketInstance.on('connect', () => {
@@ -135,6 +138,8 @@ const getSocketInstance = () => {
 const connect = () => {
   const socket = getSocketInstance()
   if (!socket.connected) {
+    // Update auth token before connecting (may have been refreshed)
+    socket.auth = { token: localStorage.getItem('token') }
     socketLogger.debug('[Socket] Connecting...')
     socket.connect()
   }

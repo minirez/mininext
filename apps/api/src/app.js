@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import mongoSanitize from 'express-mongo-sanitize'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import config from './config/index.js'
@@ -164,6 +165,10 @@ app.use((req, res, next) => {
 // Body parser (10MB limit - sufficient for most uploads, prevents DoS)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// NoSQL Injection Protection - sanitize req.body, req.query, req.params
+// Removes keys starting with '$' or containing '.' to prevent MongoDB operator injection
+app.use(mongoSanitize())
 
 // Prometheus metrics middleware (before routes, after body parser)
 app.use(metricsMiddleware)

@@ -130,4 +130,14 @@ if (config.env === 'production' && config.jwt.secret.length < 64) {
   console.warn('WARNING: JWT_SECRET should be at least 64 characters in production')
 }
 
+// Payment service security validation
+if (config.env === 'production') {
+  if (!process.env.PAYMENT_API_KEY) {
+    console.warn('WARNING: PAYMENT_API_KEY is not set! Payment gateway calls will fail.')
+  }
+  if (!process.env.PAYMENT_WEBHOOK_KEY) {
+    console.warn('WARNING: PAYMENT_WEBHOOK_KEY is not set! Payment webhooks will be rejected.')
+  }
+}
+
 export default config

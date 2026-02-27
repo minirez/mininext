@@ -12,7 +12,7 @@ router.post(
   (req, res, next) => {
     // Verify webhook key for security
     const webhookKey = req.headers['x-api-key'] || req.headers['x-webhook-key']
-    const expectedKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+    const expectedKey = process.env.PAYMENT_WEBHOOK_KEY
 
     if (webhookKey !== expectedKey) {
       logger.error('[Subscription Callback] Invalid webhook key')

@@ -37,7 +37,7 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
 
   // Validate API key (simple validation for internal service)
   const apiKey = req.headers['x-api-key']
-  const validApiKey = process.env.PAYMENT_WEBHOOK_KEY || 'payment-webhook-secret'
+  const validApiKey = process.env.PAYMENT_WEBHOOK_KEY
 
   if (apiKey !== validApiKey) {
     logger.error('[Payment Webhook] Invalid API key')

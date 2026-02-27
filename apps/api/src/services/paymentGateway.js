@@ -9,7 +9,7 @@ import logger from '../core/logger.js'
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1:7043'
 
 // API Key for internal service authentication
-const API_KEY = process.env.PAYMENT_API_KEY || 'pws-internal-api-key-2026'
+const API_KEY = process.env.PAYMENT_API_KEY
 
 // Request configuration
 const DEFAULT_TIMEOUT = 30000 // 30 seconds

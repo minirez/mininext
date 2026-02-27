@@ -1,4 +1,5 @@
 import { Server } from 'socket.io'
+import jwt from 'jsonwebtoken'
 import logger from './logger.js'
 import config from '../config/index.js'
 
@@ -19,30 +20,49 @@ export const initSocket = httpServer => {
     path: '/socket.io'
   })
 
-  // Connection handler
+  // JWT Authentication middleware - verify token during handshake
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token
+    if (!token) {
+      return next(new Error('Authentication required'))
+    }
+    try {
+      const decoded = jwt.verify(token, config.jwt.secret)
+      socket.userId = decoded.userId
+      socket.accountType = decoded.accountType
+      next()
+    } catch (err) {
+      logger.warn(`Socket auth failed: ${socket.id} - ${err.message}`)
+      next(new Error('Invalid token'))
+    }
+  })
+
+  // Connection handler (only authenticated sockets reach here)
   io.on('connection', socket => {
-    logger.info(`Socket connected: ${socket.id}`)
+    logger.info(`Socket connected: ${socket.id} (user: ${socket.userId})`)
 
-    // Authenticate user and join user-specific room
-    // Used for notifications and user-specific events
+    // Auto-join user's own room on connection
+    const userRoom = `user:${socket.userId}`
+    socket.join(userRoom)
+
+    // Authenticate event kept for backward compatibility
+    // But user can only join their own room
     socket.on('authenticate', data => {
-      const { userId, userType = 'User' } = typeof data === 'string' ? { userId: data } : data
-      if (userId) {
-        const room = `user:${userId}`
-        socket.join(room)
-        socket.userId = userId
-        socket.userType = userType
-        logger.info(`Socket ${socket.id} authenticated as ${userType}:${userId}`)
-
-        // Send acknowledgment
-        socket.emit('authenticated', { room })
-      }
+      const { userType = 'User' } = typeof data === 'string' ? {} : data || {}
+      socket.userType = userType
+      logger.info(`Socket ${socket.id} authenticated as ${userType}:${socket.userId}`)
+      socket.emit('authenticated', { room: userRoom })
     })
 
-    // Join a specific room (for user-specific events)
+    // Join a specific room - restricted to own user room and operation rooms
     socket.on('join', room => {
-      socket.join(room)
-      logger.info(`Socket ${socket.id} joined room: ${room}`)
+      // Allow joining own user room or operation rooms (not other users' rooms)
+      if (room === userRoom || !room.startsWith('user:')) {
+        socket.join(room)
+        logger.info(`Socket ${socket.id} joined room: ${room}`)
+      } else {
+        logger.warn(`Socket ${socket.id} tried to join unauthorized room: ${room}`)
+      }
     })
 
     // Leave a room
