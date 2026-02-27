@@ -2348,28 +2348,13 @@ textarea.form-input {
   background: var(--bg-secondary);
   border: 2px solid transparent;
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
   transition: var(--transition);
 }
 
 .meal-option-v2:hover {
   background: var(--bg-tertiary);
   border-color: var(--border-color);
-}
-
-/* Radio Circle */
-.meal-radio-circle {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  border: 2px solid var(--border-color);
-  border-radius: 50%;
-  transition: var(--transition);
-}
-
-.meal-option-v2:hover .meal-radio-circle {
-  border-color: var(--primary);
 }
 
 /* Meal Content */
@@ -2436,6 +2421,83 @@ textarea.form-input {
   margin-top: 8px;
 }
 
+/* Meal Footer (tags + select button) */
+.meal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.meal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.cancellation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #ecfdf5;
+  color: #059669;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  line-height: 1.2;
+}
+
+.cancellation-link:hover {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.cancellation-link svg {
+  flex-shrink: 0;
+}
+
+.cancellation-link--nonrefundable {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.cancellation-link--nonrefundable:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.meal-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.meal-select-btn:hover {
+  opacity: 0.9;
+  transform: translateX(1px);
+}
+
+.meal-select-btn svg {
+  flex-shrink: 0;
+}
+
 /* BookingView total area */
 .summary-card-total-value .price-original {
   font-size: 13px;
@@ -2475,19 +2537,6 @@ textarea.form-input {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-}
-
-/* Meal Arrow */
-.meal-arrow {
-  flex-shrink: 0;
-  color: var(--text-tertiary);
-  transition: var(--transition);
-  margin-top: 4px;
-}
-
-.meal-option-v2:hover .meal-arrow {
-  color: var(--primary);
-  transform: translateX(2px);
 }
 
 /* ==================== LIGHTBOX ==================== */
@@ -4003,6 +4052,145 @@ select.form-input option {
     margin: 0 4px;
     margin-bottom: 18px;
   }
+}
+
+/* ========================================
+   Cancellation Policy Modal
+   ======================================== */
+.cancellation-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+}
+
+.cancellation-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.cancellation-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cancellation-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cancellation-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancellation-modal-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.cancellation-modal-body {
+  padding: 20px;
+}
+
+.cancellation-free {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #ecfdf5;
+  border-radius: 8px;
+  color: #059669;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.cancellation-free svg {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+.cancellation-nonrefundable {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cancellation-nonrefundable svg {
+  flex-shrink: 0;
+}
+
+.cancellation-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cancellation-rule {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cancellation-rule:last-child {
+  border-bottom: none;
+}
+
+.rule-period {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rule-refund {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.rule-refund.full {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.rule-refund.partial {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.rule-refund.none {
+  color: #dc2626;
+  background: #fef2f2;
 }
 
 /* ========================================

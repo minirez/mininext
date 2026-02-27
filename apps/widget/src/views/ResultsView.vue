@@ -14,6 +14,21 @@ const isLoading = computed(() => widgetStore.isLoading)
 const errorMessage = computed(() => widgetStore.error)
 const widgetConfig = computed(() => widgetStore.widgetConfig)
 const resultsStale = computed(() => widgetStore.resultsStale)
+const cancellationPolicy = computed(() => widgetStore.cancellationPolicy)
+
+// Cancellation modal state
+const showCancellationModal = ref(false)
+
+function openCancellationModal() {
+  showCancellationModal.value = true
+}
+
+function closeCancellationModal() {
+  showCancellationModal.value = false
+}
+
+// Has free cancellation
+const hasFreeCancellation = computed(() => cancellationPolicy.value?.freeCancellation?.enabled)
 
 // Promo code state
 const promoOpen = ref(false)
@@ -580,11 +595,7 @@ function prevImage() {
             v-for="option in roomResult.options.filter(o => o.pricing)"
             :key="option.mealPlan.code"
             class="meal-option-v2"
-            @click="selectOption(roomResult, option)"
           >
-            <!-- Radio Circle -->
-            <div class="meal-radio-circle"></div>
-
             <!-- Meal Info -->
             <div class="meal-content">
               <div class="meal-header">
@@ -608,34 +619,73 @@ function prevImage() {
                 </div>
               </div>
 
-              <!-- Campaign Badge -->
-              <div
-                v-if="option.campaigns?.length && widgetConfig?.showCampaigns"
-                class="meal-campaigns"
-              >
-                <span
-                  v-for="campaign in option.campaigns"
-                  :key="campaign.code"
-                  class="campaign-badge-v2"
+              <!-- Footer: Tags + Select Button -->
+              <div class="meal-footer">
+                <div class="meal-tags">
+                  <!-- Cancellation Link -->
+                  <span
+                    v-if="hasFreeCancellation"
+                    class="cancellation-link"
+                    @click.stop="openCancellationModal()"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    {{ t('results.freeCancellation') }}
+                  </span>
+                  <span
+                    v-else-if="cancellationPolicy"
+                    class="cancellation-link cancellation-link--nonrefundable"
+                    @click.stop="openCancellationModal()"
+                  >
+                    {{ t('results.nonRefundable') }}
+                  </span>
+
+                  <!-- Campaign Badge -->
+                  <span
+                    v-for="campaign in option.campaigns?.length && widgetConfig?.showCampaigns
+                      ? option.campaigns
+                      : []"
+                    :key="campaign.code"
+                    class="campaign-badge-v2"
+                  >
+                    {{ campaign.discountText || campaign.name }}
+                  </span>
+                </div>
+
+                <!-- Select Button -->
+                <button
+                  class="meal-select-btn"
+                  @click="selectOption(roomResult, option)"
+                  type="button"
                 >
-                  {{ campaign.discountText || campaign.name }}
-                </span>
+                  {{ t('results.select') }}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
               </div>
             </div>
-
-            <!-- Arrow -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="meal-arrow"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
           </div>
         </div>
       </div>
@@ -679,6 +729,109 @@ function prevImage() {
         </svg>
         {{ t('results.changeDates') }}
       </button>
+    </div>
+
+    <!-- Cancellation Policy Modal -->
+    <div
+      v-if="showCancellationModal"
+      class="cancellation-modal-overlay"
+      @click.self="closeCancellationModal"
+    >
+      <div class="cancellation-modal">
+        <div class="cancellation-modal-header">
+          <h3 class="cancellation-modal-title">{{ t('cancellation.title') }}</h3>
+          <button class="cancellation-modal-close" @click="closeCancellationModal" type="button">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="cancellation-modal-body">
+          <!-- Free cancellation highlight -->
+          <div v-if="hasFreeCancellation" class="cancellation-free">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>{{
+              t('cancellation.freeUntil', {
+                days: cancellationPolicy.freeCancellation.daysBeforeCheckIn
+              })
+            }}</span>
+          </div>
+
+          <!-- Non-refundable notice -->
+          <div
+            v-if="!hasFreeCancellation && !cancellationPolicy?.rules?.length"
+            class="cancellation-nonrefundable"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>{{ t('cancellation.nonRefundable') }}</span>
+          </div>
+
+          <!-- Rules -->
+          <div v-if="cancellationPolicy?.rules?.length" class="cancellation-rules">
+            <div
+              v-for="(rule, index) in cancellationPolicy.rules"
+              :key="index"
+              class="cancellation-rule"
+            >
+              <span class="rule-period">
+                {{
+                  rule.daysBeforeCheckIn === 0
+                    ? t('cancellation.onCheckinDay')
+                    : t('cancellation.daysBeforeCheckin', { days: rule.daysBeforeCheckIn })
+                }}
+              </span>
+              <span
+                class="rule-refund"
+                :class="{
+                  full: rule.refundPercent === 100,
+                  partial: rule.refundPercent > 0 && rule.refundPercent < 100,
+                  none: rule.refundPercent === 0
+                }"
+              >
+                %{{ rule.refundPercent }} {{ t('cancellation.refund') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Lightbox (no teleport for Shadow DOM compatibility) -->

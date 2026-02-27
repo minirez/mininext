@@ -105,7 +105,9 @@ export const searchAvailability = asyncHandler(async (req, res) => {
     hotelQuery.slug = hotelCode.toLowerCase()
   }
 
-  const hotel = await Hotel.findOne(hotelQuery).select('_id slug name childAgeGroups').lean()
+  const hotel = await Hotel.findOne(hotelQuery)
+    .select('_id slug name childAgeGroups policies.freeCancellation policies.cancellationRules')
+    .lean()
 
   if (!hotel) {
     throw new NotFoundError('HOTEL_NOT_FOUND')
@@ -248,6 +250,24 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         bankTransferDiscount: market.paymentMethods?.bankTransfer?.discountRate || 0,
         bankTransferReleaseDays: market.paymentMethods?.bankTransfer?.releaseDays ?? 3,
         campaignCode: campaignCode || null,
+        cancellationPolicy: (() => {
+          const useHotel = market.cancellationPolicy?.useHotelPolicy !== false
+          const source = useHotel
+            ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
+            : {
+                fc: market.cancellationPolicy?.freeCancellation,
+                rules: market.cancellationPolicy?.rules
+              }
+          return {
+            freeCancellation: source.fc?.enabled
+              ? { enabled: true, daysBeforeCheckIn: source.fc.daysBeforeCheckIn || 7 }
+              : { enabled: false },
+            rules: (source.rules || []).map(r => ({
+              daysBeforeCheckIn: r.daysBeforeCheckIn,
+              refundPercent: r.refundPercent
+            }))
+          }
+        })(),
         cancellationGuarantee: (() => {
           const gp = market.cancellationPolicy?.guaranteePackage
           // lean() bypasses Mongoose defaults - treat missing field as enabled with 1% rate

@@ -83,7 +83,20 @@ export default {
       kitchenette: 'Kitchenette'
     },
     staleResults: 'Prices may have changed since your last search.',
-    refreshPrices: 'Refresh'
+    refreshPrices: 'Refresh',
+    select: 'Select',
+    freeCancellation: 'Free cancellation',
+    nonRefundable: 'Non-refundable'
+  },
+
+  cancellation: {
+    title: 'Cancellation Policy',
+    freeUntil: 'Free cancellation up to {days} days before check-in',
+    refund: 'refund',
+    daysBeforeCheckin: '{days}+ days before check-in',
+    lessThanDays: 'Less than {days} days before check-in',
+    nonRefundable: 'This reservation is non-refundable.',
+    onCheckinDay: 'On check-in day'
   },
 
   booking: {

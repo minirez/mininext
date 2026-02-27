@@ -80,6 +80,9 @@ export const useWidgetStore = defineStore('widget', () => {
   const bankTransferDescription = ref({})
   const bankTransferEnabled = ref(false)
 
+  // Cancellation Policy (from search response)
+  const cancellationPolicy = ref(null)
+
   // Cancellation Guarantee Package
   const cancellationGuarantee = ref(false) // purchased toggle
   const cancellationGuaranteeConfig = ref(null) // { enabled, rate } from search response
@@ -343,6 +346,10 @@ export const useWidgetStore = defineStore('widget', () => {
       if (results.search?.paymentTerms) {
         paymentTerms.value = results.search.paymentTerms
       }
+      // Cancellation policy
+      if (results.search?.cancellationPolicy) {
+        cancellationPolicy.value = results.search.cancellationPolicy
+      }
       // Cancellation guarantee config
       if (results.search?.cancellationGuarantee) {
         cancellationGuaranteeConfig.value = results.search.cancellationGuarantee
@@ -594,6 +601,7 @@ export const useWidgetStore = defineStore('widget', () => {
     booking.value = null
     paymentResult.value = null
     selectedPaymentType.value = 'full'
+    cancellationPolicy.value = null
     cancellationGuarantee.value = false
     cancellationGuaranteeConfig.value = null
     promoCode.value = ''
@@ -638,6 +646,7 @@ export const useWidgetStore = defineStore('widget', () => {
     bankTransferDescription,
     bankTransferEnabled,
     detectedMarket,
+    cancellationPolicy,
     cancellationGuarantee,
     cancellationGuaranteeConfig,
     promoCode,

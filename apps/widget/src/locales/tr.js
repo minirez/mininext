@@ -84,7 +84,20 @@ export default {
       kitchenette: 'Mini Mutfak'
     },
     staleResults: 'Son aramanızdan bu yana fiyatlar değişmiş olabilir.',
-    refreshPrices: 'Yenile'
+    refreshPrices: 'Yenile',
+    select: 'Seç',
+    freeCancellation: 'Ücretsiz iptal',
+    nonRefundable: 'İade edilemez'
+  },
+
+  cancellation: {
+    title: 'İptal Koşulları',
+    freeUntil: 'Girişten {days} gün öncesine kadar ücretsiz iptal',
+    refund: 'iade',
+    daysBeforeCheckin: 'Girişe {days}+ gün kala',
+    lessThanDays: 'Girişe {days} günden az kala',
+    nonRefundable: 'Bu rezervasyon için iade yapılmamaktadır.',
+    onCheckinDay: 'Giriş günü'
   },
 
   booking: {
