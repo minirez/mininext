@@ -97,19 +97,46 @@
             </p>
           </div>
 
-          <!-- Partner dropdown -->
-          <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-            Partner
-          </label>
-          <select
-            v-model="selectedPartnerId"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-          >
-            <option value="">-- Partner seciniz --</option>
-            <option v-for="p in partners" :key="p._id" :value="p._id">
-              {{ p.companyName }} ({{ p.partnerType }})
-            </option>
-          </select>
+          <!-- Partner search & list -->
+          <input
+            v-model="partnerSearch"
+            type="text"
+            class="w-full px-3 py-2 mb-4 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+            :placeholder="$t('migration.accounts.searchPartner')"
+            @input="debouncedFetchPartners"
+          />
+
+          <div v-if="loadingPartners" class="flex justify-center py-8">
+            <span class="material-icons animate-spin text-purple-600">refresh</span>
+          </div>
+          <div v-else-if="!partners.length" class="text-center py-8 text-gray-500">
+            {{ $t('migration.accounts.noPartners') }}
+          </div>
+          <div v-else class="space-y-2 max-h-96 overflow-y-auto">
+            <div
+              v-for="p in partners"
+              :key="p._id"
+              class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors"
+              :class="
+                selectedPartnerId === p._id
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                  : 'border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
+              "
+              @click="selectedPartnerId = p._id"
+            >
+              <div>
+                <p class="font-medium text-gray-900 dark:text-white">{{ p.companyName }}</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400">
+                  {{ p.partnerType }}
+                </p>
+              </div>
+              <span
+                v-if="selectedPartnerId === p._id"
+                class="material-icons text-purple-600 text-base"
+                >check_circle</span
+              >
+            </div>
+          </div>
         </div>
       </div>
 
@@ -930,6 +957,8 @@ const loadingAccounts = ref(false)
 const accountSearch = ref('')
 const selectedAccount = ref(null)
 const partners = ref([])
+const partnerSearch = ref('')
+const loadingPartners = ref(false)
 const selectedPartnerId = ref('')
 
 // Step 2: Hotels
@@ -960,6 +989,9 @@ const reservationResult = ref(null)
 const migrating = ref(false)
 const migrationStarted = ref(false)
 const migrationResult = ref(null)
+
+// Hotel migration interim data (stored while waiting for reservation migration to finish)
+const hotelMigrationData = ref(null)
 
 // Socket progress state
 const operationId = ref(null)
@@ -1076,12 +1108,24 @@ function debouncedFetchAccounts() {
   searchTimer = setTimeout(fetchAccounts, 300)
 }
 
+let partnerSearchTimer = null
+
+function debouncedFetchPartners() {
+  clearTimeout(partnerSearchTimer)
+  partnerSearchTimer = setTimeout(fetchPartners, 300)
+}
+
 async function fetchPartners() {
+  loadingPartners.value = true
   try {
-    const res = await partnerService.getPartners({ limit: 1000 })
+    const params = { limit: 100 }
+    if (partnerSearch.value) params.search = partnerSearch.value
+    const res = await partnerService.getPartners(params)
     partners.value = res.data?.partners || []
   } catch {
     partners.value = []
+  } finally {
+    loadingPartners.value = false
   }
 }
 
@@ -1253,33 +1297,18 @@ function setupSocketListeners(opId) {
 
     // If reservation migration is enabled, start it after hotel migration completes
     if (migrationOptions.value.includeReservations && selectedHotels.value.length) {
-      await startReservationMigration(opId)
-    }
-
-    migrating.value = false
-
-    // Fetch full history record for the result view
-    try {
-      const res = await migrationService.getHistory()
-      const historyItem = res.data?.find(h => h._id === data.historyId)
-      if (historyItem) {
-        // Merge reservation result if exists
-        if (reservationResult.value) {
-          historyItem.summary = {
-            ...historyItem.summary,
-            totalReservations: reservationResult.value.totalReservations || 0,
-            migratedReservations: reservationResult.value.migratedReservations || 0
-          }
-        }
-        migrationResult.value = historyItem
-      } else {
-        migrationResult.value = { status: data.status, summary: data.summary, hotels: [] }
+      // Store hotel migration data - finalization will happen in reservation:complete
+      hotelMigrationData.value = {
+        status: data.status,
+        summary: data.summary,
+        historyId: data.historyId
       }
-    } catch {
-      migrationResult.value = { status: data.status, summary: data.summary, hotels: [] }
+      await startReservationMigration(opId)
+      return // DON'T finalize here - wait for reservation:complete
     }
 
-    cleanupSocket()
+    // No reservations - finalize now
+    finalizeMigration(data.historyId, data.status, data.summary)
   })
 
   // Reservation socket handlers
@@ -1329,9 +1358,47 @@ function setupSocketListeners(opId) {
     if (!isResOp(data)) return
     reservationMigrating.value = false
     reservationResult.value = data
+
+    // Finalize the whole migration now that reservations are done
+    const hmData = hotelMigrationData.value
+    if (hmData) {
+      const mergedSummary = {
+        ...hmData.summary,
+        totalReservations: data.totalReservations || 0,
+        migratedReservations: data.migratedReservations || 0
+      }
+      finalizeMigration(hmData.historyId, hmData.status, mergedSummary)
+      hotelMigrationData.value = null
+    }
   })
 
   socketHandlers.value = handlers
+}
+
+async function finalizeMigration(historyId, status, summary) {
+  migrating.value = false
+
+  try {
+    const res = await migrationService.getHistory()
+    const historyItem = res.data?.find(h => h._id === historyId)
+    if (historyItem) {
+      // Merge reservation data if available
+      if (summary?.totalReservations) {
+        historyItem.summary = {
+          ...historyItem.summary,
+          totalReservations: summary.totalReservations,
+          migratedReservations: summary.migratedReservations || 0
+        }
+      }
+      migrationResult.value = historyItem
+    } else {
+      migrationResult.value = { status, summary, hotels: [] }
+    }
+  } catch {
+    migrationResult.value = { status, summary, hotels: [] }
+  }
+
+  cleanupSocket()
 }
 
 async function startReservationMigration(opId) {
@@ -1358,6 +1425,12 @@ async function startReservationMigration(opId) {
       migratedReservations: 0,
       failedReservations: 0,
       error: err.message
+    }
+    // Reservation migration failed to start - finalize with hotel-only data
+    const hmData = hotelMigrationData.value
+    if (hmData) {
+      finalizeMigration(hmData.historyId, hmData.status, hmData.summary)
+      hotelMigrationData.value = null
     }
   }
 }
@@ -1438,6 +1511,7 @@ function goBackForNewMigration() {
   progress.value = { totalHotels: 0, completedHotels: 0, currentHotel: null, hotels: [] }
   reservationMigrating.value = false
   reservationResult.value = null
+  hotelMigrationData.value = null
   reservationProgress.value = {
     totalHotels: 0,
     completedHotels: 0,
@@ -1454,6 +1528,7 @@ function resetWizard() {
   currentStep.value = 0
   selectedAccount.value = null
   selectedPartnerId.value = ''
+  partnerSearch.value = ''
   accountHotels.value = []
   selectedHotels.value = []
   migrationStarted.value = false
@@ -1463,6 +1538,7 @@ function resetWizard() {
   reservationSummary.value = null
   reservationMigrating.value = false
   reservationResult.value = null
+  hotelMigrationData.value = null
   reservationProgress.value = {
     totalHotels: 0,
     completedHotels: 0,

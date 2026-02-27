@@ -4,6 +4,7 @@
  * Split from booking.service.js for better maintainability
  */
 
+import mongoose from 'mongoose'
 import { asyncHandler } from '#helpers'
 import Booking from './booking.model.js'
 import { BadRequestError } from '#core/errors.js'
@@ -23,6 +24,9 @@ export const getBookingStats = asyncHandler(async (req, res) => {
 
   const { hotelId, period = '30d' } = req.query
 
+  // Convert to ObjectId for aggregate pipeline (Mongoose doesn't auto-cast in aggregate)
+  const partnerObjectId = new mongoose.Types.ObjectId(partnerId)
+
   // Calculate date range
   const now = new Date()
   const startDate = new Date()
@@ -33,38 +37,34 @@ export const getBookingStats = asyncHandler(async (req, res) => {
 
   // Build query for period stats
   const periodQuery = {
-    partner: partnerId,
+    partner: partnerObjectId,
     createdAt: { $gte: startDate }
   }
   if (hotelId) {
-    periodQuery.hotel = hotelId
+    periodQuery.hotel = new mongoose.Types.ObjectId(hotelId)
   }
 
   // Build query for all-time status counts
   const allTimeQuery = {
-    partner: partnerId
+    partner: partnerObjectId
   }
   if (hotelId) {
-    allTimeQuery.hotel = hotelId
+    allTimeQuery.hotel = new mongoose.Types.ObjectId(hotelId)
   }
 
-  // Aggregate stats for period
-  const [periodStats, statusCounts] = await Promise.all([
-    // Period-based stats (revenue, etc.)
+  // Aggregate stats
+  const [revenueByCurrency, statusCounts, periodSummary] = await Promise.all([
+    // Revenue grouped by currency (all-time, confirmed+completed only)
     Booking.aggregate([
-      { $match: periodQuery },
+      { $match: { ...allTimeQuery, status: { $in: ['confirmed', 'completed'] } } },
       {
         $group: {
-          _id: null,
-          totalRevenue: {
-            $sum: {
-              $cond: [{ $in: ['$status', ['confirmed', 'completed']] }, '$pricing.grandTotal', 0]
-            }
-          },
-          totalRooms: { $sum: '$totalRooms' },
-          totalGuests: { $sum: { $add: ['$totalAdults', '$totalChildren'] } }
+          _id: '$pricing.currency',
+          total: { $sum: '$pricing.grandTotal' },
+          count: { $sum: 1 }
         }
-      }
+      },
+      { $sort: { total: -1 } }
     ]),
     // All-time status counts
     Booking.aggregate([
@@ -73,6 +73,17 @@ export const getBookingStats = asyncHandler(async (req, res) => {
         $group: {
           _id: '$status',
           count: { $sum: 1 }
+        }
+      }
+    ]),
+    // Period-based summary
+    Booking.aggregate([
+      { $match: periodQuery },
+      {
+        $group: {
+          _id: null,
+          totalRooms: { $sum: '$totalRooms' },
+          totalGuests: { $sum: { $add: ['$totalAdults', '$totalChildren'] } }
         }
       }
     ])
@@ -86,25 +97,31 @@ export const getBookingStats = asyncHandler(async (req, res) => {
     total += s.count
   })
 
-  const result = {
-    // All-time counts
-    total,
-    draft: statusMap.draft || 0,
-    pending: statusMap.pending || 0,
-    confirmed: statusMap.confirmed || 0,
-    completed: statusMap.completed || 0,
-    cancelled: statusMap.cancelled || 0,
-    // Period-based stats
-    revenue: periodStats[0]?.totalRevenue || 0,
-    totalRooms: periodStats[0]?.totalRooms || 0,
-    totalGuests: periodStats[0]?.totalGuests || 0
-  }
+  // Build revenue breakdown by currency
+  const revenueByCurrencyMap = revenueByCurrency
+    .filter(r => r._id)
+    .map(r => ({
+      currency: r._id,
+      total: Math.round(r.total * 100) / 100,
+      count: r.count
+    }))
 
   res.json({
     success: true,
     data: {
       period,
-      ...result
+      // All-time counts
+      total,
+      draft: statusMap.draft || 0,
+      pending: statusMap.pending || 0,
+      confirmed: statusMap.confirmed || 0,
+      completed: statusMap.completed || 0,
+      cancelled: statusMap.cancelled || 0,
+      // Revenue by currency
+      revenueByCurrency: revenueByCurrencyMap,
+      // Period-based stats
+      totalRooms: periodSummary[0]?.totalRooms || 0,
+      totalGuests: periodSummary[0]?.totalGuests || 0
     }
   })
 })

@@ -109,6 +109,61 @@ const getHistory = async (params = {}) => {
   }
 }
 
+// Standalone reservation migration
+const getLegacyHotelsWithBookings = async () => {
+  try {
+    const response = await apiClient.get(`${BASE}/reservations/legacy-hotels`)
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Get legacy hotels failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const getNewSystemHotels = async partnerId => {
+  try {
+    const response = await apiClient.get(`${BASE}/reservations/new-hotels`, {
+      params: { partnerId }
+    })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Get new hotels failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const startReservationMigration = async data => {
+  try {
+    const response = await apiClient.post(`${BASE}/reservations/migrate`, data, { timeout: 600000 })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Reservation migration failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
+const getReservationMigrationHistory = async (params = {}) => {
+  try {
+    const response = await apiClient.get(`${BASE}/reservations/history`, { params })
+    return response.data
+  } catch (error) {
+    apiLogger.error(
+      'Migration Service: Get reservation history failed',
+      error.response?.data || error.message
+    )
+    throw error
+  }
+}
+
 export default {
   connectLegacy,
   disconnectLegacy,
@@ -119,5 +174,9 @@ export default {
   migrate,
   getAccountReservations,
   migrateReservations,
-  getHistory
+  getHistory,
+  getLegacyHotelsWithBookings,
+  getNewSystemHotels,
+  startReservationMigration,
+  getReservationMigrationHistory
 }

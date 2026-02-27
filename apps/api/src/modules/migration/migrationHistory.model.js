@@ -41,6 +41,21 @@ const hotelResultSchema = new mongoose.Schema(
   { _id: false }
 )
 
+const hotelMappingSchema = new mongoose.Schema(
+  {
+    legacyHotelId: Number,
+    newHotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel' },
+    newHotelName: String,
+    accountId: Number,
+    reservations: {
+      total: { type: Number, default: 0 },
+      migrated: { type: Number, default: 0 },
+      failed: { type: Number, default: 0 }
+    }
+  },
+  { _id: false }
+)
+
 const migrationHistorySchema = new mongoose.Schema(
   {
     partner: {
@@ -54,6 +69,11 @@ const migrationHistorySchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    migrationType: {
+      type: String,
+      enum: ['hotels', 'reservations'],
+      default: 'hotels'
+    },
     legacyAccountId: Number,
     legacyAccountName: String,
     status: {
@@ -62,6 +82,7 @@ const migrationHistorySchema = new mongoose.Schema(
       default: 'in_progress'
     },
     hotels: [hotelResultSchema],
+    hotelMappings: [hotelMappingSchema],
     startedAt: { type: Date, default: Date.now },
     completedAt: Date,
     summary: {
@@ -71,7 +92,8 @@ const migrationHistorySchema = new mongoose.Schema(
       totalPhotos: { type: Number, default: 0 },
       downloadedPhotos: { type: Number, default: 0 },
       totalReservations: { type: Number, default: 0 },
-      migratedReservations: { type: Number, default: 0 }
+      migratedReservations: { type: Number, default: 0 },
+      failedReservations: { type: Number, default: 0 }
     }
   },
   {
@@ -80,6 +102,7 @@ const migrationHistorySchema = new mongoose.Schema(
 )
 
 migrationHistorySchema.index({ legacyAccountId: 1 })
+migrationHistorySchema.index({ migrationType: 1, createdAt: -1 })
 migrationHistorySchema.index({ createdAt: -1 })
 
 export default mongoose.model('MigrationHistory', migrationHistorySchema)

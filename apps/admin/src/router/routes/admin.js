@@ -106,6 +106,12 @@ export default [
         meta: { tab: 'migration' }
       },
       {
+        path: 'reservation-migration',
+        name: 'reservation-migration',
+        component: () => import('@/views/admin/ReservationMigrationView.vue'),
+        meta: { tab: 'reservation-migration' }
+      },
+      {
         path: 'tursab',
         name: 'tursab-directory',
         component: () => import('@/views/admin/TursabDirectoryView.vue'),

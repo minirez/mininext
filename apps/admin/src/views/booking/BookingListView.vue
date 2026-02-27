@@ -10,18 +10,34 @@
           v-for="stat in statCards"
           :key="stat.key"
           class="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 cursor-pointer transition-all hover:shadow-md"
-          :class="{ 'ring-2 ring-purple-500': filters.status === stat.filterValue }"
+          :class="{
+            'ring-2 ring-purple-500':
+              stat.filterValue !== null && filters.status === stat.filterValue
+          }"
           @click="setStatusFilter(stat.filterValue)"
         >
           <div class="flex items-center">
             <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+              class="w-10 h-10 rounded-lg flex items-center justify-center mr-3 shrink-0"
               :class="stat.bgClass"
             >
               <span class="material-icons" :class="stat.iconClass">{{ stat.icon }}</span>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</p>
+            <div class="min-w-0">
+              <template v-if="stat.key === 'revenue'">
+                <div v-if="revenueByCurrency.length" class="flex flex-wrap gap-x-2 gap-y-0.5">
+                  <span
+                    v-for="rev in revenueByCurrency"
+                    :key="rev.currency"
+                    class="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap"
+                    >{{ formatPrice(rev.total, rev.currency) }}</span
+                  >
+                </div>
+                <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+              </template>
+              <p v-else class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ stat.value }}
+              </p>
               <p class="text-xs text-gray-500 dark:text-slate-400">{{ stat.label }}</p>
             </div>
           </div>
@@ -739,6 +755,9 @@ const statusTabs = computed(() => [
   { value: 'cancelled', label: t('booking.status.cancelled'), count: stats.value.cancelled || 0 }
 ])
 
+// Revenue by currency from stats
+const revenueByCurrency = computed(() => stats.value.revenueByCurrency || [])
+
 // Stat cards
 const statCards = computed(() => [
   {
@@ -779,7 +798,7 @@ const statCards = computed(() => [
   },
   {
     key: 'revenue',
-    value: formatPrice(stats.value.revenue, 'TRY'),
+    value: null,
     label: t('booking.stats.totalRevenue'),
     icon: 'payments',
     bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',

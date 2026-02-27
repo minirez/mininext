@@ -17,7 +17,7 @@ export default defineConfig({
   },
   server: {
     host: true, // Listen on all interfaces (0.0.0.0) for Docker/WSL access
-    port: 5173,
+    port: 5180,
     allowedHosts: true,
     proxy: {
       '/api': {

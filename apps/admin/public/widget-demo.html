@@ -607,10 +607,10 @@
 
           document.body.appendChild(host)
 
-          // Dynamic import of widget entry from widget dev server (port 5174)
+          // Dynamic import of widget entry from widget dev server (port 5181)
           try {
             const partnerId = document.getElementById('widget-partner')?.value || null
-            const widgetBaseUrl = 'http://localhost:5174'
+            const widgetBaseUrl = 'http://localhost:5181'
             const { createWidget } = await import(
               /* @vite-ignore */ `${widgetBaseUrl}/src/widget-entry.js`
             )

@@ -3,14 +3,14 @@
  * Handles environment-specific settings with automatic detection
  */
 
-const PORT = process.env.PORT || 7043;
+const PORT = process.env.PORT || 7043
 
 /**
  * Check if running in development mode
  * Must be a function to read env AFTER dotenv loads
  */
 function isDev() {
-  return process.env.NODE_ENV !== 'production';
+  return process.env.NODE_ENV !== 'production'
 }
 
 /**
@@ -21,37 +21,37 @@ function isDev() {
 function getCallbackBaseUrl() {
   // In production, use CALLBACK_BASE_URL or default to payment.maxirez.com
   if (!isDev()) {
-    return process.env.CALLBACK_BASE_URL || 'https://payment.maxirez.com';
+    return process.env.CALLBACK_BASE_URL || 'https://payment.maxirez.com'
   }
 
   // In development, always use localhost
-  return `http://localhost:${PORT}`;
+  return `http://localhost:${PORT}`
 }
 
 /**
  * Get the frontend URL for redirects after payment
- * In development: uses localhost:5173 (Vite dev server)
+ * In development: uses localhost:5180 (Vite dev server)
  * In production: uses FRONTEND_URL env variable
  */
 function getFrontendUrl() {
   // In production, use FRONTEND_URL or default
   if (!isDev()) {
-    return process.env.FRONTEND_URL || 'https://app.maxirez.com';
+    return process.env.FRONTEND_URL || 'https://app.maxirez.com'
   }
 
-  return 'http://localhost:5173';
+  return 'http://localhost:5180'
 }
 
 const config = {
   port: PORT,
   get nodeEnv() {
-    return process.env.NODE_ENV || 'development';
+    return process.env.NODE_ENV || 'development'
   },
   get isDevelopment() {
-    return isDev();
+    return isDev()
   },
   get isProduction() {
-    return process.env.NODE_ENV === 'production';
+    return process.env.NODE_ENV === 'production'
   },
 
   // MongoDB
@@ -62,17 +62,17 @@ const config = {
 
   // URLs - these are getter functions for dynamic resolution
   get callbackBaseUrl() {
-    return getCallbackBaseUrl();
+    return getCallbackBaseUrl()
   },
 
   get frontendUrl() {
-    return getFrontendUrl();
+    return getFrontendUrl()
   },
 
   // Server info
   serviceName: process.env.SERVICE_NAME || 'payment-service',
   serverPublicIp: process.env.SERVER_PUBLIC_IP || null
-};
+}
 
-export default config;
-export { getCallbackBaseUrl, getFrontendUrl };
+export default config
+export { getCallbackBaseUrl, getFrontendUrl }

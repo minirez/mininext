@@ -20,6 +20,12 @@ const tabs = [
     icon: 'swap_horiz',
     path: '/admin/settings/migration'
   },
+  {
+    id: 'reservation-migration',
+    label: t('migration.resMigration.title'),
+    icon: 'import_export',
+    path: '/admin/settings/reservation-migration'
+  },
   { id: 'tursab', label: t('tursab.title'), icon: 'menu_book', path: '/admin/settings/tursab' },
   {
     id: 'responsive-viewer',

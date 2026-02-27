@@ -138,11 +138,13 @@ export const listBookings = asyncHandler(async (req, res) => {
     const grandTotal = b.pricing?.grandTotal || 0
 
     // Calculate payment status from actual data
+    // If booking already has an explicit payment status (e.g. from migration deposit model),
+    // respect it as an override when it's more favorable than calculated
     let paymentStatus = 'pending'
     if (paymentData.paidAmount >= grandTotal && grandTotal > 0) {
       paymentStatus = 'paid'
     } else if (paymentData.paidAmount > 0) {
-      paymentStatus = 'partial'
+      paymentStatus = b.payment?.status === 'paid' ? 'paid' : 'partial'
     }
 
     return {
@@ -304,11 +306,13 @@ export const getBookingDetail = asyncHandler(async (req, res) => {
   const grandTotal = booking.pricing?.grandTotal || 0
 
   // Calculate payment status from actual data
+  // If booking already has an explicit payment status (e.g. from migration deposit model),
+  // respect it as an override when it's more favorable than calculated
   let paymentStatus = 'pending'
   if (paidAmount >= grandTotal && grandTotal > 0) {
     paymentStatus = 'paid'
   } else if (paidAmount > 0) {
-    paymentStatus = 'partial'
+    paymentStatus = booking.payment?.status === 'paid' ? 'paid' : 'partial'
   }
 
   // Override booking.payment with calculated values

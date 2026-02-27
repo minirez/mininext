@@ -39,7 +39,7 @@ vi.mock('#helpers/twoFactor.js', () => ({
 vi.mock('#helpers/mail.js', () => ({
   sendPasswordResetEmail: vi.fn(),
   sendNewPartnerNotification: vi.fn(),
-  getAdminUrl: vi.fn(() => 'http://localhost:5173')
+  getAdminUrl: vi.fn(() => 'http://localhost:5180')
 }))
 
 vi.mock('#middleware/rateLimiter.js', () => ({

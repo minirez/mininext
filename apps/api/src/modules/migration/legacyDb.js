@@ -1,7 +1,15 @@
 import mongoose from 'mongoose'
 import logger from '#core/logger.js'
 
-const DEFAULT_URI = process.env.LEGACY_DB_URI || 'mongodb://mongodb:27017/webv2?replicaSet=rs0'
+// Derive legacy DB URI from main app's MongoDB connection (replace db name with 'webv2')
+function getDefaultLegacyUri() {
+  if (process.env.LEGACY_DB_URI) return process.env.LEGACY_DB_URI
+  const mainUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/booking-engine'
+  // Replace the database name with 'webv2', preserving host/auth/options
+  return mainUri.replace(/\/[^/?]+(\?|$)/, '/webv2$1')
+}
+
+const DEFAULT_URI = getDefaultLegacyUri()
 
 let connection = null
 

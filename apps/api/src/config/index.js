@@ -31,14 +31,14 @@ const config = {
   cors: {
     origin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || [
       'http://localhost:3000',
-      'http://localhost:5173'
+      'http://localhost:5180'
     ]
   },
 
   // Frontend/Admin URL - Used for password reset links, activation emails etc.
   // IMPORTANT: Must be set in production!
-  frontendUrl: process.env.FRONTEND_URL || process.env.ADMIN_URL || 'http://localhost:5173',
-  adminUrl: process.env.ADMIN_URL || process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || process.env.ADMIN_URL || 'http://localhost:5180',
+  adminUrl: process.env.ADMIN_URL || process.env.FRONTEND_URL || 'http://localhost:5180',
   apiUrl: process.env.API_URL || process.env.API_BASE_URL || 'http://localhost:4000',
 
   // AWS - fromEmail/fromName are stored in database (PlatformSettings)

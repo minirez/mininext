@@ -50,9 +50,9 @@ let allowedOrigins = process.env.CORS_ORIGIN
 // In development, always allow localhost origins
 if (process.env.NODE_ENV !== 'production') {
   const devOrigins = [
-    'http://localhost:5173',
+    'http://localhost:5180',
     'http://localhost:4000',
-    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5180',
     'http://127.0.0.1:4000'
   ]
   allowedOrigins = [...new Set([...allowedOrigins, ...devOrigins])]

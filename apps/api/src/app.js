@@ -45,7 +45,7 @@ app.use(
           "'self'",
           'data:',
           'https:',
-          ...(config.isDev ? ['http://localhost:4000', 'http://localhost:5174'] : [])
+          ...(config.isDev ? ['http://localhost:4000', 'http://localhost:5181'] : [])
         ]
       }
     }

@@ -14,7 +14,7 @@ process.env.JWT_REFRESH_EXPIRE = '7d'
 process.env.MONGODB_URI = 'mongodb://localhost:27017/booking-engine-test'
 process.env.PORT = '4001'
 process.env.REDIS_ENABLED = 'false'
-process.env.FRONTEND_URL = 'http://localhost:5173'
+process.env.FRONTEND_URL = 'http://localhost:5180'
 
 // ── Global mocks ────────────────────────────────────────────────────────────
 

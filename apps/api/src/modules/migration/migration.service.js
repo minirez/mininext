@@ -842,11 +842,12 @@ async function cleanupPreviousMigration(legacyHotelId) {
     `[Migration] Cleaning up previous migration for legacy hotel ${legacyHotelId} (hotel: ${hotelId})`
   )
 
-  // Delete associated data
+  // Delete associated data (including migrated bookings)
   await Promise.all([
     RoomType.deleteMany({ hotel: hotelId }),
     MealPlan.deleteMany({ hotel: hotelId }),
     Market.deleteMany({ hotel: hotelId }),
+    Booking.deleteMany({ hotel: hotelId, 'source.type': 'migration' }),
     Hotel.deleteOne({ _id: hotelId })
   ])
 

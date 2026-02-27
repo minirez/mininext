@@ -14,7 +14,9 @@ function widgetSymlinkPlugin() {
       try {
         if (existsSync(link)) unlinkSync(link)
         symlinkSync(target, link)
-      } catch (_e) { /* ignore */ }
+      } catch (_e) {
+        /* ignore */
+      }
     }
   }
 }
@@ -34,7 +36,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/widget-entry.js'),
       name: 'MaxiResWidget',
-      fileName: (format) => `widget.${format}.js`,
+      fileName: format => `widget.${format}.js`,
       formats: ['es', 'iife']
     },
     rollupOptions: {
@@ -57,7 +59,7 @@ export default defineConfig({
 
   // Development server
   server: {
-    port: 5174,
+    port: 5181,
     host: true, // Listen on all addresses
     cors: true,
     allowedHosts: ['widget.mini.com'],
