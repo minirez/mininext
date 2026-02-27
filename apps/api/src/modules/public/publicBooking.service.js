@@ -71,7 +71,9 @@ export const createBooking = asyncHandler(async (req, res) => {
     hotelQuery.slug = hotelCode.toLowerCase()
   }
   const hotel = await Hotel.findOne(hotelQuery)
-    .select('_id partner name slug pricingSettings')
+    .select(
+      '_id partner name slug pricingSettings policies.freeCancellation policies.cancellationRules'
+    )
     .lean()
 
   if (!hotel) {
@@ -179,6 +181,23 @@ export const createBooking = asyncHandler(async (req, res) => {
       dailyBreakdown: priceResult.dailyBreakdown,
       campaigns: priceResult.campaigns.applied,
       specialRequests: room.specialRequests
+    }
+
+    // Cancellation policy snapshot
+    const useHotelPolicy = market.cancellationPolicy?.useHotelPolicy !== false
+    const cpSource = useHotelPolicy
+      ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
+      : { fc: market.cancellationPolicy?.freeCancellation, rules: market.cancellationPolicy?.rules }
+    roomBooking.cancellationPolicy = {
+      isRefundable: cpSource.fc?.enabled || (cpSource.rules || []).some(r => r.refundPercent > 0),
+      freeCancellation: {
+        enabled: cpSource.fc?.enabled || false,
+        daysBeforeCheckIn: cpSource.fc?.daysBeforeCheckIn || 0
+      },
+      rules: (cpSource.rules || []).map(r => ({
+        daysBeforeCheckIn: r.daysBeforeCheckIn,
+        refundPercent: r.refundPercent
+      }))
     }
 
     processedRooms.push(roomBooking)

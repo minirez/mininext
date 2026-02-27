@@ -630,8 +630,9 @@ function prevImage() {
                 <div class="meal-tags">
                   <!-- Cancellation Link -->
                   <span
-                    v-if="hasFreeCancellation"
+                    v-if="hasCancellationPolicy"
                     class="cancellation-link"
+                    :class="{ 'cancellation-link--nonrefundable': !hasFreeCancellation }"
                     @click.stop="openCancellationModal()"
                   >
                     <svg
@@ -647,14 +648,7 @@ function prevImage() {
                     >
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                     </svg>
-                    {{ t('results.freeCancellation') }}
-                  </span>
-                  <span
-                    v-else-if="hasCancellationPolicy"
-                    class="cancellation-link cancellation-link--nonrefundable"
-                    @click.stop="openCancellationModal()"
-                  >
-                    {{ t('results.nonRefundable') }}
+                    {{ t('cancellation.title') }}
                   </span>
 
                   <!-- Campaign Badge -->

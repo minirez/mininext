@@ -51,7 +51,9 @@ export const createBooking = asyncHandler(async (req, res) => {
     partner: partnerId,
     status: 'active'
   })
-    .select('_id partner name slug code pricingSettings')
+    .select(
+      '_id partner name slug code pricingSettings policies.freeCancellation policies.cancellationRules'
+    )
     .lean()
 
   if (!hotel) {
@@ -190,6 +192,23 @@ export const createBooking = asyncHandler(async (req, res) => {
       dailyBreakdown: priceResult.dailyBreakdown,
       campaigns: priceResult.campaigns.applied,
       specialRequests: room.specialRequests
+    }
+
+    // Cancellation policy snapshot
+    const useHotelPolicy = market.cancellationPolicy?.useHotelPolicy !== false
+    const cpSource = useHotelPolicy
+      ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
+      : { fc: market.cancellationPolicy?.freeCancellation, rules: market.cancellationPolicy?.rules }
+    roomBooking.cancellationPolicy = {
+      isRefundable: cpSource.fc?.enabled || (cpSource.rules || []).some(r => r.refundPercent > 0),
+      freeCancellation: {
+        enabled: cpSource.fc?.enabled || false,
+        daysBeforeCheckIn: cpSource.fc?.daysBeforeCheckIn || 0
+      },
+      rules: (cpSource.rules || []).map(r => ({
+        daysBeforeCheckIn: r.daysBeforeCheckIn,
+        refundPercent: r.refundPercent
+      }))
     }
 
     processedRooms.push(roomBooking)
@@ -427,7 +446,9 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     partner: partnerId,
     status: 'active'
   })
-    .select('_id partner name slug code pricingSettings')
+    .select(
+      '_id partner name slug code pricingSettings policies.freeCancellation policies.cancellationRules'
+    )
     .lean()
 
   if (!hotel) {
@@ -566,6 +587,23 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
       dailyBreakdown: priceResult.dailyBreakdown,
       campaigns: priceResult.campaigns.applied,
       specialRequests: room.specialRequests
+    }
+
+    // Cancellation policy snapshot
+    const useHotelPolicy2 = market.cancellationPolicy?.useHotelPolicy !== false
+    const cpSource2 = useHotelPolicy2
+      ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
+      : { fc: market.cancellationPolicy?.freeCancellation, rules: market.cancellationPolicy?.rules }
+    roomBooking.cancellationPolicy = {
+      isRefundable: cpSource2.fc?.enabled || (cpSource2.rules || []).some(r => r.refundPercent > 0),
+      freeCancellation: {
+        enabled: cpSource2.fc?.enabled || false,
+        daysBeforeCheckIn: cpSource2.fc?.daysBeforeCheckIn || 0
+      },
+      rules: (cpSource2.rules || []).map(r => ({
+        daysBeforeCheckIn: r.daysBeforeCheckIn,
+        refundPercent: r.refundPercent
+      }))
     }
 
     processedRooms.push(roomBooking)

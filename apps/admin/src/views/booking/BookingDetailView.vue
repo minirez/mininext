@@ -247,6 +247,45 @@
                       </span>
                     </div>
                   </div>
+                  <!-- Cancellation Policy -->
+                  <div
+                    v-if="room.cancellationPolicy?.rules?.length"
+                    class="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700"
+                  >
+                    <p
+                      class="text-xs text-gray-500 dark:text-slate-400 mb-2 flex items-center gap-1"
+                    >
+                      <span class="material-icons text-xs">event_busy</span>
+                      {{ $t('hotels.policies.cancellation') }}
+                      <span
+                        v-if="room.cancellationPolicy.freeCancellation?.enabled"
+                        class="ml-1 px-1.5 py-0.5 text-[10px] font-medium bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded"
+                      >
+                        {{ room.cancellationPolicy.freeCancellation.daysBeforeCheckIn }}+
+                        {{ $t('hotels.policies.days') }}
+                      </span>
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <span
+                        v-for="(rule, rIndex) in room.cancellationPolicy.rules"
+                        :key="rIndex"
+                        class="inline-flex items-center px-2 py-1 rounded-lg text-xs"
+                        :class="{
+                          'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400':
+                            rule.refundPercent === 100,
+                          'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400':
+                            rule.refundPercent > 0 && rule.refundPercent < 100,
+                          'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400':
+                            rule.refundPercent === 0
+                        }"
+                      >
+                        {{ rule.daysBeforeCheckIn }}+ {{ $t('hotels.policies.days') }} → %{{
+                          rule.refundPercent
+                        }}
+                        {{ $t('hotels.policies.refund') }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
