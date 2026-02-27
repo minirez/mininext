@@ -171,10 +171,10 @@ export const createBooking = asyncHandler(async (req, res) => {
       guests: room.guests || [],
       pricing: {
         currency: market.currency,
-        originalTotal: priceResult.pricing.originalTotal,
-        discount: priceResult.pricing.totalDiscount,
-        finalTotal: priceResult.pricing.finalTotal,
-        avgPerNight: priceResult.pricing.avgPerNight
+        originalTotal: priceResult.pricing.b2cOriginalTotal,
+        discount: priceResult.pricing.b2cTotalDiscount,
+        finalTotal: priceResult.pricing.b2cPrice,
+        avgPerNight: priceResult.pricing.perNight.b2cPrice
       },
       dailyBreakdown: priceResult.dailyBreakdown,
       campaigns: priceResult.campaigns.applied,
@@ -186,8 +186,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     // Update totals
     totalAdults += adults
     totalChildren += children.length
-    subtotal += priceResult.pricing.originalTotal
-    totalDiscount += priceResult.pricing.totalDiscount
+    subtotal += priceResult.pricing.b2cOriginalTotal
+    totalDiscount += priceResult.pricing.b2cTotalDiscount
   }
 
   // Calculate final pricing

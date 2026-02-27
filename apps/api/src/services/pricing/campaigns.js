@@ -456,6 +456,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
   // Build daily breakdown
   const dailyBreakdown = []
   let totalBasePrice = 0
+  let totalB2COriginal = 0
+  let totalB2BOriginal = 0
   let hasIssues = false
   const issues = []
 
@@ -588,6 +590,8 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
 
     dailyBreakdown.push(dayData)
     totalBasePrice += priceResult.totalPrice
+    totalB2COriginal += dayTierPricing.b2cPrice
+    totalB2BOriginal += dayTierPricing.b2bPrice
   }
 
   // Apply campaigns if requested
@@ -699,6 +703,11 @@ export async function calculatePriceWithCampaigns(query, useCache = true) {
       hotelCost: totalHotelCost,
       b2cPrice: totalB2CPrice,
       b2bPrice: totalB2BPrice,
+      // Pre-campaign B2C/B2B totals (for showing original price before discount)
+      b2cOriginalTotal: Math.round(totalB2COriginal * 100) / 100,
+      b2bOriginalTotal: Math.round(totalB2BOriginal * 100) / 100,
+      b2cTotalDiscount: Math.round((totalB2COriginal - totalB2CPrice) * 100) / 100,
+      b2bTotalDiscount: Math.round((totalB2BOriginal - totalB2BPrice) * 100) / 100,
       // 3-tier pricing per night (average)
       perNight: {
         hotelCost: Math.round((totalHotelCost / nights) * 100) / 100,

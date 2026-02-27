@@ -192,10 +192,10 @@ export const searchAvailability = asyncHandler(async (req, res) => {
             },
             pricing: {
               currency: market.currency,
-              originalTotal: priceResult.pricing.originalTotal,
-              totalDiscount: priceResult.pricing.totalDiscount,
-              finalTotal: priceResult.pricing.finalTotal,
-              avgPerNight: priceResult.pricing.avgPerNight
+              originalTotal: priceResult.pricing.b2cOriginalTotal,
+              totalDiscount: priceResult.pricing.b2cTotalDiscount,
+              finalTotal: priceResult.pricing.b2cPrice,
+              avgPerNight: priceResult.pricing.perNight.b2cPrice
             },
             campaigns: priceResult.campaigns.applied.map(c => ({
               code: c.code,
