@@ -14,6 +14,7 @@ import path from 'path'
 import logger from '../../core/logger.js'
 import appConfig from '../../config/index.js'
 import { hostExec } from './hostExec.js'
+import { validateDomain } from '../../helpers/inputValidation.js'
 
 // Konfigurasyon (config module'den alınıyor)
 const CONFIG = {
@@ -44,6 +45,9 @@ const CONFIG = {
  * @returns {string} Nginx konfigurasyon icerigi
  */
 export const generateNginxConfig = (domain, type, partnerId) => {
+  // Validate domain to prevent config injection
+  validateDomain(domain)
+
   const certPath = path.join(CONFIG.certDir, domain)
 
   // Ortak bloklar
@@ -208,6 +212,9 @@ ${apiBlock}
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export const installTempHttpConfig = async domain => {
+  // Validate domain to prevent shell/config injection
+  validateDomain(domain)
+
   const configContent = `# Temporary HTTP config for ACME challenge - ${domain}
 server {
     listen 80;
@@ -263,6 +270,9 @@ server {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export const installNginxConfig = async (domain, configContent) => {
+  // Validate domain to prevent path traversal and shell injection
+  validateDomain(domain)
+
   // Mevcut minisites dosyalari uzantisiz: inndream.com, alianstravel.com vb.
   const configPath = path.join(CONFIG.nginxSitesDir, domain)
 
@@ -310,6 +320,9 @@ export const installNginxConfig = async (domain, configContent) => {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export const removeNginxConfig = async domain => {
+  // Validate domain to prevent path traversal
+  validateDomain(domain)
+
   const configPath = path.join(CONFIG.nginxSitesDir, domain)
 
   try {

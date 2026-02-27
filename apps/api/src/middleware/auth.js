@@ -21,6 +21,11 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, config.jwt.secret)
 
+    // Reject refresh tokens used as access tokens
+    if (decoded.type === 'refresh') {
+      throw new UnauthorizedError('INVALID_TOKEN')
+    }
+
     // Get user
     const user = await User.findById(decoded.userId)
     if (!user || !user.isActive()) {

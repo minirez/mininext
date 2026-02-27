@@ -7,6 +7,7 @@
 
 import express from 'express'
 import client from 'prom-client'
+import { timingSafeCompare } from '#helpers'
 
 const router = express.Router()
 
@@ -23,7 +24,7 @@ const debugAuth = (req, res, next) => {
     })
   }
 
-  if (apiKey !== validKey) {
+  if (!timingSafeCompare(apiKey, validKey)) {
     return res.status(401).json({
       success: false,
       error: 'Invalid debug key'

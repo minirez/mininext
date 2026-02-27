@@ -16,6 +16,7 @@ import path from 'path'
 import logger from '../../core/logger.js'
 import appConfig from '../../config/index.js'
 import { hostExec } from './hostExec.js'
+import { validateDomain } from '../../helpers/inputValidation.js'
 
 const execAsync = promisify(exec)
 
@@ -36,6 +37,9 @@ const CONFIG = {
  */
 export const requestCertificate = async domain => {
   try {
+    // Validate domain to prevent shell injection
+    validateDomain(domain)
+
     logger.info(`[SSL] Requesting certificate for ${domain}`)
 
     // Certbot komutu - host üzerinde çalışır (nsenter ile)

@@ -2,6 +2,7 @@ import Tag, { TAG_LANGUAGES } from './tag.model.js'
 import { BadRequestError } from '#core/errors.js'
 import { BaseEntityService } from '#services/base/BaseEntityService.js'
 import { sendSuccess, sendCreated } from '#services/responseHelper.js'
+import { escapeRegex } from '#helpers'
 import logger from '#core/logger.js'
 
 class TagService extends BaseEntityService {
@@ -36,9 +37,10 @@ class TagService extends BaseEntityService {
     }
 
     if (search) {
+      const escaped = escapeRegex(search)
       filter.$or = [
-        { 'name.tr': { $regex: search, $options: 'i' } },
-        { 'name.en': { $regex: search, $options: 'i' } }
+        { 'name.tr': { $regex: escaped, $options: 'i' } },
+        { 'name.en': { $regex: escaped, $options: 'i' } }
       ]
     }
 
@@ -71,7 +73,7 @@ class TagService extends BaseEntityService {
 
     // Check for duplicate
     const existingTag = await Tag.findOne({
-      [`name.${sourceLang}`]: { $regex: `^${name[sourceLang]}$`, $options: 'i' }
+      [`name.${sourceLang}`]: { $regex: `^${escapeRegex(name[sourceLang])}$`, $options: 'i' }
     })
 
     if (existingTag) {

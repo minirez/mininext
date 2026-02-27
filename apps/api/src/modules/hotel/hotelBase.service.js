@@ -6,7 +6,7 @@
 import Hotel from './hotel.model.js'
 import City from '../location/city.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import {
   downloadHotelImages,
   downloadHotelLogo,
@@ -40,9 +40,10 @@ export const getBaseHotels = asyncHandler(async (req, res) => {
   }
 
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { 'address.city': { $regex: search, $options: 'i' } }
+      { name: { $regex: escaped, $options: 'i' } },
+      { 'address.city': { $regex: escaped, $options: 'i' } }
     ]
   }
 
@@ -194,10 +195,11 @@ export const createBaseHotel = asyncHandler(async (req, res) => {
     try {
       // Find city by name (case-insensitive, partial match)
       const cityName = hotelData.address.city.trim()
+      const escapedCityName = escapeRegex(cityName)
       const city = await City.findOne({
         $or: [
-          { name: { $regex: new RegExp(`^${cityName}$`, 'i') } },
-          { name: { $regex: new RegExp(cityName, 'i') } }
+          { name: { $regex: new RegExp(`^${escapedCityName}$`, 'i') } },
+          { name: { $regex: new RegExp(escapedCityName, 'i') } }
         ]
       })
 

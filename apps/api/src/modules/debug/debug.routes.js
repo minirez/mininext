@@ -4,6 +4,7 @@
  */
 
 import express from 'express'
+import { timingSafeCompare } from '#helpers'
 import Issue from '#modules/issue/issue.model.js'
 import User from '#modules/user/user.model.js'
 
@@ -21,7 +22,7 @@ const debugAuth = (req, res, next) => {
     })
   }
 
-  if (apiKey !== validKey) {
+  if (!timingSafeCompare(apiKey, validKey)) {
     return res.status(401).json({
       success: false,
       error: 'Invalid debug key'

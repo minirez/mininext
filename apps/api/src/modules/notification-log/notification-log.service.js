@@ -8,6 +8,7 @@ import { BaseEntityService } from '#services/base/BaseEntityService.js'
 import { sendSuccess } from '#services/responseHelper.js'
 import { parsePagination, paginatedQuery } from '#services/queryBuilder.js'
 import { NotFoundError } from '#core/errors.js'
+import { escapeRegex } from '#helpers'
 
 class NotificationLogService extends BaseEntityService {
   constructor() {
@@ -60,10 +61,11 @@ class NotificationLogService extends BaseEntityService {
     }
 
     if (search) {
+      const escaped = escapeRegex(search)
       filter.$or = [
-        { recipientEmail: { $regex: search, $options: 'i' } },
-        { recipientPhone: { $regex: search, $options: 'i' } },
-        { subject: { $regex: search, $options: 'i' } }
+        { recipientEmail: { $regex: escaped, $options: 'i' } },
+        { recipientPhone: { $regex: escaped, $options: 'i' } },
+        { subject: { $regex: escaped, $options: 'i' } }
       ]
     }
 
@@ -106,8 +108,10 @@ class NotificationLogService extends BaseEntityService {
       throw new NotFoundError('NOTIFICATION_LOG_NOT_FOUND')
     }
 
-    if (req.partnerContext?.partnerId &&
-        log.partner?.toString() !== req.partnerContext.partnerId.toString()) {
+    if (
+      req.partnerContext?.partnerId &&
+      log.partner?.toString() !== req.partnerContext.partnerId.toString()
+    ) {
       throw new NotFoundError('NOTIFICATION_LOG_NOT_FOUND')
     }
 
@@ -186,9 +190,13 @@ class NotificationLogService extends BaseEntityService {
     ])
 
     const stats = channelStats[0] || {
-      emailAttempted: 0, emailSuccess: 0,
-      smsAttempted: 0, smsSuccess: 0,
-      pushAttempted: 0, pushSent: 0, pushFailed: 0
+      emailAttempted: 0,
+      emailSuccess: 0,
+      smsAttempted: 0,
+      smsSuccess: 0,
+      pushAttempted: 0,
+      pushSent: 0,
+      pushFailed: 0
     }
 
     sendSuccess(res, {
@@ -196,22 +204,26 @@ class NotificationLogService extends BaseEntityService {
         attempted: stats.emailAttempted,
         success: stats.emailSuccess,
         failed: stats.emailAttempted - stats.emailSuccess,
-        successRate: stats.emailAttempted > 0
-          ? Math.round((stats.emailSuccess / stats.emailAttempted) * 100) : 0
+        successRate:
+          stats.emailAttempted > 0
+            ? Math.round((stats.emailSuccess / stats.emailAttempted) * 100)
+            : 0
       },
       sms: {
         attempted: stats.smsAttempted,
         success: stats.smsSuccess,
         failed: stats.smsAttempted - stats.smsSuccess,
-        successRate: stats.smsAttempted > 0
-          ? Math.round((stats.smsSuccess / stats.smsAttempted) * 100) : 0
+        successRate:
+          stats.smsAttempted > 0 ? Math.round((stats.smsSuccess / stats.smsAttempted) * 100) : 0
       },
       push: {
         attempted: stats.pushAttempted,
         sent: stats.pushSent,
         failed: stats.pushFailed,
-        successRate: stats.pushAttempted > 0
-          ? Math.round((stats.pushSent / (stats.pushSent + stats.pushFailed)) * 100) : 0
+        successRate:
+          stats.pushAttempted > 0
+            ? Math.round((stats.pushSent / (stats.pushSent + stats.pushFailed)) * 100)
+            : 0
       }
     })
   }

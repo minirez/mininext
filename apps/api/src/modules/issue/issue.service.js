@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 import Issue from './issue.model.js'
 import User from '#modules/user/user.model.js'
 import Notification from '#modules/notification/notification.model.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import { NotFoundError, ForbiddenError, ValidationError, BadRequestError } from '#core/errors.js'
 import { getIssueFileUrl, deleteIssueFile, deleteIssueFolder } from '#helpers/issueUpload.js'
 import { sendIssueNudgeEmail } from '#helpers/mail.js'
@@ -88,10 +88,11 @@ export const getIssues = asyncHandler(async (req, res) => {
 
   // Search
   if (search) {
+    const escaped = escapeRegex(search)
     query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } },
-      { issueNumber: { $regex: search, $options: 'i' } }
+      { title: { $regex: escaped, $options: 'i' } },
+      { description: { $regex: escaped, $options: 'i' } },
+      { issueNumber: { $regex: escaped, $options: 'i' } }
     ]
   }
 

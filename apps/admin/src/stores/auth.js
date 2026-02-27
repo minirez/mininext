@@ -155,6 +155,11 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.success && response.data?.accessToken) {
         token.value = response.data.accessToken
         localStorage.setItem('token', response.data.accessToken)
+        // Token rotation: update refresh token if a new one was provided
+        if (response.data.refreshToken) {
+          refreshTokenValue.value = response.data.refreshToken
+          localStorage.setItem('refreshToken', response.data.refreshToken)
+        }
         return response.data.accessToken
       } else {
         throw new Error('Token refresh failed')

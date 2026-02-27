@@ -28,14 +28,15 @@ export const generateTokens = (user, account) => {
     userId: user._id,
     accountId: account._id,
     accountType: user.accountType,
-    role: user.role
+    role: user.role,
+    type: 'access'
   }
 
   const accessToken = jwt.sign(payload, config.jwt.secret, {
     expiresIn: config.jwt.accessExpire
   })
 
-  const refreshToken = jwt.sign({ userId: user._id }, config.jwt.secret, {
+  const refreshToken = jwt.sign({ userId: user._id, type: 'refresh' }, config.jwt.secret, {
     expiresIn: config.jwt.refreshExpire
   })
 
@@ -187,9 +188,22 @@ export const refreshToken = asyncHandler(async (req, res) => {
   try {
     const decoded = jwt.verify(refreshToken, config.jwt.secret)
 
+    // C1 fix: Verify this is actually a refresh token, not an access token
+    if (decoded.type !== 'refresh') {
+      throw new UnauthorizedError('INVALID_TOKEN')
+    }
+
     const user = await User.findById(decoded.userId)
     if (!user || !user.isActive()) {
       throw new UnauthorizedError('INVALID_TOKEN')
+    }
+
+    // C3 fix: Check if user has any active session (password change invalidates all)
+    if (user.passwordChangedAt) {
+      const tokenIssuedAt = decoded.iat * 1000 // JWT iat is in seconds
+      if (tokenIssuedAt < user.passwordChangedAt.getTime()) {
+        throw new UnauthorizedError('INVALID_TOKEN')
+      }
     }
 
     // Get account
@@ -202,14 +216,18 @@ export const refreshToken = asyncHandler(async (req, res) => {
       account = { _id: user.accountId }
     }
 
-    // Generate new access token
-    const { accessToken } = generateTokens(user, account)
+    // C2 fix: Generate new access AND refresh token (token rotation)
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, account)
 
     res.json({
       success: true,
-      data: { accessToken }
+      data: {
+        accessToken,
+        refreshToken: newRefreshToken
+      }
     })
-  } catch {
+  } catch (err) {
+    if (err.name === 'UnauthorizedError' || err.statusCode) throw err
     throw new UnauthorizedError('INVALID_TOKEN')
   }
 })

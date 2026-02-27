@@ -2,6 +2,7 @@ import EmailLog from './emailLog.model.js'
 import { BaseEntityService } from '#services/base/BaseEntityService.js'
 import { sendSuccess, sendError, sendMessage } from '#services/responseHelper.js'
 import { parsePagination, paginatedQuery } from '#services/queryBuilder.js'
+import { escapeRegex } from '#helpers'
 import logger from '#core/logger.js'
 
 class EmailLogService extends BaseEntityService {
@@ -44,7 +45,7 @@ class EmailLogService extends BaseEntityService {
     if (partnerId && !filter.partnerId) filter.partnerId = partnerId
     if (status) filter.status = status
     if (type) filter.type = type
-    if (to) filter.to = { $regex: to, $options: 'i' }
+    if (to) filter.to = { $regex: escapeRegex(to), $options: 'i' }
 
     if (startDate || endDate) {
       filter.createdAt = {}

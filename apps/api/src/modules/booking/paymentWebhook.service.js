@@ -1,4 +1,4 @@
-import { asyncHandler, withTransaction } from '#helpers'
+import { asyncHandler, withTransaction, timingSafeCompare } from '#helpers'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
 import logger from '#core/logger.js'
@@ -39,7 +39,7 @@ export const paymentWebhook = asyncHandler(async (req, res) => {
   const apiKey = req.headers['x-api-key']
   const validApiKey = process.env.PAYMENT_WEBHOOK_KEY
 
-  if (apiKey !== validApiKey) {
+  if (!timingSafeCompare(apiKey, validApiKey)) {
     logger.error('[Payment Webhook] Invalid API key')
     return res.status(401).json({ success: false, error: 'Invalid API key' })
   }

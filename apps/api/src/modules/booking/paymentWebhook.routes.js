@@ -9,7 +9,7 @@
  */
 
 import express from 'express'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, timingSafeCompare } from '#helpers'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
 import logger from '#core/logger.js'
@@ -53,7 +53,7 @@ router.post(
     const apiKey = req.headers['x-api-key']
     const validApiKey = process.env.PAYMENT_WEBHOOK_KEY
 
-    if (apiKey !== validApiKey) {
+    if (!timingSafeCompare(apiKey, validApiKey)) {
       logger.error('[PaymentWebhook] Invalid API key')
       return res.status(401).json({ success: false, error: 'Invalid API key' })
     }

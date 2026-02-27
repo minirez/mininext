@@ -4,7 +4,7 @@ import Booking from '../booking/booking.model.js'
 import Payment from '../booking/payment.model.js'
 import Exchange from '../../models/exchange.model.js'
 import { NotFoundError, BadRequestError, ConflictError } from '#core/errors.js'
-import { asyncHandler, getEffectivePartnerId, escapeRegex } from '#helpers'
+import { asyncHandler, getEffectivePartnerId, escapeRegex, timingSafeCompare } from '#helpers'
 import logger from '#core/logger.js'
 import paymentGateway from '#services/paymentGateway.js'
 // Import centralized notification function
@@ -803,7 +803,7 @@ export const completePaymentLink = asyncHandler(async (req, res) => {
 
   if (configuredKey) {
     // API key is configured - enforce validation
-    if (apiKey !== configuredKey) {
+    if (!timingSafeCompare(apiKey, configuredKey)) {
       logger.error('[completePaymentLink] Invalid or missing API key')
       return res.status(401).json({ success: false, error: 'Unauthorized' })
     }

@@ -5,7 +5,7 @@ import Agency from '../agency/agency.model.js'
 import Session from '../session/session.model.js'
 import AuditLog from '../audit/audit.model.js'
 import { NotFoundError, ForbiddenError, BadRequestError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import { generate2FASecret, generateQRCode, verify2FAToken } from '#helpers/twoFactor.js'
 import {
   send2FASetupEmail,
@@ -184,9 +184,10 @@ export const getUsers = asyncHandler(async (req, res) => {
   if (status) filter.status = status
   if (role) filter.role = role
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { name: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } }
     ]
   }
 
@@ -538,9 +539,18 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new NotFoundError('USER_NOT_FOUND')
   }
 
-  // Check permissions
-  if (req.user.role !== 'admin' && user._id.toString() !== req.user._id.toString()) {
-    throw new ForbiddenError('FORBIDDEN')
+  // Check permissions - admin can only change passwords within their own account
+  if (user._id.toString() !== req.user._id.toString()) {
+    if (req.user.role !== 'admin') {
+      throw new ForbiddenError('FORBIDDEN')
+    }
+    // Cross-account check: admin can only change passwords for users in the same account
+    if (
+      req.user.accountType !== 'platform' &&
+      user.accountId?.toString() !== req.user.accountId?.toString()
+    ) {
+      throw new ForbiddenError('FORBIDDEN')
+    }
   }
 
   // If changing someone else's password (admin), don't require current password

@@ -3,7 +3,7 @@
  * Hotel listing and info endpoints for B2C
  */
 
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import Hotel from '../hotel/hotel.model.js'
 import RoomType from '../planning/roomType.model.js'
 import MealPlan from '../planning/mealPlan.model.js'
@@ -36,7 +36,7 @@ export const listHotels = asyncHandler(async (req, res) => {
 
   // Filters
   if (city) {
-    query['address.city'] = { $regex: city, $options: 'i' }
+    query['address.city'] = { $regex: escapeRegex(city), $options: 'i' }
   }
   if (country) {
     query['location.countryCode'] = country.toUpperCase()

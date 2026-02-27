@@ -1,8 +1,8 @@
 import Agency from './agency.model.js'
 import Partner from '../partner/partner.model.js'
 import User from '../user/user.model.js'
-import { NotFoundError, ConflictError, BadRequestError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
+import { NotFoundError, ConflictError, BadRequestError, ForbiddenError } from '#core/errors.js'
+import { asyncHandler, escapeRegex } from '#helpers'
 import { getPartnerId } from '#services/helpers.js'
 import { parsePagination } from '#services/queryBuilder.js'
 import { sendWelcomeEmail } from '#helpers/mail.js'
@@ -104,11 +104,12 @@ export const getAgencies = asyncHandler(async (req, res) => {
 
   if (status) filter.status = status
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { companyName: { $regex: search, $options: 'i' } },
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-      { taxNumber: { $regex: search, $options: 'i' } }
+      { companyName: { $regex: escaped, $options: 'i' } },
+      { name: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } },
+      { taxNumber: { $regex: escaped, $options: 'i' } }
     ]
   }
 
@@ -142,6 +143,12 @@ export const getAgency = asyncHandler(async (req, res) => {
     throw new NotFoundError('AGENCY_NOT_FOUND')
   }
 
+  // Partner ownership check - partner users can only access their own agencies
+  const partnerId = getPartnerId(req)
+  if (partnerId && !agency.partner?._id?.equals(partnerId) && !agency.partner?.equals(partnerId)) {
+    throw new ForbiddenError('FORBIDDEN')
+  }
+
   res.json({
     success: true,
     data: agency
@@ -154,6 +161,12 @@ export const updateAgency = asyncHandler(async (req, res) => {
 
   if (!agency) {
     throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Partner ownership check
+  const partnerId = getPartnerId(req)
+  if (partnerId && !agency.partner?.equals(partnerId)) {
+    throw new ForbiddenError('FORBIDDEN')
   }
 
   // Update only allowed fields (security: prevent mass assignment)
@@ -195,6 +208,12 @@ export const deleteAgency = asyncHandler(async (req, res) => {
 
   if (!agency) {
     throw new NotFoundError('AGENCY_NOT_FOUND')
+  }
+
+  // Partner ownership check
+  const partnerId = getPartnerId(req)
+  if (partnerId && !agency.partner?.equals(partnerId)) {
+    throw new ForbiddenError('FORBIDDEN')
   }
 
   // Check if agency has users
@@ -285,9 +304,10 @@ export const getAgencyUsers = asyncHandler(async (req, res) => {
   if (status) filter.status = status
   if (role) filter.role = role
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { name: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } }
     ]
   }
 

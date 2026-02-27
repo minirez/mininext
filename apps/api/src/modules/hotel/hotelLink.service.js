@@ -6,7 +6,7 @@
 import Hotel from './hotel.model.js'
 import Market from '../planning/market.model.js'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import logger from '#core/logger.js'
 import { parsePagination } from '#services/queryBuilder.js'
 import { getPartnerId, verifyHotelOwnership } from '#services/helpers.js'
@@ -45,9 +45,10 @@ export const getAvailableBases = asyncHandler(async (req, res) => {
   }
 
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { 'address.city': { $regex: search, $options: 'i' } }
+      { name: { $regex: escaped, $options: 'i' } },
+      { 'address.city': { $regex: escaped, $options: 'i' } }
     ]
   }
 

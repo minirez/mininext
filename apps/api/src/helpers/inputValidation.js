@@ -3,6 +3,7 @@
  * Centralized validation for external API inputs
  */
 
+import crypto from 'crypto'
 import { BadRequestError } from '../core/errors.js'
 
 /**
@@ -330,6 +331,24 @@ export const buildSearchQuery = (search, fields) => {
   }
 }
 
+/**
+ * Timing-safe string comparison to prevent timing attacks on API keys/secrets
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {boolean} True if strings are equal
+ */
+export const timingSafeCompare = (a, b) => {
+  if (!a || !b) return false
+  const bufA = Buffer.from(String(a))
+  const bufB = Buffer.from(String(b))
+  if (bufA.length !== bufB.length) {
+    // Compare against self to maintain constant time even on length mismatch
+    crypto.timingSafeEqual(bufA, bufA)
+    return false
+  }
+  return crypto.timingSafeEqual(bufA, bufB)
+}
+
 export default {
   validateUrl,
   validateDomain,
@@ -342,5 +361,6 @@ export default {
   validateObjectId,
   sanitizeString,
   escapeRegex,
-  buildSearchQuery
+  buildSearchQuery,
+  timingSafeCompare
 }

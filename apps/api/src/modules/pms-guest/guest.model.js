@@ -4,6 +4,7 @@
  */
 
 import mongoose from 'mongoose'
+import { escapeRegex } from '#helpers'
 
 // ID types for different countries/documents
 export const ID_TYPES = {
@@ -381,31 +382,37 @@ guestSchema.statics.findOrCreate = async function (hotelId, guestData) {
 
   // Priority 2: Try to find by email + name combination
   if (!existingGuest && guestData.email && guestData.firstName && guestData.lastName) {
+    const escapedFirst = escapeRegex(guestData.firstName)
+    const escapedLast = escapeRegex(guestData.lastName)
     existingGuest = await this.findOne({
       hotel: hotelId,
       email: guestData.email.toLowerCase(),
-      firstName: { $regex: new RegExp(`^${guestData.firstName}$`, 'i') },
-      lastName: { $regex: new RegExp(`^${guestData.lastName}$`, 'i') }
+      firstName: { $regex: new RegExp(`^${escapedFirst}$`, 'i') },
+      lastName: { $regex: new RegExp(`^${escapedLast}$`, 'i') }
     })
   }
 
   // Priority 3: Try to find by phone + name combination
   if (!existingGuest && guestData.phone && guestData.firstName && guestData.lastName) {
+    const escapedFirst = escapeRegex(guestData.firstName)
+    const escapedLast = escapeRegex(guestData.lastName)
     existingGuest = await this.findOne({
       hotel: hotelId,
       phone: guestData.phone,
-      firstName: { $regex: new RegExp(`^${guestData.firstName}$`, 'i') },
-      lastName: { $regex: new RegExp(`^${guestData.lastName}$`, 'i') }
+      firstName: { $regex: new RegExp(`^${escapedFirst}$`, 'i') },
+      lastName: { $regex: new RegExp(`^${escapedLast}$`, 'i') }
     })
   }
 
   // Priority 4: Try to find by exact name match (if we have unique identifiers like idNumber)
   if (!existingGuest && guestData.firstName && guestData.lastName) {
     if (guestData.email || guestData.phone || guestData.idNumber) {
+      const escapedFirst = escapeRegex(guestData.firstName)
+      const escapedLast = escapeRegex(guestData.lastName)
       const nameMatch = await this.findOne({
         hotel: hotelId,
-        firstName: { $regex: new RegExp(`^${guestData.firstName}$`, 'i') },
-        lastName: { $regex: new RegExp(`^${guestData.lastName}$`, 'i') },
+        firstName: { $regex: new RegExp(`^${escapedFirst}$`, 'i') },
+        lastName: { $regex: new RegExp(`^${escapedLast}$`, 'i') },
         $or: [
           { email: { $exists: false } },
           { email: null },
@@ -467,12 +474,13 @@ guestSchema.statics.search = async function (hotelId, query, options = {}) {
   }
 
   if (query) {
+    const escaped = escapeRegex(query)
     searchQuery.$or = [
-      { firstName: { $regex: query, $options: 'i' } },
-      { lastName: { $regex: query, $options: 'i' } },
-      { email: { $regex: query, $options: 'i' } },
-      { phone: { $regex: query, $options: 'i' } },
-      { idNumber: { $regex: query, $options: 'i' } }
+      { firstName: { $regex: escaped, $options: 'i' } },
+      { lastName: { $regex: escaped, $options: 'i' } },
+      { email: { $regex: escaped, $options: 'i' } },
+      { phone: { $regex: escaped, $options: 'i' } },
+      { idNumber: { $regex: escaped, $options: 'i' } }
     ]
   }
 

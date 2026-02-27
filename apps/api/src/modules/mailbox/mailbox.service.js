@@ -6,6 +6,7 @@ import { getEmailSettings, getSESClient } from '#helpers/mail/transporter.js'
 import { renderEmailTemplate, htmlToText } from '#helpers/emailTemplates.js'
 import { NotFoundError } from '#core/errors.js'
 import { parsePagination } from '#services/queryBuilder.js'
+import { escapeRegex } from '#helpers'
 
 // Lazy-loaded AWS SDK modules
 let _s3Client = null
@@ -225,11 +226,12 @@ export const list = async ({ folder, status, starred, search, page: rawPage, lim
 
   // Search
   if (search) {
+    const escaped = escapeRegex(search)
     query.$or = [
-      { subject: { $regex: search, $options: 'i' } },
-      { 'from.address': { $regex: search, $options: 'i' } },
-      { 'from.name': { $regex: search, $options: 'i' } },
-      { snippet: { $regex: search, $options: 'i' } }
+      { subject: { $regex: escaped, $options: 'i' } },
+      { 'from.address': { $regex: escaped, $options: 'i' } },
+      { 'from.name': { $regex: escaped, $options: 'i' } },
+      { snippet: { $regex: escaped, $options: 'i' } }
     ]
   }
 

@@ -1,5 +1,5 @@
 import AuditLog from './audit.model.js'
-import { asyncHandler } from '#helpers'
+import { asyncHandler, escapeRegex } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import { parsePagination } from '#services/queryBuilder.js'
 
@@ -47,10 +47,11 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
 
   // Search in email, name, documentName
   if (search) {
+    const escaped = escapeRegex(search)
     filter.$or = [
-      { 'actor.email': { $regex: search, $options: 'i' } },
-      { 'actor.name': { $regex: search, $options: 'i' } },
-      { 'target.documentName': { $regex: search, $options: 'i' } }
+      { 'actor.email': { $regex: escaped, $options: 'i' } },
+      { 'actor.name': { $regex: escaped, $options: 'i' } },
+      { 'target.documentName': { $regex: escaped, $options: 'i' } }
     ]
   }
 

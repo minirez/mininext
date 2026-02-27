@@ -5,6 +5,8 @@
  * Replaces duplicate implementations across modules.
  */
 
+import { escapeRegex } from '#helpers'
+
 /**
  * Pagination result object
  * @typedef {Object} PaginationResult
@@ -179,7 +181,7 @@ export const buildSearchFilter = (searchTerm, fields, existingFilter = {}) => {
     return existingFilter
   }
 
-  const searchRegex = { $regex: searchTerm, $options: 'i' }
+  const searchRegex = { $regex: escapeRegex(searchTerm), $options: 'i' }
   const searchConditions = fields.map(field => ({ [field]: searchRegex }))
 
   // If existing filter already has $or, we need to $and them

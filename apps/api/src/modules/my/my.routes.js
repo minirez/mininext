@@ -1,6 +1,7 @@
 import express from 'express'
 import * as myService from './my.service.js'
 import { protect } from '#middleware/auth.js'
+import { timingSafeCompare } from '#helpers'
 import logger from '#core/logger.js'
 
 const router = express.Router()
@@ -14,7 +15,7 @@ router.post(
     const webhookKey = req.headers['x-api-key'] || req.headers['x-webhook-key']
     const expectedKey = process.env.PAYMENT_WEBHOOK_KEY
 
-    if (webhookKey !== expectedKey) {
+    if (!timingSafeCompare(webhookKey, expectedKey)) {
       logger.error('[Subscription Callback] Invalid webhook key')
       return res.status(401).json({ success: false, error: 'Invalid webhook key' })
     }

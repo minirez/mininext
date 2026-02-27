@@ -13,6 +13,7 @@
 
 import config from '#config'
 import { UnauthorizedError } from '#core/errors.js'
+import { timingSafeCompare } from '#helpers'
 import logger from '#core/logger.js'
 
 /**
@@ -31,7 +32,7 @@ export const requireStorefrontKey = (req, res, next) => {
     throw new UnauthorizedError('STOREFRONT_AUTH_NOT_CONFIGURED')
   }
 
-  if (key !== config.storefrontApiKey) {
+  if (!timingSafeCompare(key, config.storefrontApiKey)) {
     throw new UnauthorizedError('INVALID_STOREFRONT_KEY')
   }
 
