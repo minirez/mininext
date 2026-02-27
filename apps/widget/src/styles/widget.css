@@ -1140,9 +1140,6 @@ textarea.form-input {
 }
 
 .summary-date {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   text-align: center;
   flex: 1;
 }
@@ -1157,6 +1154,7 @@ textarea.form-input {
 .summary-date-value {
   font-size: 15px;
   font-weight: 600;
+  margin-left: 5px;
   white-space: nowrap;
 }
 
