@@ -27,6 +27,12 @@ function closeCancellationModal() {
   showCancellationModal.value = false
 }
 
+// Has any cancellation policy defined (free cancellation or rules)
+const hasCancellationPolicy = computed(() => {
+  const cp = cancellationPolicy.value
+  return cp?.freeCancellation?.enabled || cp?.rules?.length > 0
+})
+
 // Has free cancellation
 const hasFreeCancellation = computed(() => cancellationPolicy.value?.freeCancellation?.enabled)
 
@@ -644,7 +650,7 @@ function prevImage() {
                     {{ t('results.freeCancellation') }}
                   </span>
                   <span
-                    v-else-if="cancellationPolicy"
+                    v-else-if="hasCancellationPolicy"
                     class="cancellation-link cancellation-link--nonrefundable"
                     @click.stop="openCancellationModal()"
                   >
