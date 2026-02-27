@@ -17,6 +17,17 @@
       </div>
     </div>
 
+    <!-- Cancellation Policy Warning -->
+    <div
+      v-if="!hotel.policies?.cancellationRules?.length"
+      class="p-3 mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-3"
+    >
+      <span class="material-icons text-amber-500 text-xl flex-shrink-0">warning</span>
+      <p class="text-sm text-amber-700 dark:text-amber-300">
+        {{ $t('hotels.policies.noCancellationWarning') }}
+      </p>
+    </div>
+
     <!-- No Rooms Warning -->
     <div v-if="pricingRoomTypes.length === 0" class="text-center py-12">
       <div

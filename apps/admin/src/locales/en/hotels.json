@@ -520,6 +520,7 @@
       "freeCancellationDays": "Free cancellation until X days before check-in",
       "noRules": "No cancellation rules defined.",
       "noRulesHelp": "Use quick add buttons to set standard cancellation rules.",
+      "noCancellationWarning": "No cancellation policy defined for this hotel. Please set cancellation rules in Hotel Settings or Policies tab.",
       "years": "years",
       "days": "days before",
       "daysPlus": "days+",

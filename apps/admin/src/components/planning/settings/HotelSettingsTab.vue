@@ -232,6 +232,210 @@
         </div>
       </div>
 
+      <!-- Cancellation Policy -->
+      <div
+        class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden"
+      >
+        <!-- Header -->
+        <div
+          class="bg-gray-50 dark:bg-slate-700/50 px-4 py-3 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-2">
+            <span class="material-icons text-purple-600 dark:text-purple-400">event_busy</span>
+            <h3 class="font-semibold text-gray-800 dark:text-white">
+              {{ $t('hotels.policies.cancellation') }}
+            </h3>
+          </div>
+          <button
+            type="button"
+            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            @click="addRule"
+          >
+            <span class="material-icons text-sm">add</span>
+            {{ $t('hotels.policies.addRule') }}
+          </button>
+        </div>
+
+        <!-- Free Cancellation Toggle -->
+        <div
+          class="px-4 py-3 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between bg-green-50/50 dark:bg-green-900/10"
+        >
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-green-600 dark:text-green-400">verified</span>
+            <div>
+              <span class="text-sm font-medium text-gray-800 dark:text-white">{{
+                $t('hotels.policies.freeCancellation')
+              }}</span>
+              <span
+                v-if="form.policies.freeCancellation.enabled"
+                class="ml-2 text-xs text-green-600 dark:text-green-400"
+              >
+                ({{ form.policies.freeCancellation.daysBeforeCheckIn }}+
+                {{ $t('hotels.policies.days') }})
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <input
+              v-if="form.policies.freeCancellation.enabled"
+              v-model.number="form.policies.freeCancellation.daysBeforeCheckIn"
+              type="number"
+              min="1"
+              max="30"
+              class="w-16 px-2 py-1 text-sm text-center border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+            />
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                v-model="form.policies.freeCancellation.enabled"
+                type="checkbox"
+                class="sr-only peer"
+              />
+              <div
+                class="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"
+              ></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Rules Table -->
+        <div class="divide-y divide-gray-200 dark:divide-slate-600">
+          <!-- Empty State -->
+          <div v-if="form.policies.cancellationRules.length === 0" class="px-4 py-8 text-center">
+            <span class="material-icons text-3xl text-gray-300 dark:text-slate-600">rule</span>
+            <p class="mt-2 text-sm text-gray-500 dark:text-slate-400">
+              {{ $t('hotels.policies.noRules') }}
+            </p>
+            <p class="text-xs text-gray-400 dark:text-slate-500">
+              {{ $t('hotels.policies.noRulesHelp') }}
+            </p>
+          </div>
+
+          <!-- Rule Rows -->
+          <div
+            v-for="(rule, index) in sortedRules"
+            :key="index"
+            class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors group"
+          >
+            <!-- Timeline Dot -->
+            <div class="flex-shrink-0">
+              <div
+                class="w-3 h-3 rounded-full"
+                :class="
+                  rule.refundPercent === 100
+                    ? 'bg-green-500'
+                    : rule.refundPercent > 0
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500'
+                "
+              ></div>
+            </div>
+
+            <!-- Days -->
+            <div class="flex items-center gap-2 min-w-[140px]">
+              <input
+                v-model.number="rule.daysBeforeCheckIn"
+                type="number"
+                min="0"
+                max="365"
+                class="w-16 px-2 py-1.5 text-sm text-center border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+                @change="sortRulesDebounced"
+              />
+              <span class="text-sm text-gray-600 dark:text-slate-400">{{
+                $t('hotels.policies.daysPlus')
+              }}</span>
+            </div>
+
+            <!-- Arrow -->
+            <span class="material-icons text-gray-400 text-sm">arrow_forward</span>
+
+            <!-- Refund -->
+            <div class="flex items-center gap-2 min-w-[120px]">
+              <input
+                v-model.number="rule.refundPercent"
+                type="number"
+                min="0"
+                max="100"
+                class="w-16 px-2 py-1.5 text-sm text-center border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+              />
+              <span class="text-sm text-gray-600 dark:text-slate-400"
+                >% {{ $t('hotels.policies.refund') }}</span
+              >
+            </div>
+
+            <!-- Visual Badge -->
+            <div class="flex-1">
+              <span
+                class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+                :class="{
+                  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400':
+                    rule.refundPercent === 100,
+                  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400':
+                    rule.refundPercent > 0 && rule.refundPercent < 100,
+                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400':
+                    rule.refundPercent === 0
+                }"
+              >
+                {{
+                  rule.refundPercent === 100
+                    ? $t('hotels.policies.fullRefund')
+                    : rule.refundPercent === 0
+                      ? $t('hotels.policies.noRefund')
+                      : $t('hotels.policies.partialRefund')
+                }}
+              </span>
+            </div>
+
+            <!-- Delete -->
+            <button
+              type="button"
+              class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 p-1 rounded transition-all"
+              @click="removeRule(index)"
+            >
+              <span class="material-icons text-lg">close</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Add Presets -->
+        <div
+          class="px-4 py-3 bg-gray-50 dark:bg-slate-700/30 border-t border-gray-200 dark:border-slate-600"
+        >
+          <p class="text-xs text-gray-500 dark:text-slate-400 mb-2">
+            {{ $t('hotels.policies.quickAdd') }}:
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="px-2 py-1 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+              @click="addPreset('flexible')"
+            >
+              {{ $t('hotels.policies.presetFlexible') }}
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
+              @click="addPreset('moderate')"
+            >
+              {{ $t('hotels.policies.presetModerate') }}
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+              @click="addPreset('strict')"
+            >
+              {{ $t('hotels.policies.presetStrict') }}
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1 text-xs bg-gray-100 text-gray-700 dark:bg-slate-600 dark:text-slate-300 rounded hover:bg-gray-200 dark:hover:bg-slate-500 transition-colors"
+              @click="addPreset('nonRefundable')"
+            >
+              {{ $t('hotels.policies.presetNonRefundable') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Save Button Bottom -->
       <div class="flex justify-end">
         <button class="btn-primary" :disabled="saving" @click="saveSettings">
@@ -264,7 +468,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import hotelService from '@/services/hotelService'
@@ -308,7 +512,9 @@ const form = ref({
   },
   policies: {
     maxBabyAge: 2,
-    maxChildAge: 12
+    maxChildAge: 12,
+    freeCancellation: { enabled: false, daysBeforeCheckIn: 1 },
+    cancellationRules: []
   },
   childAgeGroups: getDefaultChildAgeGroups()
 })
@@ -325,7 +531,15 @@ watch(
         },
         policies: {
           maxBabyAge: newHotel.policies?.maxBabyAge ?? 2,
-          maxChildAge: newHotel.policies?.maxChildAge ?? 12
+          maxChildAge: newHotel.policies?.maxChildAge ?? 12,
+          freeCancellation: {
+            enabled: newHotel.policies?.freeCancellation?.enabled || false,
+            daysBeforeCheckIn: newHotel.policies?.freeCancellation?.daysBeforeCheckIn || 1
+          },
+          cancellationRules: (newHotel.policies?.cancellationRules || []).map(r => ({
+            daysBeforeCheckIn: r.daysBeforeCheckIn || 0,
+            refundPercent: r.refundPercent || 0
+          }))
         },
         childAgeGroups:
           newHotel.childAgeGroups?.length > 0
@@ -401,6 +615,73 @@ const onMaxAgeChange = index => {
   }
 }
 
+// Cancellation rules - sorted by days descending
+const sortedRules = computed(() => {
+  return [...form.value.policies.cancellationRules].sort(
+    (a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn
+  )
+})
+
+let sortTimeout = null
+const sortRulesDebounced = () => {
+  if (sortTimeout) clearTimeout(sortTimeout)
+  sortTimeout = setTimeout(() => {
+    form.value.policies.cancellationRules.sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn)
+  }, 500)
+}
+
+const addRule = () => {
+  const rules = form.value.policies.cancellationRules
+  const lastDays = rules.length > 0 ? Math.max(...rules.map(r => r.daysBeforeCheckIn)) + 7 : 7
+
+  rules.push({ daysBeforeCheckIn: lastDays, refundPercent: 50 })
+  rules.sort((a, b) => b.daysBeforeCheckIn - a.daysBeforeCheckIn)
+}
+
+const removeRule = index => {
+  const rules = form.value.policies.cancellationRules
+  const sorted = sortedRules.value[index]
+  const actualIndex = rules.findIndex(
+    r =>
+      r.daysBeforeCheckIn === sorted.daysBeforeCheckIn && r.refundPercent === sorted.refundPercent
+  )
+  if (actualIndex > -1) rules.splice(actualIndex, 1)
+}
+
+const addPreset = type => {
+  const p = form.value.policies
+  switch (type) {
+    case 'flexible':
+      p.cancellationRules = [
+        { daysBeforeCheckIn: 1, refundPercent: 100 },
+        { daysBeforeCheckIn: 0, refundPercent: 0 }
+      ]
+      p.freeCancellation = { enabled: true, daysBeforeCheckIn: 1 }
+      break
+    case 'moderate':
+      p.cancellationRules = [
+        { daysBeforeCheckIn: 7, refundPercent: 100 },
+        { daysBeforeCheckIn: 3, refundPercent: 50 },
+        { daysBeforeCheckIn: 0, refundPercent: 0 }
+      ]
+      p.freeCancellation = { enabled: true, daysBeforeCheckIn: 7 }
+      break
+    case 'strict':
+      p.cancellationRules = [
+        { daysBeforeCheckIn: 14, refundPercent: 100 },
+        { daysBeforeCheckIn: 7, refundPercent: 50 },
+        { daysBeforeCheckIn: 3, refundPercent: 25 },
+        { daysBeforeCheckIn: 0, refundPercent: 0 }
+      ]
+      p.freeCancellation = { enabled: true, daysBeforeCheckIn: 14 }
+      break
+    case 'nonRefundable':
+      p.cancellationRules = [{ daysBeforeCheckIn: 0, refundPercent: 0 }]
+      p.freeCancellation = { enabled: false, daysBeforeCheckIn: 1 }
+      break
+  }
+}
+
 // Save settings
 const saveSettings = async () => {
   saving.value = true
@@ -410,7 +691,9 @@ const saveSettings = async () => {
       policies: {
         ...props.hotel.policies,
         maxBabyAge: form.value.policies.maxBabyAge,
-        maxChildAge: form.value.policies.maxChildAge
+        maxChildAge: form.value.policies.maxChildAge,
+        freeCancellation: form.value.policies.freeCancellation,
+        cancellationRules: form.value.policies.cancellationRules
       },
       childAgeGroups: form.value.childAgeGroups
     })

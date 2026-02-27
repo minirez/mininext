@@ -15,6 +15,17 @@
       @open-bulk-modal="openBulkModal"
     />
 
+    <!-- Cancellation Policy Warning -->
+    <div
+      v-if="!hotel.policies?.cancellationRules?.length"
+      class="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-3"
+    >
+      <span class="material-icons text-amber-500 text-xl flex-shrink-0">warning</span>
+      <p class="text-sm text-amber-700 dark:text-amber-300">
+        {{ $t('hotels.policies.noCancellationWarning') }}
+      </p>
+    </div>
+
     <!-- AI Pricing Assistant Panel -->
     <div class="mb-6">
       <AIPricingAssistant

@@ -520,6 +520,7 @@
       "freeCancellationDays": "Giriş tarihinden X gün öncesine kadar ücretsiz iptal",
       "noRules": "İptal kuralı tanımlanmadı.",
       "noRulesHelp": "Hızlı ekle butonlarını kullanarak standart iptal kuralları ekleyebilirsiniz.",
+      "noCancellationWarning": "Bu otel için iptal politikası tanımlanmamış. Lütfen Otel Ayarları veya Politikalar sekmesinden iptal kurallarını belirleyin.",
       "years": "yaş",
       "days": "gün önce",
       "daysPlus": "gün+",
