@@ -5,13 +5,13 @@ Production sunucusuna güvenli deploy süreci.
 ## Bilgiler
 
 - **Sunucu:** root@85.31.238.34
-- **Şifre:** CwQGE8NDAUU6eaH9siDg
+- **Şifre:** FkOMOgQT6LHaEBMOxis0VXgn
 - **Mimari:** Docker Compose + Nginx
 - **Proje dizini:** /var/www/booking-engine
 - **Docker compose:** /var/www/docker-compose.yml
 - **Container'lar:** maxirez-booking-api, maxirez-payment-service, minirez-mongodb
 - **Admin Frontend:** Nginx serve (`/var/www/booking-engine/apps/admin/dist`) → `app.maxirez.com`
-- **SSH prefix:** `sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34`
+- **SSH prefix:** `sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34`
 
 ## Mimari Notlar
 
@@ -52,21 +52,21 @@ Değişen dosyalara göre otomatik belirle:
 git push origin main
 
 # Remote: pull
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www/booking-engine && git pull origin main"
 ```
 
 ### 4a. API Deploy (backend değişiklikleri)
 
 ```bash
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www && docker compose build booking-api && docker compose up -d booking-api"
 ```
 
 ### 4b. Payment Service Deploy
 
 ```bash
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www && docker compose build payment-service && docker compose up -d payment-service"
 ```
 
@@ -75,7 +75,7 @@ sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238
 **ÖNEMLİ:** Admin frontend Docker'da DEĞİL. Sunucuda direkt build edilmeli:
 
 ```bash
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www/booking-engine && pnpm --filter booking-engine-admin build"
 ```
 
@@ -85,18 +85,18 @@ Nginx otomatik olarak yeni `dist/` klasörünü serve eder, restart gerekmez.
 
 ```bash
 # API build + restart
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www && docker compose build booking-api && docker compose up -d booking-api"
 
 # Admin frontend build
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www/booking-engine && pnpm --filter booking-engine-admin build"
 ```
 
 ### 4e. Full Deploy (her şey)
 
 ```bash
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "cd /var/www && docker compose build booking-api payment-service && docker compose up -d booking-api payment-service && cd booking-engine && pnpm --filter booking-engine-admin build"
 ```
 
@@ -104,11 +104,11 @@ sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238
 
 ```bash
 # Container durumu
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'maxirez|minirez'"
 
 # API logları (hata var mı?)
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "docker logs maxirez-booking-api --tail 10 2>&1"
 
 # API health check

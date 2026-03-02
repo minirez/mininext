@@ -11,7 +11,7 @@ env:
 
 jobs:
   # =========================================================================
-  # Quality Gate: Lint + Build verification
+  # Quality Gate: Lint + Build verification (GitHub-hosted runner)
   # =========================================================================
   quality:
     name: Lint & Build
@@ -59,128 +59,43 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
   # =========================================================================
-  # Deploy: SSH to server, build, restart Docker containers
+  # Deploy: Self-hosted runner on production server
+  # No SSH needed - runner runs directly on the server
   # =========================================================================
   deploy:
     name: Deploy
     needs: quality
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, production]
 
     steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          # API Environment Variables
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SES_REGION: ${{ secrets.AWS_SES_REGION }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-          STOREFRONT_API_KEY: ${{ secrets.STOREFRONT_KEY }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: 22
-          timeout: 120s
-          command_timeout: 30m
-          envs: TURBO_TOKEN,JWT_SECRET,ENCRYPTION_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_REGION,GEMINI_API_KEY,FIRECRAWL_API_KEY,STOREFRONT_API_KEY,SENTRY_DSN,VITE_SENTRY_DSN
-          script: |
-            export PNPM_HOME="/root/.local/share/pnpm"
-            export PATH="$PNPM_HOME:$PATH"
-            export TURBO_TOKEN="${TURBO_TOKEN}"
-            cd /var/www/booking-engine
-            git fetch origin main || { echo "Git fetch failed"; exit 1; }
-            git reset --hard origin/main
+      - name: Pull latest code
+        run: |
+          cd /var/www/booking-engine
+          sudo git fetch origin main || { echo "Git fetch failed"; exit 1; }
+          sudo git reset --hard origin/main
+          echo "Code updated to $(sudo git rev-parse --short HEAD)"
 
-            # Create/Update .env file for API
-            cat > apps/api/.env << EOF
-            NODE_ENV=production
-            PORT=4000
+      - name: Install dependencies
+        run: |
+          cd /var/www/booking-engine
+          sudo pnpm install --frozen-lockfile
 
-            # MongoDB
-            MONGODB_URI=mongodb://localhost:27017/booking-engine
+      - name: Build admin frontend
+        run: |
+          cd /var/www/booking-engine
+          sudo VITE_API_BASE_URL=https://api.maxirez.com/api \
+               VITE_SOCKET_URL=https://api.maxirez.com \
+               VITE_IMAGES_URL=https://images.maxirez.com \
+               VITE_PAYMENT_API_URL=https://api.maxirez.com/payment-api \
+               VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }} \
+               pnpm turbo run build --filter=booking-engine-admin
 
-            # JWT
-            JWT_SECRET=${JWT_SECRET}
-            JWT_ACCESS_EXPIRE=15m
-            JWT_REFRESH_EXPIRE=7d
-
-            # CORS
-            CORS_ORIGIN=https://app.maxirez.com
-
-            # Admin Panel URL (for email links)
-            ADMIN_URL=https://app.maxirez.com
-
-            # Encryption
-            ENCRYPTION_KEY=${ENCRYPTION_KEY}
-
-            # AWS SES (Email) - fromEmail/fromName are in database (PlatformSettings)
-            AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-            AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-            AWS_SES_REGION=${AWS_SES_REGION}
-
-            # AI Translation (Gemini)
-            GEMINI_API_KEY=${GEMINI_API_KEY}
-
-            # Firecrawl (Web Scraping)
-            FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
-
-            # Storefront API Key (server-to-server auth for site3 etc.)
-            STOREFRONT_API_KEY=${STOREFRONT_API_KEY}
-
-            # Sentry Error Tracking
-            SENTRY_DSN=${SENTRY_DSN}
-            EOF
-
-            # Create/Update .env file for Payment Service
-            cat > apps/payment-service/.env << EOF
-            # Payment Service Configuration
-            PORT=7043
-            SERVICE_NAME=payment-service
-            NODE_ENV=production
-
-            # MongoDB - separate database for payment
-            MONGODB_URI=mongodb://localhost:27017/payment
-
-            # Security - Same JWT secret as main API
-            JWT_SECRET=${JWT_SECRET}
-
-            # CORS - Production domains
-            CORS_ORIGIN=https://pms.maxirez.com,https://app.maxirez.com,https://api.maxirez.com
-
-            # Callback URL for 3D Secure redirects
-            CALLBACK_BASE_URL=https://api.maxirez.com/payment-api
-
-            # Frontend URL for result redirects
-            FRONTEND_URL=https://app.maxirez.com
-
-            # Server Public IP (for bank POS configuration)
-            SERVER_PUBLIC_IP=94.130.195.4
-            EOF
-
-            # Install dependencies
-            pnpm install --frozen-lockfile
-
-            # Build admin frontend (Nginx serves from apps/admin/dist/)
-            VITE_API_BASE_URL=https://api.maxirez.com/api \
-            VITE_SOCKET_URL=https://api.maxirez.com \
-            VITE_IMAGES_URL=https://images.maxirez.com \
-            VITE_PAYMENT_API_URL=https://api.maxirez.com/payment-api \
-            VITE_SENTRY_DSN=${VITE_SENTRY_DSN} \
-            pnpm turbo run build --filter=booking-engine-admin
-
-            # Build and restart Docker containers (API + Payment Service)
-            cd /var/www
-            docker compose build booking-api payment-service || { echo "Docker build failed"; exit 1; }
-            docker compose up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
-
-            echo "Deploy completed at $(date)"
+      - name: Build and restart Docker containers
+        run: |
+          cd /var/www
+          sudo docker compose build booking-api payment-service || { echo "Docker build failed"; exit 1; }
+          sudo docker compose up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
+          echo "Deploy completed at $(date)"
 
       - name: Post-deploy health check
         run: |
@@ -196,7 +111,7 @@ jobs:
             exit 1
           fi
 
-          # Readiness check (MongoDB, Redis, etc.)
+          # Readiness check
           RESPONSE=$(curl -s --max-time 10 https://api.maxirez.com/health/ready || echo '{}')
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health/ready || echo "000")
           if [ "$HTTP_STATUS" = "200" ]; then

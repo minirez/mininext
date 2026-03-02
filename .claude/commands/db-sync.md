@@ -7,7 +7,7 @@ Production sunucudan MongoDB dump alıp lokal ortama restore eden skill.
 - **Production Sunucu:** root@85.31.238.34 (Docker)
 - **Production DB:** Docker container `minirez-mongodb` içinde
 - **Lokal DB:** mongodb://localhost:27017/booking-engine
-- **SSH Şifresi:** CwQGE8NDAUU6eaH9siDg
+- **SSH Şifresi:** FkOMOgQT6LHaEBMOxis0VXgn
 - **Dump Dizini (sunucu):** /tmp/db-dump
 - **Dump Dizini (lokal):** /tmp/db-dump
 
@@ -28,13 +28,13 @@ SSH ile production sunucuya bağlan. MongoDB Docker container içinde çalışı
 ```bash
 # sshpass gerekli (interactive SSH desteklenmiyor)
 # Tüm DB için:
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "docker exec minirez-mongodb rm -rf /tmp/db-dump && \
    docker exec minirez-mongodb mongodump --db booking-engine --out /tmp/db-dump --gzip && \
    docker cp minirez-mongodb:/tmp/db-dump /tmp/db-dump"
 
 # Belirli collection için:
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "docker exec minirez-mongodb rm -rf /tmp/db-dump && \
    docker exec minirez-mongodb mongodump --db booking-engine --collection <COLLECTION_ADI> --out /tmp/db-dump --gzip && \
    docker cp minirez-mongodb:/tmp/db-dump /tmp/db-dump"
@@ -46,7 +46,7 @@ SCP ile dump dosyalarını lokal makineye çek:
 
 ```bash
 rm -rf /tmp/db-dump
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' scp -o StrictHostKeyChecking=no -r root@85.31.238.34:/tmp/db-dump /tmp/db-dump
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' scp -o StrictHostKeyChecking=no -r root@85.31.238.34:/tmp/db-dump /tmp/db-dump
 ```
 
 ### 4. (Opsiyonel) Lokal Yedek Al
@@ -73,7 +73,7 @@ Sunucudaki ve lokaldeki dump dosyalarını temizle:
 
 ```bash
 # Sunucu (container + host)
-sshpass -p 'CwQGE8NDAUU6eaH9siDg' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
+sshpass -p 'FkOMOgQT6LHaEBMOxis0VXgn' ssh -o StrictHostKeyChecking=no root@85.31.238.34 \
   "rm -rf /tmp/db-dump && docker exec minirez-mongodb rm -rf /tmp/db-dump"
 
 # Lokal

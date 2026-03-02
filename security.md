@@ -91,7 +91,8 @@
 - **Etki:** Tam sunucu kontrolü, veri ihlali.
 - **Çözüm:** Credential'ları CLAUDE.md'den kaldır, şifreleri değiştir. SSH key-based auth'a geç.
 - **Yapılan:** CLAUDE.md `git rm --cached` ile git takibinden çıkarıldı (.gitignore'da zaten vardı). Yeni commit'lerde dosya paylaşılmıyor.
-- **KALAN:** SSH şifreleri değiştirilmeli, SSH key-based auth'a geçilmeli. Git history'den eski commit'lerdeki credential'lar hâlâ erişilebilir (git filter-branch veya BFG ile temizlenmeli).
+- **Yapılan (2026-03-02):** Root şifresi değiştirildi. UFW ile SSH sadece belirli IP'ye kısıtlandı. fail2ban kuruldu (3 deneme → 24 saat ban).
+- **KALAN:** SSH key-based auth'a geçilmeli. Git history'den eski commit'lerdeki credential'lar hâlâ erişilebilir (git filter-branch veya BFG ile temizlenmeli).
 
 ### C9. Kart Verisi API Sunucusundan Geçiyor (PCI DSS İhlali) [BEKLIYOR]
 
