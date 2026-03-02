@@ -477,19 +477,42 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
       }
     }
 
-    case 'hotel_notification':
+    case 'hotel_notification': {
+      const hotelDiscountSection = buildDiscountSection(booking, locale, labels)
+      const hotelPaymentInfo = buildPaymentInfoSection(booking, locale, labels)
+      const hotelSpecialRequests = buildSpecialRequestsSection(booking, labels)
+
+      let hotelBankSection = ''
+      let hotelPaymentMethod = ''
+      if (booking.payment?.method === 'bank_transfer') {
+        hotelBankSection = await buildBankTransferSection(booking, language)
+        hotelPaymentMethod = labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi'
+      } else if (booking.payment?.method === 'credit_card') {
+        hotelPaymentMethod = labels.PAYMENT_METHOD_CREDIT_CARD || 'Kredi Kartı'
+      } else if (booking.payment?.method === 'pay_at_hotel') {
+        hotelPaymentMethod = labels.PAYMENT_METHOD_PAY_AT_HOTEL || 'Otelde Ödeme'
+      }
+
       return {
         ...commonData,
         TITLE: language === 'tr' ? 'Yeni Rezervasyon Bildirimi' : 'New Booking Notification',
         SUBTITLE:
           language === 'tr'
             ? `${booking.bookingNumber} numaralı yeni rezervasyon oluşturuldu`
-            : `New booking ${booking.bookingNumber} has been created`
+            : `New booking ${booking.bookingNumber} has been created`,
+        DISCOUNT_SECTION: hotelDiscountSection,
+        BANK_TRANSFER_SECTION: hotelBankSection,
+        PAYMENT_METHOD: hotelPaymentMethod,
+        PAYMENT_INFO: hotelPaymentInfo,
+        SPECIAL_REQUESTS: hotelSpecialRequests
       }
+    }
 
     default: {
       // Build discount section HTML
       const discountSection = buildDiscountSection(booking, locale, labels)
+      const paymentInfo = buildPaymentInfoSection(booking, locale, labels)
+      const specialRequests = buildSpecialRequestsSection(booking, labels)
 
       // For confirmation emails, add bank transfer info if payment method is bank_transfer
       if (booking.payment?.method === 'bank_transfer') {
@@ -498,17 +521,88 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
           ...commonData,
           BANK_TRANSFER_SECTION: bankSection,
           PAYMENT_METHOD: labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi',
-          DISCOUNT_SECTION: discountSection
+          DISCOUNT_SECTION: discountSection,
+          PAYMENT_INFO: paymentInfo,
+          SPECIAL_REQUESTS: specialRequests
         }
       }
       return {
         ...commonData,
         BANK_TRANSFER_SECTION: '',
         PAYMENT_METHOD: '',
-        DISCOUNT_SECTION: discountSection
+        DISCOUNT_SECTION: discountSection,
+        PAYMENT_INFO: paymentInfo,
+        SPECIAL_REQUESTS: specialRequests
       }
     }
   }
+}
+
+/**
+ * Build payment info HTML section
+ * Shows payment method, paid amount and remaining amount
+ */
+function buildPaymentInfoSection(booking, locale, labels) {
+  const method = booking.payment?.method
+  if (!method) return ''
+
+  const currency = booking.pricing?.currency || 'TRY'
+  const paidAmount = booking.payment?.paidAmount || 0
+  const grandTotal = booking.pricing?.grandTotal || 0
+  const remaining = grandTotal - paidAmount
+
+  // Payment method label
+  let methodLabel = ''
+  if (method === 'credit_card') methodLabel = labels.PAYMENT_METHOD_CREDIT_CARD || 'Kredi Kartı'
+  else if (method === 'bank_transfer')
+    methodLabel = labels.PAYMENT_METHOD_BANK_TRANSFER || 'Banka Havalesi'
+  else if (method === 'pay_at_hotel')
+    methodLabel = labels.PAYMENT_METHOD_PAY_AT_HOTEL || 'Otelde Ödeme'
+  else methodLabel = method
+
+  const paymentMethodLabel = labels.PAYMENT_METHOD_LABEL || 'Ödeme Yöntemi'
+  const paidLabel = labels.PAID_AMOUNT_LABEL || 'Ödenen'
+  const remainingLabel = labels.REMAINING_LABEL || 'Kalan'
+  const title = labels.PAYMENT_INFO_TITLE || 'Ödeme Bilgisi'
+
+  let rows = `<tr>
+<td style="padding:8px 0;color:#64748b;font-size:14px;border-bottom:1px solid #e2e8f0;width:40%;">${paymentMethodLabel}</td>
+<td style="padding:8px 0;color:#1e293b;font-size:14px;font-weight:600;border-bottom:1px solid #e2e8f0;">${methodLabel}</td>
+</tr>`
+
+  if (paidAmount > 0) {
+    rows += `<tr>
+<td style="padding:8px 0;color:#64748b;font-size:14px;border-bottom:1px solid #e2e8f0;">${paidLabel}</td>
+<td style="padding:8px 0;color:#16a34a;font-size:14px;font-weight:600;border-bottom:1px solid #e2e8f0;">${formatCurrency(paidAmount, currency, locale)}</td>
+</tr>`
+  }
+
+  if (remaining > 0) {
+    rows += `<tr>
+<td style="padding:8px 0;color:#64748b;font-size:14px;">${remainingLabel}</td>
+<td style="padding:8px 0;color:#dc2626;font-size:14px;font-weight:600;">${formatCurrency(remaining, currency, locale)}</td>
+</tr>`
+  }
+
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;margin-bottom:24px;" role="none"><tr><td style="padding:20px;">
+<h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">${title}</h3>
+<table width="100%" cellpadding="0" cellspacing="0" role="none">${rows}</table>
+</td></tr></table>`
+}
+
+/**
+ * Build special requests HTML section
+ * Returns empty string if no special requests
+ */
+function buildSpecialRequestsSection(booking, labels) {
+  if (!booking.specialRequests) return ''
+
+  const title = labels.SPECIAL_REQUESTS_TITLE || 'Özel İstekler'
+
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:24px;" role="none"><tr><td style="padding:20px;">
+<h3 style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;">${title}</h3>
+<p style="margin:0;font-size:14px;color:#78350f;line-height:1.6;">${booking.specialRequests}</p>
+</td></tr></table>`
 }
 
 /**

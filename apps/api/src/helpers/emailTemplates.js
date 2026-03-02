@@ -33,7 +33,9 @@ export const TEMPLATE_VARIABLES = {
     'BOOKING_URL',
     'BANK_TRANSFER_SECTION',
     'PAYMENT_METHOD',
-    'DISCOUNT_SECTION'
+    'DISCOUNT_SECTION',
+    'PAYMENT_INFO',
+    'SPECIAL_REQUESTS'
   ],
   'booking-cancelled': [
     'BOOKING_NUMBER',
@@ -167,6 +169,8 @@ export const TEMPLATE_LABELS = {
     PAYMENT_METHOD_BANK_TRANSFER: 'Banka Havalesi',
     PAYMENT_METHOD_CREDIT_CARD: 'Kredi Kartı',
     PAYMENT_METHOD_PAY_AT_HOTEL: 'Otelde Ödeme',
+    SPECIAL_REQUESTS_TITLE: 'Özel İstekler',
+    PAYMENT_INFO_TITLE: 'Ödeme Bilgisi',
 
     // Booking Cancelled
     CANCELLED_TITLE: 'Rezervasyonunuz İptal Edildi',
@@ -365,6 +369,8 @@ export const TEMPLATE_LABELS = {
     PAYMENT_METHOD_BANK_TRANSFER: 'Bank Transfer',
     PAYMENT_METHOD_CREDIT_CARD: 'Credit Card',
     PAYMENT_METHOD_PAY_AT_HOTEL: 'Pay at Hotel',
+    SPECIAL_REQUESTS_TITLE: 'Special Requests',
+    PAYMENT_INFO_TITLE: 'Payment Information',
 
     // Booking Cancelled
     CANCELLED_TITLE: 'Your Booking Has Been Cancelled',
