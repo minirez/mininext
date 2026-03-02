@@ -116,7 +116,7 @@
               <div class="space-y-2">
                 <div
                   v-for="hotel in account.hotels"
-                  :key="account.accountId"
+                  :key="hotel._id || hotel.hotelId"
                   class="p-3 rounded-lg border border-gray-200 dark:border-slate-600"
                 >
                   <div class="flex items-center justify-between mb-2">

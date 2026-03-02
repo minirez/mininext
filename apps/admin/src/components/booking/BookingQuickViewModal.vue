@@ -843,7 +843,7 @@ const statusLabel = computed(() => {
 })
 
 const headerGradient = computed(() => {
-  const s = bookingDetails.value?.status || booking?.status
+  const s = bookingDetails.value?.status || props.booking?.status
   const map = {
     confirmed: 'bg-gradient-to-r from-emerald-600 to-teal-600',
     completed: 'bg-gradient-to-r from-blue-600 to-indigo-600',

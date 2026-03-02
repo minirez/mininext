@@ -227,12 +227,12 @@ export const deleteAgency = asyncHandler(async (req, res) => {
     throw new ConflictError('AGENCY_HAS_USERS')
   }
 
-  const partnerId = agency.partner
+  const agencyPartnerId = agency.partner
 
   await agency.deleteOne()
 
   // Update partner stats
-  await Partner.findByIdAndUpdate(partnerId, {
+  await Partner.findByIdAndUpdate(agencyPartnerId, {
     $inc: { 'stats.totalAgencies': -1 }
   })
 

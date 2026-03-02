@@ -1,6 +1,5 @@
 import { AppError } from '../core/errors.js'
 import logger from '../core/logger.js'
-import config from '../config/index.js'
 import { captureException } from '../core/sentry.js'
 
 export const errorHandler = (err, req, res, _next) => {
