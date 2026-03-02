@@ -3,6 +3,7 @@
  * Widget-specific endpoints for B2C booking widget
  */
 
+import geoip from 'geoip-lite'
 import { asyncHandler } from '#helpers'
 import { NotFoundError } from '#core/errors.js'
 import Hotel from '#modules/hotel/hotel.model.js'
@@ -85,49 +86,59 @@ const DEFAULT_MARKET = { currency: 'EUR', locale: 'en-US' }
  * Returns country code, currency and locale
  */
 export const detectMarket = asyncHandler(async (req, res) => {
-  // Get IP address
-  const ip =
-    req.ip ||
+  // Get IP address - clean ::ffff: IPv4-mapped IPv6 prefix
+  const rawIp =
     req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.ip ||
     req.connection.remoteAddress ||
     '127.0.0.1'
+  const ip = rawIp.replace(/^::ffff:/, '')
 
   // For local/private IPs, default to Turkey
+  // 172.16.0.0/12 = 172.16.x.x - 172.31.x.x (NOT all 172.x.x.x)
   const isLocalIP =
     ip === '127.0.0.1' ||
     ip === '::1' ||
     ip.startsWith('192.168.') ||
     ip.startsWith('10.') ||
-    ip.startsWith('172.')
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip)
 
   let countryCode = 'TR' // Default to Turkey
+  let detectedFrom = 'default'
 
   if (!isLocalIP) {
-    // Try to detect country from IP
-    // In production, you would use a GeoIP service like:
-    // - MaxMind GeoLite2
-    // - IP-API
-    // - ipstack
-    // For now, we'll use a header-based approach if available
-
-    // Check for Cloudflare country header
+    // 1. Cloudflare country header
     const cfCountry = req.headers['cf-ipcountry']
     if (cfCountry && cfCountry !== 'XX') {
       countryCode = cfCountry
+      detectedFrom = 'cloudflare'
     }
 
-    // Check for nginx GeoIP header
+    // 2. Nginx GeoIP header
     const geoCountry = req.headers['x-geoip-country']
-    if (geoCountry) {
+    if (geoCountry && detectedFrom === 'default') {
       countryCode = geoCountry
+      detectedFrom = 'nginx-geoip'
     }
 
-    // Check Accept-Language header as fallback
-    const acceptLang = req.headers['accept-language']
-    if (!cfCountry && !geoCountry && acceptLang) {
-      const langCountry = acceptLang.split(',')[0]?.split('-')[1]?.toUpperCase()
-      if (langCountry && COUNTRY_CURRENCY_MAP[langCountry]) {
-        countryCode = langCountry
+    // 3. geoip-lite lookup (MaxMind GeoLite2 local DB)
+    if (detectedFrom === 'default') {
+      const geo = geoip.lookup(ip)
+      if (geo?.country) {
+        countryCode = geo.country
+        detectedFrom = 'geoip'
+      }
+    }
+
+    // 4. Accept-Language fallback
+    if (detectedFrom === 'default') {
+      const acceptLang = req.headers['accept-language']
+      if (acceptLang) {
+        const langCountry = acceptLang.split(',')[0]?.split('-')[1]?.toUpperCase()
+        if (langCountry && COUNTRY_CURRENCY_MAP[langCountry]) {
+          countryCode = langCountry
+          detectedFrom = 'accept-language'
+        }
       }
     }
   }
@@ -141,7 +152,7 @@ export const detectMarket = asyncHandler(async (req, res) => {
       countryCode,
       currency: marketInfo.currency,
       locale: marketInfo.locale,
-      detectedFrom: isLocalIP ? 'default' : 'ip'
+      detectedFrom
     }
   })
 })
