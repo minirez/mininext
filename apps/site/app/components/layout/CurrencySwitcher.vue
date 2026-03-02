@@ -56,10 +56,9 @@ const dropdownRef = ref<HTMLElement>()
 
 const currencies = [
   { code: 'TRY', symbol: '₺' },
-  { code: 'USD', symbol: '$' },
   { code: 'EUR', symbol: '€' },
-  { code: 'GBP', symbol: '£' },
-  { code: 'RUB', symbol: '₽' }
+  { code: 'USD', symbol: '$' },
+  { code: 'GBP', symbol: '£' }
 ]
 
 const currentSymbol = computed(() => {

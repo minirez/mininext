@@ -17,31 +17,30 @@
       </svg>
     </button>
 
-    <Transition name="dropdown">
+    <Transition name="lang-mega">
       <div
         v-if="open"
-        class="absolute right-0 top-full mt-2 dropdown-panel py-1 min-w-[160px] z-50"
+        class="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 w-[540px] max-w-[90vw]"
       >
-        <button
-          v-for="lang in availableLocales"
-          :key="lang.code"
-          @click="switchLang(lang.code)"
-          class="w-full text-left px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2.5"
-          :class="{ 'font-semibold text-site-primary bg-site-primary/5': locale === lang.code }"
-        >
-          <span class="text-base leading-none">{{ getFlagEmoji(lang.code) }}</span>
-          {{ lang.name }}
-          <svg
-            v-if="locale === lang.code"
-            class="w-4 h-4 ml-auto text-site-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            stroke-width="2"
+        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">
+          {{ $t('common.language') }}
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1">
+          <button
+            v-for="lang in allLocales"
+            :key="lang.code"
+            @click="switchLang(lang.code)"
+            class="flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm transition-colors text-left"
+            :class="
+              locale === lang.code
+                ? 'bg-site-primary/10 text-site-primary font-semibold ring-1 ring-site-primary/20'
+                : 'text-gray-700 hover:bg-gray-50'
+            "
           >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </button>
+            <span class="text-base leading-none shrink-0">{{ getFlagEmoji(lang.code) }}</span>
+            <span class="truncate text-xs">{{ lang.name }}</span>
+          </button>
+        </div>
       </div>
     </Transition>
   </div>
@@ -49,7 +48,7 @@
 
 <script setup lang="ts">
 const { locale, locales, setLocale } = useI18n()
-const partner = usePartnerStore()
+const { t: $t } = useI18n()
 
 const open = ref(false)
 const dropdownRef = ref<HTMLElement>()
@@ -83,14 +82,9 @@ function getFlagEmoji(code: string) {
 
 const flagEmoji = computed(() => getFlagEmoji(locale.value))
 
-const availableLocales = computed(() => {
-  const activeLangs = partner.activeLanguages
-  const all = locales.value as any[]
-  if (activeLangs.length > 1) {
-    return all.filter(l => activeLangs.includes(l.code))
-  }
-  // Fallback: backend'den dil ayarı gelmediyse tüm locale'leri göster
-  return all
+// Tüm 20 dili her zaman göster
+const allLocales = computed(() => {
+  return (locales.value as any[]).slice()
 })
 
 function switchLang(code: string) {
@@ -108,3 +102,22 @@ onMounted(() => {
   onUnmounted(() => document.removeEventListener('click', handler))
 })
 </script>
+
+<style scoped>
+.lang-mega-enter-active,
+.lang-mega-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.lang-mega-enter-from,
+.lang-mega-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.lang-mega-enter-to,
+.lang-mega-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>

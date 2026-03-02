@@ -104,35 +104,65 @@
         <!-- Tour: Month selector -->
         <template v-if="activeTab === 'tours'">
           <div
-            class="flex-1 min-w-0 px-4 py-2.5 sm:py-1.5 border-b sm:border-b-0 border-gray-100 group"
+            class="relative flex-1 min-w-0 px-4 py-2.5 sm:py-1.5 border-b sm:border-b-0 border-gray-100 group"
+            ref="monthRef"
           >
-            <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{{
-              $t('search.when')
-            }}</label>
-            <div class="flex items-center gap-2.5 mt-1">
-              <svg
-                class="w-[18px] h-[18px] text-gray-400 group-focus-within:text-site-primary shrink-0 transition-colors"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
+            <button
+              type="button"
+              @click="monthOpen = !monthOpen"
+              class="w-full text-left focus:outline-none"
+            >
+              <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{{
+                $t('search.when')
+              }}</span>
+              <div class="flex items-center gap-2.5 mt-1">
+                <svg
+                  class="w-[18px] h-[18px] text-gray-400 shrink-0 transition-colors"
+                  :class="{ 'text-site-primary': monthOpen }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+                  />
+                </svg>
+                <span
+                  class="text-sm"
+                  :class="tourMonth ? 'text-gray-800 font-medium' : 'text-gray-400'"
+                >
+                  {{ tourMonth ? selectedMonthLabel : $t('search.selectMonth') }}
+                </span>
+              </div>
+            </button>
+
+            <!-- Month grid dropdown -->
+            <Transition name="dropdown">
+              <div
+                v-if="monthOpen"
+                class="absolute top-full left-0 sm:left-1/2 sm:-translate-x-1/2 mt-3 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 w-[300px]"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-                />
-              </svg>
-              <select
-                v-model="tourMonth"
-                class="w-full text-sm text-gray-800 bg-transparent focus:outline-none appearance-none cursor-pointer"
-              >
-                <option value="" disabled>{{ $t('search.selectMonth') }}</option>
-                <option v-for="m in monthOptions" :key="m.value" :value="m.value">
-                  {{ m.label }}
-                </option>
-              </select>
-            </div>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <button
+                    v-for="m in monthOptions"
+                    :key="m.value"
+                    type="button"
+                    @click="selectMonth(m.value)"
+                    class="px-2 py-2.5 rounded-lg text-sm text-center transition-all"
+                    :class="
+                      tourMonth === m.value
+                        ? 'bg-site-primary text-white font-semibold shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-site-primary'
+                    "
+                  >
+                    {{ m.shortLabel }}
+                  </button>
+                </div>
+              </div>
+            </Transition>
           </div>
         </template>
 
@@ -223,23 +253,42 @@ const storefront = useStorefrontStore()
 const router = useRouter()
 const guestOpen = ref(false)
 const guestRef = ref<HTMLElement>()
+const monthOpen = ref(false)
+const monthRef = ref<HTMLElement>()
 const activeTab = ref('hotels')
 const tourMonth = ref('')
 
 // Month options for tour search
 const monthOptions = computed(() => {
   const now = new Date()
-  const months: { value: string; label: string }[] = []
+  const months: { value: string; label: string; shortLabel: string }[] = []
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const localeTag =
       locale.value === 'tr' ? 'tr-TR' : locale.value === 'en' ? 'en-US' : locale.value
     const label = d.toLocaleDateString(localeTag, { month: 'long', year: 'numeric' })
-    months.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) })
+    const shortMonth = d.toLocaleDateString(localeTag, { month: 'short' })
+    const year = d.getFullYear()
+    const shortLabel =
+      `${shortMonth.charAt(0).toUpperCase() + shortMonth.slice(1)} ${year !== now.getFullYear() ? year : ''}`.trim()
+    months.push({
+      value,
+      label: label.charAt(0).toUpperCase() + label.slice(1),
+      shortLabel
+    })
   }
   return months
 })
+
+const selectedMonthLabel = computed(() => {
+  return monthOptions.value.find(m => m.value === tourMonth.value)?.label || ''
+})
+
+function selectMonth(value: string) {
+  tourMonth.value = value
+  monthOpen.value = false
+}
 
 // Tab icons as render functions
 const IconHotel = () =>
@@ -420,11 +469,14 @@ function handleSearch() {
   }
 }
 
-// Close guest selector on outside click
+// Close dropdowns on outside click
 onMounted(() => {
   const handler = (e: Event) => {
     if (guestRef.value && !guestRef.value.contains(e.target as Node)) {
       guestOpen.value = false
+    }
+    if (monthRef.value && !monthRef.value.contains(e.target as Node)) {
+      monthOpen.value = false
     }
   }
   document.addEventListener('click', handler)
