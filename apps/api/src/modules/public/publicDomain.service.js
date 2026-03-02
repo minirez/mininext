@@ -45,7 +45,7 @@ export const resolveDomain = asyncHandler(async (req, res) => {
         partner: partner._id,
         status: 'active'
       })
-        .select('_id name slug logo stars')
+        .select('_id name slug logo stars images city')
         .limit(50)
 
       return res.json({
@@ -62,13 +62,18 @@ export const resolveDomain = asyncHandler(async (req, res) => {
             logo: hotel.logo,
             stars: hotel.stars
           },
-          hotels: hotels.map(h => ({
-            id: h._id,
-            name: h.name,
-            slug: h.slug,
-            logo: h.logo,
-            stars: h.stars
-          }))
+          hotels: hotels.map(h => {
+            const mainImg = h.images?.find(img => img.isMain) || h.images?.[0]
+            return {
+              id: h._id,
+              name: h.name,
+              slug: h.slug,
+              logo: h.logo,
+              image: mainImg?.url || '',
+              stars: h.stars,
+              city: h.city
+            }
+          })
         }
       })
     }
@@ -83,7 +88,7 @@ export const resolveDomain = asyncHandler(async (req, res) => {
       partner: partner._id,
       status: 'active'
     })
-      .select('_id name slug logo stars')
+      .select('_id name slug logo stars images city')
       .limit(50)
 
     return res.json({
@@ -93,13 +98,18 @@ export const resolveDomain = asyncHandler(async (req, res) => {
         partnerName: partner.companyName,
         code: partner.code,
         logo: partner.branding?.logo,
-        hotels: hotels.map(h => ({
-          id: h._id,
-          name: h.name,
-          slug: h.slug,
-          logo: h.logo,
-          stars: h.stars
-        }))
+        hotels: hotels.map(h => {
+          const mainImg = h.images?.find(img => img.isMain) || h.images?.[0]
+          return {
+            id: h._id,
+            name: h.name,
+            slug: h.slug,
+            logo: h.logo,
+            image: mainImg?.url || '',
+            stars: h.stars,
+            city: h.city
+          }
+        })
       }
     })
   }

@@ -354,7 +354,9 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
         'general.maintenanceMessage': 1,
         'general.logo': 1,
         'general.favicon': 1,
-        'general.tursab': 1
+        'general.tursab': 1,
+        'general.activeLanguages': 1,
+        'general.defaultLanguage': 1
       })
       .lean()
 
@@ -381,6 +383,13 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
         height: 0,
         link: siteSettings.general.favicon
       }
+    }
+
+    if (siteSettings?.general?.activeLanguages?.length) {
+      publicData.activeLanguages = siteSettings.general.activeLanguages
+    }
+    if (siteSettings?.general?.defaultLanguage) {
+      publicData.defaultLanguage = siteSettings.general.defaultLanguage
     }
 
     if (siteSettings?.general?.tursab && publicData.settings) {

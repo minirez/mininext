@@ -135,7 +135,7 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
 
   const hotel = await Hotel.findOne(hotelQuery)
     .select(
-      'slug name description stars type category amenities images address contact policies childAgeGroups partner'
+      'slug name description stars type category amenities images address contact policies profile childAgeGroups partner'
     )
     .lean()
 
@@ -169,8 +169,14 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
       },
       policies: {
         checkIn: hotel.policies?.checkIn,
-        checkOut: hotel.policies?.checkOut
+        checkOut: hotel.policies?.checkOut,
+        freeCancellation: hotel.policies?.freeCancellation,
+        childPolicy: hotel.policies?.childPolicy,
+        petPolicy: hotel.policies?.petPolicy,
+        additionalInfo: hotel.policies?.additionalInfo,
+        cancellationRules: hotel.policies?.cancellationRules
       },
+      profile: hotel.profile,
       childAgeGroups: hotel.childAgeGroups
     }
   })
