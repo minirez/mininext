@@ -49,7 +49,7 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Build verification (populates Turbo remote cache)
+      - name: Build verification
         run: pnpm turbo run build --filter=booking-engine-admin
         env:
           VITE_API_BASE_URL: https://api.maxirez.com/api
@@ -60,7 +60,6 @@ jobs:
 
   # =========================================================================
   # Deploy: Self-hosted runner on production server
-  # No SSH needed - runner runs directly on the server
   # =========================================================================
   deploy:
     name: Deploy
@@ -75,12 +74,34 @@ jobs:
           sudo git reset --hard origin/main
           echo "Code updated to $(sudo git rev-parse --short HEAD)"
 
+      - name: Detect changed paths
+        id: changes
+        run: |
+          cd /var/www/booking-engine
+          # Compare with previous deploy (last successful HEAD)
+          PREV=$(sudo git rev-parse HEAD~1 2>/dev/null || echo "")
+          if [ -z "$PREV" ]; then
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "admin=true" >> $GITHUB_OUTPUT
+            echo "packages=true" >> $GITHUB_OUTPUT
+            echo "payment=true" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(sudo git diff --name-only "$PREV" HEAD)
+            echo "$CHANGED"
+            echo "api=$(echo "$CHANGED" | grep -q '^apps/api/' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "admin=$(echo "$CHANGED" | grep -q '^apps/admin/' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "packages=$(echo "$CHANGED" | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
+            echo "payment=$(echo "$CHANGED" | grep -q '^apps/payment-service/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          fi
+
       - name: Install dependencies
+        if: steps.changes.outputs.admin == 'true' || steps.changes.outputs.packages == 'true'
         run: |
           cd /var/www/booking-engine
           sudo pnpm install --frozen-lockfile
 
       - name: Build admin frontend
+        if: steps.changes.outputs.admin == 'true' || steps.changes.outputs.packages == 'true'
         run: |
           cd /var/www/booking-engine
           sudo VITE_API_BASE_URL=https://api.maxirez.com/api \
@@ -90,35 +111,47 @@ jobs:
                VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }} \
                pnpm turbo run build --filter=booking-engine-admin
 
-      - name: Build and restart Docker containers
+      - name: Build and restart API
+        if: steps.changes.outputs.api == 'true' || steps.changes.outputs.packages == 'true'
         run: |
           cd /var/www
-          sudo docker compose build booking-api payment-service || { echo "Docker build failed"; exit 1; }
-          sudo docker compose up -d booking-api payment-service || { echo "Docker up failed"; exit 1; }
-          echo "Deploy completed at $(date)"
+          sudo docker compose build booking-api || { echo "Docker build failed"; exit 1; }
+          sudo docker compose up -d booking-api || { echo "Docker up failed"; exit 1; }
+          echo "API restarted at $(date)"
+
+      - name: Build and restart Payment Service
+        if: steps.changes.outputs.payment == 'true' || steps.changes.outputs.packages == 'true'
+        run: |
+          cd /var/www
+          sudo docker compose build payment-service || { echo "Docker build failed"; exit 1; }
+          sudo docker compose up -d payment-service || { echo "Docker up failed"; exit 1; }
+          echo "Payment service restarted at $(date)"
 
       - name: Post-deploy health check
+        if: steps.changes.outputs.api == 'true' || steps.changes.outputs.packages == 'true'
         run: |
-          echo "Waiting 20s for containers to start..."
-          sleep 20
+          echo "Waiting for API to be ready..."
+          for i in $(seq 1 12); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "API healthy (HTTP $HTTP_STATUS) after ${i}0s"
+              break
+            fi
+            echo "Attempt $i: HTTP $HTTP_STATUS - waiting 10s..."
+            if [ "$i" = "12" ]; then
+              echo "Health check FAILED after 120s (HTTP $HTTP_STATUS)"
+              sudo docker logs maxirez-booking-api --tail 20
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Deploy completed successfully"
 
-          # Liveness check
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health || echo "000")
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "Liveness check passed (HTTP $HTTP_STATUS)"
-          else
-            echo "Liveness check FAILED (HTTP $HTTP_STATUS)"
-            exit 1
-          fi
-
-          # Readiness check
-          RESPONSE=$(curl -s --max-time 10 https://api.maxirez.com/health/ready || echo '{}')
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://api.maxirez.com/health/ready || echo "000")
-          if [ "$HTTP_STATUS" = "200" ]; then
-            echo "Readiness check passed (HTTP $HTTP_STATUS)"
-          else
-            echo "Readiness check warning (HTTP $HTTP_STATUS) - service may still be initializing"
-            echo "Response: $RESPONSE"
-          fi
-
-          echo "All health checks completed"
+      - name: Deploy summary
+        run: |
+          echo "=== Deploy Summary ==="
+          echo "API changed: ${{ steps.changes.outputs.api }}"
+          echo "Admin changed: ${{ steps.changes.outputs.admin }}"
+          echo "Packages changed: ${{ steps.changes.outputs.packages }}"
+          echo "Payment changed: ${{ steps.changes.outputs.payment }}"
+          echo "======================"
