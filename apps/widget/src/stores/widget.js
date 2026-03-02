@@ -461,13 +461,41 @@ export const useWidgetStore = defineStore('widget', () => {
         return result
       }
 
-      // Payment completed without 3D
-      currentStep.value = 'confirmation'
+      // Non-3D path: verify payment status from server before confirming
+      const verified = await verifyPaymentCompleted()
+      if (!verified) {
+        error.value = 'Ödeme doğrulanamadı. Lütfen tekrar deneyin.'
+      }
     } catch (err) {
       error.value = err.message
     } finally {
       isLoading.value = false
     }
+  }
+
+  /**
+   * Verify payment is actually completed on server before showing confirmation.
+   * Polls server up to 5 times (15 seconds total) to allow webhook processing.
+   * @returns {boolean} true if payment verified as completed
+   */
+  async function verifyPaymentCompleted() {
+    const maxAttempts = 5
+    for (let i = 0; i < maxAttempts; i++) {
+      const status = await checkPaymentStatus()
+      if (status?.payment?.status === 'completed') {
+        currentStep.value = 'confirmation'
+        return true
+      }
+      if (status?.payment?.status === 'failed') {
+        error.value = status?.payment?.cardDetails?.gatewayResponse?.error || 'Ödeme başarısız oldu'
+        return false
+      }
+      // Wait 3 seconds before retrying (except on last attempt)
+      if (i < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000))
+      }
+    }
+    return false
   }
 
   async function checkPaymentStatus() {
@@ -480,10 +508,6 @@ export const useWidgetStore = defineStore('widget', () => {
         paymentResult.value?.paymentId,
         config.value.apiUrl
       )
-
-      if (status.payment?.status === 'completed') {
-        currentStep.value = 'confirmation'
-      }
 
       return status
     } catch (err) {

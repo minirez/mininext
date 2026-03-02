@@ -317,14 +317,23 @@ async function submitPayment() {
 }
 
 // 3D Secure postMessage dinleyici
-function handlePaymentMessage(event) {
+async function handlePaymentMessage(event) {
   if (event.data?.type === 'payment_result') {
     stopStatusCheck()
     show3DModal.value = false
     payment3DUrl.value = ''
 
     if (event.data.data?.success) {
-      widgetStore.currentStep = 'confirmation'
+      // Never trust client-side message alone - verify with server
+      const status = await widgetStore.checkPaymentStatus()
+      if (status?.payment?.status === 'completed') {
+        widgetStore.currentStep = 'confirmation'
+      } else if (status?.payment?.status === 'failed') {
+        widgetStore.error = t('payment.errors.paymentFailed')
+      } else {
+        // Payment not yet processed by webhook, start polling
+        startStatusCheck()
+      }
     } else {
       widgetStore.error = event.data.data?.message || t('payment.errors.paymentFailed')
     }
@@ -367,7 +376,7 @@ function cancel3DPayment() {
   paymentId.value = null
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('message', handlePaymentMessage)
 
   // Check for 3D Secure return (legacy fallback)
@@ -375,7 +384,14 @@ onMounted(() => {
   const paymentStatus = urlParams.get('paymentStatus')
 
   if (paymentStatus === 'success') {
-    widgetStore.currentStep = 'confirmation'
+    // Never trust URL params alone - verify with server
+    const status = await widgetStore.checkPaymentStatus()
+    if (status?.payment?.status === 'completed') {
+      widgetStore.currentStep = 'confirmation'
+    } else {
+      // Payment not yet confirmed, start polling to wait for webhook
+      startStatusCheck()
+    }
   } else if (paymentStatus === 'failed') {
     widgetStore.error = t('payment.errors.paymentFailedRetry')
   }
