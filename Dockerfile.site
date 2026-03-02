@@ -1,0 +1,71 @@
+# ============================================
+# Stage 1: Install dependencies
+# ============================================
+FROM node:22-alpine AS deps
+
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy package.json files for all workspace packages
+COPY apps/site/package.json ./apps/site/
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validation/package.json ./packages/validation/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# ============================================
+# Stage 2: Build
+# ============================================
+FROM node:22-alpine AS builder
+
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+# Copy everything from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/site/node_modules ./apps/site/node_modules
+COPY --from=deps /app/packages/constants/node_modules ./packages/constants/node_modules
+COPY --from=deps /app/packages/utils/node_modules ./packages/utils/node_modules
+COPY --from=deps /app/packages/validation/node_modules ./packages/validation/node_modules
+
+# Copy source
+COPY packages/ ./packages/
+COPY apps/site/ ./apps/site/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Build
+WORKDIR /app/apps/site
+RUN npx nuxt build
+
+# ============================================
+# Stage 3: Production runner
+# ============================================
+FROM node:22-alpine AS runner
+
+RUN addgroup --system --gid 1001 nuxt && \
+    adduser --system --uid 1001 nuxt
+
+WORKDIR /app
+
+# Copy built output
+COPY --from=builder --chown=nuxt:nuxt /app/apps/site/.output ./.output
+
+USER nuxt
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+CMD ["node", ".output/server/index.mjs"]

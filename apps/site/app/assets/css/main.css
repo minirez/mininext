@@ -1,0 +1,298 @@
+@import 'tailwindcss';
+@import './themes.css';
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--site-font-family, 'Inter', ui-sans-serif, system-ui, sans-serif);
+  color: rgb(var(--site-text));
+  background-color: rgb(var(--site-bg));
+}
+
+/* Utility: site theme colors for Tailwind */
+@theme {
+  --color-site-primary: rgb(var(--site-primary));
+  --color-site-primary-dark: rgb(var(--site-primary-dark));
+  --color-site-primary-light: rgb(var(--site-primary-light));
+  --color-site-bg: rgb(var(--site-bg));
+  --color-site-text: rgb(var(--site-text));
+  --color-site-text-muted: rgb(var(--site-text-muted));
+  --color-site-border: rgb(var(--site-border));
+  --color-site-surface: rgb(var(--site-surface));
+}
+
+/* Focus ring utility */
+*:focus-visible {
+  outline: 2px solid rgb(var(--site-primary));
+  outline-offset: 2px;
+}
+
+/* Image lazy loading fade-in (uses JS @load event to add .loaded class) */
+img.lazy-fade {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+img.lazy-fade.loaded {
+  opacity: 1;
+}
+
+/* ==========================================
+   KEYFRAME ANIMATIONS
+   ========================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ==========================================
+   ANIMATION UTILITY CLASSES
+   ========================================== */
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out both;
+}
+
+/* Stagger delay classes */
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+.stagger-6 {
+  animation-delay: 0.3s;
+}
+
+/* ==========================================
+   DROPDOWN PANEL
+   ========================================== */
+
+.dropdown-panel {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: var(--site-shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.12));
+  border: 1px solid rgb(var(--site-border));
+  animation: fadeInDown 0.2s ease-out both;
+  overflow: hidden;
+}
+
+/* ==========================================
+   BACKDROP OVERLAY
+   ========================================== */
+
+.backdrop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 40;
+  animation: fadeIn 0.2s ease-out both;
+}
+
+/* ==========================================
+   NO SCROLLBAR (carousel)
+   ========================================== */
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================
+   IMAGE PLACEHOLDER (shimmer loading)
+   ========================================== */
+
+.img-placeholder {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================
+   VUE TRANSITION CSS
+   ========================================== */
+
+/* Dropdown transition */
+.dropdown-enter-active {
+  animation: fadeInDown 0.2s ease-out;
+}
+.dropdown-leave-active {
+  animation: fadeInDown 0.15s ease-in reverse;
+}
+
+/* Fade transition */
+.fade-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+.fade-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile menu slide-in from right */
+.mobile-menu-enter-active {
+  animation: slideInRight 0.3s ease-out;
+}
+.mobile-menu-leave-active {
+  animation: slideInRight 0.25s ease-in reverse;
+}
+
+/* Scale fade (for modals, popovers) */
+.scale-fade-enter-active {
+  animation: scaleIn 0.2s ease-out;
+}
+.scale-fade-leave-active {
+  animation: scaleIn 0.15s ease-in reverse;
+}
+
+/* Slide up (for bottom sheets) */
+.slide-up-enter-active {
+  animation: slideUp 0.3s ease-out;
+}
+.slide-up-leave-active {
+  animation: slideUp 0.25s ease-in reverse;
+}
+
+/* ==========================================
+   FONT DISPLAY (Playfair Display for hero titles)
+   ========================================== */
+
+.font-display {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+
+/* RTL support loaded dynamically */

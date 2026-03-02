@@ -43,6 +43,20 @@ services:
     networks:
       - booking-network
 
+  booking-site:
+    build:
+      context: .
+      dockerfile: Dockerfile.site
+    container_name: booking-engine-site
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_API_BASE_URL=http://host.docker.internal:4000
+      - NODE_ENV=production
+    networks:
+      - booking-network
+
 networks:
   booking-network:
     driver: bridge

@@ -1,0 +1,14 @@
+/* RTL overrides for Arabic, Hebrew, Farsi */
+[dir='rtl'] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir='rtl'] .rtl\:space-x-reverse > :not(:first-child) {
+  margin-right: var(--space-x);
+  margin-left: 0;
+}
+
+[dir='rtl'] .rtl\:flip {
+  transform: scaleX(-1);
+}

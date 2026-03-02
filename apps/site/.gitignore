@@ -1,0 +1,17 @@
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+
+# Node
+node_modules
+
+# Test
+test-results
+playwright-report
+
+# Misc
+*.log
+.DS_Store
