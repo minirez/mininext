@@ -31,7 +31,8 @@
     "language": "Dil",
     "responsiveViewer": "Responsive Viewer",
     "logs": "Loglar",
-    "settingsMisc": "Ayarlar & Diğer"
+    "settingsMisc": "Ayarlar & Diğer",
+    "deployments": "Deploy Monitor"
   },
   "platformBookings": {
     "title": "Platform Rezervasyonları",

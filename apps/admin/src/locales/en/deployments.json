@@ -1,0 +1,60 @@
+{
+  "deployments": {
+    "title": "Deploy Monitor",
+    "description": "Track CI/CD pipeline statuses",
+    "sync": "Sync",
+    "syncing": "Syncing...",
+    "synced": "{count} deployment(s) synced",
+    "syncError": "Sync failed",
+    "noDeployments": "No deployments found. Sync from GitHub.",
+    "autoRefresh": "Auto-refresh active",
+    "refreshing": "Refreshing...",
+    "table": {
+      "status": "Status",
+      "commit": "Commit",
+      "branch": "Branch",
+      "message": "Message",
+      "author": "Author",
+      "duration": "Duration",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "status": {
+      "queued": "Queued",
+      "in_progress": "In Progress",
+      "success": "Success",
+      "failure": "Failure",
+      "cancelled": "Cancelled",
+      "skipped": "Skipped",
+      "timed_out": "Timed Out"
+    },
+    "stats": {
+      "total": "Total Deploys",
+      "successRate": "Success Rate",
+      "avgDuration": "Avg. Duration",
+      "lastDeploy": "Last Deploy"
+    },
+    "detail": {
+      "title": "Deployment Details",
+      "jobs": "Jobs",
+      "steps": "Steps",
+      "noJobs": "No job info. Click sync.",
+      "syncJobs": "Sync Jobs",
+      "viewOnGithub": "View on GitHub"
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allBranches": "All Branches",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "clearAll": "Clear"
+    },
+    "time": {
+      "seconds": "{n}s",
+      "minutes": "{n}m",
+      "hours": "{n}h",
+      "ago": "ago",
+      "justNow": "just now"
+    }
+  }
+}

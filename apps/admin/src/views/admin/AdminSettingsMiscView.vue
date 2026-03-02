@@ -32,6 +32,12 @@ const tabs = [
     label: t('nav.responsiveViewer'),
     icon: 'devices',
     path: '/admin/settings/responsive-viewer'
+  },
+  {
+    id: 'deployments',
+    label: t('nav.deployments'),
+    icon: 'rocket_launch',
+    path: '/admin/settings/deployments'
   }
 ]
 

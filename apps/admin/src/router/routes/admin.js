@@ -122,6 +122,12 @@ export default [
         name: 'responsive-viewer',
         component: () => import('@/views/admin/ResponsiveViewerView.vue'),
         meta: { tab: 'responsive-viewer' }
+      },
+      {
+        path: 'deployments',
+        name: 'deployments',
+        component: () => import('@/views/admin/DeploymentMonitorView.vue'),
+        meta: { tab: 'deployments' }
       }
     ]
   }

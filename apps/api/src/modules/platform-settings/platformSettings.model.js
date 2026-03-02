@@ -189,6 +189,32 @@ const platformSettingsSchema = new mongoose.Schema(
       }
     },
 
+    // GitHub Integration (CI/CD monitoring)
+    github: {
+      token: {
+        type: String,
+        set: function (val) {
+          if (!val) return val
+          return isEncrypted(val) ? val : encrypt(val)
+        }
+      },
+      webhookSecret: {
+        type: String,
+        set: function (val) {
+          if (!val) return val
+          return isEncrypted(val) ? val : encrypt(val)
+        }
+      },
+      owner: {
+        type: String,
+        trim: true
+      },
+      repo: {
+        type: String,
+        trim: true
+      }
+    },
+
     // Billing / Invoice Settings (Platform as seller)
     billing: {
       companyName: {
@@ -375,6 +401,16 @@ platformSettingsSchema.methods.getPaximumCredentials = function () {
   }
 }
 
+// Instance method to get decrypted GitHub credentials
+platformSettingsSchema.methods.getGitHubCredentials = function () {
+  return {
+    token: this.github?.token ? decrypt(this.github.token) : null,
+    webhookSecret: this.github?.webhookSecret ? decrypt(this.github.webhookSecret) : null,
+    owner: this.github?.owner || null,
+    repo: this.github?.repo || null
+  }
+}
+
 // Instance method to update Paximum token cache
 platformSettingsSchema.methods.updatePaximumToken = async function (token, expiresOn) {
   this.paximum.token = token
@@ -415,6 +451,14 @@ platformSettingsSchema.methods.toSafeJSON = function () {
   // Mask Firecrawl API key
   if (obj.firecrawl?.apiKey) {
     obj.firecrawl.apiKey = '********'
+  }
+
+  // Mask GitHub credentials
+  if (obj.github?.token) {
+    obj.github.token = '********'
+  }
+  if (obj.github?.webhookSecret) {
+    obj.github.webhookSecret = '********'
   }
 
   // Paximum: show agency & user in plain text (not secret), mask password

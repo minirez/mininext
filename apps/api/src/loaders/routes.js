@@ -80,7 +80,10 @@ const ROUTE_CONFIG = {
   'tursab-agency': 'tursab-agencies',
 
   // Screenshot service (responsive viewer)
-  screenshot: 'screenshot'
+  screenshot: 'screenshot',
+
+  // Deployment monitor (CI/CD)
+  deployment: 'deployments'
 }
 
 /**

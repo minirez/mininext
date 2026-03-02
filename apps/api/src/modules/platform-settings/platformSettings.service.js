@@ -77,6 +77,17 @@ export const updateSettings = asyncHandler(async (req, res) => {
     if (firecrawl.apiKey) settings.firecrawl.apiKey = firecrawl.apiKey
   }
 
+  // Update GitHub settings
+  const { github } = req.body
+  if (github !== undefined) {
+    settings.github = settings.github || {}
+
+    if (github.token) settings.github.token = github.token
+    if (github.webhookSecret) settings.github.webhookSecret = github.webhookSecret
+    if (github.owner !== undefined) settings.github.owner = github.owner
+    if (github.repo !== undefined) settings.github.repo = github.repo
+  }
+
   // Update Paximum settings
   const { paximum } = req.body
   if (paximum !== undefined) {

@@ -58,6 +58,9 @@ app.use('/api/public', cors({ origin: true, credentials: false }))
 // CORS for channel manager webhooks (called by Reseliva)
 app.use('/api/channel-manager/webhook', cors({ origin: true, credentials: false }))
 
+// CORS for GitHub deployment webhooks
+app.use('/api/deployments/webhook', cors({ origin: true, credentials: false }))
+
 // CORS - Dynamic origin validation for multi-tenant domains
 // Public routes are already handled above with open CORS, skip them here
 
@@ -161,6 +164,10 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/public')) return next()
   cors(corsOptions)(req, res, next)
 })
+
+// Deployment webhook (must be before global JSON parser - needs raw body for signature verification)
+import deploymentWebhookRoutes from './modules/deployment/deployment-webhook.routes.js'
+app.use('/api/deployments', deploymentWebhookRoutes)
 
 // Body parser (10MB limit - sufficient for most uploads, prevents DoS)
 app.use(express.json({ limit: '10mb' }))

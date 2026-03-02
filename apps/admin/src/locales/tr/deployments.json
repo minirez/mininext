@@ -1,0 +1,60 @@
+{
+  "deployments": {
+    "title": "Deploy Monitor",
+    "description": "CI/CD pipeline durumlarını takip edin",
+    "sync": "Senkronize Et",
+    "syncing": "Senkronize ediliyor...",
+    "synced": "{count} deploy senkronize edildi",
+    "syncError": "Senkronizasyon başarısız",
+    "noDeployments": "Henüz deploy kaydı bulunmuyor. GitHub'dan senkronize edin.",
+    "autoRefresh": "Otomatik yenileme aktif",
+    "refreshing": "Yenileniyor...",
+    "table": {
+      "status": "Durum",
+      "commit": "Commit",
+      "branch": "Branch",
+      "message": "Mesaj",
+      "author": "Yazar",
+      "duration": "Süre",
+      "date": "Tarih",
+      "actions": "İşlemler"
+    },
+    "status": {
+      "queued": "Kuyrukta",
+      "in_progress": "Devam Ediyor",
+      "success": "Başarılı",
+      "failure": "Başarısız",
+      "cancelled": "İptal Edildi",
+      "skipped": "Atlandı",
+      "timed_out": "Zaman Aşımı"
+    },
+    "stats": {
+      "total": "Toplam Deploy",
+      "successRate": "Başarı Oranı",
+      "avgDuration": "Ort. Süre",
+      "lastDeploy": "Son Deploy"
+    },
+    "detail": {
+      "title": "Deploy Detayı",
+      "jobs": "İşler (Jobs)",
+      "steps": "Adımlar",
+      "noJobs": "Job bilgisi yok. Senkronize edin.",
+      "syncJobs": "Job'ları Senkronize Et",
+      "viewOnGithub": "GitHub'da Görüntüle"
+    },
+    "filters": {
+      "allStatuses": "Tüm Durumlar",
+      "allBranches": "Tüm Branch'ler",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş",
+      "clearAll": "Temizle"
+    },
+    "time": {
+      "seconds": "{n}sn",
+      "minutes": "{n}dk",
+      "hours": "{n}sa",
+      "ago": "önce",
+      "justNow": "az önce"
+    }
+  }
+}

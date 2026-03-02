@@ -31,7 +31,8 @@
     "language": "Language",
     "responsiveViewer": "Responsive Viewer",
     "logs": "Logs",
-    "settingsMisc": "Settings & Misc"
+    "settingsMisc": "Settings & Misc",
+    "deployments": "Deploy Monitor"
   },
   "platformBookings": {
     "title": "Platform Reservations",
