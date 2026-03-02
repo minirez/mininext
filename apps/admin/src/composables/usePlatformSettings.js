@@ -159,8 +159,9 @@ export function usePlatformSettings() {
           paximum: {
             enabled: data.paximum?.enabled || false,
             endpoint: data.paximum?.endpoint || 'https://service.paximum.com/v2',
-            agency: '', // Don't show masked value
-            user: '', // Don't show masked value
+            agency:
+              data.paximum?.agency && data.paximum.agency !== '********' ? data.paximum.agency : '',
+            user: data.paximum?.user && data.paximum.user !== '********' ? data.paximum.user : '',
             password: '', // Don't show masked value
             defaultMarkup: data.paximum?.defaultMarkup ?? 10
           },

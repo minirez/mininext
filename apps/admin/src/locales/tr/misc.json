@@ -307,6 +307,7 @@
     "saved": "Kaydedildi",
     "savedToast": "Ayarlar başarıyla kaydedildi",
     "unsavedChanges": "Kaydedilmemiş değişiklikler var",
+    "credentialSaved": "Şifre kaydedildi. Değiştirmek için yeni değer girin.",
     "leaveConfirm": {
       "title": "Kaydedilmemiş Değişiklikler",
       "message": "Kaydedilmemiş değişiklikleriniz var. Sayfadan ayrılırsanız bu değişiklikler kaybolacak.",

@@ -89,13 +89,20 @@
                 <input
                   v-model="settings.aws.ses.accessKeyId"
                   type="text"
-                  :placeholder="existingCredentials.aws.accessKeyId ? '••••••••  (stored)' : ''"
+                  :placeholder="existingCredentials.aws.accessKeyId ? '••••••••' : ''"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.aws.accessKeyId && !settings.aws.ses.accessKeyId"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -104,13 +111,22 @@
                 <input
                   v-model="settings.aws.ses.secretAccessKey"
                   type="text"
-                  :placeholder="existingCredentials.aws.secretAccessKey ? '••••••••  (stored)' : ''"
+                  :placeholder="existingCredentials.aws.secretAccessKey ? '••••••••' : ''"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="
+                    existingCredentials.aws.secretAccessKey && !settings.aws.ses.secretAccessKey
+                  "
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -195,13 +211,20 @@
                 <input
                   v-model="settings.netgsm.usercode"
                   type="text"
-                  :placeholder="existingCredentials.netgsm.usercode ? '••••••••  (stored)' : ''"
+                  :placeholder="existingCredentials.netgsm.usercode ? '••••••••' : ''"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.netgsm.usercode && !settings.netgsm.usercode"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -209,14 +232,21 @@
                 </label>
                 <input
                   v-model="settings.netgsm.password"
-                  type="text"
-                  :placeholder="existingCredentials.netgsm.password ? '••••••••  (stored)' : ''"
+                  type="password"
+                  :placeholder="existingCredentials.netgsm.password ? '••••••••' : ''"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.netgsm.password && !settings.netgsm.password"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -293,16 +323,21 @@
                 <input
                   v-model="settings.gemini.apiKey"
                   type="text"
-                  :placeholder="
-                    existingCredentials.gemini.apiKey ? '••••••••  (stored)' : 'AIzaSy...'
-                  "
+                  :placeholder="existingCredentials.gemini.apiKey ? '••••••••' : 'AIzaSy...'"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
-                <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                <p
+                  v-if="existingCredentials.gemini.apiKey && !settings.gemini.apiKey"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
+                <p v-else class="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   {{ $t('platformSettings.gemini.apiKeyHint') }}
                 </p>
               </div>
@@ -344,16 +379,21 @@
                 <input
                   v-model="settings.firecrawl.apiKey"
                   type="text"
-                  :placeholder="
-                    existingCredentials.firecrawl.apiKey ? '••••••••  (stored)' : 'fc-...'
-                  "
+                  :placeholder="existingCredentials.firecrawl.apiKey ? '••••••••' : 'fc-...'"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
-                <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                <p
+                  v-if="existingCredentials.firecrawl.apiKey && !settings.firecrawl.apiKey"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
+                <p v-else class="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   {{ $t('platformSettings.firecrawl.apiKeyHint') }}
                 </p>
               </div>
@@ -407,15 +447,20 @@
                 <input
                   v-model="settings.paximum.agency"
                   type="text"
-                  :placeholder="
-                    existingCredentials.paximum.agency ? '••••••••  (stored)' : 'PXM...'
-                  "
+                  :placeholder="existingCredentials.paximum.agency ? '••••••••' : 'PXM...'"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.paximum.agency && !settings.paximum.agency"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -424,13 +469,20 @@
                 <input
                   v-model="settings.paximum.user"
                   type="text"
-                  :placeholder="existingCredentials.paximum.user ? '••••••••  (stored)' : 'USR...'"
+                  :placeholder="existingCredentials.paximum.user ? '••••••••' : 'USR...'"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.paximum.user && !settings.paximum.user"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -438,14 +490,21 @@
                 </label>
                 <input
                   v-model="settings.paximum.password"
-                  type="text"
-                  :placeholder="existingCredentials.paximum.password ? '••••••••  (stored)' : ''"
+                  type="password"
+                  :placeholder="existingCredentials.paximum.password ? '••••••••' : ''"
                   autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.paximum.password && !settings.paximum.password"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -544,7 +603,7 @@
                 <input
                   v-model="settings.webPush.privateKey"
                   type="text"
-                  :placeholder="existingCredentials.webPush.privateKey ? '••••••••  (stored)' : ''"
+                  :placeholder="existingCredentials.webPush.privateKey ? '••••••••' : ''"
                   readonly
                   autocomplete="off"
                   data-1p-ignore
@@ -552,6 +611,13 @@
                   data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
+                <p
+                  v-if="existingCredentials.webPush.privateKey && !settings.webPush.privateKey"
+                  class="mt-1 text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
+                >
+                  <span class="material-icons text-xs">check_circle</span>
+                  {{ $t('platformSettings.credentialSaved') }}
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">

@@ -307,6 +307,7 @@
     "saved": "Saved",
     "savedToast": "Settings saved successfully",
     "unsavedChanges": "You have unsaved changes",
+    "credentialSaved": "Password saved. Enter a new value to change it.",
     "leaveConfirm": {
       "title": "Unsaved Changes",
       "message": "You have unsaved changes. If you leave this page, your changes will be lost.",

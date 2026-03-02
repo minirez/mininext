@@ -355,11 +355,20 @@ platformSettingsSchema.methods.getPaximumCredentials = function () {
     return null
   }
 
+  const safeDecrypt = val => {
+    if (!val) return null
+    try {
+      return decrypt(val)
+    } catch {
+      return null
+    }
+  }
+
   return {
     endpoint: this.paximum.endpoint,
-    agency: this.paximum.agency ? decrypt(this.paximum.agency) : null,
-    user: this.paximum.user ? decrypt(this.paximum.user) : null,
-    password: this.paximum.password ? decrypt(this.paximum.password) : null,
+    agency: safeDecrypt(this.paximum.agency),
+    user: safeDecrypt(this.paximum.user),
+    password: safeDecrypt(this.paximum.password),
     token: this.paximum.token,
     tokenExpiresOn: this.paximum.tokenExpiresOn,
     defaultMarkup: this.paximum.defaultMarkup
@@ -408,12 +417,21 @@ platformSettingsSchema.methods.toSafeJSON = function () {
     obj.firecrawl.apiKey = '********'
   }
 
-  // Mask Paximum credentials
-  if (obj.paximum?.agency) {
-    obj.paximum.agency = '********'
-  }
-  if (obj.paximum?.user) {
-    obj.paximum.user = '********'
+  // Paximum: show agency & user in plain text (not secret), mask password
+  if (obj.paximum) {
+    // Try to decrypt agency & user - they are identifiers, not secrets
+    for (const field of ['agency', 'user']) {
+      if (obj.paximum[field]) {
+        try {
+          obj.paximum[field] = isEncrypted(obj.paximum[field])
+            ? decrypt(obj.paximum[field])
+            : obj.paximum[field]
+        } catch {
+          // Can't decrypt (e.g. different encryption key) - mask but indicate stored
+          obj.paximum[field] = '********'
+        }
+      }
+    }
   }
   if (obj.paximum?.password) {
     obj.paximum.password = '********'
