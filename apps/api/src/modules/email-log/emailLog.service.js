@@ -3,6 +3,7 @@ import { BaseEntityService } from '#services/base/BaseEntityService.js'
 import { sendSuccess, sendError, sendMessage } from '#services/responseHelper.js'
 import { parsePagination, paginatedQuery } from '#services/queryBuilder.js'
 import { escapeRegex } from '#helpers'
+import config from '#config'
 import logger from '#core/logger.js'
 
 class EmailLogService extends BaseEntityService {
@@ -375,8 +376,14 @@ class EmailLogService extends BaseEntityService {
         COMPANY_NAME: booking.partner?.companyName || 'Booking Engine',
         COMPANY_ADDRESS: booking.partner?.address?.city || '',
         SUPPORT_EMAIL: booking.partner?.email || 'destek@maxirez.com',
-        SITE_URL: 'https://app.maxirez.com',
-        LOGO_URL: 'https://app.maxirez.com/logo.png'
+        SITE_URL: booking.partner?.branding?.siteDomain
+          ? `https://${booking.partner.branding.siteDomain}`
+          : config.frontendUrl || 'https://app.maxirez.com',
+        LOGO_URL: booking.partner?.branding?.logo
+          ? booking.partner.branding.logo.startsWith('http')
+            ? booking.partner.branding.logo
+            : `${config.apiUrl.includes('localhost') ? 'https://api.maxirez.com' : config.apiUrl}${booking.partner.branding.logo.startsWith('/') ? '' : '/'}${booking.partner.branding.logo}`
+          : `${config.frontendUrl || 'https://app.maxirez.com'}/logo.png`
       }
 
       const templateMap = {

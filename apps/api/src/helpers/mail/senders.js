@@ -49,9 +49,12 @@ const getEmailBranding = async partnerId => {
 
         if (partner.branding?.logo) {
           const logo = partner.branding.logo
+          const assetBaseUrl = config.apiUrl.includes('localhost')
+            ? 'https://api.maxirez.com'
+            : config.apiUrl
           result.LOGO_URL = logo.startsWith('http')
             ? logo
-            : `${config.apiUrl}${logo.startsWith('/') ? '' : '/'}${logo}`
+            : `${assetBaseUrl}${logo.startsWith('/') ? '' : '/'}${logo}`
         }
 
         if (partner.branding?.extranetDomain) {

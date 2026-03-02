@@ -407,7 +407,7 @@ async function buildEmailTemplateData(booking, type, language = 'tr') {
     LOGO_URL: partner.branding?.logo
       ? partner.branding.logo.startsWith('http')
         ? partner.branding.logo
-        : `${config.apiUrl}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
+        : `${config.apiUrl.includes('localhost') ? 'https://api.maxirez.com' : config.apiUrl}${partner.branding.logo.startsWith('/') ? '' : '/'}${partner.branding.logo}`
       : `${siteUrl}/logo.png`,
     SUPPORT_EMAIL: partner.email || config.supportEmail || 'destek@maxirez.com',
     COMPANY_NAME: partner.companyName || labels.COMPANY_NAME || 'Booking Engine',
