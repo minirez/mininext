@@ -36,6 +36,16 @@ export function usePlatformSettings() {
   const testEmailAddress = ref('')
   const testPhoneNumber = ref('')
 
+  // Track which sensitive fields have stored values (shown as masked in API)
+  const existingCredentials = ref({
+    aws: { accessKeyId: false, secretAccessKey: false },
+    netgsm: { usercode: false, password: false },
+    gemini: { apiKey: false },
+    firecrawl: { apiKey: false },
+    paximum: { agency: false, user: false, password: false },
+    webPush: { privateKey: false }
+  })
+
   const settings = ref({
     aws: {
       ses: {
@@ -100,6 +110,26 @@ export function usePlatformSettings() {
   const loadSettings = async () => {
     await executeLoad(() => platformSettingsService.getSettings(), {
       onSuccess: data => {
+        // Track which sensitive fields have stored values
+        existingCredentials.value = {
+          aws: {
+            accessKeyId: !!data.aws?.ses?.accessKeyId,
+            secretAccessKey: !!data.aws?.ses?.secretAccessKey
+          },
+          netgsm: {
+            usercode: !!data.netgsm?.usercode,
+            password: !!data.netgsm?.password
+          },
+          gemini: { apiKey: !!data.gemini?.apiKey },
+          firecrawl: { apiKey: !!data.firecrawl?.apiKey },
+          paximum: {
+            agency: !!data.paximum?.agency,
+            user: !!data.paximum?.user,
+            password: !!data.paximum?.password
+          },
+          webPush: { privateKey: !!data.webPush?.privateKey }
+        }
+
         // Merge with defaults - will reset isDirty after nextTick
         settings.value = {
           aws: {
@@ -376,6 +406,7 @@ export function usePlatformSettings() {
   return {
     // State
     settings,
+    existingCredentials,
     isDirty,
     lastSaveTime,
     testEmailAddress,

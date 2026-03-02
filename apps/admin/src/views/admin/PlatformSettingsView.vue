@@ -1,9 +1,5 @@
 <template>
-  <div class="space-y-6">
-    <!-- Hidden dummy fields to prevent browser autofill -->
-    <input type="text" name="prevent_autofill" style="display: none" tabindex="-1" />
-    <input type="password" name="prevent_autofill_pass" style="display: none" tabindex="-1" />
-
+  <div class="space-y-6" data-form-type="other">
     <!-- Save Button + Status Indicator -->
     <div class="flex items-center justify-between">
       <div v-if="isDirty" class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
@@ -92,11 +88,12 @@
                 </label>
                 <input
                   v-model="settings.aws.ses.accessKeyId"
-                  type="password"
-                  :placeholder="settings.aws.ses.accessKeyId ? '********' : ''"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="existingCredentials.aws.accessKeyId ? '••••••••  (stored)' : ''"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -106,11 +103,12 @@
                 </label>
                 <input
                   v-model="settings.aws.ses.secretAccessKey"
-                  type="password"
-                  :placeholder="settings.aws.ses.secretAccessKey ? '********' : ''"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="existingCredentials.aws.secretAccessKey ? '••••••••  (stored)' : ''"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -196,11 +194,12 @@
                 </label>
                 <input
                   v-model="settings.netgsm.usercode"
-                  type="password"
-                  :placeholder="settings.netgsm.usercode ? '********' : ''"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="existingCredentials.netgsm.usercode ? '••••••••  (stored)' : ''"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -210,11 +209,12 @@
                 </label>
                 <input
                   v-model="settings.netgsm.password"
-                  type="password"
-                  :placeholder="settings.netgsm.password ? '********' : ''"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="existingCredentials.netgsm.password ? '••••••••  (stored)' : ''"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -292,11 +292,14 @@
                 </label>
                 <input
                   v-model="settings.gemini.apiKey"
-                  type="password"
-                  :placeholder="settings.gemini.apiKey ? '********' : 'AIzaSy...'"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="
+                    existingCredentials.gemini.apiKey ? '••••••••  (stored)' : 'AIzaSy...'
+                  "
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
                 <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -340,11 +343,14 @@
                 </label>
                 <input
                   v-model="settings.firecrawl.apiKey"
-                  type="password"
-                  :placeholder="settings.firecrawl.apiKey ? '********' : 'fc-...'"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="
+                    existingCredentials.firecrawl.apiKey ? '••••••••  (stored)' : 'fc-...'
+                  "
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
                 <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -401,8 +407,13 @@
                 <input
                   v-model="settings.paximum.agency"
                   type="text"
-                  :placeholder="settings.paximum.agency ? '********' : 'PXM...'"
+                  :placeholder="
+                    existingCredentials.paximum.agency ? '••••••••  (stored)' : 'PXM...'
+                  "
                   autocomplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -413,8 +424,11 @@
                 <input
                   v-model="settings.paximum.user"
                   type="text"
-                  :placeholder="settings.paximum.user ? '********' : 'USR...'"
+                  :placeholder="existingCredentials.paximum.user ? '••••••••  (stored)' : 'USR...'"
                   autocomplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -424,11 +438,12 @@
                 </label>
                 <input
                   v-model="settings.paximum.password"
-                  type="password"
-                  :placeholder="settings.paximum.password ? '********' : ''"
-                  autocomplete="new-password"
+                  type="text"
+                  :placeholder="existingCredentials.paximum.password ? '••••••••  (stored)' : ''"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -528,12 +543,13 @@
                 </label>
                 <input
                   v-model="settings.webPush.privateKey"
-                  type="password"
-                  :placeholder="settings.webPush.privateKey ? '********' : ''"
+                  type="text"
+                  :placeholder="existingCredentials.webPush.privateKey ? '••••••••  (stored)' : ''"
                   readonly
-                  autocomplete="new-password"
+                  autocomplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  data-form-type="other"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -1155,6 +1171,7 @@ const tabs = [
 // Platform settings composable
 const {
   settings,
+  existingCredentials,
   isDirty,
   lastSaveTime,
   testEmailAddress,
