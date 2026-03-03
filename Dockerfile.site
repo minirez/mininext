@@ -16,6 +16,9 @@ COPY packages/constants/package.json ./packages/constants/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/validation/package.json ./packages/validation/
 
+# Force flat node_modules (no symlinks) to avoid ELOOP in Nitro output
+RUN echo "node-linker=hoisted" >> .npmrc
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
