@@ -35,6 +35,9 @@ COPY --from=deps /app ./
 COPY packages/ ./packages/
 COPY apps/site/ ./apps/site/
 
+# Ensure no stale .nuxt from host leaks in
+RUN rm -rf /app/apps/site/.nuxt /app/apps/site/.output
+
 # Build
 WORKDIR /app/apps/site
 RUN npx nuxt build
