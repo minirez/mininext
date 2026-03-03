@@ -125,7 +125,11 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     alias: intlifyAlias,
     externals: {
-      inline: ['vue-i18n', '@intlify/core-base', '@intlify/shared', '@intlify/message-compiler'],
+      inline: [
+        'vue-i18n', '@intlify/core-base', '@intlify/shared', '@intlify/message-compiler',
+        'vue', '@vue/server-renderer', '@vue/runtime-core', '@vue/runtime-dom',
+        '@vue/compiler-dom', '@vue/compiler-core', '@vue/shared', '@vue/reactivity',
+      ],
     },
   },
 })
