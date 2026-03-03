@@ -1,4 +1,14 @@
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
+
+// Resolve @intlify paths dynamically (works in Docker + local dev)
+const require = createRequire(import.meta.url)
+const intlifyAlias = {
+  '@intlify/core-base': resolve(dirname(require.resolve('@intlify/core-base/package.json')), 'dist/core-base.mjs'),
+  '@intlify/shared': resolve(dirname(require.resolve('@intlify/shared/package.json')), 'dist/shared.mjs'),
+  '@intlify/message-compiler': resolve(dirname(require.resolve('@intlify/message-compiler/package.json')), 'dist/message-compiler.mjs'),
+}
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -35,11 +45,7 @@ export default defineNuxtConfig({
       allowedHosts: true,
     },
     resolve: {
-      alias: {
-        '@intlify/core-base': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+core-base@10.0.8/node_modules/@intlify/core-base/dist/core-base.mjs',
-        '@intlify/shared': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+shared@10.0.8/node_modules/@intlify/shared/dist/shared.mjs',
-        '@intlify/message-compiler': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+message-compiler@10.0.8/node_modules/@intlify/message-compiler/dist/message-compiler.mjs',
-      },
+      alias: intlifyAlias,
     },
     ssr: {
       noExternal: ['vue-i18n', '@intlify/core-base', '@intlify/shared', '@intlify/message-compiler'],
@@ -117,11 +123,7 @@ export default defineNuxtConfig({
 
   nitro: {
     compressPublicAssets: true,
-    alias: {
-      '@intlify/core-base': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+core-base@10.0.8/node_modules/@intlify/core-base/dist/core-base.mjs',
-      '@intlify/shared': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+shared@10.0.8/node_modules/@intlify/shared/dist/shared.mjs',
-      '@intlify/message-compiler': '/var/www/mini/booking-engine/node_modules/.pnpm/@intlify+message-compiler@10.0.8/node_modules/@intlify/message-compiler/dist/message-compiler.mjs',
-    },
+    alias: intlifyAlias,
     externals: {
       inline: ['vue-i18n', '@intlify/core-base', '@intlify/shared', '@intlify/message-compiler'],
     },
