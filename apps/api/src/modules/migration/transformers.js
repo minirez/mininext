@@ -322,22 +322,18 @@ export function parseLegacyPayments(payments, bookingCurrency) {
       paymentStatus === 'completed' || paymentStatus === 'complete' || paymentStatus === 'paid'
 
     // Resolve amount in booking currency:
-    // - fromAmount = what customer was charged (source currency)
-    // - toAmount = what hotel received (destination currency)
-    // Pick the one matching the booking currency; fallback to fromAmount
+    // - toAmount = actual payment received (prioritize this)
+    // - fromAmount = debt/invoice amount (fallback)
     let amount = 0
     const fromAmt = p.fromAmount
     const toAmt = p.toAmount
 
-    if (fromAmt && typeof fromAmt === 'object') {
+    if (toAmt && typeof toAmt === 'object' && (toAmt.currency || '').toLowerCase() === cur) {
+      // toAmount matches booking currency - use actual payment amount
+      amount = Number(toAmt.value) || 0
+    } else if (fromAmt && typeof fromAmt === 'object') {
       if ((fromAmt.currency || '').toLowerCase() === cur) {
         amount = Number(fromAmt.value) || 0
-      } else if (
-        toAmt &&
-        typeof toAmt === 'object' &&
-        (toAmt.currency || '').toLowerCase() === cur
-      ) {
-        amount = Number(toAmt.value) || 0
       } else {
         // No currency match - use fromAmount as best guess
         amount = Number(fromAmt.value) || 0

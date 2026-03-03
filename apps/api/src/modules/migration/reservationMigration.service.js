@@ -35,6 +35,41 @@ import {
 // Helpers
 // ========================
 
+/**
+ * Match a legacy room to a new room type by name keywords.
+ * Used as fallback when code-based matching fails.
+ * @param {string|object} legacyRoomName - Legacy room name (string or i18n object)
+ * @param {Array} roomTypes - Available new room types
+ * @returns {object|null} - Matched room type or null
+ */
+function matchRoomByName(legacyRoomName, roomTypes) {
+  if (!legacyRoomName) return null
+  const name = (
+    typeof legacyRoomName === 'string'
+      ? legacyRoomName
+      : legacyRoomName.tr || legacyRoomName.en || ''
+  ).toLowerCase()
+
+  if (!name) return null
+
+  const keywords = [
+    { pattern: /villa|dubleks|duplex/i, codes: ['DVP'] },
+    { pattern: /penthouse/i, codes: ['PSD'] },
+    { pattern: /senior\s*s[uü]it/i, codes: ['SSP'] },
+    { pattern: /junior\s*s[uü]it/i, codes: ['JSP'] },
+    { pattern: /deluxe|dlx/i, codes: ['DLX'] },
+    { pattern: /superior|sup/i, codes: ['SUP'] }
+  ]
+
+  for (const { pattern, codes } of keywords) {
+    if (pattern.test(name)) {
+      const match = roomTypes.find(rt => codes.includes(rt.code))
+      if (match) return match
+    }
+  }
+  return null
+}
+
 async function ensureConnected() {
   const status = getLegacyStatus()
   if (!status.connected) {
@@ -425,14 +460,20 @@ async function migrateHotelReservationsStandalone(
     }
   }
 
-  // Map: legacy room id → new RoomType (code matching)
+  // Map: legacy room id → new RoomType (code matching, then name-based fallback)
   const roomMap = new Map()
   for (const lr of legacyRooms) {
     const legacyCode = (lr.code || `RM${lr.id}`).toUpperCase().substring(0, 10)
     const match = roomTypes.find(
       rt => rt.code === legacyCode || rt.code.startsWith(legacyCode.substring(0, 8))
     )
-    if (match) roomMap.set(lr.id, match)
+    if (match) {
+      roomMap.set(lr.id, match)
+    } else {
+      // Fallback: try matching by room name keywords
+      const nameMatch = matchRoomByName(convertLangArray(lr.name), roomTypes)
+      if (nameMatch) roomMap.set(lr.id, nameMatch)
+    }
   }
 
   // Map: legacy priceplan id → new MealPlan (code matching)
@@ -586,9 +627,10 @@ async function createBookingFromLegacy(
   const currency = mapCurrency(product.currency)
   const price = Number(product.price) || 0
 
-  // Resolve room type - fallback to first available
+  // Resolve room type - fallback: try name-based matching, then first available
   const roomTypeDoc = roomMap.get(product.room?.id)
-  const finalRoomType = roomTypeDoc || allRoomTypes[0]
+  const finalRoomType =
+    roomTypeDoc || matchRoomByName(product.room?.name, allRoomTypes) || allRoomTypes[0]
   const mealPlanDoc = mealPlanMap.get(product.pricePlan?.id)
   const finalMealPlan = mealPlanDoc || allMealPlans[0]
 
