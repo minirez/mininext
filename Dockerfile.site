@@ -28,17 +28,12 @@ RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 WORKDIR /app
 
-# Copy everything from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/site/node_modules ./apps/site/node_modules
-COPY --from=deps /app/packages/constants/node_modules ./packages/constants/node_modules
-COPY --from=deps /app/packages/utils/node_modules ./packages/utils/node_modules
-COPY --from=deps /app/packages/validation/node_modules ./packages/validation/node_modules
+# Copy entire deps stage (pnpm hoists most deps to root node_modules)
+COPY --from=deps /app ./
 
 # Copy source
 COPY packages/ ./packages/
 COPY apps/site/ ./apps/site/
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Build
 WORKDIR /app/apps/site
