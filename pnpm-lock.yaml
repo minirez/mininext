@@ -321,14 +321,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/validation
       '@intlify/core-base':
-        specifier: 10.0.8
-        version: 10.0.8
+        specifier: 9.14.5
+        version: 9.14.5
       '@intlify/message-compiler':
-        specifier: 10.0.8
-        version: 10.0.8
+        specifier: 9.14.5
+        version: 9.14.5
       '@intlify/shared':
-        specifier: 10.0.8
-        version: 10.0.8
+        specifier: 9.14.5
+        version: 9.14.5
       '@nuxt/image':
         specifier: ^1.9.0
         version: 1.11.0(db0@0.3.4(better-sqlite3@12.6.2))(ioredis@5.9.1)(magicast@0.5.2)

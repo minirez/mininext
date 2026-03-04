@@ -489,6 +489,26 @@ export const getPublicStorefrontPages = asyncHandler(async (req, res) => {
 })
 
 /**
+ * POST /public/storefront/newsletter/subscribe
+ * Subscribe email to partner newsletter (stub — integrate with provider later)
+ */
+export const subscribeNewsletter = asyncHandler(async (req, res) => {
+  const { email } = req.body || {}
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    throw new BadRequestError('INVALID_EMAIL', { hint: 'A valid email address is required' })
+  }
+
+  const partnerId = await resolvePartnerFromRequest(req)
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_NOT_RESOLVED')
+  }
+
+  console.log(`[newsletter] subscription: ${email} for partner ${partnerId}`)
+
+  res.json({ success: true, message: 'Subscribed successfully' })
+})
+
+/**
  * GET /public/storefront/sections/:sectionType
  * Get a specific section's data
  */

@@ -1,32 +1,38 @@
 <template>
-  <section class="relative min-h-[560px] lg:min-h-[650px] flex items-center justify-center">
-    <!-- Background with luxury overlay -->
-    <div class="absolute inset-0 overflow-hidden">
+  <section class="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+    <!-- Background image with fade-in -->
+    <div class="absolute inset-0 -z-10" :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''">
       <img
-        v-if="storefront.hero?.photo?.link"
-        :src="imageUrl(storefront.hero.photo)"
+        v-if="heroImage"
+        :src="heroImage"
         alt=""
-        class="w-full h-full object-cover"
+        class="w-full h-full object-cover transition-opacity duration-500"
+        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+        @load="imageLoaded = true"
       />
-      <div class="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
     </div>
 
-    <!-- Content -->
-    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center text-white">
-      <span
-        class="inline-block text-xs uppercase tracking-[0.3em] text-white/70 font-semibold mb-4 animate-fade-in-up"
-      >
-        {{ $t('hero.exclusive') }}
-      </span>
+    <!-- Dark overlay when backdropFilter is active -->
+    <div v-if="hasBackdropFilter" class="absolute inset-0 bg-black/40" />
+
+    <!-- Content (smaller text than Hero1) -->
+    <div class="relative z-10 text-center max-w-4xl mx-auto px-4">
       <h1
-        class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in-up stagger-1"
+        v-if="heroTitle"
+        class="text-[40px] lg:text-[30px] md:text-[24px] text-white font-semibold leading-tight"
+        :style="noBackdrop ? textShadowStyle : undefined"
       >
-        {{ ml(storefront.hero?.title) || $t('hero.defaultTitle') }}
+        {{ heroTitle }}
       </h1>
-      <p class="text-lg text-white/80 mb-10 max-w-2xl mx-auto animate-fade-in-up stagger-2">
-        {{ ml(storefront.hero?.description) || $t('hero.defaultSubtitle') }}
+      <p
+        v-if="heroDescription"
+        class="text-white mt-1.5"
+        :style="noBackdrop ? descShadowStyle : undefined"
+      >
+        {{ heroDescription }}
       </p>
-      <div class="animate-fade-in-up stagger-3">
+
+      <div v-if="hasSearchOptions" class="mt-12">
         <SearchBar class="max-w-4xl mx-auto" />
       </div>
     </div>
@@ -37,4 +43,26 @@
 const storefront = useStorefrontStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
+
+const imageLoaded = ref(false)
+
+const heroImage = computed(() => {
+  const photo = storefront.hero?.photo
+  if (!photo) return ''
+  return imageUrl(photo)
+})
+
+const heroTitle = computed(() => ml(storefront.hero?.title))
+const heroDescription = computed(() => ml(storefront.hero?.description))
+const hasSearchOptions = computed(() => storefront.hero?.searchOptions?.length)
+
+const hasBackdropFilter = computed(() => storefront.hero?.backdropFilter !== false)
+const noBackdrop = computed(() => !hasBackdropFilter.value)
+
+const textShadowStyle = {
+  textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)',
+}
+const descShadowStyle = {
+  textShadow: '0 2px 6px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3)',
+}
 </script>

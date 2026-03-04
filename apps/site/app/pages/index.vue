@@ -1,10 +1,12 @@
 <template>
   <div>
-    <!-- Hero -->
-    <HeroResolver />
-
-    <!-- Sections -->
-    <SectionRenderer />
+    <template v-if="storefront.useCustomTheme && storefront.activeSections?.length">
+      <CustomThemeRenderer />
+    </template>
+    <template v-else>
+      <HeroResolver />
+      <SectionRenderer />
+    </template>
   </div>
 </template>
 

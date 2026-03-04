@@ -2,7 +2,6 @@ import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 
-// Resolve @intlify paths dynamically (works in Docker + local dev)
 const require = createRequire(import.meta.url)
 const intlifyAlias = {
   '@intlify/core-base': resolve(dirname(require.resolve('@intlify/core-base/package.json')), 'dist/core-base.mjs'),
@@ -71,6 +70,14 @@ export default defineNuxtConfig({
     '/booking/**': { isr: false },
     '/search': { isr: false },
     '/payment/**': { isr: false },
+    '/draftlive/**': {
+      headers: {
+        'X-Frame-Options': 'ALLOWALL',
+        'Content-Security-Policy': 'frame-ancestors *',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+      isr: false,
+    },
   },
 
   image: {

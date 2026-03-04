@@ -16,24 +16,30 @@
         </div>
 
         <!-- Right: Email form -->
-        <form
-          @submit.prevent="handleSubscribe"
-          class="flex gap-2 w-full md:w-auto md:min-w-[340px]"
-        >
-          <input
-            v-model="email"
-            type="email"
-            :placeholder="$t('sections.emailPlaceholder')"
-            required
-            class="flex-1 px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors text-sm"
-          />
-          <button
-            type="submit"
-            class="px-5 py-3 bg-site-primary hover:bg-site-primary-dark text-white font-semibold rounded-xl transition-colors text-sm whitespace-nowrap"
+        <div class="w-full md:w-auto md:min-w-[340px]">
+          <form
+            v-if="!submitted"
+            @submit.prevent="handleSubscribe"
+            class="flex gap-2"
           >
-            {{ $t('sections.subscribe') }}
-          </button>
-        </form>
+            <input
+              v-model="email"
+              type="email"
+              :placeholder="$t('sections.emailPlaceholder')"
+              required
+              class="flex-1 px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors text-sm"
+            />
+            <button
+              type="submit"
+              class="px-5 py-3 bg-site-primary hover:bg-site-primary-dark text-white font-semibold rounded-xl transition-colors text-sm whitespace-nowrap"
+            >
+              {{ $t('sections.subscribe') }}
+            </button>
+          </form>
+          <p v-else class="text-green-400 font-medium text-sm">
+            {{ $t('sections.subscribeSuccess') || 'Subscribed successfully!' }}
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -41,9 +47,19 @@
 
 <script setup lang="ts">
 const partner = usePartnerStore()
+const api = useApi()
 const email = ref('')
+const submitted = ref(false)
 
-function handleSubscribe() {
-  email.value = ''
+async function handleSubscribe() {
+  if (!email.value) return
+  try {
+    await api.post('/api/public/storefront/newsletter/subscribe', { email: email.value })
+    email.value = ''
+    submitted.value = true
+    setTimeout(() => { submitted.value = false }, 4000)
+  } catch {
+    // silently fail — the user sees no change
+  }
 }
 </script>

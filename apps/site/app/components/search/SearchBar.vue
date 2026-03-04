@@ -247,6 +247,8 @@
 <script setup lang="ts">
 import { h } from 'vue'
 
+const props = withDefaults(defineProps<{ defaultTab?: string }>(), { defaultTab: '' })
+
 const { t, locale } = useI18n()
 const searchStore = useSearchStore()
 const storefront = useStorefrontStore()
@@ -255,8 +257,31 @@ const guestOpen = ref(false)
 const guestRef = ref<HTMLElement>()
 const monthOpen = ref(false)
 const monthRef = ref<HTMLElement>()
-const activeTab = ref('hotels')
 const tourMonth = ref('')
+
+const resolvedDefaultTab = computed(() => {
+  if (props.defaultTab) return props.defaultTab
+  const opts = storefront.hero?.searchOptions
+  if (opts?.length) {
+    const first = opts[0]
+    const canon: Record<string, string> = {
+      hotel: 'hotels', hotels: 'hotels',
+      flight: 'flights', flights: 'flights',
+      tour: 'tours', tours: 'tours',
+      transfer: 'transfer',
+      cruise: 'cruises', cruises: 'cruises',
+      activity: 'activities', activities: 'activities',
+    }
+    return canon[first] || 'hotels'
+  }
+  return 'hotels'
+})
+
+const activeTab = ref(resolvedDefaultTab.value)
+
+watch(resolvedDefaultTab, (v) => {
+  if (v) activeTab.value = v
+})
 
 // Month options for tour search
 const monthOptions = computed(() => {

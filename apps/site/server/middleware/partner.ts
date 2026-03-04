@@ -1,26 +1,23 @@
 /**
  * Server middleware: resolve partner from request hostname on every SSR request.
  * Sets event.context.partner and event.context.storefront for downstream use.
+ * Detects /draftlive routes and fetches draft data instead of live.
  */
 export default defineEventHandler(async (event) => {
-  // Skip for static assets and internal routes
   const path = getRequestURL(event).pathname
   if (path.startsWith('/_nuxt/') || path.startsWith('/__nuxt') || path.startsWith('/api/') || path.includes('.')) {
     return
   }
 
   const api = useServerApi(event)
-  const config = useRuntimeConfig()
+  const isDraftLive = path.startsWith('/draftlive')
 
-  // Determine domain from request hostname
   let domain = getRequestHost(event, { xForwardedHost: true })
-  // Remove port
   if (domain.includes(':')) {
     domain = domain.split(':')[0]
   }
 
   try {
-    // 1. Resolve domain → partner (always from database)
     let partnerData: any = null
 
     const resolved = await api.get<{ success: boolean; data: any }>(
@@ -32,7 +29,6 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!partnerData) {
-      // Partner not found for this domain
       event.context.partner = null
       event.context.storefront = null
       return
@@ -40,24 +36,40 @@ export default defineEventHandler(async (event) => {
 
     event.context.partner = partnerData
 
-    // 2. Fetch storefront data
     try {
+      const storefrontEndpoint = isDraftLive
+        ? '/api/public/storefront/draftLive'
+        : '/api/public/storefront'
+
+      const pagePath = isDraftLive
+        ? path.replace('/draftlive', '') || '/'
+        : path
+
       const storefrontRes = await api.get<{ success: boolean; data: any }>(
-        '/api/public/storefront',
+        storefrontEndpoint,
         {
           partnerId: partnerData.partnerId,
           view: 'full',
+          path: pagePath,
         },
       )
       if (storefrontRes.success && storefrontRes.data) {
         event.context.storefront = storefrontRes.data
+        if (isDraftLive) {
+          event.context.storefront._isDraftMode = true
+        }
       }
     } catch {
-      // Storefront fetch failed - use empty
       event.context.storefront = null
     }
 
-    // 3. Fetch site settings (tracking, languages, etc.)
+    // Theme color for SSR (prevents flash)
+    const themeColor = partnerData?.settings?.themeColor
+      || event.context.storefront?.settings?.themeColor
+    if (themeColor) {
+      event.context.themeColor = themeColor
+    }
+
     try {
       const settingsRes = await api.get<{ success: boolean; data: any }>(
         '/api/public/site-settings',

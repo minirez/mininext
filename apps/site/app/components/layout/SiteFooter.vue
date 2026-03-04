@@ -55,9 +55,9 @@
       </div>
     </div>
 
-    <!-- Main footer: 4 columns -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+    <!-- Main footer: 5-column layout matching site3 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
         <!-- Column 1: Contact info -->
         <div class="space-y-4">
           <!-- Logo -->
@@ -73,69 +73,30 @@
             </span>
           </NuxtLink>
 
-          <ul class="space-y-3 text-sm">
+          <ul class="space-y-4 text-sm">
             <li v-if="partner.contact?.phone">
+              <div class="text-sm text-gray-400 mb-1">{{ $t('footer.tollFreeCustomerCare') || 'Toll Free Customer Care' }}</div>
               <a
                 :href="`tel:${partner.contact.phone}`"
-                class="hover:text-white transition-colors flex items-center gap-2.5"
+                class="text-lg font-medium text-site-primary hover:text-white transition-colors"
               >
-                <svg
-                  class="w-4 h-4 text-site-primary shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
-                  />
-                </svg>
                 {{ partner.contact.phone }}
               </a>
             </li>
             <li v-if="partner.contact?.email">
+              <div class="text-sm text-gray-400 mb-1">{{ $t('footer.needLiveSupport') || 'Need live support?' }}</div>
               <a
                 :href="`mailto:${partner.contact.email}`"
-                class="hover:text-white transition-colors flex items-center gap-2.5"
+                class="text-lg font-medium text-site-primary hover:text-white transition-colors"
               >
-                <svg
-                  class="w-4 h-4 text-site-primary shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                  />
-                </svg>
                 {{ partner.contact.email }}
               </a>
             </li>
-            <li v-if="partner.contact?.address" class="flex items-start gap-2.5 text-gray-400">
-              <svg
-                class="w-4 h-4 text-site-primary shrink-0 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"
-                />
-              </svg>
-              {{ partner.contact.address }}
+            <li v-if="partner.contact?.address">
+              <div class="text-sm text-gray-400 mb-1">{{ $t('footer.address') || 'Address' }}</div>
+              <div class="text-xs text-gray-400 leading-relaxed">
+                {{ partner.contact.address }}
+              </div>
             </li>
             <li
               v-if="partner.contact?.workingHours"
@@ -281,7 +242,7 @@
 
     <!-- Copyright bar -->
     <div class="border-t border-gray-800">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-0">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
           <!-- Left: Copyright -->
           <span class="text-xs text-gray-500">
@@ -360,7 +321,9 @@ const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 const { t: $t } = useI18n()
 
+const api = useApi()
 const email = ref('')
+const subscribed = ref(false)
 const bankLogos = [
   'Visa',
   'Mastercard',
@@ -376,8 +339,16 @@ const bankLogos = [
   'CardFinans'
 ]
 
-function handleSubscribe() {
-  email.value = ''
+async function handleSubscribe() {
+  if (!email.value) return
+  try {
+    await api.post('/api/public/storefront/newsletter/subscribe', { email: email.value })
+    email.value = ''
+    subscribed.value = true
+    setTimeout(() => { subscribed.value = false }, 4000)
+  } catch {
+    // silent
+  }
 }
 
 const socialLinks = computed(() => {

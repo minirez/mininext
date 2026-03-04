@@ -1,28 +1,36 @@
 <template>
-  <section class="relative min-h-[560px] lg:min-h-[650px] flex items-end pt-24 lg:pt-28 pb-16">
-    <!-- Background -->
-    <div class="absolute inset-0 overflow-hidden">
+  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <!-- Background: dark base + image + theme color tint -->
+    <div class="absolute inset-0 bg-gray-900 -z-10">
       <img
-        v-if="storefront.hero?.photo?.link"
-        :src="imageUrl(storefront.hero.photo)"
+        v-if="heroImage"
+        :src="heroImage"
         alt=""
-        class="w-full h-full object-cover"
+        class="w-full h-full object-cover transition-opacity duration-500"
+        :style="{ opacity: imageLoaded ? 1 : 0.7 }"
+        @load="imageLoaded = true"
       />
       <div
-        class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/30 to-slate-900/10"
+        v-if="themeColor"
+        class="absolute inset-0 pointer-events-none"
+        :style="{ backgroundColor: themeColor, opacity: 0.3, mixBlendMode: 'multiply' }"
       />
     </div>
 
     <!-- Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 animate-fade-in-up">
-        {{ ml(storefront.hero?.title) || $t('hero.defaultTitle') }}
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h1
+        v-if="heroTitle"
+        class="text-[60px] lg:text-[40px] md:text-[30px] text-white font-semibold leading-tight"
+      >
+        {{ heroTitle }}
       </h1>
-      <p class="text-lg text-white/80 mb-8 max-w-xl animate-fade-in-up stagger-2">
-        {{ ml(storefront.hero?.description) || $t('hero.defaultSubtitle') }}
+      <p v-if="heroDescription" class="text-white mt-1.5">
+        {{ heroDescription }}
       </p>
-      <div class="animate-fade-in-up stagger-3">
-        <SearchBar />
+
+      <div class="mt-10">
+        <SearchBar class="max-w-4xl mx-auto" default-tab="activities" />
       </div>
     </div>
   </section>
@@ -30,6 +38,23 @@
 
 <script setup lang="ts">
 const storefront = useStorefrontStore()
+const partner = usePartnerStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
+
+const imageLoaded = ref(false)
+
+const heroImage = computed(() => {
+  const photo = storefront.hero?.photo
+  if (!photo) return ''
+  return imageUrl(photo)
+})
+
+const heroTitle = computed(() => ml(storefront.hero?.title))
+const heroDescription = computed(() => ml(storefront.hero?.description))
+
+const themeColor = computed(() => {
+  const c = partner.themeColor || storefront.settings?.themeColor
+  return c && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c) ? c : null
+})
 </script>

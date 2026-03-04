@@ -40,4 +40,10 @@ router.get('/pages', publicStorefrontService.getPublicStorefrontPages)
  */
 router.get('/sections/:sectionType', publicStorefrontService.getPublicStorefrontSection)
 
+/**
+ * POST /public/storefront/newsletter/subscribe
+ * Subscribe an email to the partner's newsletter
+ */
+router.post('/newsletter/subscribe', publicStorefrontService.subscribeNewsletter)
+
 export default router

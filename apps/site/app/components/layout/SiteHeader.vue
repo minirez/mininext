@@ -17,7 +17,7 @@
               v-if="partner.logo"
               :src="imageUrl(partner.logo)"
               :alt="partner.partnerName"
-              class="h-9 w-auto"
+              class="max-h-[50px] w-auto"
             />
             <span
               v-else
@@ -304,9 +304,9 @@ const navigationTabs = computed(() => {
 
 const scrolled = ref(false)
 const isTransparent = computed(() => {
+  if (storefront.header?.headerType === 'white') return false
   const path = route.path
-  // Home page: '/' (default locale) or '/{locale}' (prefixed locales)
-  return path === '/' || /^\/[a-z]{2}$/.test(path)
+  return path === '/' || /^\/[a-z]{2}$/.test(path) || path.startsWith('/draftlive')
 })
 
 const adminPanelUrl = ref('#')
@@ -319,7 +319,7 @@ onMounted(() => {
   }
 
   const handleScroll = () => {
-    scrolled.value = window.scrollY > 50
+    scrolled.value = window.scrollY >= 10
   }
   window.addEventListener('scroll', handleScroll, { passive: true })
   onUnmounted(() => window.removeEventListener('scroll', handleScroll))

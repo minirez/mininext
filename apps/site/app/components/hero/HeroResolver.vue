@@ -10,6 +10,7 @@ const heroComponent = computed(() => {
   switch (type) {
     case 'hero-5':
     case 'split':
+    case 'tour':
       return defineAsyncComponent(() => import('./HeroSplit.vue'))
     case 'hero-6':
     case 'activity':
@@ -23,6 +24,11 @@ const heroComponent = computed(() => {
     case 'hero-10':
     case 'flight':
       return defineAsyncComponent(() => import('./HeroFlight.vue'))
+    case 'hero-1':
+    case 'home1':
+    case 'home2':
+    case 'hotel':
+    case 'transfer':
     default:
       return defineAsyncComponent(() => import('./HeroDefault.vue'))
   }

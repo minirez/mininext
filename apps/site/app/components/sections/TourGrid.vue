@@ -1,22 +1,18 @@
 <template>
-  <section class="py-12 sm:py-16 bg-white">
+  <section class="py-12 sm:py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-10">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">
-          {{ title || $t('sections.featuredTours') }}
-        </h2>
-        <p v-if="description" class="mt-2 text-gray-500 max-w-2xl mx-auto">{{ description }}</p>
+      <div v-if="title" class="mb-8">
+        <h2 class="text-3xl font-semibold text-gray-900">{{ title }}</h2>
+        <p v-if="description" class="text-gray-500 mt-1">{{ description }}</p>
       </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         <NuxtLink
-          v-for="(tour, i) in items.slice(0, 6)"
+          v-for="(tour, i) in items"
           :key="i"
           :to="`/tours/${tour.slug || tour.id}`"
-          class="group rounded-2xl overflow-hidden bg-white border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up"
-          :class="`stagger-${Math.min(i + 1, 6)}`"
+          class="group"
         >
-          <div class="aspect-[16/10] relative overflow-hidden">
+          <div class="relative rounded overflow-hidden" style="aspect-ratio: 1/1">
             <img
               v-if="tour.image || tour.photo?.link"
               :src="tour.image || tour.photo?.link"
@@ -24,23 +20,27 @@
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
             />
-            <div v-if="tour.duration" class="absolute top-3 left-3">
-              <span
-                class="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 rounded-full"
-              >
-                {{ tour.duration }}
-              </span>
-            </div>
-          </div>
-          <div class="p-5">
-            <h3
-              class="font-semibold text-gray-900 line-clamp-1 group-hover:text-site-primary transition-colors"
+            <div v-else class="w-full h-full bg-gray-100" />
+            <span
+              v-if="tour.duration"
+              class="absolute top-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 rounded-full inline-flex items-center gap-1"
             >
+              {{ tour.duration }}
+            </span>
+          </div>
+          <div class="mt-2.5">
+            <div class="flex items-center text-sm text-gray-500 leading-snug">
+              <span v-if="tour.duration">{{ tour.duration }}</span>
+              <span v-if="tour.duration && tour.type" class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0" />
+              <span v-if="tour.type">{{ tour.type }}</span>
+            </div>
+            <h4 class="text-lg font-medium text-gray-900 mt-1 group-hover:underline line-clamp-1">
               {{ tour.name }}
-            </h3>
+            </h4>
             <p v-if="tour.location" class="text-sm text-gray-500 mt-1">{{ tour.location }}</p>
-            <div v-if="tour.price" class="mt-3 pt-3 border-t border-gray-100">
-              <span class="text-lg font-bold text-site-primary">{{ tour.price }}</span>
+            <div v-if="tour.price" class="flex items-center gap-1 mt-2">
+              <span class="text-sm text-gray-500">{{ $t('common.from') }}</span>
+              <span class="font-medium text-site-primary">{{ tour.price }}</span>
             </div>
           </div>
         </NuxtLink>
