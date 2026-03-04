@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { encrypt, decrypt, isEncrypted } from '#helpers/encryption.js'
+import logger from '#core/logger.js'
 
 const platformSettingsSchema = new mongoose.Schema(
   {
@@ -381,20 +382,27 @@ platformSettingsSchema.methods.getPaximumCredentials = function () {
     return null
   }
 
-  const safeDecrypt = val => {
+  const decryptField = (val, fieldName) => {
     if (!val) return null
     try {
       return decrypt(val)
-    } catch {
-      return null
+    } catch (err) {
+      logger.error(`Paximum ${fieldName} decryption failed – ENCRYPTION_KEY may have changed`, {
+        error: err.message,
+        fieldName
+      })
+      throw new Error(
+        `Paximum ${fieldName} şifresi çözülemedi. ENCRYPTION_KEY değişmiş olabilir – ` +
+          'lütfen Paximum kimlik bilgilerini yeniden kaydedin.'
+      )
     }
   }
 
   return {
     endpoint: this.paximum.endpoint,
-    agency: safeDecrypt(this.paximum.agency),
-    user: safeDecrypt(this.paximum.user),
-    password: safeDecrypt(this.paximum.password),
+    agency: decryptField(this.paximum.agency, 'agency'),
+    user: decryptField(this.paximum.user, 'user'),
+    password: decryptField(this.paximum.password, 'password'),
     token: this.paximum.token,
     tokenExpiresOn: this.paximum.tokenExpiresOn,
     defaultMarkup: this.paximum.defaultMarkup

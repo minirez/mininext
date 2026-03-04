@@ -404,6 +404,13 @@ export const testPaximum = asyncHandler(async (req, res) => {
       }
     )
 
+    logger.info('Paximum test connection response', {
+      status: response.status,
+      headerSuccess: response.data?.header?.success,
+      hasToken: !!response.data?.body?.token,
+      messages: response.data?.header?.messages
+    })
+
     if (response.data?.body?.token) {
       // Connection successful - save credentials to database
       const settings = await PlatformSettings.getSettings()
@@ -471,7 +478,14 @@ export const testPaximum = asyncHandler(async (req, res) => {
         }
       })
     } else {
-      throw new Error('Token not received from Paximum')
+      const paxMsg =
+        response.data?.header?.messages?.[0]?.message ||
+        response.data?.header?.messages?.[0]?.code ||
+        JSON.stringify(response.data?.header || response.data)
+      logger.error('Paximum test: token missing from response', {
+        fullResponse: JSON.stringify(response.data).slice(0, 2000)
+      })
+      throw new Error(`Token not received from Paximum: ${paxMsg}`)
     }
   } catch (error) {
     logger.error('Paximum connection test failed:', error.message)
@@ -508,12 +522,20 @@ export const testPaximum = asyncHandler(async (req, res) => {
       errorMessage: error.response?.data?.header?.messages?.[0]?.message || error.message
     })
 
+    const paxError = error.response?.data?.header?.messages?.[0]?.message
+    const paxCode = error.response?.data?.header?.messages?.[0]?.code
+
     res.status(400).json({
       success: false,
-      error:
-        error.response?.data?.header?.messages?.[0]?.message ||
-        error.message ||
-        'Paximum bağlantı testi başarısız'
+      error: paxError || error.message || 'Paximum bağlantı testi başarısız',
+      details: {
+        paximumMessage: paxError || null,
+        paximumCode: paxCode || null,
+        httpStatus: error.response?.status || null,
+        hint: !error.response
+          ? 'Paximum API responded but returned no token. This may indicate IP whitelist restriction on Paximum side.'
+          : null
+      }
     })
   }
 })

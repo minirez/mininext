@@ -36,6 +36,18 @@ export async function getToken() {
   // Token expired or not available - get a new one
   logger.info('Paximum: Refreshing authentication token')
 
+  if (!creds.agency || !creds.user || !creds.password) {
+    logger.error('Paximum: Decrypted credentials are empty – ENCRYPTION_KEY may have changed', {
+      hasAgency: !!creds.agency,
+      hasUser: !!creds.user,
+      hasPassword: !!creds.password
+    })
+    throw new Error(
+      'Paximum kimlik bilgileri çözülemedi (agency/user/password boş). ' +
+        "ENCRYPTION_KEY değişmiş olabilir – lütfen Platform Ayarları'ndan Paximum bilgilerini yeniden kaydedin."
+    )
+  }
+
   try {
     const response = await axios.post(
       `${creds.endpoint}${AUTH_SERVICE}/login`,
@@ -51,6 +63,11 @@ export async function getToken() {
     )
 
     if (!response.data?.body?.token) {
+      logger.error('Paximum: Login response missing token', {
+        status: response.status,
+        headerSuccess: response.data?.header?.success,
+        messages: response.data?.header?.messages
+      })
       throw new Error('Paximum login yanıtında token bulunamadı')
     }
 
