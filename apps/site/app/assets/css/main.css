@@ -251,6 +251,24 @@ img.lazy-fade.loaded {
   animation: fadeInDown 0.15s ease-in reverse;
 }
 
+/* Modal transition */
+.modal-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+.modal-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active > div {
+  animation: fadeInDown 0.2s ease-out;
+}
+.modal-leave-active > div {
+  animation: fadeInDown 0.15s ease-in reverse;
+}
+
 /* Fade transition */
 .fade-enter-active {
   transition: opacity 0.2s ease-out;

@@ -60,30 +60,79 @@
       </div>
 
       <!-- Price -->
-      <div
-        v-if="hotel.minPrice || hotel.price"
-        class="mt-3 pt-3 border-t border-gray-100 flex items-end justify-between"
-      >
-        <span class="text-xs text-gray-400">{{ $t('common.from') }}</span>
-        <span class="text-lg font-bold text-site-primary">
-          {{ formatPrice(hotel.minPrice || hotel.price) }}
-        </span>
+      <div class="mt-3 pt-3 border-t border-gray-100">
+        <!-- Live price from search -->
+        <template v-if="priceData">
+          <!-- Loading shimmer -->
+          <div v-if="priceData.loading" class="flex items-end justify-between">
+            <div class="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+            <div class="h-5 w-24 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <!-- Available with price -->
+          <div
+            v-else-if="priceData.available && priceData.price"
+            class="flex items-end justify-between"
+          >
+            <div>
+              <span v-if="priceData.mealPlan" class="block text-[10px] text-gray-400 mb-0.5">{{
+                priceData.mealPlan
+              }}</span>
+              <span class="text-xs text-gray-400">{{ $t('common.perNight') }}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-lg font-bold text-site-primary">
+                {{ formatPriceValue(priceData.perNight || priceData.price, priceData.currency) }}
+              </span>
+              <span
+                v-if="priceData.perNight && priceData.price !== priceData.perNight"
+                class="block text-xs text-gray-400"
+              >
+                {{ $t('common.total') }} {{ formatPriceValue(priceData.price, priceData.currency) }}
+              </span>
+            </div>
+          </div>
+          <!-- Not available -->
+          <div v-else-if="priceData.available === false" class="flex items-center justify-center">
+            <span class="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded">{{
+              $t('hotel.notAvailable')
+            }}</span>
+          </div>
+        </template>
+        <!-- Static price (no search) -->
+        <div v-else-if="hotel.minPrice || hotel.price" class="flex items-end justify-between">
+          <span class="text-xs text-gray-400">{{ $t('common.from') }}</span>
+          <span class="text-lg font-bold text-site-primary">
+            {{ formatPriceValue(hotel.minPrice || hotel.price) }}
+          </span>
+        </div>
       </div>
     </div>
   </NuxtLink>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ hotel: any }>()
+const props = defineProps<{
+  hotel: any
+  priceData?: {
+    loading: boolean
+    price?: number
+    currency?: string
+    available?: boolean
+    mealPlan?: string
+    perNight?: number
+    error?: boolean
+  }
+}>()
 
 const { imageUrl } = useImageUrl()
 const searchStore = useSearchStore()
 
-function formatPrice(price: number | string) {
+function formatPriceValue(price: number | string | undefined, currency?: string) {
   if (!price) return ''
   const num = typeof price === 'string' ? parseFloat(price) : price
+  const cur = currency || searchStore.currency
   const symbols: Record<string, string> = { TRY: '₺', USD: '$', EUR: '€', GBP: '£', RUB: '₽' }
-  const symbol = symbols[searchStore.currency] || searchStore.currency + ' '
+  const symbol = symbols[cur] || cur + ' '
   return `${symbol}${num.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 </script>

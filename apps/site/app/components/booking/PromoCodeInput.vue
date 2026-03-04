@@ -27,7 +27,7 @@
     <p v-if="error" class="text-xs text-red-500 mt-1">{{ error }}</p>
     <p v-if="bookingStore.promoApplied" class="text-xs text-green-600 mt-1">
       {{ $t('booking.discount') }}: -{{
-        formatPrice(bookingStore.promoDiscount, bookingStore.selectedRoom?.price?.currency || 'TRY')
+        formatPrice(bookingStore.promoDiscount, bookingStore.cartTotal.currency || 'TRY')
       }}
     </p>
   </div>
@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{ hotelCode: string }>()
+const emit = defineEmits<{ applied: [] }>()
 const bookingStore = useBookingStore()
 const { applyPromo } = usePricing()
 const { formatPrice } = useCurrency()
@@ -56,6 +57,7 @@ async function applyPromoCode() {
     if (result) {
       bookingStore.promoApplied = true
       bookingStore.promoDiscount = result.discount || 0
+      emit('applied')
     } else {
       error.value = 'Invalid promo code'
     }

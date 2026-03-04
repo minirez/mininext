@@ -36,12 +36,12 @@
         </div>
 
         <div class="flex gap-3">
-          <NuxtLink
-            :to="`/hotels/${hotel.slug}/book`"
+          <button
+            @click="scrollToRooms"
             class="inline-flex items-center px-6 py-3 bg-site-primary text-white font-medium rounded-xl hover:bg-site-primary-dark transition-colors"
           >
             {{ $t('common.bookNow') }}
-          </NuxtLink>
+          </button>
         </div>
       </div>
 
@@ -71,10 +71,16 @@
 
           <!-- Policies -->
           <HotelPolicies v-if="hotel.policies" :policies="hotel.policies" />
+
+          <!-- Room Availability -->
+          <RoomAvailability :hotel-code="hotel.hotelCode || slug" />
         </div>
 
         <!-- Sidebar -->
         <aside class="space-y-6">
+          <!-- Search Sidebar -->
+          <SearchSidebar @search="scrollToRooms" />
+
           <!-- Map -->
           <div
             v-if="hotel.address?.coordinates && mapboxToken"
@@ -126,20 +132,12 @@
               }}</a>
             </p>
           </div>
-
-          <!-- Quick booking CTA -->
-          <div class="bg-site-primary/5 border border-site-primary/20 rounded-xl p-6 text-center">
-            <h3 class="font-semibold text-gray-900 mb-2">{{ $t('hotel.selectRoom') }}</h3>
-            <NuxtLink
-              :to="`/hotels/${hotel.slug}/book`"
-              class="inline-flex items-center px-6 py-3 bg-site-primary text-white font-medium rounded-xl hover:bg-site-primary-dark transition-colors w-full justify-center"
-            >
-              {{ $t('common.bookNow') }}
-            </NuxtLink>
-          </div>
         </aside>
       </div>
     </div>
+
+    <!-- Floating Cart Bar -->
+    <CartBar :hotel-code="hotel.hotelCode || slug" />
   </div>
 
   <!-- Loading state -->
@@ -156,11 +154,25 @@ const slug = route.params.slug as string
 const { ml } = useMultiLang()
 const { t: $t } = useI18n()
 const partner = usePartnerStore()
+const searchStore = useSearchStore()
 const mapboxToken = useRuntimeConfig().public.mapboxToken
 
 const { hotel, loading, profileSections, fetchHotel } = useHotelDetail(slug)
 
 await fetchHotel()
+
+// Parse search params from query
+if (route.query.checkIn && !searchStore.checkIn) searchStore.checkIn = route.query.checkIn as string
+if (route.query.checkOut && !searchStore.checkOut)
+  searchStore.checkOut = route.query.checkOut as string
+if (route.query.adults) searchStore.adults = Number(route.query.adults)
+
+function scrollToRooms() {
+  const el = document.getElementById('room-availability')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 const breadcrumbs = computed(() => [
   { label: $t('common.home'), to: '/' },

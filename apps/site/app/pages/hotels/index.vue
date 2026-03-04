@@ -40,8 +40,9 @@
 
       <!-- Content -->
       <div class="flex gap-6">
-        <!-- Sidebar filters (desktop) -->
-        <aside class="hidden lg:block w-64 shrink-0">
+        <!-- Sidebar (desktop) -->
+        <aside class="hidden lg:block w-64 shrink-0 space-y-4">
+          <SearchSidebar @search="handleSidebarSearch" />
           <SearchFilters />
         </aside>
 
@@ -64,7 +65,12 @@
               v-else-if="hotels.length"
               class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
             >
-              <HotelCard v-for="hotel in hotels" :key="hotel.slug" :hotel="hotel" />
+              <HotelCard
+                v-for="hotel in hotels"
+                :key="hotel.slug"
+                :hotel="hotel"
+                :price-data="priceMap[hotel.hotelCode || hotel.slug]"
+              />
             </div>
             <EmptyState v-else />
           </div>
@@ -95,6 +101,7 @@
               {{ $t('common.close') }}
             </button>
           </div>
+          <SearchSidebar @search="handleSidebarSearch" class="mb-4" />
           <SearchFilters />
         </div>
       </div>
@@ -108,12 +115,15 @@ const router = useRouter()
 const searchStore = useSearchStore()
 const ui = useUiStore()
 const { hotels, loading, totalHotels, totalPages, fetchHotels } = useHotels()
+const { priceMap, fetchPricesForHotels, clearPrices } = useHotelPrices()
 
 // Parse query params on load
 if (route.query.city) searchStore.city = route.query.city as string
 if (route.query.checkIn) searchStore.checkIn = route.query.checkIn as string
 if (route.query.checkOut) searchStore.checkOut = route.query.checkOut as string
 if (route.query.adults) searchStore.adults = Number(route.query.adults)
+if (route.query.children)
+  searchStore.children = (route.query.children as string).split(',').map(Number)
 if (route.query.stars)
   searchStore.filters.stars = (route.query.stars as string).split(',').map(Number)
 if (route.query.page) searchStore.currentPage = Number(route.query.page)
@@ -130,6 +140,34 @@ const fetchKey = computed(() =>
 )
 
 watch(fetchKey, () => fetchHotels(), { immediate: true })
+
+// Fetch prices when hotels load and dates are set
+watch(
+  () => hotels.value,
+  list => {
+    if (list?.length && searchStore.hasDates) {
+      const codes = list.map((h: any) => h.hotelCode || h.slug).filter(Boolean)
+      fetchPricesForHotels(codes)
+    }
+  }
+)
+
+function handleSidebarSearch() {
+  // Update URL query params
+  const q: Record<string, string> = { ...(route.query as Record<string, string>) }
+  if (searchStore.checkIn) q.checkIn = searchStore.checkIn
+  if (searchStore.checkOut) q.checkOut = searchStore.checkOut
+  if (searchStore.adults) q.adults = String(searchStore.adults)
+  if (searchStore.children.length) q.children = searchStore.children.join(',')
+  router.replace({ query: q })
+
+  // Re-fetch prices
+  clearPrices()
+  if (hotels.value?.length && searchStore.hasDates) {
+    const codes = hotels.value.map((h: any) => h.hotelCode || h.slug).filter(Boolean)
+    fetchPricesForHotels(codes)
+  }
+}
 
 function changePage(page: number) {
   searchStore.currentPage = page

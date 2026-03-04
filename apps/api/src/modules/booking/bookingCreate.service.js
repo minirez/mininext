@@ -383,6 +383,16 @@ export const createBooking = asyncHandler(async (req, res) => {
     }
   }
 
+  // Send automatic booking emails (non-blocking)
+  try {
+    const { sendAutomaticBookingEmails } = await import('./email.service.js')
+    sendAutomaticBookingEmails(booking._id, {
+      trigger: 'creation'
+    }).catch(err => logger.error('[BookingCreate] Auto email failed:', err.message))
+  } catch (err) {
+    logger.error('[BookingCreate] Failed to import email service:', err.message)
+  }
+
   // Populate for response
   await booking.populate('hotel', 'name slug')
 
@@ -939,6 +949,16 @@ export const createBookingWithPaymentLink = asyncHandler(async (req, res) => {
     } catch (error) {
       logger.error('Failed to send payment link notification:', error.message)
     }
+  }
+
+  // Send automatic booking confirmation emails (non-blocking)
+  try {
+    const { sendAutomaticBookingEmails } = await import('./email.service.js')
+    sendAutomaticBookingEmails(booking._id, {
+      trigger: 'creation'
+    }).catch(err => logger.error('[BookingCreate+PL] Auto email failed:', err.message))
+  } catch (err) {
+    logger.error('[BookingCreate+PL] Failed to import email service:', err.message)
   }
 
   // Populate for response

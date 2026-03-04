@@ -26,9 +26,9 @@
 
       <!-- Room info -->
       <div class="flex-1 p-4">
-        <h3 class="font-semibold text-gray-900 mb-1">{{ room.roomType.name }}</h3>
+        <h3 class="font-semibold text-gray-900 mb-1">{{ mlText(room.roomType.name) }}</h3>
         <p v-if="room.roomType.description" class="text-sm text-gray-500 mb-3 line-clamp-2">
-          {{ room.roomType.description }}
+          {{ mlText(room.roomType.description) }}
         </p>
 
         <!-- Meal plan options -->
@@ -39,7 +39,9 @@
             class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
           >
             <div>
-              <span class="text-sm font-medium text-gray-800">{{ option.mealPlan.name }}</span>
+              <span class="text-sm font-medium text-gray-800">{{
+                mlText(option.mealPlan.name)
+              }}</span>
               <span v-if="option.availability" class="text-xs text-gray-500 ml-2">
                 ({{ option.availability }} {{ $t('booking.availability') }})
               </span>
@@ -51,7 +53,7 @@
             </div>
             <div class="text-right">
               <div class="font-bold text-gray-900">
-                {{ formatPrice(option.prices?.total || 0, option.prices?.currency || 'TRY') }}
+                {{ formatPrice(optionTotal(option), optionCurrency(option)) }}
               </div>
               <button
                 @click="selectOption(option)"
@@ -77,15 +79,38 @@ const props = defineProps<{
 }>()
 
 const { formatPrice } = useCurrency()
+const { locale } = useI18n()
 const bookingStore = useBookingStore()
+
+function mlText(val: any): string {
+  if (!val) return ''
+  if (typeof val === 'string') return val
+  return (
+    val[locale.value] ||
+    val.en ||
+    val.tr ||
+    (Object.values(val).find((v: any) => v) as string) ||
+    ''
+  )
+}
+
+function optionTotal(option: any): number {
+  const p = option.pricing || option.prices
+  return p?.finalTotal || p?.total || 0
+}
+
+function optionCurrency(option: any): string {
+  const p = option.pricing || option.prices
+  return p?.currency || 'TRY'
+}
 
 function selectOption(option: any) {
   bookingStore.selectRoom({
     roomTypeCode: props.room.roomType.code,
-    roomTypeName: props.room.roomType.name,
+    roomTypeName: mlText(props.room.roomType.name),
     mealPlanCode: option.mealPlan.code,
-    mealPlanName: option.mealPlan.name,
-    price: option.prices,
+    mealPlanName: mlText(option.mealPlan.name),
+    price: option.pricing || option.prices,
     availability: option.availability,
     images: props.room.roomType.images || []
   })

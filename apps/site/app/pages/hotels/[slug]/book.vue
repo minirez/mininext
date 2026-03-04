@@ -42,8 +42,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Main content -->
       <div class="lg:col-span-2">
-        <!-- Step 1: Room Selection -->
-        <RoomSelector v-if="bookingStore.step === 1" :hotel-code="slug" />
+        <!-- Step 1: Cart Review -->
+        <CartReview v-if="bookingStore.step === 1" :hotel-code="slug" />
 
         <!-- Step 2: Guest Form -->
         <GuestForm v-else-if="bookingStore.step === 2" />
@@ -69,13 +69,29 @@ definePageMeta({ layout: 'booking' })
 const route = useRoute()
 const slug = route.params.slug as string
 const bookingStore = useBookingStore()
+const searchStore = useSearchStore()
 
-// Reset booking state when entering
 onMounted(() => {
-  // Parse search params from query
+  // Sync search params from searchStore or query
+  if (searchStore.hasDates) {
+    bookingStore.searchParams.checkIn = searchStore.checkIn
+    bookingStore.searchParams.checkOut = searchStore.checkOut
+    bookingStore.searchParams.adults = searchStore.adults
+    bookingStore.searchParams.children = searchStore.children
+  }
   if (route.query.checkIn) bookingStore.searchParams.checkIn = route.query.checkIn as string
   if (route.query.checkOut) bookingStore.searchParams.checkOut = route.query.checkOut as string
   if (route.query.adults) bookingStore.searchParams.adults = Number(route.query.adults)
+
+  // If cart has items, stay at step 1 (CartReview)
+  // If no cart and no selectedRoom, redirect to hotel detail
+  if (!bookingStore.cart.length) {
+    navigateTo(`/hotels/${slug}`)
+    return
+  }
+  if (bookingStore.step > 1 && !bookingStore.cart.length) {
+    bookingStore.step = 1
+  }
 })
 
 const { t: $t } = useI18n()

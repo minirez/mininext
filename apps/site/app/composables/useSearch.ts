@@ -8,6 +8,7 @@ export function useAvailabilitySearch() {
   const availableRooms = ref<any[]>([])
   const searching = ref(false)
   const searchError = ref('')
+  const cancellationPolicy = ref<any>(null)
 
   async function searchAvailability(hotelCode: string, params?: Record<string, any>) {
     searching.value = true
@@ -28,7 +29,16 @@ export function useAvailabilitySearch() {
         body,
       )
       if (res.success && res.data) {
-        availableRooms.value = res.data.rooms || []
+        availableRooms.value = res.data.rooms || res.data.results || []
+
+        // Extract payment config from search response
+        const bookingStore = useBookingStore()
+        const search = res.data.search || res.data
+        if (search?.paymentTerms) bookingStore.paymentTerms = search.paymentTerms
+        if (search?.cancellationGuarantee) bookingStore.cancellationGuaranteeConfig = search.cancellationGuarantee
+        if (search?.bankTransferDiscount) bookingStore.bankTransferDiscount = search.bankTransferDiscount
+        if (search?.bankTransferReleaseDays != null) bookingStore.bankTransferReleaseDays = search.bankTransferReleaseDays
+        if (search?.cancellationPolicy) cancellationPolicy.value = search.cancellationPolicy
       }
     } catch (err: any) {
       console.error('[useSearch] error:', err)
@@ -43,6 +53,7 @@ export function useAvailabilitySearch() {
     availableRooms,
     searching,
     searchError,
+    cancellationPolicy,
     searchAvailability,
   }
 }
