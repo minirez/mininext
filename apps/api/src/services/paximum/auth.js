@@ -48,38 +48,50 @@ export async function getToken() {
     )
   }
 
+  const loginUrl = `${creds.endpoint}${AUTH_SERVICE}/login`
+
   try {
     const response = await axios.post(
-      `${creds.endpoint}${AUTH_SERVICE}/login`,
-      {
-        Agency: creds.agency,
-        User: creds.user,
-        Password: creds.password
-      },
+      loginUrl,
+      { Agency: creds.agency, User: creds.user, Password: creds.password },
       {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 30000
+        timeout: 30000,
+        validateStatus: () => true
       }
     )
 
+    const rawBody = typeof response.data === 'string'
+      ? response.data.slice(0, 2000)
+      : JSON.stringify(response.data).slice(0, 2000)
+
+    logger.info('Paximum: Login raw response', {
+      url: loginUrl,
+      httpStatus: response.status,
+      contentType: response.headers?.['content-type'],
+      body: rawBody
+    })
+
+    if (response.status < 200 || response.status >= 300) {
+      const msg = response.data?.header?.messages?.[0]?.message || `HTTP ${response.status}`
+      throw new Error(`Paximum HTTP ${response.status}: ${msg}`)
+    }
+
     if (!response.data?.body?.token) {
-      logger.error('Paximum: Login response missing token', {
-        status: response.status,
-        headerSuccess: response.data?.header?.success,
-        messages: response.data?.header?.messages
-      })
-      throw new Error('Paximum login yanıtında token bulunamadı')
+      const paxMsg = response.data?.header?.messages?.[0]?.message || 'no token in body'
+      throw new Error(`Paximum login yanıtında token bulunamadı: ${paxMsg} | raw: ${rawBody}`)
     }
 
     const { token, expiresOn } = response.data.body
-
-    // Cache the new token
     await settings.updatePaximumToken(token, new Date(expiresOn))
 
     logger.info('Paximum: Token refreshed successfully')
     return token
   } catch (error) {
-    logger.error('Paximum: Authentication failed', { error: error.message })
+    logger.error('Paximum: Authentication failed', {
+      error: error.message,
+      url: loginUrl
+    })
     throw new Error(`Paximum kimlik doğrulama hatası: ${error.message}`)
   }
 }

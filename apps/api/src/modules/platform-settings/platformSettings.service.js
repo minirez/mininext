@@ -389,30 +389,41 @@ export const testPaximum = asyncHandler(async (req, res) => {
     })
   }
 
-  try {
-    // Try to authenticate with Paximum using provided credentials
-    const response = await axios.post(
-      `${endpoint}/api/authenticationservice/login`,
-      {
-        Agency: agency,
-        User: user,
-        Password: password
-      },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 30000
-      }
-    )
+  const loginUrl = `${endpoint}/api/authenticationservice/login`
+  const loginBody = { Agency: agency, User: user, Password: password }
+  let rawResponse = null
+  let rawStatus = null
+  let rawHeaders = null
 
-    logger.info('Paximum test connection response', {
-      status: response.status,
-      headerSuccess: response.data?.header?.success,
-      hasToken: !!response.data?.body?.token,
-      messages: response.data?.header?.messages
+  try {
+    const response = await axios.post(loginUrl, loginBody, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 30000,
+      validateStatus: () => true
     })
 
+    rawStatus = response.status
+    rawHeaders = {
+      'content-type': response.headers?.['content-type'],
+      server: response.headers?.['server']
+    }
+    rawResponse = typeof response.data === 'string'
+      ? response.data.slice(0, 3000)
+      : JSON.stringify(response.data).slice(0, 3000)
+
+    logger.info('Paximum test connection raw response', {
+      url: loginUrl,
+      httpStatus: rawStatus,
+      responseHeaders: rawHeaders,
+      responseBody: rawResponse
+    })
+
+    if (rawStatus < 200 || rawStatus >= 300) {
+      const paxMsg = response.data?.header?.messages?.[0]?.message || `HTTP ${rawStatus}`
+      throw new Error(`Paximum HTTP ${rawStatus}: ${paxMsg}`)
+    }
+
     if (response.data?.body?.token) {
-      // Connection successful - save credentials to database
       const settings = await PlatformSettings.getSettings()
 
       settings.paximum = settings.paximum || {}
@@ -425,7 +436,6 @@ export const testPaximum = asyncHandler(async (req, res) => {
         settings.paximum.defaultMarkup = defaultMarkup
       }
 
-      // Update token cache
       await settings.updatePaximumToken(
         response.data.body.token,
         new Date(response.data.body.expiresOn)
@@ -433,7 +443,6 @@ export const testPaximum = asyncHandler(async (req, res) => {
 
       await settings.save()
 
-      // Create audit log for Paximum settings update
       await AuditLog.log({
         actor: {
           userId: req.user?._id,
@@ -451,19 +460,10 @@ export const testPaximum = asyncHandler(async (req, res) => {
           documentName: 'Paximum Integration'
         },
         changes: {
-          after: {
-            endpoint: endpoint,
-            agency: agency,
-            defaultMarkup: defaultMarkup
-          }
+          after: { endpoint, agency, defaultMarkup }
         },
-        request: {
-          method: req.method,
-          path: req.originalUrl
-        },
-        metadata: {
-          reason: 'Paximum connection test successful, credentials saved'
-        },
+        request: { method: req.method, path: req.originalUrl },
+        metadata: { reason: 'Paximum connection test successful, credentials saved' },
         status: 'success'
       })
 
@@ -473,7 +473,7 @@ export const testPaximum = asyncHandler(async (req, res) => {
         success: true,
         message: 'Paximum bağlantısı başarılı, ayarlar kaydedildi',
         data: {
-          agency: agency,
+          agency,
           tokenExpiry: response.data.body.expiresOn
         }
       })
@@ -481,16 +481,19 @@ export const testPaximum = asyncHandler(async (req, res) => {
       const paxMsg =
         response.data?.header?.messages?.[0]?.message ||
         response.data?.header?.messages?.[0]?.code ||
-        JSON.stringify(response.data?.header || response.data)
-      logger.error('Paximum test: token missing from response', {
-        fullResponse: JSON.stringify(response.data).slice(0, 2000)
-      })
+        'no error detail in response'
       throw new Error(`Token not received from Paximum: ${paxMsg}`)
     }
   } catch (error) {
-    logger.error('Paximum connection test failed:', error.message)
+    logger.error('Paximum connection test failed', {
+      message: error.message,
+      httpStatus: rawStatus,
+      rawResponse
+    })
 
-    // Log failed connection attempt
+    const paxError = error.response?.data?.header?.messages?.[0]?.message
+    const paxCode = error.response?.data?.header?.messages?.[0]?.code
+
     await AuditLog.log({
       actor: {
         userId: req.user?._id,
@@ -508,22 +511,18 @@ export const testPaximum = asyncHandler(async (req, res) => {
         documentName: 'Paximum Integration'
       },
       changes: {
-        after: {
-          endpoint: endpoint,
-          agency: agency
-        }
+        after: { endpoint, agency }
       },
-      request: {
-        method: req.method,
-        path: req.originalUrl,
-        statusCode: 400
-      },
+      request: { method: req.method, path: req.originalUrl, statusCode: 400 },
       status: 'failure',
-      errorMessage: error.response?.data?.header?.messages?.[0]?.message || error.message
+      errorMessage: paxError || error.message,
+      metadata: {
+        paximumHttpStatus: rawStatus,
+        paximumRawResponse: rawResponse,
+        paximumResponseHeaders: rawHeaders,
+        requestUrl: loginUrl
+      }
     })
-
-    const paxError = error.response?.data?.header?.messages?.[0]?.message
-    const paxCode = error.response?.data?.header?.messages?.[0]?.code
 
     res.status(400).json({
       success: false,
@@ -531,10 +530,9 @@ export const testPaximum = asyncHandler(async (req, res) => {
       details: {
         paximumMessage: paxError || null,
         paximumCode: paxCode || null,
-        httpStatus: error.response?.status || null,
-        hint: !error.response
-          ? 'Paximum API responded but returned no token. This may indicate IP whitelist restriction on Paximum side.'
-          : null
+        httpStatus: rawStatus,
+        rawResponse,
+        requestUrl: loginUrl
       }
     })
   }
