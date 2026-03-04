@@ -370,6 +370,7 @@
       "defaultMarkup": "Default Markup",
       "defaultMarkupHint": "Default markup percentage to apply on Paximum prices",
       "testConnection": "Test Connection",
+      "resetCredentials": "Reset Credentials",
       "testSuccess": "Paximum connection successful",
       "endpointRequired": "Paximum API endpoint is required",
       "credentialsRequired": "Paximum credentials are incomplete (agency, username, password required)"

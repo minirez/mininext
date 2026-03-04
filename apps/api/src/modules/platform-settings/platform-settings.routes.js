@@ -29,4 +29,7 @@ router.post('/generate-vapid', service.generateVAPIDKeys)
 // Test Paximum connection
 router.post('/test-paximum', service.testPaximum)
 
+// Reset Paximum credentials
+router.post('/reset-paximum', service.resetPaximum)
+
 export default router

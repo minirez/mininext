@@ -62,6 +62,14 @@ export const testPaximum = async (credentials) => {
   return response.data
 }
 
+/**
+ * Reset Paximum credentials (clears all stored data)
+ */
+export const resetPaximum = async () => {
+  const response = await apiClient.post('/platform-settings/reset-paximum')
+  return response.data
+}
+
 export default {
   getSettings,
   updateSettings,
@@ -69,5 +77,6 @@ export default {
   testSMS,
   generateVAPIDKeys,
   getVAPIDPublicKey,
-  testPaximum
+  testPaximum,
+  resetPaximum
 }

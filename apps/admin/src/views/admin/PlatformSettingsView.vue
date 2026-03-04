@@ -526,7 +526,7 @@
                 </p>
               </div>
             </div>
-            <!-- Test Connection Button -->
+            <!-- Test Connection & Reset Buttons -->
             <div
               class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-slate-700"
             >
@@ -540,6 +540,17 @@
                 >
                 <span v-else class="material-icons text-sm">wifi_tethering</span>
                 {{ $t('platformSettings.paximum.testConnection') }}
+              </button>
+              <button
+                :disabled="resettingPaximum"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg transition-colors disabled:opacity-50"
+                @click="confirmResetPaximum"
+              >
+                <span v-if="resettingPaximum" class="material-icons animate-spin text-sm"
+                  >refresh</span
+                >
+                <span v-else class="material-icons text-sm">restart_alt</span>
+                {{ $t('platformSettings.paximum.resetCredentials') }}
               </button>
             </div>
           </div>
@@ -1247,15 +1258,27 @@ const {
   testingEmail,
   testingSMS,
   testingPaximum,
+  resettingPaximum,
   generatingVAPID,
   loadSettings,
   saveSettings,
   sendTestEmail,
   sendTestSMS,
   testPaximumConnection,
+  resetPaximumCredentials,
   generateVAPID,
   copyToClipboard
 } = usePlatformSettings()
+
+const confirmResetPaximum = () => {
+  if (
+    window.confirm(
+      'Bu işlem Paximum kimlik bilgilerini sıfırlayacak. Devam etmek istiyor musunuz?'
+    )
+  ) {
+    resetPaximumCredentials()
+  }
+}
 
 // Exchange rates composable
 const {

@@ -538,6 +538,55 @@ export const testPaximum = asyncHandler(async (req, res) => {
   }
 })
 
+/**
+ * Reset Paximum credentials
+ * Clears all stored Paximum data so user can re-enter from scratch
+ */
+export const resetPaximum = asyncHandler(async (req, res) => {
+  const settings = await PlatformSettings.getSettings()
+
+  settings.paximum = {
+    enabled: false,
+    endpoint: 'https://service.paximum.com/v2',
+    agency: null,
+    user: null,
+    password: null,
+    token: null,
+    tokenExpiresOn: null,
+    defaultMarkup: 10
+  }
+
+  await settings.save()
+
+  await AuditLog.log({
+    actor: {
+      userId: req.user?._id,
+      email: req.user?.email,
+      name: req.user?.name,
+      role: req.user?.role || 'admin',
+      ip: req.ip,
+      userAgent: req.headers?.['user-agent']
+    },
+    module: 'settings',
+    subModule: 'paximum',
+    action: 'delete',
+    target: {
+      collection: 'platform_settings',
+      documentName: 'Paximum Integration'
+    },
+    request: { method: req.method, path: req.originalUrl },
+    metadata: { reason: 'Paximum credentials reset by admin' },
+    status: 'success'
+  })
+
+  logger.info('Paximum credentials reset by user:', req.user?.email)
+
+  res.json({
+    success: true,
+    message: 'Paximum credentials have been reset. Please re-enter and test.'
+  })
+})
+
 export default {
   getSettings,
   updateSettings,
@@ -545,5 +594,6 @@ export default {
   testSMS,
   generateVAPIDKeys,
   getVAPIDPublicKey,
-  testPaximum
+  testPaximum,
+  resetPaximum
 }

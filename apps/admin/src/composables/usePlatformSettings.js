@@ -362,6 +362,21 @@ export function usePlatformSettings() {
     )
   }
 
+  // Reset Paximum credentials
+  const resettingPaximum = ref(false)
+  const resetPaximumCredentials = async () => {
+    resettingPaximum.value = true
+    try {
+      const result = await platformSettingsService.resetPaximum()
+      toast.success(result.message || 'Paximum credentials reset')
+      await loadSettings()
+    } catch (error) {
+      toast.error(error.response?.data?.error || error.message)
+    } finally {
+      resettingPaximum.value = false
+    }
+  }
+
   // Generate VAPID keys
   const generateVAPID = async () => {
     await executeGenerateVAPID(() => platformSettingsService.generateVAPIDKeys(), {
@@ -417,6 +432,7 @@ export function usePlatformSettings() {
     testingEmail,
     testingSMS,
     testingPaximum,
+    resettingPaximum,
     generatingVAPID,
 
     // Actions
@@ -425,6 +441,7 @@ export function usePlatformSettings() {
     sendTestEmail,
     sendTestSMS,
     testPaximumConnection,
+    resetPaximumCredentials,
     generateVAPID,
     copyToClipboard,
     addBankAccount,
