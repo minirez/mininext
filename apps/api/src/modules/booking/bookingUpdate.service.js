@@ -36,6 +36,20 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
 
   const previousStatus = booking.status
 
+  // Block confirmation if prepayment is required but not yet received
+  if (status === 'confirmed' && booking.status === 'pending') {
+    const terms = booking.payment?.paymentTerms
+    if (terms?.prepaymentRequired && terms.prepaymentPercentage > 0) {
+      const minAmount = Math.round((booking.pricing.grandTotal * terms.prepaymentPercentage) / 100)
+      const paidAmount = booking.payment?.paidAmount || 0
+      if (paidAmount < minAmount) {
+        throw new BadRequestError(
+          `PREPAYMENT_REQUIRED: Minimum %${terms.prepaymentPercentage} ön ödeme gerekli (${minAmount} ${booking.pricing.currency}). Mevcut ödeme: ${paidAmount} ${booking.pricing.currency}`
+        )
+      }
+    }
+  }
+
   // Add modification record
   booking.modifications.push({
     modifiedAt: new Date(),
