@@ -19,8 +19,11 @@ COPY packages/validation/package.json ./packages/validation/
 # Force flat node_modules (no symlinks) to avoid ELOOP in Nitro output
 RUN echo "node-linker=hoisted" >> .npmrc
 
+# Narrow workspace to site-only packages (avoids admin's vue-i18n v9 / @intlify v10 conflict)
+RUN printf 'packages:\n  - "apps/site"\n  - "packages/*"\n' > pnpm-workspace.yaml
+
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # ============================================
 # Stage 2: Build
