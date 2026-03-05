@@ -22,8 +22,8 @@ const buildQuery = params => {
 
 const upload = (url, file, extra = {}) => {
   const formData = new FormData()
-  formData.append('file', file)
   Object.entries(extra).forEach(([k, v]) => v != null && formData.append(k, String(v)))
+  formData.append('file', file)
   return request('Upload failed', () =>
     apiClient.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
   )

@@ -1023,7 +1023,7 @@ import { useI18n } from 'vue-i18n'
 import LanguageInput from '@/components/common/LanguageInput.vue'
 import PaximumLocationPicker from './PaximumLocationPicker.vue'
 import ProductPicker from './ProductPicker.vue'
-import { getImageUrl as getCdnImageUrl, getFileUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl } from '@/utils/imageUrl'
 import websiteService from '@/services/websiteService'
 import hotelService from '@/services/hotelService'
 import tourService from '@/services/tourService'
@@ -1313,15 +1313,7 @@ const updateTourItems = items => {
   section.names = items.map(i => i.name || '').filter(Boolean)
 }
 
-// Helper functions
-const getImageUrl = photo => {
-  if (!photo) return ''
-  const link = typeof photo === 'string' ? photo : photo.link || photo.url
-  if (!link) return ''
-  if (link.startsWith('http')) return link
-  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
-  return getCdnImageUrl(link)
-}
+const getImageUrl = getStorefrontImageUrl
 
 const normalizeUploadedPhoto = data => {
   if (!data || typeof data !== 'object') return data

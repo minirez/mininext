@@ -3,8 +3,6 @@
  * Handles storefront paths (storefront/xxx) and upload paths (/uploads/xxx).
  */
 export function useImageUrl() {
-  const config = useRuntimeConfig()
-
   function imageUrl(path: string | { link?: string; url?: string } | null | undefined): string {
     if (!path) return ''
 

@@ -140,7 +140,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
-import { getImageUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl as getImageUrl } from '@/utils/imageUrl'
 
 const { t } = useI18n()
 const toast = useToast()

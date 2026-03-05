@@ -844,46 +844,43 @@ export const uploadImage = asyncHandler(async (req, res) => {
   const { uploadType = 'general', uploadIndex = '0', sectionType, sectionIndex } = req.body
   const normalized = normalizeStorefrontUploadType(uploadType)
 
-  // Optimize: resize + WebP conversion (before MD5 so dedupe uses optimized hash)
+  // 1. Optimize: resize + WebP conversion
   const optimized = await optimizeUpload(req.file.path, 'storefront')
-  req.file.filename = optimized.filename
-  req.file.path = optimized.path
 
-  const { filename, size } = req.file
-
+  // 2. Compute the canonical filename and destination.
+  //    Multer writes to a temp dir; we generate the real name from parsed body fields
+  //    and move the file into the partner's subdirectory.
   const subPath = getStorefrontUploadSubPath({
     uploadType: normalized,
     uploadIndex,
     sectionType,
     sectionIndex
   })
-  const currentRelativePath = `${subPath}/${filename}`
+  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+  const filename = `${normalized}-${uniqueSuffix}.webp`
+  const destDir = getStorefrontDiskPath(partnerId, subPath)
+  const destPath = path.join(destDir, filename)
 
-  // MD5 dedupe (post-upload): if an identical file already exists, delete the new one and reuse.
+  // 3. MD5 dedupe: check before moving so we can skip the copy entirely
   let md5 = null
   try {
-    md5 = await md5FileHex(req.file.path)
+    md5 = await md5FileHex(optimized.path)
   } catch {
     /* ignore */
   }
 
   if (md5) {
     const existingRelativePath = await getExistingStorefrontFileByMd5(partnerId, md5)
-    if (existingRelativePath && existingRelativePath !== currentRelativePath) {
-      try {
-        await fs.promises.unlink(req.file.path)
-      } catch {
-        /* ignore */
-      }
+    if (existingRelativePath) {
+      await fs.promises.unlink(optimized.path).catch(() => {})
 
       const existingFilename = path.basename(existingRelativePath)
       const url = getStorefrontUploadsUrlFromRelativePath(partnerId, existingRelativePath)
 
-      let existingSize = size
+      let existingSize = optimized.path ? 0 : 0
       try {
         const abs = path.join(getStorefrontDiskPath(partnerId, ''), existingRelativePath)
-        const stat = await fs.promises.stat(abs)
-        existingSize = stat.size
+        existingSize = (await fs.promises.stat(abs)).size
       } catch {
         /* ignore */
       }
@@ -903,8 +900,21 @@ export const uploadImage = asyncHandler(async (req, res) => {
         }
       })
     }
+  }
 
-    await setStorefrontFileMd5(partnerId, md5, currentRelativePath)
+  // 4. Move from temp to final destination
+  try {
+    await fs.promises.rename(optimized.path, destPath)
+  } catch {
+    await fs.promises.copyFile(optimized.path, destPath)
+    await fs.promises.unlink(optimized.path).catch(() => {})
+  }
+
+  const size = (await fs.promises.stat(destPath).catch(() => ({ size: 0 }))).size
+  const relativePath = `${subPath}/${filename}`
+
+  if (md5) {
+    await setStorefrontFileMd5(partnerId, md5, relativePath)
   }
 
   const fileUrl = getStorefrontFileUrl(partnerId, normalized, filename, uploadIndex, {

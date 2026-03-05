@@ -496,7 +496,7 @@
               :key="index"
               class="relative aspect-square rounded overflow-hidden bg-gray-100 dark:bg-slate-700"
             >
-              <img :src="img.newUrl ? getFileUrl(`/uploads/${img.newUrl}`) : img.url" class="w-full h-full object-cover" />
+              <img :src="img.newUrl ? getStorefrontImageUrl(img.newUrl) : img.url" class="w-full h-full object-cover" />
               <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-1 py-0.5 truncate">
                 {{ img.section }}
               </div>
@@ -570,7 +570,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/common/Modal.vue'
 import websiteService from '@/services/websiteService'
-import { getImageUrl as getCdnImageUrl, getFileUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl } from '@/utils/imageUrl'
 
 const props = defineProps({
   modelValue: {
@@ -676,18 +676,7 @@ const isValidJson = computed(() => {
   }
 })
 
-// Get image URL (from CDN or API server)
-const getImageUrl = (photo) => {
-  if (!photo) return ''
-  const link = typeof photo === 'string' ? photo : photo.link
-  if (!link) return ''
-  // Full external URLs pass through
-  if (link.startsWith('http://') || link.startsWith('https://')) return link
-  // Storefront uploads are served from API server's /uploads/ path
-  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
-  // Other images use the CDN
-  return getCdnImageUrl(link)
-}
+const getImageUrl = getStorefrontImageUrl
 
 // Get localized text from array
 const getLocalizedText = (arr, lang) => {

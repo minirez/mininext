@@ -351,7 +351,7 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ThemeContentEditor from './ThemeContentEditor.vue'
-import { getFileUrl } from '@/utils/imageUrl'
+import { getStorefrontImageUrl } from '@/utils/imageUrl'
 
 const { t } = useI18n()
 
@@ -391,17 +391,7 @@ const themePreviewImages = {
   bedbank: '/previews/hero-bedbank.webp'
 }
 
-// Get uploaded hero image for a theme if it exists
-const resolveStorefrontUploadUrl = photoOrLink => {
-  if (!photoOrLink) return null
-  const link =
-    typeof photoOrLink === 'string' ? photoOrLink : photoOrLink?.link || photoOrLink?.url || ''
-  if (!link) return null
-  if (link.startsWith('http://') || link.startsWith('https://')) return link
-  if (link.startsWith('storefront/')) return getFileUrl(`/uploads/${link}`)
-  if (link.startsWith('/uploads/')) return getFileUrl(link)
-  return link
-}
+const resolveStorefrontUploadUrl = getStorefrontImageUrl
 
 const getThemeHeroImage = themeId => {
   const storefront = props.storefront

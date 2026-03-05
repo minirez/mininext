@@ -291,32 +291,20 @@ const getPartnerDir = (partnerId, subPath = '') => {
 export const getStorefrontDiskPath = (partnerId, subPath = '') => getPartnerDir(partnerId, subPath)
 
 /**
- * Configure multer storage for storefront images
+ * Configure multer storage for storefront images.
+ * Uses a temp directory so we don't depend on req.body field ordering
+ * (multipart fields may arrive after the file). The uploadImage handler
+ * moves the file to its final location once all fields are parsed.
  */
+const tmpDir = path.join(uploadsDir, '.tmp')
+if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
+
 const storefrontStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const partnerId = req.partnerId || req.user?.accountId
-    if (!partnerId) {
-      return cb(new Error('Partner ID required for upload'))
-    }
-
-    const subPath = getStorefrontUploadSubPath({
-      uploadType: req.body?.uploadType,
-      uploadIndex: req.body?.uploadIndex,
-      sectionType: req.body?.sectionType,
-      sectionIndex: req.body?.sectionIndex
-    })
-
-    const destDir = getPartnerDir(partnerId, subPath)
-    cb(null, destDir)
-  },
-  filename: (req, file, cb) => {
-    // Generate unique filename (consistent with other upload helpers)
+  destination: (_req, _file, cb) => cb(null, tmpDir),
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
     const ext = path.extname(file.originalname)
-    const uploadType = req.body?.uploadType || 'general'
-
-    cb(null, `${uploadType}-${uniqueSuffix}${ext}`)
+    cb(null, `upload-${uniqueSuffix}${ext}`)
   }
 })
 
