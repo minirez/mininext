@@ -28,14 +28,22 @@
       <div
         v-show="openSections.includes(key)"
         class="px-5 pb-4 text-gray-700 leading-relaxed [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 [&_p]:mb-2 [&_strong]:font-semibold [&_br]:leading-loose"
-        v-html="ml(hotel.profile?.[key]?.content)"
+        v-html="sanitizeHtml(ml(hotel.profile?.[key]?.content))"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
+
 const { ml } = useMultiLang()
+
+function sanitizeHtml(html: string): string {
+  if (!html) return ''
+  if (import.meta.server) return html
+  return DOMPurify.sanitize(html)
+}
 
 defineProps<{
   hotel: any

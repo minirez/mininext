@@ -51,16 +51,19 @@
         <div class="lg:col-span-2 space-y-8">
           <!-- Description -->
           <div v-if="ml(hotel.description) || hotel.stars">
-            <p class="text-gray-700 leading-relaxed">
-              {{
-                ml(hotel.description) ||
-                $t('hotel.defaultDescription', {
-                  name: hotel.name,
-                  stars: hotel.stars || '',
-                  city: hotel.address?.city || ''
-                })
-              }}
-            </p>
+            <div
+              class="text-gray-700 leading-relaxed prose prose-sm max-w-none [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 [&_p]:mb-2 [&_strong]:font-semibold [&_br]:leading-loose"
+              v-html="
+                sanitizeHtml(
+                  ml(hotel.description) ||
+                    $t('hotel.defaultDescription', {
+                      name: hotel.name,
+                      stars: hotel.stars || '',
+                      city: hotel.address?.city || ''
+                    })
+                )
+              "
+            />
           </div>
 
           <!-- Profile sections -->
@@ -149,10 +152,18 @@
 </template>
 
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
+
 const route = useRoute()
 const slug = route.params.slug as string
 const { ml } = useMultiLang()
 const { t: $t } = useI18n()
+
+function sanitizeHtml(html: string): string {
+  if (!html) return ''
+  if (import.meta.server) return html
+  return DOMPurify.sanitize(html)
+}
 const partner = usePartnerStore()
 const searchStore = useSearchStore()
 const mapboxToken = useRuntimeConfig().public.mapboxToken

@@ -113,7 +113,7 @@
               <div
                 class="room-desc max-w-none [&_p]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_br]:content-[''] [&_br]:block [&_br]:mb-1"
                 :class="{ 'line-clamp-3': !expandedDescs[room.roomType.code] }"
-                v-html="mlText(room.roomType.description)"
+                v-html="sanitizeHtml(mlText(room.roomType.description))"
               />
               <button
                 v-if="isDescLong(room.roomType)"
@@ -546,6 +546,8 @@
 </template>
 
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
+
 const props = defineProps<{ hotelCode: string }>()
 
 const { t: $t, locale } = useI18n()
@@ -632,6 +634,12 @@ function formatDate(dateStr: string): string {
   } catch {
     return dateStr
   }
+}
+
+function sanitizeHtml(html: string): string {
+  if (!html) return ''
+  if (import.meta.server) return html
+  return DOMPurify.sanitize(html)
 }
 
 function mlText(val: any): string {
