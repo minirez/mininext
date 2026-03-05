@@ -38,11 +38,14 @@
                   'sh-has-mega': hasSubItems(tab),
                   current: isTabActive(tab)
                 }"
+                @mouseenter="onTabEnter(tab, tabIndex)"
+                @mouseleave="onTabLeave(tab)"
               >
                 <NuxtLink
                   :to="tab.link || '#'"
                   class="sh-nav-link"
                   :class="isTabActive(tab) ? 'text-site-primary' : ''"
+                  @click="onTabLinkClick($event, tab, tabIndex)"
                 >
                   <span class="mr-2.5">{{ ml(tab.title) }}</span>
                   <svg
@@ -56,7 +59,13 @@
                 </NuxtLink>
 
                 <!-- Mega menu (tabs with subitems) -->
-                <div v-if="hasSubItems(tab)" class="sh-mega">
+                <div
+                  v-if="hasSubItems(tab)"
+                  class="sh-mega"
+                  :style="getMenuStyle(tabIndex)"
+                  @mouseenter="cancelCloseMenu"
+                  @mouseleave="scheduleCloseMenu"
+                >
                   <div class="flex gap-x-10 gap-y-2.5 pb-8 flex-wrap">
                     <button
                       v-for="(item, itemIndex) in tab.items"
@@ -131,7 +140,13 @@
                 </div>
 
                 <!-- Regular dropdown (items without subitems) -->
-                <ul v-else-if="tab.items?.length && !hasSubItems(tab)" class="sh-dropdown">
+                <ul
+                  v-else-if="tab.items?.length && !hasSubItems(tab)"
+                  class="sh-dropdown"
+                  :style="getMenuStyle(tabIndex)"
+                  @mouseenter="cancelCloseMenu"
+                  @mouseleave="scheduleCloseMenu"
+                >
                   <li
                     v-for="(item, itemIndex) in tab.items"
                     :key="itemIndex"
@@ -312,7 +327,13 @@ const headerTabs = computed(() => {
 })
 
 // Nested tab state for mega menus
+const openTab = ref<number | null>(null)
 const nestedMenus = reactive<Record<number, number>>({})
+let closeMenuTimer: ReturnType<typeof setTimeout> | undefined
+
+function hasItems(tab: any): boolean {
+  return Array.isArray(tab?.items) && tab.items.length > 0
+}
 
 function getActiveNested(tabIndex: number): number {
   return nestedMenus[tabIndex] ?? 0
@@ -320,6 +341,64 @@ function getActiveNested(tabIndex: number): number {
 
 function setActiveNested(tabIndex: number, itemIndex: number) {
   nestedMenus[tabIndex] = itemIndex
+}
+
+function onTabEnter(tab: any, tabIndex: number) {
+  cancelCloseMenu()
+  if (!hasItems(tab)) return
+  openTab.value = tabIndex
+  if (nestedMenus[tabIndex] === undefined) {
+    nestedMenus[tabIndex] = 0
+  }
+}
+
+function onTabLeave(tab: any) {
+  if (!hasItems(tab)) return
+  scheduleCloseMenu()
+}
+
+function onTabLinkClick(event: MouseEvent, tab: any, tabIndex: number) {
+  if (!hasItems(tab)) return
+  event.preventDefault()
+  cancelCloseMenu()
+  if (openTab.value === tabIndex) {
+    openTab.value = null
+    return
+  }
+  openTab.value = tabIndex
+  if (nestedMenus[tabIndex] === undefined) {
+    nestedMenus[tabIndex] = 0
+  }
+}
+
+function scheduleCloseMenu() {
+  cancelCloseMenu()
+  closeMenuTimer = setTimeout(() => {
+    openTab.value = null
+  }, 140)
+}
+
+function cancelCloseMenu() {
+  if (closeMenuTimer) {
+    clearTimeout(closeMenuTimer)
+    closeMenuTimer = undefined
+  }
+}
+
+function getMenuStyle(tabIndex: number) {
+  const isOpen = openTab.value === tabIndex
+  return {
+    opacity: isOpen ? '1' : '0',
+    pointerEvents: isOpen ? 'auto' : 'none',
+    visibility: isOpen ? 'visible' : 'hidden'
+  }
+}
+
+function handleDocumentClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  if (target.closest('.sh-nav-item')) return
+  openTab.value = null
 }
 
 function hasSubItems(tab: any): boolean {
@@ -352,12 +431,19 @@ onMounted(() => {
   if (parts.length >= 2) {
     adminPanelUrl.value = `https://app.${parts.slice(-2).join('.')}`
   }
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onUnmounted(() => {
+  cancelCloseMenu()
+  document.removeEventListener('click', handleDocumentClick)
 })
 
 watch(
   () => route.path,
   () => {
     ui.mobileMenuOpen = false
+    openTab.value = null
   }
 )
 </script>
