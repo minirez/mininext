@@ -4,7 +4,10 @@
     :class="headerClasses"
     :style="{ height: headerHeight }"
   >
-    <div class="w-full" :class="isWhiteHeader ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' : 'px-8 sm:px-5'">
+    <div
+      class="w-full"
+      :class="isWhiteHeader ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' : 'px-8 sm:px-5'"
+    >
       <div class="flex items-center justify-between flex-nowrap">
         <!-- Logo -->
         <div class="flex items-center shrink-0">
@@ -25,18 +28,20 @@
 
           <!-- Desktop Navigation -->
           <nav class="hidden xl:block">
-            <ul class="flex" :class="textColorClass">
+            <ul class="sh-nav flex" :class="textColorClass">
               <li
                 v-for="(tab, tabIndex) in headerTabs"
                 :key="tabIndex"
-                class="relative py-6"
-                :class="{ 'current': isTabActive(tab) }"
-                @mouseenter="openDropdown(tabIndex)"
-                @mouseleave="closeDropdown(tabIndex)"
+                class="sh-nav-item"
+                :class="{
+                  'sh-has-dropdown': tab.items?.length && !hasSubItems(tab),
+                  'sh-has-mega': hasSubItems(tab),
+                  current: isTabActive(tab)
+                }"
               >
                 <NuxtLink
                   :to="tab.link || '#'"
-                  class="flex items-center justify-between text-[15px] font-medium px-2.5 transition-all duration-200"
+                  class="sh-nav-link"
                   :class="isTabActive(tab) ? 'text-site-primary' : ''"
                 >
                   <span class="mr-2.5">{{ ml(tab.title) }}</span>
@@ -51,24 +56,17 @@
                 </NuxtLink>
 
                 <!-- Mega menu (tabs with subitems) -->
-                <div
-                  v-if="hasSubItems(tab)"
-                  class="absolute top-full left-0 bg-white p-8 rounded text-gray-900 w-[800px] transition-all duration-200"
-                  :style="{
-                    opacity: openTab === tabIndex ? '1' : '0',
-                    pointerEvents: openTab === tabIndex ? 'auto' : 'none',
-                    boxShadow: '0 10px 30px rgba(5,16,54,0.03)',
-                    zIndex: 9999
-                  }"
-                >
+                <div v-if="hasSubItems(tab)" class="sh-mega">
                   <div class="flex gap-x-10 gap-y-2.5 pb-8 flex-wrap">
                     <button
                       v-for="(item, itemIndex) in tab.items"
                       :key="itemIndex"
                       class="text-gray-500 font-medium text-[15px] pb-1 border-b-2 transition-colors"
-                      :class="getActiveNested(tabIndex) === itemIndex
-                        ? 'border-site-primary text-gray-900'
-                        : 'border-transparent hover:text-gray-700'"
+                      :class="
+                        getActiveNested(tabIndex) === itemIndex
+                          ? 'border-site-primary text-gray-900'
+                          : 'border-transparent hover:text-gray-700'
+                      "
                       @click="setActiveNested(tabIndex, itemIndex)"
                       @dblclick="item.link && navigateTo(item.link)"
                     >
@@ -85,7 +83,8 @@
                           </div>
                           <div class="space-y-1.5 text-[15px] pt-1.5">
                             <div
-                              v-for="(subItem, subIndex) in tab.items[getActiveNested(tabIndex)].subItems || []"
+                              v-for="(subItem, subIndex) in tab.items[getActiveNested(tabIndex)]
+                                .subItems || []"
                               :key="subIndex"
                               :class="isLinkActive(subItem.link) ? 'text-site-primary' : ''"
                             >
@@ -132,16 +131,7 @@
                 </div>
 
                 <!-- Regular dropdown (items without subitems) -->
-                <ul
-                  v-else-if="tab.items?.length && !hasSubItems(tab)"
-                  class="absolute top-full left-0 bg-white rounded text-gray-900 min-w-[240px] py-5 px-5 transition-all duration-200"
-                  :style="{
-                    opacity: openTab === tabIndex ? '1' : '0',
-                    pointerEvents: openTab === tabIndex ? 'auto' : 'none',
-                    boxShadow: '0 10px 60px rgba(5,16,54,0.05)',
-                    zIndex: 9999
-                  }"
-                >
+                <ul v-else-if="tab.items?.length && !hasSubItems(tab)" class="sh-dropdown">
                   <li
                     v-for="(item, itemIndex) in tab.items"
                     :key="itemIndex"
@@ -177,8 +167,18 @@
                 :class="cartButtonClass"
                 title="Shopping Cart"
               >
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-5.98.572m5.98-.572h9m-9 0a3 3 0 01-5.98.572M17.25 14.25a3 3 0 005.98.572m-5.98-.572h-9m9 0a3 3 0 015.98.572M3.75 4.863l.75 9.75a1.5 1.5 0 001.5 1.387h9a1.5 1.5 0 001.5-1.387l.75-9.75" />
+                <svg
+                  class="w-[18px] h-[18px]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-5.98.572m5.98-.572h9m-9 0a3 3 0 01-5.98.572M17.25 14.25a3 3 0 005.98.572m-5.98-.572h-9m9 0a3 3 0 015.98.572M3.75 4.863l.75 9.75a1.5 1.5 0 001.5 1.387h9a1.5 1.5 0 001.5-1.387l.75-9.75"
+                  />
                 </svg>
               </button>
             </div>
@@ -204,8 +204,18 @@
               @click="ui.toggleMobileMenu()"
               :aria-label="$t('common.menu')"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+                />
               </svg>
             </button>
           </div>
@@ -255,12 +265,16 @@ const headerClasses = computed(() => {
     if (scrolled.value) {
       return 'bg-white shadow-[0_10px_30px_rgba(5,16,54,0.03)]'
     }
-    return isTransparent.value ? 'bg-transparent' : 'bg-white shadow-[0_10px_30px_rgba(5,16,54,0.03)]'
+    return isTransparent.value
+      ? 'bg-transparent'
+      : 'bg-white shadow-[0_10px_30px_rgba(5,16,54,0.03)]'
   }
   if (scrolled.value) {
     return 'bg-gray-800 shadow-[rgba(149,157,165,0.2)_0px_8px_24px]'
   }
-  return isTransparent.value ? 'bg-transparent' : 'bg-gray-800 shadow-[rgba(149,157,165,0.2)_0px_8px_24px]'
+  return isTransparent.value
+    ? 'bg-transparent'
+    : 'bg-gray-800 shadow-[rgba(149,157,165,0.2)_0px_8px_24px]'
 })
 
 const textColorClass = computed(() => {
@@ -297,23 +311,8 @@ const headerTabs = computed(() => {
   return storefront.header?.tabs || []
 })
 
-// Dropdown state — fully JS-driven via inline :style to bypass all CSS specificity issues
-const openTab = ref<number | null>(null)
+// Nested tab state for mega menus
 const nestedMenus = reactive<Record<number, number>>({})
-let closeTimer: ReturnType<typeof setTimeout> | undefined
-
-function openDropdown(tabIndex: number) {
-  if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined }
-  const tab = headerTabs.value[tabIndex]
-  if (tab?.items?.length) {
-    openTab.value = tabIndex
-    if (nestedMenus[tabIndex] === undefined) nestedMenus[tabIndex] = 0
-  }
-}
-
-function closeDropdown(_tabIndex: number) {
-  closeTimer = setTimeout(() => { openTab.value = null }, 150)
-}
 
 function getActiveNested(tabIndex: number): number {
   return nestedMenus[tabIndex] ?? 0
@@ -355,14 +354,90 @@ onMounted(() => {
   }
 })
 
-watch(() => route.path, () => {
-  ui.mobileMenuOpen = false
-  openTab.value = null
-})
+watch(
+  () => route.path,
+  () => {
+    ui.mobileMenuOpen = false
+  }
+)
 </script>
 
 <style>
+/*
+  Header dropdown styles — intentionally unscoped and outside Tailwind layers
+  so they cannot be overridden by Tailwind v4 cascade layers.
+  Uses the same :hover pattern proven in site3's header.scss.
+*/
+
+.sh-nav-item {
+  position: relative;
+  padding: 25px 0;
+}
+
+.sh-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 10px;
+  transition: all 0.2s ease;
+}
+
+/* Dropdown base: hidden by default */
+.sh-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border-radius: 4px;
+  color: #111827;
+  min-width: 240px;
+  padding: 20px;
+  box-shadow: 0px 10px 60px 0px rgba(5, 16, 54, 0.05);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 9999;
+}
+
+/* Mega menu base: hidden by default */
+.sh-mega {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  padding: 30px;
+  border-radius: 4px;
+  color: #111827;
+  width: 800px;
+  box-shadow: 0px 10px 30px 0px rgba(5, 16, 54, 0.03);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 9999;
+}
+
+/* Show dropdown on hover */
+.sh-has-dropdown:hover > .sh-dropdown {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Show mega menu on hover */
+.sh-has-mega:hover > .sh-mega {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Active tab highlight */
+.sh-nav-item.current > .sh-nav-link {
+  color: rgb(var(--site-primary));
+}
+
 @media (max-width: 767px) {
-  .site-header-root { height: 80px !important; }
+  .site-header-root {
+    height: 80px !important;
+  }
 }
 </style>
