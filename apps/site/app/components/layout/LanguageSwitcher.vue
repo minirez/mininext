@@ -47,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+defineProps<{ textClass?: string }>()
 const { locale, locales, setLocale } = useI18n()
 const { t: $t } = useI18n()
 

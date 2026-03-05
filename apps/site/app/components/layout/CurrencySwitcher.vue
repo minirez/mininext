@@ -50,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+defineProps<{ textClass?: string }>()
 const searchStore = useSearchStore()
 const open = ref(false)
 const dropdownRef = ref<HTMLElement>()

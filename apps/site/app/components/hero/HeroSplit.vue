@@ -1,19 +1,19 @@
 <template>
-  <section class="relative overflow-hidden min-h-[85vh] flex items-center">
-    <!-- SVG pattern background + theme color tint -->
-    <div class="absolute inset-0 -z-10">
-      <div class="absolute inset-0 bg-gray-50" />
-      <div
+  <section class="masthead-type-5 relative overflow-hidden min-h-[85vh] flex items-center">
+    <!-- Background: SVG pattern + theme color overlay -->
+    <div class="absolute inset-0 -z-10" style="position: absolute">
+      <img alt="" src="/img/masthead/5/bg.svg" class="w-full h-full object-cover" />
+      <span
         v-if="themeColor"
         class="absolute inset-0 pointer-events-none"
         :style="{ backgroundColor: themeColor, opacity: 0.22, mixBlendMode: 'multiply' }"
       />
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-24 lg:py-0">
-      <div class="grid lg:grid-cols-12 gap-8 items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div class="flex flex-wrap items-center">
         <!-- Left: Content (col-xl-9 equivalent) -->
-        <div class="lg:col-span-7 xl:col-span-8">
+        <div class="w-full xl:w-3/4 pr-0 xl:pr-8">
           <h1
             v-if="heroTitle"
             class="text-[60px] lg:text-[40px] md:text-[30px] font-semibold leading-tight"
@@ -21,13 +21,24 @@
             <template v-for="(line, idx) in titleLines" :key="idx">
               <span :class="idx === 1 ? 'text-site-primary relative' : ''">
                 {{ line }}
-                <span
-                  v-if="idx === 1"
-                  class="block h-4 w-full mt-1"
-                  :style="themeColor
-                    ? { backgroundColor: themeColor, maskImage: 'url(/img/general/line.png)', WebkitMaskImage: 'url(/img/general/line.png)', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', maskSize: 'contain', WebkitMaskSize: 'contain', maskPosition: 'center', WebkitMaskPosition: 'center' }
-                    : { background: 'currentColor', maskImage: 'url(/img/general/line.png)', WebkitMaskImage: 'url(/img/general/line.png)', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', maskSize: 'contain', WebkitMaskSize: 'contain', maskPosition: 'center', WebkitMaskPosition: 'center' }"
-                />
+                <span v-if="idx === 1" class="-line block">
+                  <span
+                    v-if="themeColor"
+                    class="block w-full h-4"
+                    :style="{
+                      backgroundColor: themeColor,
+                      maskImage: 'url(/img/general/line.png)',
+                      WebkitMaskImage: 'url(/img/general/line.png)',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskSize: 'contain',
+                      WebkitMaskSize: 'contain',
+                      maskPosition: 'center',
+                      WebkitMaskPosition: 'center'
+                    }"
+                  />
+                  <img v-else src="/img/general/line.png" alt="" class="w-full" />
+                </span>
               </span>
             </template>
           </h1>
@@ -41,9 +52,9 @@
           </div>
         </div>
 
-        <!-- Right: Hero image -->
-        <div class="lg:col-span-5 xl:col-span-4 hidden lg:block">
-          <div class="rounded-2xl overflow-hidden shadow-xl">
+        <!-- Right: Hero image (masthead__image) -->
+        <div class="hidden xl:block xl:w-1/4">
+          <div class="masthead-image rounded-2xl overflow-hidden">
             <img
               v-if="heroImage"
               :src="heroImage"
@@ -86,3 +97,22 @@ const themeColor = computed(() => {
   return c && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c) ? c : null
 })
 </script>
+
+<style scoped>
+.masthead-type-5 {
+  padding-top: 120px;
+  padding-bottom: 60px;
+}
+
+.masthead-image {
+  position: relative;
+  min-height: 400px;
+}
+
+@media (max-width: 1199px) {
+  .masthead-type-5 {
+    padding-top: 140px;
+    padding-bottom: 40px;
+  }
+}
+</style>

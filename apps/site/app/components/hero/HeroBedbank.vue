@@ -1,7 +1,7 @@
 <template>
-  <section class="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
-    <!-- Background image with fade-in -->
-    <div class="absolute inset-0 -z-10" :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''">
+  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <!-- Background image with dark overlay -->
+    <div class="absolute inset-0 -z-10 masthead-bg-overlay">
       <img
         v-if="heroImage"
         :src="heroImage"
@@ -11,29 +11,21 @@
         @load="imageLoaded = true"
       />
     </div>
+    <div class="absolute inset-0 bg-black/40" />
 
-    <!-- Dark overlay when backdropFilter is active -->
-    <div v-if="hasBackdropFilter" class="absolute inset-0 bg-black/40" />
-
-    <!-- Content (smaller text than Hero1) -->
+    <!-- Content - same layout as HeroDefault but smaller text -->
     <div class="relative z-10 text-center max-w-4xl mx-auto px-4">
       <h1
         v-if="heroTitle"
-        class="text-[40px] lg:text-[30px] md:text-[24px] text-white font-semibold leading-tight"
-        :style="noBackdrop ? textShadowStyle : undefined"
+        class="text-[40px] lg:text-[30px] sm:text-[24px] text-white font-semibold leading-tight"
       >
         {{ heroTitle }}
       </h1>
-      <p
-        v-if="heroDescription"
-        class="text-white mt-1.5"
-        :style="noBackdrop ? descShadowStyle : undefined"
-      >
+      <p v-if="heroDescription" class="text-white mt-5">
         {{ heroDescription }}
       </p>
-
-      <div v-if="hasSearchOptions" class="mt-12">
-        <SearchBar class="max-w-4xl mx-auto" />
+      <div v-if="hasSearchOptions" class="mt-8">
+        <SearchBar default-tab="hotels" />
       </div>
     </div>
   </section>
@@ -55,14 +47,12 @@ const heroImage = computed(() => {
 const heroTitle = computed(() => ml(storefront.hero?.title))
 const heroDescription = computed(() => ml(storefront.hero?.description))
 const hasSearchOptions = computed(() => storefront.hero?.searchOptions?.length)
-
-const hasBackdropFilter = computed(() => storefront.hero?.backdropFilter !== false)
-const noBackdrop = computed(() => !hasBackdropFilter.value)
-
-const textShadowStyle = {
-  textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)',
-}
-const descShadowStyle = {
-  textShadow: '0 2px 6px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3)',
-}
 </script>
+
+<style scoped>
+.masthead-bg-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+</style>
