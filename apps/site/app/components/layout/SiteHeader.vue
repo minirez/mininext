@@ -29,14 +29,13 @@
               <li
                 v-for="(tab, tabIndex) in headerTabs"
                 :key="tabIndex"
-                class="relative py-6"
+                class="header-nav-item relative py-6"
                 :class="{
                   'menu-item-has-children': tab.items?.length,
                   '-has-mega-menu': hasSubItems(tab),
                   'current': isTabActive(tab)
                 }"
-                @mouseenter="onTabHover(tab, tabIndex)"
-                @mouseleave="onTabLeave"
+                @mouseenter="onTabEnter(tabIndex)"
               >
                 <NuxtLink
                   :to="tab.link || '#'"
@@ -54,40 +53,37 @@
                   </svg>
                 </NuxtLink>
 
-                <!-- Mega menu (tabs with subitems) -->
+                <!-- Mega menu (tabs with subitems) — visibility controlled by CSS :hover -->
                 <div
                   v-if="hasSubItems(tab)"
-                  class="mega absolute top-full left-0 bg-white p-8 rounded text-gray-900 w-[800px] shadow-[0_10px_30px_rgba(5,16,54,0.03)] transition-all duration-200"
-                  :class="hoveredTab === tabIndex ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+                  class="mega absolute top-full left-0 bg-white p-8 rounded text-gray-900 w-[800px] shadow-[0_10px_30px_rgba(5,16,54,0.03)] transition-all duration-200 opacity-0 pointer-events-none"
                 >
                   <div class="tabs">
-                    <!-- Tab controls -->
                     <div class="flex gap-x-10 gap-y-2.5 pb-8 flex-wrap">
                       <button
                         v-for="(item, itemIndex) in tab.items"
                         :key="itemIndex"
                         class="text-gray-500 font-medium text-[15px] pb-1 border-b-2 transition-colors"
-                        :class="activeNestedMenu === itemIndex
+                        :class="activeNestedMenus[tabIndex] === itemIndex
                           ? 'border-site-primary text-gray-900'
                           : 'border-transparent hover:text-gray-700'"
-                        @click="activeNestedMenu = itemIndex"
+                        @click="activeNestedMenus[tabIndex] = itemIndex"
                         @dblclick="item.link && navigateTo(item.link)"
                       >
                         {{ ml(item.title) }}
                       </button>
                     </div>
 
-                    <!-- Tab content -->
-                    <div v-if="tab.items?.[activeNestedMenu]">
+                    <div v-if="tab.items?.[activeNestedMenus[tabIndex] ?? 0]">
                       <ul class="flex justify-between">
                         <li class="mega-grid">
                           <div>
                             <div class="text-[15px] font-medium">
-                              {{ ml(tab.items[activeNestedMenu].title) }}
+                              {{ ml(tab.items[activeNestedMenus[tabIndex] ?? 0].title) }}
                             </div>
                             <div class="space-y-1.5 text-[15px] pt-1.5">
                               <div
-                                v-for="(subItem, subIndex) in tab.items[activeNestedMenu].subItems || []"
+                                v-for="(subItem, subIndex) in tab.items[activeNestedMenus[tabIndex] ?? 0].subItems || []"
                                 :key="subIndex"
                                 :class="isLinkActive(subItem.link) ? 'text-site-primary' : ''"
                               >
@@ -101,7 +97,6 @@
                             </div>
                           </div>
                         </li>
-                        <!-- Image section -->
                         <li class="relative w-[270px] shrink-0 flex">
                           <img
                             v-if="tab.photo?.link"
@@ -119,11 +114,11 @@
                           </div>
                           <div class="absolute inset-0 px-8 py-6">
                             <div class="text-[22px] font-medium leading-snug text-white">
-                              {{ ml(tab.items?.[activeNestedMenu]?.title) }}
+                              {{ ml(tab.items?.[activeNestedMenus[tabIndex] ?? 0]?.title) }}
                             </div>
                             <NuxtLink
-                              v-if="tab.items?.[activeNestedMenu]?.link"
-                              :to="tab.items[activeNestedMenu].link"
+                              v-if="tab.items?.[activeNestedMenus[tabIndex] ?? 0]?.link"
+                              :to="tab.items[activeNestedMenus[tabIndex] ?? 0].link"
                               class="inline-flex items-center uppercase h-[50px] px-8 bg-white text-gray-900 mt-5 font-medium rounded hover:bg-site-primary hover:text-white transition-colors"
                             >
                               View All
@@ -135,11 +130,10 @@
                   </div>
                 </div>
 
-                <!-- Regular dropdown (items without subitems) -->
+                <!-- Regular dropdown (items without subitems) — visibility controlled by CSS :hover -->
                 <ul
                   v-else-if="tab.items?.length && !hasSubItems(tab)"
-                  class="subnav absolute top-full left-0 bg-white rounded text-gray-900 min-w-[240px] py-5 px-5 shadow-[0_10px_60px_rgba(5,16,54,0.05)] transition-all duration-200"
-                  :class="hoveredTab === tabIndex ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+                  class="subnav absolute top-full left-0 bg-white rounded text-gray-900 min-w-[240px] py-5 px-5 shadow-[0_10px_60px_rgba(5,16,54,0.05)] transition-all duration-200 opacity-0 pointer-events-none"
                 >
                   <li
                     v-for="(item, itemIndex) in tab.items"
@@ -296,23 +290,13 @@ const headerTabs = computed(() => {
   return storefront.header?.tabs || []
 })
 
-// Mega menu state
-const hoveredTab = ref<number | null>(null)
-const activeNestedMenu = ref(0)
-let hoverTimeout: ReturnType<typeof setTimeout> | null = null
+// Per-tab active nested menu index (reset to 0 when hovering a new tab)
+const activeNestedMenus = reactive<Record<number, number>>({})
 
-function onTabHover(tab: any, tabIndex: number) {
-  if (hoverTimeout) clearTimeout(hoverTimeout)
-  if (tab.items?.length) {
-    hoveredTab.value = tabIndex
-    activeNestedMenu.value = 0
+function onTabEnter(tabIndex: number) {
+  if (activeNestedMenus[tabIndex] === undefined) {
+    activeNestedMenus[tabIndex] = 0
   }
-}
-
-function onTabLeave() {
-  hoverTimeout = setTimeout(() => {
-    hoveredTab.value = null
-  }, 150)
 }
 
 function hasSubItems(tab: any): boolean {
@@ -349,12 +333,33 @@ onMounted(() => {
 
 watch(() => route.path, () => {
   ui.mobileMenuOpen = false
-  hoveredTab.value = null
 })
 </script>
 
 <style scoped>
 @media (max-width: 767px) {
   header { height: 80px !important; }
+}
+
+/* CSS-driven dropdown visibility — mirrors site3's header.scss exactly */
+.header-nav-item.menu-item-has-children:hover > .subnav {
+  opacity: 1;
+  pointer-events: auto;
+}
+.header-nav-item.-has-mega-menu:hover > .mega {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Small triangle arrow on regular subnav */
+.header-nav-item > .subnav::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 20px;
+  width: 10px;
+  height: 10px;
+  background-color: white;
+  transform: rotate(45deg);
 }
 </style>
