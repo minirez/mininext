@@ -53,6 +53,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     apiBaseUrl: 'http://localhost:4000',
+    localhostTenantDomain: process.env.NUXT_LOCALHOST_TENANT_DOMAIN || 'olimpos.codemin.com',
     public: {
       apiBaseUrl: '/api',
       mapboxToken: '',

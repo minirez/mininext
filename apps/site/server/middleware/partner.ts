@@ -4,6 +4,7 @@
  * Detects /draftlive routes and fetches draft data instead of live.
  */
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const path = getRequestURL(event).pathname
   if (path.startsWith('/_nuxt/') || path.startsWith('/__nuxt') || path.startsWith('/api/') || path.includes('.')) {
     return
@@ -15,6 +16,12 @@ export default defineEventHandler(async (event) => {
   let domain = getRequestHost(event, { xForwardedHost: true })
   if (domain.includes(':')) {
     domain = domain.split(':')[0]
+  }
+  domain = domain.toLowerCase()
+
+  // Local debugging shortcut: map localhost traffic to a real tenant domain.
+  if (domain === 'localhost' || domain === '127.0.0.1' || domain === '0.0.0.0') {
+    domain = String(config.localhostTenantDomain || 'olimpos.codemin.com')
   }
 
   try {
