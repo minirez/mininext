@@ -75,8 +75,8 @@ const lightboxImages = ref([])
 const lightboxIndex = ref(0)
 const lightboxRoomName = ref('')
 
-function selectOption(roomResult, option) {
-  widgetStore.selectRoom(roomResult, option)
+function selectOption(roomResult, option, isNonRefundable = false) {
+  widgetStore.selectRoom(roomResult, option, isNonRefundable)
 }
 
 // Get localized value from a multilingual object
@@ -609,7 +609,7 @@ function prevImage() {
                   <p class="meal-name">{{ getMealPlanName(option.mealPlan) }}</p>
                   <p class="meal-desc">{{ getMealPlanDesc(option) }}</p>
                 </div>
-                <div class="meal-price">
+                <div v-if="!option.nonRefundable" class="meal-price">
                   <span
                     v-if="option.pricing.totalDiscount > 0 && widgetConfig?.showOriginalPrice"
                     class="price-original"
@@ -625,44 +625,154 @@ function prevImage() {
                 </div>
               </div>
 
-              <!-- Footer: Tags + Select Button -->
-              <div class="meal-footer">
-                <div class="meal-tags">
-                  <!-- Cancellation Link -->
-                  <span
-                    v-if="hasCancellationPolicy"
-                    class="cancellation-link"
-                    :class="{ 'cancellation-link--nonrefundable': !hasFreeCancellation }"
-                    @click.stop="openCancellationModal()"
+              <!-- Tags (Cancellation + Campaigns) -->
+              <div class="meal-tags" style="margin-top: 6px">
+                <!-- Cancellation Link -->
+                <span
+                  v-if="hasCancellationPolicy"
+                  class="cancellation-link"
+                  :class="{ 'cancellation-link--nonrefundable': !hasFreeCancellation }"
+                  @click.stop="openCancellationModal()"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  {{ t('cancellation.title') }}
+                </span>
+
+                <!-- Campaign Badge -->
+                <span
+                  v-for="campaign in option.campaigns?.length && widgetConfig?.showCampaigns
+                    ? option.campaigns
+                    : []"
+                  :key="campaign.code"
+                  class="campaign-badge-v2"
+                >
+                  {{ campaign.discountText || campaign.name }}
+                </span>
+              </div>
+
+              <!-- Non-refundable: Show two rate rows -->
+              <div v-if="option.nonRefundable" class="rate-options">
+                <!-- Refundable rate -->
+                <div class="rate-row">
+                  <div class="rate-row-left">
+                    <span class="rate-badge rate-badge--refundable">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      {{ t('results.freeCancellation') }}
+                    </span>
+                  </div>
+                  <div class="rate-row-right">
+                    <span class="rate-price">{{ formatCurrency(option.pricing.finalTotal) }}</span>
+                    <button
+                      class="meal-select-btn"
+                      @click="selectOption(roomResult, option, false)"
+                      type="button"
                     >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    {{ t('cancellation.title') }}
-                  </span>
-
-                  <!-- Campaign Badge -->
-                  <span
-                    v-for="campaign in option.campaigns?.length && widgetConfig?.showCampaigns
-                      ? option.campaigns
-                      : []"
-                    :key="campaign.code"
-                    class="campaign-badge-v2"
-                  >
-                    {{ campaign.discountText || campaign.name }}
-                  </span>
+                      {{ t('results.select') }}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
+                <!-- Non-refundable rate -->
+                <div class="rate-row rate-row--nr">
+                  <div class="rate-row-left">
+                    <span class="rate-badge rate-badge--nonrefundable">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                      {{ t('results.nonRefundable') }}
+                    </span>
+                    <span class="rate-discount-badge">
+                      {{
+                        t('results.nonRefundableDiscount', {
+                          percent: option.nonRefundable.discountPercent
+                        })
+                      }}
+                    </span>
+                  </div>
+                  <div class="rate-row-right">
+                    <div class="rate-price-group">
+                      <span class="price-original">{{
+                        formatCurrency(option.pricing.finalTotal)
+                      }}</span>
+                      <span class="rate-price rate-price--nr">{{
+                        formatCurrency(option.nonRefundable.finalTotal)
+                      }}</span>
+                    </div>
+                    <button
+                      class="meal-select-btn"
+                      @click="selectOption(roomResult, option, true)"
+                      type="button"
+                    >
+                      {{ t('results.select') }}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
+              <!-- Normal footer (no non-refundable) -->
+              <div v-else class="meal-footer">
+                <div></div>
                 <!-- Select Button -->
                 <button
                   class="meal-select-btn"

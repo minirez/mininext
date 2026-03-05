@@ -366,9 +366,24 @@ export const useWidgetStore = defineStore('widget', () => {
     }
   }
 
-  function selectRoom(roomResult, option) {
+  function selectRoom(roomResult, option, isNonRefundable = false) {
     selectedRoom.value = roomResult
-    selectedOption.value = option
+    // When non-refundable is selected, override the pricing in selectedOption
+    if (isNonRefundable && option.nonRefundable) {
+      selectedOption.value = {
+        ...option,
+        pricing: {
+          ...option.pricing,
+          originalTotal: option.pricing.finalTotal,
+          totalDiscount: option.pricing.finalTotal - option.nonRefundable.finalTotal,
+          finalTotal: option.nonRefundable.finalTotal,
+          avgPerNight: option.nonRefundable.avgPerNight
+        },
+        isNonRefundable: true
+      }
+    } else {
+      selectedOption.value = option
+    }
 
     // Initialize booking data with room selection
     bookingData.value.rooms = [
@@ -377,7 +392,8 @@ export const useWidgetStore = defineStore('widget', () => {
         mealPlanCode: option.mealPlan.code,
         adults: searchParams.value.adults,
         children: searchParams.value.children,
-        guests: []
+        guests: [],
+        ...(isNonRefundable && { nonRefundable: true })
       }
     ]
 

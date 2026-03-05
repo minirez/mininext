@@ -187,7 +187,7 @@ export const searchAvailability = asyncHandler(async (req, res) => {
         })
 
         if (priceResult.availability?.isAvailable) {
-          roomResult.options.push({
+          const option = {
             mealPlan: {
               code: mealPlan.code,
               name: mealPlan.name
@@ -205,7 +205,19 @@ export const searchAvailability = asyncHandler(async (req, res) => {
               discountText: c.discountText
             })),
             nights
-          })
+          }
+
+          // Include non-refundable pricing if available
+          if (priceResult.nonRefundable?.enabled) {
+            option.nonRefundable = {
+              discountPercent: priceResult.nonRefundable.discountPercent,
+              finalTotal: priceResult.nonRefundable.pricing.b2cPrice,
+              avgPerNight: priceResult.nonRefundable.pricing.perNight.b2cPrice,
+              savings: priceResult.nonRefundable.savings.b2cTotal
+            }
+          }
+
+          roomResult.options.push(option)
         } else {
           // Include unavailable options with reason
           const issues = priceResult.availability?.issues || []

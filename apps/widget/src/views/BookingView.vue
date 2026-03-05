@@ -28,11 +28,7 @@ const guaranteeConfig = computed(() => widgetStore.cancellationGuaranteeConfig)
 const guaranteeAmount = computed(() => widgetStore.guaranteeAmount)
 const showGuarantee = computed(() => {
   // Non-refundable rate'lerde gösterme
-  const isNonRefundable =
-    selectedOption.value?.nonRefundable?.enabled &&
-    selectedOption.value?.pricing?.finalTotal ===
-      selectedOption.value?.nonRefundable?.pricing?.finalTotal
-  return guaranteeConfig.value?.enabled && !isNonRefundable
+  return guaranteeConfig.value?.enabled && !selectedOption.value?.isNonRefundable
 })
 
 // Banka havalesi: check-in'e releaseDays'den az kaldıysa gizle
@@ -304,8 +300,11 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div v-if="selectedOption?.campaigns?.length" class="summary-campaigns">
-        <span v-for="c in selectedOption.campaigns" :key="c.code" class="campaign-badge-v2">
+      <div class="summary-campaigns">
+        <span v-if="selectedOption?.isNonRefundable" class="rate-badge rate-badge--nonrefundable">
+          {{ t('results.nonRefundable') }}
+        </span>
+        <span v-for="c in selectedOption?.campaigns || []" :key="c.code" class="campaign-badge-v2">
           {{ c.discountText || c.name }}
         </span>
       </div>

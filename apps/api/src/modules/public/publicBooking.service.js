@@ -162,6 +162,25 @@ export const createBooking = asyncHandler(async (req, res) => {
       throw new BadRequestError(`ROOM_NOT_AVAILABLE: ${room.roomTypeCode}`)
     }
 
+    // Determine if non-refundable rate was selected
+    const isNonRefundable = room.nonRefundable === true && priceResult.nonRefundable?.enabled
+    const roomPricing = isNonRefundable
+      ? {
+          currency: market.currency,
+          originalTotal: priceResult.pricing.b2cOriginalTotal,
+          discount:
+            priceResult.pricing.b2cOriginalTotal - priceResult.nonRefundable.pricing.b2cPrice,
+          finalTotal: priceResult.nonRefundable.pricing.b2cPrice,
+          avgPerNight: priceResult.nonRefundable.pricing.perNight.b2cPrice
+        }
+      : {
+          currency: market.currency,
+          originalTotal: priceResult.pricing.b2cOriginalTotal,
+          discount: priceResult.pricing.b2cTotalDiscount,
+          finalTotal: priceResult.pricing.b2cPrice,
+          avgPerNight: priceResult.pricing.perNight.b2cPrice
+        }
+
     // Build room booking
     const roomBooking = {
       roomType: roomType._id,
@@ -171,33 +190,39 @@ export const createBooking = asyncHandler(async (req, res) => {
       mealPlanCode: mealPlan.code,
       mealPlanName: mealPlan.name,
       guests: room.guests || [],
-      pricing: {
-        currency: market.currency,
-        originalTotal: priceResult.pricing.b2cOriginalTotal,
-        discount: priceResult.pricing.b2cTotalDiscount,
-        finalTotal: priceResult.pricing.b2cPrice,
-        avgPerNight: priceResult.pricing.perNight.b2cPrice
-      },
+      pricing: roomPricing,
       dailyBreakdown: priceResult.dailyBreakdown,
       campaigns: priceResult.campaigns.applied,
       specialRequests: room.specialRequests
     }
 
     // Cancellation policy snapshot
-    const useHotelPolicy = market.cancellationPolicy?.useHotelPolicy !== false
-    const cpSource = useHotelPolicy
-      ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
-      : { fc: market.cancellationPolicy?.freeCancellation, rules: market.cancellationPolicy?.rules }
-    roomBooking.cancellationPolicy = {
-      isRefundable: cpSource.fc?.enabled || (cpSource.rules || []).some(r => r.refundPercent > 0),
-      freeCancellation: {
-        enabled: cpSource.fc?.enabled || false,
-        daysBeforeCheckIn: cpSource.fc?.daysBeforeCheckIn || 0
-      },
-      rules: (cpSource.rules || []).map(r => ({
-        daysBeforeCheckIn: r.daysBeforeCheckIn,
-        refundPercent: r.refundPercent
-      }))
+    if (isNonRefundable) {
+      roomBooking.cancellationPolicy = {
+        isRefundable: false,
+        freeCancellation: { enabled: false, daysBeforeCheckIn: 0 },
+        rules: [],
+        nonRefundableRate: true
+      }
+    } else {
+      const useHotelPolicy = market.cancellationPolicy?.useHotelPolicy !== false
+      const cpSource = useHotelPolicy
+        ? { fc: hotel.policies?.freeCancellation, rules: hotel.policies?.cancellationRules }
+        : {
+            fc: market.cancellationPolicy?.freeCancellation,
+            rules: market.cancellationPolicy?.rules
+          }
+      roomBooking.cancellationPolicy = {
+        isRefundable: cpSource.fc?.enabled || (cpSource.rules || []).some(r => r.refundPercent > 0),
+        freeCancellation: {
+          enabled: cpSource.fc?.enabled || false,
+          daysBeforeCheckIn: cpSource.fc?.daysBeforeCheckIn || 0
+        },
+        rules: (cpSource.rules || []).map(r => ({
+          daysBeforeCheckIn: r.daysBeforeCheckIn,
+          refundPercent: r.refundPercent
+        }))
+      }
     }
 
     processedRooms.push(roomBooking)
@@ -205,8 +230,8 @@ export const createBooking = asyncHandler(async (req, res) => {
     // Update totals
     totalAdults += adults
     totalChildren += children.length
-    subtotal += priceResult.pricing.b2cOriginalTotal
-    totalDiscount += priceResult.pricing.b2cTotalDiscount
+    subtotal += roomPricing.originalTotal
+    totalDiscount += roomPricing.discount
   }
 
   // Calculate final pricing

@@ -86,7 +86,9 @@ export default {
     refreshPrices: 'Refresh',
     select: 'Select',
     freeCancellation: 'Free cancellation',
-    nonRefundable: 'Non-refundable'
+    nonRefundable: 'Non-refundable',
+    nonRefundableDiscount: '{percent}% off',
+    perNight: '/ night'
   },
 
   cancellation: {

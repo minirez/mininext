@@ -87,7 +87,9 @@ export default {
     refreshPrices: 'Yenile',
     select: 'Seç',
     freeCancellation: 'Ücretsiz iptal',
-    nonRefundable: 'İade edilemez'
+    nonRefundable: 'İade edilemez',
+    nonRefundableDiscount: '%{percent} indirimli',
+    perNight: '/ gece'
   },
 
   cancellation: {
