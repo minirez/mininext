@@ -1,6 +1,6 @@
 <template>
   <header
-    class="fixed top-0 left-0 right-0 z-[1000] flex items-center transition-all duration-400"
+    class="site-header-root fixed top-0 left-0 right-0 z-[1000] flex items-center transition-all duration-400"
     :class="headerClasses"
     :style="{ height: headerHeight }"
   >
@@ -31,8 +31,8 @@
                 :key="tabIndex"
                 class="header-nav-item relative py-6"
                 :class="{
-                  'menu-item-has-children': tab.items?.length,
-                  '-has-mega-menu': hasSubItems(tab),
+                  'has-dropdown': tab.items?.length && !hasSubItems(tab),
+                  'has-mega': hasSubItems(tab),
                   'current': isTabActive(tab)
                 }"
                 @mouseenter="onTabEnter(tabIndex)"
@@ -336,17 +336,18 @@ watch(() => route.path, () => {
 })
 </script>
 
-<style scoped>
+<style>
 @media (max-width: 767px) {
-  header { height: 80px !important; }
+  .site-header-root { height: 80px !important; }
 }
 
-/* CSS-driven dropdown visibility — mirrors site3's header.scss exactly */
-.header-nav-item.menu-item-has-children:hover > .subnav {
-  opacity: 1;
-  pointer-events: auto;
+/* Dropdown visibility on hover — matches site3's header.scss pattern.
+   !important needed to override Tailwind's opacity-0 / pointer-events-none utilities. */
+.header-nav-item.has-dropdown:hover > .subnav {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
-.header-nav-item.-has-mega-menu:hover > .mega {
+.header-nav-item.has-mega:hover > .mega {
   opacity: 1 !important;
   pointer-events: auto !important;
 }
