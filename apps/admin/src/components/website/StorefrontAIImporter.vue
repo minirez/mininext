@@ -140,11 +140,11 @@
               <input type="checkbox" v-model="importSections.campaignSection" class="form-checkbox" />
               <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.campaigns') }}</span>
             </label>
-            <label v-if="extractedData.hotels?.ids?.length" class="flex items-center gap-2 text-sm">
+            <label v-if="extractedData.hotels?.ids?.length || extractedData.hotels?.names?.length || extractedData.hotels?.items?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.hotels" class="form-checkbox" />
               <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.hotels') }}</span>
             </label>
-            <label v-if="extractedData.tours?.ids?.length" class="flex items-center gap-2 text-sm">
+            <label v-if="extractedData.tours?.ids?.length || extractedData.tours?.names?.length || extractedData.tours?.items?.length" class="flex items-center gap-2 text-sm">
               <input type="checkbox" v-model="importSections.tours" class="form-checkbox" />
               <span class="text-gray-700 dark:text-slate-300">{{ $t('website.sections.tours') }}</span>
             </label>
@@ -805,11 +805,19 @@ const updateImageInData = (section, index, newImageData) => {
     link: newImageData.link
   }
 
+  const syncToTargetBlock = (key, updater) => {
+    const themeType = extractedData.value.homepageTheme?.type || 'home1'
+    const target = ['home1', 'home2', 'hotel'].includes(themeType) ? themeType : 'home1'
+    const block = extractedData.value.homepageTheme?.[target]
+    if (block?.[key]) updater(block[key])
+  }
+
   switch (section) {
     case 'hero':
       if (extractedData.value.hero) {
         extractedData.value.hero.photo = newPhoto
       }
+      syncToTargetBlock('hero', h => { h.photo = newPhoto })
       break
     case 'logo':
       if (extractedData.value.settings) {
@@ -828,11 +836,17 @@ const updateImageInData = (section, index, newImageData) => {
       if (extractedData.value.locations?.[index]) {
         extractedData.value.locations[index].photo = newPhoto
       }
+      syncToTargetBlock('locationSection', ls => {
+        if (ls.items?.[index]) ls.items[index].photo = newPhoto
+      })
       break
     case 'campaign':
       if (extractedData.value.campaignSection?.[index]) {
         extractedData.value.campaignSection[index].photo = newPhoto
       }
+      syncToTargetBlock('campaignSection', cs => {
+        if (cs?.[index]) cs[index].photo = newPhoto
+      })
       break
     case 'headerTab':
       if (extractedData.value.header?.tabs?.[index]) {

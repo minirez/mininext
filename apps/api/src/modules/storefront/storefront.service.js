@@ -810,13 +810,32 @@ export const downloadAndUploadImage = asyncHandler(async (req, res) => {
     })
   }
 
-  const filename = `${normalized}-${Date.now()}-${Math.round(Math.random() * 1e9)}${imageData.extension}`
-  const subPath = getStorefrontUploadSubPath({ uploadType: normalized, uploadIndex })
-  const uploadsDir = getStorefrontDiskPath(partnerId, subPath)
-  await fs.promises.writeFile(path.join(uploadsDir, filename), imageData.buffer)
+  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+  const tmpDir = path.join(path.dirname(getStorefrontDiskPath(partnerId, '')), '..', '.tmp')
+  await fs.promises.mkdir(tmpDir, { recursive: true })
+  const tmpFilename = `dl-${uniqueSuffix}${imageData.extension}`
+  const tmpPath = path.join(tmpDir, tmpFilename)
+  await fs.promises.writeFile(tmpPath, imageData.buffer)
 
+  const optimized = await optimizeUpload(tmpPath, 'storefront')
+
+  const filename = `${normalized}-${uniqueSuffix}.webp`
+  const subPath = getStorefrontUploadSubPath({ uploadType: normalized, uploadIndex })
+  const destDir = getStorefrontDiskPath(partnerId, subPath)
+  const destPath = path.join(destDir, filename)
+
+  try {
+    await fs.promises.rename(optimized.path, destPath)
+  } catch {
+    await fs.promises.copyFile(optimized.path, destPath)
+    await fs.promises.unlink(optimized.path).catch(() => {})
+  }
+
+  const size = (await fs.promises.stat(destPath).catch(() => ({ size: 0 }))).size
   const relativePath = `${subPath}/${filename}`
-  await setStorefrontFileMd5(partnerId, md5, relativePath)
+
+  const optimizedMd5 = await md5FileHex(destPath).catch(() => md5)
+  await setStorefrontFileMd5(partnerId, optimizedMd5, relativePath)
 
   const fileUrl = getStorefrontFileUrl(partnerId, normalized, filename, uploadIndex)
   res.json({
@@ -827,7 +846,7 @@ export const downloadAndUploadImage = asyncHandler(async (req, res) => {
       url: fileUrl,
       link: fileUrl,
       filename,
-      size: imageData.size,
+      size,
       uploadType: normalized,
       uploadIndex,
       originalUrl: imageUrl

@@ -182,7 +182,8 @@ const mapStorefrontToCurrentShape = source => {
       title: normalizeLangArray(src.hotels?.title),
       description: normalizeLangArray(src.hotels?.description),
       ids: Array.isArray(src.hotels?.ids) ? src.hotels.ids : [],
-      names: Array.isArray(src.hotels?.names) ? src.hotels.names : []
+      names: Array.isArray(src.hotels?.names) ? src.hotels.names : [],
+      items: Array.isArray(src.hotels?.items) ? src.hotels.items : []
     }
   }
 
@@ -191,7 +192,8 @@ const mapStorefrontToCurrentShape = source => {
       title: normalizeLangArray(src.tours?.title),
       description: normalizeLangArray(src.tours?.description),
       ids: Array.isArray(src.tours?.ids) ? src.tours.ids : [],
-      names: normalizeLangArray(src.tours?.names)
+      names: Array.isArray(src.tours?.names) ? src.tours.names : [],
+      items: Array.isArray(src.tours?.items) ? src.tours.items : []
     }
   }
 
@@ -443,6 +445,27 @@ const collectAllImages = (data, baseCdnUrl = 'https://images.minirez.com') => {
   // Theme-specific images
   const theme = data.homepageTheme
   if (theme) {
+    // Default theme blocks (home1/home2/hotel) - these mirror the root sections
+    // but may have been set independently; collect without duplicating root images.
+    const rootHeroLink = data.hero?.photo?.link
+    ;['home1', 'home2', 'hotel'].forEach(block => {
+      const b = theme[block]
+      if (!b || typeof b !== 'object') return
+      if (b.hero?.photo?.link && b.hero.photo.link !== rootHeroLink) {
+        addImage(b.hero.photo, 'hero')
+      }
+      if (b.locationSection?.items) {
+        b.locationSection.items.forEach((item, i) => {
+          if (item.photo?.link) addImage(item.photo, 'location', i)
+        })
+      }
+      if (Array.isArray(b.campaignSection)) {
+        b.campaignSection.forEach((c, i) => {
+          if (c.photo?.link) addImage(c.photo, 'campaign', i)
+        })
+      }
+    })
+
     // Tour theme
     if (theme.tour?.hero?.photo) addImage(theme.tour.hero.photo, 'tour-hero')
     if (theme.tour?.campaignSection?.campaign?.photo) {
@@ -625,8 +648,10 @@ export const migrateStorefrontData = async (jsonContent, options = {}) => {
     if (cleanedData.hero?.photo?.link) summary.sectionsFound.push('hero')
     if (cleanedData.locationSection?.items?.length) summary.sectionsFound.push('locations')
     if (cleanedData.campaignSection?.length) summary.sectionsFound.push('campaigns')
-    if (cleanedData.hotels?.ids?.length) summary.sectionsFound.push('hotels')
-    if (cleanedData.tours?.ids?.length) summary.sectionsFound.push('tours')
+    if (cleanedData.hotels?.ids?.length || cleanedData.hotels?.names?.length || cleanedData.hotels?.items?.length)
+      summary.sectionsFound.push('hotels')
+    if (cleanedData.tours?.ids?.length || cleanedData.tours?.names?.length || cleanedData.tours?.items?.length)
+      summary.sectionsFound.push('tours')
     if (cleanedData.header?.tabs?.length) summary.sectionsFound.push('header')
     if (cleanedData.footer?.items?.length) summary.sectionsFound.push('footer')
     if (cleanedData.settings?.name) summary.sectionsFound.push('settings')
