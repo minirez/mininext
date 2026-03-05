@@ -331,6 +331,15 @@ const openTab = ref<number | null>(null)
 const nestedMenus = reactive<Record<number, number>>({})
 let closeMenuTimer: ReturnType<typeof setTimeout> | undefined
 
+function debugHeader(event: string, payload?: Record<string, unknown>) {
+  if (!import.meta.client) return
+  if (payload) {
+    console.info(`[SiteHeader] ${event}`, payload)
+    return
+  }
+  console.info(`[SiteHeader] ${event}`)
+}
+
 function hasItems(tab: any): boolean {
   return Array.isArray(tab?.items) && tab.items.length > 0
 }
@@ -346,6 +355,12 @@ function setActiveNested(tabIndex: number, itemIndex: number) {
 function onTabEnter(tab: any, tabIndex: number) {
   cancelCloseMenu()
   if (!hasItems(tab)) return
+  debugHeader('tab enter', {
+    tabIndex,
+    title: ml(tab.title),
+    itemCount: tab.items?.length || 0,
+    hasSubItems: hasSubItems(tab)
+  })
   openTab.value = tabIndex
   if (nestedMenus[tabIndex] === undefined) {
     nestedMenus[tabIndex] = 0
@@ -354,6 +369,7 @@ function onTabEnter(tab: any, tabIndex: number) {
 
 function onTabLeave(tab: any) {
   if (!hasItems(tab)) return
+  debugHeader('tab leave', { title: ml(tab.title) })
   scheduleCloseMenu()
 }
 
@@ -361,11 +377,18 @@ function onTabLinkClick(event: MouseEvent, tab: any, tabIndex: number) {
   if (!hasItems(tab)) return
   event.preventDefault()
   cancelCloseMenu()
+  debugHeader('tab click', {
+    tabIndex,
+    title: ml(tab.title),
+    currentlyOpenTab: openTab.value
+  })
   if (openTab.value === tabIndex) {
     openTab.value = null
+    debugHeader('tab closed by click', { tabIndex, title: ml(tab.title) })
     return
   }
   openTab.value = tabIndex
+  debugHeader('tab opened by click', { tabIndex, title: ml(tab.title) })
   if (nestedMenus[tabIndex] === undefined) {
     nestedMenus[tabIndex] = 0
   }
@@ -373,8 +396,10 @@ function onTabLinkClick(event: MouseEvent, tab: any, tabIndex: number) {
 
 function scheduleCloseMenu() {
   cancelCloseMenu()
+  debugHeader('schedule close menu')
   closeMenuTimer = setTimeout(() => {
     openTab.value = null
+    debugHeader('menu closed by timer')
   }, 140)
 }
 
@@ -382,6 +407,7 @@ function cancelCloseMenu() {
   if (closeMenuTimer) {
     clearTimeout(closeMenuTimer)
     closeMenuTimer = undefined
+    debugHeader('cancel close menu')
   }
 }
 
@@ -398,6 +424,7 @@ function handleDocumentClick(event: MouseEvent) {
   const target = event.target as HTMLElement | null
   if (!target) return
   if (target.closest('.sh-nav-item')) return
+  debugHeader('document click outside menu')
   openTab.value = null
 }
 
@@ -432,6 +459,15 @@ onMounted(() => {
     adminPanelUrl.value = `https://app.${parts.slice(-2).join('.')}`
   }
   document.addEventListener('click', handleDocumentClick)
+  debugHeader('mounted', {
+    tabCount: headerTabs.value.length,
+    tabs: headerTabs.value.map((tab: any, tabIndex: number) => ({
+      tabIndex,
+      title: ml(tab.title),
+      itemCount: tab.items?.length || 0,
+      hasSubItems: hasSubItems(tab)
+    }))
+  })
 })
 
 onUnmounted(() => {
@@ -444,8 +480,13 @@ watch(
   () => {
     ui.mobileMenuOpen = false
     openTab.value = null
+    debugHeader('route changed, menus reset', { path: route.path })
   }
 )
+
+watch(openTab, (next, prev) => {
+  debugHeader('open tab changed', { previous: prev, next })
+})
 </script>
 
 <style>
