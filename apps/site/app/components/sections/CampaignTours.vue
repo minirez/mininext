@@ -55,8 +55,8 @@
           >
             <div class="aspect-[3/4] relative overflow-hidden">
               <img
-                v-if="tour.image || tour.photo?.link"
-                :src="tour.image || tour.photo?.link"
+                v-if="tourImage(tour)"
+                :src="tourImage(tour)"
                 :alt="tour.name"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
@@ -76,9 +76,17 @@
 
 <script setup lang="ts">
 const { ml } = useMultiLang()
+const { imageUrl } = useImageUrl()
 
 defineProps<{
   campaign?: any
   tours: any[]
 }>()
+
+function tourImage(tour: any): string {
+  if (tour.image) return imageUrl(tour.image)
+  if (tour.photo?.link) return imageUrl(tour.photo)
+  if (tour.gallery?.[0]?.url) return imageUrl(tour.gallery[0].url)
+  return ''
+}
 </script>

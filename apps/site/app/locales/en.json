@@ -33,7 +33,9 @@
     "contact": "Contact",
     "about": "About Us",
     "language": "Language",
-    "currency": "Currency"
+    "currency": "Currency",
+    "partnerLogin": "Sign In",
+    "menu": "Menu"
   },
   "hero": {
     "defaultTitle": "Discover Your Dream Vacation",
@@ -95,6 +97,27 @@
       "pension": "Pension",
       "camping": "Camping"
     }
+  },
+  "tour": {
+    "overview": "Overview",
+    "itinerary": "Itinerary",
+    "included": "What's Included",
+    "notIncluded": "What's Not Included",
+    "duration": "Duration",
+    "groupSize": "Group Size",
+    "type": "Tour Type",
+    "day": "day",
+    "days": "days",
+    "night": "night",
+    "nights": "nights",
+    "addToCart": "Book Now",
+    "gallery": "Gallery",
+    "seeAllPhotos": "See All Photos",
+    "importantInfo": "Important Information",
+    "departureInfo": "Departure Info",
+    "noDescription": "No description available.",
+    "stop": "Stop",
+    "allPhotos": "All Photos"
   },
   "booking": {
     "title": "Reservation",

@@ -1,7 +1,7 @@
 <template>
   <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
     <!-- Background: dark base + hero image + theme color overlay -->
-    <div class="absolute inset-0 -z-10 bg-gray-900">
+    <div class="absolute inset-0 z-0 bg-gray-900">
       <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
       <span
         v-if="themeColor"
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Content (col-xl-9, centered) -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div class="flex justify-center">
         <div class="w-full xl:w-3/4">
           <div class="text-center">

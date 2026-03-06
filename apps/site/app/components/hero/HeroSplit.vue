@@ -1,7 +1,7 @@
 <template>
   <section class="masthead-type-5 relative overflow-hidden min-h-[85vh] flex items-center">
     <!-- Background: SVG pattern + theme color overlay -->
-    <div class="absolute inset-0 -z-10" style="position: absolute">
+    <div class="absolute inset-0 z-0">
       <img alt="" src="/img/masthead/5/bg.svg" class="w-full h-full object-cover" />
       <span
         v-if="themeColor"
@@ -10,7 +10,7 @@
       />
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div class="flex flex-wrap items-center">
         <!-- Left: Content (col-xl-9 equivalent) -->
         <div class="w-full xl:w-3/4 pr-0 xl:pr-8">

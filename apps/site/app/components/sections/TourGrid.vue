@@ -14,8 +14,8 @@
         >
           <div class="relative rounded overflow-hidden" style="aspect-ratio: 1/1">
             <img
-              v-if="tour.image || tour.photo?.link"
-              :src="tour.image || tour.photo?.link"
+              v-if="tourImage(tour)"
+              :src="tourImage(tour)"
               :alt="tour.name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
@@ -31,7 +31,10 @@
           <div class="mt-2.5">
             <div class="flex items-center text-sm text-gray-500 leading-snug">
               <span v-if="tour.duration">{{ tour.duration }}</span>
-              <span v-if="tour.duration && tour.type" class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0" />
+              <span
+                v-if="tour.duration && tour.type"
+                class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0"
+              />
               <span v-if="tour.type">{{ tour.type }}</span>
             </div>
             <h4 class="text-lg font-medium text-gray-900 mt-1 group-hover:underline line-clamp-1">
@@ -50,9 +53,18 @@
 </template>
 
 <script setup lang="ts">
+const { imageUrl } = useImageUrl()
+
 defineProps<{
   title?: string
   description?: string
   items: any[]
 }>()
+
+function tourImage(tour: any): string {
+  if (tour.image) return imageUrl(tour.image)
+  if (tour.photo?.link) return imageUrl(tour.photo)
+  if (tour.gallery?.[0]?.url) return imageUrl(tour.gallery[0].url)
+  return ''
+}
 </script>

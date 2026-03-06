@@ -1,10 +1,10 @@
 <template>
   <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
     <!-- Background image with dark overlay -->
-    <div class="absolute inset-0 -z-10 masthead-bg-overlay">
+    <div class="absolute inset-0 z-0">
       <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
     </div>
-    <div class="absolute inset-0 bg-black/40" />
+    <div class="absolute inset-0 z-1 bg-black/40" />
 
     <!-- Content - same layout as HeroDefault but smaller text -->
     <div class="relative z-10 text-center max-w-4xl mx-auto px-4">
@@ -39,11 +39,3 @@ const heroTitle = computed(() => ml(storefront.hero?.title))
 const heroDescription = computed(() => ml(storefront.hero?.description))
 const hasSearchOptions = computed(() => storefront.hero?.searchOptions?.length)
 </script>
-
-<style scoped>
-.masthead-bg-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
-</style>

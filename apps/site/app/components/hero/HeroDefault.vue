@@ -1,16 +1,16 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden z-[5]">
+  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
     <!-- TURSAB badge -->
     <div
       v-if="partner.tursab?.documentNumber"
-      class="absolute top-[100px] left-2.5 z-10 px-5 py-1.5 font-medium text-gray-900 rounded bg-white/60"
+      class="absolute top-[100px] left-2.5 z-20 px-5 py-1.5 font-medium text-gray-900 rounded bg-white/60"
       style="font-size: 10px"
     >
       {{ partner.tursab.documentNumber }}
     </div>
 
     <!-- Background image -->
-    <div class="absolute inset-0 -z-10" :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''">
+    <div class="absolute inset-0 z-0">
       <img
         v-if="heroImage"
         :src="heroImage"
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Dark overlay when backdropFilter is active -->
-    <div v-if="hasBackdropFilter" class="absolute inset-0 bg-black/40" />
+    <div v-if="hasBackdropFilter" class="absolute inset-0 z-1 bg-black/40" />
 
     <!-- Content -->
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -95,12 +95,6 @@ const descShadowStyle = {
 </script>
 
 <style scoped>
-.masthead-bg-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
-
 .search-no-backdrop {
   background: radial-gradient(
     ellipse at center,

@@ -33,7 +33,9 @@
     "contact": "İletişim",
     "about": "Hakkımızda",
     "language": "Dil",
-    "currency": "Para Birimi"
+    "currency": "Para Birimi",
+    "partnerLogin": "Giriş Yap",
+    "menu": "Menü"
   },
   "hero": {
     "defaultTitle": "Hayalinizdeki Tatili Keşfedin",
@@ -95,6 +97,27 @@
       "pension": "Pansiyon",
       "camping": "Kamp"
     }
+  },
+  "tour": {
+    "overview": "Genel Bakış",
+    "itinerary": "Güzergah",
+    "included": "Dahil Olanlar",
+    "notIncluded": "Dahil Olmayanlar",
+    "duration": "Süre",
+    "groupSize": "Grup Büyüklüğü",
+    "type": "Tur Tipi",
+    "day": "gün",
+    "days": "gün",
+    "night": "gece",
+    "nights": "gece",
+    "addToCart": "Rezervasyon Yap",
+    "gallery": "Galeri",
+    "seeAllPhotos": "Tüm Fotoğrafları Gör",
+    "importantInfo": "Önemli Bilgiler",
+    "departureInfo": "Kalkış Bilgileri",
+    "noDescription": "Açıklama bulunmamaktadır.",
+    "stop": "Durak",
+    "allPhotos": "Tüm Fotoğraflar"
   },
   "booking": {
     "title": "Rezervasyon",

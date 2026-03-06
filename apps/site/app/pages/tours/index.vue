@@ -23,12 +23,13 @@
         >
           <div class="aspect-video overflow-hidden">
             <img
-              v-if="tour.image || tour.photo?.link"
-              :src="tour.image || tour.photo?.link"
+              v-if="tourImage(tour)"
+              :src="tourImage(tour)"
               :alt="tour.name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
             />
+            <div v-else class="w-full h-full bg-gray-100" />
           </div>
           <div class="p-4">
             <h3 class="font-semibold text-gray-900 group-hover:text-site-primary transition-colors">
@@ -46,7 +47,15 @@
 
 <script setup lang="ts">
 const storefront = useStorefrontStore()
+const { imageUrl } = useImageUrl()
 
 const { t: $t } = useI18n()
 useSeo({ title: $t('common.tours') })
+
+function tourImage(tour: any): string {
+  if (tour.image) return imageUrl(tour.image)
+  if (tour.photo?.link) return imageUrl(tour.photo)
+  if (tour.gallery?.[0]?.url) return imageUrl(tour.gallery[0].url)
+  return ''
+}
 </script>
