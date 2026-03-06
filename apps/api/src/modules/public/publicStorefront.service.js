@@ -14,6 +14,7 @@ import { asyncHandler } from '#helpers'
 import Storefront from '../storefront/storefront.model.js'
 import Partner from '../partner/partner.model.js'
 import SiteSettings from '../siteSettings/siteSettings.model.js'
+import Tour from '../tour/tour.model.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import crypto from 'crypto'
 
@@ -108,6 +109,46 @@ const resolvePartnerFromRequest = async req => {
   }
 
   return null
+}
+
+/**
+ * Enrich tour showcase items with gallery images from the Tour collection.
+ * The storefront stores tour references as { id, name, location } without images.
+ * This resolves the first gallery image for each referenced tour so the frontend
+ * can display thumbnails without an extra API round-trip.
+ */
+const enrichTourItems = async (partnerId, items) => {
+  if (!Array.isArray(items) || items.length === 0) return items
+
+  const tourIds = items.map(i => i.id).filter(Boolean)
+  if (tourIds.length === 0) return items
+
+  const tours = await Tour.find({
+    _id: { $in: tourIds },
+    partner: partnerId,
+    status: 'active'
+  })
+    .select('_id slug gallery name primaryLocation type basePricing')
+    .lean()
+
+  const tourMap = new Map(tours.map(t => [t._id.toString(), t]))
+
+  return items.map(item => {
+    const t = tourMap.get(String(item.id))
+    if (!t) return item
+
+    const mainImg = t.gallery?.find(g => g.isMain) || t.gallery?.[0]
+    return {
+      ...item,
+      image: mainImg?.url || item.image || '',
+      slug: t.slug || item.slug || '',
+      name: item.name || t.name?.tr || t.name?.en || '',
+      location: item.location || t.primaryLocation?.name || '',
+      type: t.type || '',
+      price: t.basePricing?.adultPrice?.value || t.basePricing?.perPerson?.value || 0,
+      currency: t.basePricing?.adultPrice?.currency || t.basePricing?.perPerson?.currency || 'TRY'
+    }
+  })
 }
 
 /**
@@ -345,6 +386,21 @@ export const getPublicStorefront = asyncHandler(async (req, res) => {
 
   // Shape response for public consumption
   const publicData = shapePublicResponse(storefront, isDraftLive)
+
+  // Enrich tour showcase items with gallery images from the Tour collection.
+  try {
+    const themeType = publicData.homepageTheme?.type || 'home1'
+    const themeData = publicData.homepageTheme?.[themeType]
+
+    if (themeData?.tours?.items?.length) {
+      themeData.tours.items = await enrichTourItems(partnerId, themeData.tours.items)
+    }
+    if (publicData.tours?.items?.length) {
+      publicData.tours.items = await enrichTourItems(partnerId, publicData.tours.items)
+    }
+  } catch (_e) {
+    // Non-critical: tours will render without images if enrichment fails
+  }
 
   // Merge site-level settings from SiteSettings into the public storefront response.
   try {

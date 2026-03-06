@@ -70,50 +70,6 @@ export default defineEventHandler(async (event) => {
       event.context.storefront = null
     }
 
-    // Enrich tour items with images from the legacy mainpagetours endpoint
-    if (event.context.storefront) {
-      try {
-        const domain = partnerData?.branding?.siteDomain || getRequestHost(event, { xForwardedHost: true })
-        const toursRes = await api.get<{ status: boolean; list: any[] }>(
-          '/api/storefronts/mainpagetours',
-          { referer: domain },
-        )
-        if (toursRes.status && toursRes.list?.length) {
-          const tourMap = new Map(toursRes.list.map((t: any) => [String(t.id), t]))
-
-          const enrichTourItems = (items: any[]) => {
-            if (!Array.isArray(items)) return items
-            return items.map((item: any) => {
-              const enriched = tourMap.get(String(item.id))
-              if (enriched) {
-                return {
-                  ...item,
-                  image: enriched.image || item.image,
-                  slug: enriched.slug || item.slug,
-                  name: item.name || enriched.name,
-                  location: item.location || enriched.city,
-                }
-              }
-              return item
-            })
-          }
-
-          const sf = event.context.storefront
-          const themeType = sf.homepageTheme?.type || 'home1'
-          const themeData = sf.homepageTheme?.[themeType]
-
-          if (themeData?.tours?.items?.length) {
-            themeData.tours.items = enrichTourItems(themeData.tours.items)
-          }
-          if (sf.tours?.items?.length) {
-            sf.tours.items = enrichTourItems(sf.tours.items)
-          }
-        }
-      } catch {
-        // Non-critical: tours will render without images
-      }
-    }
-
     // Theme color for SSR (prevents flash)
     const themeColor = partnerData?.settings?.themeColor
       || event.context.storefront?.settings?.themeColor
