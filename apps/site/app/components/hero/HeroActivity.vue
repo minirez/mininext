@@ -2,7 +2,15 @@
   <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
     <!-- Background: dark base + hero image + theme color overlay -->
     <div class="absolute inset-0 -z-10 bg-gray-900">
-      <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
+      <img
+        v-if="heroImage"
+        ref="heroRef"
+        :src="heroImage"
+        alt=""
+        class="w-full h-full object-cover transition-opacity duration-500"
+        :style="{ opacity: imageLoaded ? 1 : 0.7 }"
+        @load="imageLoaded = true"
+      />
       <span
         v-if="themeColor"
         class="absolute inset-0 pointer-events-none"
@@ -40,6 +48,15 @@ const storefront = useStorefrontStore()
 const partner = usePartnerStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
+
+const imageLoaded = ref(import.meta.server)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo

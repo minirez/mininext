@@ -2,7 +2,15 @@
   <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
     <!-- Background image with dark overlay -->
     <div class="absolute inset-0 -z-10 masthead-bg-overlay">
-      <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
+      <img
+        v-if="heroImage"
+        ref="heroRef"
+        :src="heroImage"
+        alt=""
+        class="w-full h-full object-cover transition-opacity duration-500"
+        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+        @load="imageLoaded = true"
+      />
     </div>
     <div class="absolute inset-0 bg-black/40" />
 
@@ -28,6 +36,15 @@
 const storefront = useStorefrontStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
+
+const imageLoaded = ref(import.meta.server)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo

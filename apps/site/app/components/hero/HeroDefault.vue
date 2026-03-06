@@ -13,10 +13,13 @@
     <div class="absolute inset-0 -z-10" :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''">
       <img
         v-if="heroImage"
+        ref="heroRef"
         :src="heroImage"
         alt=""
-        class="w-full h-full object-cover absolute inset-0"
+        class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0"
+        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
         :style="imageTopStyle"
+        @load="imageLoaded = true"
       />
     </div>
 
@@ -60,6 +63,15 @@ const storefront = useStorefrontStore()
 const partner = usePartnerStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
+
+const imageLoaded = ref(import.meta.server)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo

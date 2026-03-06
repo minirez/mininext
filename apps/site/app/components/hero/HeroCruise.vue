@@ -2,7 +2,15 @@
   <section class="relative min-h-[100vh] overflow-hidden">
     <!-- Swiper / Slide background - single image for now (carousel can be extended) -->
     <div class="absolute inset-0 bg-gray-900">
-      <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
+      <img
+        v-if="heroImage"
+        ref="heroRef"
+        :src="heroImage"
+        alt=""
+        class="w-full h-full object-cover transition-opacity duration-500"
+        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+        @load="imageLoaded = true"
+      />
       <!-- Dark overlay when backdrop filter active -->
       <div v-if="hasBackdropFilter" class="absolute inset-0 bg-black/40" />
     </div>
@@ -68,6 +76,15 @@ const storefront = useStorefrontStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 const { t: $t } = useI18n()
+
+const imageLoaded = ref(import.meta.server)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo
