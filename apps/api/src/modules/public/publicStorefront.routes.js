@@ -41,6 +41,12 @@ router.get('/pages', publicStorefrontService.getPublicStorefrontPages)
 router.get('/sections/:sectionType', publicStorefrontService.getPublicStorefrontSection)
 
 /**
+ * GET /public/storefront/tour/:tourId
+ * Public tour detail by slug or ObjectId
+ */
+router.get('/tour/:tourId', publicStorefrontService.getPublicTourDetail)
+
+/**
  * POST /public/storefront/newsletter/subscribe
  * Subscribe an email to the partner's newsletter
  */

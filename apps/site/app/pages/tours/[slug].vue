@@ -529,11 +529,8 @@ async function fetchTour() {
   loading.value = true
   error.value = ''
   try {
-    const domain = import.meta.client ? window.location.hostname : ''
-    const res = await api.get<any>(`/api/storefronts/tour/${encodeURIComponent(slug)}`, {
-      referer: domain
-    })
-    if (res.status && res.record) {
+    const res = await api.get<any>(`/api/storefront/tour/${encodeURIComponent(slug)}`)
+    if ((res.success || res.status) && res.record) {
       tour.value = res.record
     } else {
       error.value = res.msg || 'Tour not found'

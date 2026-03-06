@@ -565,6 +565,74 @@ export const subscribeNewsletter = asyncHandler(async (req, res) => {
 })
 
 /**
+ * GET /public/storefront/tour/:tourId
+ * Public tour detail by slug or ObjectId.
+ * Resolves partner from domain/partnerId — no authentication required.
+ */
+export const getPublicTourDetail = asyncHandler(async (req, res) => {
+  const partnerId = await resolvePartnerFromRequest(req)
+
+  if (!partnerId) {
+    throw new BadRequestError('PARTNER_NOT_RESOLVED')
+  }
+
+  const { tourId } = req.params
+  if (!tourId) {
+    throw new BadRequestError('TOUR_ID_REQUIRED')
+  }
+
+  const isObjectId = /^[a-f\d]{24}$/i.test(tourId)
+  const projection =
+    'code name slug type tags primaryLocation basePricing content routePlan gallery isFeatured displayOrder createdAt updatedAt'
+
+  const baseFilter = {
+    partner: partnerId,
+    status: 'active',
+    'visibility.b2c': true
+  }
+
+  let tour = null
+
+  if (isObjectId) {
+    tour = await Tour.findOne({ _id: tourId, ...baseFilter })
+      .select(projection)
+      .lean()
+  }
+
+  if (!tour) {
+    tour = await Tour.findOne({ slug: tourId, ...baseFilter })
+      .select(projection)
+      .lean()
+  }
+
+  if (!tour) {
+    throw new NotFoundError('TOUR_NOT_FOUND')
+  }
+
+  res.set({ 'Cache-Control': 'public, max-age=120, stale-while-revalidate=600' })
+
+  res.json({
+    success: true,
+    status: true,
+    record: {
+      id: tour._id,
+      code: tour.code,
+      name: tour.name,
+      slug: tour.slug,
+      type: tour.type,
+      tags: tour.tags || [],
+      primaryLocation: tour.primaryLocation,
+      basePricing: tour.basePricing,
+      content: tour.content,
+      routePlan: tour.routePlan,
+      gallery: tour.gallery || [],
+      featured: Boolean(tour.isFeatured),
+      displayOrder: tour.displayOrder
+    }
+  })
+})
+
+/**
  * GET /public/storefront/sections/:sectionType
  * Get a specific section's data
  */
