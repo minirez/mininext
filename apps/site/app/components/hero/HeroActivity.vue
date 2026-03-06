@@ -4,6 +4,7 @@
     <div class="absolute inset-0 -z-10 bg-gray-900">
       <img
         v-if="heroImage"
+        ref="heroRef"
         :src="heroImage"
         alt=""
         class="w-full h-full object-cover transition-opacity duration-500"
@@ -49,6 +50,13 @@ const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 
 const imageLoaded = ref(false)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo

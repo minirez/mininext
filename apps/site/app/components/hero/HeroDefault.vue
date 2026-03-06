@@ -10,12 +10,10 @@
     </div>
 
     <!-- Background image -->
-    <div
-      class="absolute inset-0 -z-10"
-      :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''"
-    >
+    <div class="absolute inset-0 -z-10" :class="hasBackdropFilter ? 'masthead-bg-overlay' : ''">
       <img
         v-if="heroImage"
+        ref="heroRef"
         :src="heroImage"
         alt=""
         class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0"
@@ -67,6 +65,13 @@ const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 
 const imageLoaded = ref(false)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo
@@ -94,10 +99,10 @@ const imageTopStyle = computed(() => {
 })
 
 const textShadowStyle = {
-  textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)',
+  textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(0,0,0,0.3)'
 }
 const descShadowStyle = {
-  textShadow: '0 2px 6px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3)',
+  textShadow: '0 2px 6px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.3)'
 }
 </script>
 
@@ -109,7 +114,12 @@ const descShadowStyle = {
 }
 
 .search-no-backdrop {
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 50%, transparent 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.15) 50%,
+    transparent 70%
+  );
   padding: 30px 40px;
   border-radius: 20px;
   margin-left: -40px;

@@ -4,6 +4,7 @@
     <div class="absolute inset-0 bg-gray-900">
       <img
         v-if="heroImage"
+        ref="heroRef"
         :src="heroImage"
         alt=""
         class="w-full h-full object-cover transition-opacity duration-500"
@@ -77,6 +78,13 @@ const { imageUrl } = useImageUrl()
 const { t: $t } = useI18n()
 
 const imageLoaded = ref(false)
+const heroRef = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
+    imageLoaded.value = true
+  }
+})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo
@@ -121,7 +129,14 @@ const descShadowStyle = {
   animation-delay: 0.2s;
 }
 @keyframes scrollBounce {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(4px); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(4px);
+  }
 }
 </style>
