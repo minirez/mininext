@@ -64,7 +64,7 @@ const partner = usePartnerStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 
-const imageLoaded = ref(false)
+const imageLoaded = ref(import.meta.server)
 const heroRef = ref<HTMLImageElement | null>(null)
 
 onMounted(() => {
