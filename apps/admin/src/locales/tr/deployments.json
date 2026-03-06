@@ -55,6 +55,23 @@
       "hours": "{n}sa",
       "ago": "önce",
       "justNow": "az önce"
+    },
+    "deploy": "Deploy",
+    "deploying": "Deploy ediliyor...",
+    "confirmDeploy": "\"{target}\" deploy edilecek. Emin misiniz?",
+    "deployTriggered": "\"{target}\" deploy başlatıldı",
+    "deployError": "Deploy başlatılamadı",
+    "targets": {
+      "all": "Tümünü Deploy Et",
+      "allDesc": "Tüm servisleri build & restart",
+      "api": "Backend API",
+      "apiDesc": "booking-api container",
+      "admin": "Admin Panel",
+      "adminDesc": "Frontend build",
+      "site": "B2C Site",
+      "siteDesc": "booking-site container",
+      "payment": "Payment Service",
+      "paymentDesc": "payment-service container"
     }
   }
 }

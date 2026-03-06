@@ -1,6 +1,6 @@
 import express from 'express'
 import { protect, requirePlatformAdmin } from '#middleware/auth.js'
-import { list, stats, detail, sync, syncJobs } from './deployment.service.js'
+import { list, stats, detail, sync, syncJobs, triggerDeploy } from './deployment.service.js'
 
 const router = express.Router()
 
@@ -15,6 +15,9 @@ router.get('/stats', stats)
 
 // POST /api/deployments/sync - Sync from GitHub
 router.post('/sync', sync)
+
+// POST /api/deployments/trigger - Trigger manual deploy
+router.post('/trigger', triggerDeploy)
 
 // GET /api/deployments/:id - Detail
 router.get('/:id', detail)

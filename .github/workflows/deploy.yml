@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - api
+          - admin
+          - site
+          - payment
+          - all
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -78,20 +92,43 @@ jobs:
         id: changes
         run: |
           cd /var/www/booking-engine
-          # Compare with previous deploy (last successful HEAD)
-          PREV=$(sudo git rev-parse HEAD~1 2>/dev/null || echo "")
-          if [ -z "$PREV" ]; then
+          TARGET="${{ github.event.inputs.target || 'auto' }}"
+
+          if [ "$TARGET" = "all" ]; then
             echo "api=true" >> $GITHUB_OUTPUT
             echo "admin=true" >> $GITHUB_OUTPUT
             echo "packages=true" >> $GITHUB_OUTPUT
             echo "payment=true" >> $GITHUB_OUTPUT
+            echo "site=true" >> $GITHUB_OUTPUT
+            echo "Manual deploy: all targets"
+          elif [ "$TARGET" != "auto" ]; then
+            # Single target override
+            for t in api admin packages payment site; do
+              if [ "$t" = "$TARGET" ]; then
+                echo "$t=true" >> $GITHUB_OUTPUT
+              else
+                echo "$t=false" >> $GITHUB_OUTPUT
+              fi
+            done
+            echo "Manual deploy: $TARGET only"
           else
-            CHANGED=$(sudo git diff --name-only "$PREV" HEAD)
-            echo "$CHANGED"
-            echo "api=$(echo "$CHANGED" | grep -q '^apps/api/' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "admin=$(echo "$CHANGED" | grep -q '^apps/admin/' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "packages=$(echo "$CHANGED" | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
-            echo "payment=$(echo "$CHANGED" | grep -q '^apps/payment-service/' && echo true || echo false)" >> $GITHUB_OUTPUT
+            # Auto-detect from changed files
+            PREV=$(sudo git rev-parse HEAD~1 2>/dev/null || echo "")
+            if [ -z "$PREV" ]; then
+              echo "api=true" >> $GITHUB_OUTPUT
+              echo "admin=true" >> $GITHUB_OUTPUT
+              echo "packages=true" >> $GITHUB_OUTPUT
+              echo "payment=true" >> $GITHUB_OUTPUT
+              echo "site=true" >> $GITHUB_OUTPUT
+            else
+              CHANGED=$(sudo git diff --name-only "$PREV" HEAD)
+              echo "$CHANGED"
+              echo "api=$(echo "$CHANGED" | grep -q '^apps/api/' && echo true || echo false)" >> $GITHUB_OUTPUT
+              echo "admin=$(echo "$CHANGED" | grep -q '^apps/admin/' && echo true || echo false)" >> $GITHUB_OUTPUT
+              echo "packages=$(echo "$CHANGED" | grep -q '^packages/' && echo true || echo false)" >> $GITHUB_OUTPUT
+              echo "payment=$(echo "$CHANGED" | grep -q '^apps/payment-service/' && echo true || echo false)" >> $GITHUB_OUTPUT
+              echo "site=$(echo "$CHANGED" | grep -q '^apps/site/\|^Dockerfile.site' && echo true || echo false)" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Install dependencies
@@ -127,6 +164,30 @@ jobs:
           sudo docker compose up -d payment-service || { echo "Docker up failed"; exit 1; }
           echo "Payment service restarted at $(date)"
 
+      - name: Build and restart Site
+        if: steps.changes.outputs.site == 'true' || steps.changes.outputs.packages == 'true'
+        run: |
+          cd /var/www
+          sudo docker compose build booking-site || { echo "Docker build failed"; exit 1; }
+          sudo docker compose up -d booking-site || { echo "Docker up failed"; exit 1; }
+          echo "Site restarted at $(date)"
+          # Health check
+          echo "Waiting for Site to be ready..."
+          for i in $(seq 1 12); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://127.0.0.1:3002/ || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Site healthy (HTTP $HTTP_STATUS) after attempt $i"
+              break
+            fi
+            echo "Attempt $i: HTTP $HTTP_STATUS - waiting 5s..."
+            if [ "$i" = "12" ]; then
+              echo "Site health check FAILED after 60s (HTTP $HTTP_STATUS)"
+              sudo docker logs maxirez-booking-site --tail 20
+              exit 1
+            fi
+            sleep 5
+          done
+
       - name: Post-deploy health check
         if: steps.changes.outputs.api == 'true' || steps.changes.outputs.packages == 'true'
         run: |
@@ -150,8 +211,10 @@ jobs:
       - name: Deploy summary
         run: |
           echo "=== Deploy Summary ==="
+          echo "Target: ${{ github.event.inputs.target || 'auto' }}"
           echo "API changed: ${{ steps.changes.outputs.api }}"
           echo "Admin changed: ${{ steps.changes.outputs.admin }}"
           echo "Packages changed: ${{ steps.changes.outputs.packages }}"
           echo "Payment changed: ${{ steps.changes.outputs.payment }}"
+          echo "Site changed: ${{ steps.changes.outputs.site }}"
           echo "======================"

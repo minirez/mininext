@@ -10,14 +10,56 @@
           {{ $t('deployments.description') }}
         </p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-        :disabled="syncing"
-        @click="handleSync"
-      >
-        <span class="material-icons text-lg" :class="{ 'animate-spin': syncing }">sync</span>
-        {{ syncing ? $t('deployments.syncing') : $t('deployments.sync') }}
-      </button>
+      <div class="flex items-center gap-2">
+        <!-- Deploy dropdown -->
+        <div class="relative" ref="deployDropdownRef">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            :disabled="deploying"
+            @click="deployDropdownOpen = !deployDropdownOpen"
+          >
+            <span class="material-icons text-lg" :class="{ 'animate-spin': deploying }">
+              {{ deploying ? 'sync' : 'rocket_launch' }}
+            </span>
+            {{ deploying ? $t('deployments.deploying') : $t('deployments.deploy') }}
+            <span class="material-icons text-lg">expand_more</span>
+          </button>
+
+          <div
+            v-if="deployDropdownOpen"
+            class="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg z-50 py-1"
+          >
+            <button
+              v-for="target in deployTargets"
+              :key="target.key"
+              class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+              @click="handleDeploy(target.key)"
+            >
+              <span class="material-icons text-lg" :class="target.iconClass">{{
+                target.icon
+              }}</span>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-800 dark:text-slate-200">
+                  {{ $t(`deployments.targets.${target.key}`) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">
+                  {{ $t(`deployments.targets.${target.key}Desc`) }}
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sync button -->
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          :disabled="syncing"
+          @click="handleSync"
+        >
+          <span class="material-icons text-lg" :class="{ 'animate-spin': syncing }">sync</span>
+          {{ syncing ? $t('deployments.syncing') : $t('deployments.sync') }}
+        </button>
+      </div>
     </div>
 
     <div class="flex-1 overflow-y-auto py-2">
@@ -413,7 +455,8 @@ import {
   getDeployments,
   getDeploymentStats,
   syncDeployments,
-  syncDeploymentJobs
+  syncDeploymentJobs,
+  triggerDeployment
 } from '@/services/deploymentService'
 
 const { t } = useI18n()
@@ -427,6 +470,18 @@ const loading = ref(false)
 const syncing = ref(false)
 const expandedRow = ref(null)
 const syncingJobs = ref(null)
+const deploying = ref(false)
+const deployDropdownOpen = ref(false)
+const deployDropdownRef = ref(null)
+
+// Deploy targets
+const deployTargets = [
+  { key: 'all', icon: 'select_all', iconClass: 'text-purple-500' },
+  { key: 'api', icon: 'dns', iconClass: 'text-blue-500' },
+  { key: 'admin', icon: 'admin_panel_settings', iconClass: 'text-orange-500' },
+  { key: 'site', icon: 'language', iconClass: 'text-green-500' },
+  { key: 'payment', icon: 'payment', iconClass: 'text-red-500' }
+]
 
 // Filters
 const filters = ref({
@@ -625,6 +680,32 @@ async function handleSyncJobs(deployment) {
   }
 }
 
+async function handleDeploy(target) {
+  deployDropdownOpen.value = false
+  const targetLabel = t(`deployments.targets.${target}`)
+  if (!confirm(t('deployments.confirmDeploy', { target: targetLabel }))) return
+
+  deploying.value = true
+  try {
+    await triggerDeployment(target)
+    toast.success(t('deployments.deployTriggered', { target: targetLabel }))
+    // Wait a bit for workflow to start, then sync
+    setTimeout(async () => {
+      await handleSync()
+    }, 3000)
+  } catch {
+    toast.error(t('deployments.deployError'))
+  } finally {
+    deploying.value = false
+  }
+}
+
+function handleClickOutside(e) {
+  if (deployDropdownRef.value && !deployDropdownRef.value.contains(e.target)) {
+    deployDropdownOpen.value = false
+  }
+}
+
 function toggleExpand(id) {
   expandedRow.value = expandedRow.value === id ? null : id
 }
@@ -670,9 +751,11 @@ onMounted(() => {
   fetchDeployments()
   fetchStats()
   startAutoRefresh()
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   stopAutoRefresh()
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>

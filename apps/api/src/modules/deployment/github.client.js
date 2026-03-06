@@ -51,6 +51,17 @@ export function createGitHubClient({ token, owner, repo }) {
     async getWorkflowRun(runId) {
       const { data } = await client.get(`/actions/runs/${runId}`)
       return data
+    },
+
+    /**
+     * Trigger a workflow dispatch event
+     * @param {string} workflowFileName - Workflow file name (e.g. 'deploy.yml')
+     * @param {string} ref - Git ref (branch/tag)
+     * @param {Object} inputs - Workflow inputs
+     */
+    async triggerWorkflow(workflowFileName, ref = 'main', inputs = {}) {
+      await client.post(`/actions/workflows/${workflowFileName}/dispatches`, { ref, inputs })
+      // GitHub returns 204 No Content on success
     }
   }
 }

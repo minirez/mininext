@@ -208,6 +208,29 @@ export const syncJobs = asyncHandler(async (req, res) => {
 })
 
 /**
+ * POST /api/deployments/trigger
+ * Trigger a manual deploy via GitHub workflow_dispatch
+ */
+export const triggerDeploy = asyncHandler(async (req, res) => {
+  const { target = 'all' } = req.body
+  const validTargets = ['all', 'api', 'admin', 'site', 'payment']
+
+  if (!validTargets.includes(target)) {
+    return res.status(400).json({ success: false, error: 'Invalid target' })
+  }
+
+  const client = await getGitHubClient()
+  if (!client) {
+    return res.status(400).json({ success: false, error: 'GitHub credentials not configured' })
+  }
+
+  await client.triggerWorkflow('deploy.yml', 'main', { target })
+  logger.info(`[Deployment] Manual deploy triggered: target=${target} by ${req.user.email}`)
+
+  res.json({ success: true, message: `Deploy triggered for: ${target}` })
+})
+
+/**
  * Process GitHub webhook payload
  * Called from webhook route after signature verification
  */
@@ -237,5 +260,6 @@ export default {
   detail,
   sync,
   syncJobs,
+  triggerDeploy,
   processWebhook
 }

@@ -40,10 +40,19 @@ export const syncDeploymentJobs = async id => {
   return response.data
 }
 
+/**
+ * Trigger a manual deploy via workflow_dispatch
+ */
+export const triggerDeployment = async (target = 'all') => {
+  const response = await apiClient.post('/deployments/trigger', { target })
+  return response.data
+}
+
 export default {
   getDeployments,
   getDeploymentStats,
   getDeployment,
   syncDeployments,
-  syncDeploymentJobs
+  syncDeploymentJobs,
+  triggerDeployment
 }

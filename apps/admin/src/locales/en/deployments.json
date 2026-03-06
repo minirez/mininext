@@ -55,6 +55,23 @@
       "hours": "{n}h",
       "ago": "ago",
       "justNow": "just now"
+    },
+    "deploy": "Deploy",
+    "deploying": "Deploying...",
+    "confirmDeploy": "Deploy \"{target}\"? Are you sure?",
+    "deployTriggered": "\"{target}\" deploy triggered",
+    "deployError": "Failed to trigger deploy",
+    "targets": {
+      "all": "Deploy All",
+      "allDesc": "Build & restart all services",
+      "api": "Backend API",
+      "apiDesc": "booking-api container",
+      "admin": "Admin Panel",
+      "adminDesc": "Frontend build",
+      "site": "B2C Site",
+      "siteDesc": "booking-site container",
+      "payment": "Payment Service",
+      "paymentDesc": "payment-service container"
     }
   }
 }
