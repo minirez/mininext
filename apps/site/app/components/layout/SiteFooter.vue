@@ -1,7 +1,5 @@
 <template>
   <footer class="bg-gray-900 text-gray-300">
-    <CTATursabSmall />
-
     <!-- Main footer: 5-column layout matching site3 -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">

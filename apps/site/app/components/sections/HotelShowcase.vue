@@ -14,20 +14,82 @@
       class="shrink-0 w-[260px] sm:w-[280px] snap-start"
     >
       <NuxtLink :to="`/hotels/${hotel.slug || hotel.id}`" class="group block">
-        <!-- Image: 1:1 square -->
+        <!-- Image: 1:1 square with photo carousel -->
         <div class="relative rounded overflow-hidden" style="aspect-ratio: 1/1">
-          <img
-            v-if="resolveHotelImage(hotel)"
-            :src="resolveHotelImage(hotel)"
-            :alt="hotel.name"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
+          <div v-if="resolveHotelImages(hotel).length" class="relative w-full h-full">
+            <img
+              v-for="(src, imgIdx) in resolveHotelImages(hotel)"
+              :key="imgIdx"
+              :src="src"
+              :alt="hotel.name"
+              class="absolute inset-0 w-full h-full object-cover transition-all duration-500"
+              :class="
+                imgIdx === (activeSlide[hotel.slug || hotel.id || i] || 0)
+                  ? 'opacity-100 scale-100 group-hover:scale-105'
+                  : 'opacity-0 scale-100'
+              "
+              loading="lazy"
+            />
+            <template v-if="resolveHotelImages(hotel).length > 1">
+              <button
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/80 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                @click.prevent="
+                  prevSlide(hotel.slug || hotel.id || i, resolveHotelImages(hotel).length)
+                "
+              >
+                <svg
+                  class="w-3.5 h-3.5 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 19.5L8.25 12l7.5-7.5"
+                  />
+                </svg>
+              </button>
+              <button
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/80 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                @click.prevent="
+                  nextSlide(hotel.slug || hotel.id || i, resolveHotelImages(hotel).length)
+                "
+              >
+                <svg
+                  class="w-3.5 h-3.5 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                  />
+                </svg>
+              </button>
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex gap-1">
+                <span
+                  v-for="(_, dotIdx) in resolveHotelImages(hotel).slice(0, 5)"
+                  :key="dotIdx"
+                  class="w-1.5 h-1.5 rounded-full transition-colors"
+                  :class="
+                    dotIdx === (activeSlide[hotel.slug || hotel.id || i] || 0)
+                      ? 'bg-white'
+                      : 'bg-white/50'
+                  "
+                />
+              </div>
+            </template>
+          </div>
           <div v-else class="w-full h-full bg-gray-100" />
 
           <!-- Wishlist button -->
           <button
-            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center hover:text-red-500 transition-colors"
+            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center hover:text-red-500 transition-colors z-10"
           >
             <svg
               class="w-4 h-4"
@@ -47,7 +109,7 @@
           <!-- Badge -->
           <span
             v-if="hotel.tag"
-            class="absolute top-3 left-0 py-1.5 px-4 rounded-r text-xs font-medium uppercase text-white bg-site-primary"
+            class="absolute top-3 left-0 py-1.5 px-4 rounded-r text-xs font-medium uppercase text-white bg-site-primary z-10"
           >
             {{ hotel.tag }}
           </span>
@@ -124,6 +186,7 @@ const partner = usePartnerStore()
 const searchStore = useSearchStore()
 const fallbackDataBySlug = ref<Record<string, any>>({})
 const mediaFetchInFlight = ref<Record<string, boolean>>({})
+const activeSlide = ref<Record<string, number>>({})
 
 function normalizeId(value: unknown): string {
   return String(value ?? '').trim()
@@ -183,15 +246,46 @@ const displayedHotels = computed(() => {
   })
 })
 
-function resolveHotelImage(hotel: any): string {
-  const directImage = getDirectImageValue(hotel)
-  if (directImage) return imageUrl(directImage)
-  return ''
+function resolveHotelImages(hotel: any): string[] {
+  const photos: string[] = []
+
+  if (Array.isArray(hotel?.photos) && hotel.photos.length) {
+    for (const p of hotel.photos) {
+      const url = typeof p === 'string' ? p : p?.url || p?.link || ''
+      if (url) photos.push(imageUrl(url))
+    }
+  }
+
+  if (Array.isArray(hotel?.images) && hotel.images.length && !photos.length) {
+    for (const img of hotel.images) {
+      const url = typeof img === 'string' ? img : img?.url || img?.link || ''
+      if (url) photos.push(imageUrl(url))
+    }
+  }
+
+  if (!photos.length) {
+    const single = getDirectImageValue(hotel)
+    if (single) photos.push(imageUrl(single))
+  }
+
+  return photos
+}
+
+function nextSlide(key: string | number, total: number) {
+  const k = String(key)
+  const cur = activeSlide.value[k] || 0
+  activeSlide.value = { ...activeSlide.value, [k]: (cur + 1) % total }
+}
+
+function prevSlide(key: string | number, total: number) {
+  const k = String(key)
+  const cur = activeSlide.value[k] || 0
+  activeSlide.value = { ...activeSlide.value, [k]: (cur - 1 + total) % total }
 }
 
 const missingMediaSlugs = computed(() => {
   return displayedHotels.value
-    .filter((hotel: any) => !getDirectImageValue(hotel))
+    .filter((hotel: any) => !resolveHotelImages(hotel).length)
     .map((hotel: any) => normalizeSlug(hotel?.slug))
     .filter((slug: string) => Boolean(slug))
     .filter((slug: string) => !fallbackDataBySlug.value[slug] && !mediaFetchInFlight.value[slug])
@@ -210,17 +304,26 @@ async function fetchHotelMedia(slugs: string[]) {
         if (!res?.success || !res?.data) return
 
         const d = res.data
-        const image =
-          d.image ||
-          d.images?.find((img: any) => img.isMain)?.url ||
-          d.images?.[0]?.url ||
-          d.logo ||
-          ''
+        const photos: string[] = []
+        if (Array.isArray(d.photos) && d.photos.length) {
+          for (const p of d.photos) {
+            const url = typeof p === 'string' ? p : p?.url || p?.link || ''
+            if (url) photos.push(url)
+          }
+        }
+        if (!photos.length && Array.isArray(d.images) && d.images.length) {
+          for (const img of d.images) {
+            const url = typeof img === 'string' ? img : img?.url || img?.link || ''
+            if (url) photos.push(url)
+          }
+        }
+        const image = photos[0] || d.image || d.logo || ''
 
         fallbackDataBySlug.value = {
           ...fallbackDataBySlug.value,
           [slug]: {
             ...(image ? { image } : {}),
+            ...(photos.length > 1 ? { photos } : {}),
             ...(d.stars ? { stars: d.stars } : {}),
             ...(d.address?.city ? { city: d.address.city } : {}),
             ...(d.address?.country ? { country: d.address.country } : {}),

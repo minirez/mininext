@@ -21,18 +21,15 @@ const findPartnerByDomain = async domain => {
 }
 
 /**
- * Pick the main image URL from an images array.
- * For linked hotels with no own images, falls back to the base hotel's images.
+ * Resolve the images array for a hotel, falling back to the base hotel for linked hotels.
  */
-const resolveMainImage = (hotel, baseHotelsMap) => {
+const resolveImages = (hotel, baseHotelsMap) => {
   let images = hotel.images
   if ((!images || images.length === 0) && hotel.hotelType === 'linked' && hotel.hotelBase) {
     const baseId = hotel.hotelBase.toString()
     images = baseHotelsMap?.get(baseId)?.images
   }
-  if (!images || images.length === 0) return ''
-  const main = images.find(img => img.isMain) || images[0]
-  return main?.url || ''
+  return images || []
 }
 
 /**
@@ -54,15 +51,23 @@ const mapHotelsForPublic = async hotels => {
     }
   }
 
-  return hotels.map(h => ({
-    id: h._id,
-    name: h.name,
-    slug: h.slug,
-    logo: h.logo,
-    image: resolveMainImage(h, baseHotelsMap),
-    stars: h.stars,
-    city: h.address?.city || ''
-  }))
+  return hotels.map(h => {
+    const images = resolveImages(h, baseHotelsMap)
+    const mainImg = images.find(img => img.isMain) || images[0]
+    return {
+      id: h._id,
+      name: h.name,
+      slug: h.slug,
+      logo: h.logo,
+      image: mainImg?.url || '',
+      photos: images
+        .slice(0, 5)
+        .map(img => img.url)
+        .filter(Boolean),
+      stars: h.stars,
+      city: h.address?.city || ''
+    }
+  })
 }
 
 /**
