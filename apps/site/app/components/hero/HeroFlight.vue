@@ -1,5 +1,5 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center overflow-hidden py-24 lg:py-32">
+  <section class="relative min-h-[85vh] flex items-center py-24 lg:py-32">
     <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
       <div class="flex flex-wrap items-center">
         <!-- Left: Text + search -->

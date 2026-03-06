@@ -1,7 +1,7 @@
 <template>
-  <section class="masthead-type-5 relative overflow-hidden min-h-[85vh] flex items-center">
+  <section class="masthead-type-5 relative min-h-[85vh] flex items-center">
     <!-- Background: SVG pattern + theme color overlay -->
-    <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 z-0 overflow-hidden">
       <img alt="" src="/img/masthead/5/bg.svg" class="w-full h-full object-cover" />
       <span
         v-if="themeColor"

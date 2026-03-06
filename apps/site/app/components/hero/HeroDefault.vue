@@ -1,5 +1,5 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+  <section class="relative min-h-[85vh] flex items-center justify-center">
     <!-- TURSAB badge -->
     <div
       v-if="partner.tursab?.documentNumber"
@@ -10,7 +10,7 @@
     </div>
 
     <!-- Background image -->
-    <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 z-0 overflow-hidden">
       <img
         v-if="heroImage"
         :src="heroImage"

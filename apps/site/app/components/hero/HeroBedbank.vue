@@ -1,7 +1,7 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+  <section class="relative min-h-[85vh] flex items-center justify-center">
     <!-- Background image with dark overlay -->
-    <div class="absolute inset-0 z-0">
+    <div class="absolute inset-0 z-0 overflow-hidden">
       <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
     </div>
     <div class="absolute inset-0 z-1 bg-black/40" />

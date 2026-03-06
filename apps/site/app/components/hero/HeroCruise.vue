@@ -1,7 +1,7 @@
 <template>
-  <section class="relative min-h-[100vh] overflow-hidden">
+  <section class="relative min-h-[100vh]">
     <!-- Swiper / Slide background - single image for now (carousel can be extended) -->
-    <div class="absolute inset-0 bg-gray-900">
+    <div class="absolute inset-0 bg-gray-900 overflow-hidden">
       <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
       <!-- Dark overlay when backdrop filter active -->
       <div v-if="hasBackdropFilter" class="absolute inset-0 bg-black/40" />

@@ -1,7 +1,7 @@
 <template>
-  <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+  <section class="relative min-h-[85vh] flex items-center justify-center">
     <!-- Background: dark base + hero image + theme color overlay -->
-    <div class="absolute inset-0 z-0 bg-gray-900">
+    <div class="absolute inset-0 z-0 bg-gray-900 overflow-hidden">
       <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
       <span
         v-if="themeColor"
