@@ -32,8 +32,8 @@
             />
             <template v-if="resolveHotelImages(hotel).length > 1">
               <button
-                class="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/80 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-                @click.prevent="
+                class="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/70 shadow flex items-center justify-center transition-all hover:bg-white hover:scale-110"
+                @click.stop.prevent="
                   prevSlide(hotel.slug || hotel.id || i, resolveHotelImages(hotel).length)
                 "
               >
@@ -52,8 +52,8 @@
                 </svg>
               </button>
               <button
-                class="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/80 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-                @click.prevent="
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white/70 shadow flex items-center justify-center transition-all hover:bg-white hover:scale-110"
+                @click.stop.prevent="
                   nextSlide(hotel.slug || hotel.id || i, resolveHotelImages(hotel).length)
                 "
               >
@@ -323,7 +323,7 @@ async function fetchHotelMedia(slugs: string[]) {
           ...fallbackDataBySlug.value,
           [slug]: {
             ...(image ? { image } : {}),
-            ...(photos.length > 1 ? { photos } : {}),
+            ...(photos.length ? { photos } : {}),
             ...(d.stars ? { stars: d.stars } : {}),
             ...(d.address?.city ? { city: d.address.city } : {}),
             ...(d.address?.country ? { country: d.address.country } : {}),

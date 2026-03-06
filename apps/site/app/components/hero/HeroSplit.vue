@@ -55,15 +55,7 @@
         <!-- Right: Hero image (masthead__image) -->
         <div class="hidden xl:block xl:w-1/4">
           <div class="masthead-image rounded-2xl overflow-hidden">
-            <img
-              v-if="heroImage"
-              ref="heroRef"
-              :src="heroImage"
-              alt=""
-              class="w-full h-full object-cover transition-opacity duration-500"
-              :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
-              @load="imageLoaded = true"
-            />
+            <img v-if="heroImage" :src="heroImage" alt="" class="w-full h-full object-cover" />
           </div>
         </div>
       </div>
@@ -76,15 +68,6 @@ const storefront = useStorefrontStore()
 const partner = usePartnerStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
-
-const imageLoaded = ref(import.meta.server)
-const heroRef = ref<HTMLImageElement | null>(null)
-
-onMounted(() => {
-  if (heroRef.value?.complete && heroRef.value.naturalWidth > 0) {
-    imageLoaded.value = true
-  }
-})
 
 const heroImage = computed(() => {
   const photo = storefront.hero?.photo
