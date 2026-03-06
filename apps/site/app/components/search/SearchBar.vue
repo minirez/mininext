@@ -22,14 +22,14 @@
     </div>
 
     <!-- Search Form Container (pill-shaped like site3) -->
-    <div class="relative mt-8 md:mt-5 flex justify-center">
+    <div class="relative mt-5 md:mt-3 flex justify-center">
       <div
-        class="mainSearch bg-white px-2 py-2 lg:px-4 lg:py-3.5 rounded-full w-[950px] max-w-full"
+        class="mainSearch bg-white px-2 py-1.5 lg:px-4 lg:py-2 rounded-full w-[950px] max-w-full"
       >
         <form @submit.prevent="handleSearch" class="button-grid items-center">
           <!-- Location search -->
-          <div class="searchMenu-loc px-6 lg:py-3.5 lg:px-0">
-            <h4 class="text-[15px] font-medium leading-normal tracking-wide">
+          <div class="searchMenu-loc px-6 lg:py-2 lg:px-0">
+            <h4 class="text-[13px] font-medium leading-tight tracking-wide">
               {{ activeTab === 'flights' ? $t('search.departure') : $t('search.where') }}
             </h4>
             <div class="relative">
@@ -57,14 +57,14 @@
           <!-- Tour month selector -->
           <div
             v-if="activeTab === 'tours'"
-            class="searchMenu-date px-6 lg:py-3.5 lg:px-0 relative"
+            class="searchMenu-date px-6 lg:py-2 lg:px-0 relative"
             ref="monthRef"
           >
             <button type="button" @click="monthOpen = !monthOpen" class="w-full text-left">
-              <h4 class="text-[15px] font-medium leading-normal tracking-wide">
+              <h4 class="text-[13px] font-medium leading-tight tracking-wide">
                 {{ $t('search.when') }}
               </h4>
-              <div class="text-[15px] text-gray-500 leading-normal cursor-pointer">
+              <div class="text-[15px] text-gray-500 leading-tight cursor-pointer">
                 {{ selectedMonthLabel || $t('search.selectMonth') }}
               </div>
             </button>
@@ -107,8 +107,8 @@
           </div>
 
           <!-- Date Range (hotels, transfer, etc.) -->
-          <div v-else class="searchMenu-date px-6 lg:py-3.5 lg:px-0">
-            <h4 class="text-[15px] font-medium leading-normal tracking-wide">
+          <div v-else class="searchMenu-date px-6 lg:py-2 lg:px-0">
+            <h4 class="text-[13px] font-medium leading-tight tracking-wide">
               {{ $t('search.when') }}
             </h4>
             <DateRangePicker
@@ -122,14 +122,14 @@
           <!-- Guests -->
           <div
             v-if="activeTab !== 'flights'"
-            class="searchMenu-guests px-6 lg:py-3.5 lg:px-0 relative"
+            class="searchMenu-guests px-6 lg:py-2 lg:px-0 relative"
             ref="guestRef"
           >
             <button type="button" @click="guestOpen = !guestOpen" class="w-full text-left">
-              <h4 class="text-[15px] font-medium leading-normal tracking-wide">
+              <h4 class="text-[13px] font-medium leading-tight tracking-wide">
                 {{ $t('search.who') }}
               </h4>
-              <div class="text-[15px] text-gray-500 leading-normal">
+              <div class="text-[14px] text-gray-500 leading-tight">
                 {{ searchStore.adults }} {{ $t('search.adults') }}
                 <template v-if="searchStore.children.length">
                   , {{ searchStore.children.length }} {{ $t('search.children') }}
@@ -147,7 +147,7 @@
           <div class="button-item">
             <button
               type="submit"
-              class="mainSearch__submit flex items-center justify-center h-[52px] px-8 w-full rounded-full bg-site-primary text-white font-medium hover:bg-site-primary-dark transition-colors"
+              class="mainSearch__submit flex items-center justify-center h-[44px] px-8 w-full rounded-full bg-site-primary text-white font-medium hover:bg-site-primary-dark transition-colors"
             >
               <svg
                 class="w-5 h-5 mr-2.5"
@@ -328,6 +328,9 @@ onMounted(() => {
 
 .search-input-inline :deep(label) {
   display: none;
+}
+.search-input-inline :deep(.flex.items-center.gap-2\.5) {
+  margin-top: 0;
 }
 .search-input-inline :deep(.flex.items-center.gap-2\.5) svg {
   display: none;

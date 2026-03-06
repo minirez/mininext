@@ -332,5 +332,14 @@
     "redirect3d": "3D Secure doğrulama sayfasına yönlendiriliyorsunuz...",
     "securePayment": "Güvenli Ödeme",
     "secureProcessing": "İşleminiz güvenle devam ediyor..."
+  },
+  "cart": {
+    "title": "Sepetim",
+    "itemCount": "Sepette {count} ürün",
+    "emptyTitle": "Sepetiniz boş",
+    "emptyMessage": "Ürünleri keşfedin ve sepetinize ekleyin.",
+    "total": "Toplam",
+    "checkout": "Ödemeye Geç",
+    "removeItem": "Kaldır"
   }
 }

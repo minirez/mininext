@@ -3,6 +3,7 @@
     <button
       @click="open = !open"
       class="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg hover:bg-gray-100/20 transition-colors"
+      :class="props.textClass"
     >
       <span class="font-semibold text-xs">{{ currentSymbol }}</span>
       <span class="font-medium text-xs">{{ searchStore.currency }}</span>
@@ -50,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ textClass?: string }>()
+const props = defineProps<{ textClass?: string }>()
 const searchStore = useSearchStore()
 const open = ref(false)
 const dropdownRef = ref<HTMLElement>()

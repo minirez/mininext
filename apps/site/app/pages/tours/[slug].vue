@@ -301,6 +301,7 @@
 
                 <button
                   class="w-full py-3.5 bg-site-primary text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                  @click="handleAddToCart"
                 >
                   {{ $t('tour.addToCart') }}
                 </button>
@@ -394,7 +395,9 @@ const api = useApi()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 const partner = usePartnerStore()
-const { locale } = useI18n()
+const cartStore = useCartStore()
+const ui = useUiStore()
+const { locale, t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -524,6 +527,29 @@ const routeStops = computed(() => {
 })
 
 const tourTags = computed(() => tour.value?.tags || [])
+
+function handleAddToCart() {
+  if (!tour.value) return
+
+  const mainImage = galleryImages.value[0] || ''
+  cartStore.addItem({
+    type: 'tour',
+    title: tourName.value,
+    image: mainImage,
+    location: tourLocation.value,
+    duration: durationText.value,
+    guests: { adults: 2, children: 0 },
+    pricePerPerson: tourPrice.value,
+    totalPrice: tourPrice.value * 2,
+    currency:
+      tour.value.basePricing?.adultPrice?.currency ||
+      tour.value.basePricing?.perPerson?.currency ||
+      'TRY',
+    raw: tour.value
+  })
+
+  ui.cartDrawerOpen = true
+}
 
 async function fetchTour() {
   loading.value = true

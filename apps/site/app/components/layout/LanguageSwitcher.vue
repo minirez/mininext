@@ -3,6 +3,7 @@
     <button
       @click="open = !open"
       class="flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg hover:bg-gray-100/20 transition-colors"
+      :class="props.textClass"
     >
       <span class="text-base leading-none">{{ flagEmoji }}</span>
       <span class="uppercase font-medium text-xs">{{ locale }}</span>
@@ -47,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ textClass?: string }>()
+const props = defineProps<{ textClass?: string }>()
 const { locale, locales, setLocale } = useI18n()
 const { t: $t } = useI18n()
 

@@ -332,5 +332,14 @@
     "redirect3d": "Redirecting to 3D Secure verification...",
     "securePayment": "Secure Payment",
     "secureProcessing": "Your payment is being processed securely..."
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "itemCount": "{count} item(s) in cart",
+    "emptyTitle": "Your cart is empty",
+    "emptyMessage": "Browse our offerings and add items to your cart.",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "removeItem": "Remove"
   }
 }

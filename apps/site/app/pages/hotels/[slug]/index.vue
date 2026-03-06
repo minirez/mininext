@@ -80,60 +80,63 @@
         </div>
 
         <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Search Sidebar -->
-          <SearchSidebar @search="scrollToRooms" />
+        <aside>
+          <div class="sticky top-28 space-y-6">
+            <!-- Search Sidebar -->
+            <SearchSidebar @search="scrollToRooms" />
 
-          <!-- Map -->
-          <div
-            v-if="hotel.address?.coordinates && mapboxToken"
-            class="rounded-xl overflow-hidden border border-gray-200 h-[250px]"
-          >
-            <HotelMap :coordinates="hotel.address.coordinates" :name="hotel.name" />
-          </div>
-          <div v-else-if="hotel.address" class="bg-gray-50 rounded-xl p-4">
-            <div class="flex items-center gap-2 mb-1">
-              <svg
-                class="w-4 h-4 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"
-                />
-              </svg>
-              <h3 class="font-semibold text-gray-800 text-sm">{{ $t('hotel.location') }}</h3>
+            <!-- Map -->
+            <div
+              v-if="hotel.address?.coordinates && mapboxToken"
+              class="rounded-xl overflow-hidden border border-gray-200 h-[250px]"
+            >
+              <HotelMap :coordinates="hotel.address.coordinates" :name="hotel.name" />
             </div>
-            <p class="text-sm text-gray-600">
-              {{
-                hotel.address.formattedAddress || `${hotel.address.city}, ${hotel.address.country}`
-              }}
-            </p>
-          </div>
+            <div v-else-if="hotel.address" class="bg-gray-50 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-1">
+                <svg
+                  class="w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z"
+                  />
+                </svg>
+                <h3 class="font-semibold text-gray-800 text-sm">{{ $t('hotel.location') }}</h3>
+              </div>
+              <p class="text-sm text-gray-600">
+                {{
+                  hotel.address.formattedAddress ||
+                  `${hotel.address.city}, ${hotel.address.country}`
+                }}
+              </p>
+            </div>
 
-          <!-- Contact -->
-          <div v-if="hotel.contact" class="bg-gray-50 rounded-xl p-4 space-y-2">
-            <h3 class="font-semibold text-gray-800">{{ $t('common.contact') }}</h3>
-            <p v-if="hotel.contact.phone" class="text-sm text-gray-600">
-              <a :href="`tel:${hotel.contact.phone}`" class="hover:text-site-primary">{{
-                hotel.contact.phone
-              }}</a>
-            </p>
-            <p v-if="hotel.contact.email" class="text-sm text-gray-600">
-              <a :href="`mailto:${hotel.contact.email}`" class="hover:text-site-primary">{{
-                hotel.contact.email
-              }}</a>
-            </p>
+            <!-- Contact -->
+            <div v-if="hotel.contact" class="bg-gray-50 rounded-xl p-4 space-y-2">
+              <h3 class="font-semibold text-gray-800">{{ $t('common.contact') }}</h3>
+              <p v-if="hotel.contact.phone" class="text-sm text-gray-600">
+                <a :href="`tel:${hotel.contact.phone}`" class="hover:text-site-primary">{{
+                  hotel.contact.phone
+                }}</a>
+              </p>
+              <p v-if="hotel.contact.email" class="text-sm text-gray-600">
+                <a :href="`mailto:${hotel.contact.email}`" class="hover:text-site-primary">{{
+                  hotel.contact.email
+                }}</a>
+              </p>
+            </div>
           </div>
         </aside>
       </div>

@@ -6,6 +6,7 @@ export const useUiStore = defineStore('ui', () => {
   const lightboxIndex = ref(0)
   const filterPanelOpen = ref(false)
   const favorites = ref<string[]>([])
+  const cartDrawerOpen = ref(false)
 
   function toggleMobileMenu() {
     mobileMenuOpen.value = !mobileMenuOpen.value
@@ -40,12 +41,16 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
+  function toggleCartDrawer() {
+    cartDrawerOpen.value = !cartDrawerOpen.value
+  }
+
   return {
     mobileMenuOpen, mapView,
     lightboxOpen, lightboxImages, lightboxIndex,
-    filterPanelOpen, favorites,
+    filterPanelOpen, favorites, cartDrawerOpen,
     toggleMobileMenu, toggleMapView,
     openLightbox, closeLightbox, toggleFilterPanel,
-    toggleFavorite,
+    toggleFavorite, toggleCartDrawer,
   }
 })

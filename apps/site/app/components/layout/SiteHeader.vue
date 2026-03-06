@@ -181,6 +181,7 @@
                 class="relative flex items-center justify-center w-10 h-10 rounded border transition-all"
                 :class="cartButtonClass"
                 title="Shopping Cart"
+                @click="ui.toggleCartDrawer()"
               >
                 <svg
                   class="w-[18px] h-[18px]"
@@ -195,6 +196,12 @@
                     d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-5.98.572m5.98-.572h9m-9 0a3 3 0 01-5.98.572M17.25 14.25a3 3 0 005.98.572m-5.98-.572h-9m9 0a3 3 0 015.98.572M3.75 4.863l.75 9.75a1.5 1.5 0 001.5 1.387h9a1.5 1.5 0 001.5-1.387l.75-9.75"
                   />
                 </svg>
+                <span
+                  v-if="cartItemCount > 0"
+                  class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-site-primary text-white text-[10px] font-semibold flex items-center justify-center"
+                >
+                  {{ cartItemCount }}
+                </span>
               </button>
             </div>
 
@@ -252,10 +259,14 @@
 const partner = usePartnerStore()
 const storefront = useStorefrontStore()
 const ui = useUiStore()
+const cartStore = useCartStore()
+const bookingStore = useBookingStore()
 const { ml } = useMultiLang()
 const { imageUrl } = useImageUrl()
 const route = useRoute()
 const { t: $t } = useI18n()
+
+const cartItemCount = computed(() => cartStore.totalItems + bookingStore.cart.length)
 
 const isWhiteHeader = computed(() => storefront.header?.headerType === 'white')
 

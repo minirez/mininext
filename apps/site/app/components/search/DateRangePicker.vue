@@ -5,11 +5,11 @@
       <div class="flex items-center gap-2">
         <div class="flex-1 min-w-0">
           <span
-            class="block text-[11px] font-semibold uppercase tracking-wide"
+            class="block text-[11px] font-semibold uppercase tracking-wide leading-tight"
             style="color: #6b7280"
             >{{ $t('search.checkIn') }}</span
           >
-          <span class="block text-sm font-medium mt-1" style="color: #1f2937">{{
+          <span class="block text-sm font-medium mt-0.5 leading-tight" style="color: #1f2937">{{
             formatDisplay(modelCheckIn)
           }}</span>
         </div>
@@ -30,18 +30,18 @@
         </svg>
         <div class="flex-1 min-w-0">
           <span
-            class="block text-[11px] font-semibold uppercase tracking-wide"
+            class="block text-[11px] font-semibold uppercase tracking-wide leading-tight"
             style="color: #6b7280"
             >{{ $t('search.checkOut') }}</span
           >
-          <span class="block text-sm font-medium mt-1" style="color: #1f2937">{{
+          <span class="block text-sm font-medium mt-0.5 leading-tight" style="color: #1f2937">{{
             formatDisplay(modelCheckOut)
           }}</span>
         </div>
       </div>
       <div
         v-if="nights > 0"
-        class="mt-1 flex items-center gap-1 text-xs font-medium"
+        class="mt-0.5 flex items-center gap-1 text-xs font-medium leading-tight"
         style="color: var(--color-site-primary, #3b82f6)"
       >
         <svg
