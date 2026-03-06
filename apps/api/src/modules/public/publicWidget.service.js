@@ -8,6 +8,7 @@ import { asyncHandler } from '#helpers'
 import { NotFoundError } from '#core/errors.js'
 import Hotel from '#modules/hotel/hotel.model.js'
 import Market from '#modules/planning/market.model.js'
+import RoomType from '#modules/planning/roomType.model.js'
 
 // Country to currency mapping
 const COUNTRY_CURRENCY_MAP = {
@@ -199,6 +200,17 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
   // Get main image
   const mainImage = hotel.images?.find(img => img.isMain) || hotel.images?.[0]
 
+  // Get max guest capacity from hotel's room types
+  const roomTypes = await RoomType.find({ hotel: hotel._id, status: 'active' })
+    .select('occupancy')
+    .lean()
+  const hotelMaxAdults = roomTypes.length
+    ? Math.max(...roomTypes.map(rt => rt.occupancy?.maxAdults || 2))
+    : 10
+  const hotelMaxChildren = roomTypes.length
+    ? Math.max(...roomTypes.map(rt => rt.occupancy?.maxChildren || 2))
+    : 6
+
   // Get default market's payment methods (source of truth for B2C payment options)
   const defaultMarket = await Market.findOne({
     hotel: hotel._id,
@@ -249,6 +261,8 @@ export const getWidgetConfig = asyncHandler(async (req, res) => {
     maxAdvanceBookingDays: hotel.widgetConfig?.maxAdvanceBookingDays ?? 365,
     maxNights: 30,
     maxRooms: 5,
+    maxAdults: hotelMaxAdults,
+    maxChildren: hotelMaxChildren,
     childrenAllowed: defaultMarket?.childrenAllowed ?? true
   }
 

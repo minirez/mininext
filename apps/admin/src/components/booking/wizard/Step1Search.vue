@@ -96,6 +96,8 @@
       <GuestCountSelector
         :adults="bookingStore.search.adults"
         :children="bookingStore.search.children"
+        :max-adults="30"
+        :max-children="10"
         :max-child-age="maxChildAge"
         @update:adults="bookingStore.setGuestsCount($event, bookingStore.search.children)"
         @update:children="bookingStore.setGuestsCount(bookingStore.search.adults, $event)"

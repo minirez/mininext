@@ -57,16 +57,19 @@ const guestSummary = computed(() => {
   return text
 })
 
+const maxAdults = computed(() => widgetConfig.value?.maxAdults || 10)
+const maxChildren = computed(() => widgetConfig.value?.maxChildren || 6)
+
 function updateAdults(delta) {
   const newVal = adults.value + delta
-  if (newVal >= 1 && newVal <= 10) {
+  if (newVal >= 1 && newVal <= maxAdults.value) {
     adults.value = newVal
   }
 }
 
 function updateChildren(delta) {
   const newCount = childrenCount.value + delta
-  if (newCount >= 0 && newCount <= 6) {
+  if (newCount >= 0 && newCount <= maxChildren.value) {
     childrenCount.value = newCount
     while (childAges.value.length < newCount) {
       childAges.value.push(0)
@@ -218,7 +221,7 @@ onMounted(() => {
                 −
               </button>
               <span>{{ adults }}</span>
-              <button type="button" @click.stop="updateAdults(1)" :disabled="adults >= 10">
+              <button type="button" @click.stop="updateAdults(1)" :disabled="adults >= maxAdults">
                 +
               </button>
             </div>
@@ -235,7 +238,11 @@ onMounted(() => {
                 −
               </button>
               <span>{{ childrenCount }}</span>
-              <button type="button" @click.stop="updateChildren(1)" :disabled="childrenCount >= 6">
+              <button
+                type="button"
+                @click.stop="updateChildren(1)"
+                :disabled="childrenCount >= maxChildren"
+              >
                 +
               </button>
             </div>
