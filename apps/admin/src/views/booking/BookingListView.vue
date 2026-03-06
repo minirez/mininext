@@ -419,6 +419,20 @@
               </span>
               <PaymentStatusBadge :status="row.payment?.status || 'pending'" />
               <span
+                v-if="row.payment?.paymentLink"
+                class="material-icons relative group/link"
+                style="font-size: 13px"
+                :class="paymentLinkStatusStyle(row.payment.paymentLink.status)"
+                :title="paymentLinkStatusText(row.payment.paymentLink.status)"
+              >
+                link
+                <span
+                  class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-800 dark:bg-slate-700 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/link:opacity-100 pointer-events-none transition-opacity shadow-lg z-50"
+                >
+                  {{ paymentLinkStatusText(row.payment.paymentLink.status) }}
+                </span>
+              </span>
+              <span
                 class="material-icons text-xs text-gray-400 group-hover:text-purple-500 transition-colors"
                 >open_in_new</span
               >
@@ -1247,6 +1261,32 @@ const paymentMethodStyle = method => {
     pay_at_checkin: 'text-orange-500 dark:text-orange-400'
   }
   return styles[method] || 'text-gray-400'
+}
+
+// Payment link status style
+const paymentLinkStatusStyle = status => {
+  const styles = {
+    pending: 'text-blue-500 dark:text-blue-400',
+    viewed: 'text-blue-500 dark:text-blue-400',
+    processing: 'text-amber-500 dark:text-amber-400',
+    paid: 'text-green-500 dark:text-green-400',
+    expired: 'text-red-400 dark:text-red-500',
+    cancelled: 'text-gray-400 dark:text-gray-500'
+  }
+  return styles[status] || 'text-gray-400'
+}
+
+// Payment link status text
+const paymentLinkStatusText = status => {
+  const texts = {
+    pending: t('payment.linkStatus.pending'),
+    viewed: t('payment.linkStatus.viewed'),
+    processing: t('payment.linkStatus.processing'),
+    paid: t('payment.linkStatus.paid'),
+    expired: t('payment.linkStatus.expired'),
+    cancelled: t('payment.linkStatus.cancelled')
+  }
+  return texts[status] || status
 }
 
 // Get sales channel from booking (salesChannel field or searchCriteria.channel)

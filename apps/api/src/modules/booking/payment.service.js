@@ -5,6 +5,7 @@ import { asyncHandler } from '#helpers'
 import { NotFoundError, BadRequestError } from '#core/errors.js'
 import Payment from './payment.model.js'
 import Booking from './booking.model.js'
+import PaymentLink from '../paymentLink/paymentLink.model.js'
 import logger from '#core/logger.js'
 
 // ============================================================================
@@ -104,10 +105,35 @@ export const getPayments = asyncHandler(async (req, res) => {
     .filter(p => p.status === 'pending')
     .reduce((sum, p) => sum + getBookingAmount(p), 0)
 
+  // Query PaymentLinks for this booking
+  const bookingPaymentLinks = await PaymentLink.find({
+    booking: bookingId,
+    deletedAt: null
+  })
+    .select('token linkNumber status amount currency expiresAt')
+    .sort({ createdAt: -1 })
+    .lean()
+
+  // Build paymentUrl manually since virtuals don't work with lean()
+  const isDev = process.env.NODE_ENV === 'development'
+  const defaultUrl = isDev ? 'https://payment.mini.com' : 'https://payment.maxirez.com'
+  const baseUrl = process.env.PAYMENT_PUBLIC_URL || defaultUrl
+
+  const paymentLinksData = bookingPaymentLinks.map(pl => ({
+    token: pl.token,
+    linkNumber: pl.linkNumber,
+    status: pl.status,
+    amount: pl.amount,
+    currency: pl.currency,
+    expiresAt: pl.expiresAt,
+    paymentUrl: `${baseUrl}/pay-link/${pl.token}`
+  }))
+
   res.json({
     success: true,
     data: {
       payments,
+      paymentLinks: paymentLinksData,
       summary: {
         grandTotal: booking.pricing?.grandTotal || 0,
         paidAmount,

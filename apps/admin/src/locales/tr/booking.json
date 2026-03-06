@@ -833,6 +833,17 @@
       "expiresIn": "Link Geçerlilik Süresi",
       "linkCreated": "Ödeme linki oluşturuldu!",
       "success": "Ödeme linki başarıyla oluşturuldu"
-    }
+    },
+    "linkStatus": {
+      "pending": "Ödeme linki gönderildi",
+      "viewed": "Ödeme linki görüntülendi",
+      "processing": "Ödeme işleniyor",
+      "paid": "Ödeme linki ile ödendi",
+      "expired": "Ödeme linki süresi doldu",
+      "cancelled": "Ödeme linki iptal edildi"
+    },
+    "paymentLinks": "Ödeme Linkleri",
+    "noPaymentLinks": "Ödeme linki bulunmuyor",
+    "copyLink": "Linki Kopyala"
   }
 }

@@ -47,6 +47,58 @@
       </div>
     </div>
 
+    <!-- Payment Links Section -->
+    <div v-if="!loading && paymentLinks.length > 0" class="mb-6">
+      <h4
+        class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3 flex items-center gap-2"
+      >
+        <span class="material-icons text-base">link</span>
+        {{ $t('payment.paymentLinks') }}
+      </h4>
+      <div class="space-y-2">
+        <div
+          v-for="link in paymentLinks"
+          :key="link.token"
+          class="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600"
+        >
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <span
+              class="material-icons text-lg flex-shrink-0"
+              :class="linkStatusIconClass(link.status)"
+            >
+              {{ linkStatusIcon(link.status) }}
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-mono text-gray-500 dark:text-slate-400">{{
+                  link.linkNumber
+                }}</span>
+                <span
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
+                  :class="linkStatusBadgeClass(link.status)"
+                >
+                  {{ linkStatusText(link.status) }}
+                </span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ formatPrice(link.amount, link.currency) }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate font-mono">
+                {{ link.paymentUrl }}
+              </p>
+            </div>
+          </div>
+          <button
+            class="flex-shrink-0 p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+            :title="$t('payment.copyLink')"
+            @click="copyLink(link.paymentUrl)"
+          >
+            <span class="material-icons text-sm">content_copy</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <span class="material-icons text-4xl text-purple-500 animate-spin">refresh</span>
@@ -95,9 +147,7 @@
                 class="text-xs text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1"
               >
                 <span class="material-icons text-xs">currency_exchange</span>
-                {{
-                  formatPrice(payment.cardDetails.currencyConversion.convertedAmount, 'TRY')
-                }}
+                {{ formatPrice(payment.cardDetails.currencyConversion.convertedAmount, 'TRY') }}
                 olarak ödendi
                 <span class="text-gray-400 dark:text-slate-500"
                   >(1 {{ payment.cardDetails.currencyConversion.originalCurrency }} =
@@ -612,6 +662,7 @@ const summary = ref({
   currency: 'TRY'
 })
 
+const paymentLinks = ref([])
 const showAddForm = ref(false)
 const showConfirmModal = ref(false)
 const showDeleteModal = ref(false)
@@ -664,6 +715,7 @@ const fetchPayments = async () => {
     const response = await paymentService.getPayments(props.booking._id)
     if (response.success) {
       payments.value = response.data.payments
+      paymentLinks.value = response.data.paymentLinks || []
       summary.value = response.data.summary
     }
   } catch (error) {
@@ -865,6 +917,71 @@ const copyPaymentLink = async () => {
     document.body.removeChild(textArea)
     toast.success(t('common.copied'))
   }
+}
+
+// Copy any link URL
+const copyLink = async url => {
+  try {
+    await navigator.clipboard.writeText(url)
+    toast.success(t('common.copied'))
+  } catch {
+    const textArea = document.createElement('textarea')
+    textArea.value = url
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    toast.success(t('common.copied'))
+  }
+}
+
+// Payment link status helpers
+const linkStatusText = status => {
+  const texts = {
+    pending: t('payment.linkStatus.pending'),
+    viewed: t('payment.linkStatus.viewed'),
+    processing: t('payment.linkStatus.processing'),
+    paid: t('payment.linkStatus.paid'),
+    expired: t('payment.linkStatus.expired'),
+    cancelled: t('payment.linkStatus.cancelled')
+  }
+  return texts[status] || status
+}
+
+const linkStatusBadgeClass = status => {
+  const classes = {
+    pending: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    viewed: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300',
+    processing: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+    expired: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    cancelled: 'bg-gray-100 dark:bg-gray-800/30 text-gray-600 dark:text-gray-400'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-600'
+}
+
+const linkStatusIcon = status => {
+  const icons = {
+    pending: 'schedule_send',
+    viewed: 'visibility',
+    processing: 'hourglass_top',
+    paid: 'check_circle',
+    expired: 'timer_off',
+    cancelled: 'cancel'
+  }
+  return icons[status] || 'link'
+}
+
+const linkStatusIconClass = status => {
+  const classes = {
+    pending: 'text-blue-500 dark:text-blue-400',
+    viewed: 'text-cyan-500 dark:text-cyan-400',
+    processing: 'text-amber-500 dark:text-amber-400',
+    paid: 'text-green-500 dark:text-green-400',
+    expired: 'text-red-400 dark:text-red-500',
+    cancelled: 'text-gray-400 dark:text-gray-500'
+  }
+  return classes[status] || 'text-gray-400'
 }
 
 // Get type icon

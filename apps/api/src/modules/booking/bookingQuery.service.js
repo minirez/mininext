@@ -6,6 +6,7 @@
 import { asyncHandler, escapeRegex } from '#helpers'
 import Booking from './booking.model.js'
 import Payment from './payment.model.js'
+import PaymentLink from '../paymentLink/paymentLink.model.js'
 import { BadRequestError, NotFoundError } from '#core/errors.js'
 import { getPartnerId } from '#services/helpers.js'
 
@@ -120,6 +121,32 @@ export const listBookings = asyncHandler(async (req, res) => {
     }
   ])
 
+  // Query latest PaymentLink for each booking
+  const paymentLinks = await PaymentLink.aggregate([
+    {
+      $match: {
+        booking: { $in: bookingIds },
+        deletedAt: null
+      }
+    },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: '$booking',
+        token: { $first: '$token' },
+        status: { $first: '$status' },
+        expiresAt: { $first: '$expiresAt' }
+      }
+    }
+  ])
+
+  const paymentLinkMap = new Map(
+    paymentLinks.map(pl => [
+      pl._id.toString(),
+      { token: pl.token, status: pl.status, expiresAt: pl.expiresAt }
+    ])
+  )
+
   // Create a map for quick lookup
   const paymentMap = new Map(
     paymentAggregates.map(p => [
@@ -181,9 +208,13 @@ export const listBookings = asyncHandler(async (req, res) => {
       },
       payment: {
         status: paymentStatus,
+        method: b.payment?.method || null,
         paidAmount: paymentData.paidAmount,
         ...(paymentData.currencyConversion && {
           currencyConversion: paymentData.currencyConversion
+        }),
+        ...(paymentLinkMap.has(b._id.toString()) && {
+          paymentLink: paymentLinkMap.get(b._id.toString())
         })
       },
       source: {

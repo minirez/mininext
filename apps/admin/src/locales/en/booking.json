@@ -775,6 +775,17 @@
       "expiresIn": "Link Validity",
       "linkCreated": "Payment link created!",
       "success": "Payment link created successfully"
-    }
+    },
+    "linkStatus": {
+      "pending": "Payment link sent",
+      "viewed": "Payment link viewed",
+      "processing": "Payment in progress",
+      "paid": "Paid via payment link",
+      "expired": "Payment link expired",
+      "cancelled": "Payment link cancelled"
+    },
+    "paymentLinks": "Payment Links",
+    "noPaymentLinks": "No payment links",
+    "copyLink": "Copy Link"
   }
 }
