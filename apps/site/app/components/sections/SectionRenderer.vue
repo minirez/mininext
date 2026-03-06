@@ -36,7 +36,9 @@
         :items="storefront.activitySection.items"
       />
       <CampaignTours
-        v-else-if="sectionType === 'campaign-tours' && storefront.campaignToursSection?.tours?.length"
+        v-else-if="
+          sectionType === 'campaign-tours' && storefront.campaignToursSection?.tours?.length
+        "
         :campaign="storefront.campaignToursSection?.campaign"
         :tours="storefront.campaignToursSection.tours"
       />
@@ -47,7 +49,10 @@
         :items="storefront.bedbankSection.items"
       />
       <BedbankDestinations
-        v-else-if="sectionType === 'bedbank-destinations' && storefront.bedbankDestinationsSection?.items?.length"
+        v-else-if="
+          sectionType === 'bedbank-destinations' &&
+          storefront.bedbankDestinationsSection?.items?.length
+        "
         :title="ml(storefront.bedbankDestinationsSection?.title)"
         :description="ml(storefront.bedbankDestinationsSection?.description)"
         :items="storefront.bedbankDestinationsSection.items"
@@ -81,7 +86,7 @@ const storefront = useStorefrontStore()
 const { ml } = useMultiLang()
 
 const THEME_SECTION_ORDER: Record<string, string[]> = {
-  home1: ['destinations', 'campaigns', 'hotels', 'trust', 'tours', 'newsletter'],
+  home1: ['destinations', 'campaigns', 'hotels', 'trust', 'tours'],
   home2: ['destinations', 'campaigns', 'hotels', 'trust', 'tours', 'newsletter'],
   hotel: ['hotels', 'destinations', 'campaigns', 'trust', 'tours', 'newsletter'],
   tour: ['tours', 'destinations', 'campaign-tours', 'newsletter'],
@@ -90,7 +95,7 @@ const THEME_SECTION_ORDER: Record<string, string[]> = {
   cruise: ['cruise-deals', 'newsletter'],
   flight: ['trust', 'flights'],
   bedbank: ['bedbank', 'bedbank-destinations'],
-  default: ['destinations', 'campaigns', 'hotels', 'trust', 'tours', 'newsletter'],
+  default: ['destinations', 'campaigns', 'hotels', 'trust', 'tours', 'newsletter']
 }
 
 const sectionOrder = computed(() => {

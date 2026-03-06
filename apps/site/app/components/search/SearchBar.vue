@@ -10,9 +10,11 @@
           type="button"
           @click="activeTab = tab.key"
           class="text-[15px] font-medium text-white pb-1 border-b-2 transition-colors cursor-pointer"
-          :class="activeTab === tab.key
-            ? 'border-white opacity-100'
-            : 'border-transparent opacity-80 hover:opacity-100'"
+          :class="
+            activeTab === tab.key
+              ? 'border-white opacity-100'
+              : 'border-transparent opacity-80 hover:opacity-100'
+          "
         >
           {{ tab.label }}
         </button>
@@ -22,11 +24,11 @@
     <!-- Search Form Container (pill-shaped like site3) -->
     <div class="relative mt-8 md:mt-5 flex justify-center">
       <div
-        class="mainSearch bg-white px-2.5 py-2.5 lg:px-5 lg:pt-1.5 lg:pb-5 rounded-full w-[950px] max-w-full"
+        class="mainSearch bg-white px-2 py-2 lg:px-4 lg:py-3.5 rounded-full w-[950px] max-w-full"
       >
         <form @submit.prevent="handleSearch" class="button-grid items-center">
           <!-- Location search -->
-          <div class="searchMenu-loc px-8 lg:py-5 lg:px-0">
+          <div class="searchMenu-loc px-6 lg:py-3.5 lg:px-0">
             <h4 class="text-[15px] font-medium leading-normal tracking-wide">
               {{ activeTab === 'flights' ? $t('search.departure') : $t('search.where') }}
             </h4>
@@ -53,7 +55,11 @@
           </div>
 
           <!-- Tour month selector -->
-          <div v-if="activeTab === 'tours'" class="searchMenu-date px-8 lg:py-5 lg:px-0 relative" ref="monthRef">
+          <div
+            v-if="activeTab === 'tours'"
+            class="searchMenu-date px-6 lg:py-3.5 lg:px-0 relative"
+            ref="monthRef"
+          >
             <button type="button" @click="monthOpen = !monthOpen" class="w-full text-left">
               <h4 class="text-[15px] font-medium leading-normal tracking-wide">
                 {{ $t('search.when') }}
@@ -78,8 +84,18 @@
                       @click="selectMonth(month.value)"
                     >
                       <div class="flex items-center">
-                        <svg class="w-5 h-5 text-gray-400 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        <svg
+                          class="w-5 h-5 text-gray-400 mr-2.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+                          />
                         </svg>
                         <div class="text-[15px] font-medium">{{ month.label }}</div>
                       </div>
@@ -91,7 +107,7 @@
           </div>
 
           <!-- Date Range (hotels, transfer, etc.) -->
-          <div v-else class="searchMenu-date px-8 lg:py-5 lg:px-0">
+          <div v-else class="searchMenu-date px-6 lg:py-3.5 lg:px-0">
             <h4 class="text-[15px] font-medium leading-normal tracking-wide">
               {{ $t('search.when') }}
             </h4>
@@ -106,7 +122,7 @@
           <!-- Guests -->
           <div
             v-if="activeTab !== 'flights'"
-            class="searchMenu-guests px-8 lg:py-5 lg:px-0 relative"
+            class="searchMenu-guests px-6 lg:py-3.5 lg:px-0 relative"
             ref="guestRef"
           >
             <button type="button" @click="guestOpen = !guestOpen" class="w-full text-left">
@@ -131,9 +147,15 @@
           <div class="button-item">
             <button
               type="submit"
-              class="mainSearch__submit flex items-center justify-center h-[60px] px-9 w-full rounded-full bg-site-primary text-white font-medium hover:bg-site-primary-dark transition-colors"
+              class="mainSearch__submit flex items-center justify-center h-[52px] px-8 w-full rounded-full bg-site-primary text-white font-medium hover:bg-site-primary-dark transition-colors"
             >
-              <svg class="w-5 h-5 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <svg
+                class="w-5 h-5 mr-2.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <path stroke-linecap="round" d="m21 21-4.3-4.3" />
               </svg>
@@ -163,14 +185,19 @@ const resolvedDefaultTab = computed(() => {
   if (props.defaultTab) return props.defaultTab
   const opts = storefront.hero?.searchOptions
   if (opts?.length) {
-    const first = opts[0]
+    const first = String(opts[0] || '')
     const canon: Record<string, string> = {
-      hotel: 'hotels', hotels: 'hotels',
-      flight: 'flights', flights: 'flights',
-      tour: 'tours', tours: 'tours',
+      hotel: 'hotels',
+      hotels: 'hotels',
+      flight: 'flights',
+      flights: 'flights',
+      tour: 'tours',
+      tours: 'tours',
       transfer: 'transfer',
-      cruise: 'cruises', cruises: 'cruises',
-      activity: 'activities', activities: 'activities',
+      cruise: 'cruises',
+      cruises: 'cruises',
+      activity: 'activities',
+      activities: 'activities'
     }
     return canon[first] || 'hotels'
   }
@@ -179,7 +206,7 @@ const resolvedDefaultTab = computed(() => {
 
 const activeTab = ref(resolvedDefaultTab.value)
 
-watch(resolvedDefaultTab, (v) => {
+watch(resolvedDefaultTab, v => {
   if (v) activeTab.value = v
 })
 
@@ -189,7 +216,8 @@ const monthOptions = computed(() => {
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const localeTag = locale.value === 'tr' ? 'tr-TR' : locale.value === 'en' ? 'en-US' : locale.value
+    const localeTag =
+      locale.value === 'tr' ? 'tr-TR' : locale.value === 'en' ? 'en-US' : locale.value
     const label = d.toLocaleDateString(localeTag, { month: 'long', year: 'numeric' })
     months.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) })
   }
@@ -206,12 +234,17 @@ function selectMonth(value: string) {
 }
 
 const canonicalKey: Record<string, string> = {
-  hotel: 'hotels', hotels: 'hotels',
-  flight: 'flights', flights: 'flights',
-  tour: 'tours', tours: 'tours',
+  hotel: 'hotels',
+  hotels: 'hotels',
+  flight: 'flights',
+  flights: 'flights',
+  tour: 'tours',
+  tours: 'tours',
   transfer: 'transfer',
-  cruise: 'cruises', cruises: 'cruises',
-  activity: 'activities', activities: 'activities'
+  cruise: 'cruises',
+  cruises: 'cruises',
+  activity: 'activities',
+  activities: 'activities'
 }
 
 const tabLabels: Record<string, () => string> = {
@@ -306,7 +339,9 @@ onMounted(() => {
 
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .dropdown-enter-from,
 .dropdown-leave-to {

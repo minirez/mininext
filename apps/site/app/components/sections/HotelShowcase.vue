@@ -11,17 +11,14 @@
     <div
       v-for="(hotel, i) in displayedHotels"
       :key="hotel.id || i"
-      class="flex-shrink-0 w-[260px] sm:w-[280px] snap-start"
+      class="shrink-0 w-[260px] sm:w-[280px] snap-start"
     >
-      <NuxtLink
-        :to="`/hotels/${hotel.slug || hotel.id}`"
-        class="group block"
-      >
+      <NuxtLink :to="`/hotels/${hotel.slug || hotel.id}`" class="group block">
         <!-- Image: 1:1 square -->
         <div class="relative rounded overflow-hidden" style="aspect-ratio: 1/1">
           <img
-            v-if="hotel.logo || hotel.image || hotel.images?.[0]?.url || hotel.photo?.link"
-            :src="imageUrl(hotel.logo || hotel.image || hotel.images?.[0]?.url || hotel.photo)"
+            v-if="resolveHotelImage(hotel)"
+            :src="resolveHotelImage(hotel)"
             :alt="hotel.name"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -29,9 +26,21 @@
           <div v-else class="w-full h-full bg-gray-100" />
 
           <!-- Wishlist button -->
-          <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center hover:text-red-500 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+          <button
+            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center hover:text-red-500 transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
             </svg>
           </button>
 
@@ -49,7 +58,10 @@
           <!-- Location with dot separator -->
           <div class="flex items-center text-sm text-gray-500 leading-snug">
             <span v-if="hotel.city">{{ hotel.city }}</span>
-            <span v-if="hotel.city && hotel.country" class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0" />
+            <span
+              v-if="hotel.city && hotel.country"
+              class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0"
+            />
             <span v-if="hotel.country">{{ hotel.country }}</span>
             <template v-if="!hotel.city && hotel.location">
               <span>{{ hotel.location }}</span>
@@ -57,7 +69,9 @@
           </div>
 
           <!-- Name -->
-          <h4 class="text-lg font-medium text-gray-900 mt-1 group-hover:underline leading-tight line-clamp-1">
+          <h4
+            class="text-lg font-medium text-gray-900 mt-1 group-hover:underline leading-tight line-clamp-1"
+          >
             {{ hotel.name }}
           </h4>
 
@@ -71,14 +85,18 @@
               fill="currentColor"
               viewBox="0 0 20 20"
             >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+              />
             </svg>
           </div>
 
           <!-- Price -->
           <div v-if="hotel.price || hotel.minPrice" class="flex items-center gap-1 mt-2">
             <span class="text-sm text-gray-500">{{ $t('common.from') }}</span>
-            <span class="font-medium text-site-primary">{{ formatPrice(hotel.minPrice || hotel.price, hotel.currency) }}</span>
+            <span class="font-medium text-site-primary">{{
+              formatPrice(hotel.minPrice || hotel.price, hotel.currency)
+            }}</span>
           </div>
         </div>
       </NuxtLink>
@@ -93,16 +111,126 @@ const props = defineProps<{
   items: any[]
 }>()
 
+const api = useApi()
 const { imageUrl } = useImageUrl()
 const partner = usePartnerStore()
 const searchStore = useSearchStore()
+const fallbackMediaBySlug = ref<Record<string, string>>({})
+const mediaFetchInFlight = ref<Record<string, boolean>>({})
+
+function normalizeId(value: unknown): string {
+  return String(value ?? '').trim()
+}
+
+function normalizeSlug(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+function normalizeName(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+}
+
+function getDirectImageValue(hotel: any) {
+  return (
+    hotel?.logo ||
+    hotel?.image ||
+    hotel?.images?.[0]?.url ||
+    hotel?.images?.[0]?.link ||
+    hotel?.images?.[0] ||
+    hotel?.photo?.link ||
+    hotel?.photo?.url ||
+    hotel?.photo ||
+    ''
+  )
+}
 
 const displayedHotels = computed(() => {
+  const partnerHotels = Array.isArray(partner.hotels) ? partner.hotels : []
+
   return props.items.slice(0, 12).map(item => {
-    const fullHotel = partner.hotels?.find?.((h: any) => h.id === item.id)
+    const itemId = normalizeId(item?.id || item?._id)
+    const itemSlug = normalizeSlug(item?.slug)
+    const itemName = normalizeName(item?.name)
+
+    const fullHotel = partnerHotels.find((h: any) => {
+      const hotelId = normalizeId(h?.id || h?._id)
+      const hotelSlug = normalizeSlug(h?.slug)
+      const hotelName = normalizeName(h?.name)
+
+      if (itemId && hotelId) return hotelId === itemId
+      if (itemSlug && hotelSlug) return hotelSlug === itemSlug
+      return Boolean(itemName && hotelName && hotelName === itemName)
+    })
+
     return fullHotel ? { ...item, ...fullHotel } : item
   })
 })
+
+function resolveHotelImage(hotel: any): string {
+  const directImage = getDirectImageValue(hotel)
+  if (directImage) return imageUrl(directImage)
+
+  const slug = normalizeSlug(hotel?.slug)
+  const fallbackImage = slug ? fallbackMediaBySlug.value[slug] : ''
+  return fallbackImage ? imageUrl(fallbackImage) : ''
+}
+
+const missingMediaSlugs = computed(() => {
+  return displayedHotels.value
+    .filter((hotel: any) => !getDirectImageValue(hotel))
+    .map((hotel: any) => normalizeSlug(hotel?.slug))
+    .filter((slug: string) => Boolean(slug))
+    .filter((slug: string) => !fallbackMediaBySlug.value[slug] && !mediaFetchInFlight.value[slug])
+})
+
+async function fetchHotelMedia(slugs: string[]) {
+  const uniqueSlugs = Array.from(new Set(slugs.filter(Boolean)))
+  if (!uniqueSlugs.length) return
+
+  await Promise.all(
+    uniqueSlugs.map(async slug => {
+      mediaFetchInFlight.value = { ...mediaFetchInFlight.value, [slug]: true }
+
+      try {
+        const res = await api.get<{ success: boolean; data: any }>(`/api/public/hotels/${slug}`)
+        if (!res?.success || !res?.data) return
+
+        const fallbackImage =
+          res.data.image ||
+          res.data.images?.[0]?.url ||
+          res.data.images?.[0]?.link ||
+          res.data.images?.[0] ||
+          res.data.logo
+
+        if (fallbackImage) {
+          fallbackMediaBySlug.value = {
+            ...fallbackMediaBySlug.value,
+            [slug]: fallbackImage
+          }
+        }
+      } catch {
+        // Keep cards render-only when a fallback photo cannot be fetched.
+      }
+    })
+  )
+}
+
+onServerPrefetch(async () => {
+  await fetchHotelMedia(missingMediaSlugs.value)
+})
+
+watch(
+  missingMediaSlugs,
+  slugs => {
+    if (typeof window === 'undefined' || !slugs.length) return
+    void fetchHotelMedia(slugs)
+  },
+  { immediate: true }
+)
 
 function formatPrice(price: number | string, currency?: string) {
   if (!price) return ''
