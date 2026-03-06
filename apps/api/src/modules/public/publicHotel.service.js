@@ -135,7 +135,7 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
 
   const hotel = await Hotel.findOne(hotelQuery)
     .select(
-      'slug name description stars type category amenities images address contact policies profile childAgeGroups partner'
+      'slug name description stars type category amenities images address contact policies profile childAgeGroups partner hotelType hotelBase'
     )
     .lean()
 
@@ -150,6 +150,15 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
     )
   }
 
+  // Resolve images from base hotel for linked hotels with no own images
+  let images = hotel.images
+  if ((!images || images.length === 0) && hotel.hotelType === 'linked' && hotel.hotelBase) {
+    const baseHotel = await Hotel.findById(hotel.hotelBase).select('images').lean()
+    if (baseHotel?.images?.length) {
+      images = baseHotel.images
+    }
+  }
+
   res.json({
     success: true,
     data: {
@@ -160,7 +169,8 @@ export const getHotelInfo = asyncHandler(async (req, res) => {
       type: hotel.type,
       category: hotel.category,
       amenities: hotel.amenities,
-      images: hotel.images,
+      images: images || [],
+      image: (images?.find(img => img.isMain) || images?.[0])?.url || '',
       address: hotel.address,
       contact: {
         phone: hotel.contact?.phone,

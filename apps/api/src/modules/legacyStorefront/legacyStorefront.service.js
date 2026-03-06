@@ -391,29 +391,58 @@ export const getMainPageHotels = asyncHandler(async (req, res) => {
     return res.json({ status: false, list: [] })
   }
 
-  // Get featured/active hotels for this partner
   const hotels = await Hotel.find({
     partner: partner._id,
     status: 'active',
     'visibility.b2c': true
   })
-    .select('name slug stars type address images amenities featured displayOrder')
+    .select(
+      'name slug stars type address images amenities featured displayOrder hotelType hotelBase'
+    )
     .sort({ featured: -1, displayOrder: 1, createdAt: -1 })
     .limit(12)
     .lean()
 
-  const list = hotels.map(h => ({
-    id: h._id,
-    name: h.name,
-    slug: h.slug,
-    stars: h.stars,
-    type: h.type,
-    city: h.address?.city,
-    district: h.address?.district,
-    image: h.images?.find(img => img.isMain)?.url || h.images?.[0]?.url,
-    amenities: h.amenities?.slice(0, 5) || [],
-    featured: h.featured
-  }))
+  // Resolve images for linked hotels from their base hotel
+  const linkedBaseIds = hotels
+    .filter(h => h.hotelType === 'linked' && h.hotelBase && (!h.images || h.images.length === 0))
+    .map(h => h.hotelBase)
+
+  let baseImagesMap = new Map()
+  if (linkedBaseIds.length > 0) {
+    const baseHotels = await Hotel.find({ _id: { $in: linkedBaseIds } })
+      .select('_id images')
+      .lean()
+    for (const b of baseHotels) {
+      baseImagesMap.set(b._id.toString(), b.images)
+    }
+  }
+
+  const list = hotels.map(h => {
+    let images = h.images
+    if ((!images || images.length === 0) && h.hotelType === 'linked' && h.hotelBase) {
+      images = baseImagesMap.get(h.hotelBase.toString())
+    }
+    const mainImg = images?.find(img => img.isMain) || images?.[0]
+
+    return {
+      id: h._id,
+      name: h.name,
+      slug: h.slug,
+      stars: h.stars,
+      type: h.type,
+      city: h.address?.city,
+      district: h.address?.district,
+      country: h.address?.country,
+      image: mainImg?.url || '',
+      photos: (images || [])
+        .slice(0, 5)
+        .map(img => img.url)
+        .filter(Boolean),
+      amenities: h.amenities?.slice(0, 5) || [],
+      featured: h.featured
+    }
+  })
 
   res.json({
     status: true,

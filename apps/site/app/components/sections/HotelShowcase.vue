@@ -57,13 +57,20 @@
         <div class="mt-2.5">
           <!-- Location with dot separator -->
           <div class="flex items-center text-sm text-gray-500 leading-snug">
-            <span v-if="hotel.city">{{ hotel.city }}</span>
+            <span v-if="hotel.city && !isObjectIdString(hotel.city)">{{ hotel.city }}</span>
             <span
-              v-if="hotel.city && hotel.country"
+              v-if="
+                hotel.city &&
+                !isObjectIdString(hotel.city) &&
+                hotel.country &&
+                !isObjectIdString(hotel.country)
+              "
               class="mx-2.5 w-[3px] h-[3px] rounded-full bg-gray-400 shrink-0"
             />
-            <span v-if="hotel.country">{{ hotel.country }}</span>
-            <template v-if="!hotel.city && hotel.location">
+            <span v-if="hotel.country && !isObjectIdString(hotel.country)">{{
+              hotel.country
+            }}</span>
+            <template v-if="!hotel.city && hotel.location && !isObjectIdString(hotel.location)">
               <span>{{ hotel.location }}</span>
             </template>
           </div>
@@ -115,7 +122,7 @@ const api = useApi()
 const { imageUrl } = useImageUrl()
 const partner = usePartnerStore()
 const searchStore = useSearchStore()
-const fallbackMediaBySlug = ref<Record<string, string>>({})
+const fallbackDataBySlug = ref<Record<string, any>>({})
 const mediaFetchInFlight = ref<Record<string, boolean>>({})
 
 function normalizeId(value: unknown): string {
@@ -136,16 +143,19 @@ function normalizeName(value: unknown): string {
 
 function getDirectImageValue(hotel: any) {
   return (
-    hotel?.logo ||
     hotel?.image ||
     hotel?.images?.[0]?.url ||
     hotel?.images?.[0]?.link ||
-    hotel?.images?.[0] ||
     hotel?.photo?.link ||
     hotel?.photo?.url ||
     hotel?.photo ||
+    hotel?.logo ||
     ''
   )
+}
+
+function isObjectIdString(val: unknown): boolean {
+  return typeof val === 'string' && /^[a-f\d]{24}$/i.test(val)
 }
 
 const displayedHotels = computed(() => {
@@ -166,17 +176,17 @@ const displayedHotels = computed(() => {
       return Boolean(itemName && hotelName && hotelName === itemName)
     })
 
-    return fullHotel ? { ...item, ...fullHotel } : item
+    const slug = normalizeSlug(item?.slug || fullHotel?.slug)
+    const fetchedData = slug ? fallbackDataBySlug.value[slug] : null
+
+    return { ...item, ...fullHotel, ...fetchedData }
   })
 })
 
 function resolveHotelImage(hotel: any): string {
   const directImage = getDirectImageValue(hotel)
   if (directImage) return imageUrl(directImage)
-
-  const slug = normalizeSlug(hotel?.slug)
-  const fallbackImage = slug ? fallbackMediaBySlug.value[slug] : ''
-  return fallbackImage ? imageUrl(fallbackImage) : ''
+  return ''
 }
 
 const missingMediaSlugs = computed(() => {
@@ -184,7 +194,7 @@ const missingMediaSlugs = computed(() => {
     .filter((hotel: any) => !getDirectImageValue(hotel))
     .map((hotel: any) => normalizeSlug(hotel?.slug))
     .filter((slug: string) => Boolean(slug))
-    .filter((slug: string) => !fallbackMediaBySlug.value[slug] && !mediaFetchInFlight.value[slug])
+    .filter((slug: string) => !fallbackDataBySlug.value[slug] && !mediaFetchInFlight.value[slug])
 })
 
 async function fetchHotelMedia(slugs: string[]) {
@@ -199,21 +209,26 @@ async function fetchHotelMedia(slugs: string[]) {
         const res = await api.get<{ success: boolean; data: any }>(`/api/public/hotels/${slug}`)
         if (!res?.success || !res?.data) return
 
-        const fallbackImage =
-          res.data.image ||
-          res.data.images?.[0]?.url ||
-          res.data.images?.[0]?.link ||
-          res.data.images?.[0] ||
-          res.data.logo
+        const d = res.data
+        const image =
+          d.image ||
+          d.images?.find((img: any) => img.isMain)?.url ||
+          d.images?.[0]?.url ||
+          d.logo ||
+          ''
 
-        if (fallbackImage) {
-          fallbackMediaBySlug.value = {
-            ...fallbackMediaBySlug.value,
-            [slug]: fallbackImage
+        fallbackDataBySlug.value = {
+          ...fallbackDataBySlug.value,
+          [slug]: {
+            ...(image ? { image } : {}),
+            ...(d.stars ? { stars: d.stars } : {}),
+            ...(d.address?.city ? { city: d.address.city } : {}),
+            ...(d.address?.country ? { country: d.address.country } : {}),
+            slug: d.slug || slug
           }
         }
       } catch {
-        // Keep cards render-only when a fallback photo cannot be fetched.
+        // Non-critical: cards render without photo when fetch fails
       }
     })
   )

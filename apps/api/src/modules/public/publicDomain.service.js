@@ -21,6 +21,51 @@ const findPartnerByDomain = async domain => {
 }
 
 /**
+ * Pick the main image URL from an images array.
+ * For linked hotels with no own images, falls back to the base hotel's images.
+ */
+const resolveMainImage = (hotel, baseHotelsMap) => {
+  let images = hotel.images
+  if ((!images || images.length === 0) && hotel.hotelType === 'linked' && hotel.hotelBase) {
+    const baseId = hotel.hotelBase.toString()
+    images = baseHotelsMap?.get(baseId)?.images
+  }
+  if (!images || images.length === 0) return ''
+  const main = images.find(img => img.isMain) || images[0]
+  return main?.url || ''
+}
+
+/**
+ * Map raw hotel documents to the public-safe shape returned by resolve-domain.
+ * Resolves images for linked hotels from base hotel data when needed.
+ */
+const mapHotelsForPublic = async hotels => {
+  const linkedBaseIds = hotels
+    .filter(h => h.hotelType === 'linked' && h.hotelBase && (!h.images || h.images.length === 0))
+    .map(h => h.hotelBase)
+
+  let baseHotelsMap = new Map()
+  if (linkedBaseIds.length > 0) {
+    const baseHotels = await Hotel.find({ _id: { $in: linkedBaseIds } })
+      .select('_id images')
+      .lean()
+    for (const b of baseHotels) {
+      baseHotelsMap.set(b._id.toString(), b)
+    }
+  }
+
+  return hotels.map(h => ({
+    id: h._id,
+    name: h.name,
+    slug: h.slug,
+    logo: h.logo,
+    image: resolveMainImage(h, baseHotelsMap),
+    stars: h.stars,
+    city: h.address?.city || ''
+  }))
+}
+
+/**
  * Resolve domain to partner
  * GET /public/resolve-domain?domain=partner.example.com
  * Returns partner info based on domain match
@@ -40,13 +85,13 @@ export const resolveDomain = asyncHandler(async (req, res) => {
   if (hotel) {
     const partner = await Partner.findById(hotel.partner)
     if (partner && partner.status === 'active') {
-      // Get all active hotels for this partner
       const hotels = await Hotel.find({
         partner: partner._id,
         status: 'active'
       })
-        .select('_id name slug logo stars images city')
+        .select('_id name slug logo stars images address.city hotelType hotelBase')
         .limit(50)
+        .lean()
 
       return res.json({
         success: true,
@@ -62,18 +107,7 @@ export const resolveDomain = asyncHandler(async (req, res) => {
             logo: hotel.logo,
             stars: hotel.stars
           },
-          hotels: hotels.map(h => {
-            const mainImg = h.images?.find(img => img.isMain) || h.images?.[0]
-            return {
-              id: h._id,
-              name: h.name,
-              slug: h.slug,
-              logo: h.logo,
-              image: mainImg?.url || '',
-              stars: h.stars,
-              city: h.city
-            }
-          })
+          hotels: await mapHotelsForPublic(hotels)
         }
       })
     }
@@ -83,13 +117,13 @@ export const resolveDomain = asyncHandler(async (req, res) => {
   const partner = await findPartnerByDomain(normalizedDomain)
 
   if (partner && partner.status === 'active') {
-    // Get all active hotels for this partner
     const hotels = await Hotel.find({
       partner: partner._id,
       status: 'active'
     })
-      .select('_id name slug logo stars images city')
+      .select('_id name slug logo stars images address.city hotelType hotelBase')
       .limit(50)
+      .lean()
 
     return res.json({
       success: true,
@@ -98,18 +132,7 @@ export const resolveDomain = asyncHandler(async (req, res) => {
         partnerName: partner.companyName,
         code: partner.code,
         logo: partner.branding?.logo,
-        hotels: hotels.map(h => {
-          const mainImg = h.images?.find(img => img.isMain) || h.images?.[0]
-          return {
-            id: h._id,
-            name: h.name,
-            slug: h.slug,
-            logo: h.logo,
-            image: mainImg?.url || '',
-            stars: h.stars,
-            city: h.city
-          }
-        })
+        hotels: await mapHotelsForPublic(hotels)
       }
     })
   }
